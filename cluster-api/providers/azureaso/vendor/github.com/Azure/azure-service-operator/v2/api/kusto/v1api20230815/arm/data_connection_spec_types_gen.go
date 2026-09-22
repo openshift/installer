@@ -150,13 +150,17 @@ var cosmosDbDataConnection_Kind_Values = map[string]CosmosDbDataConnection_Kind{
 
 // Class representing the Kusto CosmosDb data connection properties.
 type CosmosDbDataConnectionProperties struct {
+	// CosmosDbAccountResourceId: The resource ID of the Cosmos DB account used to create the data connection.
 	CosmosDbAccountResourceId *string `json:"cosmosDbAccountResourceId,omitempty"`
 
 	// CosmosDbContainer: The name of an existing container in the Cosmos DB database.
 	CosmosDbContainer *string `json:"cosmosDbContainer,omitempty"`
 
 	// CosmosDbDatabase: The name of an existing database in the Cosmos DB account.
-	CosmosDbDatabase          *string `json:"cosmosDbDatabase,omitempty"`
+	CosmosDbDatabase *string `json:"cosmosDbDatabase,omitempty"`
+
+	// ManagedIdentityResourceId: The resource ID of a managed system or user-assigned identity. The identity is used to
+	// authenticate with Cosmos DB.
 	ManagedIdentityResourceId *string `json:"managedIdentityResourceId,omitempty"`
 
 	// MappingRuleName: The name of an existing mapping rule to use when ingesting the retrieved data.
@@ -184,18 +188,27 @@ type EventGridConnectionProperties struct {
 
 	// DatabaseRouting: Indication for database routing information from the data connection, by default only database routing
 	// information is allowed
-	DatabaseRouting     *EventGridConnectionProperties_DatabaseRouting `json:"databaseRouting,omitempty"`
-	EventGridResourceId *string                                        `json:"eventGridResourceId,omitempty"`
-	EventHubResourceId  *string                                        `json:"eventHubResourceId,omitempty"`
+	DatabaseRouting *EventGridConnectionProperties_DatabaseRouting `json:"databaseRouting,omitempty"`
+
+	// EventGridResourceId: The resource ID of the event grid that is subscribed to the storage account events.
+	EventGridResourceId *string `json:"eventGridResourceId,omitempty"`
+
+	// EventHubResourceId: The resource ID where the event grid is configured to send events.
+	EventHubResourceId *string `json:"eventHubResourceId,omitempty"`
 
 	// IgnoreFirstRecord: A Boolean value that, if set to true, indicates that ingestion should ignore the first record of
 	// every file
-	IgnoreFirstRecord         *bool   `json:"ignoreFirstRecord,omitempty"`
+	IgnoreFirstRecord *bool `json:"ignoreFirstRecord,omitempty"`
+
+	// ManagedIdentityResourceId: The resource ID of a managed identity (system or user assigned) to be used to authenticate
+	// with event hub and storage account.
 	ManagedIdentityResourceId *string `json:"managedIdentityResourceId,omitempty"`
 
 	// MappingRuleName: The mapping rule to be used to ingest the data. Optionally the mapping information can be added to each
 	// message.
-	MappingRuleName          *string `json:"mappingRuleName,omitempty"`
+	MappingRuleName *string `json:"mappingRuleName,omitempty"`
+
+	// StorageAccountResourceId: The resource ID of the storage account where the data resides.
 	StorageAccountResourceId *string `json:"storageAccountResourceId,omitempty"`
 
 	// TableName: The table where the data should be ingested. Optionally the table information can be added to each message.
@@ -225,12 +238,17 @@ type EventHubConnectionProperties struct {
 
 	// DatabaseRouting: Indication for database routing information from the data connection, by default only database routing
 	// information is allowed
-	DatabaseRouting    *EventHubConnectionProperties_DatabaseRouting `json:"databaseRouting,omitempty"`
-	EventHubResourceId *string                                       `json:"eventHubResourceId,omitempty"`
+	DatabaseRouting *EventHubConnectionProperties_DatabaseRouting `json:"databaseRouting,omitempty"`
+
+	// EventHubResourceId: The resource ID of the event hub to be used to create a data connection.
+	EventHubResourceId *string `json:"eventHubResourceId,omitempty"`
 
 	// EventSystemProperties: System properties of the event hub
-	EventSystemProperties     []string `json:"eventSystemProperties,omitempty"`
-	ManagedIdentityResourceId *string  `json:"managedIdentityResourceId,omitempty"`
+	EventSystemProperties []string `json:"eventSystemProperties,omitempty"`
+
+	// ManagedIdentityResourceId: The resource ID of a managed identity (system or user assigned) to be used to authenticate
+	// with event hub.
+	ManagedIdentityResourceId *string `json:"managedIdentityResourceId,omitempty"`
 
 	// MappingRuleName: The mapping rule to be used to ingest the data. Optionally the mapping information can be added to each
 	// message.
@@ -268,7 +286,9 @@ type IotHubConnectionProperties struct {
 
 	// EventSystemProperties: System properties of the iot hub
 	EventSystemProperties []string `json:"eventSystemProperties,omitempty"`
-	IotHubResourceId      *string  `json:"iotHubResourceId,omitempty"`
+
+	// IotHubResourceId: The resource ID of the Iot hub to be used to create a data connection.
+	IotHubResourceId *string `json:"iotHubResourceId,omitempty"`
 
 	// MappingRuleName: The mapping rule to be used to ingest the data. Optionally the mapping information can be added to each
 	// message.

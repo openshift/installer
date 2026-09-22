@@ -70,6 +70,7 @@ type RouteProperties struct {
 
 // Reference to another resource along with its state.
 type ActivatedResourceReference struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

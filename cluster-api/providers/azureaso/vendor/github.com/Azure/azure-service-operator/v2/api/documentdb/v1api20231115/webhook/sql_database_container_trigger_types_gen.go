@@ -116,7 +116,12 @@ func (trigger *SqlDatabaseContainerTrigger) ValidateUpdate(ctx context.Context, 
 
 // createValidations validates the creation of the resource
 func (trigger *SqlDatabaseContainerTrigger) createValidations() []func(ctx context.Context, obj *v20231115.SqlDatabaseContainerTrigger) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231115.SqlDatabaseContainerTrigger) (admission.Warnings, error){trigger.validateResourceReferences, trigger.validateOwnerReference, trigger.validateSecretDestinations, trigger.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20231115.SqlDatabaseContainerTrigger) (admission.Warnings, error){
+		trigger.validateResourceReferences,
+		trigger.validateOwnerReference,
+		trigger.validateSecretDestinations,
+		trigger.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

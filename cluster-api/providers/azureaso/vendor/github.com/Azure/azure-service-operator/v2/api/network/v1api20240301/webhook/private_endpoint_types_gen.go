@@ -116,7 +116,12 @@ func (endpoint *PrivateEndpoint) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (endpoint *PrivateEndpoint) createValidations() []func(ctx context.Context, obj *v20240301.PrivateEndpoint) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.PrivateEndpoint) (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.PrivateEndpoint) (admission.Warnings, error){
+		endpoint.validateResourceReferences,
+		endpoint.validateOwnerReference,
+		endpoint.validateSecretDestinations,
+		endpoint.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

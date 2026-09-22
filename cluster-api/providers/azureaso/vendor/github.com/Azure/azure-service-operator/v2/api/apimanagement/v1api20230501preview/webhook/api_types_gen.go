@@ -116,7 +116,12 @@ func (api *Api) ValidateUpdate(ctx context.Context, oldResource runtime.Object, 
 
 // createValidations validates the creation of the resource
 func (api *Api) createValidations() []func(ctx context.Context, obj *v20230501p.Api) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.Api) (admission.Warnings, error){api.validateResourceReferences, api.validateOwnerReference, api.validateSecretDestinations, api.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.Api) (admission.Warnings, error){
+		api.validateResourceReferences,
+		api.validateOwnerReference,
+		api.validateSecretDestinations,
+		api.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

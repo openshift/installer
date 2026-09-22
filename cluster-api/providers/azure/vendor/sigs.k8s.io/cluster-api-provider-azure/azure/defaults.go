@@ -44,6 +44,8 @@ const (
 	ChinaCloudName = "AzureChinaCloud"
 	// USGovernmentCloudName is the name of the Azure US Government cloud.
 	USGovernmentCloudName = "AzureUSGovernmentCloud"
+	// GermanCloudName is the name of the Azure German cloud.
+	GermanCloudName = "AzureGermanCloud"
 )
 
 const (
@@ -52,7 +54,7 @@ const (
 	// DefaultLinuxGalleryImageName is the default Linux community gallery image definition.
 	DefaultLinuxGalleryImageName = "capi-ubun2-2404"
 	// DefaultWindowsGalleryImageName is the default Windows community gallery image definition.
-	DefaultWindowsGalleryImageName = "capi-win-2019-containerd"
+	DefaultWindowsGalleryImageName = "capi-win-2022-containerd"
 )
 
 const (
@@ -72,7 +74,7 @@ const (
 const (
 	// DefaultWindowsOsAndVersion is the default Windows Server version to use when
 	// generating default images for Windows nodes.
-	DefaultWindowsOsAndVersion = "windows-2019"
+	DefaultWindowsOsAndVersion = "windows-2022"
 )
 
 const (
@@ -117,39 +119,14 @@ var (
 		bootstrapExtensionRetries, bootstrapSentinelFile, bootstrapExtensionSleep)
 )
 
-// GenerateBackendAddressPoolName generates a load balancer backend address pool name.
-func GenerateBackendAddressPoolName(lbName string) string {
-	return fmt.Sprintf("%s-%s", lbName, "backendPool")
-}
-
-// GenerateOutboundBackendAddressPoolName generates a load balancer outbound backend address pool name.
-func GenerateOutboundBackendAddressPoolName(lbName string) string {
-	return fmt.Sprintf("%s-%s", lbName, "outboundBackendPool")
-}
-
 // GenerateFrontendIPConfigName generates a load balancer frontend IP config name.
 func GenerateFrontendIPConfigName(lbName string) string {
 	return fmt.Sprintf("%s-%s", lbName, "frontEnd")
 }
 
-// GenerateNodeOutboundIPName generates a public IP name, based on the cluster name.
-func GenerateNodeOutboundIPName(clusterName string) string {
-	return fmt.Sprintf("pip-%s-node-outbound", clusterName)
-}
-
 // GenerateNodePublicIPName generates a node public IP name, based on the machine name.
 func GenerateNodePublicIPName(machineName string) string {
 	return fmt.Sprintf("pip-%s", machineName)
-}
-
-// GenerateControlPlaneOutboundLBName generates the name of the control plane outbound LB.
-func GenerateControlPlaneOutboundLBName(clusterName string) string {
-	return fmt.Sprintf("%s-outbound-lb", clusterName)
-}
-
-// GenerateControlPlaneOutboundIPName generates a public IP name, based on the cluster name.
-func GenerateControlPlaneOutboundIPName(clusterName string) string {
-	return fmt.Sprintf("pip-%s-controlplane-outbound", clusterName)
 }
 
 // GeneratePrivateDNSZoneName generates the name of a private DNS zone based on the cluster name.
@@ -175,11 +152,6 @@ func GenerateNICName(machineName string, multiNIC bool, index int) string {
 	return fmt.Sprintf("%s-nic", machineName)
 }
 
-// GeneratePublicNICName generates the name of a public network interface based on the name of a VM.
-func GeneratePublicNICName(machineName string) string {
-	return fmt.Sprintf("%s-public-nic", machineName)
-}
-
 // GenerateOSDiskName generates the name of an OS disk based on the name of a VM.
 func GenerateOSDiskName(machineName string) string {
 	return fmt.Sprintf("%s_OSDisk", machineName)
@@ -201,16 +173,6 @@ func GenerateVnetPeeringName(sourceVnetName string, remoteVnetName string) strin
 // For worker nodes, this will be the machine deployment name.
 func GenerateAvailabilitySetName(clusterName, nodeGroup string) string {
 	return fmt.Sprintf("%s_%s-as", clusterName, nodeGroup)
-}
-
-// WithIndex appends the index as suffix to a generated name.
-func WithIndex(name string, n int) string {
-	return fmt.Sprintf("%s-%d", name, n)
-}
-
-// ResourceGroupID returns the azure resource ID for a given resource group.
-func ResourceGroupID(subscriptionID, resourceGroup string) string {
-	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscriptionID, resourceGroup)
 }
 
 // VMID returns the azure resource ID for a given VM.

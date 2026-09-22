@@ -905,11 +905,23 @@ augmentConversionForBackendAuthorizationHeaderCredentials: Interface
 
 augmentConversionForBackendAuthorizationHeaderCredentials_STATUS: Interface
 
+augmentConversionForBackendCircuitBreaker: Interface
+
+augmentConversionForBackendCircuitBreaker_STATUS: Interface
+
 augmentConversionForBackendCredentialsContract: Interface
 
 augmentConversionForBackendCredentialsContract_STATUS: Interface
 
 augmentConversionForBackendOperatorSpec: Interface
+
+augmentConversionForBackendPool: Interface
+
+augmentConversionForBackendPoolItem: Interface
+
+augmentConversionForBackendPoolItem_STATUS: Interface
+
+augmentConversionForBackendPool_STATUS: Interface
 
 augmentConversionForBackendProperties: Interface
 
@@ -938,6 +950,22 @@ augmentConversionForCertificateConfiguration_STATUS: Interface
 augmentConversionForCertificateInformation: Interface
 
 augmentConversionForCertificateInformation_STATUS: Interface
+
+augmentConversionForCircuitBreakerFailureCondition: Interface
+
+augmentConversionForCircuitBreakerFailureCondition_STATUS: Interface
+
+augmentConversionForCircuitBreakerRule: Interface
+
+augmentConversionForCircuitBreakerRule_STATUS: Interface
+
+augmentConversionForConfigurationApi: Interface
+
+augmentConversionForConfigurationApi_STATUS: Interface
+
+augmentConversionForFailureStatusCodeRange: Interface
+
+augmentConversionForFailureStatusCodeRange_STATUS: Interface
 
 augmentConversionForHostnameConfiguration: Interface
 

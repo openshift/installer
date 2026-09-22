@@ -91,3 +91,28 @@ func ValidateDestinations(
 
 	return nil, nil
 }
+
+// OptionalReferencePair represents an optional secret pair. Each pair has two optional fields, a
+// string and a SecretReference.
+// This type is used purely for validation. The actual user supplied types are inline on the objects themselves as
+// two properties: Foo and FooFromSecret
+type OptionalReferencePair struct {
+	Value   *string
+	Ref     *genruntime.SecretReference
+	Name    string
+	RefName string
+}
+
+// ValidateOptionalReferences checks that only one of Foo and FooFromSecret are set
+func ValidateOptionalReferences(pairs []*OptionalReferencePair) (admission.Warnings, error) {
+	for _, pair := range pairs {
+		if pair == nil {
+			continue
+		}
+		if pair.Value != nil && pair.Ref != nil {
+			return nil, eris.Errorf("cannot specify both %s and %s", pair.Name, pair.RefName)
+		}
+	}
+
+	return nil, nil
+}

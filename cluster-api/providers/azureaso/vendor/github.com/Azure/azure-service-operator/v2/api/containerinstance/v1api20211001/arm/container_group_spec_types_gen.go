@@ -173,6 +173,7 @@ var containerGroupSku_Values = map[string]ContainerGroupSku{
 
 // Container group subnet information.
 type ContainerGroupSubnetId struct {
+	// Id: Resource ID of virtual network and subnet.
 	Id *string `json:"id,omitempty"`
 
 	// Name: Friendly name for the subnet.
@@ -393,7 +394,9 @@ type LogAnalytics struct {
 	WorkspaceId *string `json:"workspaceId,omitempty"`
 
 	// WorkspaceKey: The workspace key for log analytics
-	WorkspaceKey        *string `json:"workspaceKey,omitempty"`
+	WorkspaceKey *string `json:"workspaceKey,omitempty"`
+
+	// WorkspaceResourceId: The workspace resource id for log analytics
 	WorkspaceResourceId *string `json:"workspaceResourceId,omitempty"`
 }
 

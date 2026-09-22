@@ -93,9 +93,7 @@ FlexibleServer: Resource
 │   │   │   └── "Enabled"
 │   │   └── StorageSizeGB: *int
 │   ├── Tags: map[string]string
-│   └── Version: *Enum (2 values)
-│       ├── "5.7"
-│       └── "8.0.21"
+│   └── Version: *string
 └── Status: Object (27 properties)
     ├── AdministratorLogin: *string
     ├── AvailabilityZone: *string
@@ -211,9 +209,7 @@ FlexibleServer: Resource
     │       └── "User"
     ├── Tags: map[string]string
     ├── Type: *string
-    └── Version: *Enum (2 values)
-        ├── "5.7"
-        └── "8.0.21"
+    └── Version: *string
 
 FlexibleServersAdministrator: Resource
 ├── Owner: FlexibleServer

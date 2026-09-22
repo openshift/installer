@@ -56,7 +56,9 @@ type AutoscaleSettingProperties struct {
 
 	// TargetResourceLocation: the location of the resource that the autoscale setting should be added to.
 	TargetResourceLocation *string `json:"targetResourceLocation,omitempty"`
-	TargetResourceUri      *string `json:"targetResourceUri,omitempty"`
+
+	// TargetResourceUri: the resource identifier of the resource that the autoscale setting should be added to.
+	TargetResourceUri *string `json:"targetResourceUri,omitempty"`
 }
 
 // Autoscale notification.
@@ -212,7 +214,7 @@ type WebhookNotification struct {
 	Properties map[string]string `json:"properties,omitempty"`
 
 	// ServiceUri: the service address to receive the notification.
-	ServiceUri *string `json:"serviceUri,omitempty"`
+	ServiceUri *string `json:"serviceUri,omitempty" optionalSecretPair:"ServiceUri"`
 }
 
 // The trigger that results in a scaling action.
@@ -232,7 +234,9 @@ type MetricTrigger struct {
 
 	// MetricResourceLocation: the location of the resource the rule monitors.
 	MetricResourceLocation *string `json:"metricResourceLocation,omitempty"`
-	MetricResourceUri      *string `json:"metricResourceUri,omitempty"`
+
+	// MetricResourceUri: the resource identifier of the resource the rule monitors.
+	MetricResourceUri *string `json:"metricResourceUri,omitempty"`
 
 	// Operator: the operator that is used to compare the metric data and the threshold.
 	Operator *MetricTrigger_Operator `json:"operator,omitempty"`

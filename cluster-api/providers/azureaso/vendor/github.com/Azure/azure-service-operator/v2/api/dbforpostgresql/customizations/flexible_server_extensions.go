@@ -17,7 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	postgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
+	postgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -74,10 +74,11 @@ func secretsSpecified(obj *postgresql.FlexibleServer) bool {
 }
 
 func secretsToWrite(obj *postgresql.FlexibleServer) ([]*v1.Secret, error) {
-	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
-	if operatorSpecSecrets == nil {
+	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, nil
 	}
+
+	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 
 	collector := secrets.NewCollector(obj.Namespace)
 	collector.AddValue(operatorSpecSecrets.FullyQualifiedDomainName, to.Value(obj.Status.FullyQualifiedDomainName))
@@ -99,13 +100,12 @@ var nonBlockingFlexibleServerStates = set.Make(
 )
 
 func (ext *FlexibleServerExtension) PreReconcileCheck(
-	_ context.Context,
+	ctx context.Context,
 	obj genruntime.MetaObject,
-	_ genruntime.MetaObject,
-	_ *resolver.Resolver,
-	_ *genericarmclient.GenericClient,
-	_ logr.Logger,
-	_ extensions.PreReconcileCheckFunc,
+	resourceResolver *resolver.Resolver,
+	armClient *genericarmclient.GenericClient,
+	log logr.Logger,
+	next extensions.PreReconcileCheckFunc,
 ) (extensions.PreReconcileCheckResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
@@ -123,11 +123,11 @@ func (ext *FlexibleServerExtension) PreReconcileCheck(
 	if state != nil && flexibleServerStateBlocksReconciliation(*state) {
 		return extensions.BlockReconcile(
 			fmt.Sprintf(
-				"Flexible Server is in provisioning state %q",
+				"Flexible Server is in state %q",
 				*state)), nil
 	}
 
-	return extensions.ProceedWithReconcile(), nil
+	return next(ctx, obj, resourceResolver, armClient, log)
 }
 
 func flexibleServerStateBlocksReconciliation(state string) bool {

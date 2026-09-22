@@ -24,9 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	capiexputil "sigs.k8s.io/cluster-api/exp/util"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -90,7 +88,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 		).
 		// watch MachinePool resources
 		Watches(
-			&expv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
 		).
 		// Add a watch on clusterv1.Cluster object for pause/unpause & ready notifications.
@@ -98,7 +96,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(amcpr.ClusterToAzureManagedControlPlane),
 			builder.WithPredicates(
-				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, amcpr.WatchFilterValue),
 			),
 		).
@@ -116,6 +114,8 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 // +kubebuilder:rbac:groups=network.azure.com,resources=privateendpoints/status;virtualnetworks/status;virtualnetworkssubnets/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleetsmembers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleetsmembers/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=maintenanceconfigurations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=maintenanceconfigurations/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions/status,verbs=get;list;watch
 
@@ -168,7 +168,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) Reconcile(ctx context.Context, 
 
 	for i, ammp := range ammpList.Items {
 		// Fetch the owner MachinePool.
-		ownerPool, err := capiexputil.GetOwnerMachinePool(ctx, amcpr.Client, ammp.ObjectMeta)
+		ownerPool, err := GetOwnerMachinePool(ctx, amcpr.Client, ammp.ObjectMeta)
 		if err != nil || ownerPool == nil {
 			return reconcile.Result{}, errors.Wrapf(err, "failed to fetch owner MachinePool for AzureManagedMachinePool: %s", ammp.Name)
 		}
@@ -344,8 +344,8 @@ func (amcpr *AzureManagedControlPlaneReconciler) ClusterToAzureManagedControlPla
 	}
 
 	controlPlaneRef := c.Spec.ControlPlaneRef
-	if controlPlaneRef != nil && controlPlaneRef.Kind == infrav1.AzureManagedControlPlaneKind {
-		return []ctrl.Request{{NamespacedName: client.ObjectKey{Namespace: controlPlaneRef.Namespace, Name: controlPlaneRef.Name}}}
+	if controlPlaneRef.IsDefined() && controlPlaneRef.Kind == infrav1.AzureManagedControlPlaneKind {
+		return []ctrl.Request{{NamespacedName: client.ObjectKey{Namespace: c.Namespace, Name: controlPlaneRef.Name}}}
 	}
 
 	return nil

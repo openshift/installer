@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=keyvault.azure.com,resources={vaults/status,vaults/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,keyvault}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

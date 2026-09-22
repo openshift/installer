@@ -10,6 +10,8 @@ import (
 	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	v20230801 "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801"
 	v20230801s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
+	v20241101 "github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101"
+	v20241101s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -24,5 +26,7 @@ func (extension *RedisExtension) GetExtendedResources() []genruntime.KubernetesR
 		&v20230401.Redis{},
 		&v20230401s.Redis{},
 		&v20230801.Redis{},
-		&v20230801s.Redis{}}
+		&v20230801s.Redis{},
+		&v20241101.Redis{},
+		&v20241101s.Redis{}}
 }

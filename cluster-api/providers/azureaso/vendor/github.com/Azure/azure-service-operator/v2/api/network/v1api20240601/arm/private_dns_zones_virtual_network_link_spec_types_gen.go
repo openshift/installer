@@ -46,27 +46,31 @@ type VirtualNetworkLinkProperties struct {
 	// ResolutionPolicy: The resolution policy on the virtual network link. Only applicable for virtual network links to
 	// privatelink zones, and for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public
 	// resolution if private dns query resolution results in non-existent domain response.
-	ResolutionPolicy *VirtualNetworkLinkProperties_ResolutionPolicy `json:"resolutionPolicy,omitempty"`
+	ResolutionPolicy *ResolutionPolicy `json:"resolutionPolicy,omitempty"`
 
 	// VirtualNetwork: The reference of the virtual network.
 	VirtualNetwork *SubResource `json:"virtualNetwork,omitempty"`
 }
 
-// Reference to another subresource.
-type SubResource struct {
-	Id *string `json:"id,omitempty"`
-}
-
+// The resolution policy on the virtual network link. Only applicable for virtual network links to privatelink zones, and
+// for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public resolution if private
+// dns query resolution results in non-existent domain response.
 // +kubebuilder:validation:Enum={"Default","NxDomainRedirect"}
-type VirtualNetworkLinkProperties_ResolutionPolicy string
+type ResolutionPolicy string
 
 const (
-	VirtualNetworkLinkProperties_ResolutionPolicy_Default          = VirtualNetworkLinkProperties_ResolutionPolicy("Default")
-	VirtualNetworkLinkProperties_ResolutionPolicy_NxDomainRedirect = VirtualNetworkLinkProperties_ResolutionPolicy("NxDomainRedirect")
+	ResolutionPolicy_Default          = ResolutionPolicy("Default")
+	ResolutionPolicy_NxDomainRedirect = ResolutionPolicy("NxDomainRedirect")
 )
 
-// Mapping from string to VirtualNetworkLinkProperties_ResolutionPolicy
-var virtualNetworkLinkProperties_ResolutionPolicy_Values = map[string]VirtualNetworkLinkProperties_ResolutionPolicy{
-	"default":          VirtualNetworkLinkProperties_ResolutionPolicy_Default,
-	"nxdomainredirect": VirtualNetworkLinkProperties_ResolutionPolicy_NxDomainRedirect,
+// Mapping from string to ResolutionPolicy
+var resolutionPolicy_Values = map[string]ResolutionPolicy{
+	"default":          ResolutionPolicy_Default,
+	"nxdomainredirect": ResolutionPolicy_NxDomainRedirect,
+}
+
+// Reference to another subresource.
+type SubResource struct {
+	// Id: Resource ID.
+	Id *string `json:"id,omitempty"`
 }

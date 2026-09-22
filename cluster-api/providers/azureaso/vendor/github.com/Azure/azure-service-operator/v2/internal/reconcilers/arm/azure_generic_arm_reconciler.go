@@ -38,8 +38,9 @@ const (
 type DeleteAction string
 
 const (
-	DeleteActionBeginDelete   = DeleteAction("BeginDelete")
-	DeleteActionMonitorDelete = DeleteAction("MonitorDelete")
+	DeleteActionBeginDelete        = DeleteAction("BeginDelete")
+	DeleteActionMonitorDelete      = DeleteAction("MonitorDelete")
+	DeleteActionNotPossibleInAzure = DeleteAction("NotPossibleInAzure")
 )
 
 type (
@@ -105,6 +106,7 @@ func (r *AzureDeploymentReconciler) makeInstance(
 	if err != nil {
 		return nil, err
 	}
+
 	// Augment Log with ARM specific stuff
 	log = log.WithValues("azureName", typedObj.AzureName())
 

@@ -18,7 +18,14 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/common/config"
 )
 
-var DefaultMaxConcurrentReconciles = 1
+const (
+	DefaultSyncIntervalString = "1h"
+)
+
+var (
+	DefaultMaxConcurrentReconciles = 4
+	DefaultSyncInterval            = mustParseDuration(DefaultSyncIntervalString)
+)
 
 // NOTE: Changes to documentation or available values here should be documented in Helm values.yaml as well
 
@@ -89,14 +96,14 @@ type Values struct {
 	UserAgentSuffix string
 
 	// MaxConcurrentReconciles is the number of threads/goroutines dedicated to reconciling each resource type.
-	// If not specified, the default is 1.
+	// If not specified, the default is 4.
 	// IMPORTANT: Having MaxConcurrentReconciles set to N does not mean that ASO is limited to N interactions with
 	// Azure at any given time, because the control loop yields to another resource while it is not actively issuing HTTP
 	// calls to Azure. Any single resource only blocks the control-loop for its resource-type for as long as it takes to issue
 	// an HTTP call to Azure, view the result, and make a decision. In most cases the time taken to perform these actions
 	// (and thus how long the loop is blocked and preventing other resources from being acted upon) is a few hundred
-	// milliseconds to at most a second or two. In a typical 60s period, many hundreds or even thousands of resources
-	// can be managed with this set to 1.
+	// milliseconds to at most a second or two. In a typical 60s period, hundreds of resources
+	// for a given resource type can be managed with this set to 1.
 	// MaxConcurrentReconciles applies to every registered resource type being watched/managed by ASO.
 	MaxConcurrentReconciles int
 
@@ -105,6 +112,13 @@ type Values struct {
 	// DefaultReconcilePolicy allows to override the default reconcile policy that should be used by ASO
 	// when the annotation serviceoperator.azure.com/reconcile-policy is omitted
 	DefaultReconcilePolicy annotations.ReconcilePolicyValue
+
+	// AllowMultiEnvManagement determines whether per-namespace and per-resource credentials can specify
+	// their own Azure cloud environment settings (AZURE_RESOURCE_MANAGER_ENDPOINT, AZURE_RESOURCE_MANAGER_AUDIENCE,
+	// and AZURE_AUTHORITY_HOST). When enabled, credentials must specify ALL three of these settings or NONE of them.
+	// When disabled, any attempt to specify these settings in a credential will cause reconciliation to fail.
+	// This defaults to false for security reasons.
+	AllowMultiEnvManagement bool
 }
 
 type RateLimitMode string
@@ -184,8 +198,9 @@ func (v Values) String() string {
 	builder.WriteString(fmt.Sprintf("UseWorkloadIdentityAuth:%t/", v.UseWorkloadIdentityAuth))
 	builder.WriteString(fmt.Sprintf("UserAgentSuffix:%s/", v.UserAgentSuffix))
 	builder.WriteString(fmt.Sprintf("MaxConcurrentReconciles:%d/", v.MaxConcurrentReconciles))
-	builder.WriteString(fmt.Sprintf("RateLimit:[%s]", v.RateLimit.String()))
-	builder.WriteString(fmt.Sprintf("DefaultReconcilePolicy:[%s]", v.DefaultReconcilePolicy))
+	builder.WriteString(fmt.Sprintf("RateLimit:[%s]/", v.RateLimit.String()))
+	builder.WriteString(fmt.Sprintf("DefaultReconcilePolicy:[%s]/", v.DefaultReconcilePolicy))
+	builder.WriteString(fmt.Sprintf("AllowMultiEnvManagement:%t", v.AllowMultiEnvManagement))
 
 	return builder.String()
 }
@@ -253,6 +268,9 @@ func ReadFromEnvironment() (Values, error) {
 		return result, err
 	}
 	result.DefaultReconcilePolicy = annotations.ReconcilePolicyValue(envOrDefault(config.DefaultReconcilePolicy, string(annotations.ReconcilePolicyManage)))
+
+	// Ignoring error here, as any other value or empty value means we should default to false
+	result.AllowMultiEnvManagement, _ = strconv.ParseBool(os.Getenv(config.AllowMultiEnvManagement))
 
 	// Not calling validate here to support using from tests where we
 	// don't require consistent settings.
@@ -348,4 +366,12 @@ func envOrDefault(env string, def string) string {
 	}
 
 	return result
+}
+
+func mustParseDuration(s string) time.Duration {
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse duration %q: %s", s, err.Error()))
+	}
+	return d
 }

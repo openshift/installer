@@ -116,7 +116,12 @@ func (provider *AuthorizationProvider) ValidateUpdate(ctx context.Context, oldRe
 
 // createValidations validates the creation of the resource
 func (provider *AuthorizationProvider) createValidations() []func(ctx context.Context, obj *v20230501p.AuthorizationProvider) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.AuthorizationProvider) (admission.Warnings, error){provider.validateResourceReferences, provider.validateOwnerReference, provider.validateSecretDestinations, provider.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.AuthorizationProvider) (admission.Warnings, error){
+		provider.validateResourceReferences,
+		provider.validateOwnerReference,
+		provider.validateSecretDestinations,
+		provider.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -116,7 +116,12 @@ func (pool *WorkspacesBigDataPool) ValidateUpdate(ctx context.Context, oldResour
 
 // createValidations validates the creation of the resource
 func (pool *WorkspacesBigDataPool) createValidations() []func(ctx context.Context, obj *v20210601.WorkspacesBigDataPool) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210601.WorkspacesBigDataPool) (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210601.WorkspacesBigDataPool) (admission.Warnings, error){
+		pool.validateResourceReferences,
+		pool.validateOwnerReference,
+		pool.validateSecretDestinations,
+		pool.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

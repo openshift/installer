@@ -104,7 +104,12 @@ func (policy *ServersDatabasesBackupShortTermRetentionPolicy) ValidateUpdate(ctx
 
 // createValidations validates the creation of the resource
 func (policy *ServersDatabasesBackupShortTermRetentionPolicy) createValidations() []func(ctx context.Context, obj *v20211101.ServersDatabasesBackupShortTermRetentionPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersDatabasesBackupShortTermRetentionPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersDatabasesBackupShortTermRetentionPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

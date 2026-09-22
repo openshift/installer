@@ -79,6 +79,7 @@ type SubnetPropertiesFormat_VirtualNetworks_Subnet_SubResourceEmbedded struct {
 
 // IP configuration of an application gateway. Currently 1 public and 1 private IP configuration is allowed.
 type ApplicationGatewayIPConfiguration_VirtualNetworks_Subnet_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -93,16 +94,19 @@ type Delegation struct {
 
 // NetworkSecurityGroup resource.
 type NetworkSecurityGroupSpec_VirtualNetworks_Subnet_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Route table resource.
 type RouteTableSpec_VirtualNetworks_Subnet_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Service End point policy resource.
 type ServiceEndpointPolicySpec_VirtualNetworks_Subnet_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

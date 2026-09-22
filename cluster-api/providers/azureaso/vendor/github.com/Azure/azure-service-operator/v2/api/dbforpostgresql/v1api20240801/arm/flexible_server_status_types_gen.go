@@ -8,7 +8,7 @@ type FlexibleServer_STATUS struct {
 	// "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
 	Id *string `json:"id,omitempty"`
 
-	// Identity: Describes the identity of the application.
+	// Identity: User assigned managed identities assigned to the flexible server.
 	Identity *UserAssignedIdentity_STATUS `json:"identity,omitempty"`
 
 	// Location: The geo-location where the resource lives
@@ -17,10 +17,10 @@ type FlexibleServer_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Properties: Properties of the server.
+	// Properties: Properties of a flexible server.
 	Properties *ServerProperties_STATUS `json:"properties,omitempty"`
 
-	// Sku: The SKU (pricing tier) of the server.
+	// Sku: Compute tier and size of a flexible server.
 	Sku *Sku_STATUS `json:"sku,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -33,80 +33,82 @@ type FlexibleServer_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// The properties of a server.
+// Properties of a flexible server.
 type ServerProperties_STATUS struct {
-	// AdministratorLogin: The administrator's login name of a server. Can only be specified when the server is being created
-	// (and is required for creation).
+	// AdministratorLogin: Name of the login designated as the first password based administrator assigned to your instance of
+	// PostgreSQL. Must be specified the first time that you enable password based authentication on a server. Once set to a
+	// given value, it cannot be changed for the rest of the life of a server. If you disable password based authentication on
+	// a server which had it enabled, this password based role isn't deleted.
 	AdministratorLogin *string `json:"administratorLogin,omitempty"`
 
-	// AuthConfig: AuthConfig properties of a server.
+	// AuthConfig: Authentication configuration properties of a flexible server.
 	AuthConfig *AuthConfig_STATUS `json:"authConfig,omitempty"`
 
-	// AvailabilityZone: availability zone information of the server.
+	// AvailabilityZone: Availability zone of a flexible server.
 	AvailabilityZone *string `json:"availabilityZone,omitempty"`
 
-	// Backup: Backup properties of a server.
+	// Backup: Backup properties of a flexible server.
 	Backup *Backup_STATUS `json:"backup,omitempty"`
 
-	// CreateMode: The mode to create a new PostgreSQL server.
+	// CreateMode: Creation mode of a new flexible server.
 	CreateMode *ServerProperties_CreateMode_STATUS `json:"createMode,omitempty"`
 
-	// DataEncryption: Data encryption properties of a server.
+	// DataEncryption: Data encryption properties of a flexible server.
 	DataEncryption *DataEncryption_STATUS `json:"dataEncryption,omitempty"`
 
-	// FullyQualifiedDomainName: The fully qualified domain name of a server.
+	// FullyQualifiedDomainName: Fully qualified domain name of a flexible server.
 	FullyQualifiedDomainName *string `json:"fullyQualifiedDomainName,omitempty"`
 
-	// HighAvailability: High availability properties of a server.
+	// HighAvailability: High availability properties of a flexible server.
 	HighAvailability *HighAvailability_STATUS `json:"highAvailability,omitempty"`
 
-	// MaintenanceWindow: Maintenance window properties of a server.
+	// MaintenanceWindow: Maintenance window properties of a flexible server.
 	MaintenanceWindow *MaintenanceWindow_STATUS `json:"maintenanceWindow,omitempty"`
 
-	// MinorVersion: The minor version of the server.
+	// MinorVersion: Minor version of PostgreSQL database engine.
 	MinorVersion *string `json:"minorVersion,omitempty"`
 
-	// Network: Network properties of a server. This Network property is required to be passed only in case you want the server
-	// to be Private access server.
+	// Network: Network properties of a flexible server. Only required if you want your server to be integrated into a virtual
+	// network provided by customer.
 	Network *Network_STATUS `json:"network,omitempty"`
 
-	// PointInTimeUTC: Restore point creation time (ISO8601 format), specifying the time to restore from. It's required when
-	// 'createMode' is 'PointInTimeRestore' or 'GeoRestore' or 'ReviveDropped'.
+	// PointInTimeUTC: Creation time (in ISO8601 format) of the backup which you want to restore in the new flexible server.
+	// It's required when 'createMode' is 'PointInTimeRestore', 'GeoRestore', or 'ReviveDropped'.
 	PointInTimeUTC *string `json:"pointInTimeUTC,omitempty"`
 
-	// PrivateEndpointConnections: List of private endpoint connections associated with the specified resource.
+	// PrivateEndpointConnections: List of private endpoint connections associated with the specified flexible server.
 	PrivateEndpointConnections []PrivateEndpointConnection_STATUS `json:"privateEndpointConnections,omitempty"`
 
-	// Replica: Replica properties of a server. These Replica properties are required to be passed only in case you want to
-	// Promote a server.
+	// Replica: Read replica properties of a flexible server. Required only in case that you want to promote a server.
 	Replica *Replica_STATUS `json:"replica,omitempty"`
 
-	// ReplicaCapacity: Replicas allowed for a server.
+	// ReplicaCapacity: Maximum number of read replicas allowed for a flexible server.
 	ReplicaCapacity *int `json:"replicaCapacity,omitempty"`
 
-	// ReplicationRole: Replication role of the server
+	// ReplicationRole: Role of the server in a replication set.
 	ReplicationRole *ReplicationRole_STATUS `json:"replicationRole,omitempty"`
 
-	// SourceServerResourceId: The source server resource ID to restore from. It's required when 'createMode' is
-	// 'PointInTimeRestore' or 'GeoRestore' or 'Replica' or 'ReviveDropped'. This property is returned only for Replica server
+	// SourceServerResourceId: Identifier of the flexible server to be used as the source of the new flexible server. Required
+	// when 'createMode' is 'PointInTimeRestore', 'GeoRestore', 'Replica', or 'ReviveDropped'. This property is returned only
+	// when the target flexible server is a read replica.
 	SourceServerResourceId *string `json:"sourceServerResourceId,omitempty"`
 
-	// State: A state of a server that is visible to user.
+	// State: Possible states of a flexible server.
 	State *ServerProperties_State_STATUS `json:"state,omitempty"`
 
-	// Storage: Storage properties of a server.
+	// Storage: Storage properties of a flexible server.
 	Storage *Storage_STATUS `json:"storage,omitempty"`
 
-	// Version: PostgreSQL Server version.
+	// Version: Major version of PostgreSQL database engine.
 	Version *ServerVersion_STATUS `json:"version,omitempty"`
 }
 
-// Sku information related properties of a server.
+// Compute information of a flexible server.
 type Sku_STATUS struct {
-	// Name: The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3.
+	// Name: Name by which is known a given compute size assigned to a flexible server.
 	Name *string `json:"name,omitempty"`
 
-	// Tier: The tier of the particular SKU, e.g. Burstable.
+	// Tier: Tier of the compute assigned to a flexible server.
 	Tier *Sku_Tier_STATUS `json:"tier,omitempty"`
 }
 
@@ -131,111 +133,119 @@ type SystemData_STATUS struct {
 	LastModifiedByType *SystemData_LastModifiedByType_STATUS `json:"lastModifiedByType,omitempty"`
 }
 
-// Information describing the identities associated with this application.
+// Identities associated with a flexible server.
 type UserAssignedIdentity_STATUS struct {
-	// PrincipalId: the identity principal Id of the server.
+	// PrincipalId: Identifier of the object of the service principal associated to the user assigned managed identity.
 	PrincipalId *string `json:"principalId,omitempty"`
 
-	// TenantId: Tenant id of the server.
+	// TenantId: Identifier of the tenant of a flexible server.
 	TenantId *string `json:"tenantId,omitempty"`
 
-	// Type: the types of identities associated with this resource
+	// Type: Types of identities associated with a flexible server.
 	Type *UserAssignedIdentity_Type_STATUS `json:"type,omitempty"`
 
-	// UserAssignedIdentities: represents user assigned identities map.
+	// UserAssignedIdentities: Map of user assigned managed identities.
 	UserAssignedIdentities map[string]UserIdentity_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
-// Authentication configuration properties of a server
+// Authentication configuration properties of a flexible server.
 type AuthConfig_STATUS struct {
-	// ActiveDirectoryAuth: If Enabled, Azure Active Directory authentication is enabled.
+	// ActiveDirectoryAuth: Indicates if the server supports Microsoft Entra authentication.
 	ActiveDirectoryAuth *AuthConfig_ActiveDirectoryAuth_STATUS `json:"activeDirectoryAuth,omitempty"`
 
-	// PasswordAuth: If Enabled, Password authentication is enabled.
+	// PasswordAuth: Indicates if the server supports password based authentication.
 	PasswordAuth *AuthConfig_PasswordAuth_STATUS `json:"passwordAuth,omitempty"`
 
-	// TenantId: Tenant id of the server.
+	// TenantId: Identifier of the tenant of the delegated resource.
 	TenantId *string `json:"tenantId,omitempty"`
 }
 
-// Backup properties of a server
+// Backup properties of a flexible server.
 type Backup_STATUS struct {
-	// BackupRetentionDays: Backup retention days for the server.
+	// BackupRetentionDays: Backup retention days for the flexible server.
 	BackupRetentionDays *int `json:"backupRetentionDays,omitempty"`
 
-	// EarliestRestoreDate: The earliest restore point time (ISO8601 format) for server.
+	// EarliestRestoreDate: Earliest restore point time (ISO8601 format) for a flexible server.
 	EarliestRestoreDate *string `json:"earliestRestoreDate,omitempty"`
 
-	// GeoRedundantBackup: A value indicating whether Geo-Redundant backup is enabled on the server.
+	// GeoRedundantBackup: Indicates if the server is configured to create geographically redundant backups.
 	GeoRedundantBackup *Backup_GeoRedundantBackup_STATUS `json:"geoRedundantBackup,omitempty"`
 }
 
-// Data encryption properties of a server
+// Data encryption properties of a flexible server.
 type DataEncryption_STATUS struct {
-	// GeoBackupEncryptionKeyStatus: Geo-backup encryption key status for Data encryption enabled server.
+	// GeoBackupEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the geographically redundant storage associated to the server when it is configured to support
+	// geographically redundant backups.
 	GeoBackupEncryptionKeyStatus *DataEncryption_GeoBackupEncryptionKeyStatus_STATUS `json:"geoBackupEncryptionKeyStatus,omitempty"`
 
-	// GeoBackupKeyURI: URI for the key in keyvault for data encryption for geo-backup of server.
+	// GeoBackupKeyURI: Identifier of the user assigned managed identity used to access the key in Azure Key Vault for data
+	// encryption of the geographically redundant storage associated to a flexible server that is configured to support
+	// geographically redundant backups.
 	GeoBackupKeyURI *string `json:"geoBackupKeyURI,omitempty"`
 
-	// GeoBackupUserAssignedIdentityId: Resource Id for the User assigned identity to be used for data encryption for
-	// geo-backup of server.
+	// GeoBackupUserAssignedIdentityId: Identifier of the user assigned managed identity used to access the key in Azure Key
+	// Vault for data encryption of the geographically redundant storage associated to a flexible server that is configured to
+	// support geographically redundant backups.
 	GeoBackupUserAssignedIdentityId *string `json:"geoBackupUserAssignedIdentityId,omitempty"`
 
-	// PrimaryEncryptionKeyStatus: Primary encryption key status for Data encryption enabled server.
+	// PrimaryEncryptionKeyStatus: Status of key used by a flexible server configured with data encryption based on customer
+	// managed key, to encrypt the primary storage associated to the server.
 	PrimaryEncryptionKeyStatus *DataEncryption_PrimaryEncryptionKeyStatus_STATUS `json:"primaryEncryptionKeyStatus,omitempty"`
 
-	// PrimaryKeyURI: URI for the key in keyvault for data encryption of the primary server.
+	// PrimaryKeyURI: URI of the key in Azure Key Vault used for data encryption of the primary storage associated to a
+	// flexible server.
 	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty"`
 
-	// PrimaryUserAssignedIdentityId: Resource Id for the User assigned identity to be used for data encryption of the primary
-	// server.
+	// PrimaryUserAssignedIdentityId: Identifier of the user assigned managed identity used to access the key in Azure Key
+	// Vault for data encryption of the primary storage associated to a flexible server.
 	PrimaryUserAssignedIdentityId *string `json:"primaryUserAssignedIdentityId,omitempty"`
 
-	// Type: Data encryption type to depict if it is System Managed vs Azure Key vault.
+	// Type: Data encryption type used by a flexible server.
 	Type *DataEncryption_Type_STATUS `json:"type,omitempty"`
 }
 
-// High availability properties of a server
+// High availability properties of a flexible server.
 type HighAvailability_STATUS struct {
-	// Mode: The HA mode for the server.
+	// Mode: High availability mode for a flexible server.
 	Mode *HighAvailability_Mode_STATUS `json:"mode,omitempty"`
 
-	// StandbyAvailabilityZone: availability zone information of the standby.
+	// StandbyAvailabilityZone: Availability zone associated to the standby server created when high availability is set to
+	// SameZone or ZoneRedundant.
 	StandbyAvailabilityZone *string `json:"standbyAvailabilityZone,omitempty"`
 
-	// State: A state of a HA server that is visible to user.
+	// State: Possible states of the standby server created when high availability is set to SameZone or ZoneRedundant.
 	State *HighAvailability_State_STATUS `json:"state,omitempty"`
 }
 
-// Maintenance window properties of a server.
+// Maintenance window properties of a flexible server.
 type MaintenanceWindow_STATUS struct {
-	// CustomWindow: indicates whether custom window is enabled or disabled
+	// CustomWindow: Indicates whether custom window is enabled or disabled.
 	CustomWindow *string `json:"customWindow,omitempty"`
 
-	// DayOfWeek: day of week for maintenance window
+	// DayOfWeek: Day of the week to be used for maintenance window.
 	DayOfWeek *int `json:"dayOfWeek,omitempty"`
 
-	// StartHour: start hour for maintenance window
+	// StartHour: Start hour to be used for maintenance window.
 	StartHour *int `json:"startHour,omitempty"`
 
-	// StartMinute: start minute for maintenance window
+	// StartMinute: Start minute to be used for maintenance window.
 	StartMinute *int `json:"startMinute,omitempty"`
 }
 
-// Network properties of a server.
+// Network properties of a flexible server.
 type Network_STATUS struct {
-	// DelegatedSubnetResourceId: Delegated subnet arm resource id. This is required to be passed during create, in case we
-	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
-	// value for Private DNS zone.
+	// DelegatedSubnetResourceId: Resource identifier of the delegated subnet. Required during creation of a new server, in
+	// case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	DelegatedSubnetResourceId *string `json:"delegatedSubnetResourceId,omitempty"`
 
-	// PrivateDnsZoneArmResourceId: Private dns zone arm resource id. This is required to be passed during create, in case we
-	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
-	// value for Private DNS zone.
+	// PrivateDnsZoneArmResourceId: Identifier of the private DNS zone. Required during creation of a new server, in case you
+	// want the server to be integrated into your own virtual network. For an update operation, you only have to provide this
+	// property if you want to change the value assigned for the private DNS zone.
 	PrivateDnsZoneArmResourceId *string `json:"privateDnsZoneArmResourceId,omitempty"`
 
-	// PublicNetworkAccess: public network access is enabled or not
+	// PublicNetworkAccess: Indicates if public network access is enabled or not.
 	PublicNetworkAccess *Network_PublicNetworkAccess_STATUS `json:"publicNetworkAccess,omitempty"`
 }
 
@@ -246,26 +256,32 @@ type PrivateEndpointConnection_STATUS struct {
 	Id *string `json:"id,omitempty"`
 }
 
-// Replica properties of a server
+// Replica properties of a flexible server.
 type Replica_STATUS struct {
-	// Capacity: Replicas allowed for a server.
+	// Capacity: Maximum number of read replicas allowed for a flexible server.
 	Capacity *int `json:"capacity,omitempty"`
 
-	// PromoteMode: Sets the promote mode for a replica server. This is a write only property.
+	// PromoteMode: Type of operation to apply on the read replica. This property is write only. Standalone means that the read
+	// replica will be promoted to a standalone server, and will become a completely independent entity from the replication
+	// set. Switchover means that the read replica will roles with the primary server.
 	PromoteMode *Replica_PromoteMode_STATUS `json:"promoteMode,omitempty"`
 
-	// PromoteOption: Sets the promote options for a replica server. This is a write only property.
+	// PromoteOption: Data synchronization option to use when processing the operation specified in the promoteMode property
+	// This property is write only. Planned means that the operation will wait for data in the read replica to be fully
+	// synchronized with its source server before it initiates the operation. Forced means that the operation will not wait for
+	// data in the read replica to be synchronized with its source server before it initiates the operation.
 	PromoteOption *Replica_PromoteOption_STATUS `json:"promoteOption,omitempty"`
 
-	// ReplicationState: Gets the replication state of a replica server. This property is returned only for replicas api call.
-	// Supported values are Active, Catchup, Provisioning, Updating, Broken, Reconfiguring
+	// ReplicationState: Indicates the replication state of a read replica. This property is returned only when the target
+	// flexible server is a read replica. Possible  values are Active, Broken, Catchup, Provisioning, Reconfiguring, and
+	// Updating
 	ReplicationState *Replica_ReplicationState_STATUS `json:"replicationState,omitempty"`
 
-	// Role: Used to indicate role of the server in replication set.
+	// Role: Role of the server in a replication set.
 	Role *ReplicationRole_STATUS `json:"role,omitempty"`
 }
 
-// Used to indicate role of the server in replication set.
+// Role of the flexible server in a replication set.
 type ReplicationRole_STATUS string
 
 const (
@@ -329,7 +345,7 @@ var serverProperties_State_STATUS_Values = map[string]ServerProperties_State_STA
 	"updating": ServerProperties_State_STATUS_Updating,
 }
 
-// The version of a server.
+// Major version of PostgreSQL database engine.
 type ServerVersion_STATUS string
 
 const (
@@ -366,25 +382,26 @@ var sku_Tier_STATUS_Values = map[string]Sku_Tier_STATUS{
 	"memoryoptimized": Sku_Tier_STATUS_MemoryOptimized,
 }
 
-// Storage properties of a server
+// Storage properties of a flexible server.
 type Storage_STATUS struct {
-	// AutoGrow: Flag to enable / disable Storage Auto grow for flexible server.
+	// AutoGrow: Flag to enable or disable the automatic growth of storage size of a flexible server when available space is
+	// nearing zero and conditions allow for automatically growing storage size.
 	AutoGrow *Storage_AutoGrow_STATUS `json:"autoGrow,omitempty"`
 
-	// Iops: Storage tier IOPS quantity. This property is required to be set for storage Type PremiumV2_LRS
+	// Iops: Maximum IOPS supported for storage. Required when type of storage is PremiumV2_LRS.
 	Iops *int `json:"iops,omitempty"`
 
-	// StorageSizeGB: Max storage allowed for a server.
+	// StorageSizeGB: Size of storage assigned to a flexible server.
 	StorageSizeGB *int `json:"storageSizeGB,omitempty"`
 
-	// Throughput: Storage throughput for the server. This is required to be set for storage Type PremiumV2_LRS
+	// Throughput: Maximum throughput supported for storage. Required when type of storage is PremiumV2_LRS.
 	Throughput *int `json:"throughput,omitempty"`
 
-	// Tier: Name of storage tier for IOPS.
+	// Tier: Storage tier of a flexible server.
 	Tier *Storage_Tier_STATUS `json:"tier,omitempty"`
 
-	// Type: Storage type for the server. Allowed values are Premium_LRS and PremiumV2_LRS, and default is Premium_LRS if not
-	// specified
+	// Type: Type of storage assigned to a flexible server. Allowed values are Premium_LRS or PremiumV2_LRS. If not specified,
+	// it defaults to Premium_LRS.
 	Type *Storage_Type_STATUS `json:"type,omitempty"`
 }
 
@@ -439,12 +456,12 @@ var userAssignedIdentity_Type_STATUS_Values = map[string]UserAssignedIdentity_Ty
 	"userassigned":                UserAssignedIdentity_Type_STATUS_UserAssigned,
 }
 
-// Describes a single user-assigned identity associated with the application.
+// User assigned managed identity associated with a flexible server.
 type UserIdentity_STATUS struct {
-	// ClientId: the client identifier of the Service Principal which this identity represents.
+	// ClientId: Identifier of the client of the service principal associated to the user assigned managed identity.
 	ClientId *string `json:"clientId,omitempty"`
 
-	// PrincipalId: the object identifier of the Service Principal which this identity represents.
+	// PrincipalId: Identifier of the object of the service principal associated to the user assigned managed identity.
 	PrincipalId *string `json:"principalId,omitempty"`
 }
 

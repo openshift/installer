@@ -63,7 +63,9 @@ type ServerProperties struct {
 	KeyId *string `json:"keyId,omitempty"`
 
 	// MinimalTlsVersion: Minimal TLS version. Allowed values: '1.0', '1.1', '1.2'
-	MinimalTlsVersion             *string `json:"minimalTlsVersion,omitempty"`
+	MinimalTlsVersion *string `json:"minimalTlsVersion,omitempty"`
+
+	// PrimaryUserAssignedIdentityId: The resource id of a user assigned identity to be used by default.
 	PrimaryUserAssignedIdentityId *string `json:"primaryUserAssignedIdentityId,omitempty"`
 
 	// PublicNetworkAccess: Whether or not public endpoint access is allowed for this server.  Value is optional but if passed

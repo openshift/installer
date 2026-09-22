@@ -44,7 +44,9 @@ func (job *Job_Spec) GetType() string {
 type Job_Properties_Spec struct {
 	// Configuration: Container Apps Job configuration properties.
 	Configuration *JobConfiguration `json:"configuration,omitempty"`
-	EnvironmentId *string           `json:"environmentId,omitempty"`
+
+	// EnvironmentId: Resource ID of environment.
+	EnvironmentId *string `json:"environmentId,omitempty"`
 
 	// Template: Container Apps job definition.
 	Template *JobTemplate `json:"template,omitempty"`

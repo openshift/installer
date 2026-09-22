@@ -8,10 +8,11 @@ type Disk_STATUS struct {
 	// ExtendedLocation: The extended location where the disk will be created. Extended location cannot be changed.
 	ExtendedLocation *ExtendedLocation_STATUS `json:"extendedLocation,omitempty"`
 
-	// Id: Resource Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// ManagedBy: A relative URI containing the ID of the VM that has the disk attached.
@@ -21,20 +22,23 @@ type Disk_STATUS struct {
 	// set to a value greater than one for disks to allow attaching them to multiple VMs.
 	ManagedByExtended []string `json:"managedByExtended,omitempty"`
 
-	// Name: Resource name
+	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
 	// Properties: Disk resource properties.
 	Properties *DiskProperties_STATUS `json:"properties,omitempty"`
 
 	// Sku: The disks sku name. Can be Standard_LRS, Premium_LRS, StandardSSD_LRS, UltraSSD_LRS, Premium_ZRS, StandardSSD_ZRS,
-	// or  PremiumV2_LRS.
+	// or PremiumV2_LRS.
 	Sku *DiskSku_STATUS `json:"sku,omitempty"`
 
-	// Tags: Resource tags
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// Type: Resource type
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
 	// Zones: The Logical zone list for Disk.
@@ -97,7 +101,7 @@ type DiskProperties_STATUS struct {
 	EncryptionSettingsCollection *EncryptionSettingsCollection_STATUS `json:"encryptionSettingsCollection,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *DiskProperties_HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
 
 	// LastOwnershipUpdateTime: The UTC time when the ownership state of the disk was last changed i.e., the time the disk was
 	// last attached or detached from a VM or the time when the VM to which the disk was attached was deallocated or started.
@@ -117,7 +121,7 @@ type DiskProperties_STATUS struct {
 	OptimizedForFrequentAttach *bool `json:"optimizedForFrequentAttach,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *DiskProperties_OsType_STATUS `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes_STATUS `json:"osType,omitempty"`
 
 	// PropertyUpdatesInProgress: Properties of the disk for which update is pending.
 	PropertyUpdatesInProgress *PropertyUpdatesInProgress_STATUS `json:"propertyUpdatesInProgress,omitempty"`
@@ -130,7 +134,7 @@ type DiskProperties_STATUS struct {
 
 	// PurchasePlan: Purchase plan information for the the image from which the OS disk was created. E.g. - {name:
 	// 2019-Datacenter, publisher: MicrosoftWindowsServer, product: WindowsServer}
-	PurchasePlan *PurchasePlan_STATUS `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan_STATUS `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile_STATUS `json:"securityProfile,omitempty"`
@@ -160,7 +164,7 @@ type DiskProperties_STATUS struct {
 // PremiumV2_LRS.
 type DiskSku_STATUS struct {
 	// Name: The sku name.
-	Name *DiskSku_Name_STATUS `json:"name,omitempty"`
+	Name *DiskStorageAccountTypes_STATUS `json:"name,omitempty"`
 
 	// Tier: The sku tier.
 	Tier *string `json:"tier,omitempty"`
@@ -169,7 +173,7 @@ type DiskSku_STATUS struct {
 // Data used when creating a disk.
 type CreationData_STATUS struct {
 	// CreateOption: This enumerates the possible sources of a disk's creation.
-	CreateOption *CreationData_CreateOption_STATUS `json:"createOption,omitempty"`
+	CreateOption *DiskCreateOption_STATUS `json:"createOption,omitempty"`
 
 	// ElasticSanResourceId: Required if createOption is CopyFromSanSnapshot. This is the ARM id of the source elastic san
 	// volume snapshot.
@@ -191,7 +195,7 @@ type CreationData_STATUS struct {
 
 	// ProvisionedBandwidthCopySpeed: If this field is set on a snapshot and createOption is CopyStart, the snapshot will be
 	// copied at a quicker speed.
-	ProvisionedBandwidthCopySpeed *CreationData_ProvisionedBandwidthCopySpeed_STATUS `json:"provisionedBandwidthCopySpeed,omitempty"`
+	ProvisionedBandwidthCopySpeed *ProvisionedBandwidthCopyOption_STATUS `json:"provisionedBandwidthCopySpeed,omitempty"`
 
 	// SecurityDataUri: If createOption is ImportSecure, this is the URI of a blob to be imported into VM guest state.
 	SecurityDataUri *string `json:"securityDataUri,omitempty"`
@@ -229,30 +233,20 @@ var dataAccessAuthMode_STATUS_Values = map[string]DataAccessAuthMode_STATUS{
 	"none":                 DataAccessAuthMode_STATUS_None,
 }
 
-type DiskProperties_HyperVGeneration_STATUS string
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan_STATUS struct {
+	// Name: The plan ID.
+	Name *string `json:"name,omitempty"`
 
-const (
-	DiskProperties_HyperVGeneration_STATUS_V1 = DiskProperties_HyperVGeneration_STATUS("V1")
-	DiskProperties_HyperVGeneration_STATUS_V2 = DiskProperties_HyperVGeneration_STATUS("V2")
-)
+	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
+	// imageReference element.
+	Product *string `json:"product,omitempty"`
 
-// Mapping from string to DiskProperties_HyperVGeneration_STATUS
-var diskProperties_HyperVGeneration_STATUS_Values = map[string]DiskProperties_HyperVGeneration_STATUS{
-	"v1": DiskProperties_HyperVGeneration_STATUS_V1,
-	"v2": DiskProperties_HyperVGeneration_STATUS_V2,
-}
+	// PromotionCode: The Offer Promotion Code.
+	PromotionCode *string `json:"promotionCode,omitempty"`
 
-type DiskProperties_OsType_STATUS string
-
-const (
-	DiskProperties_OsType_STATUS_Linux   = DiskProperties_OsType_STATUS("Linux")
-	DiskProperties_OsType_STATUS_Windows = DiskProperties_OsType_STATUS("Windows")
-)
-
-// Mapping from string to DiskProperties_OsType_STATUS
-var diskProperties_OsType_STATUS_Values = map[string]DiskProperties_OsType_STATUS{
-	"linux":   DiskProperties_OsType_STATUS_Linux,
-	"windows": DiskProperties_OsType_STATUS_Windows,
+	// Publisher: The publisher ID.
+	Publisher *string `json:"publisher,omitempty"`
 }
 
 // Contains the security related information for the resource.
@@ -262,30 +256,7 @@ type DiskSecurityProfile_STATUS struct {
 	SecureVMDiskEncryptionSetId *string `json:"secureVMDiskEncryptionSetId,omitempty"`
 
 	// SecurityType: Specifies the SecurityType of the VM. Applicable for OS disks only.
-	SecurityType *DiskSecurityType_STATUS `json:"securityType,omitempty"`
-}
-
-type DiskSku_Name_STATUS string
-
-const (
-	DiskSku_Name_STATUS_PremiumV2_LRS   = DiskSku_Name_STATUS("PremiumV2_LRS")
-	DiskSku_Name_STATUS_Premium_LRS     = DiskSku_Name_STATUS("Premium_LRS")
-	DiskSku_Name_STATUS_Premium_ZRS     = DiskSku_Name_STATUS("Premium_ZRS")
-	DiskSku_Name_STATUS_StandardSSD_LRS = DiskSku_Name_STATUS("StandardSSD_LRS")
-	DiskSku_Name_STATUS_StandardSSD_ZRS = DiskSku_Name_STATUS("StandardSSD_ZRS")
-	DiskSku_Name_STATUS_Standard_LRS    = DiskSku_Name_STATUS("Standard_LRS")
-	DiskSku_Name_STATUS_UltraSSD_LRS    = DiskSku_Name_STATUS("UltraSSD_LRS")
-)
-
-// Mapping from string to DiskSku_Name_STATUS
-var diskSku_Name_STATUS_Values = map[string]DiskSku_Name_STATUS{
-	"premiumv2_lrs":   DiskSku_Name_STATUS_PremiumV2_LRS,
-	"premium_lrs":     DiskSku_Name_STATUS_Premium_LRS,
-	"premium_zrs":     DiskSku_Name_STATUS_Premium_ZRS,
-	"standardssd_lrs": DiskSku_Name_STATUS_StandardSSD_LRS,
-	"standardssd_zrs": DiskSku_Name_STATUS_StandardSSD_ZRS,
-	"standard_lrs":    DiskSku_Name_STATUS_Standard_LRS,
-	"ultrassd_lrs":    DiskSku_Name_STATUS_UltraSSD_LRS,
+	SecurityType *DiskSecurityTypes_STATUS `json:"securityType,omitempty"`
 }
 
 // This enumerates the possible state of the disk.
@@ -314,6 +285,30 @@ var diskState_STATUS_Values = map[string]DiskState_STATUS{
 	"unattached":      DiskState_STATUS_Unattached,
 }
 
+// The sku name.
+type DiskStorageAccountTypes_STATUS string
+
+const (
+	DiskStorageAccountTypes_STATUS_PremiumV2_LRS   = DiskStorageAccountTypes_STATUS("PremiumV2_LRS")
+	DiskStorageAccountTypes_STATUS_Premium_LRS     = DiskStorageAccountTypes_STATUS("Premium_LRS")
+	DiskStorageAccountTypes_STATUS_Premium_ZRS     = DiskStorageAccountTypes_STATUS("Premium_ZRS")
+	DiskStorageAccountTypes_STATUS_StandardSSD_LRS = DiskStorageAccountTypes_STATUS("StandardSSD_LRS")
+	DiskStorageAccountTypes_STATUS_StandardSSD_ZRS = DiskStorageAccountTypes_STATUS("StandardSSD_ZRS")
+	DiskStorageAccountTypes_STATUS_Standard_LRS    = DiskStorageAccountTypes_STATUS("Standard_LRS")
+	DiskStorageAccountTypes_STATUS_UltraSSD_LRS    = DiskStorageAccountTypes_STATUS("UltraSSD_LRS")
+)
+
+// Mapping from string to DiskStorageAccountTypes_STATUS
+var diskStorageAccountTypes_STATUS_Values = map[string]DiskStorageAccountTypes_STATUS{
+	"premiumv2_lrs":   DiskStorageAccountTypes_STATUS_PremiumV2_LRS,
+	"premium_lrs":     DiskStorageAccountTypes_STATUS_Premium_LRS,
+	"premium_zrs":     DiskStorageAccountTypes_STATUS_Premium_ZRS,
+	"standardssd_lrs": DiskStorageAccountTypes_STATUS_StandardSSD_LRS,
+	"standardssd_zrs": DiskStorageAccountTypes_STATUS_StandardSSD_ZRS,
+	"standard_lrs":    DiskStorageAccountTypes_STATUS_Standard_LRS,
+	"ultrassd_lrs":    DiskStorageAccountTypes_STATUS_UltraSSD_LRS,
+}
+
 // Encryption at rest settings for disk or snapshot
 type Encryption_STATUS struct {
 	// DiskEncryptionSetId: ResourceId of the disk encryption set to use for enabling encryption at rest.
@@ -338,6 +333,20 @@ type EncryptionSettingsCollection_STATUS struct {
 	EncryptionSettingsVersion *string `json:"encryptionSettingsVersion,omitempty"`
 }
 
+// The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
+type HyperVGeneration_STATUS string
+
+const (
+	HyperVGeneration_STATUS_V1 = HyperVGeneration_STATUS("V1")
+	HyperVGeneration_STATUS_V2 = HyperVGeneration_STATUS("V2")
+)
+
+// Mapping from string to HyperVGeneration_STATUS
+var hyperVGeneration_STATUS_Values = map[string]HyperVGeneration_STATUS{
+	"v1": HyperVGeneration_STATUS_V1,
+	"v2": HyperVGeneration_STATUS_V2,
+}
+
 // Policy for accessing the disk via network.
 type NetworkAccessPolicy_STATUS string
 
@@ -352,6 +361,20 @@ var networkAccessPolicy_STATUS_Values = map[string]NetworkAccessPolicy_STATUS{
 	"allowall":     NetworkAccessPolicy_STATUS_AllowAll,
 	"allowprivate": NetworkAccessPolicy_STATUS_AllowPrivate,
 	"denyall":      NetworkAccessPolicy_STATUS_DenyAll,
+}
+
+// The Operating System type.
+type OperatingSystemTypes_STATUS string
+
+const (
+	OperatingSystemTypes_STATUS_Linux   = OperatingSystemTypes_STATUS("Linux")
+	OperatingSystemTypes_STATUS_Windows = OperatingSystemTypes_STATUS("Windows")
+)
+
+// Mapping from string to OperatingSystemTypes_STATUS
+var operatingSystemTypes_STATUS_Values = map[string]OperatingSystemTypes_STATUS{
+	"linux":   OperatingSystemTypes_STATUS_Linux,
+	"windows": OperatingSystemTypes_STATUS_Windows,
 }
 
 // Properties of the disk for which update is pending.
@@ -374,22 +397,6 @@ var publicNetworkAccess_STATUS_Values = map[string]PublicNetworkAccess_STATUS{
 	"enabled":  PublicNetworkAccess_STATUS_Enabled,
 }
 
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan_STATUS struct {
-	// Name: The plan ID.
-	Name *string `json:"name,omitempty"`
-
-	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
-	// imageReference element.
-	Product *string `json:"product,omitempty"`
-
-	// PromotionCode: The Offer Promotion Code.
-	PromotionCode *string `json:"promotionCode,omitempty"`
-
-	// Publisher: The publisher ID.
-	Publisher *string `json:"publisher,omitempty"`
-}
-
 type ShareInfoElement_STATUS struct {
 	// VmUri: A relative URI containing the ID of the VM that has the disk attached.
 	VmUri *string `json:"vmUri,omitempty"`
@@ -401,74 +408,76 @@ type SupportedCapabilities_STATUS struct {
 	AcceleratedNetwork *bool `json:"acceleratedNetwork,omitempty"`
 
 	// Architecture: CPU architecture supported by an OS disk.
-	Architecture *SupportedCapabilities_Architecture_STATUS `json:"architecture,omitempty"`
+	Architecture *Architecture_STATUS `json:"architecture,omitempty"`
 
 	// DiskControllerTypes: The disk controllers that an OS disk supports. If set it can be SCSI or SCSI, NVME or NVME, SCSI.
 	DiskControllerTypes *string `json:"diskControllerTypes,omitempty"`
 }
 
-type CreationData_CreateOption_STATUS string
+// CPU architecture supported by an OS disk.
+type Architecture_STATUS string
 
 const (
-	CreationData_CreateOption_STATUS_Attach               = CreationData_CreateOption_STATUS("Attach")
-	CreationData_CreateOption_STATUS_Copy                 = CreationData_CreateOption_STATUS("Copy")
-	CreationData_CreateOption_STATUS_CopyFromSanSnapshot  = CreationData_CreateOption_STATUS("CopyFromSanSnapshot")
-	CreationData_CreateOption_STATUS_CopyStart            = CreationData_CreateOption_STATUS("CopyStart")
-	CreationData_CreateOption_STATUS_Empty                = CreationData_CreateOption_STATUS("Empty")
-	CreationData_CreateOption_STATUS_FromImage            = CreationData_CreateOption_STATUS("FromImage")
-	CreationData_CreateOption_STATUS_Import               = CreationData_CreateOption_STATUS("Import")
-	CreationData_CreateOption_STATUS_ImportSecure         = CreationData_CreateOption_STATUS("ImportSecure")
-	CreationData_CreateOption_STATUS_Restore              = CreationData_CreateOption_STATUS("Restore")
-	CreationData_CreateOption_STATUS_Upload               = CreationData_CreateOption_STATUS("Upload")
-	CreationData_CreateOption_STATUS_UploadPreparedSecure = CreationData_CreateOption_STATUS("UploadPreparedSecure")
+	Architecture_STATUS_Arm64 = Architecture_STATUS("Arm64")
+	Architecture_STATUS_X64   = Architecture_STATUS("x64")
 )
 
-// Mapping from string to CreationData_CreateOption_STATUS
-var creationData_CreateOption_STATUS_Values = map[string]CreationData_CreateOption_STATUS{
-	"attach":               CreationData_CreateOption_STATUS_Attach,
-	"copy":                 CreationData_CreateOption_STATUS_Copy,
-	"copyfromsansnapshot":  CreationData_CreateOption_STATUS_CopyFromSanSnapshot,
-	"copystart":            CreationData_CreateOption_STATUS_CopyStart,
-	"empty":                CreationData_CreateOption_STATUS_Empty,
-	"fromimage":            CreationData_CreateOption_STATUS_FromImage,
-	"import":               CreationData_CreateOption_STATUS_Import,
-	"importsecure":         CreationData_CreateOption_STATUS_ImportSecure,
-	"restore":              CreationData_CreateOption_STATUS_Restore,
-	"upload":               CreationData_CreateOption_STATUS_Upload,
-	"uploadpreparedsecure": CreationData_CreateOption_STATUS_UploadPreparedSecure,
+// Mapping from string to Architecture_STATUS
+var architecture_STATUS_Values = map[string]Architecture_STATUS{
+	"arm64": Architecture_STATUS_Arm64,
+	"x64":   Architecture_STATUS_X64,
 }
 
-type CreationData_ProvisionedBandwidthCopySpeed_STATUS string
+// This enumerates the possible sources of a disk's creation.
+type DiskCreateOption_STATUS string
 
 const (
-	CreationData_ProvisionedBandwidthCopySpeed_STATUS_Enhanced = CreationData_ProvisionedBandwidthCopySpeed_STATUS("Enhanced")
-	CreationData_ProvisionedBandwidthCopySpeed_STATUS_None     = CreationData_ProvisionedBandwidthCopySpeed_STATUS("None")
+	DiskCreateOption_STATUS_Attach               = DiskCreateOption_STATUS("Attach")
+	DiskCreateOption_STATUS_Copy                 = DiskCreateOption_STATUS("Copy")
+	DiskCreateOption_STATUS_CopyFromSanSnapshot  = DiskCreateOption_STATUS("CopyFromSanSnapshot")
+	DiskCreateOption_STATUS_CopyStart            = DiskCreateOption_STATUS("CopyStart")
+	DiskCreateOption_STATUS_Empty                = DiskCreateOption_STATUS("Empty")
+	DiskCreateOption_STATUS_FromImage            = DiskCreateOption_STATUS("FromImage")
+	DiskCreateOption_STATUS_Import               = DiskCreateOption_STATUS("Import")
+	DiskCreateOption_STATUS_ImportSecure         = DiskCreateOption_STATUS("ImportSecure")
+	DiskCreateOption_STATUS_Restore              = DiskCreateOption_STATUS("Restore")
+	DiskCreateOption_STATUS_Upload               = DiskCreateOption_STATUS("Upload")
+	DiskCreateOption_STATUS_UploadPreparedSecure = DiskCreateOption_STATUS("UploadPreparedSecure")
 )
 
-// Mapping from string to CreationData_ProvisionedBandwidthCopySpeed_STATUS
-var creationData_ProvisionedBandwidthCopySpeed_STATUS_Values = map[string]CreationData_ProvisionedBandwidthCopySpeed_STATUS{
-	"enhanced": CreationData_ProvisionedBandwidthCopySpeed_STATUS_Enhanced,
-	"none":     CreationData_ProvisionedBandwidthCopySpeed_STATUS_None,
+// Mapping from string to DiskCreateOption_STATUS
+var diskCreateOption_STATUS_Values = map[string]DiskCreateOption_STATUS{
+	"attach":               DiskCreateOption_STATUS_Attach,
+	"copy":                 DiskCreateOption_STATUS_Copy,
+	"copyfromsansnapshot":  DiskCreateOption_STATUS_CopyFromSanSnapshot,
+	"copystart":            DiskCreateOption_STATUS_CopyStart,
+	"empty":                DiskCreateOption_STATUS_Empty,
+	"fromimage":            DiskCreateOption_STATUS_FromImage,
+	"import":               DiskCreateOption_STATUS_Import,
+	"importsecure":         DiskCreateOption_STATUS_ImportSecure,
+	"restore":              DiskCreateOption_STATUS_Restore,
+	"upload":               DiskCreateOption_STATUS_Upload,
+	"uploadpreparedsecure": DiskCreateOption_STATUS_UploadPreparedSecure,
 }
 
 // Specifies the SecurityType of the VM. Applicable for OS disks only.
-type DiskSecurityType_STATUS string
+type DiskSecurityTypes_STATUS string
 
 const (
-	DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityType_STATUS("ConfidentialVM_DiskEncryptedWithCustomerKey")
-	DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityType_STATUS("ConfidentialVM_DiskEncryptedWithPlatformKey")
-	DiskSecurityType_STATUS_ConfidentialVM_NonPersistedTPM                          = DiskSecurityType_STATUS("ConfidentialVM_NonPersistedTPM")
-	DiskSecurityType_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityType_STATUS("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
-	DiskSecurityType_STATUS_TrustedLaunch                                           = DiskSecurityType_STATUS("TrustedLaunch")
+	DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityTypes_STATUS("ConfidentialVM_DiskEncryptedWithCustomerKey")
+	DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityTypes_STATUS("ConfidentialVM_DiskEncryptedWithPlatformKey")
+	DiskSecurityTypes_STATUS_ConfidentialVM_NonPersistedTPM                          = DiskSecurityTypes_STATUS("ConfidentialVM_NonPersistedTPM")
+	DiskSecurityTypes_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityTypes_STATUS("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
+	DiskSecurityTypes_STATUS_TrustedLaunch                                           = DiskSecurityTypes_STATUS("TrustedLaunch")
 )
 
-// Mapping from string to DiskSecurityType_STATUS
-var diskSecurityType_STATUS_Values = map[string]DiskSecurityType_STATUS{
-	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey,
-	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey,
-	"confidentialvm_nonpersistedtpm":                          DiskSecurityType_STATUS_ConfidentialVM_NonPersistedTPM,
-	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityType_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
-	"trustedlaunch": DiskSecurityType_STATUS_TrustedLaunch,
+// Mapping from string to DiskSecurityTypes_STATUS
+var diskSecurityTypes_STATUS_Values = map[string]DiskSecurityTypes_STATUS{
+	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey,
+	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey,
+	"confidentialvm_nonpersistedtpm":                          DiskSecurityTypes_STATUS_ConfidentialVM_NonPersistedTPM,
+	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityTypes_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
+	"trustedlaunch": DiskSecurityTypes_STATUS_TrustedLaunch,
 }
 
 // Encryption settings for one disk volume.
@@ -513,17 +522,18 @@ type ImageDiskReference_STATUS struct {
 	SharedGalleryImageId *string `json:"sharedGalleryImageId,omitempty"`
 }
 
-type SupportedCapabilities_Architecture_STATUS string
+// If this field is set on a snapshot and createOption is CopyStart, the snapshot will be copied at a quicker speed.
+type ProvisionedBandwidthCopyOption_STATUS string
 
 const (
-	SupportedCapabilities_Architecture_STATUS_Arm64 = SupportedCapabilities_Architecture_STATUS("Arm64")
-	SupportedCapabilities_Architecture_STATUS_X64   = SupportedCapabilities_Architecture_STATUS("x64")
+	ProvisionedBandwidthCopyOption_STATUS_Enhanced = ProvisionedBandwidthCopyOption_STATUS("Enhanced")
+	ProvisionedBandwidthCopyOption_STATUS_None     = ProvisionedBandwidthCopyOption_STATUS("None")
 )
 
-// Mapping from string to SupportedCapabilities_Architecture_STATUS
-var supportedCapabilities_Architecture_STATUS_Values = map[string]SupportedCapabilities_Architecture_STATUS{
-	"arm64": SupportedCapabilities_Architecture_STATUS_Arm64,
-	"x64":   SupportedCapabilities_Architecture_STATUS_X64,
+// Mapping from string to ProvisionedBandwidthCopyOption_STATUS
+var provisionedBandwidthCopyOption_STATUS_Values = map[string]ProvisionedBandwidthCopyOption_STATUS{
+	"enhanced": ProvisionedBandwidthCopyOption_STATUS_Enhanced,
+	"none":     ProvisionedBandwidthCopyOption_STATUS_None,
 }
 
 // Key Vault Key Url and vault id of KeK, KeK is optional and when provided is used to unwrap the encryptionKey

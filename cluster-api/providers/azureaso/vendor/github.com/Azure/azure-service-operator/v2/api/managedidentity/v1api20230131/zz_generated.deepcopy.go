@@ -366,6 +366,11 @@ func (in *UserAssignedIdentityOperatorSecrets) DeepCopyInto(out *UserAssignedIde
 		*out = new(genruntime.SecretDestination)
 		**out = **in
 	}
+	if in.SubscriptionId != nil {
+		in, out := &in.SubscriptionId, &out.SubscriptionId
+		*out = new(genruntime.SecretDestination)
+		**out = **in
+	}
 	if in.TenantId != nil {
 		in, out := &in.TenantId, &out.TenantId
 		*out = new(genruntime.SecretDestination)

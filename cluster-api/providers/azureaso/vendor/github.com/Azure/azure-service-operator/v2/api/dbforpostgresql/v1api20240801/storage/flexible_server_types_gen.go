@@ -5,6 +5,8 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -16,14 +18,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=dbforpostgresql.azure.com,resources=flexibleservers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dbforpostgresql.azure.com,resources={flexibleservers/status,flexibleservers/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -49,6 +49,28 @@ func (server *FlexibleServer) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (server *FlexibleServer) SetConditions(conditions conditions.Conditions) {
 	server.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &FlexibleServer{}
+
+// ConvertFrom populates our FlexibleServer from the provided hub FlexibleServer
+func (server *FlexibleServer) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.FlexibleServer)
+	if !ok {
+		return fmt.Errorf("expected dbforpostgresql/v20250801/storage/FlexibleServer but received %T instead", hub)
+	}
+
+	return server.AssignProperties_From_FlexibleServer(source)
+}
+
+// ConvertTo populates the provided hub FlexibleServer from our FlexibleServer
+func (server *FlexibleServer) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.FlexibleServer)
+	if !ok {
+		return fmt.Errorf("expected dbforpostgresql/v20250801/storage/FlexibleServer but received %T instead", hub)
+	}
+
+	return server.AssignProperties_To_FlexibleServer(destination)
 }
 
 var _ configmaps.Exporter = &FlexibleServer{}
@@ -163,8 +185,75 @@ func (server *FlexibleServer) SetStatus(status genruntime.ConvertibleStatus) err
 	return nil
 }
 
-// Hub marks that this FlexibleServer is the hub type for conversion
-func (server *FlexibleServer) Hub() {}
+// AssignProperties_From_FlexibleServer populates our FlexibleServer from the provided source FlexibleServer
+func (server *FlexibleServer) AssignProperties_From_FlexibleServer(source *storage.FlexibleServer) error {
+
+	// ObjectMeta
+	server.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec FlexibleServer_Spec
+	err := spec.AssignProperties_From_FlexibleServer_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServer_Spec() to populate field Spec")
+	}
+	server.Spec = spec
+
+	// Status
+	var status FlexibleServer_STATUS
+	err = status.AssignProperties_From_FlexibleServer_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServer_STATUS() to populate field Status")
+	}
+	server.Status = status
+
+	// Invoke the augmentConversionForFlexibleServer interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer); ok {
+		err := augmentedServer.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServer populates the provided destination FlexibleServer from our FlexibleServer
+func (server *FlexibleServer) AssignProperties_To_FlexibleServer(destination *storage.FlexibleServer) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *server.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.FlexibleServer_Spec
+	err := server.Spec.AssignProperties_To_FlexibleServer_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServer_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.FlexibleServer_STATUS
+	err = server.Status.AssignProperties_To_FlexibleServer_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServer_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForFlexibleServer interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer); ok {
+		err := augmentedServer.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (server *FlexibleServer) OriginalGVK() *schema.GroupVersionKind {
@@ -191,6 +280,11 @@ type FlexibleServerList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2024-08-01")
+
+type augmentConversionForFlexibleServer interface {
+	AssignPropertiesFrom(src *storage.FlexibleServer) error
+	AssignPropertiesTo(dst *storage.FlexibleServer) error
+}
 
 // Storage version of v1api20240801.FlexibleServer_Spec
 type FlexibleServer_Spec struct {
@@ -224,8 +318,9 @@ type FlexibleServer_Spec struct {
 	ReplicationRole *string                            `json:"replicationRole,omitempty"`
 	Sku             *Sku                               `json:"sku,omitempty"`
 
-	// SourceServerResourceReference: The source server resource ID to restore from. It's required when 'createMode' is
-	// 'PointInTimeRestore' or 'GeoRestore' or 'Replica' or 'ReviveDropped'. This property is returned only for Replica server
+	// SourceServerResourceReference: Identifier of the flexible server to be used as the source of the new flexible server.
+	// Required when 'createMode' is 'PointInTimeRestore', 'GeoRestore', 'Replica', or 'ReviveDropped'. This property is
+	// returned only when the target flexible server is a read replica.
 	SourceServerResourceReference *genruntime.ResourceReference `armReference:"SourceServerResourceId" json:"sourceServerResourceReference,omitempty"`
 	Storage                       *Storage                      `json:"storage,omitempty"`
 	Tags                          map[string]string             `json:"tags,omitempty"`
@@ -236,20 +331,492 @@ var _ genruntime.ConvertibleSpec = &FlexibleServer_Spec{}
 
 // ConvertSpecFrom populates our FlexibleServer_Spec from the provided source
 func (server *FlexibleServer_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == server {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.FlexibleServer_Spec)
+	if ok {
+		// Populate our instance from source
+		return server.AssignProperties_From_FlexibleServer_Spec(src)
 	}
 
-	return source.ConvertSpecTo(server)
+	// Convert to an intermediate form
+	src = &storage.FlexibleServer_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = server.AssignProperties_From_FlexibleServer_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our FlexibleServer_Spec
 func (server *FlexibleServer_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == server {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.FlexibleServer_Spec)
+	if ok {
+		// Populate destination from our instance
+		return server.AssignProperties_To_FlexibleServer_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(server)
+	// Convert to an intermediate form
+	dst = &storage.FlexibleServer_Spec{}
+	err := server.AssignProperties_To_FlexibleServer_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FlexibleServer_Spec populates our FlexibleServer_Spec from the provided source FlexibleServer_Spec
+func (server *FlexibleServer_Spec) AssignProperties_From_FlexibleServer_Spec(source *storage.FlexibleServer_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AdministratorLogin
+	server.AdministratorLogin = genruntime.ClonePointerToString(source.AdministratorLogin)
+
+	// AdministratorLoginPassword
+	if source.AdministratorLoginPassword != nil {
+		administratorLoginPassword := source.AdministratorLoginPassword.Copy()
+		server.AdministratorLoginPassword = &administratorLoginPassword
+	} else {
+		server.AdministratorLoginPassword = nil
+	}
+
+	// AuthConfig
+	if source.AuthConfig != nil {
+		var authConfig AuthConfig
+		err := authConfig.AssignProperties_From_AuthConfig(source.AuthConfig)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthConfig() to populate field AuthConfig")
+		}
+		server.AuthConfig = &authConfig
+	} else {
+		server.AuthConfig = nil
+	}
+
+	// AvailabilityZone
+	server.AvailabilityZone = genruntime.ClonePointerToString(source.AvailabilityZone)
+
+	// AzureName
+	server.AzureName = source.AzureName
+
+	// Backup
+	if source.Backup != nil {
+		var backup Backup
+		err := backup.AssignProperties_From_Backup(source.Backup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Backup() to populate field Backup")
+		}
+		server.Backup = &backup
+	} else {
+		server.Backup = nil
+	}
+
+	// Cluster
+	if source.Cluster != nil {
+		propertyBag.Add("Cluster", *source.Cluster)
+	} else {
+		propertyBag.Remove("Cluster")
+	}
+
+	// CreateMode
+	server.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// DataEncryption
+	if source.DataEncryption != nil {
+		var dataEncryption DataEncryption
+		err := dataEncryption.AssignProperties_From_DataEncryption(source.DataEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DataEncryption() to populate field DataEncryption")
+		}
+		server.DataEncryption = &dataEncryption
+	} else {
+		server.DataEncryption = nil
+	}
+
+	// HighAvailability
+	if source.HighAvailability != nil {
+		var highAvailability HighAvailability
+		err := highAvailability.AssignProperties_From_HighAvailability(source.HighAvailability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_HighAvailability() to populate field HighAvailability")
+		}
+		server.HighAvailability = &highAvailability
+	} else {
+		server.HighAvailability = nil
+	}
+
+	// Identity
+	if source.Identity != nil {
+		var identity UserAssignedIdentity
+		err := identity.AssignProperties_From_UserAssignedIdentity(source.Identity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity() to populate field Identity")
+		}
+		server.Identity = &identity
+	} else {
+		server.Identity = nil
+	}
+
+	// Location
+	server.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MaintenanceWindow
+	if source.MaintenanceWindow != nil {
+		var maintenanceWindow MaintenanceWindow
+		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow(source.MaintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow() to populate field MaintenanceWindow")
+		}
+		server.MaintenanceWindow = &maintenanceWindow
+	} else {
+		server.MaintenanceWindow = nil
+	}
+
+	// Network
+	if source.Network != nil {
+		var network Network
+		err := network.AssignProperties_From_Network(source.Network)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Network() to populate field Network")
+		}
+		server.Network = &network
+	} else {
+		server.Network = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FlexibleServerOperatorSpec
+		err := operatorSpec.AssignProperties_From_FlexibleServerOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServerOperatorSpec() to populate field OperatorSpec")
+		}
+		server.OperatorSpec = &operatorSpec
+	} else {
+		server.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	server.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		server.Owner = &owner
+	} else {
+		server.Owner = nil
+	}
+
+	// PointInTimeUTC
+	server.PointInTimeUTC = genruntime.ClonePointerToString(source.PointInTimeUTC)
+
+	// Replica
+	if source.Replica != nil {
+		var replica Replica
+		err := replica.AssignProperties_From_Replica(source.Replica)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Replica() to populate field Replica")
+		}
+		server.Replica = &replica
+	} else {
+		server.Replica = nil
+	}
+
+	// ReplicationRole
+	server.ReplicationRole = genruntime.ClonePointerToString(source.ReplicationRole)
+
+	// Sku
+	if source.Sku != nil {
+		var sku Sku
+		err := sku.AssignProperties_From_Sku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+		}
+		server.Sku = &sku
+	} else {
+		server.Sku = nil
+	}
+
+	// SourceServerResourceReference
+	if source.SourceServerResourceReference != nil {
+		sourceServerResourceReference := source.SourceServerResourceReference.Copy()
+		server.SourceServerResourceReference = &sourceServerResourceReference
+	} else {
+		server.SourceServerResourceReference = nil
+	}
+
+	// Storage
+	if source.Storage != nil {
+		var storage Storage
+		err := storage.AssignProperties_From_Storage(source.Storage)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Storage() to populate field Storage")
+		}
+		server.Storage = &storage
+	} else {
+		server.Storage = nil
+	}
+
+	// Tags
+	server.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Version
+	server.Version = genruntime.ClonePointerToString(source.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		server.PropertyBag = propertyBag
+	} else {
+		server.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServer_Spec interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer_Spec); ok {
+		err := augmentedServer.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServer_Spec populates the provided destination FlexibleServer_Spec from our FlexibleServer_Spec
+func (server *FlexibleServer_Spec) AssignProperties_To_FlexibleServer_Spec(destination *storage.FlexibleServer_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(server.PropertyBag)
+
+	// AdministratorLogin
+	destination.AdministratorLogin = genruntime.ClonePointerToString(server.AdministratorLogin)
+
+	// AdministratorLoginPassword
+	if server.AdministratorLoginPassword != nil {
+		administratorLoginPassword := server.AdministratorLoginPassword.Copy()
+		destination.AdministratorLoginPassword = &administratorLoginPassword
+	} else {
+		destination.AdministratorLoginPassword = nil
+	}
+
+	// AuthConfig
+	if server.AuthConfig != nil {
+		var authConfig storage.AuthConfig
+		err := server.AuthConfig.AssignProperties_To_AuthConfig(&authConfig)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthConfig() to populate field AuthConfig")
+		}
+		destination.AuthConfig = &authConfig
+	} else {
+		destination.AuthConfig = nil
+	}
+
+	// AvailabilityZone
+	destination.AvailabilityZone = genruntime.ClonePointerToString(server.AvailabilityZone)
+
+	// AzureName
+	destination.AzureName = server.AzureName
+
+	// Backup
+	if server.Backup != nil {
+		var backup storage.Backup
+		err := server.Backup.AssignProperties_To_Backup(&backup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Backup() to populate field Backup")
+		}
+		destination.Backup = &backup
+	} else {
+		destination.Backup = nil
+	}
+
+	// Cluster
+	if propertyBag.Contains("Cluster") {
+		var cluster storage.Cluster
+		err := propertyBag.Pull("Cluster", &cluster)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Cluster' from propertyBag")
+		}
+
+		destination.Cluster = &cluster
+	} else {
+		destination.Cluster = nil
+	}
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(server.CreateMode)
+
+	// DataEncryption
+	if server.DataEncryption != nil {
+		var dataEncryption storage.DataEncryption
+		err := server.DataEncryption.AssignProperties_To_DataEncryption(&dataEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DataEncryption() to populate field DataEncryption")
+		}
+		destination.DataEncryption = &dataEncryption
+	} else {
+		destination.DataEncryption = nil
+	}
+
+	// HighAvailability
+	if server.HighAvailability != nil {
+		var highAvailability storage.HighAvailability
+		err := server.HighAvailability.AssignProperties_To_HighAvailability(&highAvailability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_HighAvailability() to populate field HighAvailability")
+		}
+		destination.HighAvailability = &highAvailability
+	} else {
+		destination.HighAvailability = nil
+	}
+
+	// Identity
+	if server.Identity != nil {
+		var identity storage.UserAssignedIdentity
+		err := server.Identity.AssignProperties_To_UserAssignedIdentity(&identity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(server.Location)
+
+	// MaintenanceWindow
+	if server.MaintenanceWindow != nil {
+		var maintenanceWindow storage.MaintenanceWindow
+		err := server.MaintenanceWindow.AssignProperties_To_MaintenanceWindow(&maintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow() to populate field MaintenanceWindow")
+		}
+		destination.MaintenanceWindow = &maintenanceWindow
+	} else {
+		destination.MaintenanceWindow = nil
+	}
+
+	// Network
+	if server.Network != nil {
+		var network storage.Network
+		err := server.Network.AssignProperties_To_Network(&network)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Network() to populate field Network")
+		}
+		destination.Network = &network
+	} else {
+		destination.Network = nil
+	}
+
+	// OperatorSpec
+	if server.OperatorSpec != nil {
+		var operatorSpec storage.FlexibleServerOperatorSpec
+		err := server.OperatorSpec.AssignProperties_To_FlexibleServerOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServerOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = server.OriginalVersion
+
+	// Owner
+	if server.Owner != nil {
+		owner := server.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PointInTimeUTC
+	destination.PointInTimeUTC = genruntime.ClonePointerToString(server.PointInTimeUTC)
+
+	// Replica
+	if server.Replica != nil {
+		var replica storage.Replica
+		err := server.Replica.AssignProperties_To_Replica(&replica)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Replica() to populate field Replica")
+		}
+		destination.Replica = &replica
+	} else {
+		destination.Replica = nil
+	}
+
+	// ReplicationRole
+	destination.ReplicationRole = genruntime.ClonePointerToString(server.ReplicationRole)
+
+	// Sku
+	if server.Sku != nil {
+		var sku storage.Sku
+		err := server.Sku.AssignProperties_To_Sku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SourceServerResourceReference
+	if server.SourceServerResourceReference != nil {
+		sourceServerResourceReference := server.SourceServerResourceReference.Copy()
+		destination.SourceServerResourceReference = &sourceServerResourceReference
+	} else {
+		destination.SourceServerResourceReference = nil
+	}
+
+	// Storage
+	if server.Storage != nil {
+		var storage storage.Storage
+		err := server.Storage.AssignProperties_To_Storage(&storage)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Storage() to populate field Storage")
+		}
+		destination.Storage = &storage
+	} else {
+		destination.Storage = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(server.Tags)
+
+	// Version
+	destination.Version = genruntime.ClonePointerToString(server.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServer_Spec interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer_Spec); ok {
+		err := augmentedServer.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.FlexibleServer_STATUS
@@ -290,24 +857,532 @@ var _ genruntime.ConvertibleStatus = &FlexibleServer_STATUS{}
 
 // ConvertStatusFrom populates our FlexibleServer_STATUS from the provided source
 func (server *FlexibleServer_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == server {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.FlexibleServer_STATUS)
+	if ok {
+		// Populate our instance from source
+		return server.AssignProperties_From_FlexibleServer_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(server)
+	// Convert to an intermediate form
+	src = &storage.FlexibleServer_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = server.AssignProperties_From_FlexibleServer_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our FlexibleServer_STATUS
 func (server *FlexibleServer_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == server {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.FlexibleServer_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return server.AssignProperties_To_FlexibleServer_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(server)
+	// Convert to an intermediate form
+	dst = &storage.FlexibleServer_STATUS{}
+	err := server.AssignProperties_To_FlexibleServer_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FlexibleServer_STATUS populates our FlexibleServer_STATUS from the provided source FlexibleServer_STATUS
+func (server *FlexibleServer_STATUS) AssignProperties_From_FlexibleServer_STATUS(source *storage.FlexibleServer_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AdministratorLogin
+	server.AdministratorLogin = genruntime.ClonePointerToString(source.AdministratorLogin)
+
+	// AuthConfig
+	if source.AuthConfig != nil {
+		var authConfig AuthConfig_STATUS
+		err := authConfig.AssignProperties_From_AuthConfig_STATUS(source.AuthConfig)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthConfig_STATUS() to populate field AuthConfig")
+		}
+		server.AuthConfig = &authConfig
+	} else {
+		server.AuthConfig = nil
+	}
+
+	// AvailabilityZone
+	server.AvailabilityZone = genruntime.ClonePointerToString(source.AvailabilityZone)
+
+	// Backup
+	if source.Backup != nil {
+		var backup Backup_STATUS
+		err := backup.AssignProperties_From_Backup_STATUS(source.Backup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Backup_STATUS() to populate field Backup")
+		}
+		server.Backup = &backup
+	} else {
+		server.Backup = nil
+	}
+
+	// Cluster
+	if source.Cluster != nil {
+		propertyBag.Add("Cluster", *source.Cluster)
+	} else {
+		propertyBag.Remove("Cluster")
+	}
+
+	// Conditions
+	server.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CreateMode
+	server.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// DataEncryption
+	if source.DataEncryption != nil {
+		var dataEncryption DataEncryption_STATUS
+		err := dataEncryption.AssignProperties_From_DataEncryption_STATUS(source.DataEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DataEncryption_STATUS() to populate field DataEncryption")
+		}
+		server.DataEncryption = &dataEncryption
+	} else {
+		server.DataEncryption = nil
+	}
+
+	// FullyQualifiedDomainName
+	server.FullyQualifiedDomainName = genruntime.ClonePointerToString(source.FullyQualifiedDomainName)
+
+	// HighAvailability
+	if source.HighAvailability != nil {
+		var highAvailability HighAvailability_STATUS
+		err := highAvailability.AssignProperties_From_HighAvailability_STATUS(source.HighAvailability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_HighAvailability_STATUS() to populate field HighAvailability")
+		}
+		server.HighAvailability = &highAvailability
+	} else {
+		server.HighAvailability = nil
+	}
+
+	// Id
+	server.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		var identity UserAssignedIdentity_STATUS
+		err := identity.AssignProperties_From_UserAssignedIdentity_STATUS(source.Identity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentity_STATUS() to populate field Identity")
+		}
+		server.Identity = &identity
+	} else {
+		server.Identity = nil
+	}
+
+	// Location
+	server.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MaintenanceWindow
+	if source.MaintenanceWindow != nil {
+		var maintenanceWindow MaintenanceWindow_STATUS
+		err := maintenanceWindow.AssignProperties_From_MaintenanceWindow_STATUS(source.MaintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+		}
+		server.MaintenanceWindow = &maintenanceWindow
+	} else {
+		server.MaintenanceWindow = nil
+	}
+
+	// MinorVersion
+	server.MinorVersion = genruntime.ClonePointerToString(source.MinorVersion)
+
+	// Name
+	server.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Network
+	if source.Network != nil {
+		var network Network_STATUS
+		err := network.AssignProperties_From_Network_STATUS(source.Network)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Network_STATUS() to populate field Network")
+		}
+		server.Network = &network
+	} else {
+		server.Network = nil
+	}
+
+	// PointInTimeUTC
+	server.PointInTimeUTC = genruntime.ClonePointerToString(source.PointInTimeUTC)
+
+	// PrivateEndpointConnections
+	if source.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
+			var privateEndpointConnection PrivateEndpointConnection_STATUS
+			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		server.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		server.PrivateEndpointConnections = nil
+	}
+
+	// Replica
+	if source.Replica != nil {
+		var replica Replica_STATUS
+		err := replica.AssignProperties_From_Replica_STATUS(source.Replica)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Replica_STATUS() to populate field Replica")
+		}
+		server.Replica = &replica
+	} else {
+		server.Replica = nil
+	}
+
+	// ReplicaCapacity
+	server.ReplicaCapacity = genruntime.ClonePointerToInt(source.ReplicaCapacity)
+
+	// ReplicationRole
+	server.ReplicationRole = genruntime.ClonePointerToString(source.ReplicationRole)
+
+	// Sku
+	if source.Sku != nil {
+		var sku Sku_STATUS
+		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+		}
+		server.Sku = &sku
+	} else {
+		server.Sku = nil
+	}
+
+	// SourceServerResourceId
+	server.SourceServerResourceId = genruntime.ClonePointerToString(source.SourceServerResourceId)
+
+	// State
+	server.State = genruntime.ClonePointerToString(source.State)
+
+	// Storage
+	if source.Storage != nil {
+		var storage Storage_STATUS
+		err := storage.AssignProperties_From_Storage_STATUS(source.Storage)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Storage_STATUS() to populate field Storage")
+		}
+		server.Storage = &storage
+	} else {
+		server.Storage = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		server.SystemData = &systemDatum
+	} else {
+		server.SystemData = nil
+	}
+
+	// Tags
+	server.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	server.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Version
+	server.Version = genruntime.ClonePointerToString(source.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		server.PropertyBag = propertyBag
+	} else {
+		server.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServer_STATUS interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer_STATUS); ok {
+		err := augmentedServer.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServer_STATUS populates the provided destination FlexibleServer_STATUS from our FlexibleServer_STATUS
+func (server *FlexibleServer_STATUS) AssignProperties_To_FlexibleServer_STATUS(destination *storage.FlexibleServer_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(server.PropertyBag)
+
+	// AdministratorLogin
+	destination.AdministratorLogin = genruntime.ClonePointerToString(server.AdministratorLogin)
+
+	// AuthConfig
+	if server.AuthConfig != nil {
+		var authConfig storage.AuthConfig_STATUS
+		err := server.AuthConfig.AssignProperties_To_AuthConfig_STATUS(&authConfig)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthConfig_STATUS() to populate field AuthConfig")
+		}
+		destination.AuthConfig = &authConfig
+	} else {
+		destination.AuthConfig = nil
+	}
+
+	// AvailabilityZone
+	destination.AvailabilityZone = genruntime.ClonePointerToString(server.AvailabilityZone)
+
+	// Backup
+	if server.Backup != nil {
+		var backup storage.Backup_STATUS
+		err := server.Backup.AssignProperties_To_Backup_STATUS(&backup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Backup_STATUS() to populate field Backup")
+		}
+		destination.Backup = &backup
+	} else {
+		destination.Backup = nil
+	}
+
+	// Cluster
+	if propertyBag.Contains("Cluster") {
+		var cluster storage.Cluster_STATUS
+		err := propertyBag.Pull("Cluster", &cluster)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Cluster' from propertyBag")
+		}
+
+		destination.Cluster = &cluster
+	} else {
+		destination.Cluster = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(server.Conditions)
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(server.CreateMode)
+
+	// DataEncryption
+	if server.DataEncryption != nil {
+		var dataEncryption storage.DataEncryption_STATUS
+		err := server.DataEncryption.AssignProperties_To_DataEncryption_STATUS(&dataEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DataEncryption_STATUS() to populate field DataEncryption")
+		}
+		destination.DataEncryption = &dataEncryption
+	} else {
+		destination.DataEncryption = nil
+	}
+
+	// FullyQualifiedDomainName
+	destination.FullyQualifiedDomainName = genruntime.ClonePointerToString(server.FullyQualifiedDomainName)
+
+	// HighAvailability
+	if server.HighAvailability != nil {
+		var highAvailability storage.HighAvailability_STATUS
+		err := server.HighAvailability.AssignProperties_To_HighAvailability_STATUS(&highAvailability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_HighAvailability_STATUS() to populate field HighAvailability")
+		}
+		destination.HighAvailability = &highAvailability
+	} else {
+		destination.HighAvailability = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(server.Id)
+
+	// Identity
+	if server.Identity != nil {
+		var identity storage.UserAssignedIdentity_STATUS
+		err := server.Identity.AssignProperties_To_UserAssignedIdentity_STATUS(&identity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentity_STATUS() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(server.Location)
+
+	// MaintenanceWindow
+	if server.MaintenanceWindow != nil {
+		var maintenanceWindow storage.MaintenanceWindow_STATUS
+		err := server.MaintenanceWindow.AssignProperties_To_MaintenanceWindow_STATUS(&maintenanceWindow)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MaintenanceWindow_STATUS() to populate field MaintenanceWindow")
+		}
+		destination.MaintenanceWindow = &maintenanceWindow
+	} else {
+		destination.MaintenanceWindow = nil
+	}
+
+	// MinorVersion
+	destination.MinorVersion = genruntime.ClonePointerToString(server.MinorVersion)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(server.Name)
+
+	// Network
+	if server.Network != nil {
+		var network storage.Network_STATUS
+		err := server.Network.AssignProperties_To_Network_STATUS(&network)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Network_STATUS() to populate field Network")
+		}
+		destination.Network = &network
+	} else {
+		destination.Network = nil
+	}
+
+	// PointInTimeUTC
+	destination.PointInTimeUTC = genruntime.ClonePointerToString(server.PointInTimeUTC)
+
+	// PrivateEndpointConnections
+	if server.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(server.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range server.PrivateEndpointConnections {
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
+			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		destination.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		destination.PrivateEndpointConnections = nil
+	}
+
+	// Replica
+	if server.Replica != nil {
+		var replica storage.Replica_STATUS
+		err := server.Replica.AssignProperties_To_Replica_STATUS(&replica)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Replica_STATUS() to populate field Replica")
+		}
+		destination.Replica = &replica
+	} else {
+		destination.Replica = nil
+	}
+
+	// ReplicaCapacity
+	destination.ReplicaCapacity = genruntime.ClonePointerToInt(server.ReplicaCapacity)
+
+	// ReplicationRole
+	destination.ReplicationRole = genruntime.ClonePointerToString(server.ReplicationRole)
+
+	// Sku
+	if server.Sku != nil {
+		var sku storage.Sku_STATUS
+		err := server.Sku.AssignProperties_To_Sku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SourceServerResourceId
+	destination.SourceServerResourceId = genruntime.ClonePointerToString(server.SourceServerResourceId)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(server.State)
+
+	// Storage
+	if server.Storage != nil {
+		var storage storage.Storage_STATUS
+		err := server.Storage.AssignProperties_To_Storage_STATUS(&storage)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Storage_STATUS() to populate field Storage")
+		}
+		destination.Storage = &storage
+	} else {
+		destination.Storage = nil
+	}
+
+	// SystemData
+	if server.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := server.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(server.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(server.Type)
+
+	// Version
+	destination.Version = genruntime.ClonePointerToString(server.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServer_STATUS interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForFlexibleServer_STATUS); ok {
+		err := augmentedServer.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFlexibleServer_Spec interface {
+	AssignPropertiesFrom(src *storage.FlexibleServer_Spec) error
+	AssignPropertiesTo(dst *storage.FlexibleServer_Spec) error
+}
+
+type augmentConversionForFlexibleServer_STATUS interface {
+	AssignPropertiesFrom(src *storage.FlexibleServer_STATUS) error
+	AssignPropertiesTo(dst *storage.FlexibleServer_STATUS) error
 }
 
 // Storage version of v1api20240801.AuthConfig
-// Authentication configuration properties of a server
+// Authentication configuration properties of a flexible server.
 type AuthConfig struct {
 	ActiveDirectoryAuth *string                `json:"activeDirectoryAuth,omitempty"`
 	PasswordAuth        *string                `json:"passwordAuth,omitempty"`
@@ -315,8 +1390,96 @@ type AuthConfig struct {
 	TenantId            *string                `json:"tenantId,omitempty"`
 }
 
+// AssignProperties_From_AuthConfig populates our AuthConfig from the provided source AuthConfig
+func (config *AuthConfig) AssignProperties_From_AuthConfig(source *storage.AuthConfig) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActiveDirectoryAuth
+	config.ActiveDirectoryAuth = genruntime.ClonePointerToString(source.ActiveDirectoryAuth)
+
+	// PasswordAuth
+	config.PasswordAuth = genruntime.ClonePointerToString(source.PasswordAuth)
+
+	// TenantId
+	config.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// TenantIdFromConfig
+	if source.TenantIdFromConfig != nil {
+		propertyBag.Add("TenantIdFromConfig", *source.TenantIdFromConfig)
+	} else {
+		propertyBag.Remove("TenantIdFromConfig")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		config.PropertyBag = propertyBag
+	} else {
+		config.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthConfig interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForAuthConfig); ok {
+		err := augmentedConfig.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthConfig populates the provided destination AuthConfig from our AuthConfig
+func (config *AuthConfig) AssignProperties_To_AuthConfig(destination *storage.AuthConfig) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(config.PropertyBag)
+
+	// ActiveDirectoryAuth
+	destination.ActiveDirectoryAuth = genruntime.ClonePointerToString(config.ActiveDirectoryAuth)
+
+	// PasswordAuth
+	destination.PasswordAuth = genruntime.ClonePointerToString(config.PasswordAuth)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(config.TenantId)
+
+	// TenantIdFromConfig
+	if propertyBag.Contains("TenantIdFromConfig") {
+		var tenantIdFromConfig genruntime.ConfigMapReference
+		err := propertyBag.Pull("TenantIdFromConfig", &tenantIdFromConfig)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'TenantIdFromConfig' from propertyBag")
+		}
+
+		destination.TenantIdFromConfig = &tenantIdFromConfig
+	} else {
+		destination.TenantIdFromConfig = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthConfig interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForAuthConfig); ok {
+		err := augmentedConfig.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.AuthConfig_STATUS
-// Authentication configuration properties of a server
+// Authentication configuration properties of a flexible server.
 type AuthConfig_STATUS struct {
 	ActiveDirectoryAuth *string                `json:"activeDirectoryAuth,omitempty"`
 	PasswordAuth        *string                `json:"passwordAuth,omitempty"`
@@ -324,16 +1487,146 @@ type AuthConfig_STATUS struct {
 	TenantId            *string                `json:"tenantId,omitempty"`
 }
 
+// AssignProperties_From_AuthConfig_STATUS populates our AuthConfig_STATUS from the provided source AuthConfig_STATUS
+func (config *AuthConfig_STATUS) AssignProperties_From_AuthConfig_STATUS(source *storage.AuthConfig_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActiveDirectoryAuth
+	config.ActiveDirectoryAuth = genruntime.ClonePointerToString(source.ActiveDirectoryAuth)
+
+	// PasswordAuth
+	config.PasswordAuth = genruntime.ClonePointerToString(source.PasswordAuth)
+
+	// TenantId
+	config.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		config.PropertyBag = propertyBag
+	} else {
+		config.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthConfig_STATUS interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForAuthConfig_STATUS); ok {
+		err := augmentedConfig.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthConfig_STATUS populates the provided destination AuthConfig_STATUS from our AuthConfig_STATUS
+func (config *AuthConfig_STATUS) AssignProperties_To_AuthConfig_STATUS(destination *storage.AuthConfig_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(config.PropertyBag)
+
+	// ActiveDirectoryAuth
+	destination.ActiveDirectoryAuth = genruntime.ClonePointerToString(config.ActiveDirectoryAuth)
+
+	// PasswordAuth
+	destination.PasswordAuth = genruntime.ClonePointerToString(config.PasswordAuth)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(config.TenantId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthConfig_STATUS interface (if implemented) to customize the conversion
+	var configAsAny any = config
+	if augmentedConfig, ok := configAsAny.(augmentConversionForAuthConfig_STATUS); ok {
+		err := augmentedConfig.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Backup
-// Backup properties of a server
+// Backup properties of a flexible server.
 type Backup struct {
 	BackupRetentionDays *int                   `json:"backupRetentionDays,omitempty"`
 	GeoRedundantBackup  *string                `json:"geoRedundantBackup,omitempty"`
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Backup populates our Backup from the provided source Backup
+func (backup *Backup) AssignProperties_From_Backup(source *storage.Backup) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupRetentionDays
+	backup.BackupRetentionDays = genruntime.ClonePointerToInt(source.BackupRetentionDays)
+
+	// GeoRedundantBackup
+	backup.GeoRedundantBackup = genruntime.ClonePointerToString(source.GeoRedundantBackup)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		backup.PropertyBag = propertyBag
+	} else {
+		backup.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackup interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForBackup); ok {
+		err := augmentedBackup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Backup populates the provided destination Backup from our Backup
+func (backup *Backup) AssignProperties_To_Backup(destination *storage.Backup) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
+
+	// BackupRetentionDays
+	destination.BackupRetentionDays = genruntime.ClonePointerToInt(backup.BackupRetentionDays)
+
+	// GeoRedundantBackup
+	destination.GeoRedundantBackup = genruntime.ClonePointerToString(backup.GeoRedundantBackup)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackup interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForBackup); ok {
+		err := augmentedBackup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Backup_STATUS
-// Backup properties of a server
+// Backup properties of a flexible server.
 type Backup_STATUS struct {
 	BackupRetentionDays *int                   `json:"backupRetentionDays,omitempty"`
 	EarliestRestoreDate *string                `json:"earliestRestoreDate,omitempty"`
@@ -341,29 +1634,270 @@ type Backup_STATUS struct {
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Backup_STATUS populates our Backup_STATUS from the provided source Backup_STATUS
+func (backup *Backup_STATUS) AssignProperties_From_Backup_STATUS(source *storage.Backup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupRetentionDays
+	backup.BackupRetentionDays = genruntime.ClonePointerToInt(source.BackupRetentionDays)
+
+	// EarliestRestoreDate
+	backup.EarliestRestoreDate = genruntime.ClonePointerToString(source.EarliestRestoreDate)
+
+	// GeoRedundantBackup
+	backup.GeoRedundantBackup = genruntime.ClonePointerToString(source.GeoRedundantBackup)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		backup.PropertyBag = propertyBag
+	} else {
+		backup.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackup_STATUS interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForBackup_STATUS); ok {
+		err := augmentedBackup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Backup_STATUS populates the provided destination Backup_STATUS from our Backup_STATUS
+func (backup *Backup_STATUS) AssignProperties_To_Backup_STATUS(destination *storage.Backup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
+
+	// BackupRetentionDays
+	destination.BackupRetentionDays = genruntime.ClonePointerToInt(backup.BackupRetentionDays)
+
+	// EarliestRestoreDate
+	destination.EarliestRestoreDate = genruntime.ClonePointerToString(backup.EarliestRestoreDate)
+
+	// GeoRedundantBackup
+	destination.GeoRedundantBackup = genruntime.ClonePointerToString(backup.GeoRedundantBackup)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackup_STATUS interface (if implemented) to customize the conversion
+	var backupAsAny any = backup
+	if augmentedBackup, ok := backupAsAny.(augmentConversionForBackup_STATUS); ok {
+		err := augmentedBackup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.DataEncryption
-// Data encryption properties of a server
+// Data encryption properties of a flexible server.
 type DataEncryption struct {
 	GeoBackupEncryptionKeyStatus *string                        `json:"geoBackupEncryptionKeyStatus,omitempty"`
 	GeoBackupKeyURI              *string                        `json:"geoBackupKeyURI,omitempty" optionalConfigMapPair:"GeoBackupKeyURI"`
 	GeoBackupKeyURIFromConfig    *genruntime.ConfigMapReference `json:"geoBackupKeyURIFromConfig,omitempty" optionalConfigMapPair:"GeoBackupKeyURI"`
 
-	// GeoBackupUserAssignedIdentityReference: Resource Id for the User assigned identity to be used for data encryption for
-	// geo-backup of server.
+	// GeoBackupUserAssignedIdentityReference: Identifier of the user assigned managed identity used to access the key in Azure
+	// Key Vault for data encryption of the geographically redundant storage associated to a flexible server that is configured
+	// to support geographically redundant backups.
 	GeoBackupUserAssignedIdentityReference *genruntime.ResourceReference  `armReference:"GeoBackupUserAssignedIdentityId" json:"geoBackupUserAssignedIdentityReference,omitempty"`
 	PrimaryEncryptionKeyStatus             *string                        `json:"primaryEncryptionKeyStatus,omitempty"`
 	PrimaryKeyURI                          *string                        `json:"primaryKeyURI,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
 	PrimaryKeyURIFromConfig                *genruntime.ConfigMapReference `json:"primaryKeyURIFromConfig,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
 
-	// PrimaryUserAssignedIdentityReference: Resource Id for the User assigned identity to be used for data encryption of the
-	// primary server.
+	// PrimaryUserAssignedIdentityReference: Identifier of the user assigned managed identity used to access the key in Azure
+	// Key Vault for data encryption of the primary storage associated to a flexible server.
 	PrimaryUserAssignedIdentityReference *genruntime.ResourceReference `armReference:"PrimaryUserAssignedIdentityId" json:"primaryUserAssignedIdentityReference,omitempty"`
 	PropertyBag                          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	Type                                 *string                       `json:"type,omitempty"`
 }
 
+// AssignProperties_From_DataEncryption populates our DataEncryption from the provided source DataEncryption
+func (encryption *DataEncryption) AssignProperties_From_DataEncryption(source *storage.DataEncryption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GeoBackupEncryptionKeyStatus
+	if propertyBag.Contains("GeoBackupEncryptionKeyStatus") {
+		var geoBackupEncryptionKeyStatus string
+		err := propertyBag.Pull("GeoBackupEncryptionKeyStatus", &geoBackupEncryptionKeyStatus)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'GeoBackupEncryptionKeyStatus' from propertyBag")
+		}
+
+		encryption.GeoBackupEncryptionKeyStatus = &geoBackupEncryptionKeyStatus
+	} else {
+		encryption.GeoBackupEncryptionKeyStatus = nil
+	}
+
+	// GeoBackupKeyURI
+	encryption.GeoBackupKeyURI = genruntime.ClonePointerToString(source.GeoBackupKeyURI)
+
+	// GeoBackupKeyURIFromConfig
+	if source.GeoBackupKeyURIFromConfig != nil {
+		geoBackupKeyURIFromConfig := source.GeoBackupKeyURIFromConfig.Copy()
+		encryption.GeoBackupKeyURIFromConfig = &geoBackupKeyURIFromConfig
+	} else {
+		encryption.GeoBackupKeyURIFromConfig = nil
+	}
+
+	// GeoBackupUserAssignedIdentityReference
+	if source.GeoBackupUserAssignedIdentityReference != nil {
+		geoBackupUserAssignedIdentityReference := source.GeoBackupUserAssignedIdentityReference.Copy()
+		encryption.GeoBackupUserAssignedIdentityReference = &geoBackupUserAssignedIdentityReference
+	} else {
+		encryption.GeoBackupUserAssignedIdentityReference = nil
+	}
+
+	// PrimaryEncryptionKeyStatus
+	if propertyBag.Contains("PrimaryEncryptionKeyStatus") {
+		var primaryEncryptionKeyStatus string
+		err := propertyBag.Pull("PrimaryEncryptionKeyStatus", &primaryEncryptionKeyStatus)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PrimaryEncryptionKeyStatus' from propertyBag")
+		}
+
+		encryption.PrimaryEncryptionKeyStatus = &primaryEncryptionKeyStatus
+	} else {
+		encryption.PrimaryEncryptionKeyStatus = nil
+	}
+
+	// PrimaryKeyURI
+	encryption.PrimaryKeyURI = genruntime.ClonePointerToString(source.PrimaryKeyURI)
+
+	// PrimaryKeyURIFromConfig
+	if source.PrimaryKeyURIFromConfig != nil {
+		primaryKeyURIFromConfig := source.PrimaryKeyURIFromConfig.Copy()
+		encryption.PrimaryKeyURIFromConfig = &primaryKeyURIFromConfig
+	} else {
+		encryption.PrimaryKeyURIFromConfig = nil
+	}
+
+	// PrimaryUserAssignedIdentityReference
+	if source.PrimaryUserAssignedIdentityReference != nil {
+		primaryUserAssignedIdentityReference := source.PrimaryUserAssignedIdentityReference.Copy()
+		encryption.PrimaryUserAssignedIdentityReference = &primaryUserAssignedIdentityReference
+	} else {
+		encryption.PrimaryUserAssignedIdentityReference = nil
+	}
+
+	// Type
+	encryption.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataEncryption interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForDataEncryption); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataEncryption populates the provided destination DataEncryption from our DataEncryption
+func (encryption *DataEncryption) AssignProperties_To_DataEncryption(destination *storage.DataEncryption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// GeoBackupEncryptionKeyStatus
+	if encryption.GeoBackupEncryptionKeyStatus != nil {
+		propertyBag.Add("GeoBackupEncryptionKeyStatus", *encryption.GeoBackupEncryptionKeyStatus)
+	} else {
+		propertyBag.Remove("GeoBackupEncryptionKeyStatus")
+	}
+
+	// GeoBackupKeyURI
+	destination.GeoBackupKeyURI = genruntime.ClonePointerToString(encryption.GeoBackupKeyURI)
+
+	// GeoBackupKeyURIFromConfig
+	if encryption.GeoBackupKeyURIFromConfig != nil {
+		geoBackupKeyURIFromConfig := encryption.GeoBackupKeyURIFromConfig.Copy()
+		destination.GeoBackupKeyURIFromConfig = &geoBackupKeyURIFromConfig
+	} else {
+		destination.GeoBackupKeyURIFromConfig = nil
+	}
+
+	// GeoBackupUserAssignedIdentityReference
+	if encryption.GeoBackupUserAssignedIdentityReference != nil {
+		geoBackupUserAssignedIdentityReference := encryption.GeoBackupUserAssignedIdentityReference.Copy()
+		destination.GeoBackupUserAssignedIdentityReference = &geoBackupUserAssignedIdentityReference
+	} else {
+		destination.GeoBackupUserAssignedIdentityReference = nil
+	}
+
+	// PrimaryEncryptionKeyStatus
+	if encryption.PrimaryEncryptionKeyStatus != nil {
+		propertyBag.Add("PrimaryEncryptionKeyStatus", *encryption.PrimaryEncryptionKeyStatus)
+	} else {
+		propertyBag.Remove("PrimaryEncryptionKeyStatus")
+	}
+
+	// PrimaryKeyURI
+	destination.PrimaryKeyURI = genruntime.ClonePointerToString(encryption.PrimaryKeyURI)
+
+	// PrimaryKeyURIFromConfig
+	if encryption.PrimaryKeyURIFromConfig != nil {
+		primaryKeyURIFromConfig := encryption.PrimaryKeyURIFromConfig.Copy()
+		destination.PrimaryKeyURIFromConfig = &primaryKeyURIFromConfig
+	} else {
+		destination.PrimaryKeyURIFromConfig = nil
+	}
+
+	// PrimaryUserAssignedIdentityReference
+	if encryption.PrimaryUserAssignedIdentityReference != nil {
+		primaryUserAssignedIdentityReference := encryption.PrimaryUserAssignedIdentityReference.Copy()
+		destination.PrimaryUserAssignedIdentityReference = &primaryUserAssignedIdentityReference
+	} else {
+		destination.PrimaryUserAssignedIdentityReference = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(encryption.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataEncryption interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForDataEncryption); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.DataEncryption_STATUS
-// Data encryption properties of a server
+// Data encryption properties of a flexible server.
 type DataEncryption_STATUS struct {
 	GeoBackupEncryptionKeyStatus    *string                `json:"geoBackupEncryptionKeyStatus,omitempty"`
 	GeoBackupKeyURI                 *string                `json:"geoBackupKeyURI,omitempty"`
@@ -373,6 +1907,98 @@ type DataEncryption_STATUS struct {
 	PrimaryUserAssignedIdentityId   *string                `json:"primaryUserAssignedIdentityId,omitempty"`
 	PropertyBag                     genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type                            *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_DataEncryption_STATUS populates our DataEncryption_STATUS from the provided source DataEncryption_STATUS
+func (encryption *DataEncryption_STATUS) AssignProperties_From_DataEncryption_STATUS(source *storage.DataEncryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// GeoBackupEncryptionKeyStatus
+	encryption.GeoBackupEncryptionKeyStatus = genruntime.ClonePointerToString(source.GeoBackupEncryptionKeyStatus)
+
+	// GeoBackupKeyURI
+	encryption.GeoBackupKeyURI = genruntime.ClonePointerToString(source.GeoBackupKeyURI)
+
+	// GeoBackupUserAssignedIdentityId
+	encryption.GeoBackupUserAssignedIdentityId = genruntime.ClonePointerToString(source.GeoBackupUserAssignedIdentityId)
+
+	// PrimaryEncryptionKeyStatus
+	encryption.PrimaryEncryptionKeyStatus = genruntime.ClonePointerToString(source.PrimaryEncryptionKeyStatus)
+
+	// PrimaryKeyURI
+	encryption.PrimaryKeyURI = genruntime.ClonePointerToString(source.PrimaryKeyURI)
+
+	// PrimaryUserAssignedIdentityId
+	encryption.PrimaryUserAssignedIdentityId = genruntime.ClonePointerToString(source.PrimaryUserAssignedIdentityId)
+
+	// Type
+	encryption.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataEncryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForDataEncryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataEncryption_STATUS populates the provided destination DataEncryption_STATUS from our DataEncryption_STATUS
+func (encryption *DataEncryption_STATUS) AssignProperties_To_DataEncryption_STATUS(destination *storage.DataEncryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// GeoBackupEncryptionKeyStatus
+	destination.GeoBackupEncryptionKeyStatus = genruntime.ClonePointerToString(encryption.GeoBackupEncryptionKeyStatus)
+
+	// GeoBackupKeyURI
+	destination.GeoBackupKeyURI = genruntime.ClonePointerToString(encryption.GeoBackupKeyURI)
+
+	// GeoBackupUserAssignedIdentityId
+	destination.GeoBackupUserAssignedIdentityId = genruntime.ClonePointerToString(encryption.GeoBackupUserAssignedIdentityId)
+
+	// PrimaryEncryptionKeyStatus
+	destination.PrimaryEncryptionKeyStatus = genruntime.ClonePointerToString(encryption.PrimaryEncryptionKeyStatus)
+
+	// PrimaryKeyURI
+	destination.PrimaryKeyURI = genruntime.ClonePointerToString(encryption.PrimaryKeyURI)
+
+	// PrimaryUserAssignedIdentityId
+	destination.PrimaryUserAssignedIdentityId = genruntime.ClonePointerToString(encryption.PrimaryUserAssignedIdentityId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(encryption.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataEncryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForDataEncryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.FlexibleServerOperatorSpec
@@ -385,16 +2011,240 @@ type FlexibleServerOperatorSpec struct {
 	Secrets              *FlexibleServerOperatorSecrets    `json:"secrets,omitempty"`
 }
 
+// AssignProperties_From_FlexibleServerOperatorSpec populates our FlexibleServerOperatorSpec from the provided source FlexibleServerOperatorSpec
+func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServerOperatorSpec(source *storage.FlexibleServerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if source.ConfigMaps != nil {
+		var configMap FlexibleServerOperatorConfigMaps
+		err := configMap.AssignProperties_From_FlexibleServerOperatorConfigMaps(source.ConfigMaps)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServerOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		operator.ConfigMaps = &configMap
+	} else {
+		operator.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Secrets
+	if source.Secrets != nil {
+		var secret FlexibleServerOperatorSecrets
+		err := secret.AssignProperties_From_FlexibleServerOperatorSecrets(source.Secrets)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServerOperatorSecrets() to populate field Secrets")
+		}
+		operator.Secrets = &secret
+	} else {
+		operator.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServerOperatorSpec populates the provided destination FlexibleServerOperatorSpec from our FlexibleServerOperatorSpec
+func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOperatorSpec(destination *storage.FlexibleServerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if operator.ConfigMaps != nil {
+		var configMap storage.FlexibleServerOperatorConfigMaps
+		err := operator.ConfigMaps.AssignProperties_To_FlexibleServerOperatorConfigMaps(&configMap)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServerOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		destination.ConfigMaps = &configMap
+	} else {
+		destination.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Secrets
+	if operator.Secrets != nil {
+		var secret storage.FlexibleServerOperatorSecrets
+		err := operator.Secrets.AssignProperties_To_FlexibleServerOperatorSecrets(&secret)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServerOperatorSecrets() to populate field Secrets")
+		}
+		destination.Secrets = &secret
+	} else {
+		destination.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.HighAvailability
-// High availability properties of a server
+// High availability properties of a flexible server.
 type HighAvailability struct {
 	Mode                    *string                `json:"mode,omitempty"`
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	StandbyAvailabilityZone *string                `json:"standbyAvailabilityZone,omitempty"`
 }
 
+// AssignProperties_From_HighAvailability populates our HighAvailability from the provided source HighAvailability
+func (availability *HighAvailability) AssignProperties_From_HighAvailability(source *storage.HighAvailability) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Mode
+	availability.Mode = genruntime.ClonePointerToString(source.Mode)
+
+	// StandbyAvailabilityZone
+	availability.StandbyAvailabilityZone = genruntime.ClonePointerToString(source.StandbyAvailabilityZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		availability.PropertyBag = propertyBag
+	} else {
+		availability.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForHighAvailability interface (if implemented) to customize the conversion
+	var availabilityAsAny any = availability
+	if augmentedAvailability, ok := availabilityAsAny.(augmentConversionForHighAvailability); ok {
+		err := augmentedAvailability.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_HighAvailability populates the provided destination HighAvailability from our HighAvailability
+func (availability *HighAvailability) AssignProperties_To_HighAvailability(destination *storage.HighAvailability) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(availability.PropertyBag)
+
+	// Mode
+	destination.Mode = genruntime.ClonePointerToString(availability.Mode)
+
+	// StandbyAvailabilityZone
+	destination.StandbyAvailabilityZone = genruntime.ClonePointerToString(availability.StandbyAvailabilityZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForHighAvailability interface (if implemented) to customize the conversion
+	var availabilityAsAny any = availability
+	if augmentedAvailability, ok := availabilityAsAny.(augmentConversionForHighAvailability); ok {
+		err := augmentedAvailability.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.HighAvailability_STATUS
-// High availability properties of a server
+// High availability properties of a flexible server.
 type HighAvailability_STATUS struct {
 	Mode                    *string                `json:"mode,omitempty"`
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
@@ -402,8 +2252,76 @@ type HighAvailability_STATUS struct {
 	State                   *string                `json:"state,omitempty"`
 }
 
+// AssignProperties_From_HighAvailability_STATUS populates our HighAvailability_STATUS from the provided source HighAvailability_STATUS
+func (availability *HighAvailability_STATUS) AssignProperties_From_HighAvailability_STATUS(source *storage.HighAvailability_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Mode
+	availability.Mode = genruntime.ClonePointerToString(source.Mode)
+
+	// StandbyAvailabilityZone
+	availability.StandbyAvailabilityZone = genruntime.ClonePointerToString(source.StandbyAvailabilityZone)
+
+	// State
+	availability.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		availability.PropertyBag = propertyBag
+	} else {
+		availability.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForHighAvailability_STATUS interface (if implemented) to customize the conversion
+	var availabilityAsAny any = availability
+	if augmentedAvailability, ok := availabilityAsAny.(augmentConversionForHighAvailability_STATUS); ok {
+		err := augmentedAvailability.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_HighAvailability_STATUS populates the provided destination HighAvailability_STATUS from our HighAvailability_STATUS
+func (availability *HighAvailability_STATUS) AssignProperties_To_HighAvailability_STATUS(destination *storage.HighAvailability_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(availability.PropertyBag)
+
+	// Mode
+	destination.Mode = genruntime.ClonePointerToString(availability.Mode)
+
+	// StandbyAvailabilityZone
+	destination.StandbyAvailabilityZone = genruntime.ClonePointerToString(availability.StandbyAvailabilityZone)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(availability.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForHighAvailability_STATUS interface (if implemented) to customize the conversion
+	var availabilityAsAny any = availability
+	if augmentedAvailability, ok := availabilityAsAny.(augmentConversionForHighAvailability_STATUS); ok {
+		err := augmentedAvailability.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.MaintenanceWindow
-// Maintenance window properties of a server.
+// Maintenance window properties of a flexible server.
 type MaintenanceWindow struct {
 	CustomWindow *string                `json:"customWindow,omitempty"`
 	DayOfWeek    *int                   `json:"dayOfWeek,omitempty"`
@@ -412,8 +2330,82 @@ type MaintenanceWindow struct {
 	StartMinute  *int                   `json:"startMinute,omitempty"`
 }
 
+// AssignProperties_From_MaintenanceWindow populates our MaintenanceWindow from the provided source MaintenanceWindow
+func (window *MaintenanceWindow) AssignProperties_From_MaintenanceWindow(source *storage.MaintenanceWindow) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomWindow
+	window.CustomWindow = genruntime.ClonePointerToString(source.CustomWindow)
+
+	// DayOfWeek
+	window.DayOfWeek = genruntime.ClonePointerToInt(source.DayOfWeek)
+
+	// StartHour
+	window.StartHour = genruntime.ClonePointerToInt(source.StartHour)
+
+	// StartMinute
+	window.StartMinute = genruntime.ClonePointerToInt(source.StartMinute)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		window.PropertyBag = propertyBag
+	} else {
+		window.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow); ok {
+		err := augmentedWindow.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceWindow populates the provided destination MaintenanceWindow from our MaintenanceWindow
+func (window *MaintenanceWindow) AssignProperties_To_MaintenanceWindow(destination *storage.MaintenanceWindow) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(window.PropertyBag)
+
+	// CustomWindow
+	destination.CustomWindow = genruntime.ClonePointerToString(window.CustomWindow)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToInt(window.DayOfWeek)
+
+	// StartHour
+	destination.StartHour = genruntime.ClonePointerToInt(window.StartHour)
+
+	// StartMinute
+	destination.StartMinute = genruntime.ClonePointerToInt(window.StartMinute)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow); ok {
+		err := augmentedWindow.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.MaintenanceWindow_STATUS
-// Maintenance window properties of a server.
+// Maintenance window properties of a flexible server.
 type MaintenanceWindow_STATUS struct {
 	CustomWindow *string                `json:"customWindow,omitempty"`
 	DayOfWeek    *int                   `json:"dayOfWeek,omitempty"`
@@ -422,29 +2414,259 @@ type MaintenanceWindow_STATUS struct {
 	StartMinute  *int                   `json:"startMinute,omitempty"`
 }
 
+// AssignProperties_From_MaintenanceWindow_STATUS populates our MaintenanceWindow_STATUS from the provided source MaintenanceWindow_STATUS
+func (window *MaintenanceWindow_STATUS) AssignProperties_From_MaintenanceWindow_STATUS(source *storage.MaintenanceWindow_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomWindow
+	window.CustomWindow = genruntime.ClonePointerToString(source.CustomWindow)
+
+	// DayOfWeek
+	window.DayOfWeek = genruntime.ClonePointerToInt(source.DayOfWeek)
+
+	// StartHour
+	window.StartHour = genruntime.ClonePointerToInt(source.StartHour)
+
+	// StartMinute
+	window.StartMinute = genruntime.ClonePointerToInt(source.StartMinute)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		window.PropertyBag = propertyBag
+	} else {
+		window.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow_STATUS interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow_STATUS); ok {
+		err := augmentedWindow.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MaintenanceWindow_STATUS populates the provided destination MaintenanceWindow_STATUS from our MaintenanceWindow_STATUS
+func (window *MaintenanceWindow_STATUS) AssignProperties_To_MaintenanceWindow_STATUS(destination *storage.MaintenanceWindow_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(window.PropertyBag)
+
+	// CustomWindow
+	destination.CustomWindow = genruntime.ClonePointerToString(window.CustomWindow)
+
+	// DayOfWeek
+	destination.DayOfWeek = genruntime.ClonePointerToInt(window.DayOfWeek)
+
+	// StartHour
+	destination.StartHour = genruntime.ClonePointerToInt(window.StartHour)
+
+	// StartMinute
+	destination.StartMinute = genruntime.ClonePointerToInt(window.StartMinute)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMaintenanceWindow_STATUS interface (if implemented) to customize the conversion
+	var windowAsAny any = window
+	if augmentedWindow, ok := windowAsAny.(augmentConversionForMaintenanceWindow_STATUS); ok {
+		err := augmentedWindow.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Network
-// Network properties of a server.
+// Network properties of a flexible server.
 type Network struct {
-	// DelegatedSubnetResourceReference: Delegated subnet arm resource id. This is required to be passed during create, in case
-	// we want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update
-	// the value for Private DNS zone.
+	// DelegatedSubnetResourceReference: Resource identifier of the delegated subnet. Required during creation of a new server,
+	// in case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	DelegatedSubnetResourceReference *genruntime.ResourceReference `armReference:"DelegatedSubnetResourceId" json:"delegatedSubnetResourceReference,omitempty"`
 
-	// PrivateDnsZoneArmResourceReference: Private dns zone arm resource id. This is required to be passed during create, in
-	// case we want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to
-	// update the value for Private DNS zone.
+	// PrivateDnsZoneArmResourceReference: Identifier of the private DNS zone. Required during creation of a new server, in
+	// case you want the server to be integrated into your own virtual network. For an update operation, you only have to
+	// provide this property if you want to change the value assigned for the private DNS zone.
 	PrivateDnsZoneArmResourceReference *genruntime.ResourceReference `armReference:"PrivateDnsZoneArmResourceId" json:"privateDnsZoneArmResourceReference,omitempty"`
 	PropertyBag                        genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	PublicNetworkAccess                *string                       `json:"publicNetworkAccess,omitempty"`
 }
 
+// AssignProperties_From_Network populates our Network from the provided source Network
+func (network *Network) AssignProperties_From_Network(source *storage.Network) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DelegatedSubnetResourceReference
+	if source.DelegatedSubnetResourceReference != nil {
+		delegatedSubnetResourceReference := source.DelegatedSubnetResourceReference.Copy()
+		network.DelegatedSubnetResourceReference = &delegatedSubnetResourceReference
+	} else {
+		network.DelegatedSubnetResourceReference = nil
+	}
+
+	// PrivateDnsZoneArmResourceReference
+	if source.PrivateDnsZoneArmResourceReference != nil {
+		privateDnsZoneArmResourceReference := source.PrivateDnsZoneArmResourceReference.Copy()
+		network.PrivateDnsZoneArmResourceReference = &privateDnsZoneArmResourceReference
+	} else {
+		network.PrivateDnsZoneArmResourceReference = nil
+	}
+
+	// PublicNetworkAccess
+	network.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		network.PropertyBag = propertyBag
+	} else {
+		network.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetwork interface (if implemented) to customize the conversion
+	var networkAsAny any = network
+	if augmentedNetwork, ok := networkAsAny.(augmentConversionForNetwork); ok {
+		err := augmentedNetwork.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Network populates the provided destination Network from our Network
+func (network *Network) AssignProperties_To_Network(destination *storage.Network) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(network.PropertyBag)
+
+	// DelegatedSubnetResourceReference
+	if network.DelegatedSubnetResourceReference != nil {
+		delegatedSubnetResourceReference := network.DelegatedSubnetResourceReference.Copy()
+		destination.DelegatedSubnetResourceReference = &delegatedSubnetResourceReference
+	} else {
+		destination.DelegatedSubnetResourceReference = nil
+	}
+
+	// PrivateDnsZoneArmResourceReference
+	if network.PrivateDnsZoneArmResourceReference != nil {
+		privateDnsZoneArmResourceReference := network.PrivateDnsZoneArmResourceReference.Copy()
+		destination.PrivateDnsZoneArmResourceReference = &privateDnsZoneArmResourceReference
+	} else {
+		destination.PrivateDnsZoneArmResourceReference = nil
+	}
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(network.PublicNetworkAccess)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetwork interface (if implemented) to customize the conversion
+	var networkAsAny any = network
+	if augmentedNetwork, ok := networkAsAny.(augmentConversionForNetwork); ok {
+		err := augmentedNetwork.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Network_STATUS
-// Network properties of a server.
+// Network properties of a flexible server.
 type Network_STATUS struct {
 	DelegatedSubnetResourceId   *string                `json:"delegatedSubnetResourceId,omitempty"`
 	PrivateDnsZoneArmResourceId *string                `json:"privateDnsZoneArmResourceId,omitempty"`
 	PropertyBag                 genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	PublicNetworkAccess         *string                `json:"publicNetworkAccess,omitempty"`
+}
+
+// AssignProperties_From_Network_STATUS populates our Network_STATUS from the provided source Network_STATUS
+func (network *Network_STATUS) AssignProperties_From_Network_STATUS(source *storage.Network_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DelegatedSubnetResourceId
+	network.DelegatedSubnetResourceId = genruntime.ClonePointerToString(source.DelegatedSubnetResourceId)
+
+	// PrivateDnsZoneArmResourceId
+	network.PrivateDnsZoneArmResourceId = genruntime.ClonePointerToString(source.PrivateDnsZoneArmResourceId)
+
+	// PublicNetworkAccess
+	network.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		network.PropertyBag = propertyBag
+	} else {
+		network.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetwork_STATUS interface (if implemented) to customize the conversion
+	var networkAsAny any = network
+	if augmentedNetwork, ok := networkAsAny.(augmentConversionForNetwork_STATUS); ok {
+		err := augmentedNetwork.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Network_STATUS populates the provided destination Network_STATUS from our Network_STATUS
+func (network *Network_STATUS) AssignProperties_To_Network_STATUS(destination *storage.Network_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(network.PropertyBag)
+
+	// DelegatedSubnetResourceId
+	destination.DelegatedSubnetResourceId = genruntime.ClonePointerToString(network.DelegatedSubnetResourceId)
+
+	// PrivateDnsZoneArmResourceId
+	destination.PrivateDnsZoneArmResourceId = genruntime.ClonePointerToString(network.PrivateDnsZoneArmResourceId)
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(network.PublicNetworkAccess)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetwork_STATUS interface (if implemented) to customize the conversion
+	var networkAsAny any = network
+	if augmentedNetwork, ok := networkAsAny.(augmentConversionForNetwork_STATUS); ok {
+		err := augmentedNetwork.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.PrivateEndpointConnection_STATUS
@@ -454,8 +2676,64 @@ type PrivateEndpointConnection_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Replica
-// Replica properties of a server
+// Replica properties of a flexible server.
 type Replica struct {
 	PromoteMode   *string                `json:"promoteMode,omitempty"`
 	PromoteOption *string                `json:"promoteOption,omitempty"`
@@ -463,8 +2741,76 @@ type Replica struct {
 	Role          *string                `json:"role,omitempty"`
 }
 
+// AssignProperties_From_Replica populates our Replica from the provided source Replica
+func (replica *Replica) AssignProperties_From_Replica(source *storage.Replica) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PromoteMode
+	replica.PromoteMode = genruntime.ClonePointerToString(source.PromoteMode)
+
+	// PromoteOption
+	replica.PromoteOption = genruntime.ClonePointerToString(source.PromoteOption)
+
+	// Role
+	replica.Role = genruntime.ClonePointerToString(source.Role)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		replica.PropertyBag = propertyBag
+	} else {
+		replica.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReplica interface (if implemented) to customize the conversion
+	var replicaAsAny any = replica
+	if augmentedReplica, ok := replicaAsAny.(augmentConversionForReplica); ok {
+		err := augmentedReplica.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Replica populates the provided destination Replica from our Replica
+func (replica *Replica) AssignProperties_To_Replica(destination *storage.Replica) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(replica.PropertyBag)
+
+	// PromoteMode
+	destination.PromoteMode = genruntime.ClonePointerToString(replica.PromoteMode)
+
+	// PromoteOption
+	destination.PromoteOption = genruntime.ClonePointerToString(replica.PromoteOption)
+
+	// Role
+	destination.Role = genruntime.ClonePointerToString(replica.Role)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReplica interface (if implemented) to customize the conversion
+	var replicaAsAny any = replica
+	if augmentedReplica, ok := replicaAsAny.(augmentConversionForReplica); ok {
+		err := augmentedReplica.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Replica_STATUS
-// Replica properties of a server
+// Replica properties of a flexible server.
 type Replica_STATUS struct {
 	Capacity         *int                   `json:"capacity,omitempty"`
 	PromoteMode      *string                `json:"promoteMode,omitempty"`
@@ -474,24 +2820,228 @@ type Replica_STATUS struct {
 	Role             *string                `json:"role,omitempty"`
 }
 
+// AssignProperties_From_Replica_STATUS populates our Replica_STATUS from the provided source Replica_STATUS
+func (replica *Replica_STATUS) AssignProperties_From_Replica_STATUS(source *storage.Replica_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Capacity
+	replica.Capacity = genruntime.ClonePointerToInt(source.Capacity)
+
+	// PromoteMode
+	replica.PromoteMode = genruntime.ClonePointerToString(source.PromoteMode)
+
+	// PromoteOption
+	replica.PromoteOption = genruntime.ClonePointerToString(source.PromoteOption)
+
+	// ReplicationState
+	replica.ReplicationState = genruntime.ClonePointerToString(source.ReplicationState)
+
+	// Role
+	replica.Role = genruntime.ClonePointerToString(source.Role)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		replica.PropertyBag = propertyBag
+	} else {
+		replica.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReplica_STATUS interface (if implemented) to customize the conversion
+	var replicaAsAny any = replica
+	if augmentedReplica, ok := replicaAsAny.(augmentConversionForReplica_STATUS); ok {
+		err := augmentedReplica.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Replica_STATUS populates the provided destination Replica_STATUS from our Replica_STATUS
+func (replica *Replica_STATUS) AssignProperties_To_Replica_STATUS(destination *storage.Replica_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(replica.PropertyBag)
+
+	// Capacity
+	destination.Capacity = genruntime.ClonePointerToInt(replica.Capacity)
+
+	// PromoteMode
+	destination.PromoteMode = genruntime.ClonePointerToString(replica.PromoteMode)
+
+	// PromoteOption
+	destination.PromoteOption = genruntime.ClonePointerToString(replica.PromoteOption)
+
+	// ReplicationState
+	destination.ReplicationState = genruntime.ClonePointerToString(replica.ReplicationState)
+
+	// Role
+	destination.Role = genruntime.ClonePointerToString(replica.Role)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForReplica_STATUS interface (if implemented) to customize the conversion
+	var replicaAsAny any = replica
+	if augmentedReplica, ok := replicaAsAny.(augmentConversionForReplica_STATUS); ok {
+		err := augmentedReplica.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Sku
-// Sku information related properties of a server.
+// Compute information of a flexible server.
 type Sku struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Tier        *string                `json:"tier,omitempty"`
 }
 
+// AssignProperties_From_Sku populates our Sku from the provided source Sku
+func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Tier
+	sku.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sku.PropertyBag = propertyBag
+	} else {
+		sku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Sku populates the provided destination Sku from our Sku
+func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(sku.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Sku_STATUS
-// Sku information related properties of a server.
+// Compute information of a flexible server.
 type Sku_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Tier        *string                `json:"tier,omitempty"`
 }
 
+// AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Tier
+	sku.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sku.PropertyBag = propertyBag
+	} else {
+		sku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(sku.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Storage
-// Storage properties of a server
+// Storage properties of a flexible server.
 type Storage struct {
 	AutoGrow      *string                `json:"autoGrow,omitempty"`
 	Iops          *int                   `json:"iops,omitempty"`
@@ -502,8 +3052,94 @@ type Storage struct {
 	Type          *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_Storage populates our Storage from the provided source Storage
+func (storage *Storage) AssignProperties_From_Storage(source *storage.Storage) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoGrow
+	storage.AutoGrow = genruntime.ClonePointerToString(source.AutoGrow)
+
+	// Iops
+	storage.Iops = genruntime.ClonePointerToInt(source.Iops)
+
+	// StorageSizeGB
+	storage.StorageSizeGB = genruntime.ClonePointerToInt(source.StorageSizeGB)
+
+	// Throughput
+	storage.Throughput = genruntime.ClonePointerToInt(source.Throughput)
+
+	// Tier
+	storage.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Type
+	storage.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		storage.PropertyBag = propertyBag
+	} else {
+		storage.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorage interface (if implemented) to customize the conversion
+	var storageAsAny any = storage
+	if augmentedStorage, ok := storageAsAny.(augmentConversionForStorage); ok {
+		err := augmentedStorage.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Storage populates the provided destination Storage from our Storage
+func (storage *Storage) AssignProperties_To_Storage(destination *storage.Storage) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(storage.PropertyBag)
+
+	// AutoGrow
+	destination.AutoGrow = genruntime.ClonePointerToString(storage.AutoGrow)
+
+	// Iops
+	destination.Iops = genruntime.ClonePointerToInt(storage.Iops)
+
+	// StorageSizeGB
+	destination.StorageSizeGB = genruntime.ClonePointerToInt(storage.StorageSizeGB)
+
+	// Throughput
+	destination.Throughput = genruntime.ClonePointerToInt(storage.Throughput)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(storage.Tier)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(storage.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorage interface (if implemented) to customize the conversion
+	var storageAsAny any = storage
+	if augmentedStorage, ok := storageAsAny.(augmentConversionForStorage); ok {
+		err := augmentedStorage.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.Storage_STATUS
-// Storage properties of a server
+// Storage properties of a flexible server.
 type Storage_STATUS struct {
 	AutoGrow      *string                `json:"autoGrow,omitempty"`
 	Iops          *int                   `json:"iops,omitempty"`
@@ -512,6 +3148,92 @@ type Storage_STATUS struct {
 	Throughput    *int                   `json:"throughput,omitempty"`
 	Tier          *string                `json:"tier,omitempty"`
 	Type          *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_Storage_STATUS populates our Storage_STATUS from the provided source Storage_STATUS
+func (storage *Storage_STATUS) AssignProperties_From_Storage_STATUS(source *storage.Storage_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoGrow
+	storage.AutoGrow = genruntime.ClonePointerToString(source.AutoGrow)
+
+	// Iops
+	storage.Iops = genruntime.ClonePointerToInt(source.Iops)
+
+	// StorageSizeGB
+	storage.StorageSizeGB = genruntime.ClonePointerToInt(source.StorageSizeGB)
+
+	// Throughput
+	storage.Throughput = genruntime.ClonePointerToInt(source.Throughput)
+
+	// Tier
+	storage.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Type
+	storage.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		storage.PropertyBag = propertyBag
+	} else {
+		storage.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorage_STATUS interface (if implemented) to customize the conversion
+	var storageAsAny any = storage
+	if augmentedStorage, ok := storageAsAny.(augmentConversionForStorage_STATUS); ok {
+		err := augmentedStorage.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Storage_STATUS populates the provided destination Storage_STATUS from our Storage_STATUS
+func (storage *Storage_STATUS) AssignProperties_To_Storage_STATUS(destination *storage.Storage_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(storage.PropertyBag)
+
+	// AutoGrow
+	destination.AutoGrow = genruntime.ClonePointerToString(storage.AutoGrow)
+
+	// Iops
+	destination.Iops = genruntime.ClonePointerToInt(storage.Iops)
+
+	// StorageSizeGB
+	destination.StorageSizeGB = genruntime.ClonePointerToInt(storage.StorageSizeGB)
+
+	// Throughput
+	destination.Throughput = genruntime.ClonePointerToInt(storage.Throughput)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(storage.Tier)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(storage.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorage_STATUS interface (if implemented) to customize the conversion
+	var storageAsAny any = storage
+	if augmentedStorage, ok := storageAsAny.(augmentConversionForStorage_STATUS); ok {
+		err := augmentedStorage.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.SystemData_STATUS
@@ -526,8 +3248,94 @@ type SystemData_STATUS struct {
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.UserAssignedIdentity
-// Information describing the identities associated with this application.
+// Identities associated with a flexible server.
 type UserAssignedIdentity struct {
 	PrincipalId            *string                       `json:"principalId,omitempty"`
 	PropertyBag            genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
@@ -535,8 +3343,102 @@ type UserAssignedIdentity struct {
 	UserAssignedIdentities []UserAssignedIdentityDetails `json:"userAssignedIdentities,omitempty"`
 }
 
+// AssignProperties_From_UserAssignedIdentity populates our UserAssignedIdentity from the provided source UserAssignedIdentity
+func (identity *UserAssignedIdentity) AssignProperties_From_UserAssignedIdentity(source *storage.UserAssignedIdentity) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrincipalId
+	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// Type
+	identity.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if source.UserAssignedIdentities != nil {
+		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
+		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
+			var userAssignedIdentity UserAssignedIdentityDetails
+			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
+		}
+		identity.UserAssignedIdentities = userAssignedIdentityList
+	} else {
+		identity.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identity.PropertyBag = propertyBag
+	} else {
+		identity.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentity interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity); ok {
+		err := augmentedIdentity.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UserAssignedIdentity populates the provided destination UserAssignedIdentity from our UserAssignedIdentity
+func (identity *UserAssignedIdentity) AssignProperties_To_UserAssignedIdentity(destination *storage.UserAssignedIdentity) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identity.PropertyBag)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(identity.PrincipalId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(identity.Type)
+
+	// UserAssignedIdentities
+	if identity.UserAssignedIdentities != nil {
+		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
+		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
+			var userAssignedIdentity storage.UserAssignedIdentityDetails
+			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
+		}
+		destination.UserAssignedIdentities = userAssignedIdentityList
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentity interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity); ok {
+		err := augmentedIdentity.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.UserAssignedIdentity_STATUS
-// Information describing the identities associated with this application.
+// Identities associated with a flexible server.
 type UserAssignedIdentity_STATUS struct {
 	PrincipalId            *string                        `json:"principalId,omitempty"`
 	PropertyBag            genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
@@ -545,16 +3447,363 @@ type UserAssignedIdentity_STATUS struct {
 	UserAssignedIdentities map[string]UserIdentity_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
+// AssignProperties_From_UserAssignedIdentity_STATUS populates our UserAssignedIdentity_STATUS from the provided source UserAssignedIdentity_STATUS
+func (identity *UserAssignedIdentity_STATUS) AssignProperties_From_UserAssignedIdentity_STATUS(source *storage.UserAssignedIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrincipalId
+	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// TenantId
+	identity.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// Type
+	identity.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if source.UserAssignedIdentities != nil {
+		userAssignedIdentityMap := make(map[string]UserIdentity_STATUS, len(source.UserAssignedIdentities))
+		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
+			var userAssignedIdentity UserIdentity_STATUS
+			err := userAssignedIdentity.AssignProperties_From_UserIdentity_STATUS(&userAssignedIdentityValue)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UserIdentity_STATUS() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
+		}
+		identity.UserAssignedIdentities = userAssignedIdentityMap
+	} else {
+		identity.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identity.PropertyBag = propertyBag
+	} else {
+		identity.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UserAssignedIdentity_STATUS populates the provided destination UserAssignedIdentity_STATUS from our UserAssignedIdentity_STATUS
+func (identity *UserAssignedIdentity_STATUS) AssignProperties_To_UserAssignedIdentity_STATUS(destination *storage.UserAssignedIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identity.PropertyBag)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(identity.PrincipalId)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(identity.TenantId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(identity.Type)
+
+	// UserAssignedIdentities
+	if identity.UserAssignedIdentities != nil {
+		userAssignedIdentityMap := make(map[string]storage.UserIdentity_STATUS, len(identity.UserAssignedIdentities))
+		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
+			var userAssignedIdentity storage.UserIdentity_STATUS
+			err := userAssignedIdentityValue.AssignProperties_To_UserIdentity_STATUS(&userAssignedIdentity)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UserIdentity_STATUS() to populate field UserAssignedIdentities")
+			}
+			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
+		}
+		destination.UserAssignedIdentities = userAssignedIdentityMap
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserAssignedIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthConfig interface {
+	AssignPropertiesFrom(src *storage.AuthConfig) error
+	AssignPropertiesTo(dst *storage.AuthConfig) error
+}
+
+type augmentConversionForAuthConfig_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthConfig_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthConfig_STATUS) error
+}
+
+type augmentConversionForBackup interface {
+	AssignPropertiesFrom(src *storage.Backup) error
+	AssignPropertiesTo(dst *storage.Backup) error
+}
+
+type augmentConversionForBackup_STATUS interface {
+	AssignPropertiesFrom(src *storage.Backup_STATUS) error
+	AssignPropertiesTo(dst *storage.Backup_STATUS) error
+}
+
+type augmentConversionForDataEncryption interface {
+	AssignPropertiesFrom(src *storage.DataEncryption) error
+	AssignPropertiesTo(dst *storage.DataEncryption) error
+}
+
+type augmentConversionForDataEncryption_STATUS interface {
+	AssignPropertiesFrom(src *storage.DataEncryption_STATUS) error
+	AssignPropertiesTo(dst *storage.DataEncryption_STATUS) error
+}
+
+type augmentConversionForFlexibleServerOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.FlexibleServerOperatorSpec) error
+	AssignPropertiesTo(dst *storage.FlexibleServerOperatorSpec) error
+}
+
+type augmentConversionForHighAvailability interface {
+	AssignPropertiesFrom(src *storage.HighAvailability) error
+	AssignPropertiesTo(dst *storage.HighAvailability) error
+}
+
+type augmentConversionForHighAvailability_STATUS interface {
+	AssignPropertiesFrom(src *storage.HighAvailability_STATUS) error
+	AssignPropertiesTo(dst *storage.HighAvailability_STATUS) error
+}
+
+type augmentConversionForMaintenanceWindow interface {
+	AssignPropertiesFrom(src *storage.MaintenanceWindow) error
+	AssignPropertiesTo(dst *storage.MaintenanceWindow) error
+}
+
+type augmentConversionForMaintenanceWindow_STATUS interface {
+	AssignPropertiesFrom(src *storage.MaintenanceWindow_STATUS) error
+	AssignPropertiesTo(dst *storage.MaintenanceWindow_STATUS) error
+}
+
+type augmentConversionForNetwork interface {
+	AssignPropertiesFrom(src *storage.Network) error
+	AssignPropertiesTo(dst *storage.Network) error
+}
+
+type augmentConversionForNetwork_STATUS interface {
+	AssignPropertiesFrom(src *storage.Network_STATUS) error
+	AssignPropertiesTo(dst *storage.Network_STATUS) error
+}
+
+type augmentConversionForPrivateEndpointConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS) error
+}
+
+type augmentConversionForReplica interface {
+	AssignPropertiesFrom(src *storage.Replica) error
+	AssignPropertiesTo(dst *storage.Replica) error
+}
+
+type augmentConversionForReplica_STATUS interface {
+	AssignPropertiesFrom(src *storage.Replica_STATUS) error
+	AssignPropertiesTo(dst *storage.Replica_STATUS) error
+}
+
+type augmentConversionForSku interface {
+	AssignPropertiesFrom(src *storage.Sku) error
+	AssignPropertiesTo(dst *storage.Sku) error
+}
+
+type augmentConversionForSku_STATUS interface {
+	AssignPropertiesFrom(src *storage.Sku_STATUS) error
+	AssignPropertiesTo(dst *storage.Sku_STATUS) error
+}
+
+type augmentConversionForStorage interface {
+	AssignPropertiesFrom(src *storage.Storage) error
+	AssignPropertiesTo(dst *storage.Storage) error
+}
+
+type augmentConversionForStorage_STATUS interface {
+	AssignPropertiesFrom(src *storage.Storage_STATUS) error
+	AssignPropertiesTo(dst *storage.Storage_STATUS) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
+}
+
+type augmentConversionForUserAssignedIdentity interface {
+	AssignPropertiesFrom(src *storage.UserAssignedIdentity) error
+	AssignPropertiesTo(dst *storage.UserAssignedIdentity) error
+}
+
+type augmentConversionForUserAssignedIdentity_STATUS interface {
+	AssignPropertiesFrom(src *storage.UserAssignedIdentity_STATUS) error
+	AssignPropertiesTo(dst *storage.UserAssignedIdentity_STATUS) error
+}
+
 // Storage version of v1api20240801.FlexibleServerOperatorConfigMaps
 type FlexibleServerOperatorConfigMaps struct {
 	FullyQualifiedDomainName *genruntime.ConfigMapDestination `json:"fullyQualifiedDomainName,omitempty"`
 	PropertyBag              genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_FlexibleServerOperatorConfigMaps populates our FlexibleServerOperatorConfigMaps from the provided source FlexibleServerOperatorConfigMaps
+func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_From_FlexibleServerOperatorConfigMaps(source *storage.FlexibleServerOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// FullyQualifiedDomainName
+	if source.FullyQualifiedDomainName != nil {
+		fullyQualifiedDomainName := source.FullyQualifiedDomainName.Copy()
+		maps.FullyQualifiedDomainName = &fullyQualifiedDomainName
+	} else {
+		maps.FullyQualifiedDomainName = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		maps.PropertyBag = propertyBag
+	} else {
+		maps.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForFlexibleServerOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServerOperatorConfigMaps populates the provided destination FlexibleServerOperatorConfigMaps from our FlexibleServerOperatorConfigMaps
+func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_To_FlexibleServerOperatorConfigMaps(destination *storage.FlexibleServerOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(maps.PropertyBag)
+
+	// FullyQualifiedDomainName
+	if maps.FullyQualifiedDomainName != nil {
+		fullyQualifiedDomainName := maps.FullyQualifiedDomainName.Copy()
+		destination.FullyQualifiedDomainName = &fullyQualifiedDomainName
+	} else {
+		destination.FullyQualifiedDomainName = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForFlexibleServerOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.FlexibleServerOperatorSecrets
 type FlexibleServerOperatorSecrets struct {
 	FullyQualifiedDomainName *genruntime.SecretDestination `json:"fullyQualifiedDomainName,omitempty"`
 	PropertyBag              genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_FlexibleServerOperatorSecrets populates our FlexibleServerOperatorSecrets from the provided source FlexibleServerOperatorSecrets
+func (secrets *FlexibleServerOperatorSecrets) AssignProperties_From_FlexibleServerOperatorSecrets(source *storage.FlexibleServerOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// FullyQualifiedDomainName
+	if source.FullyQualifiedDomainName != nil {
+		fullyQualifiedDomainName := source.FullyQualifiedDomainName.Copy()
+		secrets.FullyQualifiedDomainName = &fullyQualifiedDomainName
+	} else {
+		secrets.FullyQualifiedDomainName = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		secrets.PropertyBag = propertyBag
+	} else {
+		secrets.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForFlexibleServerOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FlexibleServerOperatorSecrets populates the provided destination FlexibleServerOperatorSecrets from our FlexibleServerOperatorSecrets
+func (secrets *FlexibleServerOperatorSecrets) AssignProperties_To_FlexibleServerOperatorSecrets(destination *storage.FlexibleServerOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(secrets.PropertyBag)
+
+	// FullyQualifiedDomainName
+	if secrets.FullyQualifiedDomainName != nil {
+		fullyQualifiedDomainName := secrets.FullyQualifiedDomainName.Copy()
+		destination.FullyQualifiedDomainName = &fullyQualifiedDomainName
+	} else {
+		destination.FullyQualifiedDomainName = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFlexibleServerOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForFlexibleServerOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240801.UserAssignedIdentityDetails
@@ -564,12 +3813,150 @@ type UserAssignedIdentityDetails struct {
 	Reference   genruntime.ResourceReference `armReference:"Reference" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_UserAssignedIdentityDetails populates our UserAssignedIdentityDetails from the provided source UserAssignedIdentityDetails
+func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *storage.UserAssignedIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	details.Reference = source.Reference.Copy()
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UserAssignedIdentityDetails populates the provided destination UserAssignedIdentityDetails from our UserAssignedIdentityDetails
+func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *storage.UserAssignedIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// Reference
+	destination.Reference = details.Reference.Copy()
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserAssignedIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForUserAssignedIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240801.UserIdentity_STATUS
-// Describes a single user-assigned identity associated with the application.
+// User assigned managed identity associated with a flexible server.
 type UserIdentity_STATUS struct {
 	ClientId    *string                `json:"clientId,omitempty"`
 	PrincipalId *string                `json:"principalId,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_UserIdentity_STATUS populates our UserIdentity_STATUS from the provided source UserIdentity_STATUS
+func (identity *UserIdentity_STATUS) AssignProperties_From_UserIdentity_STATUS(source *storage.UserIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ClientId
+	identity.ClientId = genruntime.ClonePointerToString(source.ClientId)
+
+	// PrincipalId
+	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identity.PropertyBag = propertyBag
+	} else {
+		identity.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UserIdentity_STATUS populates the provided destination UserIdentity_STATUS from our UserIdentity_STATUS
+func (identity *UserIdentity_STATUS) AssignProperties_To_UserIdentity_STATUS(destination *storage.UserIdentity_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identity.PropertyBag)
+
+	// ClientId
+	destination.ClientId = genruntime.ClonePointerToString(identity.ClientId)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(identity.PrincipalId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUserIdentity_STATUS interface (if implemented) to customize the conversion
+	var identityAsAny any = identity
+	if augmentedIdentity, ok := identityAsAny.(augmentConversionForUserIdentity_STATUS); ok {
+		err := augmentedIdentity.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFlexibleServerOperatorConfigMaps interface {
+	AssignPropertiesFrom(src *storage.FlexibleServerOperatorConfigMaps) error
+	AssignPropertiesTo(dst *storage.FlexibleServerOperatorConfigMaps) error
+}
+
+type augmentConversionForFlexibleServerOperatorSecrets interface {
+	AssignPropertiesFrom(src *storage.FlexibleServerOperatorSecrets) error
+	AssignPropertiesTo(dst *storage.FlexibleServerOperatorSecrets) error
+}
+
+type augmentConversionForUserAssignedIdentityDetails interface {
+	AssignPropertiesFrom(src *storage.UserAssignedIdentityDetails) error
+	AssignPropertiesTo(dst *storage.UserAssignedIdentityDetails) error
+}
+
+type augmentConversionForUserIdentity_STATUS interface {
+	AssignPropertiesFrom(src *storage.UserIdentity_STATUS) error
+	AssignPropertiesTo(dst *storage.UserIdentity_STATUS) error
 }
 
 func init() {

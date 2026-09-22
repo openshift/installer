@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/snapshot.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}
 type Snapshot struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (snapshot *Snapshot) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/snapshot.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/snapshots/{snapshotName}
 type SnapshotList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -272,9 +273,6 @@ type Snapshot_Spec struct {
 	// allowed if the disk is not attached to a running VM, and can only increase the disk's size.
 	DiskSizeGB *int `json:"diskSizeGB,omitempty"`
 
-	// DiskState: The state of the snapshot.
-	DiskState *DiskState `json:"diskState,omitempty"`
-
 	// Encryption: Encryption property can be used to encrypt data at rest with customer managed keys or platform managed keys.
 	Encryption *Encryption `json:"encryption,omitempty"`
 
@@ -286,14 +284,14 @@ type Snapshot_Spec struct {
 	ExtendedLocation *ExtendedLocation `json:"extendedLocation,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *SnapshotProperties_HyperVGeneration `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration `json:"hyperVGeneration,omitempty"`
 
 	// Incremental: Whether a snapshot is incremental. Incremental snapshots on the same disk occupy less space than full
 	// snapshots and can be diffed.
 	Incremental *bool `json:"incremental,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// NetworkAccessPolicy: Policy for accessing the disk via network.
@@ -304,7 +302,7 @@ type Snapshot_Spec struct {
 	OperatorSpec *SnapshotOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *SnapshotProperties_OsType `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes `json:"osType,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -316,13 +314,13 @@ type Snapshot_Spec struct {
 	PublicNetworkAccess *PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
 
 	// PurchasePlan: Purchase plan information for the image from which the source disk for the snapshot was originally created.
-	PurchasePlan *PurchasePlan `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile `json:"securityProfile,omitempty"`
 
 	// Sku: The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for
-	// incremental  snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
+	// incremental snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 	Sku *SnapshotSku `json:"sku,omitempty"`
 
 	// SupportedCapabilities: List of supported capabilities for the image from which the source disk from the snapshot was
@@ -332,7 +330,7 @@ type Snapshot_Spec struct {
 	// SupportsHibernation: Indicates the OS on a snapshot supports hibernation.
 	SupportsHibernation *bool `json:"supportsHibernation,omitempty"`
 
-	// Tags: Resource tags
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
@@ -347,7 +345,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "ExtendedLocation":
 	if snapshot.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*snapshot.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := snapshot.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +369,6 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		snapshot.DataAccessAuthMode != nil ||
 		snapshot.DiskAccessReference != nil ||
 		snapshot.DiskSizeGB != nil ||
-		snapshot.DiskState != nil ||
 		snapshot.Encryption != nil ||
 		snapshot.EncryptionSettingsCollection != nil ||
 		snapshot.HyperVGeneration != nil ||
@@ -390,7 +387,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.CompletionPercent = &completionPercent
 	}
 	if snapshot.CopyCompletionError != nil {
-		copyCompletionError_ARM, err := (*snapshot.CopyCompletionError).ConvertToARM(resolved)
+		copyCompletionError_ARM, err := snapshot.CopyCompletionError.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -398,7 +395,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.CopyCompletionError = &copyCompletionError
 	}
 	if snapshot.CreationData != nil {
-		creationData_ARM, err := (*snapshot.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := snapshot.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -423,14 +420,8 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		diskSizeGB := *snapshot.DiskSizeGB
 		result.Properties.DiskSizeGB = &diskSizeGB
 	}
-	if snapshot.DiskState != nil {
-		var temp string
-		temp = string(*snapshot.DiskState)
-		diskState := arm.DiskState(temp)
-		result.Properties.DiskState = &diskState
-	}
 	if snapshot.Encryption != nil {
-		encryption_ARM, err := (*snapshot.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := snapshot.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -438,7 +429,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.Encryption = &encryption
 	}
 	if snapshot.EncryptionSettingsCollection != nil {
-		encryptionSettingsCollection_ARM, err := (*snapshot.EncryptionSettingsCollection).ConvertToARM(resolved)
+		encryptionSettingsCollection_ARM, err := snapshot.EncryptionSettingsCollection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +439,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if snapshot.HyperVGeneration != nil {
 		var temp string
 		temp = string(*snapshot.HyperVGeneration)
-		hyperVGeneration := arm.SnapshotProperties_HyperVGeneration(temp)
+		hyperVGeneration := arm.HyperVGeneration(temp)
 		result.Properties.HyperVGeneration = &hyperVGeneration
 	}
 	if snapshot.Incremental != nil {
@@ -464,7 +455,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if snapshot.OsType != nil {
 		var temp string
 		temp = string(*snapshot.OsType)
-		osType := arm.SnapshotProperties_OsType(temp)
+		osType := arm.OperatingSystemTypes(temp)
 		result.Properties.OsType = &osType
 	}
 	if snapshot.PublicNetworkAccess != nil {
@@ -474,15 +465,15 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if snapshot.PurchasePlan != nil {
-		purchasePlan_ARM, err := (*snapshot.PurchasePlan).ConvertToARM(resolved)
+		purchasePlan_ARM, err := snapshot.PurchasePlan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		purchasePlan := *purchasePlan_ARM.(*arm.PurchasePlan)
+		purchasePlan := *purchasePlan_ARM.(*arm.DiskPurchasePlan)
 		result.Properties.PurchasePlan = &purchasePlan
 	}
 	if snapshot.SecurityProfile != nil {
-		securityProfile_ARM, err := (*snapshot.SecurityProfile).ConvertToARM(resolved)
+		securityProfile_ARM, err := snapshot.SecurityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -490,7 +481,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.SecurityProfile = &securityProfile
 	}
 	if snapshot.SupportedCapabilities != nil {
-		supportedCapabilities_ARM, err := (*snapshot.SupportedCapabilities).ConvertToARM(resolved)
+		supportedCapabilities_ARM, err := snapshot.SupportedCapabilities.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +495,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Sku":
 	if snapshot.Sku != nil {
-		sku_ARM, err := (*snapshot.Sku).ConvertToARM(resolved)
+		sku_ARM, err := snapshot.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -596,17 +587,6 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 		}
 	}
 
-	// Set property "DiskState":
-	// copying flattened property:
-	if typedInput.Properties != nil {
-		if typedInput.Properties.DiskState != nil {
-			var temp string
-			temp = string(*typedInput.Properties.DiskState)
-			diskState := DiskState(temp)
-			snapshot.DiskState = &diskState
-		}
-	}
-
 	// Set property "Encryption":
 	// copying flattened property:
 	if typedInput.Properties != nil {
@@ -652,7 +632,7 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 		if typedInput.Properties.HyperVGeneration != nil {
 			var temp string
 			temp = string(*typedInput.Properties.HyperVGeneration)
-			hyperVGeneration := SnapshotProperties_HyperVGeneration(temp)
+			hyperVGeneration := HyperVGeneration(temp)
 			snapshot.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -691,7 +671,7 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 		if typedInput.Properties.OsType != nil {
 			var temp string
 			temp = string(*typedInput.Properties.OsType)
-			osType := SnapshotProperties_OsType(temp)
+			osType := OperatingSystemTypes(temp)
 			snapshot.OsType = &osType
 		}
 	}
@@ -717,7 +697,7 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PurchasePlan != nil {
-			var purchasePlan1 PurchasePlan
+			var purchasePlan1 DiskPurchasePlan
 			err := purchasePlan1.PopulateFromARM(owner, *typedInput.Properties.PurchasePlan)
 			if err != nil {
 				return err
@@ -895,15 +875,6 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *stora
 	// DiskSizeGB
 	snapshot.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
 
-	// DiskState
-	if source.DiskState != nil {
-		diskState := *source.DiskState
-		diskStateTemp := genruntime.ToEnum(diskState, diskState_Values)
-		snapshot.DiskState = &diskStateTemp
-	} else {
-		snapshot.DiskState = nil
-	}
-
 	// Encryption
 	if source.Encryption != nil {
 		var encryption Encryption
@@ -943,7 +914,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *stora
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
 		hyperVGeneration := *source.HyperVGeneration
-		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, snapshotProperties_HyperVGeneration_Values)
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, hyperVGeneration_Values)
 		snapshot.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		snapshot.HyperVGeneration = nil
@@ -984,7 +955,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *stora
 	// OsType
 	if source.OsType != nil {
 		osType := *source.OsType
-		osTypeTemp := genruntime.ToEnum(osType, snapshotProperties_OsType_Values)
+		osTypeTemp := genruntime.ToEnum(osType, operatingSystemTypes_Values)
 		snapshot.OsType = &osTypeTemp
 	} else {
 		snapshot.OsType = nil
@@ -1009,10 +980,10 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *stora
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan
-		err := purchasePlan.AssignProperties_From_PurchasePlan(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		snapshot.PurchasePlan = &purchasePlan
 	} else {
@@ -1129,14 +1100,6 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *st
 	// DiskSizeGB
 	destination.DiskSizeGB = genruntime.ClonePointerToInt(snapshot.DiskSizeGB)
 
-	// DiskState
-	if snapshot.DiskState != nil {
-		diskState := string(*snapshot.DiskState)
-		destination.DiskState = &diskState
-	} else {
-		destination.DiskState = nil
-	}
-
 	// Encryption
 	if snapshot.Encryption != nil {
 		var encryption storage.Encryption
@@ -1241,10 +1204,10 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *st
 
 	// PurchasePlan
 	if snapshot.PurchasePlan != nil {
-		var purchasePlan storage.PurchasePlan
-		err := snapshot.PurchasePlan.AssignProperties_To_PurchasePlan(&purchasePlan)
+		var purchasePlan storage.DiskPurchasePlan
+		err := snapshot.PurchasePlan.AssignProperties_To_DiskPurchasePlan(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -1363,14 +1326,6 @@ func (snapshot *Snapshot_Spec) Initialize_From_Snapshot_STATUS(source *Snapshot_
 	// DiskSizeGB
 	snapshot.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
 
-	// DiskState
-	if source.DiskState != nil {
-		diskState := genruntime.ToEnum(string(*source.DiskState), diskState_Values)
-		snapshot.DiskState = &diskState
-	} else {
-		snapshot.DiskState = nil
-	}
-
 	// Encryption
 	if source.Encryption != nil {
 		var encryption Encryption
@@ -1409,7 +1364,7 @@ func (snapshot *Snapshot_Spec) Initialize_From_Snapshot_STATUS(source *Snapshot_
 
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
-		hyperVGeneration := genruntime.ToEnum(string(*source.HyperVGeneration), snapshotProperties_HyperVGeneration_Values)
+		hyperVGeneration := genruntime.ToEnum(string(*source.HyperVGeneration), hyperVGeneration_Values)
 		snapshot.HyperVGeneration = &hyperVGeneration
 	} else {
 		snapshot.HyperVGeneration = nil
@@ -1436,7 +1391,7 @@ func (snapshot *Snapshot_Spec) Initialize_From_Snapshot_STATUS(source *Snapshot_
 
 	// OsType
 	if source.OsType != nil {
-		osType := genruntime.ToEnum(string(*source.OsType), snapshotProperties_OsType_Values)
+		osType := genruntime.ToEnum(string(*source.OsType), operatingSystemTypes_Values)
 		snapshot.OsType = &osType
 	} else {
 		snapshot.OsType = nil
@@ -1452,10 +1407,10 @@ func (snapshot *Snapshot_Spec) Initialize_From_Snapshot_STATUS(source *Snapshot_
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan
-		err := purchasePlan.Initialize_From_PurchasePlan_STATUS(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan
+		err := purchasePlan.Initialize_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling Initialize_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		snapshot.PurchasePlan = &purchasePlan
 	} else {
@@ -1564,9 +1519,10 @@ type Snapshot_STATUS struct {
 	ExtendedLocation *ExtendedLocation_STATUS `json:"extendedLocation,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *SnapshotProperties_HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
 
-	// Id: Resource Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
 	// Incremental: Whether a snapshot is incremental. Incremental snapshots on the same disk occupy less space than full
@@ -1577,20 +1533,20 @@ type Snapshot_STATUS struct {
 	// Range Diff API can only be called on incremental snapshots with the same family id.
 	IncrementalSnapshotFamilyId *string `json:"incrementalSnapshotFamilyId,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// ManagedBy: Unused. Always Null.
 	ManagedBy *string `json:"managedBy,omitempty"`
 
-	// Name: Resource name
+	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
 	// NetworkAccessPolicy: Policy for accessing the disk via network.
 	NetworkAccessPolicy *NetworkAccessPolicy_STATUS `json:"networkAccessPolicy,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *SnapshotProperties_OsType_STATUS `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes_STATUS `json:"osType,omitempty"`
 
 	// ProvisioningState: The disk provisioning state.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
@@ -1599,13 +1555,13 @@ type Snapshot_STATUS struct {
 	PublicNetworkAccess *PublicNetworkAccess_STATUS `json:"publicNetworkAccess,omitempty"`
 
 	// PurchasePlan: Purchase plan information for the image from which the source disk for the snapshot was originally created.
-	PurchasePlan *PurchasePlan_STATUS `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan_STATUS `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile_STATUS `json:"securityProfile,omitempty"`
 
 	// Sku: The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for
-	// incremental  snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
+	// incremental snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 	Sku *SnapshotSku_STATUS `json:"sku,omitempty"`
 
 	// SupportedCapabilities: List of supported capabilities for the image from which the source disk from the snapshot was
@@ -1615,13 +1571,16 @@ type Snapshot_STATUS struct {
 	// SupportsHibernation: Indicates the OS on a snapshot supports hibernation.
 	SupportsHibernation *bool `json:"supportsHibernation,omitempty"`
 
-	// Tags: Resource tags
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// TimeCreated: The time when the snapshot was created.
 	TimeCreated *string `json:"timeCreated,omitempty"`
 
-	// Type: Resource type
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
 	// UniqueId: Unique Guid identifying the resource.
@@ -1825,7 +1784,7 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 		if typedInput.Properties.HyperVGeneration != nil {
 			var temp string
 			temp = string(*typedInput.Properties.HyperVGeneration)
-			hyperVGeneration := SnapshotProperties_HyperVGeneration_STATUS(temp)
+			hyperVGeneration := HyperVGeneration_STATUS(temp)
 			snapshot.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -1889,7 +1848,7 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 		if typedInput.Properties.OsType != nil {
 			var temp string
 			temp = string(*typedInput.Properties.OsType)
-			osType := SnapshotProperties_OsType_STATUS(temp)
+			osType := OperatingSystemTypes_STATUS(temp)
 			snapshot.OsType = &osType
 		}
 	}
@@ -1918,7 +1877,7 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PurchasePlan != nil {
-			var purchasePlan1 PurchasePlan_STATUS
+			var purchasePlan1 DiskPurchasePlan_STATUS
 			err := purchasePlan1.PopulateFromARM(owner, *typedInput.Properties.PurchasePlan)
 			if err != nil {
 				return err
@@ -1974,6 +1933,17 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 			supportsHibernation := *typedInput.Properties.SupportsHibernation
 			snapshot.SupportsHibernation = &supportsHibernation
 		}
+	}
+
+	// Set property "SystemData":
+	if typedInput.SystemData != nil {
+		var systemData1 SystemData_STATUS
+		err := systemData1.PopulateFromARM(owner, *typedInput.SystemData)
+		if err != nil {
+			return err
+		}
+		systemData := systemData1
+		snapshot.SystemData = &systemData
 	}
 
 	// Set property "Tags":
@@ -2116,7 +2086,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *s
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
 		hyperVGeneration := *source.HyperVGeneration
-		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, snapshotProperties_HyperVGeneration_STATUS_Values)
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, hyperVGeneration_STATUS_Values)
 		snapshot.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		snapshot.HyperVGeneration = nil
@@ -2157,7 +2127,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *s
 	// OsType
 	if source.OsType != nil {
 		osType := *source.OsType
-		osTypeTemp := genruntime.ToEnum(osType, snapshotProperties_OsType_STATUS_Values)
+		osTypeTemp := genruntime.ToEnum(osType, operatingSystemTypes_STATUS_Values)
 		snapshot.OsType = &osTypeTemp
 	} else {
 		snapshot.OsType = nil
@@ -2177,10 +2147,10 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *s
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan_STATUS
-		err := purchasePlan.AssignProperties_From_PurchasePlan_STATUS(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan_STATUS
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		snapshot.PurchasePlan = &purchasePlan
 	} else {
@@ -2229,6 +2199,18 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *s
 		snapshot.SupportsHibernation = &supportsHibernation
 	} else {
 		snapshot.SupportsHibernation = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		snapshot.SystemData = &systemDatum
+	} else {
+		snapshot.SystemData = nil
 	}
 
 	// Tags
@@ -2408,10 +2390,10 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// PurchasePlan
 	if snapshot.PurchasePlan != nil {
-		var purchasePlan storage.PurchasePlan_STATUS
-		err := snapshot.PurchasePlan.AssignProperties_To_PurchasePlan_STATUS(&purchasePlan)
+		var purchasePlan storage.DiskPurchasePlan_STATUS
+		err := snapshot.PurchasePlan.AssignProperties_To_DiskPurchasePlan_STATUS(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -2462,6 +2444,18 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 		destination.SupportsHibernation = nil
 	}
 
+	// SystemData
+	if snapshot.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := snapshot.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
 	// Tags
 	destination.Tags = genruntime.CloneMapOfStringToString(snapshot.Tags)
 
@@ -2489,7 +2483,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 type CopyCompletionError struct {
 	// +kubebuilder:validation:Required
 	// ErrorCode: Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
-	ErrorCode *CopyCompletionError_ErrorCode `json:"errorCode,omitempty"`
+	ErrorCode *CopyCompletionErrorReason `json:"errorCode,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// ErrorMessage: Indicates the error message if the background copy of a resource created via the CopyStart operation fails.
@@ -2509,7 +2503,7 @@ func (error *CopyCompletionError) ConvertToARM(resolved genruntime.ConvertToARMR
 	if error.ErrorCode != nil {
 		var temp string
 		temp = string(*error.ErrorCode)
-		errorCode := arm.CopyCompletionError_ErrorCode(temp)
+		errorCode := arm.CopyCompletionErrorReason(temp)
 		result.ErrorCode = &errorCode
 	}
 
@@ -2537,7 +2531,7 @@ func (error *CopyCompletionError) PopulateFromARM(owner genruntime.ArbitraryOwne
 	if typedInput.ErrorCode != nil {
 		var temp string
 		temp = string(*typedInput.ErrorCode)
-		errorCode := CopyCompletionError_ErrorCode(temp)
+		errorCode := CopyCompletionErrorReason(temp)
 		error.ErrorCode = &errorCode
 	}
 
@@ -2557,7 +2551,7 @@ func (error *CopyCompletionError) AssignProperties_From_CopyCompletionError(sour
 	// ErrorCode
 	if source.ErrorCode != nil {
 		errorCode := *source.ErrorCode
-		errorCodeTemp := genruntime.ToEnum(errorCode, copyCompletionError_ErrorCode_Values)
+		errorCodeTemp := genruntime.ToEnum(errorCode, copyCompletionErrorReason_Values)
 		error.ErrorCode = &errorCodeTemp
 	} else {
 		error.ErrorCode = nil
@@ -2602,7 +2596,7 @@ func (error *CopyCompletionError) Initialize_From_CopyCompletionError_STATUS(sou
 
 	// ErrorCode
 	if source.ErrorCode != nil {
-		errorCode := genruntime.ToEnum(string(*source.ErrorCode), copyCompletionError_ErrorCode_Values)
+		errorCode := genruntime.ToEnum(string(*source.ErrorCode), copyCompletionErrorReason_Values)
 		error.ErrorCode = &errorCode
 	} else {
 		error.ErrorCode = nil
@@ -2618,7 +2612,7 @@ func (error *CopyCompletionError) Initialize_From_CopyCompletionError_STATUS(sou
 // Indicates the error details if the background copy of a resource created via the CopyStart operation fails.
 type CopyCompletionError_STATUS struct {
 	// ErrorCode: Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
-	ErrorCode *CopyCompletionError_ErrorCode_STATUS `json:"errorCode,omitempty"`
+	ErrorCode *CopyCompletionErrorReason_STATUS `json:"errorCode,omitempty"`
 
 	// ErrorMessage: Indicates the error message if the background copy of a resource created via the CopyStart operation fails.
 	ErrorMessage *string `json:"errorMessage,omitempty"`
@@ -2642,7 +2636,7 @@ func (error *CopyCompletionError_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	if typedInput.ErrorCode != nil {
 		var temp string
 		temp = string(*typedInput.ErrorCode)
-		errorCode := CopyCompletionError_ErrorCode_STATUS(temp)
+		errorCode := CopyCompletionErrorReason_STATUS(temp)
 		error.ErrorCode = &errorCode
 	}
 
@@ -2662,7 +2656,7 @@ func (error *CopyCompletionError_STATUS) AssignProperties_From_CopyCompletionErr
 	// ErrorCode
 	if source.ErrorCode != nil {
 		errorCode := *source.ErrorCode
-		errorCodeTemp := genruntime.ToEnum(errorCode, copyCompletionError_ErrorCode_STATUS_Values)
+		errorCodeTemp := genruntime.ToEnum(errorCode, copyCompletionErrorReason_STATUS_Values)
 		error.ErrorCode = &errorCodeTemp
 	} else {
 		error.ErrorCode = nil
@@ -2702,33 +2696,6 @@ func (error *CopyCompletionError_STATUS) AssignProperties_To_CopyCompletionError
 	return nil
 }
 
-// This enumerates the possible state of the disk.
-// +kubebuilder:validation:Enum={"ActiveSAS","ActiveSASFrozen","ActiveUpload","Attached","Frozen","ReadyToUpload","Reserved","Unattached"}
-type DiskState string
-
-const (
-	DiskState_ActiveSAS       = DiskState("ActiveSAS")
-	DiskState_ActiveSASFrozen = DiskState("ActiveSASFrozen")
-	DiskState_ActiveUpload    = DiskState("ActiveUpload")
-	DiskState_Attached        = DiskState("Attached")
-	DiskState_Frozen          = DiskState("Frozen")
-	DiskState_ReadyToUpload   = DiskState("ReadyToUpload")
-	DiskState_Reserved        = DiskState("Reserved")
-	DiskState_Unattached      = DiskState("Unattached")
-)
-
-// Mapping from string to DiskState
-var diskState_Values = map[string]DiskState{
-	"activesas":       DiskState_ActiveSAS,
-	"activesasfrozen": DiskState_ActiveSASFrozen,
-	"activeupload":    DiskState_ActiveUpload,
-	"attached":        DiskState_Attached,
-	"frozen":          DiskState_Frozen,
-	"readytoupload":   DiskState_ReadyToUpload,
-	"reserved":        DiskState_Reserved,
-	"unattached":      DiskState_Unattached,
-}
-
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type SnapshotOperatorSpec struct {
 	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
@@ -2745,8 +2712,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_From_SnapshotOperatorSpec
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2763,8 +2728,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_From_SnapshotOperatorSpec
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2790,8 +2753,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(d
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2808,8 +2769,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(d
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2833,65 +2792,11 @@ func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(d
 	return nil
 }
 
-// +kubebuilder:validation:Enum={"V1","V2"}
-type SnapshotProperties_HyperVGeneration string
-
-const (
-	SnapshotProperties_HyperVGeneration_V1 = SnapshotProperties_HyperVGeneration("V1")
-	SnapshotProperties_HyperVGeneration_V2 = SnapshotProperties_HyperVGeneration("V2")
-)
-
-// Mapping from string to SnapshotProperties_HyperVGeneration
-var snapshotProperties_HyperVGeneration_Values = map[string]SnapshotProperties_HyperVGeneration{
-	"v1": SnapshotProperties_HyperVGeneration_V1,
-	"v2": SnapshotProperties_HyperVGeneration_V2,
-}
-
-type SnapshotProperties_HyperVGeneration_STATUS string
-
-const (
-	SnapshotProperties_HyperVGeneration_STATUS_V1 = SnapshotProperties_HyperVGeneration_STATUS("V1")
-	SnapshotProperties_HyperVGeneration_STATUS_V2 = SnapshotProperties_HyperVGeneration_STATUS("V2")
-)
-
-// Mapping from string to SnapshotProperties_HyperVGeneration_STATUS
-var snapshotProperties_HyperVGeneration_STATUS_Values = map[string]SnapshotProperties_HyperVGeneration_STATUS{
-	"v1": SnapshotProperties_HyperVGeneration_STATUS_V1,
-	"v2": SnapshotProperties_HyperVGeneration_STATUS_V2,
-}
-
-// +kubebuilder:validation:Enum={"Linux","Windows"}
-type SnapshotProperties_OsType string
-
-const (
-	SnapshotProperties_OsType_Linux   = SnapshotProperties_OsType("Linux")
-	SnapshotProperties_OsType_Windows = SnapshotProperties_OsType("Windows")
-)
-
-// Mapping from string to SnapshotProperties_OsType
-var snapshotProperties_OsType_Values = map[string]SnapshotProperties_OsType{
-	"linux":   SnapshotProperties_OsType_Linux,
-	"windows": SnapshotProperties_OsType_Windows,
-}
-
-type SnapshotProperties_OsType_STATUS string
-
-const (
-	SnapshotProperties_OsType_STATUS_Linux   = SnapshotProperties_OsType_STATUS("Linux")
-	SnapshotProperties_OsType_STATUS_Windows = SnapshotProperties_OsType_STATUS("Windows")
-)
-
-// Mapping from string to SnapshotProperties_OsType_STATUS
-var snapshotProperties_OsType_STATUS_Values = map[string]SnapshotProperties_OsType_STATUS{
-	"linux":   SnapshotProperties_OsType_STATUS_Linux,
-	"windows": SnapshotProperties_OsType_STATUS_Windows,
-}
-
 // The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for incremental
 // snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 type SnapshotSku struct {
 	// Name: The sku name.
-	Name *SnapshotSku_Name `json:"name,omitempty"`
+	Name *SnapshotStorageAccountTypes `json:"name,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &SnapshotSku{}
@@ -2907,7 +2812,7 @@ func (snapshotSku *SnapshotSku) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if snapshotSku.Name != nil {
 		var temp string
 		temp = string(*snapshotSku.Name)
-		name := arm.SnapshotSku_Name(temp)
+		name := arm.SnapshotStorageAccountTypes(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -2929,7 +2834,7 @@ func (snapshotSku *SnapshotSku) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 	if typedInput.Name != nil {
 		var temp string
 		temp = string(*typedInput.Name)
-		name := SnapshotSku_Name(temp)
+		name := SnapshotStorageAccountTypes(temp)
 		snapshotSku.Name = &name
 	}
 
@@ -2943,7 +2848,7 @@ func (snapshotSku *SnapshotSku) AssignProperties_From_SnapshotSku(source *storag
 	// Name
 	if source.Name != nil {
 		name := *source.Name
-		nameTemp := genruntime.ToEnum(name, snapshotSku_Name_Values)
+		nameTemp := genruntime.ToEnum(name, snapshotStorageAccountTypes_Values)
 		snapshotSku.Name = &nameTemp
 	} else {
 		snapshotSku.Name = nil
@@ -2982,7 +2887,7 @@ func (snapshotSku *SnapshotSku) Initialize_From_SnapshotSku_STATUS(source *Snaps
 
 	// Name
 	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), snapshotSku_Name_Values)
+		name := genruntime.ToEnum(string(*source.Name), snapshotStorageAccountTypes_Values)
 		snapshotSku.Name = &name
 	} else {
 		snapshotSku.Name = nil
@@ -2996,7 +2901,7 @@ func (snapshotSku *SnapshotSku) Initialize_From_SnapshotSku_STATUS(source *Snaps
 // snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 type SnapshotSku_STATUS struct {
 	// Name: The sku name.
-	Name *SnapshotSku_Name_STATUS `json:"name,omitempty"`
+	Name *SnapshotStorageAccountTypes_STATUS `json:"name,omitempty"`
 
 	// Tier: The sku tier.
 	Tier *string `json:"tier,omitempty"`
@@ -3020,7 +2925,7 @@ func (snapshotSku *SnapshotSku_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 	if typedInput.Name != nil {
 		var temp string
 		temp = string(*typedInput.Name)
-		name := SnapshotSku_Name_STATUS(temp)
+		name := SnapshotStorageAccountTypes_STATUS(temp)
 		snapshotSku.Name = &name
 	}
 
@@ -3040,7 +2945,7 @@ func (snapshotSku *SnapshotSku_STATUS) AssignProperties_From_SnapshotSku_STATUS(
 	// Name
 	if source.Name != nil {
 		name := *source.Name
-		nameTemp := genruntime.ToEnum(name, snapshotSku_Name_STATUS_Values)
+		nameTemp := genruntime.ToEnum(name, snapshotStorageAccountTypes_STATUS_Values)
 		snapshotSku.Name = &nameTemp
 	} else {
 		snapshotSku.Name = nil
@@ -3080,54 +2985,58 @@ func (snapshotSku *SnapshotSku_STATUS) AssignProperties_To_SnapshotSku_STATUS(de
 	return nil
 }
 
+// Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
 // +kubebuilder:validation:Enum={"CopySourceNotFound"}
-type CopyCompletionError_ErrorCode string
+type CopyCompletionErrorReason string
 
-const CopyCompletionError_ErrorCode_CopySourceNotFound = CopyCompletionError_ErrorCode("CopySourceNotFound")
+const CopyCompletionErrorReason_CopySourceNotFound = CopyCompletionErrorReason("CopySourceNotFound")
 
-// Mapping from string to CopyCompletionError_ErrorCode
-var copyCompletionError_ErrorCode_Values = map[string]CopyCompletionError_ErrorCode{
-	"copysourcenotfound": CopyCompletionError_ErrorCode_CopySourceNotFound,
+// Mapping from string to CopyCompletionErrorReason
+var copyCompletionErrorReason_Values = map[string]CopyCompletionErrorReason{
+	"copysourcenotfound": CopyCompletionErrorReason_CopySourceNotFound,
 }
 
-type CopyCompletionError_ErrorCode_STATUS string
+// Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
+type CopyCompletionErrorReason_STATUS string
 
-const CopyCompletionError_ErrorCode_STATUS_CopySourceNotFound = CopyCompletionError_ErrorCode_STATUS("CopySourceNotFound")
+const CopyCompletionErrorReason_STATUS_CopySourceNotFound = CopyCompletionErrorReason_STATUS("CopySourceNotFound")
 
-// Mapping from string to CopyCompletionError_ErrorCode_STATUS
-var copyCompletionError_ErrorCode_STATUS_Values = map[string]CopyCompletionError_ErrorCode_STATUS{
-	"copysourcenotfound": CopyCompletionError_ErrorCode_STATUS_CopySourceNotFound,
+// Mapping from string to CopyCompletionErrorReason_STATUS
+var copyCompletionErrorReason_STATUS_Values = map[string]CopyCompletionErrorReason_STATUS{
+	"copysourcenotfound": CopyCompletionErrorReason_STATUS_CopySourceNotFound,
 }
 
+// The sku name.
 // +kubebuilder:validation:Enum={"Premium_LRS","Standard_LRS","Standard_ZRS"}
-type SnapshotSku_Name string
+type SnapshotStorageAccountTypes string
 
 const (
-	SnapshotSku_Name_Premium_LRS  = SnapshotSku_Name("Premium_LRS")
-	SnapshotSku_Name_Standard_LRS = SnapshotSku_Name("Standard_LRS")
-	SnapshotSku_Name_Standard_ZRS = SnapshotSku_Name("Standard_ZRS")
+	SnapshotStorageAccountTypes_Premium_LRS  = SnapshotStorageAccountTypes("Premium_LRS")
+	SnapshotStorageAccountTypes_Standard_LRS = SnapshotStorageAccountTypes("Standard_LRS")
+	SnapshotStorageAccountTypes_Standard_ZRS = SnapshotStorageAccountTypes("Standard_ZRS")
 )
 
-// Mapping from string to SnapshotSku_Name
-var snapshotSku_Name_Values = map[string]SnapshotSku_Name{
-	"premium_lrs":  SnapshotSku_Name_Premium_LRS,
-	"standard_lrs": SnapshotSku_Name_Standard_LRS,
-	"standard_zrs": SnapshotSku_Name_Standard_ZRS,
+// Mapping from string to SnapshotStorageAccountTypes
+var snapshotStorageAccountTypes_Values = map[string]SnapshotStorageAccountTypes{
+	"premium_lrs":  SnapshotStorageAccountTypes_Premium_LRS,
+	"standard_lrs": SnapshotStorageAccountTypes_Standard_LRS,
+	"standard_zrs": SnapshotStorageAccountTypes_Standard_ZRS,
 }
 
-type SnapshotSku_Name_STATUS string
+// The sku name.
+type SnapshotStorageAccountTypes_STATUS string
 
 const (
-	SnapshotSku_Name_STATUS_Premium_LRS  = SnapshotSku_Name_STATUS("Premium_LRS")
-	SnapshotSku_Name_STATUS_Standard_LRS = SnapshotSku_Name_STATUS("Standard_LRS")
-	SnapshotSku_Name_STATUS_Standard_ZRS = SnapshotSku_Name_STATUS("Standard_ZRS")
+	SnapshotStorageAccountTypes_STATUS_Premium_LRS  = SnapshotStorageAccountTypes_STATUS("Premium_LRS")
+	SnapshotStorageAccountTypes_STATUS_Standard_LRS = SnapshotStorageAccountTypes_STATUS("Standard_LRS")
+	SnapshotStorageAccountTypes_STATUS_Standard_ZRS = SnapshotStorageAccountTypes_STATUS("Standard_ZRS")
 )
 
-// Mapping from string to SnapshotSku_Name_STATUS
-var snapshotSku_Name_STATUS_Values = map[string]SnapshotSku_Name_STATUS{
-	"premium_lrs":  SnapshotSku_Name_STATUS_Premium_LRS,
-	"standard_lrs": SnapshotSku_Name_STATUS_Standard_LRS,
-	"standard_zrs": SnapshotSku_Name_STATUS_Standard_ZRS,
+// Mapping from string to SnapshotStorageAccountTypes_STATUS
+var snapshotStorageAccountTypes_STATUS_Values = map[string]SnapshotStorageAccountTypes_STATUS{
+	"premium_lrs":  SnapshotStorageAccountTypes_STATUS_Premium_LRS,
+	"standard_lrs": SnapshotStorageAccountTypes_STATUS_Standard_LRS,
+	"standard_zrs": SnapshotStorageAccountTypes_STATUS_Standard_ZRS,
 }
 
 func init() {

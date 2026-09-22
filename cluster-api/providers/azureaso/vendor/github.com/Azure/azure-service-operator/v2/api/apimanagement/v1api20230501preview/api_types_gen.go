@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimapis.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimapis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}
 type Api struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -239,7 +240,7 @@ func (api *Api) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimapis.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimapis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}
 type ApiList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -424,7 +425,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.ApiVersionDescription = &apiVersionDescription
 	}
 	if api.ApiVersionSet != nil {
-		apiVersionSet_ARM, err := (*api.ApiVersionSet).ConvertToARM(resolved)
+		apiVersionSet_ARM, err := api.ApiVersionSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -440,7 +441,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.ApiVersionSetId = &apiVersionSetId
 	}
 	if api.AuthenticationSettings != nil {
-		authenticationSettings_ARM, err := (*api.AuthenticationSettings).ConvertToARM(resolved)
+		authenticationSettings_ARM, err := api.AuthenticationSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +449,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.AuthenticationSettings = &authenticationSettings
 	}
 	if api.Contact != nil {
-		contact_ARM, err := (*api.Contact).ConvertToARM(resolved)
+		contact_ARM, err := api.Contact.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -474,7 +475,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.IsCurrent = &isCurrent
 	}
 	if api.License != nil {
-		license_ARM, err := (*api.License).ConvertToARM(resolved)
+		license_ARM, err := api.License.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -503,7 +504,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.SourceApiId = &sourceApiId
 	}
 	if api.SubscriptionKeyParameterNames != nil {
-		subscriptionKeyParameterNames_ARM, err := (*api.SubscriptionKeyParameterNames).ConvertToARM(resolved)
+		subscriptionKeyParameterNames_ARM, err := api.SubscriptionKeyParameterNames.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -535,7 +536,7 @@ func (api *Api_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetail
 		result.Properties.Value = &value
 	}
 	if api.WsdlSelector != nil {
-		wsdlSelector_ARM, err := (*api.WsdlSelector).ConvertToARM(resolved)
+		wsdlSelector_ARM, err := api.WsdlSelector.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1005,8 +1006,6 @@ func (api *Api_Spec) AssignProperties_From_Api_Spec(source *storage.Api_Spec) er
 	if source.Protocols != nil {
 		protocolList := make([]ApiCreateOrUpdateProperties_Protocols, len(source.Protocols))
 		for protocolIndex, protocolItem := range source.Protocols {
-			// Shadow the loop variable to avoid aliasing
-			protocolItem := protocolItem
 			protocolList[protocolIndex] = genruntime.ToEnum(protocolItem, apiCreateOrUpdateProperties_Protocols_Values)
 		}
 		api.Protocols = protocolList
@@ -1221,8 +1220,6 @@ func (api *Api_Spec) AssignProperties_To_Api_Spec(destination *storage.Api_Spec)
 	if api.Protocols != nil {
 		protocolList := make([]string, len(api.Protocols))
 		for protocolIndex, protocolItem := range api.Protocols {
-			// Shadow the loop variable to avoid aliasing
-			protocolItem := protocolItem
 			protocolList[protocolIndex] = string(protocolItem)
 		}
 		destination.Protocols = protocolList
@@ -1824,8 +1821,6 @@ func (api *Api_STATUS) AssignProperties_From_Api_STATUS(source *storage.Api_STAT
 	if source.Protocols != nil {
 		protocolList := make([]ApiContractProperties_Protocols_STATUS, len(source.Protocols))
 		for protocolIndex, protocolItem := range source.Protocols {
-			// Shadow the loop variable to avoid aliasing
-			protocolItem := protocolItem
 			protocolList[protocolIndex] = genruntime.ToEnum(protocolItem, apiContractProperties_Protocols_STATUS_Values)
 		}
 		api.Protocols = protocolList
@@ -1986,8 +1981,6 @@ func (api *Api_STATUS) AssignProperties_To_Api_STATUS(destination *storage.Api_S
 	if api.Protocols != nil {
 		protocolList := make([]string, len(api.Protocols))
 		for protocolIndex, protocolItem := range api.Protocols {
-			// Shadow the loop variable to avoid aliasing
-			protocolItem := protocolItem
 			protocolList[protocolIndex] = string(protocolItem)
 		}
 		destination.Protocols = protocolList
@@ -2684,8 +2677,6 @@ func (operator *ApiOperatorSpec) AssignProperties_From_ApiOperatorSpec(source *s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2702,8 +2693,6 @@ func (operator *ApiOperatorSpec) AssignProperties_From_ApiOperatorSpec(source *s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2729,8 +2718,6 @@ func (operator *ApiOperatorSpec) AssignProperties_To_ApiOperatorSpec(destination
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2747,8 +2734,6 @@ func (operator *ApiOperatorSpec) AssignProperties_To_ApiOperatorSpec(destination
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3149,7 +3134,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 
 	// Set property "OAuth2":
 	if contract.OAuth2 != nil {
-		oAuth2_ARM, err := (*contract.OAuth2).ConvertToARM(resolved)
+		oAuth2_ARM, err := contract.OAuth2.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3168,7 +3153,7 @@ func (contract *AuthenticationSettingsContract) ConvertToARM(resolved genruntime
 
 	// Set property "Openid":
 	if contract.Openid != nil {
-		openid_ARM, err := (*contract.Openid).ConvertToARM(resolved)
+		openid_ARM, err := contract.Openid.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3264,8 +3249,6 @@ func (contract *AuthenticationSettingsContract) AssignProperties_From_Authentica
 	if source.OAuth2AuthenticationSettings != nil {
 		oAuth2AuthenticationSettingList := make([]OAuth2AuthenticationSettingsContract, len(source.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range source.OAuth2AuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
 			var oAuth2AuthenticationSetting OAuth2AuthenticationSettingsContract
 			err := oAuth2AuthenticationSetting.AssignProperties_From_OAuth2AuthenticationSettingsContract(&oAuth2AuthenticationSettingItem)
 			if err != nil {
@@ -3294,8 +3277,6 @@ func (contract *AuthenticationSettingsContract) AssignProperties_From_Authentica
 	if source.OpenidAuthenticationSettings != nil {
 		openidAuthenticationSettingList := make([]OpenIdAuthenticationSettingsContract, len(source.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range source.OpenidAuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			openidAuthenticationSettingItem := openidAuthenticationSettingItem
 			var openidAuthenticationSetting OpenIdAuthenticationSettingsContract
 			err := openidAuthenticationSetting.AssignProperties_From_OpenIdAuthenticationSettingsContract(&openidAuthenticationSettingItem)
 			if err != nil {
@@ -3333,8 +3314,6 @@ func (contract *AuthenticationSettingsContract) AssignProperties_To_Authenticati
 	if contract.OAuth2AuthenticationSettings != nil {
 		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract, len(contract.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
 			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract
 			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract(&oAuth2AuthenticationSetting)
 			if err != nil {
@@ -3363,8 +3342,6 @@ func (contract *AuthenticationSettingsContract) AssignProperties_To_Authenticati
 	if contract.OpenidAuthenticationSettings != nil {
 		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract, len(contract.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			openidAuthenticationSettingItem := openidAuthenticationSettingItem
 			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract
 			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract(&openidAuthenticationSetting)
 			if err != nil {
@@ -3482,8 +3459,6 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_Aut
 	if source.OAuth2AuthenticationSettings != nil {
 		oAuth2AuthenticationSettingList := make([]OAuth2AuthenticationSettingsContract_STATUS, len(source.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range source.OAuth2AuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
 			var oAuth2AuthenticationSetting OAuth2AuthenticationSettingsContract_STATUS
 			err := oAuth2AuthenticationSetting.AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2AuthenticationSettingItem)
 			if err != nil {
@@ -3512,8 +3487,6 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_Aut
 	if source.OpenidAuthenticationSettings != nil {
 		openidAuthenticationSettingList := make([]OpenIdAuthenticationSettingsContract_STATUS, len(source.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range source.OpenidAuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			openidAuthenticationSettingItem := openidAuthenticationSettingItem
 			var openidAuthenticationSetting OpenIdAuthenticationSettingsContract_STATUS
 			err := openidAuthenticationSetting.AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(&openidAuthenticationSettingItem)
 			if err != nil {
@@ -3551,8 +3524,6 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_Authe
 	if contract.OAuth2AuthenticationSettings != nil {
 		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract_STATUS, len(contract.OAuth2AuthenticationSettings))
 		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			oAuth2AuthenticationSettingItem := oAuth2AuthenticationSettingItem
 			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract_STATUS
 			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2AuthenticationSetting)
 			if err != nil {
@@ -3581,8 +3552,6 @@ func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_Authe
 	if contract.OpenidAuthenticationSettings != nil {
 		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract_STATUS, len(contract.OpenidAuthenticationSettings))
 		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
-			// Shadow the loop variable to avoid aliasing
-			openidAuthenticationSettingItem := openidAuthenticationSettingItem
 			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract_STATUS
 			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(&openidAuthenticationSetting)
 			if err != nil {
@@ -4044,8 +4013,6 @@ func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_Open
 	if source.BearerTokenSendingMethods != nil {
 		bearerTokenSendingMethodList := make([]BearerTokenSendingMethodsContract, len(source.BearerTokenSendingMethods))
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range source.BearerTokenSendingMethods {
-			// Shadow the loop variable to avoid aliasing
-			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
 			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = genruntime.ToEnum(bearerTokenSendingMethodItem, bearerTokenSendingMethodsContract_Values)
 		}
 		contract.BearerTokenSendingMethods = bearerTokenSendingMethodList
@@ -4069,8 +4036,6 @@ func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_To_OpenId
 	if contract.BearerTokenSendingMethods != nil {
 		bearerTokenSendingMethodList := make([]string, len(contract.BearerTokenSendingMethods))
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range contract.BearerTokenSendingMethods {
-			// Shadow the loop variable to avoid aliasing
-			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
 			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = string(bearerTokenSendingMethodItem)
 		}
 		destination.BearerTokenSendingMethods = bearerTokenSendingMethodList
@@ -4139,8 +4104,6 @@ func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_Fr
 	if source.BearerTokenSendingMethods != nil {
 		bearerTokenSendingMethodList := make([]BearerTokenSendingMethodsContract_STATUS, len(source.BearerTokenSendingMethods))
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range source.BearerTokenSendingMethods {
-			// Shadow the loop variable to avoid aliasing
-			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
 			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = genruntime.ToEnum(bearerTokenSendingMethodItem, bearerTokenSendingMethodsContract_STATUS_Values)
 		}
 		contract.BearerTokenSendingMethods = bearerTokenSendingMethodList
@@ -4164,8 +4127,6 @@ func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_To
 	if contract.BearerTokenSendingMethods != nil {
 		bearerTokenSendingMethodList := make([]string, len(contract.BearerTokenSendingMethods))
 		for bearerTokenSendingMethodIndex, bearerTokenSendingMethodItem := range contract.BearerTokenSendingMethods {
-			// Shadow the loop variable to avoid aliasing
-			bearerTokenSendingMethodItem := bearerTokenSendingMethodItem
 			bearerTokenSendingMethodList[bearerTokenSendingMethodIndex] = string(bearerTokenSendingMethodItem)
 		}
 		destination.BearerTokenSendingMethods = bearerTokenSendingMethodList

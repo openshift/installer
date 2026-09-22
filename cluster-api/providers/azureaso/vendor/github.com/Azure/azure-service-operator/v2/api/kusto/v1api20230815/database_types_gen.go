@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kusto}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}
 type Database struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &Database{}
 
 // ConvertFrom populates our Database from the provided hub Database
 func (database *Database) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Database)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/Database but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Database
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return database.AssignProperties_From_Database(source)
+	err = database.AssignProperties_From_Database(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to database")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Database from our Database
 func (database *Database) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Database)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/Database but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Database
+	err := database.AssignProperties_To_Database(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from database")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return database.AssignProperties_To_Database(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Database{}
@@ -86,17 +101,6 @@ func (database *Database) SecretDestinationExpressions() []*core.DestinationExpr
 		return nil
 	}
 	return database.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Database{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (database *Database) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Database_STATUS); ok {
-		return database.Spec.Initialize_From_Database_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Database_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Database{}
@@ -237,7 +241,7 @@ func (database *Database) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}
 type DatabaseList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -279,7 +283,7 @@ func (database *Database_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "ReadWrite":
 	if database.ReadWrite != nil {
-		readWrite_ARM, err := (*database.ReadWrite).ConvertToARM(resolved)
+		readWrite_ARM, err := database.ReadWrite.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -475,25 +479,6 @@ func (database *Database_Spec) AssignProperties_To_Database_Spec(destination *st
 	return nil
 }
 
-// Initialize_From_Database_STATUS populates our Database_Spec from the provided source Database_STATUS
-func (database *Database_Spec) Initialize_From_Database_STATUS(source *Database_STATUS) error {
-
-	// ReadWrite
-	if source.ReadWrite != nil {
-		var readWrite ReadWriteDatabase
-		err := readWrite.Initialize_From_ReadWriteDatabase_STATUS(source.ReadWrite)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ReadWriteDatabase_STATUS() to populate field ReadWrite")
-		}
-		database.ReadWrite = &readWrite
-	} else {
-		database.ReadWrite = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (database *Database_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -676,8 +661,6 @@ func (operator *DatabaseOperatorSpec) AssignProperties_From_DatabaseOperatorSpec
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -694,8 +677,6 @@ func (operator *DatabaseOperatorSpec) AssignProperties_From_DatabaseOperatorSpec
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -721,8 +702,6 @@ func (operator *DatabaseOperatorSpec) AssignProperties_To_DatabaseOperatorSpec(d
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -739,8 +718,6 @@ func (operator *DatabaseOperatorSpec) AssignProperties_To_DatabaseOperatorSpec(d
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -819,7 +796,7 @@ func (database *ReadWriteDatabase) ConvertToARM(resolved genruntime.ConvertToARM
 		result.Properties.HotCachePeriod = &hotCachePeriod
 	}
 	if database.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*database.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := database.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -971,42 +948,6 @@ func (database *ReadWriteDatabase) AssignProperties_To_ReadWriteDatabase(destina
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ReadWriteDatabase_STATUS populates our ReadWriteDatabase from the provided source ReadWriteDatabase_STATUS
-func (database *ReadWriteDatabase) Initialize_From_ReadWriteDatabase_STATUS(source *ReadWriteDatabase_STATUS) error {
-
-	// HotCachePeriod
-	database.HotCachePeriod = genruntime.ClonePointerToString(source.HotCachePeriod)
-
-	// KeyVaultProperties
-	if source.KeyVaultProperties != nil {
-		var keyVaultProperty KeyVaultProperties
-		err := keyVaultProperty.Initialize_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
-		}
-		database.KeyVaultProperties = &keyVaultProperty
-	} else {
-		database.KeyVaultProperties = nil
-	}
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), readWriteDatabase_Kind_Values)
-		database.Kind = &kind
-	} else {
-		database.Kind = nil
-	}
-
-	// Location
-	database.Location = genruntime.ClonePointerToString(source.Location)
-
-	// SoftDeletePeriod
-	database.SoftDeletePeriod = genruntime.ClonePointerToString(source.SoftDeletePeriod)
 
 	// No error
 	return nil

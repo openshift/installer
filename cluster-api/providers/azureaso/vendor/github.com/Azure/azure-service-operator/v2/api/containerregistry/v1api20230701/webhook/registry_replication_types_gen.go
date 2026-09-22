@@ -116,7 +116,12 @@ func (replication *RegistryReplication) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (replication *RegistryReplication) createValidations() []func(ctx context.Context, obj *v20230701.RegistryReplication) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230701.RegistryReplication) (admission.Warnings, error){replication.validateResourceReferences, replication.validateOwnerReference, replication.validateSecretDestinations, replication.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230701.RegistryReplication) (admission.Warnings, error){
+		replication.validateResourceReferences,
+		replication.validateOwnerReference,
+		replication.validateSecretDestinations,
+		replication.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

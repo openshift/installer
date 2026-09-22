@@ -116,7 +116,12 @@ func (productApi *ProductApi) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (productApi *ProductApi) createValidations() []func(ctx context.Context, obj *v20230501p.ProductApi) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.ProductApi) (admission.Warnings, error){productApi.validateResourceReferences, productApi.validateOwnerReference, productApi.validateSecretDestinations, productApi.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.ProductApi) (admission.Warnings, error){
+		productApi.validateResourceReferences,
+		productApi.validateOwnerReference,
+		productApi.validateSecretDestinations,
+		productApi.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

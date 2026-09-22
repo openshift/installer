@@ -116,7 +116,12 @@ func (subscription *NamespacesTopicsSubscription) ValidateUpdate(ctx context.Con
 
 // createValidations validates the creation of the resource
 func (subscription *NamespacesTopicsSubscription) createValidations() []func(ctx context.Context, obj *v20221001p.NamespacesTopicsSubscription) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20221001p.NamespacesTopicsSubscription) (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateOwnerReference, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20221001p.NamespacesTopicsSubscription) (admission.Warnings, error){
+		subscription.validateResourceReferences,
+		subscription.validateOwnerReference,
+		subscription.validateSecretDestinations,
+		subscription.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -1,5 +1,84 @@
 # Release History
 
+## 1.14.0 (2026-06-15)
+
+### Breaking Changes
+
+> These changes affect only code written against a beta version such as v1.14.0-beta.3
+- Removed `WorkloadIdentityCredentialOptions.EnableAzureProxy`.
+  It will return in v1.15.0-beta.1
+
+### Bugs Fixed
+
+- `AzureDeveloperCLICredential` improved reporting of error messages returned from `azd`
+
+### Other Changes
+
+- Returned `azidentity` errors include links to the troubleshooting guide when appropriate
+- This module now requires a minimum Go version of 1.25
+- Upgraded dependencies
+
+## 1.14.0-beta.3 (2026-02-10)
+
+### Breaking Changes
+
+> These changes affect only code written against a beta version such as v1.14.0-beta.2
+- Renamed `WorkloadIdentityCredentialOptions.EnableAzureTokenProxy` to `EnableAzureProxy`
+
+### Other Changes
+
+- Removed extraneous JSON from `AzureDeveloperCLICredential` errors
+
+## 1.14.0-beta.2 (2025-11-10)
+
+### Breaking Changes
+
+> These changes affect only code written against a beta version such as v1.13.0-beta.1
+- `WorkloadIdentityCredential` identity binding mode is disabled by default. To enable it, set
+  `WorkloadIdentityCredentialOptions.EnableAzureTokenProxy` to `true`
+- Removed identity binding mode support from `DefaultAzureCredential`. To use this feature, use
+  `WorkloadIdentityCredential` directly instead and set
+  `WorkloadIdentityCredentialOptions.EnableAzureTokenProxy` to `true`
+
+### Bugs Fixed
+
+- `AzureCLICredential` quoted arguments incorrectly on Windows
+
+## 1.13.1 (2025-11-10)
+
+### Bugs Fixed
+
+- `AzureCLICredential` quoted arguments incorrectly on Windows
+
+## 1.14.0-beta.1 (2025-10-07)
+
+### Features Added
+
+- Restored the `WorkloadIdentityCredential` identity binding mode support removed in v1.13.0
+
+## 1.13.0 (2025-10-07)
+
+### Features Added
+
+- Added `AzurePowerShellCredential`, which authenticates as the identity logged in to Azure PowerShell
+  (thanks [ArmaanMcleod](https://github.com/ArmaanMcleod))
+- When `AZURE_TOKEN_CREDENTIALS` is set to `ManagedIdentityCredential`, `DefaultAzureCredential` behaves the same as
+  does `ManagedIdentityCredential` when used directly. It doesn't apply special retry configuration or attempt to
+  determine whether IMDS is available. ([#25265](https://github.com/Azure/azure-sdk-for-go/issues/25265))
+
+### Breaking Changes
+
+* Removed the `WorkloadIdentityCredential` support for identity binding mode added in v1.13.0-beta.1.
+  It will return in v1.14.0-beta.1
+
+## 1.13.0-beta.1 (2025-09-17)
+
+### Features Added
+
+- Added `AzurePowerShellCredential`, which authenticates as the identity logged in to Azure PowerShell
+  (thanks [ArmaanMcleod](https://github.com/ArmaanMcleod))
+- `WorkloadIdentityCredential` supports identity binding mode ([#25056](https://github.com/Azure/azure-sdk-for-go/issues/25056))
+
 ## 1.12.0 (2025-09-16)
 
 ### Features Added

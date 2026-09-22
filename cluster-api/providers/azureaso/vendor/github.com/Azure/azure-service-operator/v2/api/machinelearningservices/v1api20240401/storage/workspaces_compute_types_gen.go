@@ -19,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=machinelearningservices.azure.com,resources={workspacescomputes/status,workspacescomputes/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,machinelearningservices}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

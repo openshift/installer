@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FlexibleServersAdvancedThreatProtectionSettings{
 
 // ConvertFrom populates our FlexibleServersAdvancedThreatProtectionSettings from the provided hub FlexibleServersAdvancedThreatProtectionSettings
 func (settings *FlexibleServersAdvancedThreatProtectionSettings) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersAdvancedThreatProtectionSettings)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersAdvancedThreatProtectionSettings but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersAdvancedThreatProtectionSettings
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return settings.AssignProperties_From_FlexibleServersAdvancedThreatProtectionSettings(source)
+	err = settings.AssignProperties_From_FlexibleServersAdvancedThreatProtectionSettings(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to settings")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersAdvancedThreatProtectionSettings from our FlexibleServersAdvancedThreatProtectionSettings
 func (settings *FlexibleServersAdvancedThreatProtectionSettings) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersAdvancedThreatProtectionSettings)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersAdvancedThreatProtectionSettings but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersAdvancedThreatProtectionSettings
+	err := settings.AssignProperties_To_FlexibleServersAdvancedThreatProtectionSettings(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from settings")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return settings.AssignProperties_To_FlexibleServersAdvancedThreatProtectionSettings(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersAdvancedThreatProtectionSettings{}
@@ -86,17 +101,6 @@ func (settings *FlexibleServersAdvancedThreatProtectionSettings) SecretDestinati
 		return nil
 	}
 	return settings.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersAdvancedThreatProtectionSettings{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (settings *FlexibleServersAdvancedThreatProtectionSettings) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersAdvancedThreatProtectionSettings_STATUS); ok {
-		return settings.Spec.Initialize_From_FlexibleServersAdvancedThreatProtectionSettings_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersAdvancedThreatProtectionSettings_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersAdvancedThreatProtectionSettings{}
@@ -256,8 +260,8 @@ type FlexibleServersAdvancedThreatProtectionSettings_Spec struct {
 	Owner *genruntime.KnownResourceReference `group:"dbforpostgresql.azure.com" json:"owner,omitempty" kind:"FlexibleServer"`
 
 	// +kubebuilder:validation:Required
-	// State: Specifies the state of the Threat Protection, whether it is enabled or disabled or a state has not been applied
-	// yet on the specific server.
+	// State: Specifies the state of the advanced threat protection, whether it is enabled, disabled, or a state has not been
+	// applied yet on the flexible server.
 	State *ServerThreatProtectionProperties_State `json:"state,omitempty"`
 }
 
@@ -454,21 +458,6 @@ func (settings *FlexibleServersAdvancedThreatProtectionSettings_Spec) AssignProp
 	return nil
 }
 
-// Initialize_From_FlexibleServersAdvancedThreatProtectionSettings_STATUS populates our FlexibleServersAdvancedThreatProtectionSettings_Spec from the provided source FlexibleServersAdvancedThreatProtectionSettings_STATUS
-func (settings *FlexibleServersAdvancedThreatProtectionSettings_Spec) Initialize_From_FlexibleServersAdvancedThreatProtectionSettings_STATUS(source *FlexibleServersAdvancedThreatProtectionSettings_STATUS) error {
-
-	// State
-	if source.State != nil {
-		state := genruntime.ToEnum(string(*source.State), serverThreatProtectionProperties_State_Values)
-		settings.State = &state
-	} else {
-		settings.State = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (settings *FlexibleServersAdvancedThreatProtectionSettings_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -478,7 +467,7 @@ type FlexibleServersAdvancedThreatProtectionSettings_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
-	// CreationTime: Specifies the UTC creation time of the policy.
+	// CreationTime: Specifies the creation time (UTC) of the policy.
 	CreationTime *string `json:"creationTime,omitempty"`
 
 	// Id: Fully qualified resource ID for the resource. E.g.
@@ -488,8 +477,8 @@ type FlexibleServersAdvancedThreatProtectionSettings_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// State: Specifies the state of the Threat Protection, whether it is enabled or disabled or a state has not been applied
-	// yet on the specific server.
+	// State: Specifies the state of the advanced threat protection, whether it is enabled, disabled, or a state has not been
+	// applied yet on the flexible server.
 	State *ServerThreatProtectionProperties_State_STATUS `json:"state,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -728,8 +717,6 @@ func (operator *FlexibleServersAdvancedThreatProtectionSettingsOperatorSpec) Ass
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -746,8 +733,6 @@ func (operator *FlexibleServersAdvancedThreatProtectionSettingsOperatorSpec) Ass
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -773,8 +758,6 @@ func (operator *FlexibleServersAdvancedThreatProtectionSettingsOperatorSpec) Ass
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -791,8 +774,6 @@ func (operator *FlexibleServersAdvancedThreatProtectionSettingsOperatorSpec) Ass
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

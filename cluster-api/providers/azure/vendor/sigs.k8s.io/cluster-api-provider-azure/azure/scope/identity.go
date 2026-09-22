@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -238,10 +239,8 @@ func IsClusterNamespaceAllowed(ctx context.Context, k8sClient client.Client, all
 		return true
 	}
 
-	for _, v := range allowedNamespaces.NamespaceList {
-		if v == namespace {
-			return true
-		}
+	if slices.Contains(allowedNamespaces.NamespaceList, namespace) {
+		return true
 	}
 
 	// Check if clusterNamespace is in the namespaces selected by the identity's allowedNamespaces selector.

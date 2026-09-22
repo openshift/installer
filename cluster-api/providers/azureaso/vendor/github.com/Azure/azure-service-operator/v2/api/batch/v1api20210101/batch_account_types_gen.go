@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,batch}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /batch/resource-manager/Microsoft.Batch/stable/2021-01-01/BatchManagement.json
+// - Generated from: /batch/resource-manager/Microsoft.Batch/Batch/stable/2021-01-01/BatchManagement.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}
 type BatchAccount struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &BatchAccount{}
 
 // ConvertFrom populates our BatchAccount from the provided hub BatchAccount
 func (account *BatchAccount) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.BatchAccount)
-	if !ok {
-		return fmt.Errorf("expected batch/v1api20210101/storage/BatchAccount but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.BatchAccount
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return account.AssignProperties_From_BatchAccount(source)
+	err = account.AssignProperties_From_BatchAccount(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to account")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub BatchAccount from our BatchAccount
 func (account *BatchAccount) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.BatchAccount)
-	if !ok {
-		return fmt.Errorf("expected batch/v1api20210101/storage/BatchAccount but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.BatchAccount
+	err := account.AssignProperties_To_BatchAccount(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from account")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return account.AssignProperties_To_BatchAccount(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &BatchAccount{}
@@ -86,17 +101,6 @@ func (account *BatchAccount) SecretDestinationExpressions() []*core.DestinationE
 		return nil
 	}
 	return account.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &BatchAccount{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (account *BatchAccount) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*BatchAccount_STATUS); ok {
-		return account.Spec.Initialize_From_BatchAccount_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type BatchAccount_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &BatchAccount{}
@@ -237,7 +241,7 @@ func (account *BatchAccount) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /batch/resource-manager/Microsoft.Batch/stable/2021-01-01/BatchManagement.json
+// - Generated from: /batch/resource-manager/Microsoft.Batch/Batch/stable/2021-01-01/BatchManagement.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Batch/batchAccounts/{accountName}
 type BatchAccountList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -308,7 +312,7 @@ func (account *BatchAccount_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Identity":
 	if account.Identity != nil {
-		identity_ARM, err := (*account.Identity).ConvertToARM(resolved)
+		identity_ARM, err := account.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -334,7 +338,7 @@ func (account *BatchAccount_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 		result.Properties = &arm.BatchAccountCreateProperties{}
 	}
 	if account.AutoStorage != nil {
-		autoStorage_ARM, err := (*account.AutoStorage).ConvertToARM(resolved)
+		autoStorage_ARM, err := account.AutoStorage.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +346,7 @@ func (account *BatchAccount_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 		result.Properties.AutoStorage = &autoStorage
 	}
 	if account.Encryption != nil {
-		encryption_ARM, err := (*account.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := account.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +354,7 @@ func (account *BatchAccount_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 		result.Properties.Encryption = &encryption
 	}
 	if account.KeyVaultReference != nil {
-		keyVaultReference_ARM, err := (*account.KeyVaultReference).ConvertToARM(resolved)
+		keyVaultReference_ARM, err := account.KeyVaultReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -760,83 +764,6 @@ func (account *BatchAccount_Spec) AssignProperties_To_BatchAccount_Spec(destinat
 	return nil
 }
 
-// Initialize_From_BatchAccount_STATUS populates our BatchAccount_Spec from the provided source BatchAccount_STATUS
-func (account *BatchAccount_Spec) Initialize_From_BatchAccount_STATUS(source *BatchAccount_STATUS) error {
-
-	// AutoStorage
-	if source.AutoStorage != nil {
-		var autoStorage AutoStorageBaseProperties
-		err := autoStorage.Initialize_From_AutoStorageProperties_STATUS(source.AutoStorage)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AutoStorageProperties_STATUS() to populate field AutoStorage")
-		}
-		account.AutoStorage = &autoStorage
-	} else {
-		account.AutoStorage = nil
-	}
-
-	// Encryption
-	if source.Encryption != nil {
-		var encryption EncryptionProperties
-		err := encryption.Initialize_From_EncryptionProperties_STATUS(source.Encryption)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field Encryption")
-		}
-		account.Encryption = &encryption
-	} else {
-		account.Encryption = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity BatchAccountIdentity
-		err := identity.Initialize_From_BatchAccountIdentity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BatchAccountIdentity_STATUS() to populate field Identity")
-		}
-		account.Identity = &identity
-	} else {
-		account.Identity = nil
-	}
-
-	// KeyVaultReference
-	if source.KeyVaultReference != nil {
-		var keyVaultReference KeyVaultReference
-		err := keyVaultReference.Initialize_From_KeyVaultReference_STATUS(source.KeyVaultReference)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultReference_STATUS() to populate field KeyVaultReference")
-		}
-		account.KeyVaultReference = &keyVaultReference
-	} else {
-		account.KeyVaultReference = nil
-	}
-
-	// Location
-	account.Location = genruntime.ClonePointerToString(source.Location)
-
-	// PoolAllocationMode
-	if source.PoolAllocationMode != nil {
-		poolAllocationMode := genruntime.ToEnum(string(*source.PoolAllocationMode), poolAllocationMode_Values)
-		account.PoolAllocationMode = &poolAllocationMode
-	} else {
-		account.PoolAllocationMode = nil
-	}
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), publicNetworkAccessType_Values)
-		account.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		account.PublicNetworkAccess = nil
-	}
-
-	// Tags
-	account.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (account *BatchAccount_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -1215,8 +1142,6 @@ func (account *BatchAccount_STATUS) AssignProperties_From_BatchAccount_STATUS(so
 	if source.DedicatedCoreQuotaPerVMFamily != nil {
 		dedicatedCoreQuotaPerVMFamilyList := make([]VirtualMachineFamilyCoreQuota_STATUS, len(source.DedicatedCoreQuotaPerVMFamily))
 		for dedicatedCoreQuotaPerVMFamilyIndex, dedicatedCoreQuotaPerVMFamilyItem := range source.DedicatedCoreQuotaPerVMFamily {
-			// Shadow the loop variable to avoid aliasing
-			dedicatedCoreQuotaPerVMFamilyItem := dedicatedCoreQuotaPerVMFamilyItem
 			var dedicatedCoreQuotaPerVMFamily VirtualMachineFamilyCoreQuota_STATUS
 			err := dedicatedCoreQuotaPerVMFamily.AssignProperties_From_VirtualMachineFamilyCoreQuota_STATUS(&dedicatedCoreQuotaPerVMFamilyItem)
 			if err != nil {
@@ -1301,8 +1226,6 @@ func (account *BatchAccount_STATUS) AssignProperties_From_BatchAccount_STATUS(so
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1376,8 +1299,6 @@ func (account *BatchAccount_STATUS) AssignProperties_To_BatchAccount_STATUS(dest
 	if account.DedicatedCoreQuotaPerVMFamily != nil {
 		dedicatedCoreQuotaPerVMFamilyList := make([]storage.VirtualMachineFamilyCoreQuota_STATUS, len(account.DedicatedCoreQuotaPerVMFamily))
 		for dedicatedCoreQuotaPerVMFamilyIndex, dedicatedCoreQuotaPerVMFamilyItem := range account.DedicatedCoreQuotaPerVMFamily {
-			// Shadow the loop variable to avoid aliasing
-			dedicatedCoreQuotaPerVMFamilyItem := dedicatedCoreQuotaPerVMFamilyItem
 			var dedicatedCoreQuotaPerVMFamily storage.VirtualMachineFamilyCoreQuota_STATUS
 			err := dedicatedCoreQuotaPerVMFamilyItem.AssignProperties_To_VirtualMachineFamilyCoreQuota_STATUS(&dedicatedCoreQuotaPerVMFamily)
 			if err != nil {
@@ -1461,8 +1382,6 @@ func (account *BatchAccount_STATUS) AssignProperties_To_BatchAccount_STATUS(dest
 	if account.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(account.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range account.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1587,21 +1506,6 @@ func (properties *AutoStorageBaseProperties) AssignProperties_To_AutoStorageBase
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AutoStorageProperties_STATUS populates our AutoStorageBaseProperties from the provided source AutoStorageProperties_STATUS
-func (properties *AutoStorageBaseProperties) Initialize_From_AutoStorageProperties_STATUS(source *AutoStorageProperties_STATUS) error {
-
-	// StorageAccountReference
-	if source.StorageAccountId != nil {
-		storageAccountReference := genruntime.CreateResourceReferenceFromARMID(*source.StorageAccountId)
-		properties.StorageAccountReference = &storageAccountReference
-	} else {
-		properties.StorageAccountReference = nil
 	}
 
 	// No error
@@ -1767,8 +1671,6 @@ func (identity *BatchAccountIdentity) AssignProperties_From_BatchAccountIdentity
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -1802,8 +1704,6 @@ func (identity *BatchAccountIdentity) AssignProperties_To_BatchAccountIdentity(d
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -1821,33 +1721,6 @@ func (identity *BatchAccountIdentity) AssignProperties_To_BatchAccountIdentity(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BatchAccountIdentity_STATUS populates our BatchAccountIdentity from the provided source BatchAccountIdentity_STATUS
-func (identity *BatchAccountIdentity) Initialize_From_BatchAccountIdentity_STATUS(source *BatchAccountIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), batchAccountIdentity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -1946,8 +1819,6 @@ func (identity *BatchAccountIdentity_STATUS) AssignProperties_From_BatchAccountI
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]BatchAccountIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity BatchAccountIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_BatchAccountIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -1987,8 +1858,6 @@ func (identity *BatchAccountIdentity_STATUS) AssignProperties_To_BatchAccountIde
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.BatchAccountIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.BatchAccountIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_BatchAccountIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2028,8 +1897,6 @@ func (operator *BatchAccountOperatorSpec) AssignProperties_From_BatchAccountOper
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2046,8 +1913,6 @@ func (operator *BatchAccountOperatorSpec) AssignProperties_From_BatchAccountOper
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2073,8 +1938,6 @@ func (operator *BatchAccountOperatorSpec) AssignProperties_To_BatchAccountOperat
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2091,8 +1954,6 @@ func (operator *BatchAccountOperatorSpec) AssignProperties_To_BatchAccountOperat
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2166,7 +2027,7 @@ func (properties *EncryptionProperties) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "KeyVaultProperties":
 	if properties.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*properties.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := properties.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2269,33 +2130,6 @@ func (properties *EncryptionProperties) AssignProperties_To_EncryptionProperties
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EncryptionProperties_STATUS populates our EncryptionProperties from the provided source EncryptionProperties_STATUS
-func (properties *EncryptionProperties) Initialize_From_EncryptionProperties_STATUS(source *EncryptionProperties_STATUS) error {
-
-	// KeySource
-	if source.KeySource != nil {
-		keySource := genruntime.ToEnum(string(*source.KeySource), encryptionProperties_KeySource_Values)
-		properties.KeySource = &keySource
-	} else {
-		properties.KeySource = nil
-	}
-
-	// KeyVaultProperties
-	if source.KeyVaultProperties != nil {
-		var keyVaultProperty KeyVaultProperties
-		err := keyVaultProperty.Initialize_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
-		}
-		properties.KeyVaultProperties = &keyVaultProperty
-	} else {
-		properties.KeyVaultProperties = nil
 	}
 
 	// No error
@@ -2515,24 +2349,6 @@ func (reference *KeyVaultReference) AssignProperties_To_KeyVaultReference(destin
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_KeyVaultReference_STATUS populates our KeyVaultReference from the provided source KeyVaultReference_STATUS
-func (reference *KeyVaultReference) Initialize_From_KeyVaultReference_STATUS(source *KeyVaultReference_STATUS) error {
-
-	// Reference
-	if source.Id != nil {
-		referenceTemp := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		reference.Reference = &referenceTemp
-	} else {
-		reference.Reference = nil
-	}
-
-	// Url
-	reference.Url = genruntime.ClonePointerToString(source.Url)
 
 	// No error
 	return nil
@@ -3008,16 +2824,6 @@ func (properties *KeyVaultProperties) AssignProperties_To_KeyVaultProperties(des
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_KeyVaultProperties_STATUS populates our KeyVaultProperties from the provided source KeyVaultProperties_STATUS
-func (properties *KeyVaultProperties) Initialize_From_KeyVaultProperties_STATUS(source *KeyVaultProperties_STATUS) error {
-
-	// KeyIdentifier
-	properties.KeyIdentifier = genruntime.ClonePointerToString(source.KeyIdentifier)
 
 	// No error
 	return nil

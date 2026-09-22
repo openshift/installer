@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/web/v20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=web.azure.com,resources=sitessourcecontrols,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=web.azure.com,resources={sitessourcecontrols/status,sitessourcecontrols/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,web}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220301.SitesSourcecontrol
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/WebApps.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/WebApps.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web
 type SitesSourcecontrol struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (sourcecontrol *SitesSourcecontrol) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (sourcecontrol *SitesSourcecontrol) SetConditions(conditions conditions.Conditions) {
 	sourcecontrol.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &SitesSourcecontrol{}
+
+// ConvertFrom populates our SitesSourcecontrol from the provided hub SitesSourcecontrol
+func (sourcecontrol *SitesSourcecontrol) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.SitesSourcecontrol)
+	if !ok {
+		return fmt.Errorf("expected web/v20220301/storage/SitesSourcecontrol but received %T instead", hub)
+	}
+
+	return sourcecontrol.AssignProperties_From_SitesSourcecontrol(source)
+}
+
+// ConvertTo populates the provided hub SitesSourcecontrol from our SitesSourcecontrol
+func (sourcecontrol *SitesSourcecontrol) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.SitesSourcecontrol)
+	if !ok {
+		return fmt.Errorf("expected web/v20220301/storage/SitesSourcecontrol but received %T instead", hub)
+	}
+
+	return sourcecontrol.AssignProperties_To_SitesSourcecontrol(destination)
 }
 
 var _ configmaps.Exporter = &SitesSourcecontrol{}
@@ -142,8 +164,75 @@ func (sourcecontrol *SitesSourcecontrol) SetStatus(status genruntime.Convertible
 	return nil
 }
 
-// Hub marks that this SitesSourcecontrol is the hub type for conversion
-func (sourcecontrol *SitesSourcecontrol) Hub() {}
+// AssignProperties_From_SitesSourcecontrol populates our SitesSourcecontrol from the provided source SitesSourcecontrol
+func (sourcecontrol *SitesSourcecontrol) AssignProperties_From_SitesSourcecontrol(source *storage.SitesSourcecontrol) error {
+
+	// ObjectMeta
+	sourcecontrol.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec SitesSourcecontrol_Spec
+	err := spec.AssignProperties_From_SitesSourcecontrol_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SitesSourcecontrol_Spec() to populate field Spec")
+	}
+	sourcecontrol.Spec = spec
+
+	// Status
+	var status SitesSourcecontrol_STATUS
+	err = status.AssignProperties_From_SitesSourcecontrol_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SitesSourcecontrol_STATUS() to populate field Status")
+	}
+	sourcecontrol.Status = status
+
+	// Invoke the augmentConversionForSitesSourcecontrol interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol); ok {
+		err := augmentedSourcecontrol.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SitesSourcecontrol populates the provided destination SitesSourcecontrol from our SitesSourcecontrol
+func (sourcecontrol *SitesSourcecontrol) AssignProperties_To_SitesSourcecontrol(destination *storage.SitesSourcecontrol) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *sourcecontrol.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.SitesSourcecontrol_Spec
+	err := sourcecontrol.Spec.AssignProperties_To_SitesSourcecontrol_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SitesSourcecontrol_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.SitesSourcecontrol_STATUS
+	err = sourcecontrol.Status.AssignProperties_To_SitesSourcecontrol_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SitesSourcecontrol_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForSitesSourcecontrol interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol); ok {
+		err := augmentedSourcecontrol.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (sourcecontrol *SitesSourcecontrol) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (sourcecontrol *SitesSourcecontrol) OriginalGVK() *schema.GroupVersionKind 
 // +kubebuilder:object:root=true
 // Storage version of v1api20220301.SitesSourcecontrol
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/WebApps.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/WebApps.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web
 type SitesSourcecontrolList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SitesSourcecontrol `json:"items"`
+}
+
+type augmentConversionForSitesSourcecontrol interface {
+	AssignPropertiesFrom(src *storage.SitesSourcecontrol) error
+	AssignPropertiesTo(dst *storage.SitesSourcecontrol) error
 }
 
 // Storage version of v1api20220301.SitesSourcecontrol_Spec
@@ -190,20 +284,252 @@ var _ genruntime.ConvertibleSpec = &SitesSourcecontrol_Spec{}
 
 // ConvertSpecFrom populates our SitesSourcecontrol_Spec from the provided source
 func (sourcecontrol *SitesSourcecontrol_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == sourcecontrol {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.SitesSourcecontrol_Spec)
+	if ok {
+		// Populate our instance from source
+		return sourcecontrol.AssignProperties_From_SitesSourcecontrol_Spec(src)
 	}
 
-	return source.ConvertSpecTo(sourcecontrol)
+	// Convert to an intermediate form
+	src = &storage.SitesSourcecontrol_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = sourcecontrol.AssignProperties_From_SitesSourcecontrol_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our SitesSourcecontrol_Spec
 func (sourcecontrol *SitesSourcecontrol_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == sourcecontrol {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.SitesSourcecontrol_Spec)
+	if ok {
+		// Populate destination from our instance
+		return sourcecontrol.AssignProperties_To_SitesSourcecontrol_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(sourcecontrol)
+	// Convert to an intermediate form
+	dst = &storage.SitesSourcecontrol_Spec{}
+	err := sourcecontrol.AssignProperties_To_SitesSourcecontrol_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SitesSourcecontrol_Spec populates our SitesSourcecontrol_Spec from the provided source SitesSourcecontrol_Spec
+func (sourcecontrol *SitesSourcecontrol_Spec) AssignProperties_From_SitesSourcecontrol_Spec(source *storage.SitesSourcecontrol_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Branch
+	sourcecontrol.Branch = genruntime.ClonePointerToString(source.Branch)
+
+	// DeploymentRollbackEnabled
+	if source.DeploymentRollbackEnabled != nil {
+		deploymentRollbackEnabled := *source.DeploymentRollbackEnabled
+		sourcecontrol.DeploymentRollbackEnabled = &deploymentRollbackEnabled
+	} else {
+		sourcecontrol.DeploymentRollbackEnabled = nil
+	}
+
+	// GitHubActionConfiguration
+	if source.GitHubActionConfiguration != nil {
+		var gitHubActionConfiguration GitHubActionConfiguration
+		err := gitHubActionConfiguration.AssignProperties_From_GitHubActionConfiguration(source.GitHubActionConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionConfiguration() to populate field GitHubActionConfiguration")
+		}
+		sourcecontrol.GitHubActionConfiguration = &gitHubActionConfiguration
+	} else {
+		sourcecontrol.GitHubActionConfiguration = nil
+	}
+
+	// IsGitHubAction
+	if source.IsGitHubAction != nil {
+		isGitHubAction := *source.IsGitHubAction
+		sourcecontrol.IsGitHubAction = &isGitHubAction
+	} else {
+		sourcecontrol.IsGitHubAction = nil
+	}
+
+	// IsManualIntegration
+	if source.IsManualIntegration != nil {
+		isManualIntegration := *source.IsManualIntegration
+		sourcecontrol.IsManualIntegration = &isManualIntegration
+	} else {
+		sourcecontrol.IsManualIntegration = nil
+	}
+
+	// IsMercurial
+	if source.IsMercurial != nil {
+		isMercurial := *source.IsMercurial
+		sourcecontrol.IsMercurial = &isMercurial
+	} else {
+		sourcecontrol.IsMercurial = nil
+	}
+
+	// Kind
+	sourcecontrol.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SitesSourcecontrolOperatorSpec
+		err := operatorSpec.AssignProperties_From_SitesSourcecontrolOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SitesSourcecontrolOperatorSpec() to populate field OperatorSpec")
+		}
+		sourcecontrol.OperatorSpec = &operatorSpec
+	} else {
+		sourcecontrol.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	sourcecontrol.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		sourcecontrol.Owner = &owner
+	} else {
+		sourcecontrol.Owner = nil
+	}
+
+	// RepoUrl
+	sourcecontrol.RepoUrl = genruntime.ClonePointerToString(source.RepoUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sourcecontrol.PropertyBag = propertyBag
+	} else {
+		sourcecontrol.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrol_Spec interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol_Spec); ok {
+		err := augmentedSourcecontrol.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SitesSourcecontrol_Spec populates the provided destination SitesSourcecontrol_Spec from our SitesSourcecontrol_Spec
+func (sourcecontrol *SitesSourcecontrol_Spec) AssignProperties_To_SitesSourcecontrol_Spec(destination *storage.SitesSourcecontrol_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sourcecontrol.PropertyBag)
+
+	// Branch
+	destination.Branch = genruntime.ClonePointerToString(sourcecontrol.Branch)
+
+	// DeploymentRollbackEnabled
+	if sourcecontrol.DeploymentRollbackEnabled != nil {
+		deploymentRollbackEnabled := *sourcecontrol.DeploymentRollbackEnabled
+		destination.DeploymentRollbackEnabled = &deploymentRollbackEnabled
+	} else {
+		destination.DeploymentRollbackEnabled = nil
+	}
+
+	// GitHubActionConfiguration
+	if sourcecontrol.GitHubActionConfiguration != nil {
+		var gitHubActionConfiguration storage.GitHubActionConfiguration
+		err := sourcecontrol.GitHubActionConfiguration.AssignProperties_To_GitHubActionConfiguration(&gitHubActionConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionConfiguration() to populate field GitHubActionConfiguration")
+		}
+		destination.GitHubActionConfiguration = &gitHubActionConfiguration
+	} else {
+		destination.GitHubActionConfiguration = nil
+	}
+
+	// IsGitHubAction
+	if sourcecontrol.IsGitHubAction != nil {
+		isGitHubAction := *sourcecontrol.IsGitHubAction
+		destination.IsGitHubAction = &isGitHubAction
+	} else {
+		destination.IsGitHubAction = nil
+	}
+
+	// IsManualIntegration
+	if sourcecontrol.IsManualIntegration != nil {
+		isManualIntegration := *sourcecontrol.IsManualIntegration
+		destination.IsManualIntegration = &isManualIntegration
+	} else {
+		destination.IsManualIntegration = nil
+	}
+
+	// IsMercurial
+	if sourcecontrol.IsMercurial != nil {
+		isMercurial := *sourcecontrol.IsMercurial
+		destination.IsMercurial = &isMercurial
+	} else {
+		destination.IsMercurial = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(sourcecontrol.Kind)
+
+	// OperatorSpec
+	if sourcecontrol.OperatorSpec != nil {
+		var operatorSpec storage.SitesSourcecontrolOperatorSpec
+		err := sourcecontrol.OperatorSpec.AssignProperties_To_SitesSourcecontrolOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SitesSourcecontrolOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = sourcecontrol.OriginalVersion
+
+	// Owner
+	if sourcecontrol.Owner != nil {
+		owner := sourcecontrol.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// RepoUrl
+	destination.RepoUrl = genruntime.ClonePointerToString(sourcecontrol.RepoUrl)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrol_Spec interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol_Spec); ok {
+		err := augmentedSourcecontrol.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220301.SitesSourcecontrol_STATUS
@@ -227,20 +553,240 @@ var _ genruntime.ConvertibleStatus = &SitesSourcecontrol_STATUS{}
 
 // ConvertStatusFrom populates our SitesSourcecontrol_STATUS from the provided source
 func (sourcecontrol *SitesSourcecontrol_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == sourcecontrol {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.SitesSourcecontrol_STATUS)
+	if ok {
+		// Populate our instance from source
+		return sourcecontrol.AssignProperties_From_SitesSourcecontrol_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(sourcecontrol)
+	// Convert to an intermediate form
+	src = &storage.SitesSourcecontrol_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = sourcecontrol.AssignProperties_From_SitesSourcecontrol_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our SitesSourcecontrol_STATUS
 func (sourcecontrol *SitesSourcecontrol_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == sourcecontrol {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.SitesSourcecontrol_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return sourcecontrol.AssignProperties_To_SitesSourcecontrol_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(sourcecontrol)
+	// Convert to an intermediate form
+	dst = &storage.SitesSourcecontrol_STATUS{}
+	err := sourcecontrol.AssignProperties_To_SitesSourcecontrol_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SitesSourcecontrol_STATUS populates our SitesSourcecontrol_STATUS from the provided source SitesSourcecontrol_STATUS
+func (sourcecontrol *SitesSourcecontrol_STATUS) AssignProperties_From_SitesSourcecontrol_STATUS(source *storage.SitesSourcecontrol_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Branch
+	sourcecontrol.Branch = genruntime.ClonePointerToString(source.Branch)
+
+	// Conditions
+	sourcecontrol.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DeploymentRollbackEnabled
+	if source.DeploymentRollbackEnabled != nil {
+		deploymentRollbackEnabled := *source.DeploymentRollbackEnabled
+		sourcecontrol.DeploymentRollbackEnabled = &deploymentRollbackEnabled
+	} else {
+		sourcecontrol.DeploymentRollbackEnabled = nil
+	}
+
+	// GitHubActionConfiguration
+	if source.GitHubActionConfiguration != nil {
+		var gitHubActionConfiguration GitHubActionConfiguration_STATUS
+		err := gitHubActionConfiguration.AssignProperties_From_GitHubActionConfiguration_STATUS(source.GitHubActionConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionConfiguration_STATUS() to populate field GitHubActionConfiguration")
+		}
+		sourcecontrol.GitHubActionConfiguration = &gitHubActionConfiguration
+	} else {
+		sourcecontrol.GitHubActionConfiguration = nil
+	}
+
+	// Id
+	sourcecontrol.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IsGitHubAction
+	if source.IsGitHubAction != nil {
+		isGitHubAction := *source.IsGitHubAction
+		sourcecontrol.IsGitHubAction = &isGitHubAction
+	} else {
+		sourcecontrol.IsGitHubAction = nil
+	}
+
+	// IsManualIntegration
+	if source.IsManualIntegration != nil {
+		isManualIntegration := *source.IsManualIntegration
+		sourcecontrol.IsManualIntegration = &isManualIntegration
+	} else {
+		sourcecontrol.IsManualIntegration = nil
+	}
+
+	// IsMercurial
+	if source.IsMercurial != nil {
+		isMercurial := *source.IsMercurial
+		sourcecontrol.IsMercurial = &isMercurial
+	} else {
+		sourcecontrol.IsMercurial = nil
+	}
+
+	// Kind
+	sourcecontrol.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Name
+	sourcecontrol.Name = genruntime.ClonePointerToString(source.Name)
+
+	// RepoUrl
+	sourcecontrol.RepoUrl = genruntime.ClonePointerToString(source.RepoUrl)
+
+	// Type
+	sourcecontrol.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sourcecontrol.PropertyBag = propertyBag
+	} else {
+		sourcecontrol.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrol_STATUS interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol_STATUS); ok {
+		err := augmentedSourcecontrol.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SitesSourcecontrol_STATUS populates the provided destination SitesSourcecontrol_STATUS from our SitesSourcecontrol_STATUS
+func (sourcecontrol *SitesSourcecontrol_STATUS) AssignProperties_To_SitesSourcecontrol_STATUS(destination *storage.SitesSourcecontrol_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sourcecontrol.PropertyBag)
+
+	// Branch
+	destination.Branch = genruntime.ClonePointerToString(sourcecontrol.Branch)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(sourcecontrol.Conditions)
+
+	// DeploymentRollbackEnabled
+	if sourcecontrol.DeploymentRollbackEnabled != nil {
+		deploymentRollbackEnabled := *sourcecontrol.DeploymentRollbackEnabled
+		destination.DeploymentRollbackEnabled = &deploymentRollbackEnabled
+	} else {
+		destination.DeploymentRollbackEnabled = nil
+	}
+
+	// GitHubActionConfiguration
+	if sourcecontrol.GitHubActionConfiguration != nil {
+		var gitHubActionConfiguration storage.GitHubActionConfiguration_STATUS
+		err := sourcecontrol.GitHubActionConfiguration.AssignProperties_To_GitHubActionConfiguration_STATUS(&gitHubActionConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionConfiguration_STATUS() to populate field GitHubActionConfiguration")
+		}
+		destination.GitHubActionConfiguration = &gitHubActionConfiguration
+	} else {
+		destination.GitHubActionConfiguration = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(sourcecontrol.Id)
+
+	// IsGitHubAction
+	if sourcecontrol.IsGitHubAction != nil {
+		isGitHubAction := *sourcecontrol.IsGitHubAction
+		destination.IsGitHubAction = &isGitHubAction
+	} else {
+		destination.IsGitHubAction = nil
+	}
+
+	// IsManualIntegration
+	if sourcecontrol.IsManualIntegration != nil {
+		isManualIntegration := *sourcecontrol.IsManualIntegration
+		destination.IsManualIntegration = &isManualIntegration
+	} else {
+		destination.IsManualIntegration = nil
+	}
+
+	// IsMercurial
+	if sourcecontrol.IsMercurial != nil {
+		isMercurial := *sourcecontrol.IsMercurial
+		destination.IsMercurial = &isMercurial
+	} else {
+		destination.IsMercurial = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(sourcecontrol.Kind)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sourcecontrol.Name)
+
+	// RepoUrl
+	destination.RepoUrl = genruntime.ClonePointerToString(sourcecontrol.RepoUrl)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(sourcecontrol.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrol_STATUS interface (if implemented) to customize the conversion
+	var sourcecontrolAsAny any = sourcecontrol
+	if augmentedSourcecontrol, ok := sourcecontrolAsAny.(augmentConversionForSitesSourcecontrol_STATUS); ok {
+		err := augmentedSourcecontrol.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSitesSourcecontrol_Spec interface {
+	AssignPropertiesFrom(src *storage.SitesSourcecontrol_Spec) error
+	AssignPropertiesTo(dst *storage.SitesSourcecontrol_Spec) error
+}
+
+type augmentConversionForSitesSourcecontrol_STATUS interface {
+	AssignPropertiesFrom(src *storage.SitesSourcecontrol_STATUS) error
+	AssignPropertiesTo(dst *storage.SitesSourcecontrol_STATUS) error
 }
 
 // Storage version of v1api20220301.GitHubActionConfiguration
@@ -253,6 +799,136 @@ type GitHubActionConfiguration struct {
 	PropertyBag            genruntime.PropertyBag              `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_GitHubActionConfiguration populates our GitHubActionConfiguration from the provided source GitHubActionConfiguration
+func (configuration *GitHubActionConfiguration) AssignProperties_From_GitHubActionConfiguration(source *storage.GitHubActionConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CodeConfiguration
+	if source.CodeConfiguration != nil {
+		var codeConfiguration GitHubActionCodeConfiguration
+		err := codeConfiguration.AssignProperties_From_GitHubActionCodeConfiguration(source.CodeConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionCodeConfiguration() to populate field CodeConfiguration")
+		}
+		configuration.CodeConfiguration = &codeConfiguration
+	} else {
+		configuration.CodeConfiguration = nil
+	}
+
+	// ContainerConfiguration
+	if source.ContainerConfiguration != nil {
+		var containerConfiguration GitHubActionContainerConfiguration
+		err := containerConfiguration.AssignProperties_From_GitHubActionContainerConfiguration(source.ContainerConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionContainerConfiguration() to populate field ContainerConfiguration")
+		}
+		configuration.ContainerConfiguration = &containerConfiguration
+	} else {
+		configuration.ContainerConfiguration = nil
+	}
+
+	// GenerateWorkflowFile
+	if source.GenerateWorkflowFile != nil {
+		generateWorkflowFile := *source.GenerateWorkflowFile
+		configuration.GenerateWorkflowFile = &generateWorkflowFile
+	} else {
+		configuration.GenerateWorkflowFile = nil
+	}
+
+	// IsLinux
+	if source.IsLinux != nil {
+		isLinux := *source.IsLinux
+		configuration.IsLinux = &isLinux
+	} else {
+		configuration.IsLinux = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionConfiguration populates the provided destination GitHubActionConfiguration from our GitHubActionConfiguration
+func (configuration *GitHubActionConfiguration) AssignProperties_To_GitHubActionConfiguration(destination *storage.GitHubActionConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CodeConfiguration
+	if configuration.CodeConfiguration != nil {
+		var codeConfiguration storage.GitHubActionCodeConfiguration
+		err := configuration.CodeConfiguration.AssignProperties_To_GitHubActionCodeConfiguration(&codeConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionCodeConfiguration() to populate field CodeConfiguration")
+		}
+		destination.CodeConfiguration = &codeConfiguration
+	} else {
+		destination.CodeConfiguration = nil
+	}
+
+	// ContainerConfiguration
+	if configuration.ContainerConfiguration != nil {
+		var containerConfiguration storage.GitHubActionContainerConfiguration
+		err := configuration.ContainerConfiguration.AssignProperties_To_GitHubActionContainerConfiguration(&containerConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionContainerConfiguration() to populate field ContainerConfiguration")
+		}
+		destination.ContainerConfiguration = &containerConfiguration
+	} else {
+		destination.ContainerConfiguration = nil
+	}
+
+	// GenerateWorkflowFile
+	if configuration.GenerateWorkflowFile != nil {
+		generateWorkflowFile := *configuration.GenerateWorkflowFile
+		destination.GenerateWorkflowFile = &generateWorkflowFile
+	} else {
+		destination.GenerateWorkflowFile = nil
+	}
+
+	// IsLinux
+	if configuration.IsLinux != nil {
+		isLinux := *configuration.IsLinux
+		destination.IsLinux = &isLinux
+	} else {
+		destination.IsLinux = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220301.GitHubActionConfiguration_STATUS
 // The GitHub action configuration.
 type GitHubActionConfiguration_STATUS struct {
@@ -263,12 +939,271 @@ type GitHubActionConfiguration_STATUS struct {
 	PropertyBag            genruntime.PropertyBag                     `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_GitHubActionConfiguration_STATUS populates our GitHubActionConfiguration_STATUS from the provided source GitHubActionConfiguration_STATUS
+func (configuration *GitHubActionConfiguration_STATUS) AssignProperties_From_GitHubActionConfiguration_STATUS(source *storage.GitHubActionConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CodeConfiguration
+	if source.CodeConfiguration != nil {
+		var codeConfiguration GitHubActionCodeConfiguration_STATUS
+		err := codeConfiguration.AssignProperties_From_GitHubActionCodeConfiguration_STATUS(source.CodeConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionCodeConfiguration_STATUS() to populate field CodeConfiguration")
+		}
+		configuration.CodeConfiguration = &codeConfiguration
+	} else {
+		configuration.CodeConfiguration = nil
+	}
+
+	// ContainerConfiguration
+	if source.ContainerConfiguration != nil {
+		var containerConfiguration GitHubActionContainerConfiguration_STATUS
+		err := containerConfiguration.AssignProperties_From_GitHubActionContainerConfiguration_STATUS(source.ContainerConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubActionContainerConfiguration_STATUS() to populate field ContainerConfiguration")
+		}
+		configuration.ContainerConfiguration = &containerConfiguration
+	} else {
+		configuration.ContainerConfiguration = nil
+	}
+
+	// GenerateWorkflowFile
+	if source.GenerateWorkflowFile != nil {
+		generateWorkflowFile := *source.GenerateWorkflowFile
+		configuration.GenerateWorkflowFile = &generateWorkflowFile
+	} else {
+		configuration.GenerateWorkflowFile = nil
+	}
+
+	// IsLinux
+	if source.IsLinux != nil {
+		isLinux := *source.IsLinux
+		configuration.IsLinux = &isLinux
+	} else {
+		configuration.IsLinux = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionConfiguration_STATUS populates the provided destination GitHubActionConfiguration_STATUS from our GitHubActionConfiguration_STATUS
+func (configuration *GitHubActionConfiguration_STATUS) AssignProperties_To_GitHubActionConfiguration_STATUS(destination *storage.GitHubActionConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CodeConfiguration
+	if configuration.CodeConfiguration != nil {
+		var codeConfiguration storage.GitHubActionCodeConfiguration_STATUS
+		err := configuration.CodeConfiguration.AssignProperties_To_GitHubActionCodeConfiguration_STATUS(&codeConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionCodeConfiguration_STATUS() to populate field CodeConfiguration")
+		}
+		destination.CodeConfiguration = &codeConfiguration
+	} else {
+		destination.CodeConfiguration = nil
+	}
+
+	// ContainerConfiguration
+	if configuration.ContainerConfiguration != nil {
+		var containerConfiguration storage.GitHubActionContainerConfiguration_STATUS
+		err := configuration.ContainerConfiguration.AssignProperties_To_GitHubActionContainerConfiguration_STATUS(&containerConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubActionContainerConfiguration_STATUS() to populate field ContainerConfiguration")
+		}
+		destination.ContainerConfiguration = &containerConfiguration
+	} else {
+		destination.ContainerConfiguration = nil
+	}
+
+	// GenerateWorkflowFile
+	if configuration.GenerateWorkflowFile != nil {
+		generateWorkflowFile := *configuration.GenerateWorkflowFile
+		destination.GenerateWorkflowFile = &generateWorkflowFile
+	} else {
+		destination.GenerateWorkflowFile = nil
+	}
+
+	// IsLinux
+	if configuration.IsLinux != nil {
+		isLinux := *configuration.IsLinux
+		destination.IsLinux = &isLinux
+	} else {
+		destination.IsLinux = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220301.SitesSourcecontrolOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type SitesSourcecontrolOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SitesSourcecontrolOperatorSpec populates our SitesSourcecontrolOperatorSpec from the provided source SitesSourcecontrolOperatorSpec
+func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_From_SitesSourcecontrolOperatorSpec(source *storage.SitesSourcecontrolOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrolOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSitesSourcecontrolOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SitesSourcecontrolOperatorSpec populates the provided destination SitesSourcecontrolOperatorSpec from our SitesSourcecontrolOperatorSpec
+func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_To_SitesSourcecontrolOperatorSpec(destination *storage.SitesSourcecontrolOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSitesSourcecontrolOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSitesSourcecontrolOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForGitHubActionConfiguration interface {
+	AssignPropertiesFrom(src *storage.GitHubActionConfiguration) error
+	AssignPropertiesTo(dst *storage.GitHubActionConfiguration) error
+}
+
+type augmentConversionForGitHubActionConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.GitHubActionConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.GitHubActionConfiguration_STATUS) error
+}
+
+type augmentConversionForSitesSourcecontrolOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.SitesSourcecontrolOperatorSpec) error
+	AssignPropertiesTo(dst *storage.SitesSourcecontrolOperatorSpec) error
 }
 
 // Storage version of v1api20220301.GitHubActionCodeConfiguration
@@ -279,12 +1214,136 @@ type GitHubActionCodeConfiguration struct {
 	RuntimeVersion *string                `json:"runtimeVersion,omitempty"`
 }
 
+// AssignProperties_From_GitHubActionCodeConfiguration populates our GitHubActionCodeConfiguration from the provided source GitHubActionCodeConfiguration
+func (configuration *GitHubActionCodeConfiguration) AssignProperties_From_GitHubActionCodeConfiguration(source *storage.GitHubActionCodeConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RuntimeStack
+	configuration.RuntimeStack = genruntime.ClonePointerToString(source.RuntimeStack)
+
+	// RuntimeVersion
+	configuration.RuntimeVersion = genruntime.ClonePointerToString(source.RuntimeVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionCodeConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionCodeConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionCodeConfiguration populates the provided destination GitHubActionCodeConfiguration from our GitHubActionCodeConfiguration
+func (configuration *GitHubActionCodeConfiguration) AssignProperties_To_GitHubActionCodeConfiguration(destination *storage.GitHubActionCodeConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// RuntimeStack
+	destination.RuntimeStack = genruntime.ClonePointerToString(configuration.RuntimeStack)
+
+	// RuntimeVersion
+	destination.RuntimeVersion = genruntime.ClonePointerToString(configuration.RuntimeVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionCodeConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionCodeConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220301.GitHubActionCodeConfiguration_STATUS
 // The GitHub action code configuration.
 type GitHubActionCodeConfiguration_STATUS struct {
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RuntimeStack   *string                `json:"runtimeStack,omitempty"`
 	RuntimeVersion *string                `json:"runtimeVersion,omitempty"`
+}
+
+// AssignProperties_From_GitHubActionCodeConfiguration_STATUS populates our GitHubActionCodeConfiguration_STATUS from the provided source GitHubActionCodeConfiguration_STATUS
+func (configuration *GitHubActionCodeConfiguration_STATUS) AssignProperties_From_GitHubActionCodeConfiguration_STATUS(source *storage.GitHubActionCodeConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RuntimeStack
+	configuration.RuntimeStack = genruntime.ClonePointerToString(source.RuntimeStack)
+
+	// RuntimeVersion
+	configuration.RuntimeVersion = genruntime.ClonePointerToString(source.RuntimeVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionCodeConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionCodeConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionCodeConfiguration_STATUS populates the provided destination GitHubActionCodeConfiguration_STATUS from our GitHubActionCodeConfiguration_STATUS
+func (configuration *GitHubActionCodeConfiguration_STATUS) AssignProperties_To_GitHubActionCodeConfiguration_STATUS(destination *storage.GitHubActionCodeConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// RuntimeStack
+	destination.RuntimeStack = genruntime.ClonePointerToString(configuration.RuntimeStack)
+
+	// RuntimeVersion
+	destination.RuntimeVersion = genruntime.ClonePointerToString(configuration.RuntimeVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionCodeConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionCodeConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220301.GitHubActionContainerConfiguration
@@ -297,6 +1356,90 @@ type GitHubActionContainerConfiguration struct {
 	Username    *string                     `json:"username,omitempty"`
 }
 
+// AssignProperties_From_GitHubActionContainerConfiguration populates our GitHubActionContainerConfiguration from the provided source GitHubActionContainerConfiguration
+func (configuration *GitHubActionContainerConfiguration) AssignProperties_From_GitHubActionContainerConfiguration(source *storage.GitHubActionContainerConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ImageName
+	configuration.ImageName = genruntime.ClonePointerToString(source.ImageName)
+
+	// Password
+	if source.Password != nil {
+		password := source.Password.Copy()
+		configuration.Password = &password
+	} else {
+		configuration.Password = nil
+	}
+
+	// ServerUrl
+	configuration.ServerUrl = genruntime.ClonePointerToString(source.ServerUrl)
+
+	// Username
+	configuration.Username = genruntime.ClonePointerToString(source.Username)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionContainerConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionContainerConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionContainerConfiguration populates the provided destination GitHubActionContainerConfiguration from our GitHubActionContainerConfiguration
+func (configuration *GitHubActionContainerConfiguration) AssignProperties_To_GitHubActionContainerConfiguration(destination *storage.GitHubActionContainerConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// ImageName
+	destination.ImageName = genruntime.ClonePointerToString(configuration.ImageName)
+
+	// Password
+	if configuration.Password != nil {
+		password := configuration.Password.Copy()
+		destination.Password = &password
+	} else {
+		destination.Password = nil
+	}
+
+	// ServerUrl
+	destination.ServerUrl = genruntime.ClonePointerToString(configuration.ServerUrl)
+
+	// Username
+	destination.Username = genruntime.ClonePointerToString(configuration.Username)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionContainerConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionContainerConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220301.GitHubActionContainerConfiguration_STATUS
 // The GitHub action container configuration.
 type GitHubActionContainerConfiguration_STATUS struct {
@@ -304,6 +1447,94 @@ type GitHubActionContainerConfiguration_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	ServerUrl   *string                `json:"serverUrl,omitempty"`
 	Username    *string                `json:"username,omitempty"`
+}
+
+// AssignProperties_From_GitHubActionContainerConfiguration_STATUS populates our GitHubActionContainerConfiguration_STATUS from the provided source GitHubActionContainerConfiguration_STATUS
+func (configuration *GitHubActionContainerConfiguration_STATUS) AssignProperties_From_GitHubActionContainerConfiguration_STATUS(source *storage.GitHubActionContainerConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ImageName
+	configuration.ImageName = genruntime.ClonePointerToString(source.ImageName)
+
+	// ServerUrl
+	configuration.ServerUrl = genruntime.ClonePointerToString(source.ServerUrl)
+
+	// Username
+	configuration.Username = genruntime.ClonePointerToString(source.Username)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionContainerConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionContainerConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_GitHubActionContainerConfiguration_STATUS populates the provided destination GitHubActionContainerConfiguration_STATUS from our GitHubActionContainerConfiguration_STATUS
+func (configuration *GitHubActionContainerConfiguration_STATUS) AssignProperties_To_GitHubActionContainerConfiguration_STATUS(destination *storage.GitHubActionContainerConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// ImageName
+	destination.ImageName = genruntime.ClonePointerToString(configuration.ImageName)
+
+	// ServerUrl
+	destination.ServerUrl = genruntime.ClonePointerToString(configuration.ServerUrl)
+
+	// Username
+	destination.Username = genruntime.ClonePointerToString(configuration.Username)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForGitHubActionContainerConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForGitHubActionContainerConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForGitHubActionCodeConfiguration interface {
+	AssignPropertiesFrom(src *storage.GitHubActionCodeConfiguration) error
+	AssignPropertiesTo(dst *storage.GitHubActionCodeConfiguration) error
+}
+
+type augmentConversionForGitHubActionCodeConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.GitHubActionCodeConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.GitHubActionCodeConfiguration_STATUS) error
+}
+
+type augmentConversionForGitHubActionContainerConfiguration interface {
+	AssignPropertiesFrom(src *storage.GitHubActionContainerConfiguration) error
+	AssignPropertiesTo(dst *storage.GitHubActionContainerConfiguration) error
+}
+
+type augmentConversionForGitHubActionContainerConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.GitHubActionContainerConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.GitHubActionContainerConfiguration_STATUS) error
 }
 
 func init() {

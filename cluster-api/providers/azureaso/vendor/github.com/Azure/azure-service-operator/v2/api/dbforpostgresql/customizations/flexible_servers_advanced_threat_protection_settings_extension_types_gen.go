@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20240801 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801"
-	storage "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
+	v20240801s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage"
+	v20250801 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801"
+	v20250801s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type FlexibleServersAdvancedThreatProtectionSettingsExtension struct {
 func (extension *FlexibleServersAdvancedThreatProtectionSettingsExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20240801.FlexibleServersAdvancedThreatProtectionSettings{},
-		&storage.FlexibleServersAdvancedThreatProtectionSettings{}}
+		&v20240801s.FlexibleServersAdvancedThreatProtectionSettings{},
+		&v20250801.FlexibleServersAdvancedThreatProtectionSettings{},
+		&v20250801s.FlexibleServersAdvancedThreatProtectionSettings{}}
 }

@@ -39,6 +39,7 @@ var (
 	ReasonReconcileBlocked                = Reason{Name: "ReconciliationBlocked", RetryClassification: retry.Slow}
 	ReasonReconcilePostponed              = Reason{Name: "ReconciliationPostponed", RetryClassification: retry.Slow}
 	ReasonPostReconcileFailure            = Reason{Name: "PostReconciliationFailure", RetryClassification: retry.Slow}
+	ReasonDeletionNotSupported            = Reason{Name: "DeletionNotSupportedInAzure", RetryClassification: retry.VerySlow}
 )
 
 // ReasonFailed is a catch-all error code for when we don't have a more specific error classification

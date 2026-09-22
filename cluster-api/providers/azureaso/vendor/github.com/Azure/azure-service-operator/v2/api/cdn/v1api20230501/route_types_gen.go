@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cdn}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/afdEndpoints/{endpointName}/routes/{routeName}
 type Route struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (route *Route) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/afdEndpoints/{endpointName}/routes/{routeName}
 type RouteList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -324,7 +325,7 @@ func (route *Route_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties = &arm.RouteProperties{}
 	}
 	if route.CacheConfiguration != nil {
-		cacheConfiguration_ARM, err := (*route.CacheConfiguration).ConvertToARM(resolved)
+		cacheConfiguration_ARM, err := route.CacheConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +364,7 @@ func (route *Route_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties.LinkToDefaultDomain = &linkToDefaultDomain
 	}
 	if route.OriginGroup != nil {
-		originGroup_ARM, err := (*route.OriginGroup).ConvertToARM(resolved)
+		originGroup_ARM, err := route.OriginGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -616,8 +617,6 @@ func (route *Route_Spec) AssignProperties_From_Route_Spec(source *storage.Route_
 	if source.CustomDomains != nil {
 		customDomainList := make([]ActivatedResourceReference, len(source.CustomDomains))
 		for customDomainIndex, customDomainItem := range source.CustomDomains {
-			// Shadow the loop variable to avoid aliasing
-			customDomainItem := customDomainItem
 			var customDomain ActivatedResourceReference
 			err := customDomain.AssignProperties_From_ActivatedResourceReference(&customDomainItem)
 			if err != nil {
@@ -708,8 +707,6 @@ func (route *Route_Spec) AssignProperties_From_Route_Spec(source *storage.Route_
 	if source.RuleSets != nil {
 		ruleSetList := make([]ResourceReference, len(source.RuleSets))
 		for ruleSetIndex, ruleSetItem := range source.RuleSets {
-			// Shadow the loop variable to avoid aliasing
-			ruleSetItem := ruleSetItem
 			var ruleSet ResourceReference
 			err := ruleSet.AssignProperties_From_ResourceReference(&ruleSetItem)
 			if err != nil {
@@ -726,8 +723,6 @@ func (route *Route_Spec) AssignProperties_From_Route_Spec(source *storage.Route_
 	if source.SupportedProtocols != nil {
 		supportedProtocolList := make([]AFDEndpointProtocols, len(source.SupportedProtocols))
 		for supportedProtocolIndex, supportedProtocolItem := range source.SupportedProtocols {
-			// Shadow the loop variable to avoid aliasing
-			supportedProtocolItem := supportedProtocolItem
 			supportedProtocolList[supportedProtocolIndex] = genruntime.ToEnum(supportedProtocolItem, aFDEndpointProtocols_Values)
 		}
 		route.SupportedProtocols = supportedProtocolList
@@ -763,8 +758,6 @@ func (route *Route_Spec) AssignProperties_To_Route_Spec(destination *storage.Rou
 	if route.CustomDomains != nil {
 		customDomainList := make([]storage.ActivatedResourceReference, len(route.CustomDomains))
 		for customDomainIndex, customDomainItem := range route.CustomDomains {
-			// Shadow the loop variable to avoid aliasing
-			customDomainItem := customDomainItem
 			var customDomain storage.ActivatedResourceReference
 			err := customDomainItem.AssignProperties_To_ActivatedResourceReference(&customDomain)
 			if err != nil {
@@ -854,8 +847,6 @@ func (route *Route_Spec) AssignProperties_To_Route_Spec(destination *storage.Rou
 	if route.RuleSets != nil {
 		ruleSetList := make([]storage.ResourceReference, len(route.RuleSets))
 		for ruleSetIndex, ruleSetItem := range route.RuleSets {
-			// Shadow the loop variable to avoid aliasing
-			ruleSetItem := ruleSetItem
 			var ruleSet storage.ResourceReference
 			err := ruleSetItem.AssignProperties_To_ResourceReference(&ruleSet)
 			if err != nil {
@@ -872,8 +863,6 @@ func (route *Route_Spec) AssignProperties_To_Route_Spec(destination *storage.Rou
 	if route.SupportedProtocols != nil {
 		supportedProtocolList := make([]string, len(route.SupportedProtocols))
 		for supportedProtocolIndex, supportedProtocolItem := range route.SupportedProtocols {
-			// Shadow the loop variable to avoid aliasing
-			supportedProtocolItem := supportedProtocolItem
 			supportedProtocolList[supportedProtocolIndex] = string(supportedProtocolItem)
 		}
 		destination.SupportedProtocols = supportedProtocolList
@@ -911,8 +900,6 @@ func (route *Route_Spec) Initialize_From_Route_STATUS(source *Route_STATUS) erro
 	if source.CustomDomains != nil {
 		customDomainList := make([]ActivatedResourceReference, len(source.CustomDomains))
 		for customDomainIndex, customDomainItem := range source.CustomDomains {
-			// Shadow the loop variable to avoid aliasing
-			customDomainItem := customDomainItem
 			var customDomain ActivatedResourceReference
 			err := customDomain.Initialize_From_ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded(&customDomainItem)
 			if err != nil {
@@ -979,8 +966,6 @@ func (route *Route_Spec) Initialize_From_Route_STATUS(source *Route_STATUS) erro
 	if source.RuleSets != nil {
 		ruleSetList := make([]ResourceReference, len(source.RuleSets))
 		for ruleSetIndex, ruleSetItem := range source.RuleSets {
-			// Shadow the loop variable to avoid aliasing
-			ruleSetItem := ruleSetItem
 			var ruleSet ResourceReference
 			err := ruleSet.Initialize_From_ResourceReference_STATUS(&ruleSetItem)
 			if err != nil {
@@ -997,8 +982,6 @@ func (route *Route_Spec) Initialize_From_Route_STATUS(source *Route_STATUS) erro
 	if source.SupportedProtocols != nil {
 		supportedProtocolList := make([]AFDEndpointProtocols, len(source.SupportedProtocols))
 		for supportedProtocolIndex, supportedProtocolItem := range source.SupportedProtocols {
-			// Shadow the loop variable to avoid aliasing
-			supportedProtocolItem := supportedProtocolItem
 			supportedProtocol := genruntime.ToEnum(string(supportedProtocolItem), aFDEndpointProtocols_Values)
 			supportedProtocolList[supportedProtocolIndex] = supportedProtocol
 		}
@@ -1356,8 +1339,6 @@ func (route *Route_STATUS) AssignProperties_From_Route_STATUS(source *storage.Ro
 	if source.CustomDomains != nil {
 		customDomainList := make([]ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded, len(source.CustomDomains))
 		for customDomainIndex, customDomainItem := range source.CustomDomains {
-			// Shadow the loop variable to avoid aliasing
-			customDomainItem := customDomainItem
 			var customDomain ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded
 			err := customDomain.AssignProperties_From_ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded(&customDomainItem)
 			if err != nil {
@@ -1455,8 +1436,6 @@ func (route *Route_STATUS) AssignProperties_From_Route_STATUS(source *storage.Ro
 	if source.RuleSets != nil {
 		ruleSetList := make([]ResourceReference_STATUS, len(source.RuleSets))
 		for ruleSetIndex, ruleSetItem := range source.RuleSets {
-			// Shadow the loop variable to avoid aliasing
-			ruleSetItem := ruleSetItem
 			var ruleSet ResourceReference_STATUS
 			err := ruleSet.AssignProperties_From_ResourceReference_STATUS(&ruleSetItem)
 			if err != nil {
@@ -1473,8 +1452,6 @@ func (route *Route_STATUS) AssignProperties_From_Route_STATUS(source *storage.Ro
 	if source.SupportedProtocols != nil {
 		supportedProtocolList := make([]AFDEndpointProtocols_STATUS, len(source.SupportedProtocols))
 		for supportedProtocolIndex, supportedProtocolItem := range source.SupportedProtocols {
-			// Shadow the loop variable to avoid aliasing
-			supportedProtocolItem := supportedProtocolItem
 			supportedProtocolList[supportedProtocolIndex] = genruntime.ToEnum(supportedProtocolItem, aFDEndpointProtocols_STATUS_Values)
 		}
 		route.SupportedProtocols = supportedProtocolList
@@ -1525,8 +1502,6 @@ func (route *Route_STATUS) AssignProperties_To_Route_STATUS(destination *storage
 	if route.CustomDomains != nil {
 		customDomainList := make([]storage.ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded, len(route.CustomDomains))
 		for customDomainIndex, customDomainItem := range route.CustomDomains {
-			// Shadow the loop variable to avoid aliasing
-			customDomainItem := customDomainItem
 			var customDomain storage.ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded
 			err := customDomainItem.AssignProperties_To_ActivatedResourceReference_STATUS_Profiles_AfdEndpoints_Route_SubResourceEmbedded(&customDomain)
 			if err != nil {
@@ -1618,8 +1593,6 @@ func (route *Route_STATUS) AssignProperties_To_Route_STATUS(destination *storage
 	if route.RuleSets != nil {
 		ruleSetList := make([]storage.ResourceReference_STATUS, len(route.RuleSets))
 		for ruleSetIndex, ruleSetItem := range route.RuleSets {
-			// Shadow the loop variable to avoid aliasing
-			ruleSetItem := ruleSetItem
 			var ruleSet storage.ResourceReference_STATUS
 			err := ruleSetItem.AssignProperties_To_ResourceReference_STATUS(&ruleSet)
 			if err != nil {
@@ -1636,8 +1609,6 @@ func (route *Route_STATUS) AssignProperties_To_Route_STATUS(destination *storage
 	if route.SupportedProtocols != nil {
 		supportedProtocolList := make([]string, len(route.SupportedProtocols))
 		for supportedProtocolIndex, supportedProtocolItem := range route.SupportedProtocols {
-			// Shadow the loop variable to avoid aliasing
-			supportedProtocolItem := supportedProtocolItem
 			supportedProtocolList[supportedProtocolIndex] = string(supportedProtocolItem)
 		}
 		destination.SupportedProtocols = supportedProtocolList
@@ -1898,7 +1869,7 @@ func (configuration *AfdRouteCacheConfiguration) ConvertToARM(resolved genruntim
 
 	// Set property "CompressionSettings":
 	if configuration.CompressionSettings != nil {
-		compressionSettings_ARM, err := (*configuration.CompressionSettings).ConvertToARM(resolved)
+		compressionSettings_ARM, err := configuration.CompressionSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2206,8 +2177,6 @@ func (operator *RouteOperatorSpec) AssignProperties_From_RouteOperatorSpec(sourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2224,8 +2193,6 @@ func (operator *RouteOperatorSpec) AssignProperties_From_RouteOperatorSpec(sourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2251,8 +2218,6 @@ func (operator *RouteOperatorSpec) AssignProperties_To_RouteOperatorSpec(destina
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2269,8 +2234,6 @@ func (operator *RouteOperatorSpec) AssignProperties_To_RouteOperatorSpec(destina
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
