@@ -202,6 +202,17 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Cloud controller resources", execute: o.discoverCloudControllerResources},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
+	}, {
+		// LB frontend: forwarding rules reference target TCP proxies and target pools.
+		{name: "Forwarding rules", execute: o.destroyForwardingRules},
+		{name: "Target Pools", execute: o.destroyTargetPools},
+		{name: "Target TCP Proxies", execute: o.destroyTargetTCPProxies},
+	}, {
+		// LB backend: backend services reference instance groups and health checks.
+		{name: "Backend services", execute: o.destroyBackendServices},
+		{name: "Health checks", execute: o.destroyHealthChecks},
+		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks},
+	}, {
 		{name: "Disks", execute: o.destroyDisks},
 		{name: "Service accounts", execute: o.destroyServiceAccounts},
 		{name: "Images", execute: o.destroyImages},
@@ -210,13 +221,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Routes", execute: o.destroyRoutes},
 		{name: "Firewalls", execute: o.destroyFirewalls},
 		{name: "Addresses", execute: o.destroyAddresses},
-		{name: "Forwarding rules", execute: o.destroyForwardingRules},
-		{name: "Target Pools", execute: o.destroyTargetPools},
 		{name: "Instance groups", execute: o.destroyInstanceGroups},
-		{name: "Target TCP Proxies", execute: o.destroyTargetTCPProxies},
-		{name: "Backend services", execute: o.destroyBackendServices},
-		{name: "Health checks", execute: o.destroyHealthChecks},
-		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks},
 		{name: "Routers", execute: o.destroyRouters},
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
@@ -443,6 +448,18 @@ func isErrorStatus(code int64) bool {
 	return code != 0 && (code < 200 || code >= 300)
 }
 
+func hasInternalError(op *compute.Operation) bool {
+	if op.Error == nil {
+		return false
+	}
+	for _, e := range op.Error.Errors {
+		if e.Code == "INTERNAL_ERROR" {
+			return true
+		}
+	}
+	return false
+}
+
 func operationErrorMessage(op *compute.Operation) string {
 	errs := []string{}
 	if op.Error != nil {
@@ -478,6 +495,12 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
+	}
+	if op != nil && op.Status != DONE && hasInternalError(op) {
+		o.resetRequestID(identifier...)
+		o.errorTracker.suppressWarning(item.key, fmt.Errorf("GCP operation %s for %s %s hit an internal error and will be retried: %s",
+			op.Name, resourceType, item.name, operationErrorMessage(op)), o.Logger)
+		return fmt.Errorf("delete %s %s: GCP internal error, retrying", resourceType, item.name)
 	}
 	if (err != nil && isNoOp(err)) || (op != nil && op.Status == DONE) {
 		o.resetRequestID(identifier...)
