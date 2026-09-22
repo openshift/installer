@@ -120,7 +120,7 @@ func TestClusterConfiguration_Generate(t *testing.T) {
 				imageBasedConfig(),
 			},
 
-			expectedConfig: clusterConfiguration().proxy(proxy()).build().Config,
+			expectedConfig: clusterConfiguration().proxy(enrichedProxy()).build().Config,
 		},
 		{
 			name: "valid configuration with additionalTrustBundle, policyAlways without proxy",
@@ -159,7 +159,7 @@ func TestClusterConfiguration_Generate(t *testing.T) {
 			},
 
 			expectedConfig: clusterConfiguration().
-				proxy(proxy()).
+				proxy(enrichedProxy()).
 				additionalTrustBundle(imagebased.AdditionalTrustBundle{
 					UserCaBundle: testCert,
 				}).
@@ -183,7 +183,7 @@ func TestClusterConfiguration_Generate(t *testing.T) {
 			},
 
 			expectedConfig: clusterConfiguration().
-				proxy(proxy()).
+				proxy(enrichedProxy()).
 				additionalTrustBundle(imagebased.AdditionalTrustBundle{
 					UserCaBundle:         testCert,
 					ProxyConfigmapBundle: testCert,
@@ -413,6 +413,17 @@ func proxy() *types.Proxy {
 		HTTPProxy:  "http://10.10.10.11:80",
 		HTTPSProxy: "http://my-lab-proxy.org:443",
 		NoProxy:    "internal.com",
+	}
+}
+
+func enrichedProxy() *types.Proxy {
+	// This is the proxy after enrichNoProxy() is applied with default test networks:
+	// MachineNetwork: 10.10.11.0/24, ClusterNetwork: 192.168.111.0/24, ServiceNetwork: 172.30.0.0/16
+	// ClusterDomain: ocp-ibi.testing.com (from defaultInstallConfig)
+	return &types.Proxy{
+		HTTPProxy:  "http://10.10.10.11:80",
+		HTTPSProxy: "http://my-lab-proxy.org:443",
+		NoProxy:    ".cluster.local,.svc,10.10.11.0/24,127.0.0.1,172.30.0.0/16,192.168.111.0/24,api-int.ocp-ibi.testing.com,internal.com,localhost",
 	}
 }
 
