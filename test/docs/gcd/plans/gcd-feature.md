@@ -104,13 +104,17 @@ enforces constraints, and propagates configuration to the cluster components.
 
 ### 3.2. Test Cases
 
-Test case documentation is maintained alongside this plan in the
-[`cases/`](../cases/) directory, with references to the corresponding Go test
-files.
+Automated behaviors are tracked in the coverage map below and in the E2E job.
+The [`cases/`](../cases/) directory holds one document per manual test case -
+checks that need a human because they inspect cloud-side state or network
+reachability that the test suites cannot see.
 
-| Test Case | Doc | Test File(s) |
-|-----------|-----|--------------|
-| GCD Sovereign Cloud Install | [gcd_sovereign_install.md](../cases/gcd_sovereign_install.md) | Multiple (see doc) |
+| Test Case | Doc | Priority |
+|-----------|-----|----------|
+| Nodes use sovereign machine and disk defaults | [gcd_node_machine_and_disk.md](../cases/gcd_node_machine_and_disk.md) | P1 |
+| Cluster uses private DNS only | [gcd_private_dns_only.md](../cases/gcd_private_dns_only.md) | P1 |
+| Install-config rejects public publish | [gcd_reject_public_publish.md](../cases/gcd_reject_public_publish.md) | P1 |
+| Destroy removes all resources | [gcd_destroy_cleanup.md](../cases/gcd_destroy_cleanup.md) | P2 |
 
 ### 3.3. Unit Test Coverage Map
 
@@ -161,7 +165,11 @@ When a sovereign cloud environment is detected:
 ### 4.3. E2E Test Execution
 
 The E2E test job `e2e-gcd-ovn-private-techpreview` performs a full IPI
-installation on GCD. The workflow:
+installation on GCD. Its
+[job history](https://prow.ci.openshift.org/job-history/gs/test-platform-results/logs/periodic-ci-openshift-release-main-ci-5.0-e2e-gcd-ovn-private-techpreview)
+shows recent runs; the job is defined in
+[openshift/release](https://github.com/openshift/release/blob/master/ci-operator/config/openshift/installer/openshift-installer-main.yaml)
+(search for `e2e-gcd`). The workflow:
 
 1. **Credential validation** (`ipi-conf-gcd-creds`) - Validates GCD service
    account key contains `universe_domain` field

@@ -6,7 +6,7 @@ Usage:
     python3 check.py cases                    # validate only test case files
     python3 check.py plans                    # validate only test plan files
     python3 check.py matrix                   # validate only the feature matrix
-    python3 check.py gcd/cases/gcd_sovereign_install.md  # validate a specific file
+    python3 check.py gcd/cases/gcd_private_dns_only.md   # validate a specific file
 """
 import re
 import sys
@@ -25,8 +25,6 @@ AUTOMATION_STATUSES = {
 
 PRIORITY_VALUES = {"P1", "P2", "P3", ""}
 
-TEST_TYPES = {"Unit", "Integration", "E2E"}
-
 MATRIX_CELL_VALUES = {"AT", "MT", "AT/MT", "PT", "NT", "NA", "Yes", "No"}
 
 MATRIX_CELL_PATTERN = re.compile(
@@ -42,8 +40,11 @@ JIRA_LINK_PATTERN = re.compile(
     r"\[([A-Z]+-\d+)\]\(https://redhat\.atlassian\.net/browse/[A-Z]+-\d+\)"
 )
 
-# Required metadata fields for test case files (the Metadata table).
-CASE_METADATA_FIELDS = {"Feature", "Component", "Test type", "Assignee"}
+# Required metadata fields for test case files (the table under the title).
+CASE_METADATA_FIELDS = ["Feature", "Component", "Type", "Priority", "Test plan"]
+
+# Required sections for test case files, in order (IEEE-829 shape).
+CASE_REQUIRED_SECTIONS = ["Setup", "Test", "Cleanup"]
 
 # Required top-level sections for test plan files.
 PLAN_REQUIRED_SECTIONS = [
@@ -98,6 +99,21 @@ def parse_md_table(lines, start):
             rows.append(cells)
         i += 1
     return rows
+
+
+def find_leading_table(lines):
+    """Find the first markdown table that appears before any '## ' heading.
+
+    Returns (header_row, data_rows, line_number) or None.
+    """
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            return None
+        if line.strip().startswith("|"):
+            rows = parse_md_table(lines, i)
+            if rows:
+                return rows[0], rows[1:], i + 1
+    return None
 
 
 def find_table_after_heading(lines, heading_text):
@@ -156,11 +172,16 @@ def detect_file_type(path, lines):
 
 
 def validate_case(path, lines):
-    """Validate a test case file."""
+    """Validate a test case file.
+
+    A test case file is one manual (or not-yet-automated) scenario written in
+    the IEEE-829 shape: a metadata table, then Setup / Test / Cleanup, with
+    the Test section made of alternating Step and Expect subsections.
+    """
     errors = []
     rel = relative_path(path)
 
-    # 1. Title must start with "# Test Case:"
+    # 1. Title must start with "# Test Case:".
     title_found = False
     for i, line in enumerate(lines):
         if line.startswith("# "):
@@ -180,12 +201,15 @@ def validate_case(path, lines):
     if not title_found:
         errors.append(ValidationError(rel, None, "no top-level heading found"))
 
-    # 2. Metadata table
-    result = find_table_after_heading(lines, "Metadata")
+    # 2. Metadata table, directly under the title.
+    result = find_leading_table(lines)
     if result is None:
-        errors.append(ValidationError(rel, None, "missing '## Metadata' section with table"))
+        errors.append(ValidationError(
+            rel, None,
+            "missing metadata table between the title and the first section",
+        ))
     else:
-        header, rows, line_num = result
+        _, rows, line_num = result
         found_fields = {}
         for row_idx, row in enumerate(rows):
             if len(row) < 2:
@@ -194,9 +218,9 @@ def validate_case(path, lines):
                     f"metadata row has fewer than 2 columns: {row}",
                 ))
                 continue
-            field_name = strip_bold(row[0])
-            field_value = row[1].strip()
-            found_fields[field_name] = (field_value, line_num + row_idx + 2)
+            found_fields[strip_bold(row[0])] = (
+                row[1].strip(), line_num + row_idx + 2,
+            )
 
         for required in CASE_METADATA_FIELDS:
             if required not in found_fields:
@@ -215,133 +239,90 @@ def validate_case(path, lines):
                     "(e.g. [KEY-123](https://redhat.atlassian.net/browse/KEY-123))",
                 ))
 
-        # Test type must be from the allowed set (comma-separated).
-        if "Test type" in found_fields:
-            val, ln = found_fields["Test type"]
-            parts = [p.strip() for p in val.split(",")]
-            for part in parts:
-                if part not in TEST_TYPES:
-                    errors.append(ValidationError(
-                        rel, ln,
-                        f"invalid test type '{part}' "
-                        f"(expected one of: {', '.join(sorted(TEST_TYPES))})",
-                    ))
-
-        # Assignee must not be empty.
-        if "Assignee" in found_fields:
-            val, ln = found_fields["Assignee"]
-            if not val:
+        # Type must be a known automation status.
+        if "Type" in found_fields:
+            val, ln = found_fields["Type"]
+            if val not in AUTOMATION_STATUSES:
                 errors.append(ValidationError(
-                    rel, ln, "Assignee field is empty",
-                ))
-
-    # 3. Scenarios table
-    table_statuses = {}  # scenario number -> status from table
-    result = find_table_after_heading(lines, "Scenarios")
-    if result is None:
-        errors.append(ValidationError(rel, None, "missing '## Scenarios' section with table"))
-    else:
-        header, rows, line_num = result
-        if len(header) < 3:
-            errors.append(ValidationError(
-                rel, line_num,
-                f"scenarios table must have at least 3 columns (got {len(header)})",
-            ))
-        has_manual = False
-        for row_idx, row in enumerate(rows):
-            if len(row) < 3:
-                continue
-            status = row[2].strip()
-            if status not in AUTOMATION_STATUSES:
-                errors.append(ValidationError(
-                    rel, line_num + row_idx + 2,
-                    f"invalid automation status '{status}' "
+                    rel, ln,
+                    f"invalid type '{val}' "
                     f"(expected one of: {', '.join(sorted(AUTOMATION_STATUSES))})",
                 ))
-            if status == "Manual":
-                has_manual = True
 
-            # Validate priority column if present (4th column).
-            if len(row) >= 4:
-                priority = row[3].strip()
-                if priority not in PRIORITY_VALUES:
-                    errors.append(ValidationError(
-                        rel, line_num + row_idx + 2,
-                        f"invalid priority '{priority}' "
-                        f"(expected one of: P1, P2, P3, or empty)",
-                    ))
-
-            num_str = row[0].strip()
-            if not num_str.isdigit() or int(num_str) < 1:
+        # Priority must be P1/P2/P3 or empty.
+        if "Priority" in found_fields:
+            val, ln = found_fields["Priority"]
+            if val not in PRIORITY_VALUES:
                 errors.append(ValidationError(
-                    rel, line_num + row_idx + 2,
-                    f"scenario number must be a positive integer (got '{num_str}')",
-                ))
-            else:
-                table_statuses[int(num_str)] = status
-
-        if has_manual:
-            full_text = "\n".join(lines)
-            if "MANUAL_TESTS_START" not in full_text:
-                errors.append(ValidationError(
-                    rel, None,
-                    "file has Manual scenarios but missing "
-                    "<!-- MANUAL_TESTS_START --> marker",
-                ))
-            if "MANUAL_TESTS_END" not in full_text:
-                errors.append(ValidationError(
-                    rel, None,
-                    "file has Manual scenarios but missing "
-                    "<!-- MANUAL_TESTS_END --> marker",
+                    rel, ln,
+                    f"invalid priority '{val}' (expected one of: P1, P2, P3, or empty)",
                 ))
 
-    # 4. Per-scenario automation status - cross-check with scenarios table.
-    detail_statuses = {}  # scenario number -> (status, line)
-    scenario_pattern = re.compile(r"^##\s+(\d+)\.\s+")
-    for i, line in enumerate(lines):
-        m = scenario_pattern.match(line)
-        if m:
-            num = int(m.group(1))
-            found_status = False
-            for j in range(i + 1, min(i + 8, len(lines))):
-                if "**Automation status:**" in lines[j]:
-                    found_status = True
-                    status_val = lines[j].split("**Automation status:**")[1].strip()
-                    if status_val not in AUTOMATION_STATUSES:
-                        errors.append(ValidationError(
-                            rel, j + 1,
-                            f"invalid per-scenario automation status '{status_val}'",
-                        ))
-                    detail_statuses[num] = (status_val, j + 1)
-                    break
-            if not found_status:
+        # Test plan must link to a file that exists.
+        if "Test plan" in found_fields:
+            val, ln = found_fields["Test plan"]
+            m = re.search(r"\[[^\]]+\]\(([^)]+)\)", val)
+            if not m:
                 errors.append(ValidationError(
-                    rel, i + 1,
-                    f"scenario {num} missing '**Automation status:**' field",
+                    rel, ln,
+                    "Test plan field must be a markdown link to the parent plan",
+                ))
+            elif not (path.parent / m.group(1)).resolve().exists():
+                errors.append(ValidationError(
+                    rel, ln,
+                    f"test plan link target does not exist: '{m.group(1)}'",
                 ))
 
-    # Cross-check: statuses in the table must match per-scenario statuses.
-    for num, table_status in table_statuses.items():
-        if num in detail_statuses:
-            detail_status, detail_line = detail_statuses[num]
-            if table_status != detail_status:
-                errors.append(ValidationError(
-                    rel, detail_line,
-                    f"scenario {num} status mismatch: table says "
-                    f"'{table_status}' but detail says '{detail_status}'",
-                ))
-        elif num not in detail_statuses:
+    # 3. Setup / Test / Cleanup sections, in order.
+    sections = [
+        (line.strip().removeprefix("## ").strip(), i + 1)
+        for i, line in enumerate(lines)
+        if line.startswith("## ")
+    ]
+    section_names = [name for name, _ in sections]
+    for required in CASE_REQUIRED_SECTIONS:
+        if required not in section_names:
             errors.append(ValidationError(
-                rel, None,
-                f"scenario {num} listed in table but has no "
-                f"'## {num}. ...' detail section",
+                rel, None, f"missing required section: '## {required}'",
             ))
-
-    # 5. Related Links section should exist.
-    if not any(line.strip().startswith("## Related Links") for line in lines):
+    present = [n for n in section_names if n in CASE_REQUIRED_SECTIONS]
+    expected_order = [n for n in CASE_REQUIRED_SECTIONS if n in present]
+    if present != expected_order:
         errors.append(ValidationError(
-            rel, None, "missing '## Related Links' section",
+            rel, None,
+            f"sections must appear in the order "
+            f"{' -> '.join(CASE_REQUIRED_SECTIONS)} (got: {' -> '.join(present)})",
         ))
+
+    # 4. The Test section must alternate '### Step' and '### Expect'.
+    in_test = False
+    steps = []
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            in_test = line.strip() == "## Test"
+            continue
+        if in_test and line.startswith("### "):
+            steps.append((line.strip().removeprefix("### ").strip(), i + 1))
+
+    if not any(name == "Step" for name, _ in steps):
+        errors.append(ValidationError(
+            rel, None, "the Test section must contain at least one '### Step'",
+        ))
+    for idx, (name, ln) in enumerate(steps):
+        expected = "Step" if idx % 2 == 0 else "Expect"
+        if name != expected:
+            errors.append(ValidationError(
+                rel, ln,
+                f"Test subsections must alternate Step/Expect: "
+                f"expected '### {expected}', got '### {name}'",
+            ))
+            break
+    else:
+        if len(steps) % 2 != 0:
+            errors.append(ValidationError(
+                rel, steps[-1][1],
+                "the last '### Step' has no matching '### Expect'",
+            ))
 
     return errors
 

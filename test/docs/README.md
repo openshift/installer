@@ -1,13 +1,16 @@
 # Installer Test Documentation
 
 This directory contains structured test documentation for the OpenShift
-Installer. Test plans and test cases are written as markdown files, organized
-by platform or topic, and cross-linked to the Go test files that implement
-them.
+Installer, organized by platform or topic:
 
-The goal is traceability: every testable behavior should have a documented
-scenario that links to a JIRA feature or bug, the source code under test, and
-the automated test that verifies it.
+- **Plans** (`<platform>/plans/`) cover a feature end to end: scope, strategy,
+  which behavior is covered by which Go test or CI job, risks, exit criteria.
+- **Cases** (`<platform>/cases/`) are one file per test a human runs, written
+  as setup, steps with expected results, and cleanup.
+
+The goal is traceability: every testable behavior links to a JIRA feature or
+bug, to the source under test, and to whatever verifies it - a Go test, a CI
+job, or a documented manual procedure.
 
 For a cross-platform overview of which features are tested and how, see the
 [Platform Feature Matrix](platform_feature_matrix.md).
@@ -17,7 +20,8 @@ For a cross-platform overview of which features are tested and how, see the
 The test documentation supports end-to-end traceability through this chain:
 
 ```text
-JIRA issue -> Feature -> Test Plan -> Test Cases -> Scenarios -> CI Job (Prow)
+JIRA issue -> Feature -> Test Plan -> Go tests / CI job (Prow)
+                                   -> Test Cases (manual)
 ```
 
 Each link in the chain is navigable:
@@ -27,15 +31,14 @@ Each link in the chain is navigable:
 | JIRA issue | Test plan | JIRA issue description should link to the test plan file (see [JIRA linking](#jira-linking)) |
 | Test plan | JIRA issue | `References` section contains JIRA links |
 | Test plan | Test cases | Section 3.2 links to case files in `../cases/` |
-| Test case | Test plan | `Related Links` section links back to the parent plan |
-| Test case | Scenarios | Scenarios table at the top with anchor links |
-| Scenario | Source code | `Test file` field with repo-relative path |
-| Scenario | CI job logs | `CI job history` field with Prow URL (for Prow CI scenarios) |
+| Test case | Test plan | `Test plan` metadata field links back to the parent plan |
+| Test plan | Source code | Section 3.3 maps each behavior to its source and test file |
+| Test plan | CI job logs | Section 4 links the Prow job history for the feature's E2E job |
 
 ### Navigating to Prow logs
 
-For scenarios with status `Automated (Prow CI)`, include a `CI job history`
-link using this URL pattern:
+When a test plan names an E2E CI job, link its job history using this URL
+pattern:
 
 ```text
 https://prow.ci.openshift.org/job-history/gs/test-platform-results/logs/<full-job-name>
@@ -80,11 +83,11 @@ test/docs/
     plans/
       <feature-or-component>.md      # Test plans (higher-level)
     cases/
-      <scenario-group>.md            # Test cases (scenario-level)
+      <one-case>.md                  # Test cases (one file per case)
 ```
 
 Each platform or topic gets its own directory. Within it, `plans/` holds
-higher-level test plans and `cases/` holds detailed test case documents.
+higher-level test plans and `cases/` holds one file per manual test case.
 
 ### Current contents
 
@@ -96,7 +99,10 @@ test/docs/
     plans/
       gcd-feature.md                 # Feature test plan for GCD (OCPSTRAT-3006)
     cases/
-      gcd_sovereign_install.md       # Detailed test cases for GCD installation
+      gcd_node_machine_and_disk.md   # Manual: nodes use C3 + Hyperdisk
+      gcd_private_dns_only.md        # Manual: no public DNS zone or record
+      gcd_destroy_cleanup.md         # Manual: destroy leaves nothing behind
+      gcd_reject_public_publish.md   # Manual: publish External is rejected
 ```
 
 ### Planned directories
@@ -144,34 +150,26 @@ look like.
 
 ### Test Case
 
-A test case document describes specific test scenarios with enough detail that
-someone could execute them manually or verify the automated test covers the
-right behavior.
+A test case document describes **one** test that a human runs, in enough detail
+that someone unfamiliar with the feature can execute it. The structure follows
+IEEE-829: setup, then alternating steps and expectations, then cleanup.
 
-**Location:** `<platform>/cases/<name>.md`
+**Location:** `<platform>/cases/<name>.md` - one file per case.
 
 **Required sections:**
 
 | Section | Purpose |
 |---------|---------|
-| Metadata | Table with feature JIRA, component, test type, assignee |
-| Description | What the test cases cover and how they are organized |
-| Scenarios | Table with scenario number, link, and status (Automated/Manual) |
-| Per-scenario | Test file, function, description, execution, pass/fail criteria |
-| Manual Test Checklist | Checkbox checklist of all manual scenarios (only if file has manual tests) |
-| Related Links | JIRA issues, PRs, parent test plan |
+| Title + metadata table | Feature JIRA, component, type, priority, parent plan |
+| Intro paragraph | Two or three lines on what the case proves and why it matters |
+| `## Setup` | Environment, credentials, and state required before starting |
+| `## Test` | Alternating `### Step` / `### Expect` pairs |
+| `## Cleanup` | What to tear down afterwards, or "None" |
 
-**Per-scenario fields:**
-
-Each scenario should include:
-
-- **Test file** - path to the `_test.go` file (or CI job name for E2E)
-- **Function under test** - the Go function or CI workflow being validated
-- **Automation status** - Automated (unit test), Automated (Prow CI), or Manual
-- **Description** - what the scenario validates and why it matters
-- **Execution** - code snippet or CLI command showing how to run it
-- **Expected Result** - what a passing test produces
-- **Pass/Fail Criteria** - table of inputs and expected outputs
+**What does not belong here:** automated tests. A Go test or a Prow job is its
+own documentation, and a prose copy of it drifts out of date. Record those in
+the parent plan's coverage map (section 3.3) and its E2E workflow description
+(section 4) instead, so each behavior is described in exactly one place.
 
 ## How to Add a New Test Plan
 
@@ -244,9 +242,9 @@ Create `test/docs/<platform>/plans/<name>.md` using this template:
 
 ### 3.2. Test Cases
 
-| Test Case | Doc | Test File(s) |
-|-----------|-----|--------------|
-| <Case name> | [<filename>.md](../cases/<filename>.md) | <Go test file paths> |
+| Test Case | Doc | Priority |
+|-----------|-----|----------|
+| <Case name> | [<filename>.md](../cases/<filename>.md) | <P1/P2/P3> |
 
 ### 3.3. Unit Test Coverage Map
 
@@ -276,121 +274,77 @@ The test plan should reference its test case documents in section 3.2
 using relative links:
 
 ```markdown
-| GCD Sovereign Install | [gcd_sovereign_install.md](../cases/gcd_sovereign_install.md) | Multiple |
+| Cluster uses private DNS only | [gcd_private_dns_only.md](../cases/gcd_private_dns_only.md) | P1 |
 ```
 
 ## How to Add New Test Cases
 
 ### 1. Create the test case file
 
-Create `test/docs/<platform>/cases/<name>.md` using this template:
+Create one file per case, `test/docs/<platform>/cases/<name>.md`, using this
+template:
 
 ````markdown
-# Test Case: <Case Name>
-
-## Metadata
+# Test Case: <What the test proves, as a statement>
 
 | Field | Value |
 |-------|-------|
 | **Feature** | [<JIRA-KEY>](https://redhat.atlassian.net/browse/<JIRA-KEY>) - <Description> |
 | **Component** | Installer / <platform> |
-| **Test type** | <Unit, Integration, E2E> |
-| **Assignee** | <Name or TBD> |
+| **Type** | Manual |
+| **Priority** | <P1/P2/P3> |
+| **Test plan** | [<plan-name>.md](../plans/<plan-name>.md) |
 
-## Description
+<Two or three lines: what this case proves, and why it cannot be automated.>
 
-<What these test cases cover and how they are organized.>
+## Setup
 
-## Scenarios
+- <State, credentials, or tooling needed before starting.>
 
-| # | Scenario | Status | Priority |
-|---|----------|--------|----------|
-| 1 | [<Scenario title>](#1-scenario-title) | Automated (unit test) | |
-| 2 | [<Scenario title>](#2-scenario-title) | Manual | P1 |
-
----
-
-## 1. <Scenario title>
-
-- **Test file:** `<path/to/file_test.go>`
-- **Function under test:** `<FunctionName>()`
-- **Automation status:** Automated (unit test)
-
-### Description
-
-<What this scenario validates and why it matters.>
-
-### Execution
-
-```go
-result := pkg.FunctionUnderTest(input)
-// Expected: <expected value>
+```bash
+export SOME_VAR="<value>"
 ```
 
-### Expected Result
+## Test
 
-- <What the function returns or what the test asserts>
+### Step
 
-### Pass/Fail Criteria
+<One action, with the exact command to run.>
 
-| Input | Expected Output |
-|-------|-----------------|
-| `<input>` | `<output>` |
+```bash
+<command>
+```
 
----
+### Expect
 
-## 2. <Scenario title>
+<The observable result. Be specific enough to judge pass or fail.>
 
-- **Automation status:** Manual
-- **Requires:** <Running cluster, credentials, etc.>
+### Step
 
-### Description
+<Next action.>
 
-<What this scenario validates and why manual verification is needed.>
+### Expect
 
-### Prerequisites
+<Next result.>
 
-- <What must be in place before running this test>
+## Cleanup
 
-### Execution
-
-<Step-by-step instructions with commands to run.>
-
-### Pass/Fail Criteria
-
-| Check | Pass Condition |
-|-------|---------------|
-| <Check> | <Condition> |
-
----
-
-## Manual Test Checklist
-
-<!-- MANUAL_TESTS_START -->
-
-- [ ] **2. <Scenario title>**
-  - [ ] <Sub-check from pass/fail criteria>
-
-<!-- MANUAL_TESTS_END -->
-
----
-
-## Related Links
-
-- Feature test plan: [<plan-name>.md](../plans/<plan-name>.md)
-- <JIRA links, PR links>
+<What to tear down, or "None." when every step is read-only.>
 ````
+
+Keep a case to a single page. If it grows past roughly a dozen steps, it is
+probably two cases.
 
 ### 2. Add the case to the test plan
 
 Update the parent test plan's section 3.2 (Test Cases table) to include a row
 linking to the new case file.
 
-### 3. Add to the coverage map
+### 3. Validate
 
-If the test case covers unit-tested functions, add rows to the test plan's
-section 3.3 (Unit Test Coverage Map) linking each behavior to its source and
-test file.
+```sh
+python3 test/docs/check.py cases
+```
 
 ## Conventions
 
@@ -398,8 +352,8 @@ test file.
 
 - **Plans:** Use kebab-case. Name after the feature or component:
   `gcd-feature.md`, `ipi-install.md`, `shared-vpc.md`.
-- **Cases:** Use snake_case. Name after the scenario group:
-  `gcd_sovereign_install.md`, `aws_govcloud_validation.md`.
+- **Cases:** Use snake_case. Name after what the single case checks:
+  `gcd_private_dns_only.md`, `aws_govcloud_validation.md`.
 - **Bug cases:** Name after the JIRA key: `OCPBUGS-12345.md`.
 
 ### Cross-linking
@@ -420,122 +374,61 @@ strategy or epic. For bugs, link the bug issue directly. Use the format:
 | **Feature** | [OCPSTRAT-3006](https://redhat.atlassian.net/browse/OCPSTRAT-3006) - Description |
 ```
 
-### Automation status
+### Type
 
-Use one of these values in test case scenarios:
+The `Type` metadata field records why the case is a document rather than code:
 
 | Value | Meaning |
 |-------|---------|
-| Automated (unit test) | Covered by a Go `_test.go` file |
-| Automated (Prow CI) | Covered by a CI job in the release repo |
-| Manual | Requires manual execution by a human |
-| TBD | Automation status not yet determined |
+| Manual | Requires a human to execute and judge |
+| TBD | Written ahead of the automation that will replace it |
 
-Every scenario must have an automation status in two places:
+Automated coverage is not documented in `cases/`. Record it in the parent
+plan's coverage map (section 3.3) or its E2E workflow description (section 4).
 
-1. **Scenarios table** - the `Status` column at the top of the case file
-2. **Per-scenario metadata** - the `Automation status` field in the scenario
+### Priority
 
-### Automation priority
-
-The Scenarios table has an optional `Priority` column for tracking which
-Manual or TBD scenarios should be automated and when:
+`Priority` tracks whether the case should be automated, and when:
 
 | Value | Meaning |
 |-------|---------|
 | P1 | Automate next sprint |
 | P2 | Automate soon (next 1-2 sprints) |
-| P3 | Keep manual (automation not cost-effective) |
-| (empty) | Already automated, or priority not yet assessed |
+| P3 | Keep manual (automation is not cost-effective) |
 
-Leave the Priority column empty for already-automated scenarios. Use this
-column to help Technical Leads and Software Engineers prioritize automation
-work during sprint planning.
-
-To list all scenarios awaiting automation, sorted by priority:
+To list the automation backlog, highest priority first:
 
 ```bash
-grep -n "| P[123]" test/docs/*/cases/*.md | sort -t'|' -k5
+grep -l '^| \*\*Type\*\* | Manual' test/docs/*/cases/*.md |
+  xargs grep -H '^| \*\*Priority\*\*' | sort -t'|' -k3
 ```
 
 ### Manual tests
 
-Manual test scenarios are tests that cannot be (or are not yet) automated and
-require a human to execute and verify. Common reasons for manual testing:
+A case is manual when a human has to be in the loop. Common reasons:
 
-- Verifying cloud console state that is not exposed through CLI or API
+- Verifying cloud-side state that the installer's tests cannot observe
 - Validating behavior that depends on network topology (e.g., private DNS
   reachability from outside the VPC)
 - Confirming resource cleanup after cluster destroy
 - Validating error messages during interactive install-config creation
-- Exploratory testing of new features before automation is written
+- Exploratory testing of a new feature before automation is written
 
-#### Marking a scenario as manual
-
-In the scenario's metadata, set:
-
-```markdown
-- **Automation status:** Manual
-- **Requires:** <what is needed - running cluster, credentials, etc.>
-```
-
-In the scenarios table at the top of the file, set the Status column to
-`Manual`:
-
-```markdown
-| 14 | [Verify cluster nodes use correct machine type](#14-...) | Manual |
-```
-
-#### Manual Test Checklist section
-
-Every case file that contains manual scenarios must include a
-**Manual Test Checklist** section near the end (before Related Links). This
-section provides a runnable checklist with `- [ ]` checkboxes that can be
-copied and used to track progress during a manual verification run.
-
-Wrap the checklist with HTML comments so it can be found programmatically:
-
-```markdown
-<!-- MANUAL_TESTS_START -->
-...checklist content...
-<!-- MANUAL_TESTS_END -->
-```
-
-See [gcd_sovereign_install.md](gcd/cases/gcd_sovereign_install.md) for a
-complete example.
-
-#### Finding manual tests
-
-To list all case files that have manual tests:
+Because one file is one case, discovery is just a listing:
 
 ```bash
-grep -rl "MANUAL_TESTS_START" test/docs/*/cases/
+# All manual cases
+grep -rl '^| \*\*Type\*\* | Manual' test/docs/*/cases/
+
+# Manual cases for one platform
+grep -rl '^| \*\*Type\*\* | Manual' test/docs/gcd/cases/
+
+# Count them
+grep -rl '^| \*\*Type\*\* | Manual' test/docs/*/cases/ | wc -l
 ```
 
-To list all case files with manual tests for a specific platform:
-
-```bash
-grep -rl "MANUAL_TESTS_START" test/docs/gcd/cases/
-```
-
-To see a quick summary of which scenarios are manual across all case files:
-
-```bash
-grep -n "| Manual" test/docs/*/cases/*.md
-```
-
-To extract just the manual test checklist from a specific file:
-
-```bash
-sed -n '/MANUAL_TESTS_START/,/MANUAL_TESTS_END/p' test/docs/gcd/cases/gcd_sovereign_install.md
-```
-
-To count manual vs automated scenarios across all platforms:
-
-```bash
-echo "Manual:    $(grep -rc '| Manual' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
-echo "Automated: $(grep -rc '| Automated' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
-```
+When a case is automated, delete its file and add the behavior to the parent
+plan's coverage map in the same PR as the new test.
 
 ### Keeping docs in sync
 
@@ -548,7 +441,8 @@ Test documentation should be updated when:
 - Test coverage gaps are identified during review
 
 The documentation does not need to mirror every individual Go test function.
-Focus on documenting behaviors and scenarios, not individual assertions.
+Map behaviors to their test file in the plan's coverage map; leave individual
+assertions to the tests.
 
 ## Execution Status and Reporting
 
@@ -570,16 +464,14 @@ Use `check.py` and `grep` to produce a quick coverage summary:
 # Validate all test docs and show errors
 python3 test/docs/check.py
 
-# Count scenarios by automation status across all platforms
-echo "=== Scenario counts ==="
-echo "Automated (unit): $(grep -rc '| Automated (unit test)' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
-echo "Automated (Prow): $(grep -rc '| Automated (Prow CI)' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
-echo "Manual:           $(grep -rc '| Manual' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
-echo "TBD:              $(grep -rc '| TBD' test/docs/*/cases/*.md | awk -F: '{s+=$NF}END{print s}')"
+# Count cases still needing a human, per platform
+echo "=== Manual cases ==="
+grep -rl '^| \*\*Type\*\* | Manual' test/docs/*/cases/ | cut -d/ -f3 | uniq -c
 
-# List scenarios awaiting automation, sorted by priority
+# List the automation backlog, highest priority first
 echo "=== Automation backlog ==="
-grep -n "| P[123]" test/docs/*/cases/*.md | sort -t'|' -k5
+grep -l '^| \*\*Type\*\* | Manual' test/docs/*/cases/*.md |
+  xargs grep -H '^| \*\*Priority\*\*' | sort -t'|' -k3
 
 # Count platforms with test documentation
 echo "=== Platform coverage ==="
@@ -598,56 +490,40 @@ readiness. Key indicators:
 
 ## Test Lifecycle
 
-### When to update test documentation
+### When to update a case
 
-Update scenario documentation when:
+Update a case when the commands it runs change: a renamed CLI flag, a changed
+error message, a new prerequisite. A case whose steps no longer run is worse
+than no case at all.
 
-- A test file is renamed, moved, or deleted
-- The function under test changes signature or behavior
-- A CI job is renamed or reconfigured in the release repo
-- A Manual scenario is automated (change status and add test file reference)
+### When to retire a case
 
-### When to retire a scenario
+Delete the case file, and drop its row from the plan's section 3.2, when:
 
-Remove a scenario when:
+- The case is now automated - add the behavior to the plan's coverage map in
+  the same PR as the new test
+- The feature it covers is removed from the installer
 
-- The feature it tests is removed from the installer
-- The scenario is fully replaced by a different scenario (not just refactored)
-- The CI job it references is permanently deleted
+There is no deprecation period. One case per file means deleting a file is a
+complete, reviewable removal.
 
-Before removing, check that no other documents link to the scenario's anchor.
+### Keeping plan references current
 
-### Deprecation process
-
-When a scenario will be retired but is not yet removed:
-
-1. Add `(deprecated)` to the scenario title in the Scenarios table
-2. Add a note at the top of the scenario detail section explaining why and
-   what replaces it
-3. Remove the scenario in the next PR that touches the same case file
-
-Do not leave deprecated scenarios for more than one release cycle.
-
-### Keeping source references current
-
-When a test file or function is renamed, update all references to it across
-the test docs. Use grep to find stale references:
+The plan's coverage map points at source and test files, so it goes stale when
+those are renamed. Use grep to find the references:
 
 ```bash
-# Find references to a specific test file
 grep -rn "old_file_test.go" test/docs/
-
-# Find references to a specific function
 grep -rn "OldFunctionName" test/docs/
 ```
 
 ## References
 
-These external examples informed the structure used here:
+The case format is the IEEE-829 shape (setup, steps and expected results,
+cleanup) recommended for OpenShift test documentation. These examples informed
+the rest of the structure:
 
 - [Kueue operator test docs](https://github.com/openshift/kueue-operator/pull/1994) -
   test plans and test cases with CI job traceability
-- [Node runc deprecation cases](https://github.com/asahay19/origin/blob/f1280dc76adb20a53ea1291b2496545a4eec5da5/test/extended/node/runcdeprecationcases.md) -
-  scenario-level test case format with metadata tables and pass/fail criteria
 - [Node runc upgrade cases](https://github.com/asahay19/origin/blob/4258dcd738b8cb62aa946dd4886beb962133b7e8/test/extended/node/runc_upgrade_cases.md) -
   step-by-step test case format with prerequisites and expected results

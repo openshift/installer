@@ -132,11 +132,11 @@ or CI jobs change.
 31. GCP sovereign cloud detection (`GetCloudEnvironment`) tested in
     `pkg/types/gcp/platform_test.go`
 32. GCD has full sovereign cloud test coverage: unit tests for detection,
-    defaults, validation, and config generation, plus manual test
-    procedures documented in `test/docs/gcd/cases/gcd_sovereign_install.md`
-33. Test plan at `test/docs/gcd/plans/gcd-feature.md` and test cases at
-    `test/docs/gcd/cases/gcd_sovereign_install.md` covering 17 scenarios
-    (13 automated, 4 manual)
+    defaults, validation, and config generation, plus four manual test
+    cases documented under `test/docs/gcd/cases/`
+33. Test plan at `test/docs/gcd/plans/gcd-feature.md`, with its unit test
+    coverage map in section 3.3 and four manual cases in
+    `test/docs/gcd/cases/`
 
 ## How to Update This Matrix
 
@@ -155,7 +155,7 @@ To determine the correct status code for a cell:
 2. Check for e2e CI jobs: search the openshift/release repo for job
    definitions referencing the platform
 3. Check for manual test docs: look for files under
-   `test/docs/<platform>/cases/` with `MANUAL_TESTS_START` markers
+   `test/docs/<platform>/cases/` with `Type` set to `Manual`
 4. If the feature has code but no tests of any kind, use NT
 5. If the feature is not implemented for the platform, use NA
 
@@ -167,6 +167,6 @@ explanation to the Footnotes section. Keep footnotes factual and brief.
 - [Install config field index](install_config_field_index.md)
 - [Test documentation structure and conventions](README.md)
 - [GCD feature test plan](gcd/plans/gcd-feature.md)
-- [GCD sovereign install test cases](gcd/cases/gcd_sovereign_install.md)
+- [GCD manual test cases](gcd/cases/)
 - CI job definitions: openshift/release repo, branch config for
   `openshift-installer-main`
