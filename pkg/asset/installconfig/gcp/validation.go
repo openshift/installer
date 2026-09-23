@@ -914,16 +914,9 @@ func validateUserTags(client API, projectID string, userTags []gcp.UserTag) erro
 // validateKMSKeyReference validates a KMS key reference by checking if the key ring exists.
 // Returns a field.Error on failure, or nil on success.
 // The defaultProjectID is used if the kmsKeyRef.ProjectID is empty.
-// Global KMS key locations are not allowed because GCS bucket encryption
-// does not support global keys.
 func validateKMSKeyReference(client API, kmsKeyRef *gcp.KMSKeyReference, defaultProjectID string, fldPath *field.Path) *field.Error {
 	if kmsKeyRef == nil {
 		return nil
-	}
-
-	if strings.EqualFold(kmsKeyRef.Location, "global") {
-		return field.Invalid(fldPath.Child("location"), kmsKeyRef.Location,
-			fmt.Sprintf("KMS key %q has a global location which is not supported; a regional location is required", kmsKeyRef.Name))
 	}
 
 	// Create a copy with the project ID filled in if not specified
@@ -966,7 +959,21 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig) field.ErrorLis
 
 	defaultMp := ic.GCP.DefaultMachinePlatform
 	if defaultMp != nil && defaultMp.OSDisk.EncryptionKey != nil && defaultMp.OSDisk.EncryptionKey.KMSKey != nil {
-		if err := validateKMSKeyReference(client, defaultMp.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, platformPath.Child("defaultMachinePlatform", "osDisk", "encryptionKey", "kmsKey")); err != nil {
+		fldPath := platformPath.Child("defaultMachinePlatform", "osDisk", "encryptionKey", "kmsKey")
+
+		// When the Default Machine Platform KMS key is present, the key is used for bucket encryption; also propagates
+		// to disk encryption for pools without an explicit key. Global KMS key locations are not allowed because
+		// GCS bucket encryption does not support global keys.
+		kmsKeyRef := defaultMp.OSDisk.EncryptionKey.KMSKey
+		if strings.EqualFold(kmsKeyRef.Location, "global") {
+			return append(allErrs, field.Invalid(fldPath.Child("location"), kmsKeyRef.Location,
+				fmt.Sprintf("KMS key %q has a global location which is not supported for storage buckets; "+
+					"the defaultMachinePlatform KMS key is used for all machines as well as the bootstrap ignition and "+
+					"image registry buckets and must have a regional location; "+
+					"global KMS keys may be used with the compute and control-plane machine pools", kmsKeyRef.Name)))
+		}
+
+		if err := validateKMSKeyReference(client, defaultMp.OSDisk.EncryptionKey.KMSKey, ic.GCP.ProjectID, fldPath); err != nil {
 			if validatedControlPlaneKey && (validatedComputeKeys && len(allErrs) == 0) {
 				logrus.Warn("defaultMachinePlatform.osDisk.encryptionKey.kmsKey is not valid, but compute and control plane keys are valid")
 			} else {
