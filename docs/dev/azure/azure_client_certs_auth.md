@@ -28,6 +28,8 @@ After [1], we no longer need to pass the client secret and can pass the clientCe
 
 The installer will automatically pick up the values in the sevice principal and switch to certificate based authentication.
 
+For installer API calls without a credentials file, see [Azure Authentication using Azure CLI (az login)](azure_cli_auth.md).
+
 ## Extras
 ### Creating a certificate
 Azure expects a PEM file certificate for App registrations that are used for authentication. It then expects the PEM certificate and the
