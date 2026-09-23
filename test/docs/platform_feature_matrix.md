@@ -2,10 +2,19 @@
 
 This matrix shows which installer features are tested for each platform and
 how they are tested. Use it to identify coverage gaps and prioritize new test
-documentation. For a field-level view of which install-config fields drive each
-feature, see the [Install Config Field Index](install_config_field_index.md).
-The matrix is maintained manually and should be updated when features, tests,
-or CI jobs change.
+documentation. The matrix is maintained manually and should be updated when
+features, tests, or CI jobs change.
+
+Each cell collapses a whole platform into one value. Two companion matrices
+recover what that hides:
+
+- [Sub-platform matrix](subplatform_matrix.md) - splits a platform into its
+  variants (`aws-us-gov`, `AzureStackCloud`, GCD, agent-based versus IPI)
+- [Feature combination matrix](feature_combination_matrix.md) - tracks features
+  tested *together*, which no single-feature row can show
+
+For a field-level view of which install-config fields drive each feature, see
+the [Install Config Field Index](install_config_field_index.md).
 
 ## Platform Key
 
@@ -164,6 +173,8 @@ explanation to the Footnotes section. Keep footnotes factual and brief.
 
 ## References
 
+- [Sub-platform matrix](subplatform_matrix.md)
+- [Feature combination matrix](feature_combination_matrix.md)
 - [Install config field index](install_config_field_index.md)
 - [Test documentation structure and conventions](README.md)
 - [GCD feature test plan](gcd/plans/gcd-feature.md)

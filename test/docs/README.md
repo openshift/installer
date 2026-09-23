@@ -12,8 +12,8 @@ The goal is traceability: every testable behavior links to a JIRA feature or
 bug, to the source under test, and to whatever verifies it - a Go test, a CI
 job, or a documented manual procedure.
 
-For a cross-platform overview of which features are tested and how, see the
-[Platform Feature Matrix](platform_feature_matrix.md).
+For the cross-feature view of what is tested where, see the
+[test matrices](#test-matrices).
 
 ## Traceability
 
@@ -94,7 +94,9 @@ higher-level test plans and `cases/` holds one file per manual test case.
 ```text
 test/docs/
   install_config_field_index.md       # Install-config field to feature mapping
-  platform_feature_matrix.md          # Cross-platform feature test coverage matrix
+  platform_feature_matrix.md          # feature x platform coverage
+  subplatform_matrix.md               # feature x platform x sub-platform coverage
+  feature_combination_matrix.md       # meaningful feature-pair coverage
   gcd/
     plans/
       gcd-feature.md                 # Feature test plan for GCD (OCPSTRAT-3006)
@@ -127,6 +129,61 @@ test/docs/
 The `bugs/` directory is for complex bugs that warrant their own test plan,
 typically named after the JIRA key (e.g., `bugs/cases/OCPBUGS-12345.md`).
 
+## Test Matrices
+
+Plans and cases are written per feature. The matrices are the view across
+features - they are where scope is decided and where coverage gaps become
+visible. There are three, each adding a dimension the previous one collapses:
+
+| Matrix | Dimensions | Answers |
+|--------|-----------|---------|
+| [Platform feature matrix](platform_feature_matrix.md) | feature x platform | Is dual stack tested on Azure? |
+| [Sub-platform matrix](subplatform_matrix.md) | feature x platform x sub-platform | Is dual stack tested on Azure **Stack Hub**? |
+| [Feature combination matrix](feature_combination_matrix.md) | feature x feature | Is dual stack tested **together with** custom endpoints? |
+
+They share one cell vocabulary - `AT`, `MT`, `AT/MT`, `PT`, `NT`, `NA` - so a
+reader who learns one can read all three. The two newer matrices add `TBD` for
+a cell nobody has assessed yet.
+
+### Why three documents and not one
+
+A single table cannot carry three dimensions without becoming unreadable. The
+split also matches ownership: a platform team owns its section of the
+sub-platform matrix, while the combination matrix is cross-cutting and gets
+reviewed at release planning.
+
+### Sub-platforms
+
+A sub-platform is a variant the installer must treat differently - a separate
+partition, cloud environment, API endpoint domain, or provisioning path
+(`aws-us-gov`, `AzureStackCloud`, GCD, agent-based versus IPI). A variant that
+only changes configuration values is not a sub-platform. Sub-platforms are
+grouped one table per parent platform, so each stays narrow and independently
+owned.
+
+### Feature combinations
+
+Only **meaningful** combinations belong in that matrix: ones a customer
+actually configures, ones where both features touch the same installer code,
+or ones that have produced a bug before. Enumerating every pair would bury the
+rows that matter.
+
+### Matrices and test plans move together
+
+A PR that adds or changes a feature test plan must update the matrix cells it
+affects, in the same PR:
+
+1. Set the feature's cell in the platform feature matrix
+2. If the feature targets one variant, set its column in the sub-platform
+   matrix
+3. If the feature meaningfully combines with an existing one, add the row to
+   the feature combination matrix
+4. Link the affected matrices from the plan's scope section (section 1.2)
+
+This keeps scope decisions in the matrices, where they can be seen across
+features, and leaves the plan to cover technical detail. Never guess a cell:
+`TBD` is the correct value for coverage you have not checked.
+
 ## Document Types
 
 ### Test Plan
@@ -142,7 +199,7 @@ look like.
 | Section | Purpose |
 |---------|---------|
 | 1. Introduction | Overview, scope (in/out), key features, JIRA references |
-| 2. Testing Strategy | Schedule, test types (unit/integration/E2E), environments |
+| 2. Testing Strategy | Sequencing and dependencies, test types (unit/integration/E2E), environments |
 | 3. Test Areas and Test Cases | Activity table, links to case documents, coverage map |
 | 4. Test Details | Technical details specific to the feature under test |
 | 5. Risks | Risk table with impact and mitigation |

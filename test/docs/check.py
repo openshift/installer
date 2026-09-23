@@ -46,6 +46,10 @@ CASE_METADATA_FIELDS = ["Feature", "Component", "Type", "Priority", "Test plan"]
 # Required sections for test case files, in order (IEEE-829 shape).
 CASE_REQUIRED_SECTIONS = ["Setup", "Test", "Cleanup"]
 
+# Matrices that add a dimension to the platform feature matrix.  They share its
+# cell vocabulary but not its fixed section layout, so they get a lighter check.
+COMPANION_MATRICES = {"subplatform_matrix.md", "feature_combination_matrix.md"}
+
 # Required top-level sections for test plan files.
 PLAN_REQUIRED_SECTIONS = [
     "1. Introduction",
@@ -144,6 +148,8 @@ def detect_file_type(path, lines):
     name = path.name
     if name == "platform_feature_matrix.md":
         return "matrix"
+    if name in COMPANION_MATRICES:
+        return "companion_matrix"
 
     first_heading = ""
     for line in lines[:5]:
@@ -157,6 +163,8 @@ def detect_file_type(path, lines):
         return "plan"
     if first_heading.startswith("# Platform Feature Matrix"):
         return "matrix"
+    if first_heading.endswith("Matrix"):
+        return "companion_matrix"
 
     # Fall back to path-based detection.
     parts = path.parts
@@ -592,6 +600,77 @@ def validate_matrix(path, lines):
     return errors
 
 
+def validate_companion_matrix(path, lines):
+    """Validate a sub-platform or feature-combination matrix.
+
+    These carry free-form cells (partition identifiers, prose rationale)
+    alongside coverage codes, so only the structure that must hold is checked:
+    a legend, and footnotes that line up with their references.
+    """
+    errors = []
+    rel = relative_path(path)
+
+    if find_section_table(lines, "Legend") is None:
+        errors.append(ValidationError(
+            rel, None, "missing '## Legend' section with table",
+        ))
+
+    referenced = set()
+    footnote_ref_pattern = re.compile(r"\[(\d+)\]")
+    in_footnotes = False
+    defined = set()
+    footnote_def_pattern = re.compile(r"^(\d+)\.\s+")
+
+    for line in lines:
+        if re.match(r"^##\s+Footnotes\s*$", line):
+            in_footnotes = True
+            continue
+        if in_footnotes:
+            if line.startswith("## "):
+                in_footnotes = False
+            else:
+                m = footnote_def_pattern.match(line.strip())
+                if m:
+                    defined.add(int(m.group(1)))
+                continue
+        if line.strip().startswith("|"):
+            for m in footnote_ref_pattern.finditer(line):
+                referenced.add(int(m.group(1)))
+
+    undefined = referenced - defined
+    if undefined:
+        errors.append(ValidationError(
+            rel, None,
+            f"footnotes referenced but not defined: "
+            f"{', '.join(str(n) for n in sorted(undefined))}",
+        ))
+
+    unused = defined - referenced
+    if unused:
+        errors.append(ValidationError(
+            rel, None,
+            f"footnotes defined but not referenced in a table: "
+            f"{', '.join(str(n) for n in sorted(unused))}",
+        ))
+
+    # Relative links must resolve.
+    link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+    for i, line in enumerate(lines):
+        for m in link_pattern.finditer(line):
+            target = m.group(1)
+            if target.startswith(("http://", "https://", "#")):
+                continue
+            target = target.split("#")[0]
+            if not target:
+                continue
+            if not (path.parent / target).resolve().exists():
+                errors.append(ValidationError(
+                    rel, i + 1, f"link target does not exist: '{target}'",
+                ))
+
+    return errors
+
+
 # -- Discovery and dispatch -------------------------------------------------
 
 
@@ -651,6 +730,8 @@ def validate_file(path):
         return validate_plan(path, lines)
     elif file_type == "matrix":
         return validate_matrix(path, lines)
+    elif file_type == "companion_matrix":
+        return validate_companion_matrix(path, lines)
     else:
         return None
 

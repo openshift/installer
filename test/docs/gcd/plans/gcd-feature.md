@@ -18,6 +18,19 @@ enforces constraints, and propagates configuration to the cluster components.
 
 ### 1.2. Scope
 
+Scope is set at two levels. The matrices decide which platform, sub-platform,
+and feature combinations are in or out; this plan covers the technical detail
+behind the cells they mark for GCD:
+
+| Matrix | What it fixes for GCD |
+|--------|----------------------|
+| [Platform feature matrix](../../platform_feature_matrix.md) | The `GCD` column - which installer features are in scope at all |
+| [Sub-platform matrix](../../subplatform_matrix.md) | GCD as a GCP sub-platform, versus public GCP and S3NS |
+| [Feature combination matrix](../../feature_combination_matrix.md) | Which combinations (private cluster, custom OS image) are tested together |
+
+Any change to the scope below must update the matching matrix cells in the
+same PR, so the two never disagree.
+
 **In Scope**
 
 - Install-config validation for sovereign cloud environments
@@ -57,13 +70,33 @@ enforces constraints, and propagates configuration to the cluster components.
 
 ## 2. Testing Strategy
 
-### 2.1. Schedule
+### 2.1. Sequencing
 
-| Milestone | Date / Sprint | Notes |
-|-----------|---------------|-------|
-| Unit test coverage complete | TBD | All sovereign cloud code paths covered |
-| CI job green | TBD | `e2e-gcd-ovn-private-techpreview` passing |
-| Feature complete | TBD | GCD IPI install succeeds end-to-end |
+Dates and sprint assignments live in
+[OCPSTRAT-3006](https://redhat.atlassian.net/browse/OCPSTRAT-3006); repeating
+them here only creates a second copy to keep in sync. What this plan records
+instead is the order the testing work can happen in, and what blocks what.
+
+| Activity | Starts when | Dependency |
+|----------|-------------|------------|
+| Unit tests: detection, defaults, validation, config generation | Sovereign detection rules are agreed | Start-to-start with development - no cloud access needed |
+| CI environment: GCD project, C3 quota, RHCOS image, DNS zone, bastion image | Immediately | None - the long pole, start it first |
+| E2E CI job `e2e-gcd-ovn-private-techpreview` | CI environment is ready **and** installer code has merged | Finish-to-start on both |
+| Manual cases in [`../cases/`](../cases/) | First E2E install succeeds | Finish-to-start - they inspect a live cluster |
+| Destroy verification | A cluster exists to destroy | Finish-to-start on the manual install cases |
+
+```mermaid
+flowchart LR
+    DEV[Installer code] --> UT[Unit tests]
+    DEV --> E2E[E2E CI job]
+    ENV[CI environment setup] --> E2E
+    E2E --> MAN[Manual cases]
+    MAN --> DES[Destroy verification]
+```
+
+The critical path runs through CI environment setup, not through the code: the
+unit tests need no cloud at all, while the GCD project, quota, and uploaded
+RHCOS image gate everything downstream.
 
 ### 2.2. Test Types
 
