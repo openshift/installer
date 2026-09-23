@@ -381,7 +381,7 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confiden
 				ThirdPartyImage: osImage.Plan != aztypes.ImageNoPurchasePlan,
 			},
 		}
-	case azEnv == aztypes.StackCloud:
+	case azEnv == aztypes.StackCloud || azEnv == aztypes.USSecCloud:
 		// AzureStack is the only use for managed images & supports only Gen1 VMs:
 		// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-vm-considerations?view=azs-2501&tabs=az1%2Caz2#vm-differences
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", sub, rg, infraID)
