@@ -72,6 +72,8 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
 	case aztypes.USGovernmentCloud:
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
+	case aztypes.USSecCloud:
+		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
 	case aztypes.StackCloud:
 		storageKind = to.Ptr(armstorage.KindStorage)
 	}
@@ -93,7 +95,13 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 	sku := armstorage.SKU{
 		Name: to.Ptr(armstorage.SKUNameStandardLRS),
 	}
-	allowSharedKeyAccess := in.CloudName == aztypes.StackCloud || in.AllowSharedKeyAccess
+	/*
+		if in.CloudName == aztypes.USSecCloud {
+			sku.Name = to.Ptr(armstorage.SKUNamePremiumLRS)
+		}
+	*/
+
+	allowSharedKeyAccess := (in.CloudName == aztypes.StackCloud || in.CloudName == aztypes.USSecCloud) || in.AllowSharedKeyAccess
 	accountCreateParameters := armstorage.AccountCreateParameters{
 		Identity: nil,
 		Kind:     storageKind,
@@ -345,7 +353,7 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error
 			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
 		}
 	}
-	if in.CloudEnvironment == aztypes.StackCloud || in.AllowSharedKeyAccess {
+	if (in.CloudEnvironment == aztypes.StackCloud || in.CloudEnvironment == aztypes.USSecCloud) || in.AllowSharedKeyAccess {
 		sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
 		if err != nil {
 			return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
