@@ -87,6 +87,8 @@ type agentTemplateData struct {
 	AuthType                  string
 	CaBundleMount             string
 	DisableImagePolicy        bool
+	// InstallInvokerSuffix is appended to "agent-installer" for INSTALL_INVOKER.
+	InstallInvokerSuffix string
 }
 
 // Name returns the human-friendly name of the asset.
