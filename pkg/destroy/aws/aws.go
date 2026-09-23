@@ -286,6 +286,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		case awstypes.AwsPartitionID:
 			// For AWS standard, use "us-east-1"
 			tagRegion = awstypes.UsEast1RegionID
+		case awstypes.AwsIsoPartitionID:
+			// For AWS ISO, use "us-iso-east-1"
+			tagRegion = awstypes.UsIsoEast1RegionID
+		case awstypes.AwsIsoBPartitionID:
+			// For AWS ISOB, use "us-isob-east-1"
+			tagRegion = awstypes.UsIsoBEast1RegionID
 		default:
 			// For other partitions, use the install region
 		}
@@ -310,11 +316,22 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 				Endpoints: o.endpoints,
 			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource tagging client for cn-northwest-1: %w", err)
+				return nil, fmt.Errorf("failed to create resource tagging client for %s: %w", awstypes.CnNorthwest1RegionID, err)
 			}
 			tagClients = append(tagClients, tagClient)
 		}
-	case awstypes.UsIsoEast1RegionID, awstypes.UsIsoWest1RegionID, awstypes.UsIsoBEast1RegionID:
+	case awstypes.UsIsoEast1RegionID, awstypes.UsIsoWest1RegionID:
+		if o.Region != awstypes.UsIsoEast1RegionID {
+			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+				Region:    awstypes.UsIsoEast1RegionID,
+				Endpoints: o.endpoints,
+			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource tagging client for %s: %w", awstypes.UsIsoEast1RegionID, err)
+			}
+			tagClients = append(tagClients, tagClient)
+		}
+	case awstypes.UsIsoBEast1RegionID:
 	case awstypes.UsGovEast1RegionID, awstypes.UsGovWest1RegionID:
 		if o.Region != awstypes.UsGovWest1RegionID {
 			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
@@ -322,7 +339,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 				Endpoints: o.endpoints,
 			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource tagging client for us-gov-west-1: %w", err)
+				return nil, fmt.Errorf("failed to create resource tagging client for %s: %w", awstypes.UsGovWest1RegionID, err)
 			}
 			tagClients = append(tagClients, tagClient)
 		}
@@ -333,7 +350,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 				Endpoints: o.endpoints,
 			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource tagging client for default us-east-1: %w", err)
+				return nil, fmt.Errorf("failed to create resource tagging client for default %s: %w", awstypes.UsEast1RegionID, err)
 			}
 			tagClients = append(tagClients, tagClient)
 		}
