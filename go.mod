@@ -154,7 +154,10 @@ require (
 
 require github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
 
-require github.com/k-orc/openstack-resource-controller/v2 v2.4.0
+require (
+	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/k-orc/openstack-resource-controller/v2 v2.4.0
+)
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -169,7 +172,6 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-openapi/swag/cmdutils v0.25.4 // indirect
 	github.com/go-openapi/swag/conv v0.25.4 // indirect
 	github.com/go-openapi/swag/fileutils v0.25.4 // indirect
