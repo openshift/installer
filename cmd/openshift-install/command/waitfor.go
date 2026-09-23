@@ -56,6 +56,14 @@ const (
 	coStabilityThreshold float64 = 30
 )
 
+// staticPodInstallerNamespaces lists namespaces where control-plane static-pod operators run app=installer Pods.
+var staticPodInstallerNamespaces = []string{
+	"openshift-kube-apiserver",
+	"openshift-kube-controller-manager",
+	"openshift-kube-scheduler",
+	"openshift-etcd",
+}
+
 // SkipPasswordPrintFlag when true means do not print the generated user password.
 var SkipPasswordPrintFlag bool
 
@@ -67,6 +75,38 @@ type WaitOptions struct {
 	UserProvisionedDNSEnabled bool
 	// VerifyFIPS verifies that FIPS mode is enabled on the cluster before completing.
 	VerifyFIPS bool
+}
+
+// pruneErrorInstallerPods delete all failed installer pods with 'Error' status.
+func pruneErrorInstallerPods(ctx context.Context, config *rest.Config) (err error) {
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "creating a Kubernetes client")
+	}
+
+	for _, ns := range staticPodInstallerNamespaces {
+		pods, listErr := client.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: "app=installer"})
+		if listErr != nil {
+			return errors.Wrapf(listErr, "list installer pods in namespace %s", ns)
+		}
+		for i := range pods.Items {
+			p := &pods.Items[i]
+			if p.Status.Phase == "Failed" {
+				uid := p.UID
+				delErr := client.CoreV1().Pods(ns).Delete(ctx, p.Name, metav1.DeleteOptions{
+					Preconditions: &metav1.Preconditions{UID: &uid},
+				})
+				if delErr != nil {
+					if apierrors.IsNotFound(delErr) {
+						continue
+					}
+					return errors.Wrap(delErr, "failed to delete a pod")
+				}
+				logrus.Debugf("pruned pod %s/uid: %s", ns, uid)
+			}
+		}
+	}
+	return nil
 }
 
 // verifyFIPSEnabled checks that the cluster has FIPS enabled by querying
@@ -132,6 +172,10 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 		if err := verifyFIPSEnabled(ctx, config); err != nil {
 			return err
 		}
+	}
+
+	if err := pruneErrorInstallerPods(ctx, config); err != nil {
+		return err
 	}
 
 	consoleURL, err := getConsole(ctx, config)
