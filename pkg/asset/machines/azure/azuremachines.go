@@ -71,7 +71,9 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		ManagedDisk: &capz.ManagedDiskParameters{
 			StorageAccountType: mpool.DiskType,
 		},
-		CachingType: "ReadWrite",
+		// OCPBUGS-126380: ReadOnly host caching improves etcd read latency on Azure control plane OS disks.
+		// An install-config parameter to override this will follow in a later change.
+		CachingType: "ReadOnly",
 	}
 	if in.Pool.Platform.Azure.DiskEncryptionSet != nil {
 		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
