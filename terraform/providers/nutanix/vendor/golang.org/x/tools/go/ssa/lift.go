@@ -41,7 +41,6 @@ package ssa
 import (
 	"fmt"
 	"go/token"
-	"go/types"
 	"math/big"
 	"os"
 
@@ -106,9 +105,14 @@ func buildDomFrontier(fn *Function) domFrontier {
 }
 
 func removeInstr(refs []Instruction, instr Instruction) []Instruction {
+	return removeInstrsIf(refs, func(i Instruction) bool { return i == instr })
+}
+
+func removeInstrsIf(refs []Instruction, p func(Instruction) bool) []Instruction {
+	// TODO(taking): replace with go1.22 slices.DeleteFunc.
 	i := 0
 	for _, ref := range refs {
-		if ref == instr {
+		if p(ref) {
 			continue
 		}
 		refs[i] = ref
@@ -383,12 +387,6 @@ type newPhiMap map[*BasicBlock][]newPhi
 //
 // fresh is a source of fresh ids for phi nodes.
 func liftAlloc(df domFrontier, alloc *Alloc, newPhis newPhiMap, fresh *int) bool {
-	// TODO(taking): zero constants of aggregated types can now be lifted.
-	switch deref(alloc.Type()).Underlying().(type) {
-	case *types.Array, *types.Struct, *typeparams.TypeParam:
-		return false
-	}
-
 	// Don't lift named return values in functions that defer
 	// calls that may recover from panic.
 	if fn := alloc.Parent(); fn.Recover != nil {
@@ -469,7 +467,7 @@ func liftAlloc(df domFrontier, alloc *Alloc, newPhis newPhiMap, fresh *int) bool
 				*fresh++
 
 				phi.pos = alloc.Pos()
-				phi.setType(deref(alloc.Type()))
+				phi.setType(typeparams.MustDeref(alloc.Type()))
 				phi.block = v
 				if debugLifting {
 					fmt.Fprintf(os.Stderr, "\tplace %s = %s at block %s\n", phi.Name(), phi, v)
@@ -514,7 +512,7 @@ func replaceAll(x, y Value) {
 func renamed(renaming []Value, alloc *Alloc) Value {
 	v := renaming[alloc.index]
 	if v == nil {
-		v = zeroConst(deref(alloc.Type()))
+		v = zeroConst(typeparams.MustDeref(alloc.Type()))
 		renaming[alloc.index] = v
 	}
 	return v

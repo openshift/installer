@@ -31,9 +31,9 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/zclconf/go-cty v1.8.4 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200711021454-869866162049 // indirect
 	google.golang.org/grpc v1.32.0 // indirect
@@ -42,3 +42,5 @@ require (
 
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
