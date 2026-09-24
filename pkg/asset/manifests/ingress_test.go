@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // installConfigFromTopologies generates an install config that would yield the
@@ -253,12 +254,13 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 
 func TestGenerateDefaultIngressController(t *testing.T) {
 	cases := []struct {
-		name                 string
-		installConfig        *types.InstallConfig
-		expectedScope        operatorv1.LoadBalancerScope
-		expectedAWSLbType    operatorv1.AWSLoadBalancerType
-		expectedAWSSubnetIDs []operatorv1.AWSSubnetID
-		expectIngressCtr     bool
+		name                    string
+		installConfig           *types.InstallConfig
+		expectedScope           operatorv1.LoadBalancerScope
+		expectedAWSLbType       operatorv1.AWSLoadBalancerType
+		expectedAWSSubnetIDs    []operatorv1.AWSSubnetID
+		expectedGCPClientAccess operatorv1.GCPClientAccess
+		expectIngressCtr        bool
 	}{
 		{
 			name: "aws platform, managed vpc and public ingress",
@@ -380,6 +382,17 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 			expectedScope:    operatorv1.InternalLoadBalancer,
 			expectIngressCtr: true,
 		},
+		{
+			name: "gcp platform, private ingress, global client access",
+			installConfig: icBuild.build(
+				icBuild.forGCP(),
+				icBuild.withPublish(types.InternalPublishingStrategy),
+				icBuild.withGCPLoadBalancerClientAccess(gcptypes.ClientAccessGlobal),
+			),
+			expectedScope:           operatorv1.InternalLoadBalancer,
+			expectedGCPClientAccess: operatorv1.GCPGlobalAccess,
+			expectIngressCtr:        true,
+		},
 	}
 
 	for _, tc := range cases {
@@ -417,6 +430,11 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 				assert.Equal(t, "openshift-ingress-operator", actualIngressCtrl.Namespace)
 				assert.Equal(t, operatorv1.LoadBalancerServiceStrategyType, actualIngressCtrl.Spec.EndpointPublishingStrategy.Type)
 				assert.Equal(t, tc.expectedScope, actualIngressCtrl.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)
+
+				if tc.expectedGCPClientAccess != "" {
+					assert.Equal(t, operatorv1.GCPLoadBalancerProvider, actualIngressCtrl.Spec.EndpointPublishingStrategy.LoadBalancer.ProviderParameters.Type)
+					assert.Equal(t, tc.expectedGCPClientAccess, actualIngressCtrl.Spec.EndpointPublishingStrategy.LoadBalancer.ProviderParameters.GCP.ClientAccess)
+				}
 
 				// Install case: AWS byo subnets with roles.
 				if len(tc.expectedAWSSubnetIDs) > 0 {
