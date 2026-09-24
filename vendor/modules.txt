@@ -2811,7 +2811,7 @@ sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature
 sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-azure v1.24.2
+# sigs.k8s.io/cluster-api-provider-azure v1.24.2 => github.com/jhixson74/cluster-api-provider-azure v1.24.3-0.20260924042845-28371d50119c
 ## explicit; go 1.25.0
 sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
 sigs.k8s.io/cluster-api-provider-azure/feature
@@ -3011,3 +3011,4 @@ sigs.k8s.io/yaml/kyaml
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20260722223301-f50c5b20c7e1
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+# sigs.k8s.io/cluster-api-provider-azure => github.com/jhixson74/cluster-api-provider-azure v1.24.3-0.20260924042845-28371d50119c
