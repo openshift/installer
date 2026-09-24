@@ -10,12 +10,16 @@ import (
 	"strings"
 )
 
+// DefaultContextLines is the number of unchanged lines of surrounding
+// context displayed by Unified. Use ToUnified to specify a different value.
+const DefaultContextLines = 3
+
 // Unified returns a unified diff of the old and new strings.
 // The old and new labels are the names of the old and new files.
 // If the strings are equal, it returns the empty string.
 func Unified(oldLabel, newLabel, old, new string) string {
 	edits := Strings(old, new)
-	unified, err := ToUnified(oldLabel, newLabel, old, edits)
+	unified, err := ToUnified(oldLabel, newLabel, old, edits, DefaultContextLines)
 	if err != nil {
 		// Can't happen: edits are consistent.
 		log.Fatalf("internal error in diff.Unified: %v", err)
@@ -23,11 +27,12 @@ func Unified(oldLabel, newLabel, old, new string) string {
 	return unified
 }
 
-// ToUnified applies the edits to content and returns a unified diff.
+// ToUnified applies the edits to content and returns a unified diff,
+// with contextLines lines of (unchanged) context around each diff hunk.
 // The old and new labels are the names of the content and result files.
 // It returns an error if the edits are inconsistent; see ApplyEdits.
-func ToUnified(oldLabel, newLabel, content string, edits []Edit) (string, error) {
-	u, err := toUnified(oldLabel, newLabel, content, edits)
+func ToUnified(oldLabel, newLabel, content string, edits []Edit, contextLines int) (string, error) {
+	u, err := toUnified(oldLabel, newLabel, content, edits, contextLines)
 	if err != nil {
 		return "", err
 	}
@@ -36,75 +41,70 @@ func ToUnified(oldLabel, newLabel, content string, edits []Edit) (string, error)
 
 // unified represents a set of edits as a unified diff.
 type unified struct {
-	// From is the name of the original file.
-	From string
-	// To is the name of the modified file.
-	To string
-	// Hunks is the set of edit hunks needed to transform the file content.
-	Hunks []*hunk
+	// from is the name of the original file.
+	from string
+	// to is the name of the modified file.
+	to string
+	// hunks is the set of edit hunks needed to transform the file content.
+	hunks []*hunk
 }
 
 // Hunk represents a contiguous set of line edits to apply.
 type hunk struct {
 	// The line in the original source where the hunk starts.
-	FromLine int
+	fromLine int
 	// The line in the original source where the hunk finishes.
-	ToLine int
+	toLine int
 	// The set of line based edits to apply.
-	Lines []line
+	lines []line
 }
 
 // Line represents a single line operation to apply as part of a Hunk.
 type line struct {
-	// Kind is the type of line this represents, deletion, insertion or copy.
-	Kind OpKind
-	// Content is the content of this line.
+	// kind is the type of line this represents, deletion, insertion or copy.
+	kind opKind
+	// content is the content of this line.
 	// For deletion it is the line being removed, for all others it is the line
 	// to put in the output.
-	Content string
+	content string
 }
 
-// OpKind is used to denote the type of operation a line represents.
-// TODO(adonovan): hide this once the myers package no longer references it.
-type OpKind int
+// opKind is used to denote the type of operation a line represents.
+type opKind int
 
 const (
-	// Delete is the operation kind for a line that is present in the input
+	// opDelete is the operation kind for a line that is present in the input
 	// but not in the output.
-	Delete OpKind = iota
-	// Insert is the operation kind for a line that is new in the output.
-	Insert
-	// Equal is the operation kind for a line that is the same in the input and
+	opDelete opKind = iota
+	// opInsert is the operation kind for a line that is new in the output.
+	opInsert
+	// opEqual is the operation kind for a line that is the same in the input and
 	// output, often used to provide context around edited lines.
-	Equal
+	opEqual
 )
 
 // String returns a human readable representation of an OpKind. It is not
 // intended for machine processing.
-func (k OpKind) String() string {
+func (k opKind) String() string {
 	switch k {
-	case Delete:
+	case opDelete:
 		return "delete"
-	case Insert:
+	case opInsert:
 		return "insert"
-	case Equal:
+	case opEqual:
 		return "equal"
 	default:
 		panic("unknown operation kind")
 	}
 }
 
-const (
-	edge = 3
-	gap  = edge * 2
-)
-
 // toUnified takes a file contents and a sequence of edits, and calculates
 // a unified diff that represents those edits.
-func toUnified(fromName, toName string, content string, edits []Edit) (unified, error) {
+func toUnified(fromName, toName string, content string, edits []Edit, contextLines int) (unified, error) {
+	gap := contextLines * 2
 	u := unified{
-		From: fromName,
-		To:   toName,
+		from: fromName,
+		to:   toName,
 	}
 	if len(edits) == 0 {
 		return u, nil
@@ -137,35 +137,35 @@ func toUnified(fromName, toName string, content string, edits []Edit) (unified, 
 			//need to start a new hunk
 			if h != nil {
 				// add the edge to the previous hunk
-				addEqualLines(h, lines, last, last+edge)
-				u.Hunks = append(u.Hunks, h)
+				addEqualLines(h, lines, last, last+contextLines)
+				u.hunks = append(u.hunks, h)
 			}
 			toLine += start - last
 			h = &hunk{
-				FromLine: start + 1,
-				ToLine:   toLine + 1,
+				fromLine: start + 1,
+				toLine:   toLine + 1,
 			}
 			// add the edge to the new hunk
-			delta := addEqualLines(h, lines, start-edge, start)
-			h.FromLine -= delta
-			h.ToLine -= delta
+			delta := addEqualLines(h, lines, start-contextLines, start)
+			h.fromLine -= delta
+			h.toLine -= delta
 		}
 		last = start
 		for i := start; i < end; i++ {
-			h.Lines = append(h.Lines, line{Kind: Delete, Content: lines[i]})
+			h.lines = append(h.lines, line{kind: opDelete, content: lines[i]})
 			last++
 		}
 		if edit.New != "" {
 			for _, content := range splitLines(edit.New) {
-				h.Lines = append(h.Lines, line{Kind: Insert, Content: content})
+				h.lines = append(h.lines, line{kind: opInsert, content: content})
 				toLine++
 			}
 		}
 	}
 	if h != nil {
 		// add the edge to the final hunk
-		addEqualLines(h, lines, last, last+edge)
-		u.Hunks = append(u.Hunks, h)
+		addEqualLines(h, lines, last, last+contextLines)
+		u.hunks = append(u.hunks, h)
 	}
 	return u, nil
 }
@@ -187,7 +187,7 @@ func addEqualLines(h *hunk, lines []string, start, end int) int {
 		if i >= len(lines) {
 			return delta
 		}
-		h.Lines = append(h.Lines, line{Kind: Equal, Content: lines[i]})
+		h.lines = append(h.lines, line{kind: opEqual, content: lines[i]})
 		delta++
 	}
 	return delta
@@ -196,19 +196,19 @@ func addEqualLines(h *hunk, lines []string, start, end int) int {
 // String converts a unified diff to the standard textual form for that diff.
 // The output of this function can be passed to tools like patch.
 func (u unified) String() string {
-	if len(u.Hunks) == 0 {
+	if len(u.hunks) == 0 {
 		return ""
 	}
 	b := new(strings.Builder)
-	fmt.Fprintf(b, "--- %s\n", u.From)
-	fmt.Fprintf(b, "+++ %s\n", u.To)
-	for _, hunk := range u.Hunks {
+	fmt.Fprintf(b, "--- %s\n", u.from)
+	fmt.Fprintf(b, "+++ %s\n", u.to)
+	for _, hunk := range u.hunks {
 		fromCount, toCount := 0, 0
-		for _, l := range hunk.Lines {
-			switch l.Kind {
-			case Delete:
+		for _, l := range hunk.lines {
+			switch l.kind {
+			case opDelete:
 				fromCount++
-			case Insert:
+			case opInsert:
 				toCount++
 			default:
 				fromCount++
@@ -217,29 +217,32 @@ func (u unified) String() string {
 		}
 		fmt.Fprint(b, "@@")
 		if fromCount > 1 {
-			fmt.Fprintf(b, " -%d,%d", hunk.FromLine, fromCount)
-		} else if hunk.FromLine == 1 && fromCount == 0 {
+			fmt.Fprintf(b, " -%d,%d", hunk.fromLine, fromCount)
+		} else if hunk.fromLine == 1 && fromCount == 0 {
 			// Match odd GNU diff -u behavior adding to empty file.
 			fmt.Fprintf(b, " -0,0")
 		} else {
-			fmt.Fprintf(b, " -%d", hunk.FromLine)
+			fmt.Fprintf(b, " -%d", hunk.fromLine)
 		}
 		if toCount > 1 {
-			fmt.Fprintf(b, " +%d,%d", hunk.ToLine, toCount)
+			fmt.Fprintf(b, " +%d,%d", hunk.toLine, toCount)
+		} else if hunk.toLine == 1 && toCount == 0 {
+			// Match odd GNU diff -u behavior adding to empty file.
+			fmt.Fprintf(b, " +0,0")
 		} else {
-			fmt.Fprintf(b, " +%d", hunk.ToLine)
+			fmt.Fprintf(b, " +%d", hunk.toLine)
 		}
 		fmt.Fprint(b, " @@\n")
-		for _, l := range hunk.Lines {
-			switch l.Kind {
-			case Delete:
-				fmt.Fprintf(b, "-%s", l.Content)
-			case Insert:
-				fmt.Fprintf(b, "+%s", l.Content)
+		for _, l := range hunk.lines {
+			switch l.kind {
+			case opDelete:
+				fmt.Fprintf(b, "-%s", l.content)
+			case opInsert:
+				fmt.Fprintf(b, "+%s", l.content)
 			default:
-				fmt.Fprintf(b, " %s", l.Content)
+				fmt.Fprintf(b, " %s", l.content)
 			}
-			if !strings.HasSuffix(l.Content, "\n") {
+			if !strings.HasSuffix(l.content, "\n") {
 				fmt.Fprintf(b, "\n\\ No newline at end of file\n")
 			}
 		}

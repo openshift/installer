@@ -88,13 +88,13 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/api v0.185.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -109,3 +109,5 @@ replace bitbucket.org/creachadair/stringset => bitbucket.org/creachadair/strings
 
 // https://issues.redhat.com/browse/OCPBUGS-76929
 replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20240318170109-82299d061602 => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132832-427a18d1a1c3
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
