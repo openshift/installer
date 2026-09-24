@@ -51,7 +51,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20230324103026-3f1513df25e0 // indirect
 	github.com/softlayer/softlayer-go v1.0.3 // indirect
 	go.mongodb.org/mongo-driver v1.16.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	k8s.io/api v0.26.3 // indirect
 	k8s.io/apimachinery v0.26.3 // indirect
 	k8s.io/client-go v0.26.1 // indirect
@@ -210,9 +210,9 @@ require (
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
@@ -246,3 +246,5 @@ exclude (
 
 // NOTE(cjschaef): To align with installer's golang version and since the provider has a very restrictive golang version, override to use the forked repository, which maintains unique branches based on golang version and provider release
 replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/openshift/terraform-provider-ibm v1.70.2-0.20250321144105-7e769934732a
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
