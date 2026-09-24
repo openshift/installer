@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -51,22 +52,36 @@ var _ conversion.Convertible = &FleetsUpdateRun{}
 
 // ConvertFrom populates our FleetsUpdateRun from the provided hub FleetsUpdateRun
 func (updateRun *FleetsUpdateRun) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FleetsUpdateRun)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsUpdateRun but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FleetsUpdateRun
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return updateRun.AssignProperties_From_FleetsUpdateRun(source)
+	err = updateRun.AssignProperties_From_FleetsUpdateRun(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to updateRun")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FleetsUpdateRun from our FleetsUpdateRun
 func (updateRun *FleetsUpdateRun) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FleetsUpdateRun)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsUpdateRun but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FleetsUpdateRun
+	err := updateRun.AssignProperties_To_FleetsUpdateRun(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from updateRun")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return updateRun.AssignProperties_To_FleetsUpdateRun(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FleetsUpdateRun{}
@@ -87,17 +102,6 @@ func (updateRun *FleetsUpdateRun) SecretDestinationExpressions() []*core.Destina
 		return nil
 	}
 	return updateRun.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FleetsUpdateRun{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (updateRun *FleetsUpdateRun) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FleetsUpdateRun_STATUS); ok {
-		return updateRun.Spec.Initialize_From_FleetsUpdateRun_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FleetsUpdateRun_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FleetsUpdateRun{}
@@ -293,7 +297,7 @@ func (updateRun *FleetsUpdateRun_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties = &arm.UpdateRunProperties{}
 	}
 	if updateRun.ManagedClusterUpdate != nil {
-		managedClusterUpdate_ARM, err := (*updateRun.ManagedClusterUpdate).ConvertToARM(resolved)
+		managedClusterUpdate_ARM, err := updateRun.ManagedClusterUpdate.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -301,7 +305,7 @@ func (updateRun *FleetsUpdateRun_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.ManagedClusterUpdate = &managedClusterUpdate
 	}
 	if updateRun.Strategy != nil {
-		strategy_ARM, err := (*updateRun.Strategy).ConvertToARM(resolved)
+		strategy_ARM, err := updateRun.Strategy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -530,37 +534,6 @@ func (updateRun *FleetsUpdateRun_Spec) AssignProperties_To_FleetsUpdateRun_Spec(
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_FleetsUpdateRun_STATUS populates our FleetsUpdateRun_Spec from the provided source FleetsUpdateRun_STATUS
-func (updateRun *FleetsUpdateRun_Spec) Initialize_From_FleetsUpdateRun_STATUS(source *FleetsUpdateRun_STATUS) error {
-
-	// ManagedClusterUpdate
-	if source.ManagedClusterUpdate != nil {
-		var managedClusterUpdate ManagedClusterUpdate
-		err := managedClusterUpdate.Initialize_From_ManagedClusterUpdate_STATUS(source.ManagedClusterUpdate)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
-		}
-		updateRun.ManagedClusterUpdate = &managedClusterUpdate
-	} else {
-		updateRun.ManagedClusterUpdate = nil
-	}
-
-	// Strategy
-	if source.Strategy != nil {
-		var strategy UpdateRunStrategy
-		err := strategy.Initialize_From_UpdateRunStrategy_STATUS(source.Strategy)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_UpdateRunStrategy_STATUS() to populate field Strategy")
-		}
-		updateRun.Strategy = &strategy
-	} else {
-		updateRun.Strategy = nil
 	}
 
 	// No error
@@ -957,8 +930,6 @@ func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_From_FleetsUpdateR
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -975,8 +946,6 @@ func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_From_FleetsUpdateR
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1002,8 +971,6 @@ func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_To_FleetsUpdateRun
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1020,8 +987,6 @@ func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_To_FleetsUpdateRun
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1063,7 +1028,7 @@ func (update *ManagedClusterUpdate) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Upgrade":
 	if update.Upgrade != nil {
-		upgrade_ARM, err := (*update.Upgrade).ConvertToARM(resolved)
+		upgrade_ARM, err := update.Upgrade.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1141,25 +1106,6 @@ func (update *ManagedClusterUpdate) AssignProperties_To_ManagedClusterUpdate(des
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedClusterUpdate_STATUS populates our ManagedClusterUpdate from the provided source ManagedClusterUpdate_STATUS
-func (update *ManagedClusterUpdate) Initialize_From_ManagedClusterUpdate_STATUS(source *ManagedClusterUpdate_STATUS) error {
-
-	// Upgrade
-	if source.Upgrade != nil {
-		var upgrade ManagedClusterUpgradeSpec
-		err := upgrade.Initialize_From_ManagedClusterUpgradeSpec_STATUS(source.Upgrade)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
-		}
-		update.Upgrade = &upgrade
-	} else {
-		update.Upgrade = nil
 	}
 
 	// No error
@@ -1319,8 +1265,6 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_From_UpdateRunStatus_STAT
 	if source.Stages != nil {
 		stageList := make([]UpdateStageStatus_STATUS, len(source.Stages))
 		for stageIndex, stageItem := range source.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage UpdateStageStatus_STATUS
 			err := stage.AssignProperties_From_UpdateStageStatus_STATUS(&stageItem)
 			if err != nil {
@@ -1358,8 +1302,6 @@ func (status *UpdateRunStatus_STATUS) AssignProperties_To_UpdateRunStatus_STATUS
 	if status.Stages != nil {
 		stageList := make([]storage.UpdateStageStatus_STATUS, len(status.Stages))
 		for stageIndex, stageItem := range status.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage storage.UpdateStageStatus_STATUS
 			err := stageItem.AssignProperties_To_UpdateStageStatus_STATUS(&stage)
 			if err != nil {
@@ -1461,8 +1403,6 @@ func (strategy *UpdateRunStrategy) AssignProperties_From_UpdateRunStrategy(sourc
 	if source.Stages != nil {
 		stageList := make([]UpdateStage, len(source.Stages))
 		for stageIndex, stageItem := range source.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage UpdateStage
 			err := stage.AssignProperties_From_UpdateStage(&stageItem)
 			if err != nil {
@@ -1488,8 +1428,6 @@ func (strategy *UpdateRunStrategy) AssignProperties_To_UpdateRunStrategy(destina
 	if strategy.Stages != nil {
 		stageList := make([]storage.UpdateStage, len(strategy.Stages))
 		for stageIndex, stageItem := range strategy.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage storage.UpdateStage
 			err := stageItem.AssignProperties_To_UpdateStage(&stage)
 			if err != nil {
@@ -1507,31 +1445,6 @@ func (strategy *UpdateRunStrategy) AssignProperties_To_UpdateRunStrategy(destina
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UpdateRunStrategy_STATUS populates our UpdateRunStrategy from the provided source UpdateRunStrategy_STATUS
-func (strategy *UpdateRunStrategy) Initialize_From_UpdateRunStrategy_STATUS(source *UpdateRunStrategy_STATUS) error {
-
-	// Stages
-	if source.Stages != nil {
-		stageList := make([]UpdateStage, len(source.Stages))
-		for stageIndex, stageItem := range source.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
-			var stage UpdateStage
-			err := stage.Initialize_From_UpdateStage_STATUS(&stageItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_UpdateStage_STATUS() to populate field Stages")
-			}
-			stageList[stageIndex] = stage
-		}
-		strategy.Stages = stageList
-	} else {
-		strategy.Stages = nil
 	}
 
 	// No error
@@ -1585,8 +1498,6 @@ func (strategy *UpdateRunStrategy_STATUS) AssignProperties_From_UpdateRunStrateg
 	if source.Stages != nil {
 		stageList := make([]UpdateStage_STATUS, len(source.Stages))
 		for stageIndex, stageItem := range source.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage UpdateStage_STATUS
 			err := stage.AssignProperties_From_UpdateStage_STATUS(&stageItem)
 			if err != nil {
@@ -1612,8 +1523,6 @@ func (strategy *UpdateRunStrategy_STATUS) AssignProperties_To_UpdateRunStrategy_
 	if strategy.Stages != nil {
 		stageList := make([]storage.UpdateStage_STATUS, len(strategy.Stages))
 		for stageIndex, stageItem := range strategy.Stages {
-			// Shadow the loop variable to avoid aliasing
-			stageItem := stageItem
 			var stage storage.UpdateStage_STATUS
 			err := stageItem.AssignProperties_To_UpdateStage_STATUS(&stage)
 			if err != nil {
@@ -1742,24 +1651,6 @@ func (upgrade *ManagedClusterUpgradeSpec) AssignProperties_To_ManagedClusterUpgr
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedClusterUpgradeSpec_STATUS populates our ManagedClusterUpgradeSpec from the provided source ManagedClusterUpgradeSpec_STATUS
-func (upgrade *ManagedClusterUpgradeSpec) Initialize_From_ManagedClusterUpgradeSpec_STATUS(source *ManagedClusterUpgradeSpec_STATUS) error {
-
-	// KubernetesVersion
-	upgrade.KubernetesVersion = genruntime.ClonePointerToString(source.KubernetesVersion)
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), managedClusterUpgradeType_Values)
-		upgrade.Type = &typeVar
-	} else {
-		upgrade.Type = nil
 	}
 
 	// No error
@@ -1951,8 +1842,6 @@ func (stage *UpdateStage) AssignProperties_From_UpdateStage(source *storage.Upda
 	if source.Groups != nil {
 		groupList := make([]UpdateGroup, len(source.Groups))
 		for groupIndex, groupItem := range source.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group UpdateGroup
 			err := group.AssignProperties_From_UpdateGroup(&groupItem)
 			if err != nil {
@@ -1984,8 +1873,6 @@ func (stage *UpdateStage) AssignProperties_To_UpdateStage(destination *storage.U
 	if stage.Groups != nil {
 		groupList := make([]storage.UpdateGroup, len(stage.Groups))
 		for groupIndex, groupItem := range stage.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group storage.UpdateGroup
 			err := groupItem.AssignProperties_To_UpdateGroup(&group)
 			if err != nil {
@@ -2007,37 +1894,6 @@ func (stage *UpdateStage) AssignProperties_To_UpdateStage(destination *storage.U
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UpdateStage_STATUS populates our UpdateStage from the provided source UpdateStage_STATUS
-func (stage *UpdateStage) Initialize_From_UpdateStage_STATUS(source *UpdateStage_STATUS) error {
-
-	// AfterStageWaitInSeconds
-	stage.AfterStageWaitInSeconds = genruntime.ClonePointerToInt(source.AfterStageWaitInSeconds)
-
-	// Groups
-	if source.Groups != nil {
-		groupList := make([]UpdateGroup, len(source.Groups))
-		for groupIndex, groupItem := range source.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
-			var group UpdateGroup
-			err := group.Initialize_From_UpdateGroup_STATUS(&groupItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_UpdateGroup_STATUS() to populate field Groups")
-			}
-			groupList[groupIndex] = group
-		}
-		stage.Groups = groupList
-	} else {
-		stage.Groups = nil
-	}
-
-	// Name
-	stage.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -2107,8 +1963,6 @@ func (stage *UpdateStage_STATUS) AssignProperties_From_UpdateStage_STATUS(source
 	if source.Groups != nil {
 		groupList := make([]UpdateGroup_STATUS, len(source.Groups))
 		for groupIndex, groupItem := range source.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group UpdateGroup_STATUS
 			err := group.AssignProperties_From_UpdateGroup_STATUS(&groupItem)
 			if err != nil {
@@ -2140,8 +1994,6 @@ func (stage *UpdateStage_STATUS) AssignProperties_To_UpdateStage_STATUS(destinat
 	if stage.Groups != nil {
 		groupList := make([]storage.UpdateGroup_STATUS, len(stage.Groups))
 		for groupIndex, groupItem := range stage.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group storage.UpdateGroup_STATUS
 			err := groupItem.AssignProperties_To_UpdateGroup_STATUS(&group)
 			if err != nil {
@@ -2258,8 +2110,6 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_From_UpdateStageStatus_
 	if source.Groups != nil {
 		groupList := make([]UpdateGroupStatus_STATUS, len(source.Groups))
 		for groupIndex, groupItem := range source.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group UpdateGroupStatus_STATUS
 			err := group.AssignProperties_From_UpdateGroupStatus_STATUS(&groupItem)
 			if err != nil {
@@ -2312,8 +2162,6 @@ func (status *UpdateStageStatus_STATUS) AssignProperties_To_UpdateStageStatus_ST
 	if status.Groups != nil {
 		groupList := make([]storage.UpdateGroupStatus_STATUS, len(status.Groups))
 		for groupIndex, groupItem := range status.Groups {
-			// Shadow the loop variable to avoid aliasing
-			groupItem := groupItem
 			var group storage.UpdateGroupStatus_STATUS
 			err := groupItem.AssignProperties_To_UpdateGroupStatus_STATUS(&group)
 			if err != nil {
@@ -2573,8 +2421,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 	if source.AdditionalInfo != nil {
 		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
@@ -2594,8 +2440,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 	if source.Details != nil {
 		detailList := make([]ErrorDetail_STATUS_Unrolled, len(source.Details))
 		for detailIndex, detailItem := range source.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detailLocal ErrorDetail_STATUS_Unrolled
 			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
 			if err != nil {
@@ -2627,8 +2471,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 	if detail.AdditionalInfo != nil {
 		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(detail.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range detail.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
@@ -2648,8 +2490,6 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 	if detail.Details != nil {
 		detailList := make([]storage.ErrorDetail_STATUS_Unrolled, len(detail.Details))
 		for detailIndex, detailItem := range detail.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
@@ -2787,16 +2627,6 @@ func (group *UpdateGroup) AssignProperties_To_UpdateGroup(destination *storage.U
 	return nil
 }
 
-// Initialize_From_UpdateGroup_STATUS populates our UpdateGroup from the provided source UpdateGroup_STATUS
-func (group *UpdateGroup) Initialize_From_UpdateGroup_STATUS(source *UpdateGroup_STATUS) error {
-
-	// Name
-	group.Name = genruntime.ClonePointerToString(source.Name)
-
-	// No error
-	return nil
-}
-
 // A group to be updated.
 type UpdateGroup_STATUS struct {
 	// Name: Name of the group.
@@ -2921,8 +2751,6 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_From_UpdateGroupStatus_
 	if source.Members != nil {
 		memberList := make([]MemberUpdateStatus_STATUS, len(source.Members))
 		for memberIndex, memberItem := range source.Members {
-			// Shadow the loop variable to avoid aliasing
-			memberItem := memberItem
 			var member MemberUpdateStatus_STATUS
 			err := member.AssignProperties_From_MemberUpdateStatus_STATUS(&memberItem)
 			if err != nil {
@@ -2963,8 +2791,6 @@ func (status *UpdateGroupStatus_STATUS) AssignProperties_To_UpdateGroupStatus_ST
 	if status.Members != nil {
 		memberList := make([]storage.MemberUpdateStatus_STATUS, len(status.Members))
 		for memberIndex, memberItem := range status.Members {
-			// Shadow the loop variable to avoid aliasing
-			memberItem := memberItem
 			var member storage.MemberUpdateStatus_STATUS
 			err := memberItem.AssignProperties_To_MemberUpdateStatus_STATUS(&member)
 			if err != nil {
@@ -3010,6 +2836,7 @@ const (
 	UpdateState_STATUS_Completed  = UpdateState_STATUS("Completed")
 	UpdateState_STATUS_Failed     = UpdateState_STATUS("Failed")
 	UpdateState_STATUS_NotStarted = UpdateState_STATUS("NotStarted")
+	UpdateState_STATUS_Pending    = UpdateState_STATUS("Pending")
 	UpdateState_STATUS_Running    = UpdateState_STATUS("Running")
 	UpdateState_STATUS_Stopped    = UpdateState_STATUS("Stopped")
 	UpdateState_STATUS_Stopping   = UpdateState_STATUS("Stopping")
@@ -3020,6 +2847,7 @@ var updateState_STATUS_Values = map[string]UpdateState_STATUS{
 	"completed":  UpdateState_STATUS_Completed,
 	"failed":     UpdateState_STATUS_Failed,
 	"notstarted": UpdateState_STATUS_NotStarted,
+	"pending":    UpdateState_STATUS_Pending,
 	"running":    UpdateState_STATUS_Running,
 	"stopped":    UpdateState_STATUS_Stopped,
 	"stopping":   UpdateState_STATUS_Stopping,
@@ -3170,8 +2998,6 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInf
 	if source.Info != nil {
 		infoMap := make(map[string]v1.JSON, len(source.Info))
 		for infoKey, infoValue := range source.Info {
-			// Shadow the loop variable to avoid aliasing
-			infoValue := infoValue
 			infoMap[infoKey] = *infoValue.DeepCopy()
 		}
 		info.Info = infoMap
@@ -3195,8 +3021,6 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_
 	if info.Info != nil {
 		infoMap := make(map[string]v1.JSON, len(info.Info))
 		for infoKey, infoValue := range info.Info {
-			// Shadow the loop variable to avoid aliasing
-			infoValue := infoValue
 			infoMap[infoKey] = *infoValue.DeepCopy()
 		}
 		destination.Info = infoMap
@@ -3285,8 +3109,6 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 	if source.AdditionalInfo != nil {
 		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
@@ -3321,8 +3143,6 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 	if unrolled.AdditionalInfo != nil {
 		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(unrolled.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range unrolled.AdditionalInfo {
-			// Shadow the loop variable to avoid aliasing
-			additionalInfoItem := additionalInfoItem
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
