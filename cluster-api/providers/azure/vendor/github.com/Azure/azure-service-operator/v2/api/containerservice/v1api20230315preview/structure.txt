@@ -170,10 +170,11 @@ FleetsUpdateRun: Resource
     │   │   │   │   │   ├── Message: *string
     │   │   │   │   │   └── Target: *string
     │   │   │   │   ├── StartTime: *string
-    │   │   │   │   └── State: *Enum (6 values)
+    │   │   │   │   └── State: *Enum (7 values)
     │   │   │   │       ├── "Completed"
     │   │   │   │       ├── "Failed"
     │   │   │   │       ├── "NotStarted"
+    │   │   │   │       ├── "Pending"
     │   │   │   │       ├── "Running"
     │   │   │   │       ├── "Stopped"
     │   │   │   │       └── "Stopping"
@@ -200,10 +201,11 @@ FleetsUpdateRun: Resource
     │   │   │   │       │   ├── Message: *string
     │   │   │   │       │   └── Target: *string
     │   │   │   │       ├── StartTime: *string
-    │   │   │   │       └── State: *Enum (6 values)
+    │   │   │   │       └── State: *Enum (7 values)
     │   │   │   │           ├── "Completed"
     │   │   │   │           ├── "Failed"
     │   │   │   │           ├── "NotStarted"
+    │   │   │   │           ├── "Pending"
     │   │   │   │           ├── "Running"
     │   │   │   │           ├── "Stopped"
     │   │   │   │           └── "Stopping"
@@ -225,10 +227,11 @@ FleetsUpdateRun: Resource
     │   │   │       │   ├── Message: *string
     │   │   │       │   └── Target: *string
     │   │   │       ├── StartTime: *string
-    │   │   │       └── State: *Enum (6 values)
+    │   │   │       └── State: *Enum (7 values)
     │   │   │           ├── "Completed"
     │   │   │           ├── "Failed"
     │   │   │           ├── "NotStarted"
+    │   │   │           ├── "Pending"
     │   │   │           ├── "Running"
     │   │   │           ├── "Stopped"
     │   │   │           └── "Stopping"
@@ -250,10 +253,11 @@ FleetsUpdateRun: Resource
     │   │       │   ├── Message: *string
     │   │       │   └── Target: *string
     │   │       ├── StartTime: *string
-    │   │       └── State: *Enum (6 values)
+    │   │       └── State: *Enum (7 values)
     │   │           ├── "Completed"
     │   │           ├── "Failed"
     │   │           ├── "NotStarted"
+    │   │           ├── "Pending"
     │   │           ├── "Running"
     │   │           ├── "Stopped"
     │   │           └── "Stopping"
@@ -274,10 +278,11 @@ FleetsUpdateRun: Resource
     │       │   ├── Message: *string
     │       │   └── Target: *string
     │       ├── StartTime: *string
-    │       └── State: *Enum (6 values)
+    │       └── State: *Enum (7 values)
     │           ├── "Completed"
     │           ├── "Failed"
     │           ├── "NotStarted"
+    │           ├── "Pending"
     │           ├── "Running"
     │           ├── "Stopped"
     │           └── "Stopping"

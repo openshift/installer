@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={networksecuritygroups/status,networksecuritygroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -31,8 +32,8 @@ import (
 type NetworkSecurityGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              NetworkSecurityGroup_Spec                                            `json:"spec,omitempty"`
-	Status            NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              NetworkSecurityGroup_Spec   `json:"spec,omitempty"`
+	Status            NetworkSecurityGroup_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NetworkSecurityGroup{}
@@ -110,7 +111,7 @@ func (group *NetworkSecurityGroup) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (group *NetworkSecurityGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
+	return &NetworkSecurityGroup_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -126,13 +127,13 @@ func (group *NetworkSecurityGroup) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (group *NetworkSecurityGroup) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+	if st, ok := status.(*NetworkSecurityGroup_STATUS); ok {
 		group.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+	var st NetworkSecurityGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -204,9 +205,9 @@ func (group *NetworkSecurityGroup_Spec) ConvertSpecTo(destination genruntime.Con
 	return destination.ConvertSpecFrom(group)
 }
 
-// Storage version of v1api20240301.NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+// Storage version of v1api20240301.NetworkSecurityGroup_STATUS
 // NetworkSecurityGroup resource.
-type NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct {
+type NetworkSecurityGroup_STATUS struct {
 	Conditions           []conditions.Condition                                             `json:"conditions,omitempty"`
 	DefaultSecurityRules []SecurityRule_STATUS                                              `json:"defaultSecurityRules,omitempty"`
 	Etag                 *string                                                            `json:"etag,omitempty"`
@@ -223,24 +224,24 @@ type NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct
 	Type                 *string                                                            `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &NetworkSecurityGroup_STATUS{}
 
-// ConvertStatusFrom populates our NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded from the provided source
-func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
+// ConvertStatusFrom populates our NetworkSecurityGroup_STATUS from the provided source
+func (group *NetworkSecurityGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == group {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(embedded)
+	return source.ConvertStatusTo(group)
 }
 
-// ConvertStatusTo populates the provided destination from our NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
-func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
+// ConvertStatusTo populates the provided destination from our NetworkSecurityGroup_STATUS
+func (group *NetworkSecurityGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == group {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	return destination.ConvertStatusFrom(group)
 }
 
 // Storage version of v1api20240301.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded

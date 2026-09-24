@@ -41,7 +41,9 @@ func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClien
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create publicips client options")
 	}
-
+	if auth.CloudEnvironment() == azure.USSecCloudName {
+		opts.Cloud = auth.CloudConfiguration()
+	}
 	factory, err := armnetwork.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create publicips client factory")
@@ -50,7 +52,7 @@ func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClien
 }
 
 // Get gets the specified public IP address in a specified resource group.
-func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "publicips.AzureClient.Get")
 	defer done()
 
@@ -64,7 +66,7 @@ func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a static or dynamic public IP address.
 // It sends a PUT request to Azure and if accepted without error, the func will return a Poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.PublicIPAddressesClientCreateOrUpdateResponse], err error) {
+func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armnetwork.PublicIPAddressesClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "publicips.AzureClient.CreateOrUpdate")
 	defer done()
 

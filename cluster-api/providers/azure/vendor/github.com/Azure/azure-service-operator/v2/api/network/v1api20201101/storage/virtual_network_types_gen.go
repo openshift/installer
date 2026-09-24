@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -449,8 +450,6 @@ func (network *VirtualNetwork_Spec) AssignProperties_From_VirtualNetwork_Spec(so
 	if source.IpAllocations != nil {
 		ipAllocationList := make([]SubResource, len(source.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range source.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var subResourceStash v20220701s.SubResource
 			err := subResourceStash.AssignProperties_From_SubResource(&ipAllocationItem)
 			if err != nil {
@@ -648,8 +647,6 @@ func (network *VirtualNetwork_Spec) AssignProperties_To_VirtualNetwork_Spec(dest
 	if network.IpAllocations != nil {
 		ipAllocationList := make([]v20240301s.SubResource, len(network.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range network.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var subResourceStash v20220701s.SubResource
 			err := ipAllocationItem.AssignProperties_To_SubResource(&subResourceStash)
 			if err != nil {
@@ -932,8 +929,6 @@ func (network *VirtualNetwork_STATUS) AssignProperties_From_VirtualNetwork_STATU
 	if source.IpAllocations != nil {
 		ipAllocationList := make([]SubResource_STATUS, len(source.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range source.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&ipAllocationItem)
 			if err != nil {
@@ -1149,8 +1144,6 @@ func (network *VirtualNetwork_STATUS) AssignProperties_To_VirtualNetwork_STATUS(
 	if network.IpAllocations != nil {
 		ipAllocationList := make([]v20240301s.SubResource_STATUS, len(network.IpAllocations))
 		for ipAllocationIndex, ipAllocationItem := range network.IpAllocations {
-			// Shadow the loop variable to avoid aliasing
-			ipAllocationItem := ipAllocationItem
 			var subResourceSTATUSStash v20220701s.SubResource_STATUS
 			err := ipAllocationItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -1638,8 +1631,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_From_VirtualNetwork
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1656,8 +1647,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_From_VirtualNetwork
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1699,8 +1688,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_To_VirtualNetworkOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1717,8 +1704,6 @@ func (operator *VirtualNetworkOperatorSpec) AssignProperties_To_VirtualNetworkOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

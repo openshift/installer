@@ -406,8 +406,21 @@ ApplicationGateway: Resource
 │   │   ├── DefaultRewriteRuleSet: *Object (1 property)
 │   │   │   └── Reference: *genruntime.ResourceReference
 │   │   ├── Name: *string
-│   │   └── PathRules: Object (1 property)[]
-│   │       └── Reference: *genruntime.ResourceReference
+│   │   └── PathRules: Object (8 properties)[]
+│   │       ├── BackendAddressPool: *Object (1 property)
+│   │       │   └── Reference: *genruntime.ResourceReference
+│   │       ├── BackendHttpSettings: *Object (1 property)
+│   │       │   └── Reference: *genruntime.ResourceReference
+│   │       ├── FirewallPolicy: *Object (1 property)
+│   │       │   └── Reference: *genruntime.ResourceReference
+│   │       ├── LoadDistributionPolicy: *Object (1 property)
+│   │       │   └── Reference: *genruntime.ResourceReference
+│   │       ├── Name: *string
+│   │       ├── Paths: string[]
+│   │       ├── RedirectConfiguration: *Object (1 property)
+│   │       │   └── Reference: *genruntime.ResourceReference
+│   │       └── RewriteRuleSet: *Object (1 property)
+│   │           └── Reference: *genruntime.ResourceReference
 │   ├── WebApplicationFirewallConfiguration: *Object (10 properties)
 │   │   ├── DisabledRuleGroups: Object (2 properties)[]
 │   │   │   ├── RuleGroupName: *string

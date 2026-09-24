@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kubernetesconfiguration}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -324,7 +325,7 @@ func (configuration *FluxConfiguration_Spec) ConvertToARM(resolved genruntime.Co
 		result.Properties = &arm.FluxConfiguration_Properties_Spec{}
 	}
 	if configuration.AzureBlob != nil {
-		azureBlob_ARM, err := (*configuration.AzureBlob).ConvertToARM(resolved)
+		azureBlob_ARM, err := configuration.AzureBlob.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -332,7 +333,7 @@ func (configuration *FluxConfiguration_Spec) ConvertToARM(resolved genruntime.Co
 		result.Properties.AzureBlob = &azureBlob
 	}
 	if configuration.Bucket != nil {
-		bucket_ARM, err := (*configuration.Bucket).ConvertToARM(resolved)
+		bucket_ARM, err := configuration.Bucket.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -349,7 +350,7 @@ func (configuration *FluxConfiguration_Spec) ConvertToARM(resolved genruntime.Co
 		result.Properties.ConfigurationProtectedSettings = temp
 	}
 	if configuration.GitRepository != nil {
-		gitRepository_ARM, err := (*configuration.GitRepository).ConvertToARM(resolved)
+		gitRepository_ARM, err := configuration.GitRepository.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -643,8 +644,6 @@ func (configuration *FluxConfiguration_Spec) AssignProperties_From_FluxConfigura
 	if source.Kustomizations != nil {
 		kustomizationMap := make(map[string]KustomizationDefinition, len(source.Kustomizations))
 		for kustomizationKey, kustomizationValue := range source.Kustomizations {
-			// Shadow the loop variable to avoid aliasing
-			kustomizationValue := kustomizationValue
 			var kustomization KustomizationDefinition
 			err := kustomization.AssignProperties_From_KustomizationDefinition(&kustomizationValue)
 			if err != nil {
@@ -777,8 +776,6 @@ func (configuration *FluxConfiguration_Spec) AssignProperties_To_FluxConfigurati
 	if configuration.Kustomizations != nil {
 		kustomizationMap := make(map[string]storage.KustomizationDefinition, len(configuration.Kustomizations))
 		for kustomizationKey, kustomizationValue := range configuration.Kustomizations {
-			// Shadow the loop variable to avoid aliasing
-			kustomizationValue := kustomizationValue
 			var kustomization storage.KustomizationDefinition
 			err := kustomizationValue.AssignProperties_To_KustomizationDefinition(&kustomization)
 			if err != nil {
@@ -1309,8 +1306,6 @@ func (configuration *FluxConfiguration_STATUS) AssignProperties_From_FluxConfigu
 	if source.Kustomizations != nil {
 		kustomizationMap := make(map[string]KustomizationDefinition_STATUS, len(source.Kustomizations))
 		for kustomizationKey, kustomizationValue := range source.Kustomizations {
-			// Shadow the loop variable to avoid aliasing
-			kustomizationValue := kustomizationValue
 			var kustomization KustomizationDefinition_STATUS
 			err := kustomization.AssignProperties_From_KustomizationDefinition_STATUS(&kustomizationValue)
 			if err != nil {
@@ -1375,8 +1370,6 @@ func (configuration *FluxConfiguration_STATUS) AssignProperties_From_FluxConfigu
 	if source.Statuses != nil {
 		statusList := make([]ObjectStatusDefinition_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status ObjectStatusDefinition_STATUS
 			err := status.AssignProperties_From_ObjectStatusDefinition_STATUS(&statusItem)
 			if err != nil {
@@ -1477,8 +1470,6 @@ func (configuration *FluxConfiguration_STATUS) AssignProperties_To_FluxConfigura
 	if configuration.Kustomizations != nil {
 		kustomizationMap := make(map[string]storage.KustomizationDefinition_STATUS, len(configuration.Kustomizations))
 		for kustomizationKey, kustomizationValue := range configuration.Kustomizations {
-			// Shadow the loop variable to avoid aliasing
-			kustomizationValue := kustomizationValue
 			var kustomization storage.KustomizationDefinition_STATUS
 			err := kustomizationValue.AssignProperties_To_KustomizationDefinition_STATUS(&kustomization)
 			if err != nil {
@@ -1540,8 +1531,6 @@ func (configuration *FluxConfiguration_STATUS) AssignProperties_To_FluxConfigura
 	if configuration.Statuses != nil {
 		statusList := make([]storage.ObjectStatusDefinition_STATUS, len(configuration.Statuses))
 		for statusIndex, statusItem := range configuration.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.ObjectStatusDefinition_STATUS
 			err := statusItem.AssignProperties_To_ObjectStatusDefinition_STATUS(&status)
 			if err != nil {
@@ -1648,7 +1637,7 @@ func (definition *AzureBlobDefinition) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "ManagedIdentity":
 	if definition.ManagedIdentity != nil {
-		managedIdentity_ARM, err := (*definition.ManagedIdentity).ConvertToARM(resolved)
+		managedIdentity_ARM, err := definition.ManagedIdentity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1668,7 +1657,7 @@ func (definition *AzureBlobDefinition) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "ServicePrincipal":
 	if definition.ServicePrincipal != nil {
-		servicePrincipal_ARM, err := (*definition.ServicePrincipal).ConvertToARM(resolved)
+		servicePrincipal_ARM, err := definition.ServicePrincipal.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2499,8 +2488,6 @@ func (operator *FluxConfigurationOperatorSpec) AssignProperties_From_FluxConfigu
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2517,8 +2504,6 @@ func (operator *FluxConfigurationOperatorSpec) AssignProperties_From_FluxConfigu
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2544,8 +2529,6 @@ func (operator *FluxConfigurationOperatorSpec) AssignProperties_To_FluxConfigura
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2562,8 +2545,6 @@ func (operator *FluxConfigurationOperatorSpec) AssignProperties_To_FluxConfigura
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2649,7 +2630,7 @@ func (definition *GitRepositoryDefinition) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "RepositoryRef":
 	if definition.RepositoryRef != nil {
-		repositoryRef_ARM, err := (*definition.RepositoryRef).ConvertToARM(resolved)
+		repositoryRef_ARM, err := definition.RepositoryRef.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3082,7 +3063,7 @@ func (definition *KustomizationDefinition) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "PostBuild":
 	if definition.PostBuild != nil {
-		postBuild_ARM, err := (*definition.PostBuild).ConvertToARM(resolved)
+		postBuild_ARM, err := definition.PostBuild.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3720,8 +3701,6 @@ func (definition *ObjectStatusDefinition_STATUS) AssignProperties_From_ObjectSta
 	if source.StatusConditions != nil {
 		statusConditionList := make([]ObjectStatusConditionDefinition_STATUS, len(source.StatusConditions))
 		for statusConditionIndex, statusConditionItem := range source.StatusConditions {
-			// Shadow the loop variable to avoid aliasing
-			statusConditionItem := statusConditionItem
 			var statusCondition ObjectStatusConditionDefinition_STATUS
 			err := statusCondition.AssignProperties_From_ObjectStatusConditionDefinition_STATUS(&statusConditionItem)
 			if err != nil {
@@ -3788,8 +3767,6 @@ func (definition *ObjectStatusDefinition_STATUS) AssignProperties_To_ObjectStatu
 	if definition.StatusConditions != nil {
 		statusConditionList := make([]storage.ObjectStatusConditionDefinition_STATUS, len(definition.StatusConditions))
 		for statusConditionIndex, statusConditionItem := range definition.StatusConditions {
-			// Shadow the loop variable to avoid aliasing
-			statusConditionItem := statusConditionItem
 			var statusCondition storage.ObjectStatusConditionDefinition_STATUS
 			err := statusConditionItem.AssignProperties_To_ObjectStatusConditionDefinition_STATUS(&statusCondition)
 			if err != nil {
@@ -4424,8 +4401,6 @@ func (definition *PostBuildDefinition) AssignProperties_From_PostBuildDefinition
 	if source.SubstituteFrom != nil {
 		substituteFromList := make([]SubstituteFromDefinition, len(source.SubstituteFrom))
 		for substituteFromIndex, substituteFromItem := range source.SubstituteFrom {
-			// Shadow the loop variable to avoid aliasing
-			substituteFromItem := substituteFromItem
 			var substituteFrom SubstituteFromDefinition
 			err := substituteFrom.AssignProperties_From_SubstituteFromDefinition(&substituteFromItem)
 			if err != nil {
@@ -4454,8 +4429,6 @@ func (definition *PostBuildDefinition) AssignProperties_To_PostBuildDefinition(d
 	if definition.SubstituteFrom != nil {
 		substituteFromList := make([]storage.SubstituteFromDefinition, len(definition.SubstituteFrom))
 		for substituteFromIndex, substituteFromItem := range definition.SubstituteFrom {
-			// Shadow the loop variable to avoid aliasing
-			substituteFromItem := substituteFromItem
 			var substituteFrom storage.SubstituteFromDefinition
 			err := substituteFromItem.AssignProperties_To_SubstituteFromDefinition(&substituteFrom)
 			if err != nil {
@@ -4534,8 +4507,6 @@ func (definition *PostBuildDefinition_STATUS) AssignProperties_From_PostBuildDef
 	if source.SubstituteFrom != nil {
 		substituteFromList := make([]SubstituteFromDefinition_STATUS, len(source.SubstituteFrom))
 		for substituteFromIndex, substituteFromItem := range source.SubstituteFrom {
-			// Shadow the loop variable to avoid aliasing
-			substituteFromItem := substituteFromItem
 			var substituteFrom SubstituteFromDefinition_STATUS
 			err := substituteFrom.AssignProperties_From_SubstituteFromDefinition_STATUS(&substituteFromItem)
 			if err != nil {
@@ -4564,8 +4535,6 @@ func (definition *PostBuildDefinition_STATUS) AssignProperties_To_PostBuildDefin
 	if definition.SubstituteFrom != nil {
 		substituteFromList := make([]storage.SubstituteFromDefinition_STATUS, len(definition.SubstituteFrom))
 		for substituteFromIndex, substituteFromItem := range definition.SubstituteFrom {
-			// Shadow the loop variable to avoid aliasing
-			substituteFromItem := substituteFromItem
 			var substituteFrom storage.SubstituteFromDefinition_STATUS
 			err := substituteFromItem.AssignProperties_To_SubstituteFromDefinition_STATUS(&substituteFrom)
 			if err != nil {

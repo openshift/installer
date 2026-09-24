@@ -21,8 +21,8 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -37,14 +37,14 @@ const serviceName = "resourcehealth"
 type ResourceHealthScope interface {
 	azure.Authorizer
 	AvailabilityStatusResourceURI() string
-	AvailabilityStatusResource() conditions.Setter
+	AvailabilityStatusResource() v1beta1conditions.Setter
 }
 
 // AvailabilityStatusFilterer transforms the condition derived from the
 // availability status to allow the condition to be overridden in specific
 // circumstances.
 type AvailabilityStatusFilterer interface {
-	AvailabilityStatusFilter(cond *clusterv1.Condition) *clusterv1.Condition
+	AvailabilityStatusFilter(cond *clusterv1beta1.Condition) *clusterv1beta1.Condition
 }
 
 // Service provides operations on Azure resources.
@@ -76,7 +76,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	defer done()
 
 	if !feature.Gates.Enabled(feature.AKSResourceHealth) {
-		conditions.Delete(s.Scope.AvailabilityStatusResource(), infrav1.AzureResourceAvailableCondition)
+		v1beta1conditions.Delete(s.Scope.AvailabilityStatusResource(), infrav1.AzureResourceAvailableCondition)
 		return nil
 	}
 
@@ -92,7 +92,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 		cond = filterer.AvailabilityStatusFilter(cond)
 	}
 
-	conditions.Set(s.Scope.AvailabilityStatusResource(), cond)
+	v1beta1conditions.Set(s.Scope.AvailabilityStatusResource(), cond)
 
 	if cond.Status == corev1.ConditionFalse {
 		return errors.Errorf("resource is not available: %s", cond.Message)

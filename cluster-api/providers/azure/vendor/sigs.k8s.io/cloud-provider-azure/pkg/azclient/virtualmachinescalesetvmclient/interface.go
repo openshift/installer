@@ -37,4 +37,7 @@ type Interface interface {
 	Update(ctx context.Context, resourceGroupName string, VMScaleSetName string, instanceID string, parameters armcompute.VirtualMachineScaleSetVM) (*armcompute.VirtualMachineScaleSetVM, error)
 	GetInstanceView(ctx context.Context, resourceGroupName string, vmScaleSetName string, instanceID string) (*armcompute.VirtualMachineScaleSetVMInstanceView, error)
 	BeginUpdate(ctx context.Context, resourceGroupName string, vmScaleSetName string, instanceID string, parameters armcompute.VirtualMachineScaleSetVM, options *armcompute.VirtualMachineScaleSetVMsClientBeginUpdateOptions) (*runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], error)
+
+	// AttachDetachDataDisks attaches or detaches a list of managed data disks to/from a VM.
+	AttachDetachDataDisks(ctx context.Context, resourceGroupName, VMScaleSetName, instanceID string, parameters armcompute.AttachDetachDataDisksRequest) (*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, error)
 }
