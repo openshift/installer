@@ -663,6 +663,8 @@ github.com/jarcoal/httpmock v1.3.1 h1:iUx3whfZWVf3jT01hQTO/Eo5sAYtB2/rqaUuOtpInw
 github.com/jarcoal/httpmock v1.3.1/go.mod h1:3yb8rc4BI7TCBhFY8ng0gjuLKJNquuDNiPaZjnENuYg=
 github.com/jgautheron/goconst v1.7.1 h1:VpdAG7Ca7yvvJk5n8dMwQhfEZJh95kl/Hl9S1OI5Jkk=
 github.com/jgautheron/goconst v1.7.1/go.mod h1:aAosetZ5zaeC/2EfMeRswtxUFBpe2Hr7HzkgX4fanO4=
+github.com/jhixson74/cluster-api-provider-azure v1.24.3-0.20260924042845-28371d50119c h1:Uu3G5U30I21XZTIVSNOzlCbL/+0FJXF/APPjLNfpRsk=
+github.com/jhixson74/cluster-api-provider-azure v1.24.3-0.20260924042845-28371d50119c/go.mod h1:EDt1UPqLqlaKVWfwC5SzfHKg2joc0plhVyrRRo/bdRc=
 github.com/jhump/protoreflect v1.14.0 h1:MBbQK392K3u8NTLbKOCIi3XdI+y+c6yt5oMq0X3xviw=
 github.com/jhump/protoreflect v1.14.0/go.mod h1:JytZfP5d0r8pVNLZvai7U/MCuTWITgrI4tTg7puQFKI=
 github.com/jingyugao/rowserrcheck v1.1.1 h1:zibz55j/MJtLsjP1OF4bSdgXxwL1b+Vn7Tjzq7gFzUs=
@@ -1471,8 +1473,6 @@ sigs.k8s.io/cluster-api v1.13.4 h1:27PPEKSqESKeUIf475Ga6hSW1+gKxd5V5sCmMDgeBDo=
 sigs.k8s.io/cluster-api v1.13.4/go.mod h1:suV3Ixu7yUMD651EtBULa/RtwHRxU30eojF3wifGe8Y=
 sigs.k8s.io/cluster-api-provider-aws/v2 v2.12.1 h1:Qt4c7roIXEpe0wtTocE2tIWgShhcCSuLwQGgIiUFSZo=
 sigs.k8s.io/cluster-api-provider-aws/v2 v2.12.1/go.mod h1:kzoAhbiaTDdVSQ9pWOQhDuBwQlkkl8xPbDnDw7M2Hk8=
-sigs.k8s.io/cluster-api-provider-azure v1.24.2 h1:LNqS99Gon7Q9GPOO4eP/K9c1GGH09YF/EJSrBC/Tvgo=
-sigs.k8s.io/cluster-api-provider-azure v1.24.2/go.mod h1:EDt1UPqLqlaKVWfwC5SzfHKg2joc0plhVyrRRo/bdRc=
 sigs.k8s.io/cluster-api-provider-gcp v1.13.1-0.20260810150012-23049b61863d h1:FVwNJSANMDgDyJaCre0aiuR/4QGBFZhlxm/DizWpCxQ=
 sigs.k8s.io/cluster-api-provider-gcp v1.13.1-0.20260810150012-23049b61863d/go.mod h1:ox42iBYi98YATbNyA1BUc0Q+Z/Hsam+rcMhwiKGAxV4=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.13.1 h1:cR7WFEaNJJb6/R67o35zZXd7Vqf9eRAFiZkVDJomPI8=
