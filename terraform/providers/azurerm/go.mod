@@ -68,11 +68,11 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220608133413-ed9918b62aac // indirect
 	google.golang.org/grpc v1.47.0 // indirect
@@ -87,3 +87,5 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52
 replace golang.org/x/text => golang.org/x/text v0.3.7
 
 replace github.com/hashicorp/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.44.1-0.20251007235205-e7e957d7ceda // v3.32.0
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
