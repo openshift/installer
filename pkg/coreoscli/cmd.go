@@ -9,18 +9,12 @@ import (
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version"
 )
 
-// printStreamJSON is the implementation of print-stream-json
-func printStreamJSON(cmd *cobra.Command, _ []string) error {
-	streamFlag, err := cmd.Flags().GetString("stream")
-	if err != nil {
-		return err
-	}
-
-	var osImageStream types.OSImageStream
+func selectOSImageStream(streamFlag string, releaseVersionInjected bool) (types.OSImageStream, error) {
+	validStreams := types.OSImageStreamValues()
 	if streamFlag != "" {
-		validStreams := types.OSImageStreamValues()
 		s := types.OSImageStream(streamFlag)
 		valid := false
 		for _, v := range validStreams {
@@ -30,11 +24,28 @@ func printStreamJSON(cmd *cobra.Command, _ []string) error {
 			}
 		}
 		if !valid {
-			return fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
+			return "", fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
 		}
-		osImageStream = s
-	} else {
-		osImageStream = rhcos.BuildDefaultOSImageStream()
+		return s, nil
+	}
+
+	if !releaseVersionInjected {
+		return "", fmt.Errorf("release version metadata was not injected into the installer; specify --stream with one of %v", validStreams)
+	}
+
+	return rhcos.BuildDefaultOSImageStream(), nil
+}
+
+// printStreamJSON is the implementation of print-stream-json
+func printStreamJSON(cmd *cobra.Command, _ []string) error {
+	streamFlag, err := cmd.Flags().GetString("stream")
+	if err != nil {
+		return err
+	}
+
+	osImageStream, err := selectOSImageStream(streamFlag, version.IsReleaseVersionInjected())
+	if err != nil {
+		return err
 	}
 
 	streamData, err := rhcos.FetchRawCoreOSStream(context.Background(), osImageStream)

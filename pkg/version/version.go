@@ -60,9 +60,15 @@ func String() (string, error) {
 	return fmt.Sprintf("OpenShift Installer %s", version), err
 }
 
+// IsReleaseVersionInjected reports whether release extraction replaced the
+// release version marker embedded in the installer binary.
+func IsReleaseVersionInjected() bool {
+	return !strings.HasPrefix(defaultVersionPadded, defaultVersionPrefix)
+}
+
 // Version returns the installer/release version.
 func Version() (string, error) {
-	if strings.HasPrefix(defaultVersionPadded, defaultVersionPrefix) {
+	if !IsReleaseVersionInjected() {
 		return removeGoVersionPrefix(Raw), nil
 	}
 	nullTerminator := strings.IndexByte(defaultVersionPadded, '\x00')

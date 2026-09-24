@@ -4,6 +4,39 @@ import (
 	"testing"
 )
 
+func TestIsReleaseVersionInjected(t *testing.T) {
+	original := defaultVersionPadded
+	t.Cleanup(func() {
+		defaultVersionPadded = original
+	})
+
+	tests := []struct {
+		name     string
+		value    string
+		expected bool
+	}{
+		{
+			name:     "uninjected marker",
+			value:    defaultVersionPrefix + "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\x00",
+			expected: false,
+		},
+		{
+			name:     "injected version",
+			value:    "5.0.0\x00XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defaultVersionPadded = tt.value
+			if actual := IsReleaseVersionInjected(); actual != tt.expected {
+				t.Errorf("IsReleaseVersionInjected() = %t, want %t", actual, tt.expected)
+			}
+		})
+	}
+}
+
 func Test_removeGoVersionPrefix(t *testing.T) {
 	tests := []struct {
 		name     string
