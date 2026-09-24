@@ -77,11 +77,11 @@ require (
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/zclconf/go-cty v1.11.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -104,3 +104,5 @@ replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
 // https://issues.redhat.com/browse/OCPBUGS-78352
 replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
