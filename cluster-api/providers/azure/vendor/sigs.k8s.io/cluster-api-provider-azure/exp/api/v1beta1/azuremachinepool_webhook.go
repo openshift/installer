@@ -24,7 +24,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -34,14 +33,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/internal/webhooks"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 )
 
 // SetupAzureMachinePoolWebhookWithManager sets up and registers the webhook with the manager.
 func SetupAzureMachinePoolWebhookWithManager(mgr ctrl.Manager) error {
 	ampw := &azureMachinePoolWebhook{Client: mgr.GetClient()}
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&AzureMachinePool{}).
+	return ctrl.NewWebhookManagedBy(mgr, &AzureMachinePool{}).
 		WithDefaulter(ampw).
 		WithValidator(ampw).
 		Complete()
@@ -55,37 +54,24 @@ type azureMachinePoolWebhook struct {
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) Default(_ context.Context, obj runtime.Object) error {
-	amp, ok := obj.(*AzureMachinePool)
-	if !ok {
-		return apierrors.NewBadRequest("expected an AzureMachinePool")
-	}
+func (ampw *azureMachinePoolWebhook) Default(_ context.Context, amp *AzureMachinePool) error {
 	return amp.SetDefaults(ampw.Client)
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-azuremachinepool,mutating=false,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=azuremachinepools,versions=v1beta1,name=validation.azuremachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	amp, ok := obj.(*AzureMachinePool)
-	if !ok {
-		return nil, apierrors.NewBadRequest("expected an AzureMachinePool")
-	}
-
+func (ampw *azureMachinePoolWebhook) ValidateCreate(_ context.Context, amp *AzureMachinePool) (admission.Warnings, error) {
 	return nil, amp.Validate(nil, ampw.Client)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	amp, ok := newObj.(*AzureMachinePool)
-	if !ok {
-		return nil, apierrors.NewBadRequest("expected an AzureMachinePool")
-	}
+func (ampw *azureMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, amp *AzureMachinePool) (admission.Warnings, error) {
 	return nil, amp.Validate(oldObj, ampw.Client)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (ampw *azureMachinePoolWebhook) ValidateDelete(_ context.Context, _ *AzureMachinePool) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -125,7 +111,7 @@ func (amp *AzureMachinePool) ValidateNetwork() error {
 
 // ValidateOSDisk of an AzureMachinePool.
 func (amp *AzureMachinePool) ValidateOSDisk() error {
-	if errs := infrav1.ValidateOSDisk(amp.Spec.Template.OSDisk, field.NewPath("osDisk")); len(errs) > 0 {
+	if errs := webhooks.ValidateOSDisk(amp.Spec.Template.OSDisk, field.NewPath("osDisk")); len(errs) > 0 {
 		return errs.ToAggregate()
 	}
 	return nil
@@ -135,7 +121,7 @@ func (amp *AzureMachinePool) ValidateOSDisk() error {
 func (amp *AzureMachinePool) ValidateImage() error {
 	if amp.Spec.Template.Image != nil {
 		image := amp.Spec.Template.Image
-		if errs := infrav1.ValidateImage(image, field.NewPath("image")); len(errs) > 0 {
+		if errs := webhooks.ValidateImage(image, field.NewPath("image")); len(errs) > 0 {
 			return errs.ToAggregate()
 		}
 	}
@@ -163,7 +149,7 @@ func (amp *AzureMachinePool) ValidateTerminateNotificationTimeout() error {
 func (amp *AzureMachinePool) ValidateSSHKey() error {
 	if amp.Spec.Template.SSHPublicKey != "" {
 		sshKey := amp.Spec.Template.SSHPublicKey
-		if errs := infrav1.ValidateSSHKey(sshKey, field.NewPath("sshKey")); len(errs) > 0 {
+		if errs := webhooks.ValidateSSHKey(sshKey, field.NewPath("sshKey")); len(errs) > 0 {
 			agg := kerrors.NewAggregate(errs.ToAggregate().Errors())
 			return agg
 		}
@@ -175,7 +161,7 @@ func (amp *AzureMachinePool) ValidateSSHKey() error {
 // ValidateUserAssignedIdentity validates the user-assigned identities list.
 func (amp *AzureMachinePool) ValidateUserAssignedIdentity() error {
 	fldPath := field.NewPath("userAssignedIdentities")
-	if errs := infrav1.ValidateUserAssignedIdentity(amp.Spec.Identity, amp.Spec.UserAssignedIdentities, fldPath); len(errs) > 0 {
+	if errs := webhooks.ValidateUserAssignedIdentity(amp.Spec.Identity, amp.Spec.UserAssignedIdentities, fldPath); len(errs) > 0 {
 		return kerrors.NewAggregate(errs.ToAggregate().Errors())
 	}
 
@@ -220,7 +206,7 @@ func (amp *AzureMachinePool) ValidateSystemAssignedIdentity(old runtime.Object) 
 		}
 
 		fldPath := field.NewPath("roleAssignmentName")
-		if errs := infrav1.ValidateSystemAssignedIdentity(amp.Spec.Identity, oldRole, roleAssignmentName, fldPath); len(errs) > 0 {
+		if errs := webhooks.ValidateSystemAssignedIdentity(amp.Spec.Identity, oldRole, roleAssignmentName, fldPath); len(errs) > 0 {
 			return kerrors.NewAggregate(errs.ToAggregate().Errors())
 		}
 
@@ -299,15 +285,15 @@ func (amp *AzureMachinePool) ValidateOrchestrationMode(c client.Client) func() e
 	return func() error {
 		// Only Flexible orchestration mode requires validation.
 		if amp.Spec.OrchestrationMode == infrav1.OrchestrationModeType(armcompute.OrchestrationModeFlexible) {
-			parent, err := azureutil.FindParentMachinePoolWithRetry(amp.Name, c, 5)
+			parent, err := azureutil.FindParentMachinePoolWithRetryV1Beta1(amp.Name, c, 5)
 			if err != nil {
 				return errors.Wrap(err, "failed to find parent MachinePool")
 			}
 			// Kubernetes must be >= 1.26.0 for cloud-provider-azure Helm chart support.
-			if parent.Spec.Template.Spec.Version == nil {
+			if parent.Spec.Template.Spec.Version == "" {
 				return errors.New("could not find Kubernetes version in MachinePool")
 			}
-			k8sVersion, err := semver.ParseTolerant(*parent.Spec.Template.Spec.Version)
+			k8sVersion, err := semver.ParseTolerant(parent.Spec.Template.Spec.Version)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse Kubernetes version")
 			}

@@ -67,7 +67,11 @@ type ManagedClusterAgentPoolProfileProperties struct {
 
 	// GpuInstanceProfile: GPUInstanceProfile to be used to specify GPU MIG instance profile for supported GPU VM SKU.
 	GpuInstanceProfile *GPUInstanceProfile `json:"gpuInstanceProfile,omitempty"`
-	HostGroupID        *string             `json:"hostGroupID,omitempty"`
+
+	// HostGroupID: This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}.
+	// For more information see [Azure dedicated hosts](https://docs.microsoft.com/azure/virtual-machines/dedicated-hosts).
+	HostGroupID *string `json:"hostGroupID,omitempty"`
 
 	// KubeletConfig: The Kubelet configuration on the agent pool nodes.
 	KubeletConfig *KubeletConfig `json:"kubeletConfig,omitempty"`
@@ -93,8 +97,11 @@ type ManagedClusterAgentPoolProfileProperties struct {
 	Mode *AgentPoolMode `json:"mode,omitempty"`
 
 	// NodeLabels: The node labels to be persisted across all nodes in agent pool.
-	NodeLabels           map[string]string `json:"nodeLabels" serializationType:"explicitEmptyCollection"`
-	NodePublicIPPrefixID *string           `json:"nodePublicIPPrefixID,omitempty"`
+	NodeLabels map[string]string `json:"nodeLabels" serializationType:"explicitEmptyCollection"`
+
+	// NodePublicIPPrefixID: This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
+	NodePublicIPPrefixID *string `json:"nodePublicIPPrefixID,omitempty"`
 
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
 	NodeTaints []string `json:"nodeTaints" serializationType:"explicitEmptyCollection"`
@@ -120,14 +127,20 @@ type ManagedClusterAgentPoolProfileProperties struct {
 	OsSKU *OSSKU `json:"osSKU,omitempty"`
 
 	// OsType: The operating system type. The default is Linux.
-	OsType      *OSType `json:"osType,omitempty"`
+	OsType *OSType `json:"osType,omitempty"`
+
+	// PodSubnetID: If omitted, pod IPs are statically assigned on the node subnet (see vnetSubnetID for more details). This is
+	// of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}
 	PodSubnetID *string `json:"podSubnetID,omitempty"`
 
 	// PowerState: When an Agent Pool is first created it is initially Running. The Agent Pool can be stopped by setting this
 	// field to Stopped. A stopped Agent Pool stops all of its VMs and does not accrue billing charges. An Agent Pool can only
 	// be stopped if it is Running and provisioning state is Succeeded
-	PowerState                *PowerState `json:"powerState,omitempty"`
-	ProximityPlacementGroupID *string     `json:"proximityPlacementGroupID,omitempty"`
+	PowerState *PowerState `json:"powerState,omitempty"`
+
+	// ProximityPlacementGroupID: The ID for Proximity Placement Group.
+	ProximityPlacementGroupID *string `json:"proximityPlacementGroupID,omitempty"`
 
 	// ScaleDownMode: This also effects the cluster autoscaler behavior. If not specified, it defaults to Delete.
 	ScaleDownMode *ScaleDownMode `json:"scaleDownMode,omitempty"`
@@ -156,7 +169,11 @@ type ManagedClusterAgentPoolProfileProperties struct {
 	// VmSize: VM size availability varies by region. If a node contains insufficient compute resources (memory, cpu, etc) pods
 	// might fail to run correctly. For more details on restricted VM sizes, see:
 	// https://docs.microsoft.com/azure/aks/quotas-skus-regions
-	VmSize       *string `json:"vmSize,omitempty"`
+	VmSize *string `json:"vmSize,omitempty"`
+
+	// VnetSubnetID: If this is not specified, a VNET and subnet will be generated and used. If no podSubnetID is specified,
+	// this applies to nodes and pods, otherwise it applies to just nodes. This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}
 	VnetSubnetID *string `json:"vnetSubnetID,omitempty"`
 
 	// WorkloadRuntime: Determines the type of workload a node can run.

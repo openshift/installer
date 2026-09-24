@@ -22,6 +22,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={privatelinkservices/status,privatelinkservices/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -35,8 +36,8 @@ import (
 type PrivateLinkService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              PrivateLinkService_Spec                                          `json:"spec,omitempty"`
-	Status            PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              PrivateLinkService_Spec   `json:"spec,omitempty"`
+	Status            PrivateLinkService_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &PrivateLinkService{}
@@ -131,7 +132,7 @@ func (service *PrivateLinkService) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (service *PrivateLinkService) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+	return &PrivateLinkService_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -147,13 +148,13 @@ func (service *PrivateLinkService) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (service *PrivateLinkService) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+	if st, ok := status.(*PrivateLinkService_STATUS); ok {
 		service.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
+	var st PrivateLinkService_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -233,9 +234,9 @@ func (service *PrivateLinkService_Spec) ConvertSpecTo(destination genruntime.Con
 	return destination.ConvertSpecFrom(service)
 }
 
-// Storage version of v1api20240301.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
+// Storage version of v1api20240301.PrivateLinkService_STATUS
 // Private link service resource.
-type PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded struct {
+type PrivateLinkService_STATUS struct {
 	Alias                                *string                                                                 `json:"alias,omitempty"`
 	AutoApproval                         *ResourceSet_STATUS                                                     `json:"autoApproval,omitempty"`
 	Conditions                           []conditions.Condition                                                  `json:"conditions,omitempty"`
@@ -258,24 +259,24 @@ type PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	Visibility                           *ResourceSet_STATUS                                                     `json:"visibility,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &PrivateLinkService_STATUS{}
 
-// ConvertStatusFrom populates our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
+// ConvertStatusFrom populates our PrivateLinkService_STATUS from the provided source
+func (service *PrivateLinkService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == service {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(embedded)
+	return source.ConvertStatusTo(service)
 }
 
-// ConvertStatusTo populates the provided destination from our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
+// ConvertStatusTo populates the provided destination from our PrivateLinkService_STATUS
+func (service *PrivateLinkService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == service {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	return destination.ConvertStatusFrom(service)
 }
 
 // Storage version of v1api20240301.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded

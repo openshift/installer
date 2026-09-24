@@ -51,9 +51,16 @@ func New(_ azure.Authorizer) (*Service, error) {
 }
 
 // GetDefaultLinuxImage returns the default image spec for Ubuntu.
-func (s *Service) GetDefaultLinuxImage(ctx context.Context, _, k8sVersion string) (*infrav1.Image, error) {
+func (s *Service) GetDefaultLinuxImage(ctx context.Context, _, k8sVersion, cloudEnvironment string) (*infrav1.Image, error) {
+
 	_, _, done := tele.StartSpanWithLogger(ctx, "azure.services.virtualmachineimages.GetDefaultLinuxImage")
 	defer done()
+
+	if cloudEnvironment == azure.USSecCloudName {
+		return nil, errors.Errorf(
+			"no default image available for %s; an explicit image must be specified in AzureMachineSpec.Image",
+			cloudEnvironment)
+	}
 
 	v, err := semver.ParseTolerant(k8sVersion)
 	if err != nil {
@@ -86,9 +93,15 @@ func (s *Service) GetDefaultLinuxImage(ctx context.Context, _, k8sVersion string
 }
 
 // GetDefaultWindowsImage returns the default image spec for Windows.
-func (s *Service) GetDefaultWindowsImage(ctx context.Context, _, k8sVersion, runtime, osAndVersion string) (*infrav1.Image, error) {
+func (s *Service) GetDefaultWindowsImage(ctx context.Context, _, k8sVersion, runtime, osAndVersion, cloudEnvironment string) (*infrav1.Image, error) {
 	_, _, done := tele.StartSpanWithLogger(ctx, "azure.services.virtualmachineimages.GetDefaultWindowsImage")
 	defer done()
+
+	if cloudEnvironment == azure.USSecCloudName {
+		return nil, errors.Errorf(
+			"no default image available for %s; an explicit image must be specified in AzureMachineSpec.Image",
+			cloudEnvironment)
+	}
 
 	v, err := semver.ParseTolerant(k8sVersion)
 	if err != nil {

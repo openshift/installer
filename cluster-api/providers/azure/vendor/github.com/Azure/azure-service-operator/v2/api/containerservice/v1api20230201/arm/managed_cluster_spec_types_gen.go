@@ -317,8 +317,8 @@ type PrivateLinkResource struct {
 }
 
 type UserAssignedIdentity struct {
-	ClientId   *string `json:"clientId,omitempty"`
-	ObjectId   *string `json:"objectId,omitempty"`
+	ClientId   *string `json:"clientId,omitempty" optionalConfigMapPair:"ClientId"`
+	ObjectId   *string `json:"objectId,omitempty" optionalConfigMapPair:"ObjectId"`
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 

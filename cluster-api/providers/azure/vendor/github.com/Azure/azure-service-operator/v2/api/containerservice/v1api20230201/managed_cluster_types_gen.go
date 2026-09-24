@@ -23,6 +23,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -343,7 +344,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "ExtendedLocation":
 	if cluster.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*cluster.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := cluster.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -353,7 +354,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Identity":
 	if cluster.Identity != nil {
-		identity_ARM, err := (*cluster.Identity).ConvertToARM(resolved)
+		identity_ARM, err := cluster.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -402,7 +403,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties = &arm.ManagedClusterProperties{}
 	}
 	if cluster.AadProfile != nil {
-		aadProfile_ARM, err := (*cluster.AadProfile).ConvertToARM(resolved)
+		aadProfile_ARM, err := cluster.AadProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -427,7 +428,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AgentPoolProfiles = append(result.Properties.AgentPoolProfiles, *item_ARM.(*arm.ManagedClusterAgentPoolProfile))
 	}
 	if cluster.ApiServerAccessProfile != nil {
-		apiServerAccessProfile_ARM, err := (*cluster.ApiServerAccessProfile).ConvertToARM(resolved)
+		apiServerAccessProfile_ARM, err := cluster.ApiServerAccessProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -435,7 +436,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ApiServerAccessProfile = &apiServerAccessProfile
 	}
 	if cluster.AutoScalerProfile != nil {
-		autoScalerProfile_ARM, err := (*cluster.AutoScalerProfile).ConvertToARM(resolved)
+		autoScalerProfile_ARM, err := cluster.AutoScalerProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -443,7 +444,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AutoScalerProfile = &autoScalerProfile
 	}
 	if cluster.AutoUpgradeProfile != nil {
-		autoUpgradeProfile_ARM, err := (*cluster.AutoUpgradeProfile).ConvertToARM(resolved)
+		autoUpgradeProfile_ARM, err := cluster.AutoUpgradeProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -451,7 +452,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AutoUpgradeProfile = &autoUpgradeProfile
 	}
 	if cluster.AzureMonitorProfile != nil {
-		azureMonitorProfile_ARM, err := (*cluster.AzureMonitorProfile).ConvertToARM(resolved)
+		azureMonitorProfile_ARM, err := cluster.AzureMonitorProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -487,7 +488,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.FqdnSubdomain = &fqdnSubdomain
 	}
 	if cluster.HttpProxyConfig != nil {
-		httpProxyConfig_ARM, err := (*cluster.HttpProxyConfig).ConvertToARM(resolved)
+		httpProxyConfig_ARM, err := cluster.HttpProxyConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -509,7 +510,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.KubernetesVersion = &kubernetesVersion
 	}
 	if cluster.LinuxProfile != nil {
-		linuxProfile_ARM, err := (*cluster.LinuxProfile).ConvertToARM(resolved)
+		linuxProfile_ARM, err := cluster.LinuxProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -517,7 +518,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.LinuxProfile = &linuxProfile
 	}
 	if cluster.NetworkProfile != nil {
-		networkProfile_ARM, err := (*cluster.NetworkProfile).ConvertToARM(resolved)
+		networkProfile_ARM, err := cluster.NetworkProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -529,7 +530,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.NodeResourceGroup = &nodeResourceGroup
 	}
 	if cluster.OidcIssuerProfile != nil {
-		oidcIssuerProfile_ARM, err := (*cluster.OidcIssuerProfile).ConvertToARM(resolved)
+		oidcIssuerProfile_ARM, err := cluster.OidcIssuerProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -537,7 +538,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.OidcIssuerProfile = &oidcIssuerProfile
 	}
 	if cluster.PodIdentityProfile != nil {
-		podIdentityProfile_ARM, err := (*cluster.PodIdentityProfile).ConvertToARM(resolved)
+		podIdentityProfile_ARM, err := cluster.PodIdentityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -558,7 +559,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if cluster.SecurityProfile != nil {
-		securityProfile_ARM, err := (*cluster.SecurityProfile).ConvertToARM(resolved)
+		securityProfile_ARM, err := cluster.SecurityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -566,7 +567,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.SecurityProfile = &securityProfile
 	}
 	if cluster.ServicePrincipalProfile != nil {
-		servicePrincipalProfile_ARM, err := (*cluster.ServicePrincipalProfile).ConvertToARM(resolved)
+		servicePrincipalProfile_ARM, err := cluster.ServicePrincipalProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -574,7 +575,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ServicePrincipalProfile = &servicePrincipalProfile
 	}
 	if cluster.StorageProfile != nil {
-		storageProfile_ARM, err := (*cluster.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := cluster.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -582,7 +583,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.StorageProfile = &storageProfile
 	}
 	if cluster.WindowsProfile != nil {
-		windowsProfile_ARM, err := (*cluster.WindowsProfile).ConvertToARM(resolved)
+		windowsProfile_ARM, err := cluster.WindowsProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -590,7 +591,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.WindowsProfile = &windowsProfile
 	}
 	if cluster.WorkloadAutoScalerProfile != nil {
-		workloadAutoScalerProfile_ARM, err := (*cluster.WorkloadAutoScalerProfile).ConvertToARM(resolved)
+		workloadAutoScalerProfile_ARM, err := cluster.WorkloadAutoScalerProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -600,7 +601,7 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Sku":
 	if cluster.Sku != nil {
-		sku_ARM, err := (*cluster.Sku).ConvertToARM(resolved)
+		sku_ARM, err := cluster.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1111,8 +1112,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 	if source.AddonProfiles != nil {
 		addonProfileMap := make(map[string]ManagedClusterAddonProfile, len(source.AddonProfiles))
 		for addonProfileKey, addonProfileValue := range source.AddonProfiles {
-			// Shadow the loop variable to avoid aliasing
-			addonProfileValue := addonProfileValue
 			var addonProfile ManagedClusterAddonProfile
 			err := addonProfile.AssignProperties_From_ManagedClusterAddonProfile(&addonProfileValue)
 			if err != nil {
@@ -1129,8 +1128,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 	if source.AgentPoolProfiles != nil {
 		agentPoolProfileList := make([]ManagedClusterAgentPoolProfile, len(source.AgentPoolProfiles))
 		for agentPoolProfileIndex, agentPoolProfileItem := range source.AgentPoolProfiles {
-			// Shadow the loop variable to avoid aliasing
-			agentPoolProfileItem := agentPoolProfileItem
 			var agentPoolProfile ManagedClusterAgentPoolProfile
 			err := agentPoolProfile.AssignProperties_From_ManagedClusterAgentPoolProfile(&agentPoolProfileItem)
 			if err != nil {
@@ -1272,8 +1269,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 	if source.IdentityProfile != nil {
 		identityProfileMap := make(map[string]UserAssignedIdentity, len(source.IdentityProfile))
 		for identityProfileKey, identityProfileValue := range source.IdentityProfile {
-			// Shadow the loop variable to avoid aliasing
-			identityProfileValue := identityProfileValue
 			var identityProfile UserAssignedIdentity
 			err := identityProfile.AssignProperties_From_UserAssignedIdentity(&identityProfileValue)
 			if err != nil {
@@ -1367,8 +1362,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_From_ManagedCluster_Spec(so
 	if source.PrivateLinkResources != nil {
 		privateLinkResourceList := make([]PrivateLinkResource, len(source.PrivateLinkResources))
 		for privateLinkResourceIndex, privateLinkResourceItem := range source.PrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			privateLinkResourceItem := privateLinkResourceItem
 			var privateLinkResource PrivateLinkResource
 			err := privateLinkResource.AssignProperties_From_PrivateLinkResource(&privateLinkResourceItem)
 			if err != nil {
@@ -1490,8 +1483,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 	if cluster.AddonProfiles != nil {
 		addonProfileMap := make(map[string]storage.ManagedClusterAddonProfile, len(cluster.AddonProfiles))
 		for addonProfileKey, addonProfileValue := range cluster.AddonProfiles {
-			// Shadow the loop variable to avoid aliasing
-			addonProfileValue := addonProfileValue
 			var addonProfile storage.ManagedClusterAddonProfile
 			err := addonProfileValue.AssignProperties_To_ManagedClusterAddonProfile(&addonProfile)
 			if err != nil {
@@ -1508,8 +1499,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 	if cluster.AgentPoolProfiles != nil {
 		agentPoolProfileList := make([]storage.ManagedClusterAgentPoolProfile, len(cluster.AgentPoolProfiles))
 		for agentPoolProfileIndex, agentPoolProfileItem := range cluster.AgentPoolProfiles {
-			// Shadow the loop variable to avoid aliasing
-			agentPoolProfileItem := agentPoolProfileItem
 			var agentPoolProfile storage.ManagedClusterAgentPoolProfile
 			err := agentPoolProfileItem.AssignProperties_To_ManagedClusterAgentPoolProfile(&agentPoolProfile)
 			if err != nil {
@@ -1651,8 +1640,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 	if cluster.IdentityProfile != nil {
 		identityProfileMap := make(map[string]storage.UserAssignedIdentity, len(cluster.IdentityProfile))
 		for identityProfileKey, identityProfileValue := range cluster.IdentityProfile {
-			// Shadow the loop variable to avoid aliasing
-			identityProfileValue := identityProfileValue
 			var identityProfile storage.UserAssignedIdentity
 			err := identityProfileValue.AssignProperties_To_UserAssignedIdentity(&identityProfile)
 			if err != nil {
@@ -1749,8 +1736,6 @@ func (cluster *ManagedCluster_Spec) AssignProperties_To_ManagedCluster_Spec(dest
 	if cluster.PrivateLinkResources != nil {
 		privateLinkResourceList := make([]storage.PrivateLinkResource, len(cluster.PrivateLinkResources))
 		for privateLinkResourceIndex, privateLinkResourceItem := range cluster.PrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			privateLinkResourceItem := privateLinkResourceItem
 			var privateLinkResource storage.PrivateLinkResource
 			err := privateLinkResourceItem.AssignProperties_To_PrivateLinkResource(&privateLinkResource)
 			if err != nil {
@@ -2499,8 +2484,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 	if source.AddonProfiles != nil {
 		addonProfileMap := make(map[string]ManagedClusterAddonProfile_STATUS, len(source.AddonProfiles))
 		for addonProfileKey, addonProfileValue := range source.AddonProfiles {
-			// Shadow the loop variable to avoid aliasing
-			addonProfileValue := addonProfileValue
 			var addonProfile ManagedClusterAddonProfile_STATUS
 			err := addonProfile.AssignProperties_From_ManagedClusterAddonProfile_STATUS(&addonProfileValue)
 			if err != nil {
@@ -2517,8 +2500,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 	if source.AgentPoolProfiles != nil {
 		agentPoolProfileList := make([]ManagedClusterAgentPoolProfile_STATUS, len(source.AgentPoolProfiles))
 		for agentPoolProfileIndex, agentPoolProfileItem := range source.AgentPoolProfiles {
-			// Shadow the loop variable to avoid aliasing
-			agentPoolProfileItem := agentPoolProfileItem
 			var agentPoolProfile ManagedClusterAgentPoolProfile_STATUS
 			err := agentPoolProfile.AssignProperties_From_ManagedClusterAgentPoolProfile_STATUS(&agentPoolProfileItem)
 			if err != nil {
@@ -2667,8 +2648,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 	if source.IdentityProfile != nil {
 		identityProfileMap := make(map[string]UserAssignedIdentity_STATUS, len(source.IdentityProfile))
 		for identityProfileKey, identityProfileValue := range source.IdentityProfile {
-			// Shadow the loop variable to avoid aliasing
-			identityProfileValue := identityProfileValue
 			var identityProfile UserAssignedIdentity_STATUS
 			err := identityProfile.AssignProperties_From_UserAssignedIdentity_STATUS(&identityProfileValue)
 			if err != nil {
@@ -2763,8 +2742,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_From_ManagedCluster_STATU
 	if source.PrivateLinkResources != nil {
 		privateLinkResourceList := make([]PrivateLinkResource_STATUS, len(source.PrivateLinkResources))
 		for privateLinkResourceIndex, privateLinkResourceItem := range source.PrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			privateLinkResourceItem := privateLinkResourceItem
 			var privateLinkResource PrivateLinkResource_STATUS
 			err := privateLinkResource.AssignProperties_From_PrivateLinkResource_STATUS(&privateLinkResourceItem)
 			if err != nil {
@@ -2904,8 +2881,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 	if cluster.AddonProfiles != nil {
 		addonProfileMap := make(map[string]storage.ManagedClusterAddonProfile_STATUS, len(cluster.AddonProfiles))
 		for addonProfileKey, addonProfileValue := range cluster.AddonProfiles {
-			// Shadow the loop variable to avoid aliasing
-			addonProfileValue := addonProfileValue
 			var addonProfile storage.ManagedClusterAddonProfile_STATUS
 			err := addonProfileValue.AssignProperties_To_ManagedClusterAddonProfile_STATUS(&addonProfile)
 			if err != nil {
@@ -2922,8 +2897,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 	if cluster.AgentPoolProfiles != nil {
 		agentPoolProfileList := make([]storage.ManagedClusterAgentPoolProfile_STATUS, len(cluster.AgentPoolProfiles))
 		for agentPoolProfileIndex, agentPoolProfileItem := range cluster.AgentPoolProfiles {
-			// Shadow the loop variable to avoid aliasing
-			agentPoolProfileItem := agentPoolProfileItem
 			var agentPoolProfile storage.ManagedClusterAgentPoolProfile_STATUS
 			err := agentPoolProfileItem.AssignProperties_To_ManagedClusterAgentPoolProfile_STATUS(&agentPoolProfile)
 			if err != nil {
@@ -3072,8 +3045,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 	if cluster.IdentityProfile != nil {
 		identityProfileMap := make(map[string]storage.UserAssignedIdentity_STATUS, len(cluster.IdentityProfile))
 		for identityProfileKey, identityProfileValue := range cluster.IdentityProfile {
-			// Shadow the loop variable to avoid aliasing
-			identityProfileValue := identityProfileValue
 			var identityProfile storage.UserAssignedIdentity_STATUS
 			err := identityProfileValue.AssignProperties_To_UserAssignedIdentity_STATUS(&identityProfile)
 			if err != nil {
@@ -3168,8 +3139,6 @@ func (cluster *ManagedCluster_STATUS) AssignProperties_To_ManagedCluster_STATUS(
 	if cluster.PrivateLinkResources != nil {
 		privateLinkResourceList := make([]storage.PrivateLinkResource_STATUS, len(cluster.PrivateLinkResources))
 		for privateLinkResourceIndex, privateLinkResourceItem := range cluster.PrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			privateLinkResourceItem := privateLinkResourceItem
 			var privateLinkResource storage.PrivateLinkResource_STATUS
 			err := privateLinkResourceItem.AssignProperties_To_PrivateLinkResource_STATUS(&privateLinkResource)
 			if err != nil {
@@ -3320,7 +3289,7 @@ func (profile *ContainerServiceLinuxProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "Ssh":
 	if profile.Ssh != nil {
-		ssh_ARM, err := (*profile.Ssh).ConvertToARM(resolved)
+		ssh_ARM, err := profile.Ssh.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3565,7 +3534,7 @@ func (profile *ContainerServiceNetworkProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "LoadBalancerProfile":
 	if profile.LoadBalancerProfile != nil {
-		loadBalancerProfile_ARM, err := (*profile.LoadBalancerProfile).ConvertToARM(resolved)
+		loadBalancerProfile_ARM, err := profile.LoadBalancerProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3583,7 +3552,7 @@ func (profile *ContainerServiceNetworkProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "NatGatewayProfile":
 	if profile.NatGatewayProfile != nil {
-		natGatewayProfile_ARM, err := (*profile.NatGatewayProfile).ConvertToARM(resolved)
+		natGatewayProfile_ARM, err := profile.NatGatewayProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3811,8 +3780,6 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_From_ContainerSe
 	if source.IpFamilies != nil {
 		ipFamilyList := make([]ContainerServiceNetworkProfile_IpFamilies, len(source.IpFamilies))
 		for ipFamilyIndex, ipFamilyItem := range source.IpFamilies {
-			// Shadow the loop variable to avoid aliasing
-			ipFamilyItem := ipFamilyItem
 			ipFamilyList[ipFamilyIndex] = genruntime.ToEnum(ipFamilyItem, containerServiceNetworkProfile_IpFamilies_Values)
 		}
 		profile.IpFamilies = ipFamilyList
@@ -3938,8 +3905,6 @@ func (profile *ContainerServiceNetworkProfile) AssignProperties_To_ContainerServ
 	if profile.IpFamilies != nil {
 		ipFamilyList := make([]string, len(profile.IpFamilies))
 		for ipFamilyIndex, ipFamilyItem := range profile.IpFamilies {
-			// Shadow the loop variable to avoid aliasing
-			ipFamilyItem := ipFamilyItem
 			ipFamilyList[ipFamilyIndex] = string(ipFamilyItem)
 		}
 		destination.IpFamilies = ipFamilyList
@@ -4219,8 +4184,6 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_From_Cont
 	if source.IpFamilies != nil {
 		ipFamilyList := make([]ContainerServiceNetworkProfile_IpFamilies_STATUS, len(source.IpFamilies))
 		for ipFamilyIndex, ipFamilyItem := range source.IpFamilies {
-			// Shadow the loop variable to avoid aliasing
-			ipFamilyItem := ipFamilyItem
 			ipFamilyList[ipFamilyIndex] = genruntime.ToEnum(ipFamilyItem, containerServiceNetworkProfile_IpFamilies_STATUS_Values)
 		}
 		profile.IpFamilies = ipFamilyList
@@ -4346,8 +4309,6 @@ func (profile *ContainerServiceNetworkProfile_STATUS) AssignProperties_To_Contai
 	if profile.IpFamilies != nil {
 		ipFamilyList := make([]string, len(profile.IpFamilies))
 		for ipFamilyIndex, ipFamilyItem := range profile.IpFamilies {
-			// Shadow the loop variable to avoid aliasing
-			ipFamilyItem := ipFamilyItem
 			ipFamilyList[ipFamilyIndex] = string(ipFamilyItem)
 		}
 		destination.IpFamilies = ipFamilyList
@@ -5297,7 +5258,7 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "CreationData":
 	if profile.CreationData != nil {
-		creationData_ARM, err := (*profile.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := profile.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5355,7 +5316,7 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "KubeletConfig":
 	if profile.KubeletConfig != nil {
-		kubeletConfig_ARM, err := (*profile.KubeletConfig).ConvertToARM(resolved)
+		kubeletConfig_ARM, err := profile.KubeletConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5373,7 +5334,7 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "LinuxOSConfig":
 	if profile.LinuxOSConfig != nil {
-		linuxOSConfig_ARM, err := (*profile.LinuxOSConfig).ConvertToARM(resolved)
+		linuxOSConfig_ARM, err := profile.LinuxOSConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5491,7 +5452,7 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "PowerState":
 	if profile.PowerState != nil {
-		powerState_ARM, err := (*profile.PowerState).ConvertToARM(resolved)
+		powerState_ARM, err := profile.PowerState.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5560,7 +5521,7 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 
 	// Set property "UpgradeSettings":
 	if profile.UpgradeSettings != nil {
-		upgradeSettings_ARM, err := (*profile.UpgradeSettings).ConvertToARM(resolved)
+		upgradeSettings_ARM, err := profile.UpgradeSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -7867,7 +7828,7 @@ func (profile *ManagedClusterAzureMonitorProfile) ConvertToARM(resolved genrunti
 
 	// Set property "Metrics":
 	if profile.Metrics != nil {
-		metrics_ARM, err := (*profile.Metrics).ConvertToARM(resolved)
+		metrics_ARM, err := profile.Metrics.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8330,8 +8291,6 @@ func (identity *ManagedClusterIdentity) AssignProperties_From_ManagedClusterIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -8365,8 +8324,6 @@ func (identity *ManagedClusterIdentity) AssignProperties_To_ManagedClusterIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -8470,8 +8427,6 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_From_ManagedClus
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]ManagedClusterIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity ManagedClusterIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -8511,8 +8466,6 @@ func (identity *ManagedClusterIdentity_STATUS) AssignProperties_To_ManagedCluste
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.ManagedClusterIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.ManagedClusterIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ManagedClusterIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -8720,8 +8673,6 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_From_ManagedCluster
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -8750,8 +8701,6 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_From_ManagedCluster
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -8789,8 +8738,6 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_To_ManagedClusterOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -8819,8 +8766,6 @@ func (operator *ManagedClusterOperatorSpec) AssignProperties_To_ManagedClusterOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -8975,8 +8920,6 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_From_ManagedCl
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]ManagedClusterPodIdentity, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity ManagedClusterPodIdentity
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterPodIdentity(&userAssignedIdentityItem)
 			if err != nil {
@@ -8993,8 +8936,6 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_From_ManagedCl
 	if source.UserAssignedIdentityExceptions != nil {
 		userAssignedIdentityExceptionList := make([]ManagedClusterPodIdentityException, len(source.UserAssignedIdentityExceptions))
 		for userAssignedIdentityExceptionIndex, userAssignedIdentityExceptionItem := range source.UserAssignedIdentityExceptions {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityExceptionItem := userAssignedIdentityExceptionItem
 			var userAssignedIdentityException ManagedClusterPodIdentityException
 			err := userAssignedIdentityException.AssignProperties_From_ManagedClusterPodIdentityException(&userAssignedIdentityExceptionItem)
 			if err != nil {
@@ -9036,8 +8977,6 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_To_ManagedClus
 	if profile.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.ManagedClusterPodIdentity, len(profile.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range profile.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.ManagedClusterPodIdentity
 			err := userAssignedIdentityItem.AssignProperties_To_ManagedClusterPodIdentity(&userAssignedIdentity)
 			if err != nil {
@@ -9054,8 +8993,6 @@ func (profile *ManagedClusterPodIdentityProfile) AssignProperties_To_ManagedClus
 	if profile.UserAssignedIdentityExceptions != nil {
 		userAssignedIdentityExceptionList := make([]storage.ManagedClusterPodIdentityException, len(profile.UserAssignedIdentityExceptions))
 		for userAssignedIdentityExceptionIndex, userAssignedIdentityExceptionItem := range profile.UserAssignedIdentityExceptions {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityExceptionItem := userAssignedIdentityExceptionItem
 			var userAssignedIdentityException storage.ManagedClusterPodIdentityException
 			err := userAssignedIdentityExceptionItem.AssignProperties_To_ManagedClusterPodIdentityException(&userAssignedIdentityException)
 			if err != nil {
@@ -9159,8 +9096,6 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_From_Ma
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]ManagedClusterPodIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity ManagedClusterPodIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedClusterPodIdentity_STATUS(&userAssignedIdentityItem)
 			if err != nil {
@@ -9177,8 +9112,6 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_From_Ma
 	if source.UserAssignedIdentityExceptions != nil {
 		userAssignedIdentityExceptionList := make([]ManagedClusterPodIdentityException_STATUS, len(source.UserAssignedIdentityExceptions))
 		for userAssignedIdentityExceptionIndex, userAssignedIdentityExceptionItem := range source.UserAssignedIdentityExceptions {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityExceptionItem := userAssignedIdentityExceptionItem
 			var userAssignedIdentityException ManagedClusterPodIdentityException_STATUS
 			err := userAssignedIdentityException.AssignProperties_From_ManagedClusterPodIdentityException_STATUS(&userAssignedIdentityExceptionItem)
 			if err != nil {
@@ -9220,8 +9153,6 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_To_Mana
 	if profile.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.ManagedClusterPodIdentity_STATUS, len(profile.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range profile.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.ManagedClusterPodIdentity_STATUS
 			err := userAssignedIdentityItem.AssignProperties_To_ManagedClusterPodIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -9238,8 +9169,6 @@ func (profile *ManagedClusterPodIdentityProfile_STATUS) AssignProperties_To_Mana
 	if profile.UserAssignedIdentityExceptions != nil {
 		userAssignedIdentityExceptionList := make([]storage.ManagedClusterPodIdentityException_STATUS, len(profile.UserAssignedIdentityExceptions))
 		for userAssignedIdentityExceptionIndex, userAssignedIdentityExceptionItem := range profile.UserAssignedIdentityExceptions {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityExceptionItem := userAssignedIdentityExceptionItem
 			var userAssignedIdentityException storage.ManagedClusterPodIdentityException_STATUS
 			err := userAssignedIdentityExceptionItem.AssignProperties_To_ManagedClusterPodIdentityException_STATUS(&userAssignedIdentityException)
 			if err != nil {
@@ -9977,7 +9906,7 @@ func (profile *ManagedClusterSecurityProfile) ConvertToARM(resolved genruntime.C
 
 	// Set property "AzureKeyVaultKms":
 	if profile.AzureKeyVaultKms != nil {
-		azureKeyVaultKms_ARM, err := (*profile.AzureKeyVaultKms).ConvertToARM(resolved)
+		azureKeyVaultKms_ARM, err := profile.AzureKeyVaultKms.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -9987,7 +9916,7 @@ func (profile *ManagedClusterSecurityProfile) ConvertToARM(resolved genruntime.C
 
 	// Set property "Defender":
 	if profile.Defender != nil {
-		defender_ARM, err := (*profile.Defender).ConvertToARM(resolved)
+		defender_ARM, err := profile.Defender.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -9997,7 +9926,7 @@ func (profile *ManagedClusterSecurityProfile) ConvertToARM(resolved genruntime.C
 
 	// Set property "ImageCleaner":
 	if profile.ImageCleaner != nil {
-		imageCleaner_ARM, err := (*profile.ImageCleaner).ConvertToARM(resolved)
+		imageCleaner_ARM, err := profile.ImageCleaner.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10007,7 +9936,7 @@ func (profile *ManagedClusterSecurityProfile) ConvertToARM(resolved genruntime.C
 
 	// Set property "WorkloadIdentity":
 	if profile.WorkloadIdentity != nil {
-		workloadIdentity_ARM, err := (*profile.WorkloadIdentity).ConvertToARM(resolved)
+		workloadIdentity_ARM, err := profile.WorkloadIdentity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10778,7 +10707,7 @@ func (profile *ManagedClusterStorageProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "BlobCSIDriver":
 	if profile.BlobCSIDriver != nil {
-		blobCSIDriver_ARM, err := (*profile.BlobCSIDriver).ConvertToARM(resolved)
+		blobCSIDriver_ARM, err := profile.BlobCSIDriver.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10788,7 +10717,7 @@ func (profile *ManagedClusterStorageProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "DiskCSIDriver":
 	if profile.DiskCSIDriver != nil {
-		diskCSIDriver_ARM, err := (*profile.DiskCSIDriver).ConvertToARM(resolved)
+		diskCSIDriver_ARM, err := profile.DiskCSIDriver.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10798,7 +10727,7 @@ func (profile *ManagedClusterStorageProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "FileCSIDriver":
 	if profile.FileCSIDriver != nil {
-		fileCSIDriver_ARM, err := (*profile.FileCSIDriver).ConvertToARM(resolved)
+		fileCSIDriver_ARM, err := profile.FileCSIDriver.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10808,7 +10737,7 @@ func (profile *ManagedClusterStorageProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "SnapshotController":
 	if profile.SnapshotController != nil {
-		snapshotController_ARM, err := (*profile.SnapshotController).ConvertToARM(resolved)
+		snapshotController_ARM, err := profile.SnapshotController.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11228,7 +11157,7 @@ func (profile *ManagedClusterWindowsProfile) ConvertToARM(resolved genruntime.Co
 
 	// Set property "GmsaProfile":
 	if profile.GmsaProfile != nil {
-		gmsaProfile_ARM, err := (*profile.GmsaProfile).ConvertToARM(resolved)
+		gmsaProfile_ARM, err := profile.GmsaProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11554,7 +11483,7 @@ func (profile *ManagedClusterWorkloadAutoScalerProfile) ConvertToARM(resolved ge
 
 	// Set property "Keda":
 	if profile.Keda != nil {
-		keda_ARM, err := (*profile.Keda).ConvertToARM(resolved)
+		keda_ARM, err := profile.Keda.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -12214,9 +12143,11 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 }
 
 type UserAssignedIdentity struct {
-	ClientId          *string                       `json:"clientId,omitempty"`
-	ObjectId          *string                       `json:"objectId,omitempty"`
-	ResourceReference *genruntime.ResourceReference `armReference:"ResourceId" json:"resourceReference,omitempty"`
+	ClientId           *string                        `json:"clientId,omitempty" optionalConfigMapPair:"ClientId"`
+	ClientIdFromConfig *genruntime.ConfigMapReference `json:"clientIdFromConfig,omitempty" optionalConfigMapPair:"ClientId"`
+	ObjectId           *string                        `json:"objectId,omitempty" optionalConfigMapPair:"ObjectId"`
+	ObjectIdFromConfig *genruntime.ConfigMapReference `json:"objectIdFromConfig,omitempty" optionalConfigMapPair:"ObjectId"`
+	ResourceReference  *genruntime.ResourceReference  `armReference:"ResourceId" json:"resourceReference,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &UserAssignedIdentity{}
@@ -12233,10 +12164,26 @@ func (identity *UserAssignedIdentity) ConvertToARM(resolved genruntime.ConvertTo
 		clientId := *identity.ClientId
 		result.ClientId = &clientId
 	}
+	if identity.ClientIdFromConfig != nil {
+		clientIdValue, err := resolved.ResolvedConfigMaps.Lookup(*identity.ClientIdFromConfig)
+		if err != nil {
+			return nil, eris.Wrap(err, "looking up configmap for property ClientId")
+		}
+		clientId := clientIdValue
+		result.ClientId = &clientId
+	}
 
 	// Set property "ObjectId":
 	if identity.ObjectId != nil {
 		objectId := *identity.ObjectId
+		result.ObjectId = &objectId
+	}
+	if identity.ObjectIdFromConfig != nil {
+		objectIdValue, err := resolved.ResolvedConfigMaps.Lookup(*identity.ObjectIdFromConfig)
+		if err != nil {
+			return nil, eris.Wrap(err, "looking up configmap for property ObjectId")
+		}
+		objectId := objectIdValue
 		result.ObjectId = &objectId
 	}
 
@@ -12270,11 +12217,15 @@ func (identity *UserAssignedIdentity) PopulateFromARM(owner genruntime.Arbitrary
 		identity.ClientId = &clientId
 	}
 
+	// no assignment for property "ClientIdFromConfig"
+
 	// Set property "ObjectId":
 	if typedInput.ObjectId != nil {
 		objectId := *typedInput.ObjectId
 		identity.ObjectId = &objectId
 	}
+
+	// no assignment for property "ObjectIdFromConfig"
 
 	// no assignment for property "ResourceReference"
 
@@ -12288,8 +12239,24 @@ func (identity *UserAssignedIdentity) AssignProperties_From_UserAssignedIdentity
 	// ClientId
 	identity.ClientId = genruntime.ClonePointerToString(source.ClientId)
 
+	// ClientIdFromConfig
+	if source.ClientIdFromConfig != nil {
+		clientIdFromConfig := source.ClientIdFromConfig.Copy()
+		identity.ClientIdFromConfig = &clientIdFromConfig
+	} else {
+		identity.ClientIdFromConfig = nil
+	}
+
 	// ObjectId
 	identity.ObjectId = genruntime.ClonePointerToString(source.ObjectId)
+
+	// ObjectIdFromConfig
+	if source.ObjectIdFromConfig != nil {
+		objectIdFromConfig := source.ObjectIdFromConfig.Copy()
+		identity.ObjectIdFromConfig = &objectIdFromConfig
+	} else {
+		identity.ObjectIdFromConfig = nil
+	}
 
 	// ResourceReference
 	if source.ResourceReference != nil {
@@ -12311,8 +12278,24 @@ func (identity *UserAssignedIdentity) AssignProperties_To_UserAssignedIdentity(d
 	// ClientId
 	destination.ClientId = genruntime.ClonePointerToString(identity.ClientId)
 
+	// ClientIdFromConfig
+	if identity.ClientIdFromConfig != nil {
+		clientIdFromConfig := identity.ClientIdFromConfig.Copy()
+		destination.ClientIdFromConfig = &clientIdFromConfig
+	} else {
+		destination.ClientIdFromConfig = nil
+	}
+
 	// ObjectId
 	destination.ObjectId = genruntime.ClonePointerToString(identity.ObjectId)
+
+	// ObjectIdFromConfig
+	if identity.ObjectIdFromConfig != nil {
+		objectIdFromConfig := identity.ObjectIdFromConfig.Copy()
+		destination.ObjectIdFromConfig = &objectIdFromConfig
+	} else {
+		destination.ObjectIdFromConfig = nil
+	}
 
 	// ResourceReference
 	if identity.ResourceReference != nil {
@@ -12981,8 +12964,6 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_From_Con
 	if source.PublicKeys != nil {
 		publicKeyList := make([]ContainerServiceSshPublicKey, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey ContainerServiceSshPublicKey
 			err := publicKey.AssignProperties_From_ContainerServiceSshPublicKey(&publicKeyItem)
 			if err != nil {
@@ -13008,8 +12989,6 @@ func (configuration *ContainerServiceSshConfiguration) AssignProperties_To_Conta
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]storage.ContainerServiceSshPublicKey, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey storage.ContainerServiceSshPublicKey
 			err := publicKeyItem.AssignProperties_To_ContainerServiceSshPublicKey(&publicKey)
 			if err != nil {
@@ -13072,8 +13051,6 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_F
 	if source.PublicKeys != nil {
 		publicKeyList := make([]ContainerServiceSshPublicKey_STATUS, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey ContainerServiceSshPublicKey_STATUS
 			err := publicKey.AssignProperties_From_ContainerServiceSshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
@@ -13099,8 +13076,6 @@ func (configuration *ContainerServiceSshConfiguration_STATUS) AssignProperties_T
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]storage.ContainerServiceSshPublicKey_STATUS, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey storage.ContainerServiceSshPublicKey_STATUS
 			err := publicKeyItem.AssignProperties_To_ContainerServiceSshPublicKey_STATUS(&publicKey)
 			if err != nil {
@@ -13205,7 +13180,7 @@ func (metrics *ManagedClusterAzureMonitorProfileMetrics) ConvertToARM(resolved g
 
 	// Set property "KubeStateMetrics":
 	if metrics.KubeStateMetrics != nil {
-		kubeStateMetrics_ARM, err := (*metrics.KubeStateMetrics).ConvertToARM(resolved)
+		kubeStateMetrics_ARM, err := metrics.KubeStateMetrics.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -13568,7 +13543,7 @@ func (profile *ManagedClusterLoadBalancerProfile) ConvertToARM(resolved genrunti
 
 	// Set property "ManagedOutboundIPs":
 	if profile.ManagedOutboundIPs != nil {
-		managedOutboundIPs_ARM, err := (*profile.ManagedOutboundIPs).ConvertToARM(resolved)
+		managedOutboundIPs_ARM, err := profile.ManagedOutboundIPs.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -13578,7 +13553,7 @@ func (profile *ManagedClusterLoadBalancerProfile) ConvertToARM(resolved genrunti
 
 	// Set property "OutboundIPPrefixes":
 	if profile.OutboundIPPrefixes != nil {
-		outboundIPPrefixes_ARM, err := (*profile.OutboundIPPrefixes).ConvertToARM(resolved)
+		outboundIPPrefixes_ARM, err := profile.OutboundIPPrefixes.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -13588,7 +13563,7 @@ func (profile *ManagedClusterLoadBalancerProfile) ConvertToARM(resolved genrunti
 
 	// Set property "OutboundIPs":
 	if profile.OutboundIPs != nil {
-		outboundIPs_ARM, err := (*profile.OutboundIPs).ConvertToARM(resolved)
+		outboundIPs_ARM, err := profile.OutboundIPs.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -13685,8 +13660,6 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_From_ManagedC
 	if source.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]ResourceReference, len(source.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range source.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP ResourceReference
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference(&effectiveOutboundIPItem)
 			if err != nil {
@@ -13762,8 +13735,6 @@ func (profile *ManagedClusterLoadBalancerProfile) AssignProperties_To_ManagedClu
 	if profile.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]storage.ResourceReference, len(profile.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range profile.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP storage.ResourceReference
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference(&effectiveOutboundIP)
 			if err != nil {
@@ -13933,8 +13904,6 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_From_M
 	if source.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]ResourceReference_STATUS, len(source.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range source.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP ResourceReference_STATUS
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference_STATUS(&effectiveOutboundIPItem)
 			if err != nil {
@@ -14010,8 +13979,6 @@ func (profile *ManagedClusterLoadBalancerProfile_STATUS) AssignProperties_To_Man
 	if profile.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]storage.ResourceReference_STATUS, len(profile.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range profile.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP storage.ResourceReference_STATUS
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference_STATUS(&effectiveOutboundIP)
 			if err != nil {
@@ -14117,7 +14084,7 @@ func (profile *ManagedClusterNATGatewayProfile) ConvertToARM(resolved genruntime
 
 	// Set property "ManagedOutboundIPProfile":
 	if profile.ManagedOutboundIPProfile != nil {
-		managedOutboundIPProfile_ARM, err := (*profile.ManagedOutboundIPProfile).ConvertToARM(resolved)
+		managedOutboundIPProfile_ARM, err := profile.ManagedOutboundIPProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -14177,8 +14144,6 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_From_ManagedClu
 	if source.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]ResourceReference, len(source.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range source.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP ResourceReference
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference(&effectiveOutboundIPItem)
 			if err != nil {
@@ -14219,8 +14184,6 @@ func (profile *ManagedClusterNATGatewayProfile) AssignProperties_To_ManagedClust
 	if profile.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]storage.ResourceReference, len(profile.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range profile.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP storage.ResourceReference
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference(&effectiveOutboundIP)
 			if err != nil {
@@ -14317,8 +14280,6 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_From_Man
 	if source.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]ResourceReference_STATUS, len(source.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range source.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP ResourceReference_STATUS
 			err := effectiveOutboundIP.AssignProperties_From_ResourceReference_STATUS(&effectiveOutboundIPItem)
 			if err != nil {
@@ -14359,8 +14320,6 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_To_Manag
 	if profile.EffectiveOutboundIPs != nil {
 		effectiveOutboundIPList := make([]storage.ResourceReference_STATUS, len(profile.EffectiveOutboundIPs))
 		for effectiveOutboundIPIndex, effectiveOutboundIPItem := range profile.EffectiveOutboundIPs {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIPItem := effectiveOutboundIPItem
 			var effectiveOutboundIP storage.ResourceReference_STATUS
 			err := effectiveOutboundIPItem.AssignProperties_To_ResourceReference_STATUS(&effectiveOutboundIP)
 			if err != nil {
@@ -14558,7 +14517,7 @@ func (identity *ManagedClusterPodIdentity) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "Identity":
 	if identity.Identity != nil {
-		identity_ARM, err := (*identity.Identity).ConvertToARM(resolved)
+		identity_ARM, err := identity.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -15136,7 +15095,7 @@ func (defender *ManagedClusterSecurityProfileDefender) ConvertToARM(resolved gen
 
 	// Set property "SecurityMonitoring":
 	if defender.SecurityMonitoring != nil {
-		securityMonitoring_ARM, err := (*defender.SecurityMonitoring).ConvertToARM(resolved)
+		securityMonitoring_ARM, err := defender.SecurityMonitoring.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -17314,8 +17273,6 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 	if source.PublicIPPrefixes != nil {
 		publicIPPrefixList := make([]ResourceReference, len(source.PublicIPPrefixes))
 		for publicIPPrefixIndex, publicIPPrefixItem := range source.PublicIPPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIPPrefixItem := publicIPPrefixItem
 			var publicIPPrefix ResourceReference
 			err := publicIPPrefix.AssignProperties_From_ResourceReference(&publicIPPrefixItem)
 			if err != nil {
@@ -17341,8 +17298,6 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes) AssignProp
 	if prefixes.PublicIPPrefixes != nil {
 		publicIPPrefixList := make([]storage.ResourceReference, len(prefixes.PublicIPPrefixes))
 		for publicIPPrefixIndex, publicIPPrefixItem := range prefixes.PublicIPPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIPPrefixItem := publicIPPrefixItem
 			var publicIPPrefix storage.ResourceReference
 			err := publicIPPrefixItem.AssignProperties_To_ResourceReference(&publicIPPrefix)
 			if err != nil {
@@ -17405,8 +17360,6 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 	if source.PublicIPPrefixes != nil {
 		publicIPPrefixList := make([]ResourceReference_STATUS, len(source.PublicIPPrefixes))
 		for publicIPPrefixIndex, publicIPPrefixItem := range source.PublicIPPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIPPrefixItem := publicIPPrefixItem
 			var publicIPPrefix ResourceReference_STATUS
 			err := publicIPPrefix.AssignProperties_From_ResourceReference_STATUS(&publicIPPrefixItem)
 			if err != nil {
@@ -17432,8 +17385,6 @@ func (prefixes *ManagedClusterLoadBalancerProfile_OutboundIPPrefixes_STATUS) Ass
 	if prefixes.PublicIPPrefixes != nil {
 		publicIPPrefixList := make([]storage.ResourceReference_STATUS, len(prefixes.PublicIPPrefixes))
 		for publicIPPrefixIndex, publicIPPrefixItem := range prefixes.PublicIPPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIPPrefixItem := publicIPPrefixItem
 			var publicIPPrefix storage.ResourceReference_STATUS
 			err := publicIPPrefixItem.AssignProperties_To_ResourceReference_STATUS(&publicIPPrefix)
 			if err != nil {
@@ -17514,8 +17465,6 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_From_
 	if source.PublicIPs != nil {
 		publicIPList := make([]ResourceReference, len(source.PublicIPs))
 		for publicIPIndex, publicIPItem := range source.PublicIPs {
-			// Shadow the loop variable to avoid aliasing
-			publicIPItem := publicIPItem
 			var publicIP ResourceReference
 			err := publicIP.AssignProperties_From_ResourceReference(&publicIPItem)
 			if err != nil {
@@ -17541,8 +17490,6 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs) AssignProperties_To_Ma
 	if iPs.PublicIPs != nil {
 		publicIPList := make([]storage.ResourceReference, len(iPs.PublicIPs))
 		for publicIPIndex, publicIPItem := range iPs.PublicIPs {
-			// Shadow the loop variable to avoid aliasing
-			publicIPItem := publicIPItem
 			var publicIP storage.ResourceReference
 			err := publicIPItem.AssignProperties_To_ResourceReference(&publicIP)
 			if err != nil {
@@ -17605,8 +17552,6 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 	if source.PublicIPs != nil {
 		publicIPList := make([]ResourceReference_STATUS, len(source.PublicIPs))
 		for publicIPIndex, publicIPItem := range source.PublicIPs {
-			// Shadow the loop variable to avoid aliasing
-			publicIPItem := publicIPItem
 			var publicIP ResourceReference_STATUS
 			err := publicIP.AssignProperties_From_ResourceReference_STATUS(&publicIPItem)
 			if err != nil {
@@ -17632,8 +17577,6 @@ func (iPs *ManagedClusterLoadBalancerProfile_OutboundIPs_STATUS) AssignPropertie
 	if iPs.PublicIPs != nil {
 		publicIPList := make([]storage.ResourceReference_STATUS, len(iPs.PublicIPs))
 		for publicIPIndex, publicIPItem := range iPs.PublicIPs {
-			// Shadow the loop variable to avoid aliasing
-			publicIPItem := publicIPItem
 			var publicIP storage.ResourceReference_STATUS
 			err := publicIPItem.AssignProperties_To_ResourceReference_STATUS(&publicIP)
 			if err != nil {
@@ -18320,8 +18263,6 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 	if source.Details != nil {
 		detailList := make([]ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled, len(source.Details))
 		for detailIndex, detailItem := range source.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled
 			err := detail.AssignProperties_From_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled(&detailItem)
 			if err != nil {
@@ -18356,8 +18297,6 @@ func (body *ManagedClusterPodIdentityProvisioningErrorBody_STATUS) AssignPropert
 	if body.Details != nil {
 		detailList := make([]storage.ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled, len(body.Details))
 		for detailIndex, detailItem := range body.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail storage.ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ManagedClusterPodIdentityProvisioningErrorBody_STATUS_Unrolled(&detail)
 			if err != nil {

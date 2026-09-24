@@ -46,7 +46,7 @@ func (handler *PollerWrapper[ResponseType]) WaitforPollerResp(ctx context.Contex
 		return nil, errors.New("poller is nil")
 	}
 	resp, err := handler.poller.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{
-		Frequency: time.Second * 15,
+		Frequency: time.Second * 5,
 	})
 	if err != nil {
 		return nil, err

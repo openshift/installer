@@ -6193,9 +6193,19 @@ func (in *UserAssignedIdentity) DeepCopyInto(out *UserAssignedIdentity) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ClientIdFromConfig != nil {
+		in, out := &in.ClientIdFromConfig, &out.ClientIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
+		**out = **in
+	}
 	if in.ObjectId != nil {
 		in, out := &in.ObjectId, &out.ObjectId
 		*out = new(string)
+		**out = **in
+	}
+	if in.ObjectIdFromConfig != nil {
+		in, out := &in.ObjectIdFromConfig, &out.ObjectIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
 		**out = **in
 	}
 	if in.ResourceReference != nil {
