@@ -723,4 +723,91 @@ func TestDeleteCnsVolumes(t *testing.T) {
 		err := uninstaller.deleteCnsVolumes(context.TODO())
 		assert.Regexp(t, "some vsphere error", err)
 	})
+
+	t.Run("Delete CNS volumes continues after failure", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(deleteFailsID)).
+			Return([]cnstypes.CnsVolume{failVolume, validVolume, failVolume}, nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(failVolume)).
+			Return(errors.New("some vsphere error deleting CNS volume")).
+			Times(2)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(validVolume)).
+			Return(nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		metadata.InfraID = deleteFailsID
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		err := uninstaller.deleteCnsVolumes(context.TODO())
+		assert.Regexp(t, "some vsphere error deleting CNS volume", err)
+	})
+
+	t.Run("Delete CNS volumes processes all clients when first client fails", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		failClient := mock.NewMockAPI(mockCtrl)
+		successClient := mock.NewMockAPI(mockCtrl)
+
+		failClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(infraID)).
+			Return(nil, errors.New("vcenter connection error")).
+			Times(1)
+		failClient.EXPECT().
+			GetVCenterName().
+			Return("fail-vcenter").
+			AnyTimes()
+
+		successClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(infraID)).
+			Return([]cnstypes.CnsVolume{validVolume}, nil).
+			Times(1)
+		successClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(validVolume)).
+			Return(nil).
+			Times(1)
+		successClient.EXPECT().
+			GetVCenterName().
+			Return("success-vcenter").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		uninstaller := newWithClient(nullLogger, &metadata, []API{failClient, successClient})
+		assert.NotNil(t, uninstaller)
+		err := uninstaller.deleteCnsVolumes(context.TODO())
+		assert.Regexp(t, "vcenter connection error", err)
+	})
+
+	t.Run("Delete CNS volumes processes partial results from GetCnsVolumes", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		vsphereClient := mock.NewMockAPI(mockCtrl)
+
+		vsphereClient.EXPECT().
+			GetCnsVolumes(gomock.Any(), gomock.Eq(infraID)).
+			Return([]cnstypes.CnsVolume{validVolume}, errors.New("partial query failure")).
+			Times(1)
+		vsphereClient.EXPECT().
+			DeleteCnsVolumes(gomock.Any(), gomock.Eq(validVolume)).
+			Return(nil).
+			Times(1)
+		vsphereClient.EXPECT().
+			GetVCenterName().
+			Return("").
+			AnyTimes()
+
+		metadata := newDefaultMetadata()
+		uninstaller := newWithClient(nullLogger, &metadata, []API{vsphereClient})
+		assert.NotNil(t, uninstaller)
+		err := uninstaller.deleteCnsVolumes(context.TODO())
+		assert.Regexp(t, "partial query failure", err)
+	})
 }
