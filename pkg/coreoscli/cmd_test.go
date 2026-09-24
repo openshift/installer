@@ -25,12 +25,6 @@ func TestSelectOSImageStream(t *testing.T) {
 			expectedError:          fmt.Sprintf("release version metadata was not injected into the installer; specify --stream with one of %v", validStreams),
 		},
 		{
-			name:                   "uninjected release version with explicit stream",
-			streamFlag:             string(validStreams[0]),
-			releaseVersionInjected: false,
-			expected:               validStreams[0],
-		},
-		{
 			name:                   "invalid explicit stream",
 			streamFlag:             "invalid",
 			releaseVersionInjected: false,
@@ -53,6 +47,14 @@ func TestSelectOSImageStream(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, actual)
+		})
+	}
+
+	for _, stream := range validStreams {
+		t.Run(fmt.Sprintf("uninjected release version with explicit stream %q", stream), func(t *testing.T) {
+			actual, err := selectOSImageStream(string(stream), false)
+			assert.NoError(t, err)
+			assert.Equal(t, stream, actual)
 		})
 	}
 }

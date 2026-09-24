@@ -5,11 +5,6 @@ import (
 )
 
 func TestIsReleaseVersionInjected(t *testing.T) {
-	original := defaultVersionPadded
-	t.Cleanup(func() {
-		defaultVersionPadded = original
-	})
-
 	tests := []struct {
 		name     string
 		value    string
@@ -29,9 +24,9 @@ func TestIsReleaseVersionInjected(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defaultVersionPadded = tt.value
-			if actual := IsReleaseVersionInjected(); actual != tt.expected {
-				t.Errorf("IsReleaseVersionInjected() = %t, want %t", actual, tt.expected)
+			t.Parallel()
+			if actual := isReleaseVersionInjected(tt.value); actual != tt.expected {
+				t.Errorf("isReleaseVersionInjected() = %t, want %t", actual, tt.expected)
 			}
 		})
 	}

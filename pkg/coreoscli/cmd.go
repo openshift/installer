@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -16,14 +17,7 @@ func selectOSImageStream(streamFlag string, releaseVersionInjected bool) (types.
 	validStreams := types.OSImageStreamValues()
 	if streamFlag != "" {
 		s := types.OSImageStream(streamFlag)
-		valid := false
-		for _, v := range validStreams {
-			if s == v {
-				valid = true
-				break
-			}
-		}
-		if !valid {
+		if !slices.Contains(validStreams, s) {
 			return "", fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
 		}
 		return s, nil

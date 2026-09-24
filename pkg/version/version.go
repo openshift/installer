@@ -63,7 +63,11 @@ func String() (string, error) {
 // IsReleaseVersionInjected reports whether release extraction replaced the
 // release version marker embedded in the installer binary.
 func IsReleaseVersionInjected() bool {
-	return !strings.HasPrefix(defaultVersionPadded, defaultVersionPrefix)
+	return isReleaseVersionInjected(defaultVersionPadded)
+}
+
+func isReleaseVersionInjected(versionPadded string) bool {
+	return !strings.HasPrefix(versionPadded, defaultVersionPrefix)
 }
 
 // Version returns the installer/release version.
