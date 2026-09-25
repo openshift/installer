@@ -28,7 +28,7 @@ func validateSysType(platform *powervs.Platform, p *powervs.MachinePool, fldPath
 		err           error
 	)
 
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(platform.ServiceEndpoints)
 	if err != nil {
 		fallback = true
 	} else {

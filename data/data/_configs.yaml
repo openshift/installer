@@ -1,0 +1,206 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: configs.
+spec:
+  group: ""
+  names:
+    kind: Config
+    listKind: ConfigList
+    plural: configs
+    singular: config
+  scope: Namespaced
+  versions:
+  - name: ""
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Config or aka AgentConfig is the API for specifying additional
+          configuration for the agent-based installer not covered by
+          install-config.
+        properties:
+          additionalNTPSources:
+            description: |-
+              AdditionalNTPSources is a list of NTP sources (hostname or IP) to be added to all cluster
+              hosts. They are added to any NTP sources that were configured through other means.
+            items:
+              type: string
+            type: array
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          bootArtifactsBaseURL:
+            type: string
+          hosts:
+            items:
+              description: Host defines per host configurations
+              properties:
+                hostname:
+                  type: string
+                interfaces:
+                  description: list of interfaces and mac addresses
+                  items:
+                    properties:
+                      macAddress:
+                        description: mac address present on the host.
+                        pattern: ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
+                        type: string
+                      name:
+                        description: |-
+                          nic name used in the yaml, which relates 1:1 to the mac address.
+                          Name in REST API: logicalNICName
+                        type: string
+                    required:
+                    - macAddress
+                    - name
+                    type: object
+                  type: array
+                networkConfig:
+                  type: object
+                role:
+                  type: string
+                rootDeviceHints:
+                  description: |-
+                    RootDeviceHints holds the hints for specifying the storage location
+                    for the root filesystem for the image.
+                  properties:
+                    deviceName:
+                      description: |-
+                        A Linux device name like "/dev/vda". The hint must match the
+                        actual value exactly.
+                      type: string
+                    hctl:
+                      description: |-
+                        A SCSI bus address like 0:0:0:0. The hint must match the actual
+                        value exactly.
+                      type: string
+                    minSizeGigabytes:
+                      description: The minimum size of the device in Gigabytes.
+                      minimum: 0
+                      type: integer
+                    model:
+                      description: |-
+                        A vendor-specific device identifier. The hint can be a
+                        substring of the actual value.
+                      type: string
+                    rotational:
+                      description: True if the device should use spinning media, false
+                        otherwise.
+                      type: boolean
+                    serialNumber:
+                      description: |-
+                        Device serial number. The hint must match the actual value
+                        exactly.
+                      type: string
+                    vendor:
+                      description: |-
+                        The name of the vendor or manufacturer of the device. The hint
+                        can be a substring of the actual value.
+                      type: string
+                    wwn:
+                      description: |-
+                        Unique storage identifier. The hint must match the actual value
+                        exactly.
+                      type: string
+                    wwnVendorExtension:
+                      description: |-
+                        Unique vendor storage identifier. The hint must match the
+                        actual value exactly.
+                      type: string
+                    wwnWithExtension:
+                      description: |-
+                        Unique storage identifier with the vendor extension
+                        appended. The hint must match the actual value exactly.
+                      type: string
+                  type: object
+              type: object
+            type: array
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          minimalISO:
+            description: |-
+              When MinimalISO is set to true, a minimal ISO that does not contain the rootfs will be generated.
+              By default a full ISO will be created, unless the platform is External, which generates a minimal ISO.
+            type: boolean
+          rendezvousIP:
+            description: ip address of node0
+            type: string
+        type: object
+    served: true
+    storage: false
+  - name: ""
+    schema:
+      openAPIV3Schema:
+        description: Config is the API for specifying configuration for the image-based
+          configuration ISO.
+        properties:
+          additionalNTPSources:
+            description: |-
+              AdditionalNTPSources is a list of NTP sources (hostname or IP) to be added to all cluster
+              hosts. They are added to any NTP sources that were configured through other means.
+            items:
+              type: string
+            type: array
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          cluster_id:
+            description: |-
+              ClusterID is the desired cluster ID.
+              Will be generated by the installer in case it is not provided.
+            type: string
+          hostname:
+            description: Hostname is the desired hostname of the SNO node.
+            type: string
+          infra_id:
+            description: |-
+              InfraID is the desired infra ID.
+              Will be generated by the installer in case it is not provided.
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          networkConfig:
+            description: |-
+              NetworkConfig is a YAML manifest that can be processed by nmstate, using custom
+              marshaling/unmarshaling that will allow to populate nmstate config as plain yaml.
+            type: object
+          nodeLabels:
+            additionalProperties:
+              type: string
+            description: NodeLabels The desired node labels for the SNO node.
+            type: object
+          releaseRegistry:
+            description: |-
+              ReleaseRegistry is the container registry that hosts the OpenShift
+              release-image content of the cluster during the deployment step.
+            type: string
+        type: object
+    served: true
+    storage: false
