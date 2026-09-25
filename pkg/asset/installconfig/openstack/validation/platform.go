@@ -45,6 +45,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate custom cluster os image
 	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
 
+	// validate bootstrap flavor
+	allErrs = append(allErrs, validateBootstrapFlavor(p, ci, fldPath)...)
+
 	return allErrs
 }
 
@@ -199,6 +202,19 @@ func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (al
 				}
 			}
 		}
+	}
+
+	return allErrs
+}
+
+// validateBootstrapFlavor validates the bootstrap flavor if specified, ensuring it exists in OpenStack.
+func validateBootstrapFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	if p.BootstrapFlavor == "" {
+		return
+	}
+
+	if _, ok := ci.Flavors[p.BootstrapFlavor]; !ok {
+		allErrs = append(allErrs, field.NotFound(fldPath.Child("bootstrapFlavor"), p.BootstrapFlavor))
 	}
 
 	return allErrs

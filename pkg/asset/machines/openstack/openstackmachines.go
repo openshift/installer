@@ -195,8 +195,16 @@ func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *o
 		securityGroups = nil
 	}
 
+	// Determine the flavor to use for this machine.
+	// Bootstrap machines use BootstrapFlavor when specified; otherwise fall back to the
+	// control plane flavor from the machine pool. Master machines always use FlavorName.
+	flavorName := mpool.FlavorName
+	if role == bootstrapRole && platform.BootstrapFlavor != "" {
+		flavorName = platform.BootstrapFlavor
+	}
+
 	spec := capo.OpenStackMachineSpec{
-		Flavor: ptr.To(mpool.FlavorName),
+		Flavor: ptr.To(flavorName),
 		IdentityRef: &capo.OpenStackIdentityReference{
 			Name:      clusterID + "-cloud-config",
 			CloudName: CloudName,
