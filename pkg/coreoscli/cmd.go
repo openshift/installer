@@ -4,12 +4,26 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 )
+
+func selectOSImageStream(streamFlag string) (types.OSImageStream, error) {
+	validStreams := types.OSImageStreamValues()
+	if streamFlag != "" {
+		s := types.OSImageStream(streamFlag)
+		if !slices.Contains(validStreams, s) {
+			return "", fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
+		}
+		return s, nil
+	}
+
+	return rhcos.BuildDefaultOSImageStream(), nil
+}
 
 // printStreamJSON is the implementation of print-stream-json
 func printStreamJSON(cmd *cobra.Command, _ []string) error {
@@ -18,23 +32,9 @@ func printStreamJSON(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	var osImageStream types.OSImageStream
-	if streamFlag != "" {
-		validStreams := types.OSImageStreamValues()
-		s := types.OSImageStream(streamFlag)
-		valid := false
-		for _, v := range validStreams {
-			if s == v {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			return fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
-		}
-		osImageStream = s
-	} else {
-		osImageStream = rhcos.BuildDefaultOSImageStream()
+	osImageStream, err := selectOSImageStream(streamFlag)
+	if err != nil {
+		return err
 	}
 
 	streamData, err := rhcos.FetchRawCoreOSStream(context.Background(), osImageStream)

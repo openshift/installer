@@ -4,6 +4,7 @@ package version
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -44,7 +45,6 @@ var (
 	// location without having to rebuild the source.
 	defaultVersionPadded = "\x00_RELEASE_VERSION_LOCATION_\x00XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\x00"
 	defaultVersionPrefix = "\x00_RELEASE_VERSION_LOCATION_\x00"
-	defaultVersionLength = len(defaultVersionPadded)
 
 	// releaseArchitecturesPadded may be replaced in the binary with Release Image Architecture(s): RELEASE_ARCHITECTURE that overrides releaseArchitecture as
 	// a null-terminated string within the allowed character length. This allows a distributor to override the payload
@@ -54,6 +54,10 @@ var (
 	releaseArchitecturesLength = len(releaseArchitecturesPadded)
 )
 
+// fallbackVersion is used for development and test binaries that were not
+// built with hack/build.sh and were not extracted from a release payload.
+const fallbackVersion = "5.0.0"
+
 // String returns the human-friendly representation of the version.
 func String() (string, error) {
 	version, err := Version()
@@ -62,25 +66,41 @@ func String() (string, error) {
 
 // Version returns the installer/release version.
 func Version() (string, error) {
-	if strings.HasPrefix(defaultVersionPadded, defaultVersionPrefix) {
-		return removeGoVersionPrefix(Raw), nil
+	return resolveVersion(defaultVersionPadded, Raw), nil
+}
+
+func resolveVersion(versionPadded, raw string) string {
+	if !strings.HasPrefix(versionPadded, defaultVersionPrefix) {
+		if nullTerminator := strings.IndexByte(versionPadded, '\x00'); nullTerminator > 0 {
+			if releaseVersion := versionPadded[:nullTerminator]; isUsableVersion(releaseVersion) {
+				return releaseVersion
+			}
+		}
 	}
-	nullTerminator := strings.IndexByte(defaultVersionPadded, '\x00')
-	if nullTerminator == -1 {
-		// the binary has been altered, but we didn't find a null terminator within the release name constant which is an error
-		return Raw, fmt.Errorf("release name location was replaced but without a null terminator before %d bytes", defaultVersionLength)
+
+	if buildVersion := removeGoVersionPrefix(raw); isUsableVersion(buildVersion) {
+		return buildVersion
 	}
-	if nullTerminator > len(defaultVersionPadded) {
-		// the binary has been altered, but the null terminator is *longer* than the constant encoded in the binary
-		return Raw, fmt.Errorf("release name location contains no null-terminator and constant is corrupted")
+
+	return fallbackVersion
+}
+
+func isUsableVersion(version string) bool {
+	if prerelease := strings.IndexByte(version, '-'); prerelease >= 0 {
+		version = version[:prerelease]
 	}
-	releaseName := defaultVersionPadded[:nullTerminator]
-	if len(releaseName) == 0 {
-		// the binary has been altered, but the replaced release name is empty which is incorrect
-		// the oc binary will not be pinned to Release Metadata:Version
-		return Raw, fmt.Errorf("release name was incorrectly replaced during extract")
+
+	parts := strings.Split(version, ".")
+	if len(parts) == 0 || len(parts) > 3 {
+		return false
 	}
-	return releaseName, nil
+	for i, part := range parts {
+		value, err := strconv.Atoi(part)
+		if err != nil || (i == 0 && value == 0) {
+			return false
+		}
+	}
+	return true
 }
 
 // ReleaseArchitecture returns the release image cpu architecture version.

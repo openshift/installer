@@ -177,12 +177,9 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		rootCA,
 	)
 
-	versionInfo := versioninfo.GetInfo()
-	cvoChannel := fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
-
 	templateData := &bootkubeTemplateData{
 		CVOCapabilities:       installConfig.Config.Capabilities,
-		CVOChannel:            cvoChannel,
+		CVOChannel:            defaultCVOChannel(),
 		CVOClusterID:          clusterID.UUID,
 		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
@@ -250,6 +247,11 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	return files
+}
+
+func defaultCVOChannel() string {
+	versionInfo := versioninfo.GetInfo()
+	return fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
 }
 
 func appendIRIcerts(dependencies asset.Parents) *asset.File {
