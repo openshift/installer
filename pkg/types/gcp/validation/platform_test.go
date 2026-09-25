@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func TestValidatePlatform(t *testing.T) {
@@ -239,6 +240,46 @@ func TestValidatePlatform(t *testing.T) {
 				FirewallRulesManagement: "random-test",
 				Region:                  "us-east1",
 				ProjectID:               "valid-project",
+			},
+			valid: false,
+		},
+		{
+			name: "valid ipFamily IPv4",
+			platform: &gcp.Platform{
+				Region:   "us-east1",
+				IPFamily: network.IPv4,
+			},
+			valid: true,
+		},
+		{
+			name: "valid ipFamily DualStackIPv4Primary",
+			platform: &gcp.Platform{
+				Region:   "us-east1",
+				IPFamily: network.DualStackIPv4Primary,
+			},
+			valid: true,
+		},
+		{
+			name: "valid ipFamily DualStackIPv6Primary",
+			platform: &gcp.Platform{
+				Region:   "us-east1",
+				IPFamily: network.DualStackIPv6Primary,
+			},
+			valid: true,
+		},
+		{
+			name: "valid ipFamily empty (defaults to IPv4)",
+			platform: &gcp.Platform{
+				Region:   "us-east1",
+				IPFamily: "",
+			},
+			valid: true,
+		},
+		{
+			name: "invalid ipFamily",
+			platform: &gcp.Platform{
+				Region:   "us-east1",
+				IPFamily: "InvalidValue",
 			},
 			valid: false,
 		},
