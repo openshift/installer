@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -373,8 +374,6 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *v2
 	if source.PublicIpAddresses != nil {
 		publicIpAddressList := make([]SubResource, len(source.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress SubResource
 			err := publicIpAddress.AssignProperties_From_SubResource(&publicIpAddressItem)
 			if err != nil {
@@ -391,8 +390,6 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *v2
 	if source.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]SubResource, len(source.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix SubResource
 			err := publicIpPrefix.AssignProperties_From_SubResource(&publicIpPrefixItem)
 			if err != nil {
@@ -484,8 +481,6 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 	if gateway.PublicIpAddresses != nil {
 		publicIpAddressList := make([]v20240301s.SubResource, len(gateway.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress v20240301s.SubResource
 			err := publicIpAddressItem.AssignProperties_To_SubResource(&publicIpAddress)
 			if err != nil {
@@ -502,8 +497,6 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 	if gateway.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]v20240301s.SubResource, len(gateway.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix v20240301s.SubResource
 			err := publicIpPrefixItem.AssignProperties_To_SubResource(&publicIpPrefix)
 			if err != nil {
@@ -655,8 +648,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.PublicIpAddresses != nil {
 		publicIpAddressList := make([]SubResource_STATUS, len(source.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&publicIpAddressItem)
 			if err != nil {
@@ -678,8 +669,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]SubResource_STATUS, len(source.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&publicIpPrefixItem)
 			if err != nil {
@@ -716,8 +705,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.Subnets != nil {
 		subnetList := make([]SubResource_STATUS, len(source.Subnets))
 		for subnetIndex, subnetItem := range source.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&subnetItem)
 			if err != nil {
@@ -794,8 +781,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.PublicIpAddresses != nil {
 		publicIpAddressList := make([]v20240301s.SubResource_STATUS, len(gateway.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := publicIpAddressItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -817,8 +802,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]v20240301s.SubResource_STATUS, len(gateway.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := publicIpPrefixItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -855,8 +838,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.Subnets != nil {
 		subnetList := make([]v20240301s.SubResource_STATUS, len(gateway.Subnets))
 		for subnetIndex, subnetItem := range gateway.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
 			var subResourceSTATUSStash v20240101s.SubResource_STATUS
 			err := subnetItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -930,8 +911,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_From_NatGatewayOperator
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -948,8 +927,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_From_NatGatewayOperator
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -991,8 +968,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_To_NatGatewayOperatorSp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1009,8 +984,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_To_NatGatewayOperatorSp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

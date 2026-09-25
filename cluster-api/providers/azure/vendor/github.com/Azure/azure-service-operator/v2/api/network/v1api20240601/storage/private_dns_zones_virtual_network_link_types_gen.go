@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={privatednszonesvirtualnetworklinks/status,privatednszonesvirtualnetworklinks/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240601.PrivateDnsZonesVirtualNetworkLink
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/virtualNetworkLinks/{virtualNetworkLinkName}
 type PrivateDnsZonesVirtualNetworkLink struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink) OriginalGVK() *schema.GroupVersio
 // +kubebuilder:object:root=true
 // Storage version of v1api20240601.PrivateDnsZonesVirtualNetworkLink
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/virtualNetworkLinks/{virtualNetworkLinkName}
 type PrivateDnsZonesVirtualNetworkLinkList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -218,6 +219,7 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 	ProvisioningState       *string                `json:"provisioningState,omitempty"`
 	RegistrationEnabled     *bool                  `json:"registrationEnabled,omitempty"`
 	ResolutionPolicy        *string                `json:"resolutionPolicy,omitempty"`
+	SystemData              *SystemData_STATUS     `json:"systemData,omitempty"`
 	Tags                    map[string]string      `json:"tags,omitempty"`
 	Type                    *string                `json:"type,omitempty"`
 	VirtualNetwork          *SubResource_STATUS    `json:"virtualNetwork,omitempty"`

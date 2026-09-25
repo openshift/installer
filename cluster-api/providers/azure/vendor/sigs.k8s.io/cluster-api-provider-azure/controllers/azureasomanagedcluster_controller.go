@@ -24,11 +24,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -89,7 +90,7 @@ func (r *AzureASOManagedClusterReconciler) SetupWithManager(ctx context.Context,
 			),
 			builder.WithPredicates(
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
-				ClusterUpdatePauseChange(log),
+				predicates.ClusterPausedTransitions(mgr.GetScheme(), log),
 			),
 		).
 		Watches(
@@ -145,8 +146,8 @@ func asoManagedControlPlaneToManagedClusterMap(c client.Client) handler.MapFunc 
 		}
 
 		if cluster == nil ||
-			cluster.Spec.InfrastructureRef == nil ||
-			!matchesASOManagedAPIGroup(cluster.Spec.InfrastructureRef.APIVersion) ||
+			!cluster.Spec.InfrastructureRef.IsDefined() ||
+			!groupMatchesASOManagedAPIGroup(cluster.Spec.InfrastructureRef.APIGroup) ||
 			cluster.Spec.InfrastructureRef.Kind != infrav1.AzureASOManagedClusterKind {
 			return nil
 		}
@@ -154,7 +155,7 @@ func asoManagedControlPlaneToManagedClusterMap(c client.Client) handler.MapFunc 
 		return []reconcile.Request{
 			{
 				NamespacedName: client.ObjectKey{
-					Namespace: cluster.Spec.InfrastructureRef.Namespace,
+					Namespace: cluster.Namespace,
 					Name:      cluster.Spec.InfrastructureRef.Name,
 				},
 			},
@@ -162,9 +163,13 @@ func asoManagedControlPlaneToManagedClusterMap(c client.Client) handler.MapFunc 
 	}
 }
 
-func matchesASOManagedAPIGroup(apiVersion string) bool {
+func apiVersionMatchesASOManagedAPIGroup(apiVersion string) bool {
 	gv, _ := schema.ParseGroupVersion(apiVersion)
-	return gv.Group == infrav1.GroupVersion.Group
+	return groupMatchesASOManagedAPIGroup(gv.Group)
+}
+
+func groupMatchesASOManagedAPIGroup(group string) bool {
+	return group == infrav1.GroupVersion.Group
 }
 
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azureasomanagedclusters,verbs=get;list;watch;create;update;patch;delete
@@ -187,7 +192,7 @@ func (r *AzureASOManagedClusterReconciler) Reconcile(ctx context.Context, req ct
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	patchHelper, err := patch.NewHelper(asoManagedCluster, r.Client)
+	patchHelper, err := v1beta1patch.NewHelper(asoManagedCluster, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create patch helper: %w", err)
 	}
@@ -206,7 +211,7 @@ func (r *AzureASOManagedClusterReconciler) Reconcile(ctx context.Context, req ct
 		return ctrl.Result{}, err
 	}
 
-	if cluster != nil && cluster.Spec.Paused ||
+	if cluster != nil && ptr.Deref(cluster.Spec.Paused, false) ||
 		annotations.HasPaused(asoManagedCluster) {
 		return r.reconcilePaused(ctx, asoManagedCluster)
 	}
@@ -229,8 +234,8 @@ func (r *AzureASOManagedClusterReconciler) reconcileNormal(ctx context.Context, 
 		log.V(4).Info("Cluster Controller has not yet set OwnerRef")
 		return ctrl.Result{}, nil
 	}
-	if cluster.Spec.ControlPlaneRef == nil ||
-		!matchesASOManagedAPIGroup(cluster.Spec.ControlPlaneRef.APIVersion) ||
+	if !cluster.Spec.ControlPlaneRef.IsDefined() ||
+		!groupMatchesASOManagedAPIGroup(cluster.Spec.ControlPlaneRef.APIGroup) ||
 		cluster.Spec.ControlPlaneRef.Kind != infrav1.AzureASOManagedControlPlaneKind {
 		return ctrl.Result{}, reconcile.TerminalError(errInvalidControlPlaneKind)
 	}
@@ -258,7 +263,7 @@ func (r *AzureASOManagedClusterReconciler) reconcileNormal(ctx context.Context, 
 
 	asoManagedControlPlane := &infrav1.AzureASOManagedControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: cluster.Spec.ControlPlaneRef.Namespace,
+			Namespace: cluster.Namespace,
 			Name:      cluster.Spec.ControlPlaneRef.Name,
 		},
 	}

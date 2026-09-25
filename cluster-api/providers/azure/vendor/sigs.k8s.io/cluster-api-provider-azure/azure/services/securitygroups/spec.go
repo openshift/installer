@@ -36,7 +36,7 @@ type NSGSpec struct {
 	ClusterName              string
 	ResourceGroup            string
 	AdditionalTags           infrav1.Tags
-	LastAppliedSecurityRules map[string]interface{}
+	LastAppliedSecurityRules map[string]any
 }
 
 // ResourceName returns the name of the security group.
@@ -55,7 +55,7 @@ func (s *NSGSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the security group.
-func (s *NSGSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
+func (s *NSGSpec) Parameters(_ context.Context, existing any) (any, error) {
 	securityRules := make([]*armnetwork.SecurityRule, 0)
 	newAnnotation := map[string]string{}
 	var etag *string

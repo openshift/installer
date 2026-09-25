@@ -31,6 +31,8 @@ func (member *FleetsMember_Spec) GetType() string {
 
 // A member of the Fleet. It contains a reference to an existing Kubernetes cluster on Azure.
 type FleetMemberProperties struct {
+	// ClusterResourceId: The ARM resource id of the cluster that joins the Fleet. Must be a valid Azure resource id. e.g.:
+	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedClusters/{clusterName}'.
 	ClusterResourceId *string `json:"clusterResourceId,omitempty"`
 
 	// Group: The group this member belongs to for multi-cluster update management.

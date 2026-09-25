@@ -49,7 +49,7 @@ func (s *VMExtensionSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the VM extension.
-func (s *VMExtensionSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
+func (s *VMExtensionSpec) Parameters(_ context.Context, existing any) (any, error) {
 	if existing != nil {
 		_, ok := existing.(armcompute.VirtualMachineExtension)
 		if !ok {

@@ -4,6 +4,175 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage
 APIVersion: Enum (1 value)
 └── "2024-03-01"
 
+AzureFirewall: Resource
+├── Owner: resources/v1apiv20191001.ResourceGroup
+├── Spec: Object (20 properties)
+│   ├── AdditionalProperties: map[string]string
+│   ├── ApplicationRuleCollections: Object (5 properties)[]
+│   │   ├── Action: *Object (2 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Type: *string
+│   │   ├── Name: *string
+│   │   ├── Priority: *int
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Rules: Object (8 properties)[]
+│   │       ├── Description: *string
+│   │       ├── FqdnTags: string[]
+│   │       ├── Name: *string
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       ├── Protocols: Object (3 properties)[]
+│   │       │   ├── Port: *int
+│   │       │   ├── PropertyBag: genruntime.PropertyBag
+│   │       │   └── ProtocolType: *string
+│   │       ├── SourceAddresses: string[]
+│   │       ├── SourceIpGroups: string[]
+│   │       └── TargetFqdns: string[]
+│   ├── AutoscaleConfiguration: *Object (3 properties)
+│   │   ├── MaxCapacity: *int
+│   │   ├── MinCapacity: *int
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── AzureName: string
+│   ├── FirewallPolicy: *Object (2 properties)
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Reference: *genruntime.ResourceReference
+│   ├── HubIPAddresses: *Object (3 properties)
+│   │   ├── PrivateIPAddress: *string
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── PublicIPs: *Object (3 properties)
+│   │       ├── Addresses: Object (2 properties)[]
+│   │       │   ├── Address: *string
+│   │       │   └── PropertyBag: genruntime.PropertyBag
+│   │       ├── Count: *int
+│   │       └── PropertyBag: genruntime.PropertyBag
+│   ├── IpConfigurations: Object (4 properties)[]
+│   │   ├── Name: *string
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   ├── PublicIPAddress: *Object (2 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Reference: *genruntime.ResourceReference
+│   │   └── Subnet: *Object (2 properties)
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── Reference: *genruntime.ResourceReference
+│   ├── Location: *string
+│   ├── ManagementIpConfiguration: *Object (4 properties)
+│   │   ├── Name: *string
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   ├── PublicIPAddress: *Object (2 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Reference: *genruntime.ResourceReference
+│   │   └── Subnet: *Object (2 properties)
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── Reference: *genruntime.ResourceReference
+│   ├── NatRuleCollections: Object (5 properties)[]
+│   │   ├── Action: *Object (2 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Type: *string
+│   │   ├── Name: *string
+│   │   ├── Priority: *int
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Rules: Object (11 properties)[]
+│   │       ├── Description: *string
+│   │       ├── DestinationAddresses: string[]
+│   │       ├── DestinationPorts: string[]
+│   │       ├── Name: *string
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       ├── Protocols: string[]
+│   │       ├── SourceAddresses: string[]
+│   │       ├── SourceIpGroups: string[]
+│   │       ├── TranslatedAddress: *string
+│   │       ├── TranslatedFqdn: *string
+│   │       └── TranslatedPort: *string
+│   ├── NetworkRuleCollections: Object (5 properties)[]
+│   │   ├── Action: *Object (2 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Type: *string
+│   │   ├── Name: *string
+│   │   ├── Priority: *int
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Rules: Object (10 properties)[]
+│   │       ├── Description: *string
+│   │       ├── DestinationAddresses: string[]
+│   │       ├── DestinationFqdns: string[]
+│   │       ├── DestinationIpGroups: string[]
+│   │       ├── DestinationPorts: string[]
+│   │       ├── Name: *string
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       ├── Protocols: string[]
+│   │       ├── SourceAddresses: string[]
+│   │       └── SourceIpGroups: string[]
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── PropertyBag: genruntime.PropertyBag
+│   ├── Sku: *Object (3 properties)
+│   │   ├── Name: *string
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Tier: *string
+│   ├── Tags: map[string]string
+│   ├── ThreatIntelMode: *string
+│   ├── VirtualHub: *Object (2 properties)
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Reference: *genruntime.ResourceReference
+│   └── Zones: string[]
+└── Status: Object (23 properties)
+    ├── AdditionalProperties: map[string]string
+    ├── ApplicationRuleCollections: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── AutoscaleConfiguration: *Object (3 properties)
+    │   ├── MaxCapacity: *int
+    │   ├── MinCapacity: *int
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Conditions: conditions.Condition[]
+    ├── Etag: *string
+    ├── FirewallPolicy: *Object (2 properties)
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── HubIPAddresses: *Object (3 properties)
+    │   ├── PrivateIPAddress: *string
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── PublicIPs: *Object (3 properties)
+    │       ├── Addresses: Object (2 properties)[]
+    │       │   ├── Address: *string
+    │       │   └── PropertyBag: genruntime.PropertyBag
+    │       ├── Count: *int
+    │       └── PropertyBag: genruntime.PropertyBag
+    ├── Id: *string
+    ├── IpConfigurations: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── IpGroups: Object (3 properties)[]
+    │   ├── ChangeNumber: *string
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Location: *string
+    ├── ManagementIpConfiguration: *Object (2 properties)
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Name: *string
+    ├── NatRuleCollections: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── NetworkRuleCollections: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── ProvisioningState: *string
+    ├── Sku: *Object (3 properties)
+    │   ├── Name: *string
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── Tier: *string
+    ├── Tags: map[string]string
+    ├── ThreatIntelMode: *string
+    ├── Type: *string
+    ├── VirtualHub: *Object (2 properties)
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    └── Zones: string[]
+
 BastionHost: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (21 properties)
@@ -82,6 +251,452 @@ BastionHost: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Zones: string[]
+
+FirewallPoliciesRuleCollectionGroup: Resource
+├── Owner: network/v1api20240301.FirewallPolicy
+├── Spec: Object (7 properties)
+│   ├── AzureName: string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── Priority: *int
+│   ├── PropertyBag: genruntime.PropertyBag
+│   └── RuleCollections: Object (3 properties)[]
+│       ├── FirewallPolicyFilter: *Object (6 properties)
+│       │   ├── Action: *Object (2 properties)
+│       │   │   ├── PropertyBag: genruntime.PropertyBag
+│       │   │   └── Type: *string
+│       │   ├── Name: *string
+│       │   ├── Priority: *int
+│       │   ├── PropertyBag: genruntime.PropertyBag
+│       │   ├── RuleCollectionType: *string
+│       │   └── Rules: Object (4 properties)[]
+│       │       ├── Application: *Object (14 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── FqdnTags: string[]
+│       │       │   ├── HttpHeadersToInsert: Object (3 properties)[]
+│       │       │   │   ├── HeaderName: *string
+│       │       │   │   ├── HeaderValue: *string
+│       │       │   │   └── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── Protocols: Object (3 properties)[]
+│       │       │   │   ├── Port: *int
+│       │       │   │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   │   └── ProtocolType: *string
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   ├── SourceIpGroups: string[]
+│       │       │   ├── TargetFqdns: string[]
+│       │       │   ├── TargetUrls: string[]
+│       │       │   ├── TerminateTLS: *bool
+│       │       │   └── WebCategories: string[]
+│       │       ├── Nat: *Object (12 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── DestinationPorts: string[]
+│       │       │   ├── IpProtocols: string[]
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   ├── SourceIpGroups: string[]
+│       │       │   ├── TranslatedAddress: *string
+│       │       │   ├── TranslatedFqdn: *string
+│       │       │   └── TranslatedPort: *string
+│       │       ├── Network: *Object (11 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── DestinationFqdns: string[]
+│       │       │   ├── DestinationIpGroups: string[]
+│       │       │   ├── DestinationPorts: string[]
+│       │       │   ├── IpProtocols: string[]
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   └── SourceIpGroups: string[]
+│       │       └── PropertyBag: genruntime.PropertyBag
+│       ├── FirewallPolicyNat: *Object (6 properties)
+│       │   ├── Action: *Object (2 properties)
+│       │   │   ├── PropertyBag: genruntime.PropertyBag
+│       │   │   └── Type: *string
+│       │   ├── Name: *string
+│       │   ├── Priority: *int
+│       │   ├── PropertyBag: genruntime.PropertyBag
+│       │   ├── RuleCollectionType: *string
+│       │   └── Rules: Object (4 properties)[]
+│       │       ├── Application: *Object (14 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── FqdnTags: string[]
+│       │       │   ├── HttpHeadersToInsert: Object (3 properties)[]
+│       │       │   │   ├── HeaderName: *string
+│       │       │   │   ├── HeaderValue: *string
+│       │       │   │   └── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── Protocols: Object (3 properties)[]
+│       │       │   │   ├── Port: *int
+│       │       │   │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   │   └── ProtocolType: *string
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   ├── SourceIpGroups: string[]
+│       │       │   ├── TargetFqdns: string[]
+│       │       │   ├── TargetUrls: string[]
+│       │       │   ├── TerminateTLS: *bool
+│       │       │   └── WebCategories: string[]
+│       │       ├── Nat: *Object (12 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── DestinationPorts: string[]
+│       │       │   ├── IpProtocols: string[]
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   ├── SourceIpGroups: string[]
+│       │       │   ├── TranslatedAddress: *string
+│       │       │   ├── TranslatedFqdn: *string
+│       │       │   └── TranslatedPort: *string
+│       │       ├── Network: *Object (11 properties)
+│       │       │   ├── Description: *string
+│       │       │   ├── DestinationAddresses: string[]
+│       │       │   ├── DestinationFqdns: string[]
+│       │       │   ├── DestinationIpGroups: string[]
+│       │       │   ├── DestinationPorts: string[]
+│       │       │   ├── IpProtocols: string[]
+│       │       │   ├── Name: *string
+│       │       │   ├── PropertyBag: genruntime.PropertyBag
+│       │       │   ├── RuleType: *string
+│       │       │   ├── SourceAddresses: string[]
+│       │       │   └── SourceIpGroups: string[]
+│       │       └── PropertyBag: genruntime.PropertyBag
+│       └── PropertyBag: genruntime.PropertyBag
+└── Status: Object (10 properties)
+    ├── Conditions: conditions.Condition[]
+    ├── Etag: *string
+    ├── Id: *string
+    ├── Name: *string
+    ├── Priority: *int
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── ProvisioningState: *string
+    ├── RuleCollections: Object (3 properties)[]
+    │   ├── FirewallPolicyFilter: *Object (6 properties)
+    │   │   ├── Action: *Object (2 properties)
+    │   │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   │   └── Type: *string
+    │   │   ├── Name: *string
+    │   │   ├── Priority: *int
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   ├── RuleCollectionType: *string
+    │   │   └── Rules: Object (4 properties)[]
+    │   │       ├── Application: *Object (14 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── FqdnTags: string[]
+    │   │       │   ├── HttpHeadersToInsert: Object (3 properties)[]
+    │   │       │   │   ├── HeaderName: *string
+    │   │       │   │   ├── HeaderValue: *string
+    │   │       │   │   └── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── Protocols: Object (3 properties)[]
+    │   │       │   │   ├── Port: *int
+    │   │       │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   │   └── ProtocolType: *string
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   ├── SourceIpGroups: string[]
+    │   │       │   ├── TargetFqdns: string[]
+    │   │       │   ├── TargetUrls: string[]
+    │   │       │   ├── TerminateTLS: *bool
+    │   │       │   └── WebCategories: string[]
+    │   │       ├── Nat: *Object (12 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── DestinationPorts: string[]
+    │   │       │   ├── IpProtocols: string[]
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   ├── SourceIpGroups: string[]
+    │   │       │   ├── TranslatedAddress: *string
+    │   │       │   ├── TranslatedFqdn: *string
+    │   │       │   └── TranslatedPort: *string
+    │   │       ├── Network: *Object (11 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── DestinationFqdns: string[]
+    │   │       │   ├── DestinationIpGroups: string[]
+    │   │       │   ├── DestinationPorts: string[]
+    │   │       │   ├── IpProtocols: string[]
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   └── SourceIpGroups: string[]
+    │   │       └── PropertyBag: genruntime.PropertyBag
+    │   ├── FirewallPolicyNat: *Object (6 properties)
+    │   │   ├── Action: *Object (2 properties)
+    │   │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   │   └── Type: *string
+    │   │   ├── Name: *string
+    │   │   ├── Priority: *int
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   ├── RuleCollectionType: *string
+    │   │   └── Rules: Object (4 properties)[]
+    │   │       ├── Application: *Object (14 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── FqdnTags: string[]
+    │   │       │   ├── HttpHeadersToInsert: Object (3 properties)[]
+    │   │       │   │   ├── HeaderName: *string
+    │   │       │   │   ├── HeaderValue: *string
+    │   │       │   │   └── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── Protocols: Object (3 properties)[]
+    │   │       │   │   ├── Port: *int
+    │   │       │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   │   └── ProtocolType: *string
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   ├── SourceIpGroups: string[]
+    │   │       │   ├── TargetFqdns: string[]
+    │   │       │   ├── TargetUrls: string[]
+    │   │       │   ├── TerminateTLS: *bool
+    │   │       │   └── WebCategories: string[]
+    │   │       ├── Nat: *Object (12 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── DestinationPorts: string[]
+    │   │       │   ├── IpProtocols: string[]
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   ├── SourceIpGroups: string[]
+    │   │       │   ├── TranslatedAddress: *string
+    │   │       │   ├── TranslatedFqdn: *string
+    │   │       │   └── TranslatedPort: *string
+    │   │       ├── Network: *Object (11 properties)
+    │   │       │   ├── Description: *string
+    │   │       │   ├── DestinationAddresses: string[]
+    │   │       │   ├── DestinationFqdns: string[]
+    │   │       │   ├── DestinationIpGroups: string[]
+    │   │       │   ├── DestinationPorts: string[]
+    │   │       │   ├── IpProtocols: string[]
+    │   │       │   ├── Name: *string
+    │   │       │   ├── PropertyBag: genruntime.PropertyBag
+    │   │       │   ├── RuleType: *string
+    │   │       │   ├── SourceAddresses: string[]
+    │   │       │   └── SourceIpGroups: string[]
+    │   │       └── PropertyBag: genruntime.PropertyBag
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Size: *string
+    └── Type: *string
+
+FirewallPolicy: Resource
+├── Owner: resources/v1apiv20191001.ResourceGroup
+├── Spec: Object (19 properties)
+│   ├── AzureName: string
+│   ├── BasePolicy: *Object (2 properties)
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Reference: *genruntime.ResourceReference
+│   ├── DnsSettings: *Object (4 properties)
+│   │   ├── EnableProxy: *bool
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   ├── RequireProxyForNetworkRules: *bool
+│   │   └── Servers: string[]
+│   ├── ExplicitProxy: *Object (7 properties)
+│   │   ├── EnableExplicitProxy: *bool
+│   │   ├── EnablePacFile: *bool
+│   │   ├── HttpPort: *int
+│   │   ├── HttpsPort: *int
+│   │   ├── PacFile: *string
+│   │   ├── PacFilePort: *int
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── Identity: *Object (3 properties)
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   ├── Type: *string
+│   │   └── UserAssignedIdentities: Object (2 properties)[]
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── Reference: genruntime.ResourceReference
+│   ├── Insights: *Object (4 properties)
+│   │   ├── IsEnabled: *bool
+│   │   ├── LogAnalyticsResources: *Object (3 properties)
+│   │   │   ├── DefaultWorkspaceId: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── Workspaces: Object (3 properties)[]
+│   │   │       ├── PropertyBag: genruntime.PropertyBag
+│   │   │       ├── Region: *string
+│   │   │       └── WorkspaceId: *Object (2 properties)
+│   │   │           ├── PropertyBag: genruntime.PropertyBag
+│   │   │           └── Reference: *genruntime.ResourceReference
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── RetentionDays: *int
+│   ├── IntrusionDetection: *Object (4 properties)
+│   │   ├── Configuration: *Object (4 properties)
+│   │   │   ├── BypassTrafficSettings: Object (9 properties)[]
+│   │   │   │   ├── Description: *string
+│   │   │   │   ├── DestinationAddresses: string[]
+│   │   │   │   ├── DestinationIpGroups: string[]
+│   │   │   │   ├── DestinationPorts: string[]
+│   │   │   │   ├── Name: *string
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   ├── Protocol: *string
+│   │   │   │   ├── SourceAddresses: string[]
+│   │   │   │   └── SourceIpGroups: string[]
+│   │   │   ├── PrivateRanges: string[]
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   └── SignatureOverrides: Object (3 properties)[]
+│   │   │       ├── Id: *string
+│   │   │       ├── Mode: *string
+│   │   │       └── PropertyBag: genruntime.PropertyBag
+│   │   ├── Mode: *string
+│   │   ├── Profile: *string
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── PropertyBag: genruntime.PropertyBag
+│   ├── Sku: *Object (2 properties)
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Tier: *string
+│   ├── Snat: *Object (3 properties)
+│   │   ├── AutoLearnPrivateRanges: *string
+│   │   ├── PrivateRanges: string[]
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── Sql: *Object (2 properties)
+│   │   ├── AllowSqlRedirect: *bool
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── Tags: map[string]string
+│   ├── ThreatIntelMode: *string
+│   ├── ThreatIntelWhitelist: *Object (3 properties)
+│   │   ├── Fqdns: string[]
+│   │   ├── IpAddresses: string[]
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   └── TransportSecurity: *Object (2 properties)
+│       ├── CertificateAuthority: *Object (3 properties)
+│       │   ├── KeyVaultSecretId: *string
+│       │   ├── Name: *string
+│       │   └── PropertyBag: genruntime.PropertyBag
+│       └── PropertyBag: genruntime.PropertyBag
+└── Status: Object (25 properties)
+    ├── BasePolicy: *Object (2 properties)
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── ChildPolicies: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Conditions: conditions.Condition[]
+    ├── DnsSettings: *Object (4 properties)
+    │   ├── EnableProxy: *bool
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   ├── RequireProxyForNetworkRules: *bool
+    │   └── Servers: string[]
+    ├── Etag: *string
+    ├── ExplicitProxy: *Object (7 properties)
+    │   ├── EnableExplicitProxy: *bool
+    │   ├── EnablePacFile: *bool
+    │   ├── HttpPort: *int
+    │   ├── HttpsPort: *int
+    │   ├── PacFile: *string
+    │   ├── PacFilePort: *int
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Firewalls: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Id: *string
+    ├── Identity: *Object (5 properties)
+    │   ├── PrincipalId: *string
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   ├── TenantId: *string
+    │   ├── Type: *string
+    │   └── UserAssignedIdentities: map[string]Object (3 properties)
+    │       ├── ClientId: *string
+    │       ├── PrincipalId: *string
+    │       └── PropertyBag: genruntime.PropertyBag
+    ├── Insights: *Object (4 properties)
+    │   ├── IsEnabled: *bool
+    │   ├── LogAnalyticsResources: *Object (3 properties)
+    │   │   ├── DefaultWorkspaceId: *Object (2 properties)
+    │   │   │   ├── Id: *string
+    │   │   │   └── PropertyBag: genruntime.PropertyBag
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   └── Workspaces: Object (3 properties)[]
+    │   │       ├── PropertyBag: genruntime.PropertyBag
+    │   │       ├── Region: *string
+    │   │       └── WorkspaceId: *Object (2 properties)
+    │   │           ├── Id: *string
+    │   │           └── PropertyBag: genruntime.PropertyBag
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── RetentionDays: *int
+    ├── IntrusionDetection: *Object (4 properties)
+    │   ├── Configuration: *Object (4 properties)
+    │   │   ├── BypassTrafficSettings: Object (9 properties)[]
+    │   │   │   ├── Description: *string
+    │   │   │   ├── DestinationAddresses: string[]
+    │   │   │   ├── DestinationIpGroups: string[]
+    │   │   │   ├── DestinationPorts: string[]
+    │   │   │   ├── Name: *string
+    │   │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   │   ├── Protocol: *string
+    │   │   │   ├── SourceAddresses: string[]
+    │   │   │   └── SourceIpGroups: string[]
+    │   │   ├── PrivateRanges: string[]
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   └── SignatureOverrides: Object (3 properties)[]
+    │   │       ├── Id: *string
+    │   │       ├── Mode: *string
+    │   │       └── PropertyBag: genruntime.PropertyBag
+    │   ├── Mode: *string
+    │   ├── Profile: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Location: *string
+    ├── Name: *string
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── ProvisioningState: *string
+    ├── RuleCollectionGroups: Object (2 properties)[]
+    │   ├── Id: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Size: *string
+    ├── Sku: *Object (2 properties)
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── Tier: *string
+    ├── Snat: *Object (3 properties)
+    │   ├── AutoLearnPrivateRanges: *string
+    │   ├── PrivateRanges: string[]
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Sql: *Object (2 properties)
+    │   ├── AllowSqlRedirect: *bool
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Tags: map[string]string
+    ├── ThreatIntelMode: *string
+    ├── ThreatIntelWhitelist: *Object (3 properties)
+    │   ├── Fqdns: string[]
+    │   ├── IpAddresses: string[]
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── TransportSecurity: *Object (2 properties)
+    │   ├── CertificateAuthority: *Object (3 properties)
+    │   │   ├── KeyVaultSecretId: *string
+    │   │   ├── Name: *string
+    │   │   └── PropertyBag: genruntime.PropertyBag
+    │   └── PropertyBag: genruntime.PropertyBag
+    └── Type: *string
 
 LoadBalancer: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
@@ -1851,7 +2466,15 @@ VirtualNetworksVirtualNetworkPeering: Resource
     ├── Type: *string
     └── UseRemoteGateways: *bool
 
+augmentConversionForManagedServiceIdentity: Interface
+
+augmentConversionForManagedServiceIdentity_STATUS: Interface
+
+augmentConversionForManagedServiceIdentity_UserAssignedIdentities_STATUS: Interface
+
 augmentConversionForSubResource: Interface
 
 augmentConversionForSubResource_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
 

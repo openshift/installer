@@ -42,6 +42,9 @@ func newClient(auth azure.Authorizer) (*azureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourcehealth client options")
 	}
+	if auth.CloudEnvironment() == azure.USSecCloudName {
+		opts.Cloud = auth.CloudConfiguration()
+	}
 	factory, err := armresourcehealth.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armresourcehealth client factory")

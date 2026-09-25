@@ -96,6 +96,7 @@ var iPVersion_Values = map[string]IPVersion{
 
 // Nat Gateway resource.
 type NatGatewaySpec_PublicIPPrefix_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
