@@ -9,11 +9,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 var pkiCfgFilename = path.Join(manifestDir, "cluster-pki-02-config.yaml")
@@ -34,32 +31,31 @@ func (*PKIConfiguration) Name() string {
 // the asset.
 func (*PKIConfiguration) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		&tls.SignerKeyParams{},
 	}
 }
 
 // Generate generates the PKI custom resource manifest.
 // The manifest is only generated when the ConfigurablePKI feature gate is enabled.
 func (p *PKIConfiguration) Generate(_ context.Context, dependencies asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	signerKeyParams := &tls.SignerKeyParams{}
+	dependencies.Get(signerKeyParams)
 
-	if !installConfig.Config.Enabled(features.FeatureGateConfigurablePKI) {
+	if !signerKeyParams.ConfigurablePKIEnabled {
 		return nil
 	}
 
+	// A user-provided pki stanza selects Custom management so the configured
+	// profile stays pinned across releases; otherwise Default is used, allowing
+	// the profile to track OpenShift best practices as they evolve.
 	certMgmt := configv1alpha1.PKICertificateManagement{
 		Mode: configv1alpha1.PKICertificateManagementModeDefault,
 	}
-
-	if installConfig.Config.PKI != nil {
-		profile := pkidefaults.DefaultPKIProfile()
-		profile.SignerCertificates = convertToAPICertConfig(installConfig.Config.PKI.SignerCertificates)
-
+	if signerKeyParams.UserProvidedProfile {
 		certMgmt = configv1alpha1.PKICertificateManagement{
 			Mode: configv1alpha1.PKICertificateManagementModeCustom,
 			Custom: configv1alpha1.CustomPKIPolicy{
-				PKIProfile: profile,
+				PKIProfile: signerKeyParams.Profile,
 			},
 		}
 	}
@@ -100,21 +96,4 @@ func (p *PKIConfiguration) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (p *PKIConfiguration) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
-}
-
-// convertToAPICertConfig converts the installer CertificateConfig
-// to the openshift/api configv1alpha1.CertificateConfig for use in the PKI CR manifest.
-func convertToAPICertConfig(certConf types.CertificateConfig) configv1alpha1.CertificateConfig {
-	out := configv1alpha1.CertificateConfig{
-		Key: configv1alpha1.KeyConfig{
-			Algorithm: configv1alpha1.KeyAlgorithm(certConf.Key.Algorithm),
-		},
-	}
-	if certConf.Key.RSA != nil {
-		out.Key.RSA = configv1alpha1.RSAKeyConfig{KeySize: certConf.Key.RSA.KeySize}
-	}
-	if certConf.Key.ECDSA != nil {
-		out.Key.ECDSA = configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurve(certConf.Key.ECDSA.Curve)}
-	}
-	return out
 }

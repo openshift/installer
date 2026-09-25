@@ -2,19 +2,22 @@ package tls
 
 import (
 	"context"
+	"crypto/x509"
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
 )
 
-// RootCA contains the private key and the cert that acts as a certificate
-// authority, which is in turn really only used to generate a certificate
-// for the Machine Config Server.  More in
-// https://docs.openshift.com/container-platform/4.13/security/certificate_types_descriptions/machine-config-operator-certificates.html
-// and
-// https://github.com/openshift/api/tree/master/tls/docs/MachineConfig%20Operator%20Certificates
-// This logic dates back to the very creation of OpenShift 4 and the initial code for this project.
-// The private key is (as best we know) completely discarded after an installation is complete.
+// RootCA is the key/cert that signs the Machine Config Server serving cert and
+// the internal-release-image serving cert as well as the journal-gatewayd cert,
+// which is bootstrap-only.
+//
+// Despite the "root" name, RootCA is a flat single-tier signer today: it signs
+// those leaf certs directly and roots no CA hierarchy. The name is a vestige of
+// the original OpenShift 4 design, where it was the apex of an intermediate-CA
+// hierarchy that was flattened into independent per-component signers in 2019.
+//
+// The private key is (as best we know) discarded after installation completes.
 type RootCA struct {
 	SelfSignedCertKey
 }
@@ -35,14 +38,27 @@ func (c *RootCA) Dependencies() []asset.Asset {
 func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 	signerKeyParams := &SignerKeyParams{}
 	parents.Get(signerKeyParams)
+
+	if !signerKeyParams.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  ValidityTenYears(),
+			IsCA:      true,
+		}
+		return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", nil)
+	}
+
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("machine-config.machine-config-server-signer")
+	if err != nil {
+		return err
+	}
 	cfg := &CertCfg{
-		Subject: pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
-		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Subject:  pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", signerKeyParams.PKIConfig)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", keyGen)
 }
 
 // Name returns the human-friendly name of the asset.

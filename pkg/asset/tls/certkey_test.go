@@ -2,7 +2,9 @@ package tls
 
 import (
 	"context"
+	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -12,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/types"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 func TestSignedCertKeyGenerate(t *testing.T) {
@@ -60,7 +64,7 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 			assert.NoError(t, err, "failed to generate root CA")
 
 			certKey := &SignedCertKey{}
-			err = certKey.Generate(context.Background(), tt.certCfg, rootCA, tt.filenameBase, tt.appendParent)
+			err = certKey.Generate(context.Background(), tt.certCfg, rootCA, tt.filenameBase, tt.appendParent, nil)
 			if err != nil {
 				assert.EqualErrorf(t, err, tt.errString, tt.name)
 				return
@@ -100,42 +104,210 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 	}
 }
 
-func TestSelfSignedCertKeyGenerateWithPKIConfig(t *testing.T) {
-	cases := []struct {
-		name            string
-		pkiConfig       *types.PKIConfig
-		expectKeyType   interface{}
-		expectPubKeyAlg x509.PublicKeyAlgorithm
+func TestSelfSignedCertKeyGenerateLegacyPath(t *testing.T) {
+	// Test the legacy path (keyGen = nil) which uses PKIConfigToKeyParams(nil)
+	// and generates RSA 2048 by default.
+	cfg := &CertCfg{
+		Subject:  pkix.Name{CommonName: "test-legacy-ca", OrganizationalUnit: []string{"openshift"}},
+		Validity: ValidityTenYears(),
+		IsCA:     true,
+	}
+
+	ca := &SelfSignedCertKey{}
+	err := ca.Generate(t.Context(), cfg, "test-legacy-ca", nil)
+	assert.NoError(t, err)
+
+	key, err := PemToPrivateKey(ca.Key())
+	assert.NoError(t, err)
+	assert.IsType(t, &rsa.PrivateKey{}, key)
+
+	rsaKey := key.(*rsa.PrivateKey)
+	assert.Equal(t, 2048, rsaKey.N.BitLen(), "legacy path should generate RSA 2048")
+
+	cert, err := PemToCertificate(ca.Cert())
+	assert.NoError(t, err)
+	assert.Equal(t, x509.RSA, cert.PublicKeyAlgorithm)
+	assert.True(t, cert.IsCA)
+}
+
+func TestSignedCertKeyGenerateWithKeyGen(t *testing.T) {
+	// assertKeyParams decodes the PEM-encoded private key and asserts its
+	// algorithm and parameters (RSA key size or ECDSA curve).
+	assertKeyParams := func(t *testing.T, keyPEM []byte, expectAlg x509.PublicKeyAlgorithm, expectRSABits int, expectCurve elliptic.Curve) {
+		t.Helper()
+		key, err := PemToPrivateKey(keyPEM)
+		assert.NoError(t, err)
+		switch expectAlg {
+		case x509.RSA:
+			rsaKey, ok := key.(*rsa.PrivateKey)
+			if assert.True(t, ok, "expected an RSA private key") {
+				assert.Equal(t, expectRSABits, rsaKey.N.BitLen(), "unexpected RSA key size")
+			}
+		case x509.ECDSA:
+			ecKey, ok := key.(*ecdsa.PrivateKey)
+			if assert.True(t, ok, "expected an ECDSA private key") {
+				assert.Equal(t, expectCurve, ecKey.Curve, "unexpected ECDSA curve")
+			}
+		default:
+			t.Fatalf("unhandled expected algorithm: %v", expectAlg)
+		}
+	}
+
+	testCases := []struct {
+		name          string
+		caKeyGen      libcrypto.KeyPairGenerator
+		leafKeyGen    libcrypto.KeyPairGenerator
+		certType      libpki.CertificateType
+		expectAlg     x509.PublicKeyAlgorithm
+		expectRSABits int
+		expectCurve   elliptic.Curve
 	}{
 		{
-			name: "RSA 4096",
-			pkiConfig: &types.PKIConfig{
-				SignerCertificates: types.CertificateConfig{
-					Key: types.KeyConfig{
-						Algorithm: types.KeyAlgorithmRSA,
-						RSA:       &types.RSAKeyConfig{KeySize: 4096},
-					},
-				},
-			},
-			expectKeyType:   &rsa.PrivateKey{},
-			expectPubKeyAlg: x509.RSA,
+			name:          "RSA leaf signed by RSA CA (serving)",
+			caKeyGen:      libcrypto.RSAKeyPairGenerator{Bits: 4096},
+			leafKeyGen:    libcrypto.RSAKeyPairGenerator{Bits: 2048},
+			certType:      libpki.CertificateTypeServing,
+			expectAlg:     x509.RSA,
+			expectRSABits: 2048,
 		},
 		{
-			name: "ECDSA P384",
-			pkiConfig: &types.PKIConfig{
-				SignerCertificates: types.CertificateConfig{
-					Key: types.KeyConfig{
-						Algorithm: types.KeyAlgorithmECDSA,
-						ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
-					},
-				},
-			},
-			expectKeyType:   &ecdsa.PrivateKey{},
-			expectPubKeyAlg: x509.ECDSA,
+			name:        "ECDSA leaf signed by ECDSA CA (serving)",
+			caKeyGen:    libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
+			leafKeyGen:  libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
+			certType:    libpki.CertificateTypeServing,
+			expectAlg:   x509.ECDSA,
+			expectCurve: elliptic.P384(),
+		},
+		{
+			name:          "cross-algorithm: RSA leaf signed by ECDSA CA (client)",
+			caKeyGen:      libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
+			leafKeyGen:    libcrypto.RSAKeyPairGenerator{Bits: 2048},
+			certType:      libpki.CertificateTypeClient,
+			expectAlg:     x509.RSA,
+			expectRSABits: 2048,
+		},
+		{
+			name:        "cross-algorithm: ECDSA leaf signed by RSA CA (peer)",
+			caKeyGen:    libcrypto.RSAKeyPairGenerator{Bits: 2048},
+			leafKeyGen:  libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P256},
+			certType:    libpki.CertificateTypePeer,
+			expectAlg:   x509.ECDSA,
+			expectCurve: elliptic.P256(),
 		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rootCA := &SelfSignedCertKey{}
+			rootCACfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+			err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", tc.caKeyGen)
+			assert.NoError(t, err, "failed to generate root CA")
+
+			leafCfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test.openshift.io", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				DNSNames: []string{"test.openshift.io"},
+				CertType: tc.certType,
+			}
+
+			certKey := &SignedCertKey{}
+			err = certKey.Generate(context.Background(), leafCfg, rootCA, "test-leaf", DoNotAppendParent, tc.leafKeyGen)
+			assert.NoError(t, err, "failed to generate signed leaf cert")
+
+			// The leaf private key must use the configured algorithm and parameters.
+			assertKeyParams(t, certKey.Key(), tc.expectAlg, tc.expectRSABits, tc.expectCurve)
+
+			// The leaf certificate must chain to the (possibly different-algorithm) CA.
+			certPool := x509.NewCertPool()
+			if !certPool.AppendCertsFromPEM(rootCA.Cert()) {
+				t.Fatal("failed to append CA cert to pool")
+			}
+			leafCert, err := PemToCertificate(certKey.Cert())
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectAlg, leafCert.PublicKeyAlgorithm, "unexpected leaf cert public key algorithm")
+
+			_, err = leafCert.Verify(x509.VerifyOptions{
+				Roots:     certPool,
+				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+			})
+			assert.NoError(t, err, "leaf cert failed to verify against CA")
+		})
+	}
+}
+
+func TestSignedCertKeyGenerateEmptyHostnames(t *testing.T) {
+	testCases := []struct {
+		name        string
+		certType    libpki.CertificateType
+		expectedErr string
+	}{
+		{
+			name:        "serving cert without SANs",
+			certType:    libpki.CertificateTypeServing,
+			expectedErr: `serving certificate "test-leaf" requires at least one DNS name or IP address`,
+		},
+		{
+			name:        "peer cert without SANs",
+			certType:    libpki.CertificateTypePeer,
+			expectedErr: `peer certificate "test-leaf" requires at least one DNS name or IP address`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			keyGen := libcrypto.RSAKeyPairGenerator{Bits: 2048}
+
+			rootCA := &SelfSignedCertKey{}
+			rootCACfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+			err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", keyGen)
+			assert.NoError(t, err, "failed to generate root CA")
+
+			// No DNSNames or IPAddresses: library-go would panic indexing the
+			// first hostname, so Generate must return an error instead.
+			leafCfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test.openshift.io"},
+				Validity: ValidityTenYears(),
+				CertType: tc.certType,
+			}
+
+			certKey := &SignedCertKey{}
+			err = certKey.Generate(context.Background(), leafCfg, rootCA, "test-leaf", DoNotAppendParent, keyGen)
+			assert.EqualError(t, err, tc.expectedErr)
+		})
+	}
+}
+
+func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
+	testCases := []struct {
+		name            string
+		keyGen          libcrypto.KeyPairGenerator
+		expectPubKeyAlg x509.PublicKeyAlgorithm
+		expectRSABits   int
+		expectCurve     elliptic.Curve
+	}{
+		{
+			name:            "RSA 4096",
+			keyGen:          libcrypto.RSAKeyPairGenerator{Bits: 4096},
+			expectPubKeyAlg: x509.RSA,
+			expectRSABits:   4096,
+		},
+		{
+			name:            "ECDSA P384",
+			keyGen:          libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
+			expectPubKeyAlg: x509.ECDSA,
+			expectCurve:     elliptic.P384(),
+		},
+	}
+
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &CertCfg{
 				Subject:  pkix.Name{CommonName: "test-pki-ca", OrganizationalUnit: []string{"openshift"}},
@@ -144,82 +316,134 @@ func TestSelfSignedCertKeyGenerateWithPKIConfig(t *testing.T) {
 			}
 
 			ca := &SelfSignedCertKey{}
-			err := ca.Generate(t.Context(), cfg, "test-pki-ca", tc.pkiConfig)
+			err := ca.Generate(context.Background(), cfg, "test-pki-ca", tc.keyGen)
 			assert.NoError(t, err)
-
-			key, err := PemToPrivateKey(ca.Key())
-			assert.NoError(t, err)
-			assert.IsType(t, tc.expectKeyType, key)
-
-			switch k := key.(type) {
-			case *rsa.PrivateKey:
-				assert.Equal(t, 4096, k.N.BitLen())
-			case *ecdsa.PrivateKey:
-				assert.Equal(t, "P-384", k.Curve.Params().Name)
-			}
 
 			cert, err := PemToCertificate(ca.Cert())
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectPubKeyAlg, cert.PublicKeyAlgorithm)
+			switch pub := cert.PublicKey.(type) {
+			case *rsa.PublicKey:
+				assert.Equal(t, tc.expectRSABits, pub.N.BitLen(), "unexpected RSA key size")
+			case *ecdsa.PublicKey:
+				assert.Equal(t, tc.expectCurve, pub.Curve, "unexpected ECDSA curve")
+			default:
+				t.Fatalf("unexpected public key type: %T", pub)
+			}
 			assert.True(t, cert.IsCA)
 		})
 	}
 }
 
-func TestCrossAlgorithmCertificateSigning(t *testing.T) {
-	// Generate ECDSA P384 CA
-	ecdsaPKI := &types.PKIConfig{
-		SignerCertificates: types.CertificateConfig{
-			Key: types.KeyConfig{
-				Algorithm: types.KeyAlgorithmECDSA,
-				ECDSA:     &types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
+func TestRegenerateSignedCertKeyReusesExistingKey(t *testing.T) {
+	// keyPEM builds a PEM-encoded private key of the given params, standing in
+	// for the existing MCS key that regeneration reads from the ignition config.
+	keyPEM := func(t *testing.T, params PrivateKeyParams) []byte {
+		t.Helper()
+		key, err := GeneratePrivateKeyWithParams(params)
+		assert.NoError(t, err)
+		pemBytes, err := PrivateKeyToPem(key)
+		assert.NoError(t, err)
+		return pemBytes
+	}
+
+	testCases := []struct {
+		name            string
+		existingParams  PrivateKeyParams
+		expectPubKeyAlg x509.PublicKeyAlgorithm
+	}{
+		{
+			name: "reuses existing RSA 4096 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmRSA,
+				RSAKeySize: 4096,
 			},
+			expectPubKeyAlg: x509.RSA,
+		},
+		{
+			name: "reuses existing ECDSA P256 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmECDSA,
+				ECDSACurve: types.ECDSACurveP256,
+			},
+			expectPubKeyAlg: x509.ECDSA,
+		},
+		{
+			name: "reuses existing ECDSA P384 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmECDSA,
+				ECDSACurve: types.ECDSACurveP384,
+			},
+			expectPubKeyAlg: x509.ECDSA,
 		},
 	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rootCA := &SelfSignedCertKey{}
+			rootCACfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+			err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", nil)
+			assert.NoError(t, err, "failed to generate root CA")
+
+			existingKeyPEM := keyPEM(t, tc.existingParams)
+
+			leafCfg := &CertCfg{
+				Subject:      pkix.Name{CommonName: "system:machine-config-server"},
+				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+				Validity:     ValidityTenYears(),
+				DNSNames:     []string{"test.openshift.io"},
+			}
+
+			keyRaw, certRaw, err := RegenerateSignedCertKey(leafCfg, rootCA, DoNotAppendParent, existingKeyPEM)
+			assert.NoError(t, err)
+
+			// The existing key must be reused verbatim: only the cert is regenerated.
+			assert.Equal(t, existingKeyPEM, keyRaw, "existing key was not reused verbatim")
+
+			// The regenerated cert must be signed over the existing key's public key,
+			// carry the same algorithm, and chain to the CA.
+			cert, err := PemToCertificate(certRaw)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectPubKeyAlg, cert.PublicKeyAlgorithm, "unexpected cert public key algorithm")
+
+			existingKey, err := PemToPrivateKey(existingKeyPEM)
+			assert.NoError(t, err)
+			assert.Equal(t, existingKey.(crypto.Signer).Public(), cert.PublicKey, "cert public key does not match reused key")
+
+			certPool := x509.NewCertPool()
+			if !certPool.AppendCertsFromPEM(rootCA.Cert()) {
+				t.Fatal("failed to append CA cert to pool")
+			}
+			_, err = cert.Verify(x509.VerifyOptions{
+				Roots:     certPool,
+				DNSName:   "test.openshift.io",
+				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+			})
+			assert.NoError(t, err, "regenerated cert failed to verify against CA")
+		})
+	}
+}
+
+func TestRegenerateSignedCertKeyRequiresExistingKey(t *testing.T) {
 	rootCA := &SelfSignedCertKey{}
 	rootCACfg := &CertCfg{
-		Subject:  pkix.Name{CommonName: "ecdsa-ca", OrganizationalUnit: []string{"openshift"}},
+		Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
 		Validity: ValidityTenYears(),
 		IsCA:     true,
 	}
-	err := rootCA.Generate(t.Context(), rootCACfg, "ecdsa-ca", ecdsaPKI)
-	assert.NoError(t, err)
+	err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", nil)
+	assert.NoError(t, err, "failed to generate root CA")
 
-	// Verify CA key is ECDSA
-	caKey, err := PemToPrivateKey(rootCA.Key())
-	assert.NoError(t, err)
-	assert.IsType(t, &ecdsa.PrivateKey{}, caKey)
-
-	// Generate RSA leaf signed by ECDSA CA
 	leafCfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "leaf-cert", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		Validity:  ValidityTenYears(),
-		DNSNames:  []string{"test.openshift.io"},
+		Subject:  pkix.Name{CommonName: "system:machine-config-server"},
+		Validity: ValidityTenYears(),
+		DNSNames: []string{"test.openshift.io"},
 	}
-	certKey := &SignedCertKey{}
-	err = certKey.Generate(t.Context(), leafCfg, rootCA, "cross-algo-leaf", DoNotAppendParent)
-	assert.NoError(t, err)
 
-	// Verify leaf key is RSA (SignedCertKey always generates RSA leaf keys)
-	leafKey, err := PemToPrivateKey(certKey.Key())
-	assert.NoError(t, err)
-	assert.IsType(t, &rsa.PrivateKey{}, leafKey)
-
-	// Verify the leaf cert was signed by the ECDSA CA
-	leafCert, err := PemToCertificate(certKey.Cert())
-	assert.NoError(t, err)
-	assert.Equal(t, x509.ECDSAWithSHA384, leafCert.SignatureAlgorithm)
-
-	// Verify cert chain: leaf validates against CA
-	caCert, err := PemToCertificate(rootCA.Cert())
-	assert.NoError(t, err)
-	certPool := x509.NewCertPool()
-	certPool.AddCert(caCert)
-	_, err = leafCert.Verify(x509.VerifyOptions{
-		Roots:     certPool,
-		DNSName:   "test.openshift.io",
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
-	})
-	assert.NoError(t, err, "leaf cert should validate against ECDSA CA")
+	_, _, err = RegenerateSignedCertKey(leafCfg, rootCA, DoNotAppendParent, nil)
+	assert.EqualError(t, err, "existing key is required to regenerate a certificate")
 }

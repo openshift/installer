@@ -14,6 +14,7 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.
@@ -30,6 +31,7 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&RootCA{},
 		&installconfig.InstallConfig{},
+		&SignerKeyParams{},
 	}
 }
 
@@ -37,15 +39,10 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	pkiCfg := &SignerKeyParams{}
+	dependencies.Get(ca, installConfig, pkiCfg)
 
 	hostname := internalAPIAddress(installConfig.Config)
-
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityTenYears(),
-	}
 
 	var vips []string
 	switch installConfig.Config.Platform.Name() {
@@ -61,14 +58,39 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		vips = installConfig.Config.VSphere.APIVIPs
 	}
 
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &CertCfg{
+			Subject:      pkix.Name{CommonName: "system:machine-config-server"},
+			KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+			ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			Validity:     ValidityTenYears(),
+		}
+		cfg.IPAddresses = []net.IP{}
+		cfg.DNSNames = []string{hostname}
+		for _, vip := range vips {
+			cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(vip))
+			cfg.DNSNames = append(cfg.DNSNames, vip)
+		}
+		return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent, nil)
+	}
+
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "machine-config.machine-config-server-serving")
+	if err != nil {
+		return err
+	}
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		Validity:     ValidityTenYears(),
+		CertType:     libpki.CertificateTypeServing,
+	}
 	cfg.IPAddresses = []net.IP{}
 	cfg.DNSNames = []string{hostname}
 	for _, vip := range vips {
 		cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(vip))
 		cfg.DNSNames = append(cfg.DNSNames, vip)
 	}
-
-	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent, keyGen)
 }
 
 // Name returns the human-friendly name of the asset.
@@ -76,8 +98,13 @@ func (a *MCSCertKey) Name() string {
 	return "Certificate (mcs)"
 }
 
-// RegenerateMCSCertKey generates the cert/key pair based on input values.
-func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLBs []string) ([]byte, []byte, error) {
+// RegenerateMCSCertKey re-signs the MCS certificate for the current key based on
+// input values.
+//
+// existingKeyPEM is the required PEM-encoded private key from the current MCS
+// cert/key material. It is reused as-is and only the certificate is regenerated,
+// so the key stays consistent with the PKI profile applied during asset generation.
+func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLBs []string, existingKeyPEM []byte) ([]byte, []byte, error) {
 	hostname := internalAPIAddress(ic.Config)
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
@@ -90,5 +117,5 @@ func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLB
 		cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(ip))
 		cfg.DNSNames = append(cfg.DNSNames, ip)
 	}
-	return RegenerateSignedCertKey(cfg, ca, DoNotAppendParent)
+	return RegenerateSignedCertKey(cfg, ca, DoNotAppendParent, existingKeyPEM)
 }
