@@ -736,7 +736,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 		} else {
 			lastErr = err
 			if attempt < maxRetries {
-				logrus.Warnf("Process %s failed on attempt %d/%d: %v. Retrying...", ct.Name, attempt, maxRetries, err)
+				logrus.Warnf("Process %s failed on attempt %d/%d: %v. Retrying %d more time(s)...", ct.Name, attempt, maxRetries, err, maxRetries-attempt)
 				// Exponential backoff: 100ms, 200ms, 400ms
 				select {
 				case <-time.After(time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond):
