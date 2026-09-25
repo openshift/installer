@@ -147,6 +147,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 
 	ps.waitDone = make(chan struct{})
 	if err := ps.Cmd.Start(); err != nil {
+		close(pollerStopCh)
 		ps.errMu.Lock()
 		defer ps.errMu.Unlock()
 		ps.exited = true
