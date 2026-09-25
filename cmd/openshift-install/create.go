@@ -244,12 +244,12 @@ type clusterCreateError struct {
 	logMessage   string
 }
 
-// Unwrap provides the actual stored error that occured during installation.
+// Unwrap provides the actual stored error that occurred during installation.
 func (ce *clusterCreateError) Unwrap() error {
 	return ce.wrappedError
 }
 
-// Error provides the actual stored error that occured during installation.
+// Error provides the actual stored error that occurred during installation.
 func (ce *clusterCreateError) Error() string {
 	return ce.logMessage
 }
