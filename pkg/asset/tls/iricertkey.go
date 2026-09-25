@@ -88,7 +88,7 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "internal-release-image", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "installer.internal-release-image-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "installer.internal-release-image-serving")
 	if err != nil {
 		return err
 	}

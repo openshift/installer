@@ -44,7 +44,7 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 		return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.aggregator-front-proxy-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.aggregator-front-proxy-signer")
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (a *APIServerProxyCertKey) Generate(ctx context.Context, dependencies asset
 		return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.aggregator-front-proxy-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.aggregator-front-proxy-signer")
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (a *AggregatorClientCertKey) Generate(ctx context.Context, dependencies ass
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "kube-apiserver.aggregator-front-proxy-client")
 	if err != nil {
 		return err
 	}

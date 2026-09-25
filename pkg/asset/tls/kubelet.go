@@ -38,7 +38,7 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "installer.kubelet-csr-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("installer.kubelet-csr-signer")
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "installer.kubelet-bootstrap-kubeconfig-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("installer.kubelet-bootstrap-kubeconfig-signer")
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (a *KubeletClientCertKey) Generate(ctx context.Context, dependencies asset.
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kubelet-client", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.kubelet-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "installer.kubelet-client")
 	if err != nil {
 		return err
 	}

@@ -41,7 +41,7 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Generate(ctx context.Context, pare
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-to-kubelet-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.kubelet-client-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.kubelet-client-signer")
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (a *KubeAPIServerToKubeletClientCertKey) Generate(ctx context.Context, depe
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-to-kubelet-client", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kubelet-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "kube-apiserver.kubelet-client")
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Generate(ctx context.Context, pare
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-localhost-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.localhost-serving-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.localhost-serving-signer")
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func (a *KubeAPIServerLocalhostServerCertKey) Generate(ctx context.Context, depe
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-localhost-server", AppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.localhost-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "kube-apiserver.localhost-serving")
 	if err != nil {
 		return err
 	}
@@ -314,7 +314,7 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(ctx context.Context,
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-service-network-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.service-network-serving-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.service-network-serving-signer")
 	if err != nil {
 		return err
 	}
@@ -412,7 +412,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(ctx context.Context,
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-service-network-server", AppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.service-network-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "kube-apiserver.service-network-serving")
 	if err != nil {
 		return err
 	}
@@ -471,7 +471,7 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents ass
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-apiserver-lb-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.loadbalancer-serving-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.loadbalancer-serving-signer")
 	if err != nil {
 		return err
 	}
@@ -559,7 +559,7 @@ func (a *KubeAPIServerExternalLBServerCertKey) Generate(ctx context.Context, dep
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-lb-server", AppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.external-loadbalancer-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "kube-apiserver.external-loadbalancer-serving")
 	if err != nil {
 		return err
 	}
@@ -616,7 +616,7 @@ func (a *KubeAPIServerInternalLBServerCertKey) Generate(ctx context.Context, dep
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-apiserver-internal-lb-server", AppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "kube-apiserver.internal-loadbalancer-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "kube-apiserver.internal-loadbalancer-serving")
 	if err != nil {
 		return err
 	}

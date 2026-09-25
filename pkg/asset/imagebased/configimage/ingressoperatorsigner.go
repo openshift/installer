@@ -20,8 +20,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
-	libcrypto "github.com/openshift/library-go/pkg/crypto"
-	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // Name returns the human-friendly name of the asset.
@@ -72,7 +70,7 @@ func (a *IngressOperatorSignerCertKey) Generate(ctx context.Context, dependencie
 		return nil
 	}
 
-	keyGen, err := resolveSignerKeyGen(pkiCfg, "installer.ingress-operator-signer")
+	keyGen, err := pkiCfg.ResolveSignerKeyGen("ingress.router-signer")
 	if err != nil {
 		return err
 	}
@@ -190,15 +188,4 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 
 	hash := sha1.Sum(publicKeyBytes) //nolint: gosec
 	return hash[:], nil
-}
-
-// resolveSignerKeyGen resolves the KeyPairGenerator for a signer certificate
-// from the SignerKeyParams's profile.
-func resolveSignerKeyGen(pkiCfg *tls.SignerKeyParams, certName string) (libcrypto.KeyPairGenerator, error) {
-	provider := libpki.NewStaticPKIProfileProvider(&pkiCfg.Profile)
-	resolved, err := libpki.ResolveCertificateConfig(provider, libpki.CertificateTypeSigner, certName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve PKI config for signer certificate %q: %w", certName, err)
-	}
-	return resolved.Key, nil
 }

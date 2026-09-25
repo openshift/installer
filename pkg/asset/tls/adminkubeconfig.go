@@ -41,7 +41,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "installer.admin-kubeconfig-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("installer.admin-kubeconfig-signer")
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (a *AdminKubeConfigClientCertKey) Generate(ctx context.Context, dependencie
 	// The legacy path includes ServerAuth for backward compatibility, but this
 	// cert is only used as a client credential (including localhost-recovery).
 	// The library-go path uses ClientAuth only.
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "installer.admin-kubeconfig-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "installer.admin-kubeconfig-client")
 	if err != nil {
 		return err
 	}

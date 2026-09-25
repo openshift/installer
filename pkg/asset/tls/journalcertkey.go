@@ -44,7 +44,7 @@ func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parent
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypePeer, "installer.journal-gateway")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypePeer, "installer.journal-gateway")
 	if err != nil {
 		return err
 	}

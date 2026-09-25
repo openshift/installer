@@ -38,7 +38,7 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 		return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", nil)
 	}
 
-	keyGen, err := resolveSignerKeyGen(signerKeyParams, "kube-apiserver.control-plane-client-signer")
+	keyGen, err := signerKeyParams.ResolveSignerKeyGen("kube-apiserver.control-plane-client-signer")
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(ctx contex
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kube-controller-manager-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "kube-apiserver.kube-controller-manager-client")
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(ctx context.Contex
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeClient, "kube-apiserver.kube-scheduler-client")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeClient, "kube-apiserver.kube-scheduler-client")
 	if err != nil {
 		return err
 	}

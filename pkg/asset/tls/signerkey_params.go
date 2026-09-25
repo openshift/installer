@@ -2,11 +2,14 @@ package tls //nolint:revive // pre-existing package name
 
 import (
 	"context"
+	"fmt"
 
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	pkidefaults "github.com/openshift/installer/pkg/types/pki"
+	libcrypto "github.com/openshift/library-go/pkg/crypto"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 // SignerKeyParams resolves the effective PKI configuration for certificate
@@ -24,6 +27,12 @@ type SignerKeyParams struct {
 	// ConfigurablePKIEnabled indicates whether the ConfigurablePKI feature
 	// gate is active. When false, cert assets take the legacy code path.
 	ConfigurablePKIEnabled bool
+
+	// UserProvidedProfile indicates whether the user specified a pki stanza in
+	// install-config. It selects Custom over Default certificate management so
+	// that an explicitly configured profile stays pinned even when it matches
+	// the current default. Only meaningful when ConfigurablePKIEnabled is true.
+	UserProvidedProfile bool
 }
 
 var _ asset.WritableAsset = (*SignerKeyParams)(nil)
@@ -67,5 +76,26 @@ func (s *SignerKeyParams) Load(f asset.FileFetcher) (bool, error) {
 		return found, err
 	}
 	s.Profile, s.ConfigurablePKIEnabled = pkidefaults.EffectiveProfile(base.Config)
+	s.UserProvidedProfile = s.ConfigurablePKIEnabled && base.Config.PKI != nil
 	return true, nil
+}
+
+// ResolveSignerKeyGen resolves the KeyPairGenerator for a signer certificate
+// from the profile.
+func (s *SignerKeyParams) ResolveSignerKeyGen(certName string) (libcrypto.KeyPairGenerator, error) {
+	return s.ResolveKeyGen(libpki.CertificateTypeSigner, certName)
+}
+
+// ResolveKeyGen resolves the KeyPairGenerator for a certificate of the given
+// type from the profile.
+func (s *SignerKeyParams) ResolveKeyGen(certType libpki.CertificateType, certName string) (libcrypto.KeyPairGenerator, error) {
+	provider := libpki.NewStaticPKIProfileProvider(&s.Profile)
+	resolved, err := libpki.ResolveCertificateConfig(provider, certType, certName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve PKI config for %s certificate %q: %w", certType, certName, err)
+	}
+	if resolved == nil {
+		return nil, fmt.Errorf("no PKI config resolved for %s certificate %q", certType, certName)
+	}
+	return resolved.Key, nil
 }

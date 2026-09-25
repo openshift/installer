@@ -288,16 +288,20 @@ func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 		name            string
 		keyGen          libcrypto.KeyPairGenerator
 		expectPubKeyAlg x509.PublicKeyAlgorithm
+		expectRSABits   int
+		expectCurve     elliptic.Curve
 	}{
 		{
 			name:            "RSA 4096",
 			keyGen:          libcrypto.RSAKeyPairGenerator{Bits: 4096},
 			expectPubKeyAlg: x509.RSA,
+			expectRSABits:   4096,
 		},
 		{
 			name:            "ECDSA P384",
 			keyGen:          libcrypto.ECDSAKeyPairGenerator{Curve: libcrypto.P384},
 			expectPubKeyAlg: x509.ECDSA,
+			expectCurve:     elliptic.P384(),
 		},
 	}
 
@@ -316,6 +320,14 @@ func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 			cert, err := PemToCertificate(ca.Cert())
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectPubKeyAlg, cert.PublicKeyAlgorithm)
+			switch pub := cert.PublicKey.(type) {
+			case *rsa.PublicKey:
+				assert.Equal(t, tc.expectRSABits, pub.N.BitLen(), "unexpected RSA key size")
+			case *ecdsa.PublicKey:
+				assert.Equal(t, tc.expectCurve, pub.Curve, "unexpected ECDSA curve")
+			default:
+				t.Fatalf("unexpected public key type: %T", pub)
+			}
 			assert.True(t, cert.IsCA)
 		})
 	}

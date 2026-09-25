@@ -74,7 +74,7 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 		return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent, nil)
 	}
 
-	keyGen, err := resolveKeyGen(pkiCfg, libpki.CertificateTypeServing, "machine-config-operator.machine-config-server-serving")
+	keyGen, err := pkiCfg.ResolveKeyGen(libpki.CertificateTypeServing, "machine-config.machine-config-server-serving")
 	if err != nil {
 		return err
 	}
