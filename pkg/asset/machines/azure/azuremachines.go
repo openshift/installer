@@ -98,6 +98,11 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		UltraSSDEnabled: &ultrassd,
 	}
 
+	var capacityReservationGroupID *string
+	if mpool.CapacityReservationGroup != nil {
+		capacityReservationGroupID = ptr.To(mpool.CapacityReservationGroup.ToID())
+	}
+
 	machineProfile := generateSecurityProfile(mpool)
 	securityProfile := &capz.SecurityProfile{
 		EncryptionAtHost: machineProfile.EncryptionAtHost,
@@ -193,10 +198,11 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity:               mpool.Identity.Type,
-				UserAssignedIdentities: userAssignedIdentities,
-				Diagnostics:            controlPlaneDiag,
-				DataDisks:              mpool.DataDisks,
+				Identity:                   mpool.Identity.Type,
+				UserAssignedIdentities:     userAssignedIdentities,
+				Diagnostics:                controlPlaneDiag,
+				DataDisks:                  mpool.DataDisks,
+				CapacityReservationGroupID: capacityReservationGroupID,
 			},
 		}
 		utils.SetMachineOSStreamLabels(azureMachine, in.Config)
@@ -276,6 +282,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			Identity:                   mpool.Identity.Type,
 			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities:     userAssignedIdentities,
+			CapacityReservationGroupID: capacityReservationGroupID,
 		},
 	}
 	utils.SetMachineOSStreamLabels(bootstrapAzureMachine, in.Config)
