@@ -72,6 +72,10 @@ do
     podman inspect "${container_id}" >& "${ARTIFACTS}/containers/${container_name}-${container_id}.inspect"
 done
 
+echo "Gathering MCS machine config content ..."
+mkdir -p "${ARTIFACTS}/mcs"
+sudo cp /etc/mcs-machine-config-content.json "${ARTIFACTS}/mcs/" 2>/dev/null || true
+
 echo "Gathering master rpm-ostree info ..."
 mkdir -p "${ARTIFACTS}/rpm-ostree"
 sudo rpm-ostree status >& "${ARTIFACTS}/rpm-ostree/status"
