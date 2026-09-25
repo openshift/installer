@@ -29,18 +29,17 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 		total = *pool.Replicas
 	}
 
+	// Resolve the catalog image name from osImageStream (defaults to RHEL-CoreOS-9).
+	image := OSImageNameFromStream(ic.OSImageStream)
+
 	var (
 		result         []*asset.RuntimeFile
-		image          string
 		service        capibm.IBMPowerVSResourceReference
 		name           string
 		powerVSMachine *capibm.IBMPowerVSMachine
 		dataSecret     string
 		machine        *capi.Machine
 	)
-
-	// Note: This will be created later
-	image = fmt.Sprintf("rhcos-%s", clusterID)
 
 	if ic.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
@@ -112,13 +111,11 @@ func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceR
 			ServiceInstanceID: ic.PowerVS.ServiceInstanceGUID,
 			ServiceInstance:   &service,
 			SSHKey:            "",
-			ImageRef: &v1.LocalObjectReference{
-				Name: image,
-			},
-			SystemType:    mpool.SysType,
-			ProcessorType: capibm.PowerVSProcessorType(mpool.ProcType),
-			Processors:    mpool.Processors,
-			MemoryGiB:     mpool.MemoryGiB,
+			Image:             &capibm.IBMPowerVSResourceReference{Name: &image},
+			SystemType:        mpool.SysType,
+			ProcessorType:     capibm.PowerVSProcessorType(mpool.ProcType),
+			Processors:        mpool.Processors,
+			MemoryGiB:         mpool.MemoryGiB,
 		},
 	}
 	utils.SetMachineOSStreamLabels(machine, ic)

@@ -128,8 +128,7 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		}
 	case powervstypes.Name:
 		var err error
-		osImage := strings.SplitN(rhcosImage.ControlPlane, "/", 2)
-		out, err = powervs.GenerateClusterAssets(installConfig, clusterID, osImage[0], osImage[1])
+		out, err = powervs.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return fmt.Errorf("failed to generate PowerVS manifests %w", err)
 		}
