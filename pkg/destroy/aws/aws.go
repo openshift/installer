@@ -420,7 +420,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, deleted sets.Set[string]) (sets.Set[string], error) {
 	resources := sets.New[string]()
 	o.Logger.Debug("search for IAM instance profiles")
-	for _, profileType := range []string{"master", "worker", "bootstrap"} {
+	for _, profileType := range []string{"master", "worker", "bootstrap", "edge"} {
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
 		response, err := o.IAMClient.GetInstanceProfile(ctx, &iamv2.GetInstanceProfileInput{InstanceProfileName: &profile})
 		if err != nil {

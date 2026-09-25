@@ -87,7 +87,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 
 		instanceProfile := mpool.IAMProfile
 		if len(instanceProfile) == 0 {
-			instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
+			instanceProfile = fmt.Sprintf("%s-%s-profile", in.ClusterID, in.Role)
 		}
 
 		dedicatedHost := DedicatedHost(in.Hosts, mpool.HostPlacement, az)
