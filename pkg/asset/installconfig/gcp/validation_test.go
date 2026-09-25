@@ -141,25 +141,20 @@ var (
 		ProjectID: "validProjectID",
 	}
 
-	globalCPKMSKeyRing = func(ic *types.InstallConfig) {
-		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
-			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &globalKeyRing,
-			},
-		}
-	}
-	globalComputeKMSKeyRing = func(ic *types.InstallConfig) {
-		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
-			EncryptionKey: &gcp.EncryptionKeyReference{
-				KMSKey: &globalKeyRing,
-			},
-		}
-	}
 	globalDefaultMachineKeyRing = func(ic *types.InstallConfig) {
 		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
 		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
 				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+
+	validDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &validKeyRing,
 			},
 		}
 	}
@@ -187,6 +182,13 @@ var (
 			},
 		}
 	}
+	globalCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
 
 	validComputeKMSKeyRing = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
@@ -199,6 +201,13 @@ var (
 		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
 			EncryptionKey: &gcp.EncryptionKeyReference{
 				KMSKey: &invalidKeyRing,
+			},
+		}
+	}
+	globalComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
 			},
 		}
 	}
@@ -480,25 +489,44 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedErrMsg: "compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
 		},
 		{
-			name:           "Global Control Plane KMS Key Location",
-			edits:          editFunctions{globalCPKMSKeyRing},
-			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError:  true,
-			expectedErrMsg: `controlPlane.platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
-		},
-		{
-			name:           "Global Compute KMS Key Location",
-			edits:          editFunctions{globalComputeKMSKeyRing},
-			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
-			expectedError:  true,
-			expectedErrMsg: `compute\[0\].platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
-		},
-		{
 			name:           "Global Default Machine KMS Key Location",
 			edits:          editFunctions{globalDefaultMachineKeyRing},
 			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
 			expectedError:  true,
 			expectedErrMsg: `platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			// Global keys only encrypt persistent disks for the machine pools, which supports them.
+			name:          "Global Control Plane KMS Key Location",
+			edits:         editFunctions{globalCPKMSKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:          "Global Compute KMS Key Location",
+			edits:         editFunctions{globalComputeKMSKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:          "Global Control Plane and Compute KMS Key Locations",
+			edits:         editFunctions{globalCPKMSKeyRing, globalComputeKMSKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			// The bucket key comes from defaultMachinePlatform, so a regional key there allows
+			// the machine pools to keep using global keys.
+			name:          "Global Control Plane and Compute KMS Keys with Regional Default Machine KMS Key",
+			edits:         editFunctions{globalCPKMSKeyRing, globalComputeKMSKeyRing, validDefaultMachineKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:          "Regional Control Plane and Compute KMS Keys with Regional Default Machine KMS Key",
+			edits:         editFunctions{validCPKMSKeyRing, validComputeKMSKeyRing, validDefaultMachineKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
 		},
 		{
 			name:           "Invalid Base Domain",
@@ -587,6 +615,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 		Name: "validKeyRingName",
 	}
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &globalKeyRing).Return(validKeyRingRet, nil).AnyTimes()
 	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	// Default: both service agents have the encrypter/decrypter role on the KMS key
