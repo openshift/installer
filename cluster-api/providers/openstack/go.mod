@@ -76,10 +76,10 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/term v0.25.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240311132316-a219d84964c2 // indirect
@@ -112,3 +112,5 @@ replace github.com/k-orc/openstack-resource-controller => sigs.k8s.io/cluster-ap
 
 // Remove as soon as commit 4cf22c51d3b540795ccd0dd4bcdcd9cad44d94d4 is included in a release of prometheus/common
 replace github.com/prometheus/common => github.com/prometheus/common v0.55.1-0.20240715210123-4cf22c51d3b5
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
