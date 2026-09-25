@@ -6,7 +6,6 @@ import (
 	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types"
 	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
@@ -69,24 +68,4 @@ func (s *SignerKeyParams) Load(f asset.FileFetcher) (bool, error) {
 	}
 	s.Profile, s.ConfigurablePKIEnabled = pkidefaults.EffectiveProfile(base.Config)
 	return true, nil
-}
-
-// LegacyPKIConfig returns a *types.PKIConfig for the legacy code path.
-// Returns nil when ConfigurablePKI is disabled (RSA-2048 default).
-func (s *SignerKeyParams) LegacyPKIConfig() *types.PKIConfig {
-	if !s.ConfigurablePKIEnabled {
-		return nil
-	}
-	keyConfig := types.KeyConfig{
-		Algorithm: types.KeyAlgorithm(s.Profile.SignerCertificates.Key.Algorithm),
-	}
-	switch keyConfig.Algorithm {
-	case types.KeyAlgorithmRSA:
-		keyConfig.RSA = &types.RSAKeyConfig{KeySize: s.Profile.SignerCertificates.Key.RSA.KeySize}
-	case types.KeyAlgorithmECDSA:
-		keyConfig.ECDSA = &types.ECDSAKeyConfig{Curve: types.ECDSACurve(s.Profile.SignerCertificates.Key.ECDSA.Curve)}
-	}
-	return &types.PKIConfig{
-		SignerCertificates: types.CertificateConfig{Key: keyConfig},
-	}
 }

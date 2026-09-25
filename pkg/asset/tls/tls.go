@@ -22,6 +22,7 @@ import (
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 const (
@@ -135,6 +136,7 @@ type CertCfg struct {
 	Subject      pkix.Name
 	Validity     time.Duration
 	IsCA         bool
+	CertType     libpki.CertificateType
 }
 
 // rsaPublicKey reflects the ASN.1 structure of a PKCS#1 public key.
