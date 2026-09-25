@@ -730,40 +730,40 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		logrus.Infof("Running process: %s (attempt %d/%d)", ct.Name, attempt, maxRetries)
-		if err := pr.Start(ctx, c.logWriter, c.logWriter); err == nil {
+		err := pr.Start(ctx, c.logWriter, c.logWriter)
+		if err == nil {
 			ct.state = pr
-			return nil // Success
-		} else {
-			lastErr = err
-			if attempt < maxRetries {
-				logrus.Warnf("Process %s failed on attempt %d/%d: %v. Retrying %d more time(s)...", ct.Name, attempt, maxRetries, err, maxRetries-attempt)
-				// Exponential backoff: 100ms, 200ms, 400ms
-				select {
-				case <-time.After(time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond):
-				case <-ctx.Done():
-					return ctx.Err()
+			return nil
+		}
+		lastErr = err
+		if attempt < maxRetries {
+			logrus.Warnf("Process %s failed on attempt %d/%d: %v. Retrying %d more time(s)...", ct.Name, attempt, maxRetries, err, maxRetries-attempt)
+			// Exponential backoff: 100ms, 200ms, 400ms
+			select {
+			case <-time.After(time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			// Create fresh process state for next attempt
+			pr = &process.State{
+				Path:         ct.Path,
+				Args:         ct.Args,
+				Dir:          ct.Dir,
+				Env:          env,
+				StartTimeout: 60 * time.Second,
+				StopTimeout:  10 * time.Second,
+			}
+			if healthCheckHostPort != "" {
+				pr.HealthCheck = &process.HealthCheck{
+					URL: url.URL{
+						Scheme: "http",
+						Host:   healthCheckHostPort,
+						Path:   "/healthz",
+					},
 				}
-				// Create fresh process state for next attempt
-				pr = &process.State{
-					Path:         ct.Path,
-					Args:         ct.Args,
-					Dir:          ct.Dir,
-					Env:          env,
-					StartTimeout: 60 * time.Second,
-					StopTimeout:  10 * time.Second,
-				}
-				if healthCheckHostPort != "" {
-					pr.HealthCheck = &process.HealthCheck{
-						URL: url.URL{
-							Scheme: "http",
-							Host:   healthCheckHostPort,
-							Path:   "/healthz",
-						},
-					}
-				}
-				if err := pr.Init(ct.Name); err != nil {
-					return fmt.Errorf("failed to initialize process state for controller %q: %w", ct.Name, err)
-				}
+			}
+			if err := pr.Init(ct.Name); err != nil {
+				return fmt.Errorf("failed to initialize process state for controller %q: %w", ct.Name, err)
 			}
 		}
 	}

@@ -208,7 +208,7 @@ func pollURLUntilOK(ctx context.Context, url url.URL, interval time.Duration, re
 	for {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
 		if err == nil {
-			res, err := client.Do(req)
+			res, err := client.Do(req) //nolint:gosec // URL is always a locally-controlled health check endpoint
 			if err == nil {
 				res.Body.Close()
 				if res.StatusCode == http.StatusOK {
