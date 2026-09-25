@@ -10,10 +10,9 @@ import (
 
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/version"
 )
 
-func selectOSImageStream(streamFlag string, releaseVersionInjected bool) (types.OSImageStream, error) {
+func selectOSImageStream(streamFlag string) (types.OSImageStream, error) {
 	validStreams := types.OSImageStreamValues()
 	if streamFlag != "" {
 		s := types.OSImageStream(streamFlag)
@@ -21,10 +20,6 @@ func selectOSImageStream(streamFlag string, releaseVersionInjected bool) (types.
 			return "", fmt.Errorf("invalid value %q for --stream; must be one of %v", streamFlag, validStreams)
 		}
 		return s, nil
-	}
-
-	if !releaseVersionInjected {
-		return "", fmt.Errorf("release version metadata was not injected into the installer; specify --stream with one of %v", validStreams)
 	}
 
 	return rhcos.BuildDefaultOSImageStream(), nil
@@ -37,7 +32,7 @@ func printStreamJSON(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	osImageStream, err := selectOSImageStream(streamFlag, version.IsReleaseVersionInjected())
+	osImageStream, err := selectOSImageStream(streamFlag)
 	if err != nil {
 		return err
 	}

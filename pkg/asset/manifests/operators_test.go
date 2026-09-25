@@ -12,7 +12,30 @@ import (
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/version"
 )
+
+func TestDefaultCVOChannelUsesResolvedVersion(t *testing.T) {
+	originalRaw := version.Raw
+	t.Cleanup(func() { version.Raw = originalRaw })
+
+	tests := []struct {
+		name     string
+		raw      string
+		expected string
+	}{
+		{name: "build version", raw: "v4.18.3", expected: "stable-4.18"},
+		{name: "invalid build version", raw: "was not built correctly", expected: "stable-5.0"},
+		{name: "zero build version", raw: "0.0", expected: "stable-5.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version.Raw = tt.raw
+			assert.Equal(t, tt.expected, defaultCVOChannel())
+		})
+	}
+}
 
 // TestRedactedInstallConfig tests the redactedInstallConfig function.
 func TestRedactedInstallConfig(t *testing.T) {

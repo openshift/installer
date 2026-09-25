@@ -2,7 +2,45 @@ package versioninfo
 
 import (
 	"testing"
+
+	"github.com/openshift/installer/pkg/version"
 )
+
+func TestGetInfoUsesResolvedVersion(t *testing.T) {
+	originalRaw := version.Raw
+	t.Cleanup(func() { version.Raw = originalRaw })
+
+	tests := []struct {
+		name     string
+		raw      string
+		expected Info
+	}{
+		{
+			name:     "build version",
+			raw:      "v4.18.3",
+			expected: Info{Major: 4, Minor: 18, Patch: 3},
+		},
+		{
+			name:     "invalid build version",
+			raw:      "was not built correctly",
+			expected: fallbackVersion,
+		},
+		{
+			name:     "zero build version",
+			raw:      "0.0",
+			expected: fallbackVersion,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version.Raw = tt.raw
+			if actual := GetInfo(); actual != tt.expected {
+				t.Errorf("GetInfo() = %v, want %v", actual, tt.expected)
+			}
+		})
+	}
+}
 
 func Test_parseInfo(t *testing.T) {
 	tests := []struct {

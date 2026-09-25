@@ -9,7 +9,18 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/version"
 )
+
+func TestFeatureSetsForProfileUsesResolvedVersionFallback(t *testing.T) {
+	originalRaw := version.Raw
+	t.Cleanup(func() { version.Raw = originalRaw })
+	version.Raw = "was not built correctly"
+
+	featureSets, err := FeatureSetsForProfile()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, featureSets)
+}
 
 // TestStringsToIPs tests the StringsToIPs function.
 func TestStringsToIPs(t *testing.T) {
