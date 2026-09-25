@@ -23,6 +23,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/policy/retryaftermin"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/policy/useragent"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
@@ -49,6 +50,8 @@ type ARMClientConfig struct {
 	// when setting AzureAuthConfig.Cloud with "AZURESTACKCLOUD" to customize ARM endpoints
 	// while the cluster is not running on AzureStack.
 	DisableAzureStackCloud bool `json:"disableAzureStackCloud,omitempty" yaml:"disableAzureStackCloud,omitempty"`
+	// If true, HTTP responses' retry-after header will be overridden with the configured minimum retry-after value if lower than the configured minimum
+	EnableMinimumRetryAfter bool `json:"enableMinimumRetryAfter,omitempty" yaml:"enableMinimumRetryAfter,omitempty"`
 }
 
 func (config *ARMClientConfig) GetTenantID() string {
@@ -80,6 +83,10 @@ func GetAzCoreClientOption(armConfig *ARMClientConfig) (*policy.ClientOptions, *
 		}
 		if armConfig.CloudProviderBackoff && armConfig.CloudProviderBackoffRetries > 0 {
 			clientConfig.Retry.MaxRetries = armConfig.CloudProviderBackoffRetries
+		}
+		if armConfig.EnableMinimumRetryAfter {
+			// Add the minimum retry-after policy to enforce a minimum retry-after value configured in clientConfig.Retry.RetryDelay (default 5s)
+			clientConfig.PerRetryPolicies = append(clientConfig.PerRetryPolicies, retryaftermin.NewRetryAfterMinPolicy(clientConfig.Retry.RetryDelay))
 		}
 	}
 	return &clientConfig, env, nil

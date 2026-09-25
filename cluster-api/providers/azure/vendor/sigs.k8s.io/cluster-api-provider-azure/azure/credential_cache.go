@@ -104,12 +104,16 @@ func (c *credentialCache) GetOrStoreClientCert(tenantID, clientID string, cert, 
 }
 
 func (c *credentialCache) GetOrStoreManagedIdentity(opts *azidentity.ManagedIdentityCredentialOptions) (azcore.TokenCredential, error) {
+	var clientID string
+	if opts.ID != nil {
+		clientID = opts.ID.String()
+	}
 	return c.getOrStore(
 		credentialCacheKey{
 			authorityHost:  opts.Cloud.ActiveDirectoryAuthorityHost,
 			credentialType: CredentialTypeManagedIdentity,
 			// tenantID not used for managed identity
-			clientID: opts.ID.String(),
+			clientID: clientID,
 		},
 		func() (azcore.TokenCredential, error) {
 			return c.credFactory.newManagedIdentityCredential(opts)
