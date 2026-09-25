@@ -146,10 +146,10 @@ func getClients() (*vCenterClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to vCenter %s", vcenter)
-	vim25Client, restClient, logoutFunction, err := CreateVSphereClients(context.TODO(),
-		vcenter,
-		username,
-		password)
+		sess, cleanup, err := NewSession(context.TODO(),
+			vcenter,
+			username,
+			password)
 
 	// Survey does not allow validation of groups of input
 	// so we perform our own validation.
@@ -161,9 +161,9 @@ func getClients() (*vCenterClient, error) {
 		VCenter:    vcenter,
 		Username:   username,
 		Password:   password,
-		Client:     vim25Client,
-		RestClient: restClient,
-		Logout:     logoutFunction,
+		Client:     sess.Vim25Client(),
+		RestClient: sess.RestClient(),
+		Logout:     cleanup,
 	}, nil
 }
 
