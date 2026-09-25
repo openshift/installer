@@ -177,6 +177,18 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 		semVer := convertToSemver(v)
 		logrus.Infof("Found potential image match, version: %s", v)
 
+		// Paid marketplace images (unlike ARO's) always version using the OCP
+		// x.y release, e.g. "4.18.2026012111". Publishers have occasionally
+		// published stray images under the same offer/sku using a RHEL-style
+		// version instead (e.g. "9.6.2026030314"), which convertToSemver
+		// happily parses as a valid, much "greater" semver and which
+		// checkIfNewer's minor-only comparison doesn't catch. Reject any
+		// candidate whose major version doesn't match the OCP release.
+		if pub != pubARO && semver.Major(semVer) != semver.Major(fmt.Sprintf("v%s", xyVersion)) {
+			logrus.Infof("Skipping version %s as it does not match the expected major version of release %s", v, xyVersion)
+			continue
+		}
+
 		// Ensure that the image is not from a later Y stream,
 		// e.g. if we are populating a 4.19 stream, we don't want 4.20 images,
 		// but 4.18 would be ok if 4.19 is not available yet.
@@ -225,16 +237,25 @@ func (az *MarketplaceStream) getImage(ctx context.Context, pub, offer, sku, xyVe
 // gen1SKU: "aro_418"
 // gen2SKU: "418-v2"
 // version: "418.94.20241009" (removes timestamp & build number)
+//
+// Starting with the 4.22 release, ARO renamed the gen2 SKUs to include
+// the "aro_" prefix, e.g. "aro_422-v2" and "aro_422-arm" instead of
+// "422-v2" and "422-arm".
 func parseAROSKUs(release, arch string) (string, string) {
 	xyVersion := strings.ReplaceAll(release, ".", "")
+	gen2Prefix := ""
+	if semver.Compare(fmt.Sprintf("v%s", release), "v4.22") >= 0 {
+		gen2Prefix = "aro_"
+	}
+
 	var gen1SKU, gen2SKU string
 	switch arch {
 	case x86:
 		gen1SKU = fmt.Sprintf("aro_%s", xyVersion)
-		gen2SKU = fmt.Sprintf("%s-v2", xyVersion)
+		gen2SKU = fmt.Sprintf("%s%s-v2", gen2Prefix, xyVersion)
 	case arm64:
 		gen1SKU = ""
-		gen2SKU = fmt.Sprintf("%s-arm", xyVersion)
+		gen2SKU = fmt.Sprintf("%s%s-arm", gen2Prefix, xyVersion)
 	}
 	return gen1SKU, gen2SKU
 }
