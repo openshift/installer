@@ -17,6 +17,7 @@ limitations under the License.
 package cos
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,6 +26,7 @@ import (
 	"golang.org/x/net/http/httpproxy"
 
 	"github.com/IBM/ibm-cos-sdk-go/aws"
+	"github.com/IBM/ibm-cos-sdk-go/aws/credentials"
 	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
 	"github.com/IBM/ibm-cos-sdk-go/aws/request"
 	cosSession "github.com/IBM/ibm-cos-sdk-go/aws/session"
@@ -75,6 +77,22 @@ func (s *Service) GetObjectRequest(input *s3.GetObjectInput) (*request.Request, 
 	return s.client.GetObjectRequest(input)
 }
 
+// PresignedURL generates a time-limited pre-signed HTTPS URL for a GET on the given
+// bucket/key using AWS SigV4 HMAC signing. The URL encodes the signature as query
+// parameters and requires no Authorization header — it can be fetched by a plain
+// HTTP GET (e.g. from an Ignition bootstrap node). Requires an HMAC-credential client.
+func (s *Service) PresignedURL(bucket, key string, expiry time.Duration) (string, error) {
+	req, _ := s.client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	presignedURL, err := req.Presign(expiry)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate pre-signed URL for %s/%s: %w", bucket, key, err)
+	}
+	return presignedURL, nil
+}
+
 // ListObjects returns the list of objects in a bucket.
 func (s *Service) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
 	return s.client.ListObjects(input)
@@ -96,6 +114,45 @@ var NewServiceFunc = NewService // Default to the original function
 // NewServiceWrapper returns a new service for the IBM Cloud COS api client, useful in unit testing.
 func NewServiceWrapper(options ServiceOptions, apikey, serviceInstance string) (Cos, error) {
 	return NewServiceFunc(options, apikey, serviceInstance)
+}
+
+// NewServiceWithHMAC returns a COS client that authenticates via AWS SigV4 HMAC credentials
+// (access_key_id / secret_access_key) rather than an IBM IAM API key. The resulting client
+// supports pre-signed URL generation via PresignedURL().
+func NewServiceWithHMAC(options ServiceOptions, accessKeyID, secretAccessKey string) (Cos, error) {
+	if options.Options == nil {
+		options.Options = &cosSession.Options{}
+	}
+	options.Config.S3ForcePathStyle = aws.Bool(true)
+	options.Config.HTTPClient = &http.Client{
+		Transport: &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+			},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+	// Use plain AWS static credentials — this selects the SigV4 signer (ProviderType ""),
+	// not the IBM IAM OAuth signer, enabling req.Presign() to embed the signature as query
+	// parameters rather than an Authorization header.
+	options.Config.Credentials = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
+
+	sess, err := cosSession.NewSessionWithOptions(*options.Options)
+	if err != nil {
+		return nil, err
+	}
+	return &Service{
+		client: s3.New(sess),
+	}, nil
 }
 
 // NewService returns a new service for the IBM Cloud Resource Controller api client.

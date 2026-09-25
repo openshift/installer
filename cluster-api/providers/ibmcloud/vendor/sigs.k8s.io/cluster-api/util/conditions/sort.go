@@ -67,6 +67,7 @@ func defaultSortLessFunc(i, j metav1.Condition) bool {
 // | ControlPlaneComponentsHealthy  |         | x   |    |    |    |         |
 // | NodeHealthy                    |         |     |    |    |    | x       |
 // | NodeReady                      |         |     |    |    |    | x       |
+// | NodeKubeadmLabelsAndTaintsSet  |         |     |    |    |    | x       |
 // | EtcdPodHealthy                 |         |     |    |    |    | x       |
 // | EtcdMemberHealthy              |         |     |    |    |    | x       |
 // | APIServerPodHealthy            |         |     |    |    |    | x       |
@@ -76,6 +77,7 @@ func defaultSortLessFunc(i, j metav1.Condition) bool {
 // | OwnerRemediated                |         |     |    |    |    | x       |
 // | -- Operations --               |         |     |    |    |    |         |
 // | TopologyReconciled             | x       |     |    |    |    |         |
+// | Updating                       |         |     |    |    |    | x       |
 // | RollingOut                     | x       | x   | x  |    | x  |         |
 // | Remediating                    | x       | x   | x  | x  | x  |         |
 // | ScalingDown                    | x       | x   | x  | x  | x  |         |
@@ -109,6 +111,7 @@ var order = []string{
 	kubeadmControlPlaneControlPlaneComponentsHealthyCondition,
 	clusterv1.MachineNodeHealthyCondition,
 	clusterv1.MachineNodeReadyCondition,
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetCondition,
 	kubeadmControlPlaneMachineEtcdPodHealthyCondition,
 	kubeadmControlPlaneMachineEtcdMemberHealthyCondition,
 	kubeadmControlPlaneMachineAPIServerPodHealthyCondition,
@@ -117,6 +120,7 @@ var order = []string{
 	clusterv1.MachineHealthCheckSucceededCondition,
 	clusterv1.MachineOwnerRemediatedCondition,
 	clusterv1.ClusterTopologyReconciledCondition,
+	clusterv1.MachineUpdatingCondition,
 	clusterv1.RollingOutCondition,
 	clusterv1.RemediatingCondition,
 	clusterv1.ScalingDownCondition,
@@ -139,13 +143,14 @@ const (
 
 // Constants inlined for ordering (we want to avoid importing the KCP API package).
 const (
-	kubeadmControlPlaneCertificatesAvailableCondition              = "CertificatesAvailable"
-	kubeadmControlPlaneInitializedCondition                        = "Initialized"
-	kubeadmControlPlaneEtcdClusterHealthyCondition                 = "EtcdClusterHealthy"
-	kubeadmControlPlaneControlPlaneComponentsHealthyCondition      = "ControlPlaneComponentsHealthy"
-	kubeadmControlPlaneMachineAPIServerPodHealthyCondition         = "APIServerPodHealthy"
-	kubeadmControlPlaneMachineControllerManagerPodHealthyCondition = "ControllerManagerPodHealthy"
-	kubeadmControlPlaneMachineSchedulerPodHealthyCondition         = "SchedulerPodHealthy"
-	kubeadmControlPlaneMachineEtcdPodHealthyCondition              = "EtcdPodHealthy"
-	kubeadmControlPlaneMachineEtcdMemberHealthyCondition           = "EtcdMemberHealthy"
+	kubeadmControlPlaneCertificatesAvailableCondition                = "CertificatesAvailable"
+	kubeadmControlPlaneInitializedCondition                          = "Initialized"
+	kubeadmControlPlaneEtcdClusterHealthyCondition                   = "EtcdClusterHealthy"
+	kubeadmControlPlaneControlPlaneComponentsHealthyCondition        = "ControlPlaneComponentsHealthy"
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetCondition = "NodeKubeadmLabelsAndTaintsSet"
+	kubeadmControlPlaneMachineAPIServerPodHealthyCondition           = "APIServerPodHealthy"
+	kubeadmControlPlaneMachineControllerManagerPodHealthyCondition   = "ControllerManagerPodHealthy"
+	kubeadmControlPlaneMachineSchedulerPodHealthyCondition           = "SchedulerPodHealthy"
+	kubeadmControlPlaneMachineEtcdPodHealthyCondition                = "EtcdPodHealthy"
+	kubeadmControlPlaneMachineEtcdMemberHealthyCondition             = "EtcdMemberHealthy"
 )

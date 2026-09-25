@@ -57,9 +57,9 @@ func (o *ClusterUninstaller) listSecurityGroupRules(securityGroupID string) (clo
 	for _, securityGroupRule := range resources.Rules {
 		switch reflect.TypeOf(securityGroupRule).String() {
 
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+		case "*vpcv1.SecurityGroupRuleProtocolAny":
 			{
-				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleProtocolAny)
 				result = append(result, cloudResource{
 					key:      *rule.ID,
 					name:     *rule.ID,

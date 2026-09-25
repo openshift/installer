@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/utils/ptr"
-	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/vpc/v1beta2"
 
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
@@ -36,7 +36,6 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// SSH inbound cluster-wide
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -49,7 +48,6 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 			},
 			{
 				// ICMP inbound cluster-wide
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolIcmp,
@@ -63,7 +61,6 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 			},
 			{
 				// VXLAN and Geneve - port 4789
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -81,7 +78,6 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 			},
 			{
 				// VXLAN and Geneve - port 6081
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -99,7 +95,6 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 			},
 			{
 				// Outbound for cluster-wide
-				Action: capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.VPCSecurityGroupRulePrototype{
 					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolAll,
 					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
@@ -138,7 +133,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Host level services - TCP
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -156,7 +150,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			},
 			{
 				// Host level services - UDP
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -174,7 +167,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			},
 			{
 				// Kubernetes default ports
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -192,7 +184,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			},
 			{
 				// IPsec IKE - port 500
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -210,7 +201,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			},
 			{
 				// IPsec IKE NAT-T - port 4500
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -229,7 +219,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			{
 				// Kubernetes node ports - TCP
 				// Allows access to node ports from within VPC subnets to accommodate CCM LBs
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -243,7 +232,6 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 			{
 				// Kubernetes node ports - UDP
 				// Allows access to node ports from within VPC subnets to accommodate CCM LBs
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -268,7 +256,6 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Kubernetes API LB - inbound
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -285,7 +272,6 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 			},
 			{
 				// Kubernetes API LB - outbound
-				Action: capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
 						MaximumPort: 6443,
@@ -303,7 +289,6 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 			},
 			{
 				// Machine Config Server LB - inbound
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -321,7 +306,6 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 			},
 			{
 				// Machine Config Server LB - outbound
-				Action: capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
 						MaximumPort: 22623,
@@ -351,7 +335,6 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Kubernetes API - inbound via cluster
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -369,7 +352,6 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 			},
 			{
 				// Kubernetes API - inbound via LB
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -387,7 +369,6 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 			},
 			{
 				// Machine Config Server - inbound via LB
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -405,7 +386,6 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 			},
 			{
 				// Kubernetes default ports
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -433,7 +413,6 @@ func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// etcd internal traffic
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -479,7 +458,6 @@ func buildBootstrapSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// SSH traffic
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
@@ -492,7 +470,6 @@ func buildBootstrapSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet
 			},
 			{
 				// Konnectivity
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
 				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
 					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
