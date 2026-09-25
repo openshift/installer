@@ -7,7 +7,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeControlPlaneSignerCertKey is a key/cert pair that signs the kube control-plane client certs.
@@ -19,13 +18,14 @@ var _ asset.WritableAsset = (*KubeControlPlaneSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *KubeControlPlaneSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{&SignerKeyParams{}, &installconfig.InstallConfig{}}
 }
 
 // Generate generates the root-ca key and cert pair.
 func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents asset.Parents) error {
+	signerKeyParams := &SignerKeyParams{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(installConfig)
+	parents.Get(signerKeyParams, installConfig)
 	cfg := &CertCfg{
 		Subject: pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
 		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
@@ -33,7 +33,7 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kube-control-plane-signer", signerKeyParams.LegacyPKIConfig())
 }
 
 // Name returns the human-friendly name of the asset.
