@@ -224,7 +224,14 @@ func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) (
 
 func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config, privateLBs []string) error {
 	if len(privateLBs) > 0 {
-		keyRaw, certRaw, err := tls.RegenerateMCSCertKey(in.InstallConfig, in.RootCA, privateLBs)
+		// Reuse the algorithm and size/curve of the existing MCS key so the
+		// regenerated key stays consistent with the PKI profile applied during
+		// asset generation.
+		existingKey, err := existingMCSKey(config)
+		if err != nil {
+			return fmt.Errorf("failed to read existing MCS key: %w", err)
+		}
+		keyRaw, certRaw, err := tls.RegenerateMCSCertKey(in.InstallConfig, in.RootCA, privateLBs, existingKey)
 		if err != nil {
 			return fmt.Errorf("failed to regenerate MCS Cert and Key: %w", err)
 		}
@@ -267,6 +274,40 @@ func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config
 		}
 	}
 	return nil
+}
+
+// existingMCSKey extracts the PEM-encoded MCS private key from the MCS TLS secret
+// embedded in the bootstrap ignition config. The secret is always present (it is an
+// unconditional bootkube manifest), so a missing secret or key indicates corrupted
+// state and returns an error rather than silently regenerating with a default key.
+func existingMCSKey(config *igntypes.Config) ([]byte, error) {
+	for i := range config.Storage.Files {
+		fileData := config.Storage.Files[i]
+		if fileData.Path != mcsCertKeyFilepath {
+			continue
+		}
+		if fileData.Contents.Source == nil {
+			return nil, fmt.Errorf("ignition file %s has no contents", mcsCertKeyFilepath)
+		}
+		contents := strings.Split(*fileData.Contents.Source, ",")
+		if len(contents) < 2 {
+			return nil, fmt.Errorf("ignition file %s has malformed contents", mcsCertKeyFilepath)
+		}
+		rawDecodedText, err := base64.StdEncoding.DecodeString(contents[1])
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode contents of ignition file %s: %w", mcsCertKeyFilepath, err)
+		}
+		mcsSecret := &corev1.Secret{}
+		if err := yaml.Unmarshal(rawDecodedText, mcsSecret); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal MCSCertKey within ignition: %w", err)
+		}
+		key := mcsSecret.Data[corev1.TLSPrivateKeyKey]
+		if len(key) == 0 {
+			return nil, fmt.Errorf("MCS secret in ignition file %s has no %q", mcsCertKeyFilepath, corev1.TLSPrivateKeyKey)
+		}
+		return key, nil
+	}
+	return nil, fmt.Errorf("MCS TLS secret %s not found in ignition config", mcsCertKeyFilepath)
 }
 
 func updateUserDataSecret(in IgnitionInput, role string, config *igntypes.Config, updatedPointerIgnition []byte) error {

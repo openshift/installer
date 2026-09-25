@@ -3,6 +3,7 @@ package tls
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"fmt"
 	"os"
 
@@ -312,13 +313,23 @@ func (c *SelfSignedCertKey) generateSelfSignedCert(cfg *CertCfg, filenameBase st
 	return nil
 }
 
-// RegenerateSignedCertKey regenerates a cert/key pair signed by the specified parent CA.
-// It does not write the cert/key pair to an asset file.
+// RegenerateSignedCertKey re-signs a certificate for the required existingKeyPEM,
+// signed by the specified parent CA, without writing the cert/key pair to an asset
+// file.
+//
+// The existing key is reused as-is: only the certificate is regenerated (for
+// example to add SANs). This keeps the key material — and thus its algorithm and
+// size/curve — consistent with what asset generation produced under the PKI profile.
 func RegenerateSignedCertKey(
 	cfg *CertCfg,
 	parentCA CertKeyInterface,
 	appendParent AppendParentChoice,
+	existingKeyPEM []byte,
 ) ([]byte, []byte, error) {
+	if len(existingKeyPEM) == 0 {
+		return nil, nil, fmt.Errorf("existing key is required to regenerate a certificate")
+	}
+
 	caKey, err := PemToPrivateKey(parentCA.Key())
 	if err != nil {
 		logrus.Debugf("Failed to parse private key: %s", err)
@@ -331,23 +342,27 @@ func RegenerateSignedCertKey(
 		return nil, nil, fmt.Errorf("failed to parse x509 certificate: %w", err)
 	}
 
-	key, crt, generateErr := GenerateSignedCertificate(caKey, caCert, cfg)
-	if generateErr != nil {
-		logrus.Debugf("Failed to generate signed cert/key pair: %s", generateErr)
-		return nil, nil, fmt.Errorf("failed to generate signed cert/key pair: %w", generateErr)
-	}
-
-	keyRaw, err := PrivateKeyToPem(key)
+	existingKey, err := PemToPrivateKey(existingKeyPEM)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to encode private key to PEM: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse existing private key: %w", err)
 	}
-	certRaw := CertToPem(crt)
+	key, ok := existingKey.(crypto.Signer)
+	if !ok {
+		return nil, nil, fmt.Errorf("existing private key of type %T does not implement crypto.Signer", existingKey)
+	}
 
+	crt, err := signCertificate(caKey, caCert, cfg, key)
+	if err != nil {
+		logrus.Debugf("Failed to regenerate signed certificate: %s", err)
+		return nil, nil, fmt.Errorf("failed to regenerate signed certificate: %w", err)
+	}
+
+	certRaw := CertToPem(crt)
 	if appendParent {
 		certRaw = bytes.Join([][]byte{certRaw, CertToPem(caCert)}, []byte("\n"))
 	}
 
-	return keyRaw, certRaw, nil
+	return existingKeyPEM, certRaw, nil
 }
 
 // hostnamesFromCfg extracts hostnames (DNS names and IP addresses) from CertCfg.

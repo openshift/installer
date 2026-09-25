@@ -2,6 +2,7 @@ package tls
 
 import (
 	"context"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/openshift/installer/pkg/types"
 	libcrypto "github.com/openshift/library-go/pkg/crypto"
 	libpki "github.com/openshift/library-go/pkg/pki"
 )
@@ -331,4 +333,117 @@ func TestSelfSignedCertKeyGenerateWithKeyGen(t *testing.T) {
 			assert.True(t, cert.IsCA)
 		})
 	}
+}
+
+func TestRegenerateSignedCertKeyReusesExistingKey(t *testing.T) {
+	// keyPEM builds a PEM-encoded private key of the given params, standing in
+	// for the existing MCS key that regeneration reads from the ignition config.
+	keyPEM := func(t *testing.T, params PrivateKeyParams) []byte {
+		t.Helper()
+		key, err := GeneratePrivateKeyWithParams(params)
+		assert.NoError(t, err)
+		pemBytes, err := PrivateKeyToPem(key)
+		assert.NoError(t, err)
+		return pemBytes
+	}
+
+	testCases := []struct {
+		name            string
+		existingParams  PrivateKeyParams
+		expectPubKeyAlg x509.PublicKeyAlgorithm
+	}{
+		{
+			name: "reuses existing RSA 4096 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmRSA,
+				RSAKeySize: 4096,
+			},
+			expectPubKeyAlg: x509.RSA,
+		},
+		{
+			name: "reuses existing ECDSA P256 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmECDSA,
+				ECDSACurve: types.ECDSACurveP256,
+			},
+			expectPubKeyAlg: x509.ECDSA,
+		},
+		{
+			name: "reuses existing ECDSA P384 key",
+			existingParams: PrivateKeyParams{
+				Algorithm:  types.KeyAlgorithmECDSA,
+				ECDSACurve: types.ECDSACurveP384,
+			},
+			expectPubKeyAlg: x509.ECDSA,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rootCA := &SelfSignedCertKey{}
+			rootCACfg := &CertCfg{
+				Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+				Validity: ValidityTenYears(),
+				IsCA:     true,
+			}
+			err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", nil)
+			assert.NoError(t, err, "failed to generate root CA")
+
+			existingKeyPEM := keyPEM(t, tc.existingParams)
+
+			leafCfg := &CertCfg{
+				Subject:      pkix.Name{CommonName: "system:machine-config-server"},
+				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+				Validity:     ValidityTenYears(),
+				DNSNames:     []string{"test.openshift.io"},
+			}
+
+			keyRaw, certRaw, err := RegenerateSignedCertKey(leafCfg, rootCA, DoNotAppendParent, existingKeyPEM)
+			assert.NoError(t, err)
+
+			// The existing key must be reused verbatim: only the cert is regenerated.
+			assert.Equal(t, existingKeyPEM, keyRaw, "existing key was not reused verbatim")
+
+			// The regenerated cert must be signed over the existing key's public key,
+			// carry the same algorithm, and chain to the CA.
+			cert, err := PemToCertificate(certRaw)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectPubKeyAlg, cert.PublicKeyAlgorithm, "unexpected cert public key algorithm")
+
+			existingKey, err := PemToPrivateKey(existingKeyPEM)
+			assert.NoError(t, err)
+			assert.Equal(t, existingKey.(crypto.Signer).Public(), cert.PublicKey, "cert public key does not match reused key")
+
+			certPool := x509.NewCertPool()
+			if !certPool.AppendCertsFromPEM(rootCA.Cert()) {
+				t.Fatal("failed to append CA cert to pool")
+			}
+			_, err = cert.Verify(x509.VerifyOptions{
+				Roots:     certPool,
+				DNSName:   "test.openshift.io",
+				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+			})
+			assert.NoError(t, err, "regenerated cert failed to verify against CA")
+		})
+	}
+}
+
+func TestRegenerateSignedCertKeyRequiresExistingKey(t *testing.T) {
+	rootCA := &SelfSignedCertKey{}
+	rootCACfg := &CertCfg{
+		Subject:  pkix.Name{CommonName: "test-root-ca", OrganizationalUnit: []string{"openshift"}},
+		Validity: ValidityTenYears(),
+		IsCA:     true,
+	}
+	err := rootCA.Generate(context.Background(), rootCACfg, "test-root-ca", nil)
+	assert.NoError(t, err, "failed to generate root CA")
+
+	leafCfg := &CertCfg{
+		Subject:  pkix.Name{CommonName: "system:machine-config-server"},
+		Validity: ValidityTenYears(),
+		DNSNames: []string{"test.openshift.io"},
+	}
+
+	_, _, err = RegenerateSignedCertKey(leafCfg, rootCA, DoNotAppendParent, nil)
+	assert.EqualError(t, err, "existing key is required to regenerate a certificate")
 }

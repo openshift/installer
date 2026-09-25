@@ -117,6 +117,7 @@ require (
 	k8s.io/api v0.36.2
 	k8s.io/apiextensions-apiserver v0.36.0
 	k8s.io/apimachinery v0.36.2
+	k8s.io/apiserver v0.36.0
 	k8s.io/client-go v0.36.0
 	k8s.io/code-generator v0.36.0
 	k8s.io/klog v1.0.0
@@ -343,7 +344,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
-	k8s.io/apiserver v0.36.0
 	k8s.io/cli-runtime v0.36.0 // indirect
 	k8s.io/cluster-bootstrap v0.35.5 // indirect
 	k8s.io/component-base v0.36.0 // indirect

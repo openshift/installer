@@ -98,8 +98,13 @@ func (a *MCSCertKey) Name() string {
 	return "Certificate (mcs)"
 }
 
-// RegenerateMCSCertKey generates the cert/key pair based on input values.
-func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLBs []string) ([]byte, []byte, error) {
+// RegenerateMCSCertKey re-signs the MCS certificate for the current key based on
+// input values.
+//
+// existingKeyPEM is the required PEM-encoded private key from the current MCS
+// cert/key material. It is reused as-is and only the certificate is regenerated,
+// so the key stays consistent with the PKI profile applied during asset generation.
+func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLBs []string, existingKeyPEM []byte) ([]byte, []byte, error) {
 	hostname := internalAPIAddress(ic.Config)
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
@@ -112,5 +117,5 @@ func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLB
 		cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(ip))
 		cfg.DNSNames = append(cfg.DNSNames, ip)
 	}
-	return RegenerateSignedCertKey(cfg, ca, DoNotAppendParent)
+	return RegenerateSignedCertKey(cfg, ca, DoNotAppendParent, existingKeyPEM)
 }
