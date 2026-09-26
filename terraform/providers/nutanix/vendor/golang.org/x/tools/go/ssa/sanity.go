@@ -8,6 +8,7 @@ package ssa
 // Currently it checks CFG invariants but little at the instruction level.
 
 import (
+	"bytes"
 	"fmt"
 	"go/types"
 	"io"
@@ -131,6 +132,11 @@ func (s *sanity) checkInstr(idx int, instr Instruction) {
 
 	case *BinOp:
 	case *Call:
+		if common := instr.Call; common.IsInvoke() {
+			if !types.IsInterface(common.Value.Type()) {
+				s.errorf("invoke on %s (%s) which is not an interface type (or type param)", common.Value, common.Value.Type())
+			}
+		}
 	case *ChangeInterface:
 	case *ChangeType:
 	case *SliceToArrayPointer:
@@ -343,7 +349,7 @@ func (s *sanity) checkBlock(b *BasicBlock, index int) {
 
 			// Check that "untyped" types only appear on constant operands.
 			if _, ok := (*op).(*Const); !ok {
-				if basic, ok := (*op).Type().(*types.Basic); ok {
+				if basic, ok := (*op).Type().Underlying().(*types.Basic); ok {
 					if basic.Info()&types.IsUntyped != 0 {
 						s.errorf("operand #%d of %s is untyped: %s", i, instr, basic)
 					}
@@ -412,14 +418,17 @@ func (s *sanity) checkFunction(fn *Function) bool {
 		s.errorf("nil Prog")
 	}
 
+	var buf bytes.Buffer
 	_ = fn.String()               // must not crash
 	_ = fn.RelString(fn.relPkg()) // must not crash
+	WriteFunction(&buf, fn)       // must not crash
 
 	// All functions have a package, except delegates (which are
 	// shared across packages, or duplicated as weak symbols in a
 	// separate-compilation model), and error.Error.
 	if fn.Pkg == nil {
-		if strings.HasPrefix(fn.Synthetic, "wrapper ") ||
+		if strings.HasPrefix(fn.Synthetic, "from type information (on demand)") ||
+			strings.HasPrefix(fn.Synthetic, "wrapper ") ||
 			strings.HasPrefix(fn.Synthetic, "bound ") ||
 			strings.HasPrefix(fn.Synthetic, "thunk ") ||
 			strings.HasSuffix(fn.name, "Error") ||
