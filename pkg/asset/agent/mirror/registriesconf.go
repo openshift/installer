@@ -189,14 +189,23 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
-	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
-		return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
-	}
-
 	digestMirrorSources := []types.ImageDigestSource{}
-	if len(deprecatedImageContentSources) > 0 {
+	switch {
+	case len(deprecatedImageContentSources) > 0 && len(imageDigestSources) > 0:
+		logrus.Warnf("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present, merging with IDMS taking precedence")
+		digestMirrorSources = append(digestMirrorSources, imageDigestSources...)
+		idmsSources := make(map[string]bool)
+		for _, s := range imageDigestSources {
+			idmsSources[s.Source] = true
+		}
+		for _, converted := range bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources) {
+			if !idmsSources[converted.Source] {
+				digestMirrorSources = append(digestMirrorSources, converted)
+			}
+		}
+	case len(deprecatedImageContentSources) > 0:
 		digestMirrorSources = bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
-	} else if len(imageDigestSources) > 0 {
+	case len(imageDigestSources) > 0:
 		digestMirrorSources = append(digestMirrorSources, imageDigestSources...)
 	}
 

@@ -330,6 +330,94 @@ unqualified-search-registries = []
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
+		{
+			name: "add-nodes command - both ICSP and IDMS present with no overlap",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+					DeprecatedImageContentSources: []types.ImageContentSource{
+						{
+							Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: `additional-layer-store-auth-helper = ""
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
+		{
+			name: "add-nodes command - overlapping ICSP and IDMS sources, IDMS wins",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+					DeprecatedImageContentSources: []types.ImageContentSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/old-icsp-mirror",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: `additional-layer-store-auth-helper = ""
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
