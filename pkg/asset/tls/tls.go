@@ -22,6 +22,7 @@ import (
 	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	libpki "github.com/openshift/library-go/pkg/pki"
 )
 
 const (
@@ -135,6 +136,7 @@ type CertCfg struct {
 	Subject      pkix.Name
 	Validity     time.Duration
 	IsCA         bool
+	CertType     libpki.CertificateType
 }
 
 // rsaPublicKey reflects the ASN.1 structure of a PKCS#1 public key.
@@ -183,7 +185,7 @@ func SelfSignedCertificate(cfg *CertCfg, key crypto.Signer) (*x509.Certificate, 
 func SignedCertificate(
 	cfg *CertCfg,
 	csr *x509.CertificateRequest,
-	key *rsa.PrivateKey,
+	key crypto.Signer,
 	caCert *x509.Certificate,
 	caKey crypto.PrivateKey,
 ) (*x509.Certificate, error) {
@@ -241,33 +243,42 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 // GenerateSignedCertificate generate a key and cert defined by CertCfg and signed by CA.
 func GenerateSignedCertificate(caKey crypto.PrivateKey, caCert *x509.Certificate,
 	cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
-
 	// create a private key
 	key, err := PrivateKey()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to generate private key")
 	}
 
+	cert, err := signCertificate(caKey, caCert, cfg, key)
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, cert, nil
+}
+
+// signCertificate builds a CSR for the given key and returns a certificate defined
+// by CertCfg and signed by the CA. The key may be RSA or ECDSA.
+func signCertificate(caKey crypto.PrivateKey, caCert *x509.Certificate, cfg *CertCfg, key crypto.Signer) (*x509.Certificate, error) {
 	// create a CSR
 	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to create certificate request")
+		return nil, errors.Wrap(err, "failed to create certificate request")
 	}
 
 	csr, err := x509.ParseCertificateRequest(csrBytes)
 	if err != nil {
 		logrus.Debugf("Failed to parse x509 certificate request: %s", err)
-		return nil, nil, errors.Wrap(err, "error parsing x509 certificate request")
+		return nil, errors.Wrap(err, "error parsing x509 certificate request")
 	}
 
 	// create a cert
 	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
 	if err != nil {
 		logrus.Debugf("Failed to create a signed certificate: %s", err)
-		return nil, nil, errors.Wrap(err, "failed to create a signed certificate")
+		return nil, errors.Wrap(err, "failed to create a signed certificate")
 	}
-	return key, cert, nil
+	return cert, nil
 }
 
 // GenerateSelfSignedCertificate generates a key/cert pair defined by CertCfg

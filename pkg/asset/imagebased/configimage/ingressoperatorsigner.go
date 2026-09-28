@@ -37,7 +37,10 @@ var _ asset.Asset = (*IngressOperatorSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the the cert/key pair.
 func (a *IngressOperatorSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{&installconfig.InstallConfig{}}
+	return []asset.Asset{
+		&installconfig.InstallConfig{},
+		&tls.SignerKeyParams{},
+	}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
@@ -45,27 +48,38 @@ func (a *IngressOperatorSignerCertKey) Generate(ctx context.Context, dependencie
 	signerName := fmt.Sprintf("%s@%d", "ingress-operator", time.Now().Unix())
 
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	pkiCfg := &tls.SignerKeyParams{}
+	dependencies.Get(installConfig, pkiCfg)
 
-	cfg := &tls.CertCfg{
-		Subject:   pkix.Name{CommonName: signerName},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  tls.ValidityOneYear(installConfig) * 2,
-		IsCA:      true,
+	if !pkiCfg.ConfigurablePKIEnabled {
+		cfg := &tls.CertCfg{
+			Subject:   pkix.Name{CommonName: signerName},
+			KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			Validity:  tls.ValidityOneYear(installConfig) * 2,
+			IsCA:      true,
+		}
+		key, crt, err := generateSelfSignedCertificate(cfg)
+		if err != nil {
+			return err
+		}
+		a.KeyRaw, err = tls.PrivateKeyToPem(key)
+		if err != nil {
+			return fmt.Errorf("failed to encode private key to PEM: %w", err)
+		}
+		a.CertRaw = tls.CertToPem(crt)
+		return nil
 	}
 
-	key, crt, err := generateSelfSignedCertificate(cfg)
+	keyGen, err := pkiCfg.ResolveSignerKeyGen("ingress.router-signer")
 	if err != nil {
 		return err
 	}
-
-	a.KeyRaw, err = tls.PrivateKeyToPem(key)
-	if err != nil {
-		return fmt.Errorf("failed to encode private key to PEM: %w", err)
+	cfg := &tls.CertCfg{
+		Subject:  pkix.Name{CommonName: signerName},
+		Validity: tls.ValidityOneYear(installConfig) * 2,
+		IsCA:     true,
 	}
-	a.CertRaw = tls.CertToPem(crt)
-
-	return nil
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "ingress-operator-signer", keyGen)
 }
 
 // IngressOperatorCABundle is the asset the generates the ingress-operator-signer-ca-bundle,
