@@ -80,8 +80,12 @@ type Provider struct {
 	computeClientOptions  *arm.ClientOptions
 	publicLBIP            string
 	publicLBIPv6          string
+	wifIssuerURL          string
+	wifIdentities         map[string]WIFIdentity
+	wifTokenPaths         map[string]string
 }
 
+var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
@@ -91,6 +95,30 @@ var _ clusterapi.Timeouts = (*Provider)(nil)
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
 	return aztypes.Name
+}
+
+// PreProvision creates WIF infrastructure for managed mode, or sets issuer URL for manual mode.
+func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	if in.InstallConfig.Config.Platform.Azure == nil || !in.InstallConfig.Config.Platform.Azure.IsWIFEnabled() {
+		return nil
+	}
+
+	// Initialize token paths for both modes.
+	p.wifTokenPaths = make(map[string]string, len(in.CredentialsRequests.Requests))
+	for _, cr := range in.CredentialsRequests.Requests {
+		if cr.CloudTokenPath != "" {
+			p.wifTokenPaths[cr.SecretRefNamespace+"/"+cr.SecretRefName] = cr.CloudTokenPath
+		}
+	}
+
+	// Set issuer URL for manual mode.
+	if in.InstallConfig.Config.Platform.Azure.IsWIFManual() {
+		p.wifIssuerURL = in.InstallConfig.Config.Platform.Azure.WIFMode.IssuerURL
+		return nil
+	}
+
+	// Provision WIF infrastructure for managed mode.
+	return p.provisionWIF(ctx, in)
 }
 
 // NetworkTimeout uses the default timeout of 15 minutes to satisfy the Timeouts interface.
@@ -981,7 +1009,7 @@ func isNotFoundError(err error) bool {
 
 // Ignition provisions the Azure container that holds the bootstrap ignition
 // file.
-func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+func (p *Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -1016,6 +1044,15 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	ignOutput, err := editIgnition(ctx, in, p.publicLBIP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap, master or worker ignition: %w", err)
+	}
+
+	// Inject WIF manifests for both managed and manual modes.
+	if in.InstallConfig.Config.Platform.Azure.IsWIFEnabled() && p.wifIssuerURL != "" {
+		updatedIgn, err := p.injectWIFManifests(in, ignOutput.UpdatedBootstrapIgn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to inject WIF manifests into bootstrap ignition: %w", err)
+		}
+		ignOutput.UpdatedBootstrapIgn = updatedIgn
 	}
 
 	sasURL := ""

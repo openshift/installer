@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
+	"github.com/openshift/installer/pkg/asset/credentialsrequest"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -88,6 +89,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	workerIgnAsset := &machine.Worker{}
 	tfvarsAsset := &tfvars.TerraformVariables{}
 	rootCA := &tls.RootCA{}
+	boundSASigningKey := &tls.BoundSASigningKey{}
+	credReqs := &credentialsrequest.CredentialsRequests{}
 	parents.Get(
 		manifestsAsset,
 		workersAsset,
@@ -102,6 +105,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		capiMachinesAsset,
 		tfvarsAsset,
 		rootCA,
+		boundSASigningKey,
+		credReqs,
 	)
 
 	var capiClusters []*clusterv1.Cluster
@@ -127,12 +132,14 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
-			InfraID:          clusterID.InfraID,
-			InstallConfig:    installConfig,
-			RhcosImage:       rhcosImage,
-			ManifestsAsset:   manifestsAsset,
-			MachineManifests: machineManifests,
-			WorkersAsset:     workersAsset,
+			InfraID:             clusterID.InfraID,
+			InstallConfig:       installConfig,
+			RhcosImage:          rhcosImage,
+			ManifestsAsset:      manifestsAsset,
+			MachineManifests:    machineManifests,
+			WorkersAsset:        workersAsset,
+			BoundSASigningKey:   boundSASigningKey,
+			CredentialsRequests: credReqs,
 		}
 		timer.StartTimer(preProvisionStage)
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {

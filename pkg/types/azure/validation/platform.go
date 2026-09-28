@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
@@ -167,6 +168,20 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 
 	if p.CloudName == azure.StackCloud && p.AllowSharedKeyAccess != nil && !*p.AllowSharedKeyAccess {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("allowSharedAccessKey"), p.AllowSharedKeyAccess, "disabling shared access key creation is unsupported in Azure stack hub"))
+	}
+
+	if p.WIFMode != nil {
+		wifModeTypes := sets.New[string](azure.WIFManagedMode, azure.WIFManualMode)
+		if !wifModeTypes.Has(p.WIFMode.Type) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("wifMode", "type"), p.WIFMode.Type, wifModeTypes.UnsortedList()))
+		} else if p.WIFMode.Type == azure.WIFManualMode {
+			if ic.CredentialsMode != "Manual" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("wifMode"), p.WIFMode.Type, "credentials mode must be manual for WIF manual mode"))
+			}
+			if p.WIFMode.IssuerURL == "" {
+				allErrs = append(allErrs, field.Required(fldPath.Child("wifMode", "issuerURL"), "issuerURL is required for manual WIF mode"))
+			}
+		}
 	}
 	return allErrs
 }
