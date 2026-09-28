@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -80,6 +81,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		},
 		PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 		Publish:       types.ExternalPublishingStrategy,
+		FeatureSet:    defaultFeatureSet(),
 		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 	}
 	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
@@ -148,6 +150,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
+				FeatureSet:    defaultFeatureSet(),
 				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
@@ -249,6 +252,7 @@ wrong_key: wrong_value
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
+				FeatureSet:    defaultFeatureSet(),
 				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
@@ -305,6 +309,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				PullSecret:    `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:       types.ExternalPublishingStrategy,
+				FeatureSet:    defaultFeatureSet(),
 				OSImageStream: rhcos.BuildDefaultOSImageStream(),
 			},
 		},
@@ -351,4 +356,11 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			}
 		})
 	}
+}
+
+func defaultFeatureSet() configv1.FeatureSet {
+	if (&types.InstallConfig{}).IsOKD() {
+		return configv1.OKD
+	}
+	return configv1.Default
 }

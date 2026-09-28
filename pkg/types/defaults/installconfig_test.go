@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -21,7 +22,7 @@ import (
 )
 
 func defaultInstallConfig() *types.InstallConfig {
-	return &types.InstallConfig{
+	c := &types.InstallConfig{
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
@@ -41,6 +42,10 @@ func defaultInstallConfig() *types.InstallConfig {
 		Publish:       types.ExternalPublishingStrategy,
 		OSImageStream: rhcos.BuildDefaultOSImageStream(),
 	}
+	if c.IsOKD() {
+		c.FeatureSet = configv1.OKD
+	}
+	return c
 }
 
 func defaultInstallConfigWithEdge() *types.InstallConfig {
@@ -292,6 +297,52 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			SetInstallConfigDefaults(tc.config)
 			assert.Equal(t, tc.expected, tc.config, "unexpected install config")
+		})
+	}
+}
+
+func TestSetInstallConfigFeatureSetDefaults(t *testing.T) {
+	originalSCOS := types.SCOS
+	t.Cleanup(func() {
+		types.SCOS = originalSCOS
+	})
+
+	tests := []struct {
+		name       string
+		isOKD      bool
+		featureSet configv1.FeatureSet
+		expected   configv1.FeatureSet
+	}{
+		{
+			name:     "OpenShift defaults to the default feature set",
+			expected: configv1.Default,
+		},
+		{
+			name:       "OpenShift preserves an explicit feature set",
+			featureSet: configv1.TechPreviewNoUpgrade,
+			expected:   configv1.TechPreviewNoUpgrade,
+		},
+		{
+			name:     "OKD defaults to the OKD feature set",
+			isOKD:    true,
+			expected: configv1.OKD,
+		},
+		{
+			name:       "OKD preserves an explicit feature set",
+			isOKD:      true,
+			featureSet: configv1.TechPreviewNoUpgrade,
+			expected:   configv1.TechPreviewNoUpgrade,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			types.SCOS = tc.isOKD
+			config := &types.InstallConfig{FeatureSet: tc.featureSet}
+
+			SetInstallConfigDefaults(config)
+
+			assert.Equal(t, tc.expected, config.FeatureSet)
 		})
 	}
 }
