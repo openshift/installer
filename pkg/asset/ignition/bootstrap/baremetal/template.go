@@ -84,6 +84,9 @@ type TemplateData struct {
 	// ExternalURLv6 is a callback URL for the node if the node and the BMC use different network families
 	ExternalURLv6 string
 
+	// ExternalHTTPURL is the URL used by BMCs to fetch virtual media over the external network
+	ExternalHTTPURL string
+
 	// DisableIronicVirtualMediaTLS enables or disables TLS in ironic virtual media deployments
 	DisableIronicVirtualMediaTLS bool
 
@@ -141,7 +144,8 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	type provisioningCRTemplate struct {
 		Spec struct {
-			DisableVirtualMediaTLS *bool `yaml:"disableVirtualMediaTLS"`
+			DisableVirtualMediaTLS         *bool `yaml:"disableVirtualMediaTLS"`
+			VirtualMediaViaExternalNetwork bool  `yaml:"virtualMediaViaExternalNetwork"`
 		} `yaml:"spec"`
 	}
 	provisioningCR := &provisioningCRTemplate{}
@@ -167,8 +171,25 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 		logrus.Debugf("TLS is disabled for ironic virtual media")
 		protocol = "http"
 	}
-	_, externalURLv6 := externalURLs(config.APIVIPs, protocol)
+	externalURLv4, externalURLv6 := externalURLs(config.APIVIPs, protocol)
 	templateData.ExternalURLv6 = externalURLv6
+
+	if provisioningCR.Spec.VirtualMediaViaExternalNetwork && len(config.APIVIPs) > 0 {
+		templateData.ExternalHTTPURL = externalURLv4
+
+		if templateData.ExternalHTTPURL == "" {
+			port := "6180"
+			if protocol == "https" {
+				port = "6183"
+			}
+
+			templateData.ExternalHTTPURL = fmt.Sprintf(
+				"%s://%s/",
+				protocol,
+				net.JoinHostPort(config.APIVIPs[0], port),
+			)
+		}
+	}
 
 	if len(config.APIVIPs) > 0 {
 		templateData.APIVIPs = config.APIVIPs
