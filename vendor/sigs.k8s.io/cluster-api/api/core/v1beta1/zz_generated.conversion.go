@@ -139,11 +139,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.ClusterControlPlaneStatus)(nil), (*ClusterControlPlaneStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlaneStatus(a.(*v1beta2.ClusterControlPlaneStatus), b.(*ClusterControlPlaneStatus), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*ClusterList)(nil), (*v1beta2.ClusterList)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_ClusterList_To_v1beta2_ClusterList(a.(*ClusterList), b.(*v1beta2.ClusterList), scope)
 	}); err != nil {
@@ -509,6 +504,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*StatusUpgradePlanVersion)(nil), (*v1beta2.StatusUpgradePlanVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_StatusUpgradePlanVersion_To_v1beta2_StatusUpgradePlanVersion(a.(*StatusUpgradePlanVersion), b.(*v1beta2.StatusUpgradePlanVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.StatusUpgradePlanVersion)(nil), (*StatusUpgradePlanVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_StatusUpgradePlanVersion_To_v1beta1_StatusUpgradePlanVersion(a.(*v1beta2.StatusUpgradePlanVersion), b.(*StatusUpgradePlanVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*StatusVersion)(nil), (*v1beta2.StatusVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_StatusVersion_To_v1beta2_StatusVersion(a.(*StatusVersion), b.(*v1beta2.StatusVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*v1beta2.StatusVersion)(nil), (*StatusVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_StatusVersion_To_v1beta1_StatusVersion(a.(*v1beta2.StatusVersion), b.(*StatusVersion), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ValidationRule)(nil), (*v1beta2.ValidationRule)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_ValidationRule_To_v1beta2_ValidationRule(a.(*ValidationRule), b.(*v1beta2.ValidationRule), scope)
 	}); err != nil {
@@ -551,11 +566,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*WorkersStatus)(nil), (*v1beta2.WorkersStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_WorkersStatus_To_v1beta2_WorkersStatus(a.(*WorkersStatus), b.(*v1beta2.WorkersStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.WorkersStatus)(nil), (*WorkersStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus(a.(*v1beta2.WorkersStatus), b.(*WorkersStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -804,6 +814,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*v1beta2.ClusterControlPlaneStatus)(nil), (*ClusterControlPlaneStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlaneStatus(a.(*v1beta2.ClusterControlPlaneStatus), b.(*ClusterControlPlaneStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*v1beta2.ClusterNetwork)(nil), (*ClusterNetwork)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_ClusterNetwork_To_v1beta1_ClusterNetwork(a.(*v1beta2.ClusterNetwork), b.(*ClusterNetwork), scope)
 	}); err != nil {
@@ -966,6 +981,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*v1beta2.UnhealthyMachineCondition)(nil), (*UnhealthyMachineCondition)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_UnhealthyMachineCondition_To_v1beta1_UnhealthyMachineCondition(a.(*v1beta2.UnhealthyMachineCondition), b.(*UnhealthyMachineCondition), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta2.WorkersStatus)(nil), (*WorkersStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus(a.(*v1beta2.WorkersStatus), b.(*WorkersStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -1502,6 +1522,8 @@ func autoConvert_v1beta1_ClusterControlPlaneStatus_To_v1beta2_ClusterControlPlan
 	out.UpToDateReplicas = (*int32)(unsafe.Pointer(in.UpToDateReplicas))
 	out.ReadyReplicas = (*int32)(unsafe.Pointer(in.ReadyReplicas))
 	out.AvailableReplicas = (*int32)(unsafe.Pointer(in.AvailableReplicas))
+	out.Versions = *(*[]v1beta2.StatusVersion)(unsafe.Pointer(&in.Versions))
+	out.UpgradePlan = *(*[]v1beta2.StatusUpgradePlanVersion)(unsafe.Pointer(&in.UpgradePlan))
 	return nil
 }
 
@@ -1516,12 +1538,9 @@ func autoConvert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlan
 	out.UpToDateReplicas = (*int32)(unsafe.Pointer(in.UpToDateReplicas))
 	out.ReadyReplicas = (*int32)(unsafe.Pointer(in.ReadyReplicas))
 	out.AvailableReplicas = (*int32)(unsafe.Pointer(in.AvailableReplicas))
+	out.Versions = *(*[]StatusVersion)(unsafe.Pointer(&in.Versions))
+	out.UpgradePlan = *(*[]StatusUpgradePlanVersion)(unsafe.Pointer(&in.UpgradePlan))
 	return nil
-}
-
-// Convert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlaneStatus is an autogenerated conversion function.
-func Convert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlaneStatus(in *v1beta2.ClusterControlPlaneStatus, out *ClusterControlPlaneStatus, s conversion.Scope) error {
-	return autoConvert_v1beta2_ClusterControlPlaneStatus_To_v1beta1_ClusterControlPlaneStatus(in, out, s)
 }
 
 func autoConvert_v1beta1_ClusterList_To_v1beta2_ClusterList(in *ClusterList, out *v1beta2.ClusterList, s conversion.Scope) error {
@@ -2202,12 +2221,16 @@ func Convert_v1beta2_MachineAddress_To_v1beta1_MachineAddress(in *v1beta2.Machin
 func autoConvert_v1beta1_MachineDeletionStatus_To_v1beta2_MachineDeletionStatus(in *MachineDeletionStatus, out *v1beta2.MachineDeletionStatus, s conversion.Scope) error {
 	// WARNING: in.NodeDrainStartTime requires manual conversion: inconvertible types (*k8s.io/apimachinery/pkg/apis/meta/v1.Time vs k8s.io/apimachinery/pkg/apis/meta/v1.Time)
 	// WARNING: in.WaitForNodeVolumeDetachStartTime requires manual conversion: inconvertible types (*k8s.io/apimachinery/pkg/apis/meta/v1.Time vs k8s.io/apimachinery/pkg/apis/meta/v1.Time)
+	// WARNING: in.WaitForPreDrainHookStartTime requires manual conversion: inconvertible types (*k8s.io/apimachinery/pkg/apis/meta/v1.Time vs k8s.io/apimachinery/pkg/apis/meta/v1.Time)
+	// WARNING: in.WaitForPreTerminateHookStartTime requires manual conversion: inconvertible types (*k8s.io/apimachinery/pkg/apis/meta/v1.Time vs k8s.io/apimachinery/pkg/apis/meta/v1.Time)
 	return nil
 }
 
 func autoConvert_v1beta2_MachineDeletionStatus_To_v1beta1_MachineDeletionStatus(in *v1beta2.MachineDeletionStatus, out *MachineDeletionStatus, s conversion.Scope) error {
 	// WARNING: in.NodeDrainStartTime requires manual conversion: inconvertible types (k8s.io/apimachinery/pkg/apis/meta/v1.Time vs *k8s.io/apimachinery/pkg/apis/meta/v1.Time)
 	// WARNING: in.WaitForNodeVolumeDetachStartTime requires manual conversion: inconvertible types (k8s.io/apimachinery/pkg/apis/meta/v1.Time vs *k8s.io/apimachinery/pkg/apis/meta/v1.Time)
+	// WARNING: in.WaitForPreDrainHookStartTime requires manual conversion: inconvertible types (k8s.io/apimachinery/pkg/apis/meta/v1.Time vs *k8s.io/apimachinery/pkg/apis/meta/v1.Time)
+	// WARNING: in.WaitForPreTerminateHookStartTime requires manual conversion: inconvertible types (k8s.io/apimachinery/pkg/apis/meta/v1.Time vs *k8s.io/apimachinery/pkg/apis/meta/v1.Time)
 	return nil
 }
 
@@ -2383,6 +2406,7 @@ func autoConvert_v1beta1_MachineDeploymentStatus_To_v1beta2_MachineDeploymentSta
 	} else {
 		out.Conditions = nil
 	}
+	out.Versions = *(*[]v1beta2.StatusVersion)(unsafe.Pointer(&in.Versions))
 	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -2411,6 +2435,7 @@ func autoConvert_v1beta2_MachineDeploymentStatus_To_v1beta1_MachineDeploymentSta
 		return err
 	}
 	// WARNING: in.UpToDateReplicas requires manual conversion: does not exist in peer-type
+	out.Versions = *(*[]StatusVersion)(unsafe.Pointer(&in.Versions))
 	out.Phase = in.Phase
 	// WARNING: in.Deprecated requires manual conversion: does not exist in peer-type
 	return nil
@@ -3008,6 +3033,7 @@ func autoConvert_v1beta1_MachinePoolStatus_To_v1beta2_MachinePoolStatus(in *Mach
 	} else {
 		out.Conditions = nil
 	}
+	out.Versions = *(*[]v1beta2.StatusVersion)(unsafe.Pointer(&in.Versions))
 	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -3036,6 +3062,7 @@ func autoConvert_v1beta2_MachinePoolStatus_To_v1beta1_MachinePoolStatus(in *v1be
 		return err
 	}
 	// WARNING: in.UpToDateReplicas requires manual conversion: does not exist in peer-type
+	out.Versions = *(*[]StatusVersion)(unsafe.Pointer(&in.Versions))
 	out.Phase = in.Phase
 	out.ObservedGeneration = in.ObservedGeneration
 	// WARNING: in.Deprecated requires manual conversion: does not exist in peer-type
@@ -3261,6 +3288,7 @@ func autoConvert_v1beta1_MachineSetStatus_To_v1beta2_MachineSetStatus(in *Machin
 	} else {
 		out.Conditions = nil
 	}
+	out.Versions = *(*[]v1beta2.StatusVersion)(unsafe.Pointer(&in.Versions))
 	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -3288,6 +3316,7 @@ func autoConvert_v1beta2_MachineSetStatus_To_v1beta1_MachineSetStatus(in *v1beta
 		return err
 	}
 	// WARNING: in.UpToDateReplicas requires manual conversion: does not exist in peer-type
+	out.Versions = *(*[]StatusVersion)(unsafe.Pointer(&in.Versions))
 	out.ObservedGeneration = in.ObservedGeneration
 	// WARNING: in.Deprecated requires manual conversion: does not exist in peer-type
 	return nil
@@ -3658,6 +3687,48 @@ func Convert_v1beta2_PatchSelectorMatchMachinePoolClass_To_v1beta1_PatchSelector
 	return autoConvert_v1beta2_PatchSelectorMatchMachinePoolClass_To_v1beta1_PatchSelectorMatchMachinePoolClass(in, out, s)
 }
 
+func autoConvert_v1beta1_StatusUpgradePlanVersion_To_v1beta2_StatusUpgradePlanVersion(in *StatusUpgradePlanVersion, out *v1beta2.StatusUpgradePlanVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1beta1_StatusUpgradePlanVersion_To_v1beta2_StatusUpgradePlanVersion is an autogenerated conversion function.
+func Convert_v1beta1_StatusUpgradePlanVersion_To_v1beta2_StatusUpgradePlanVersion(in *StatusUpgradePlanVersion, out *v1beta2.StatusUpgradePlanVersion, s conversion.Scope) error {
+	return autoConvert_v1beta1_StatusUpgradePlanVersion_To_v1beta2_StatusUpgradePlanVersion(in, out, s)
+}
+
+func autoConvert_v1beta2_StatusUpgradePlanVersion_To_v1beta1_StatusUpgradePlanVersion(in *v1beta2.StatusUpgradePlanVersion, out *StatusUpgradePlanVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1beta2_StatusUpgradePlanVersion_To_v1beta1_StatusUpgradePlanVersion is an autogenerated conversion function.
+func Convert_v1beta2_StatusUpgradePlanVersion_To_v1beta1_StatusUpgradePlanVersion(in *v1beta2.StatusUpgradePlanVersion, out *StatusUpgradePlanVersion, s conversion.Scope) error {
+	return autoConvert_v1beta2_StatusUpgradePlanVersion_To_v1beta1_StatusUpgradePlanVersion(in, out, s)
+}
+
+func autoConvert_v1beta1_StatusVersion_To_v1beta2_StatusVersion(in *StatusVersion, out *v1beta2.StatusVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Replicas = in.Replicas
+	return nil
+}
+
+// Convert_v1beta1_StatusVersion_To_v1beta2_StatusVersion is an autogenerated conversion function.
+func Convert_v1beta1_StatusVersion_To_v1beta2_StatusVersion(in *StatusVersion, out *v1beta2.StatusVersion, s conversion.Scope) error {
+	return autoConvert_v1beta1_StatusVersion_To_v1beta2_StatusVersion(in, out, s)
+}
+
+func autoConvert_v1beta2_StatusVersion_To_v1beta1_StatusVersion(in *v1beta2.StatusVersion, out *StatusVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Replicas = in.Replicas
+	return nil
+}
+
+// Convert_v1beta2_StatusVersion_To_v1beta1_StatusVersion is an autogenerated conversion function.
+func Convert_v1beta2_StatusVersion_To_v1beta1_StatusVersion(in *v1beta2.StatusVersion, out *StatusVersion, s conversion.Scope) error {
+	return autoConvert_v1beta2_StatusVersion_To_v1beta1_StatusVersion(in, out, s)
+}
+
 func autoConvert_v1beta1_Topology_To_v1beta2_Topology(in *Topology, out *v1beta2.Topology, s conversion.Scope) error {
 	// WARNING: in.Class requires manual conversion: does not exist in peer-type
 	// WARNING: in.ClassNamespace requires manual conversion: does not exist in peer-type
@@ -3858,6 +3929,8 @@ func autoConvert_v1beta1_WorkersStatus_To_v1beta2_WorkersStatus(in *WorkersStatu
 	out.UpToDateReplicas = (*int32)(unsafe.Pointer(in.UpToDateReplicas))
 	out.ReadyReplicas = (*int32)(unsafe.Pointer(in.ReadyReplicas))
 	out.AvailableReplicas = (*int32)(unsafe.Pointer(in.AvailableReplicas))
+	out.Versions = *(*[]v1beta2.StatusVersion)(unsafe.Pointer(&in.Versions))
+	out.UpgradePlan = *(*[]v1beta2.StatusUpgradePlanVersion)(unsafe.Pointer(&in.UpgradePlan))
 	return nil
 }
 
@@ -3872,12 +3945,9 @@ func autoConvert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus(in *v1beta2.Work
 	out.UpToDateReplicas = (*int32)(unsafe.Pointer(in.UpToDateReplicas))
 	out.ReadyReplicas = (*int32)(unsafe.Pointer(in.ReadyReplicas))
 	out.AvailableReplicas = (*int32)(unsafe.Pointer(in.AvailableReplicas))
+	out.Versions = *(*[]StatusVersion)(unsafe.Pointer(&in.Versions))
+	out.UpgradePlan = *(*[]StatusUpgradePlanVersion)(unsafe.Pointer(&in.UpgradePlan))
 	return nil
-}
-
-// Convert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus is an autogenerated conversion function.
-func Convert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus(in *v1beta2.WorkersStatus, out *WorkersStatus, s conversion.Scope) error {
-	return autoConvert_v1beta2_WorkersStatus_To_v1beta1_WorkersStatus(in, out, s)
 }
 
 func autoConvert_v1beta1_WorkersTopology_To_v1beta2_WorkersTopology(in *WorkersTopology, out *v1beta2.WorkersTopology, s conversion.Scope) error {

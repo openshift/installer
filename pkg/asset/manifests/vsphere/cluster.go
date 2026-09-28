@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capv "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -49,7 +49,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 					Port: 6443,
 				},
-				IdentityRef: &capv.VSphereIdentityReference{
+				IdentityRef: capv.VSphereIdentityReference{
 					Kind: capv.SecretKind,
 					Name: vsphereCreds.Name,
 				},
@@ -62,7 +62,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		})
 
 		infra := &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 			Kind:       "VSphereCluster",
 			Name:       vsphereCluster.Name,
 			Namespace:  capiutils.Namespace,
@@ -109,8 +109,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 					Topology: capv.Topology{
 						Datacenter:     failureDomain.Topology.Datacenter,
-						ComputeCluster: &failureDomain.Topology.ComputeCluster,
-						Hosts: &capv.FailureDomainHosts{
+						ComputeCluster: failureDomain.Topology.ComputeCluster,
+						Hosts: capv.FailureDomainHosts{
 							VMGroupName:   fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name),
 							HostGroupName: failureDomain.Topology.HostGroup,
 						},

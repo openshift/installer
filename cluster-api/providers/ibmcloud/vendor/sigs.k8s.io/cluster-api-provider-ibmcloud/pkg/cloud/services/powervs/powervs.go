@@ -17,32 +17,44 @@ limitations under the License.
 package powervs
 
 import (
+	"context"
+
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
 //go:generate ../../../../hack/tools/bin/mockgen -source=./powervs.go -destination=./mock/powervs_generated.go -package=mock
-//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/powervs_generated.go > ./mock/_powervs_generated.go && mv ./mock/_powervs_generated.go ./mock/powervs_generated.go"
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/scripts/verify/boilerplate/boilerplate.generatego.txt ./mock/powervs_generated.go > ./mock/_powervs_generated.go && mv ./mock/_powervs_generated.go ./mock/powervs_generated.go"
 
-// PowerVS interface defines methods that a Cluster API IBMCLOUD object should implement.
+// PowerVS interface defines methods that a Cluster API IBM Cloud object should implement.
 type PowerVS interface {
-	CreateInstance(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error)
-	DeleteInstance(id string) error
-	GetAllInstance() (*models.PVMInstances, error)
-	GetAllImage() (*models.Images, error)
-	GetAllNetwork() (*models.Networks, error)
-	GetNetworkByID(id string) (*models.Network, error)
-	GetInstance(id string) (*models.PVMInstance, error)
-	GetImage(id string) (*models.Image, error)
-	DeleteImage(id string) error
-	CreateCosImage(body *models.CreateCosImageImportJob) (*models.JobReference, error)
-	GetCosImages(id string) (*models.Job, error)
-	GetJob(id string) (*models.Job, error)
-	DeleteJob(id string) error
-	GetAllDHCPServers() (models.DHCPServers, error)
-	GetDHCPServer(id string) (*models.DHCPServerDetail, error)
-	CreateDHCPServer(*models.DHCPServerCreate) (*models.DHCPServer, error)
-	DeleteDHCPServer(id string) error
-	WithClients(options ServiceOptions) *Service
-	GetNetworkByName(networkName string) (*models.NetworkReference, error)
-	GetDatacenterCapabilities(zone string) (map[string]bool, error)
+	// Instances
+	CreateInstance(ctx context.Context, body *models.PVMInstanceCreate) (*models.PVMInstanceList, error)
+	DeleteInstance(ctx context.Context, id string) error
+	GetInstance(ctx context.Context, id string) (*models.PVMInstance, error)
+	ListInstances(ctx context.Context) (*models.PVMInstances, error)
+
+	// Images
+	GetImage(ctx context.Context, id string) (*models.Image, error)
+	DeleteImage(ctx context.Context, id string) error
+	ListImages(ctx context.Context) (*models.Images, error)
+	GetJob(ctx context.Context, id string) (*models.Job, error)
+	DeleteJob(ctx context.Context, id string) error
+
+	// COS Image Jobs
+	CreateCosImage(ctx context.Context, body *models.CreateCosImageImportJob) (*models.JobReference, error)
+	GetCosImages(ctx context.Context, id string) (*models.Job, error)
+
+	// Networks
+	ListNetworks(ctx context.Context) (*models.Networks, error)
+	GetNetworkByID(ctx context.Context, id string) (*models.Network, error)
+	GetNetworkByName(ctx context.Context, networkName string) (*models.NetworkReference, error)
+
+	// DHCP Servers
+	CreateDHCPServer(ctx context.Context, body *models.DHCPServerCreate) (*models.DHCPServer, error)
+	GetDHCPServer(ctx context.Context, id string) (*models.DHCPServerDetail, error)
+	DeleteDHCPServer(ctx context.Context, id string) error
+	ListDHCPServers(ctx context.Context) (models.DHCPServers, error)
+
+	// Datacenter
+	GetDatacenterDetails(ctx context.Context, zone string) (*models.Datacenter, error)
 }

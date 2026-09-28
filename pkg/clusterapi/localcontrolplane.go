@@ -20,9 +20,10 @@ import (
 	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	capgv1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	capiv1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capipowervsv1beta3 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
+	capivpcv1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/vpc/v1beta2"
 	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -46,7 +47,8 @@ func init() {
 	utilruntime.Must(capgv1.AddToScheme(Scheme))
 	utilruntime.Must(capvv1.AddToScheme(Scheme))
 	utilruntime.Must(capov1.AddToScheme(Scheme))
-	utilruntime.Must(capiv1.AddToScheme(Scheme))
+	utilruntime.Must(capivpcv1beta2.AddToScheme(Scheme))
+	utilruntime.Must(capipowervsv1beta3.AddToScheme(Scheme))
 	utilruntime.Must(capnv1.AddToScheme(Scheme))
 }
 

@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/validation/path"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversionscheme "k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -175,15 +175,15 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 
 	} else {
 		switch req.Method {
-		case "POST":
+		case MethodPost:
 			requestInfo.Verb = "create"
-		case "GET", "HEAD":
+		case MethodGet, MethodHead:
 			requestInfo.Verb = "get"
-		case "PUT":
+		case MethodPut:
 			requestInfo.Verb = "update"
-		case "PATCH":
+		case MethodPatch:
 			requestInfo.Verb = "patch"
-		case "DELETE":
+		case MethodDelete:
 			requestInfo.Verb = "delete"
 		default:
 			requestInfo.Verb = ""
@@ -246,7 +246,7 @@ func (r *RequestInfoFactory) NewRequestInfo(req *http.Request) (*RequestInfo, er
 
 		if opts.FieldSelector != nil {
 			if name, ok := opts.FieldSelector.RequiresExactMatch("metadata.name"); ok {
-				if len(path.IsValidPathSegmentName(name)) == 0 {
+				if len(content.IsPathSegmentName(name)) == 0 {
 					requestInfo.Name = name
 				}
 			}
