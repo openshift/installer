@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -14,11 +15,16 @@ import (
 
 func cleanupIgnitionCOSBucket(ctx context.Context, client ibmcloudic.API, instanceID string, bucketName string, region string) error {
 	// First, check whether the bucket exists.
+	var cosResourceNotFoundError *ibmcloudic.COSResourceNotFoundError
 	bucketDetails, err := client.GetCOSBucketByName(ctx, instanceID, bucketName, region)
 	switch {
+	// The bucket already being gone is the desired result, so cleanup can be skipped in that case.
+	case errors.As(err, &cosResourceNotFoundError):
+		logrus.Debugf("ignition bucket not found, skipping cleanup")
+		return nil
 	case err != nil:
 		return fmt.Errorf("failed checking for ignition bucket: %w", err)
-	case bucketDetails == nil:
+	case bucketDetails == nil || bucketDetails.Name == nil:
 		logrus.Debugf("ignition bucket not found, skipping cleanup")
 		return nil
 	default:
@@ -48,6 +54,30 @@ func cleanupIgnitionCOSBucket(ctx context.Context, client ibmcloudic.API, instan
 	logrus.Debugf("deleting ignition bucket %s", bucketName)
 	if err = client.DeleteCOSBucket(ctx, instanceID, bucketName, region); err != nil {
 		return fmt.Errorf("failed to delete ignition cos bucket: %w", err)
+	}
+	return nil
+}
+
+// cleanupIgnitionCOSInstance deletes the COS Instance if it no longer contains any Buckets that are required
+// by the cluster (specifically the Bucket used for the VSI Image).
+func cleanupIgnitionCOSInstance(ctx context.Context, client ibmcloudic.API, instanceID string, ignitionBucketName string, region string) error {
+	logrus.Debugf("checking whether cos instance should be cleaned up as well: %s", instanceID)
+	cosBucketsOutput, err := client.ListCOSBuckets(ctx, instanceID, region)
+	switch {
+	case err != nil:
+		return fmt.Errorf("failed listing cos buckets in cos instance %s: %w", instanceID, err)
+	case cosBucketsOutput == nil || len(cosBucketsOutput.Buckets) == 0:
+		logrus.Debugf("no remaining buckets in cos instance %s, attempting to cleanup instance", instanceID)
+		if err := client.DeleteCOSInstance(ctx, instanceID); err != nil {
+			return fmt.Errorf("failed to delete empty cos instance %s: %w", instanceID, err)
+		}
+	case len(cosBucketsOutput.Buckets) == 1 && cosBucketsOutput.Buckets[0].Name != nil && *cosBucketsOutput.Buckets[0].Name == ignitionBucketName:
+		logrus.Debugf("bootstrap ignition cos bucket %s still listed in cos instance, proceeding to cleanup cos instance: %s", ignitionBucketName, instanceID)
+		if err := client.DeleteCOSInstance(ctx, instanceID); err != nil {
+			return fmt.Errorf("failed to delete cos instance %s, with single bucket %s: %w", instanceID, ignitionBucketName, err)
+		}
+	default:
+		logrus.Debugf("cos instance contains additional buckets, skipping cos instance %s cleanup", instanceID)
 	}
 	return nil
 }

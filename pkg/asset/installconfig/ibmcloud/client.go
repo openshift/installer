@@ -663,7 +663,7 @@ func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, b
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s", bucketName, cosInstanceID)
+	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s: %w", bucketName, cosInstanceID, &COSResourceNotFoundError{})
 }
 
 // getCOSClient returns a new IBM Cloud COS client session.
