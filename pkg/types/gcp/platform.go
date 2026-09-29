@@ -252,3 +252,34 @@ func FormatKMSKeyResourcePath(kmsKey *KMSKeyReference, projectID string) string 
 	return fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
 		keyProjectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
 }
+
+// GetConfiguredOSImage returns the OS image configured for a machine pool,
+// falling back to the platform default machine platform when the pool does not
+// specify one. Returns nil when neither specifies an image.
+func GetConfiguredOSImage(platform *Platform, mpool *MachinePool) *OSImage {
+	if mpool != nil && mpool.OSImage != nil {
+		return mpool.OSImage
+	} else if platform.DefaultMachinePlatform != nil {
+		return platform.DefaultMachinePlatform.OSImage
+	}
+
+	return nil
+}
+
+// NeedsRHCOSUpload returns true when the installer must upload a
+// cluster-specific RHCOS image for the given machine pool. This is required for
+// sovereign clouds where the public rhcos-cloud images are inaccessible, and
+// only when the user has not provided a custom osImage.
+//
+// The pool may be either raw or already merged with the default machine
+// platform; the fallback in GetConfiguredOSImage makes both safe.
+func NeedsRHCOSUpload(platform *Platform, mpool *MachinePool) bool {
+	return GetCloudEnvironment(platform.ProjectID, platform.Region) == CloudEnvironmentSovereign &&
+		GetConfiguredOSImage(platform, mpool) == nil
+}
+
+// RHCOSImageRef returns the fully-qualified GCP image reference for the
+// cluster-specific RHCOS image that will be uploaded during provisioning.
+func RHCOSImageRef(projectID, infraID string) string {
+	return fmt.Sprintf("projects/%s/global/images/%s-rhcos", projectID, infraID)
+}

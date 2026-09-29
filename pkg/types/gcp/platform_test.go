@@ -153,3 +153,135 @@ func TestGetDefaultServiceAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestGetConfiguredOSImage(t *testing.T) {
+	poolImage := &OSImage{Name: "pool-image", Project: "pool-project"}
+	defaultImage := &OSImage{Name: "default-image", Project: "default-project"}
+
+	cases := []struct {
+		name                   string
+		defaultMachinePlatform *MachinePool
+		mpool                  *MachinePool
+		expected               *OSImage
+	}{
+		{
+			name:     "no image anywhere",
+			mpool:    &MachinePool{},
+			expected: nil,
+		},
+		{
+			name:     "nil pool and no default machine platform",
+			mpool:    nil,
+			expected: nil,
+		},
+		{
+			name:     "image on pool",
+			mpool:    &MachinePool{OSImage: poolImage},
+			expected: poolImage,
+		},
+		{
+			name:                   "image only on default machine platform",
+			defaultMachinePlatform: &MachinePool{OSImage: defaultImage},
+			mpool:                  &MachinePool{},
+			expected:               defaultImage,
+		},
+		{
+			name:                   "nil pool falls back to default machine platform",
+			defaultMachinePlatform: &MachinePool{OSImage: defaultImage},
+			mpool:                  nil,
+			expected:               defaultImage,
+		},
+		{
+			name:                   "pool image overrides default machine platform",
+			defaultMachinePlatform: &MachinePool{OSImage: defaultImage},
+			mpool:                  &MachinePool{OSImage: poolImage},
+			expected:               poolImage,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			platform := &Platform{DefaultMachinePlatform: tc.defaultMachinePlatform}
+			assert.Equal(t, tc.expected, GetConfiguredOSImage(platform, tc.mpool))
+		})
+	}
+}
+
+func TestNeedsRHCOSUpload(t *testing.T) {
+	osImage := &OSImage{Name: "my-image", Project: "my-project"}
+
+	cases := []struct {
+		name                   string
+		projectID              string
+		region                 string
+		defaultMachinePlatform *MachinePool
+		mpool                  *MachinePool
+		expected               bool
+	}{
+		{
+			name:      "public gcp without image uses the public rhcos project",
+			projectID: "my-project",
+			region:    "us-central1",
+			mpool:     &MachinePool{},
+			expected:  false,
+		},
+		{
+			name:      "sovereign without image requires an upload",
+			projectID: "eu0:my-project",
+			region:    "u-northeast1",
+			mpool:     &MachinePool{},
+			expected:  true,
+		},
+		{
+			name:      "sovereign with image on pool uses the custom image",
+			projectID: "eu0:my-project",
+			region:    "u-northeast1",
+			mpool:     &MachinePool{OSImage: osImage},
+			expected:  false,
+		},
+		{
+			// A pool that inherits its image from the default machine platform
+			// must not trigger an upload it will never reference.
+			name:                   "sovereign with image only on default machine platform",
+			projectID:              "eu0:my-project",
+			region:                 "u-northeast1",
+			defaultMachinePlatform: &MachinePool{OSImage: osImage},
+			mpool:                  &MachinePool{},
+			expected:               false,
+		},
+		{
+			// Compute pools may omit the platform stanza entirely.
+			name:      "sovereign with nil pool requires an upload",
+			projectID: "eu0:my-project",
+			region:    "u-northeast1",
+			mpool:     nil,
+			expected:  true,
+		},
+		{
+			name:                   "sovereign with nil pool inheriting a default image",
+			projectID:              "eu0:my-project",
+			region:                 "u-northeast1",
+			defaultMachinePlatform: &MachinePool{OSImage: osImage},
+			mpool:                  nil,
+			expected:               false,
+		},
+		{
+			name:      "domain-scoped project outside a sovereign region",
+			projectID: "eu0:my-project",
+			region:    "us-central1",
+			mpool:     &MachinePool{},
+			expected:  false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			platform := &Platform{
+				ProjectID:              tc.projectID,
+				Region:                 tc.region,
+				DefaultMachinePlatform: tc.defaultMachinePlatform,
+			}
+			assert.Equal(t, tc.expected, NeedsRHCOSUpload(platform, tc.mpool))
+		})
+	}
+}

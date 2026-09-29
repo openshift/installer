@@ -76,6 +76,12 @@ func FetchCoreOSBuild(ctx context.Context, osImageStream types.OSImageStream) (*
 	return &st, nil
 }
 
+// CompressedSHA256Param is the query parameter carrying the sha256 of an
+// artifact as it is served, i.e. before decompression.  It is deliberately
+// distinct from the "sha256" parameter set by FormatURLWithIntegrity, which by
+// convention holds the digest of the *uncompressed* artifact.
+const CompressedSHA256Param = "compressed-sha256"
+
 // FormatURLWithIntegrity squashes an artifact into a URL string
 // with the uncompressed sha256 as a query parameter.  This is necessary
 // currently because various parts of the installer pass around this
@@ -91,6 +97,28 @@ func FormatURLWithIntegrity(artifact *stream.Artifact) (string, error) {
 	return u.String(), nil
 }
 
+// FormatURLWithCompressedIntegrity squashes an artifact into a URL string with
+// the sha256 of the artifact as served -- before any decompression -- as a
+// query parameter.  Use this rather than FormatURLWithIntegrity for consumers
+// that keep the artifact compressed, such as the GCP image upload, which needs
+// the tar.gz byte for byte.
+func FormatURLWithCompressedIntegrity(artifact *stream.Artifact) (string, error) {
+	// Streams are not required to carry a digest, but an artifact that cannot be
+	// verified must not be passed off as one that can: callers only skip
+	// verification when the parameter is absent, which would be silent.
+	if artifact.Sha256 == "" {
+		return "", fmt.Errorf("artifact %s has no sha256 checksum", artifact.Location)
+	}
+	u, err := url.Parse(artifact.Location)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse artifact URL: %v", err)
+	}
+	q := u.Query()
+	q.Set(CompressedSHA256Param, artifact.Sha256)
+	u.RawQuery = q.Encode()
+	return u.String(), nil
+}
+
 // FindArtifactURL returns a single "disk" artifact type; this
 // mainly abstracts over different compression formats like `qcow2.xz` and `qcow2.gz`.
 //
@@ -100,19 +128,40 @@ func FormatURLWithIntegrity(artifact *stream.Artifact) (string, error) {
 // Some platforms have multiple artifact types; for example, `metal` has an ISO
 // as well as PXE files.  This function will error in such a case.
 func FindArtifactURL(artifacts stream.PlatformArtifacts) (string, error) {
+	artifact, err := findDiskArtifact(artifacts)
+	if err != nil {
+		return "", err
+	}
+	return FormatURLWithIntegrity(artifact)
+}
+
+// FindCompressedArtifactURL is FindArtifactURL for consumers that use the
+// artifact in the compressed form it is served in; the returned URL carries the
+// compressed sha256 rather than the uncompressed one.
+func FindCompressedArtifactURL(artifacts stream.PlatformArtifacts) (string, error) {
+	artifact, err := findDiskArtifact(artifacts)
+	if err != nil {
+		return "", err
+	}
+	return FormatURLWithCompressedIntegrity(artifact)
+}
+
+// findDiskArtifact returns the single "disk" artifact among the given platform
+// artifacts, erroring when there is not exactly one.
+func findDiskArtifact(artifacts stream.PlatformArtifacts) (*stream.Artifact, error) {
 	var artifact *stream.Artifact
 	for _, v := range artifacts.Formats {
 		if v.Disk != nil {
 			if artifact != nil {
-				return "", fmt.Errorf("multiple \"disk\" artifacts found")
+				return nil, fmt.Errorf("multiple \"disk\" artifacts found")
 			}
 			artifact = v.Disk
 		}
 	}
-	if artifact != nil {
-		return FormatURLWithIntegrity(artifact)
+	if artifact == nil {
+		return nil, fmt.Errorf("no \"disk\" artifact found")
 	}
-	return "", fmt.Errorf("no \"disk\" artifact found")
+	return artifact, nil
 }
 
 func fetchRawCoreOSStream(osImageStream types.OSImageStream) ([]byte, error) {
