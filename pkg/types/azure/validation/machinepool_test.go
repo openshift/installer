@@ -18,7 +18,11 @@ func TestValidateMachinePool(t *testing.T) {
 		name          string
 		azurePlatform azure.CloudEnvironment
 		pool          *types.MachinePool
-		expected      string
+		// defaultMachinePlatform is merged into the platform the case runs
+		// against, for the few checks that resolve a field settable in both
+		// places. Left nil, the platform carries only azurePlatform.
+		defaultMachinePlatform *azure.MachinePool
+		expected               string
 	}{
 		{
 			name:          "empty",
@@ -1054,10 +1058,232 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
 		},
+		{
+			name:          "more diskSetup entries than dataDisks",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{Type: types.Etcd, Etcd: &types.DiskEtcd{PlatformDiskID: "etcd"}},
+					{Type: types.UserDefined, UserDefined: &types.DiskUserDefined{PlatformDiskID: "containers", MountPath: "/var/lib/containers"}},
+				},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "etcd",
+							DiskSizeGB: 1,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks: Invalid value: 1: each diskSetup entry configures the dataDisk at the same index; diskSetup length is 2 but dataDisks length is 1, so the extra diskSetup entries would be silently ignored$`,
+		},
+		{
+			name:          "diskSetup with no dataDisks at all",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{Type: types.Etcd, Etcd: &types.DiskEtcd{PlatformDiskID: "etcd"}},
+				},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{},
+				},
+			},
+			expected: `^test-path\.dataDisks: Invalid value: 0: each diskSetup entry configures the dataDisk at the same index; diskSetup length is 1 but dataDisks length is 0, so the extra diskSetup entries would be silently ignored$`,
+		},
+		{
+			name:          "dataDisks without diskSetup are still checked for a lun id",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "containers",
+							DiskSizeGB: 1,
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.Lun: Required value: \"containers\" must have lun id$`,
+		},
+		{
+			name:          "dataDisks without diskSetup are still checked for size",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "containers",
+							DiskSizeGB: 0,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\.DiskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
+		},
+		{
+			name:          "duplicate dataDisk name suffix",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{
+							{
+								NameSuffix: "containers",
+								DiskSizeGB: 32,
+								Lun:        ptr.To(int32(0)),
+							},
+							{
+								NameSuffix: "containers",
+								DiskSizeGB: 32,
+								Lun:        ptr.To(int32(1)),
+							},
+						},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[1\]\.nameSuffix: Duplicate value: \"containers\"$`,
+		},
+		{
+			name:          "unsupported dataDisk storage account type",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "containers",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "Premium_LRS_v9"},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Unsupported value: \"Premium_LRS_v9\": supported values: .*\"StandardSSD_LRS\".*\"UltraSSD_LRS\"$`,
+		},
+		{
+			name:          "supported dataDisk storage account type",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "containers",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(1)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "StandardSSD_LRS"},
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "ultra ssd dataDisk without the capability",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "ultra",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Invalid value: \"UltraSSD_LRS\": ultraSSDCapability must be \"Enabled\" on this pool or on platform\.azure\.defaultMachinePlatform to attach an UltraSSD_LRS data disk$`,
+		},
+		{
+			name:          "ultra ssd dataDisk with the capability disabled",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						UltraSSDCapability: "Disabled",
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "ultra",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Invalid value: \"UltraSSD_LRS\": ultraSSDCapability must be \"Enabled\" on this pool or on platform\.azure\.defaultMachinePlatform to attach an UltraSSD_LRS data disk$`,
+		},
+		{
+			name:          "ultra ssd dataDisk with the capability enabled on the pool",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						UltraSSDCapability: "Enabled",
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "ultra",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:                   "ultra ssd dataDisk with the capability enabled only on defaultMachinePlatform",
+			azurePlatform:          azure.PublicCloud,
+			defaultMachinePlatform: &azure.MachinePool{UltraSSDCapability: "Enabled"},
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "ultra",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+						}},
+					},
+				},
+			},
+		},
+		{
+			// Same precedence MachinePool.Set applies: a value on the pool wins,
+			// so this stays an error despite defaultMachinePlatform enabling it.
+			name:                   "ultra ssd dataDisk with the pool overriding defaultMachinePlatform",
+			azurePlatform:          azure.PublicCloud,
+			defaultMachinePlatform: &azure.MachinePool{UltraSSDCapability: "Enabled"},
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						UltraSSDCapability: "Disabled",
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "ultra",
+							DiskSizeGB:  32,
+							Lun:         ptr.To(int32(0)),
+							ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.managedDisk\.storageAccountType: Invalid value: \"UltraSSD_LRS\": ultraSSDCapability must be \"Enabled\" on this pool or on platform\.azure\.defaultMachinePlatform to attach an UltraSSD_LRS data disk$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			azurePlatform := &azure.Platform{CloudName: tc.azurePlatform}
+			azurePlatform := &azure.Platform{CloudName: tc.azurePlatform, DefaultMachinePlatform: tc.defaultMachinePlatform}
 			err := ValidateMachinePool(tc.pool.Platform.Azure, tc.pool.Name, azurePlatform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -17,6 +18,10 @@ import (
 
 const (
 	enabled = "Enabled"
+
+	// ultraSSDStorageAccountType is the data disk SKU that Azure will only
+	// attach to a VM created with the UltraSSD capability.
+	ultraSSDStorageAccountType = "UltraSSD_LRS"
 )
 
 var (
@@ -31,6 +36,20 @@ var (
 			v = append(v, string(n))
 		}
 		sort.Strings(v)
+		return v
+	}()
+
+	// validDataDiskStorageAccountTypes is the set of SKUs Azure accepts for a
+	// managed data disk. It is taken from the SDK rather than written out by
+	// hand so that it keeps up with SDK bumps. Note this is deliberately wider
+	// than the enum the Machine API declares for its data disks: that enum is
+	// not enforced, because providerSpec is preserved as unstructured, and
+	// StandardSSD_LRS is already in use.
+	validDataDiskStorageAccountTypes = func() sets.Set[string] {
+		v := sets.New[string]()
+		for _, t := range armcompute.PossibleDiskStorageAccountTypesValues() {
+			v.Insert(string(t))
+		}
 		return v
 	}()
 )
@@ -128,14 +147,14 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("dataDisks"),
 				fmt.Sprintf("data disks are not supported on %s", azure.StackCloud)))
 		} else {
-			allErrs = append(allErrs, validateDataDisk(p, poolName, fldPath.Child("dataDisks"))...)
+			allErrs = append(allErrs, validateDataDisk(p, poolName, platform, fldPath.Child("dataDisks"))...)
 		}
 	}
 
-	if pool != nil {
-		if len(p.DataDisks) != 0 && len(pool.DiskSetup) != 0 {
-			allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
-		}
+	// Checked whenever diskSetup is set rather than only alongside dataDisks: a
+	// diskSetup entry with no disk to pair should fail validations.
+	if pool != nil && len(pool.DiskSetup) != 0 {
+		allErrs = append(allErrs, validateDataDiskSetup(p, pool, fldPath.Child("dataDisks"))...)
 	}
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
@@ -147,49 +166,32 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	// We could have a situation where the azure DataDisks are
-	// defined but no corresponding disk setup but we should never have
-	// more DiskSetup than DataDisks
+	// Azure pairs the Nth diskSetup entry with the Nth dataDisk, so a diskSetup
+	// entry past the end of dataDisks has no disk to configure and would be dropped
+	// during generation without a word. Having more dataDisks than diskSetup
+	// entries is fine: those disks are attached but left unpartitioned.
 	if len(azurePool.DataDisks) < len(pool.DiskSetup) {
-		allErrs = append(allErrs, field.TooLong(fldPath, pool.DiskSetup, len(azurePool.DataDisks)))
+		allErrs = append(allErrs, field.Invalid(fldPath, len(azurePool.DataDisks),
+			fmt.Sprintf("each diskSetup entry configures the dataDisk at the same index; diskSetup length is %d but dataDisks length is %d, so the extra diskSetup entries would be silently ignored",
+				len(pool.DiskSetup), len(azurePool.DataDisks))))
 		// return early if disksetup and datadisks don't match lengths
 		return allErrs
 	}
 
-	lunNumbers := make(map[int32]interface{})
-	for i, d := range azurePool.DataDisks {
-		if d.Lun == nil {
-			allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id", d.NameSuffix)))
-		} else {
-			if *(d.Lun) < 0 || *(d.Lun) > 63 {
-				allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id between 0 and 63", d.NameSuffix)))
+	for i, setup := range pool.DiskSetup {
+		d := azurePool.DataDisks[i]
+		switch setup.Type {
+		case types.Etcd:
+			if setup.Etcd != nil && setup.Etcd.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %q", setup.Etcd.PlatformDiskID)))
 			}
-			if _, ok := lunNumbers[*d.Lun]; ok {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("Lun"), d.NameSuffix, "dataDisk must have a unique lun number"))
-			} else {
-				lunNumbers[*d.Lun] = struct{}{}
+		case types.Swap:
+			if setup.Swap != nil && setup.Swap.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %q", setup.Swap.PlatformDiskID)))
 			}
-		}
-
-		if d.DiskSizeGB <= 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), d.DiskSizeGB, "diskSizeGB must be greater than zero"))
-		}
-
-		if i < len(pool.DiskSetup) {
-			setup := pool.DiskSetup[i]
-			switch setup.Type {
-			case types.Etcd:
-				if setup.Etcd != nil && setup.Etcd.PlatformDiskID != d.NameSuffix {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %q", setup.Etcd.PlatformDiskID)))
-				}
-			case types.Swap:
-				if setup.Swap != nil && setup.Swap.PlatformDiskID != d.NameSuffix {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %q", setup.Swap.PlatformDiskID)))
-				}
-			case types.UserDefined:
-				if setup.UserDefined != nil && setup.UserDefined.PlatformDiskID != d.NameSuffix {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %q", setup.UserDefined.PlatformDiskID)))
-				}
+		case types.UserDefined:
+			if setup.UserDefined != nil && setup.UserDefined.PlatformDiskID != d.NameSuffix {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %q", setup.UserDefined.PlatformDiskID)))
 			}
 		}
 	}
@@ -353,17 +355,77 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 	return errs
 }
 
-func validateDataDisk(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+func validateDataDisk(p *azure.MachinePool, poolName string, platform *azure.Platform, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
+
+	// ultraSSDCapability can be set on the pool or once on defaultMachinePlatform.
+	// Defaulting merges the latter onto the pool before validation normally runs;
+	// resolving it here as well, with the same precedence, keeps the check correct
+	// without depending on that having happened.
+	ultraSSDCapability := p.UltraSSDCapability
+	if ultraSSDCapability == "" && platform.DefaultMachinePlatform != nil {
+		ultraSSDCapability = platform.DefaultMachinePlatform.UltraSSDCapability
+	}
 
 	switch poolName {
 	case types.MachinePoolControlPlaneRoleName, types.MachinePoolComputeRoleName:
+		// The name suffix is what the disk is addressed by: it names the Azure
+		// resource and it is what diskSetup matches against. Two disks sharing
+		// one makes both the resource name and that match ambiguous.
+		seenNameSuffixes := sets.New[string]()
+		lunNumbers := sets.New[int32]()
+
 		for i, dataDisk := range p.DataDisks {
+			if seenNameSuffixes.Has(dataDisk.NameSuffix) {
+				allErrs = append(allErrs, field.Duplicate(fldPath.Index(i).Child("nameSuffix"), dataDisk.NameSuffix))
+			} else {
+				seenNameSuffixes.Insert(dataDisk.NameSuffix)
+			}
+
+			if dataDisk.Lun == nil {
+				allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id", dataDisk.NameSuffix)))
+			} else {
+				if *(dataDisk.Lun) < 0 || *(dataDisk.Lun) > 63 {
+					allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id between 0 and 63", dataDisk.NameSuffix)))
+				}
+				if lunNumbers.Has(*dataDisk.Lun) {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("Lun"), dataDisk.NameSuffix, "dataDisk must have a unique lun number"))
+				} else {
+					lunNumbers.Insert(*dataDisk.Lun)
+				}
+			}
+
+			if dataDisk.DiskSizeGB <= 0 {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), dataDisk.DiskSizeGB, "diskSizeGB must be greater than zero"))
+			}
+
 			if dataDisk.ManagedDisk != nil {
-				if dataDisk.ManagedDisk.StorageAccountType == "" {
+				switch {
+				case dataDisk.ManagedDisk.StorageAccountType == "":
 					allErrs = append(allErrs, field.Required(
 						fldPath.Index(i).Child("managedDisk", "storageAccountType"),
 						"storageAccountType is required when managedDisk is specified",
+					))
+				case !validDataDiskStorageAccountTypes.Has(dataDisk.ManagedDisk.StorageAccountType):
+					// Unchecked, an unknown SKU reaches Azure only once the
+					// machine is created, well after the installer has reported
+					// success on the manifests.
+					allErrs = append(allErrs, field.NotSupported(
+						fldPath.Index(i).Child("managedDisk", "storageAccountType"),
+						dataDisk.ManagedDisk.StorageAccountType, sets.List(validDataDiskStorageAccountTypes),
+					))
+				}
+				// Azure only attaches an UltraSSD_LRS disk to a VM created with
+				// additionalCapabilities.ultraSSDEnabled, and machine generation
+				// derives that flag from ultraSSDCapability alone, comparing it
+				// to "Enabled" exactly. Unchecked, the manifests generate and
+				// the mismatch surfaces as machines that never come up.
+				if dataDisk.ManagedDisk.StorageAccountType == ultraSSDStorageAccountType && ultraSSDCapability != enabled {
+					allErrs = append(allErrs, field.Invalid(
+						fldPath.Index(i).Child("managedDisk", "storageAccountType"),
+						dataDisk.ManagedDisk.StorageAccountType,
+						fmt.Sprintf("ultraSSDCapability must be %q on this pool or on platform.azure.defaultMachinePlatform to attach an %s data disk",
+							enabled, ultraSSDStorageAccountType),
 					))
 				}
 				if dataDisk.ManagedDisk.SecurityProfile != nil {
