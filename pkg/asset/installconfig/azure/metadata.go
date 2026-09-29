@@ -35,7 +35,7 @@ type Metadata struct {
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
 	CloudName typesazure.CloudEnvironment `json:"cloudName,omitempty"`
 
-	// ARMEndpoint indicates the resource management API endpoint used by AzureStack.
+	// ARMEndpoint indicates the resource management API endpoint used by AzureStack and AzureUSSecCloud.
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
 
 	// Credentials hold prepopulated Azure credentials.
