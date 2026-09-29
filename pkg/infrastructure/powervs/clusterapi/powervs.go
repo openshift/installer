@@ -79,7 +79,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	)
 
 	logrus.Debugf("InfraReady: in = %+v", in)
-	logrus.Debugf("InfraReady: in.InstallConfig.Config = %+v", in.InstallConfig.Config)
 	logrus.Debugf("InfraReady: in.InstallConfig.PowerVS = %+v", in.InstallConfig.PowerVS)
 
 	powerVSCluster := &capibm.IBMPowerVSCluster{}
