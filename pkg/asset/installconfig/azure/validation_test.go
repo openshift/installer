@@ -363,6 +363,61 @@ var (
 		}
 	}
 
+	validCapacityReservationGroupSubscriptionID = "test-capacity-reservation-subscription-id"
+	validCapacityReservationGroupResourceGroup  = "test-capacity-reservation-resource-group"
+	validCapacityReservationGroupName           = "test-capacity-reservation-group"
+	invalidCapacityReservationGroupName         = "invalid-capacity-reservation-group"
+	wrongRegionCapacityReservationGroupName     = "wrong-region-capacity-reservation-group"
+	validCapacityReservationGroupConfig         = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           validCapacityReservationGroupName,
+		}
+	}
+	invalidCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           invalidCapacityReservationGroupName,
+		}
+	}
+	wrongRegionCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           wrongRegionCapacityReservationGroupName,
+		}
+	}
+
+	validCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	validCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	validCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+
 	validOSImagePublisher            = "test-publisher"
 	validOSImageOffer                = "test-offer"
 	validOSImageSKU                  = "test-sku"
@@ -1062,6 +1117,71 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestAzureCapacityReservationGroup(t *testing.T) {
+	validResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(validRegion)}
+	wrongRegion := "westus"
+	wrongRegionResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(wrongRegion)}
+
+	cases := []struct {
+		name     string
+		edit     func(*types.InstallConfig)
+		errorMsg string
+	}{
+		{name: "valid default machine platform", edit: validCapacityReservationGroupDefaultMachinePlatform},
+		{name: "valid control plane", edit: validCapacityReservationGroupControlPlane},
+		{name: "valid compute", edit: validCapacityReservationGroupCompute},
+		{
+			name:     "missing default machine platform group",
+			edit:     invalidCapacityReservationGroupDefaultMachinePlatform,
+			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "missing control plane group",
+			edit:     invalidCapacityReservationGroupControlPlane,
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "missing compute group",
+			edit:     invalidCapacityReservationGroupCompute,
+			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "wrong region default machine platform group",
+			edit:     wrongRegionCapacityReservationGroupDefaultMachinePlatform,
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+		{
+			name:     "wrong region control plane group",
+			edit:     wrongRegionCapacityReservationGroupControlPlane,
+			errorMsg: fmt.Sprintf(`^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+		{
+			name:     "wrong region compute group",
+			edit:     wrongRegionCapacityReservationGroupCompute,
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	azureClient := mock.NewMockAPI(mockCtrl)
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, validCapacityReservationGroupName).Return(validResult, nil).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, invalidCapacityReservationGroupName).Return(nil, fmt.Errorf("failed to get capacity reservation group")).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, wrongRegionCapacityReservationGroupName).Return(wrongRegionResult, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ic := validInstallConfig()
+			tc.edit(ic)
+			err := ValidateCapacityReservationGroup(azureClient, ic).ToAggregate()
+			if tc.errorMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.errorMsg, err)
 			}
 		})
 	}
