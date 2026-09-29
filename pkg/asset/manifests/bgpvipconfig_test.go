@@ -72,14 +72,18 @@ func TestBGPVIPConfigMapSchemaMatchesRuntimecfg(t *testing.T) {
 }
 
 // FRR's "timers <keepalive> <hold>" takes bare seconds; the install-config
-// carries human-friendly duration strings, so the generated peer data must
-// carry whole-second decimal strings (installer#10718 review 4919561631).
-func TestBGPVIPConfigMapTimersConvertedToSeconds(t *testing.T) {
+// carries the typed install-config fields, so the generated peer data must
+// carry the boolean-string and whole-second decimal-string shapes of the
+// merged runtimecfg/MCO/CNO contract (installer#10718 review 4919561631).
+func TestBGPVIPConfigMapContractMapping(t *testing.T) {
 	ic := bgpInstallConfig()
-	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].HoldTime = "1m30s"
-	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].KeepaliveTime = "30s"
-	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].HoldTime = "90s"
-	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].KeepaliveTime = "30s"
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].HoldTimeSeconds = 90
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].KeepaliveTimeSeconds = 30
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].FailureDetection = baremetal.BGPFailureDetectionBFD
+	ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].PeerReachability = baremetal.BGPPeerReachabilityMultiHop
+	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].HoldTimeSeconds = 90
+	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].KeepaliveTimeSeconds = 30
+	ic.Config.Platform.BareMetal.Hosts[0].BGPPeers[0].FailureDetection = baremetal.BGPFailureDetectionHoldTimer
 
 	cm := &BGPVIPConfigMap{}
 	parents := asset.Parents{}
@@ -90,9 +94,19 @@ func TestBGPVIPConfigMapTimersConvertedToSeconds(t *testing.T) {
 	assert.NoError(t, json.Unmarshal([]byte(cm.ConfigMap.Data["config.json"]), &data))
 	assert.Equal(t, "90", data.DefaultPeers[0].HoldTime)
 	assert.Equal(t, "30", data.DefaultPeers[0].KeepaliveTime)
+	assert.Equal(t, "true", data.DefaultPeers[0].BFDEnabled)
+	assert.Equal(t, "true", data.DefaultPeers[0].EBGPMultiHop)
 	assert.Equal(t, "90", data.HostOverrides["master-0"][0].HoldTime)
 	assert.Equal(t, "30", data.HostOverrides["master-0"][0].KeepaliveTime)
+	// HoldTimer / DirectlyConnected / omitted map to omitted contract keys.
+	assert.Empty(t, data.HostOverrides["master-0"][0].BFDEnabled)
+	assert.Empty(t, data.HostOverrides["master-0"][0].EBGPMultiHop)
 
-	// The install-config object itself must not be mutated.
-	assert.Equal(t, "1m30s", ic.Config.Platform.BareMetal.BGPVIPConfig.Peers[0].HoldTime)
+	// The raw payload must carry the stable contract keys, not the
+	// install-config field names.
+	raw := cm.ConfigMap.Data["config.json"]
+	assert.Contains(t, raw, `"bfdEnabled"`)
+	assert.Contains(t, raw, `"holdTime"`)
+	assert.NotContains(t, raw, `"failureDetection"`)
+	assert.NotContains(t, raw, `"holdTimeSeconds"`)
 }

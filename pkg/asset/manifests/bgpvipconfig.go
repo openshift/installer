@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -31,42 +30,57 @@ const (
 // names match baremetal-runtimecfg's FRRPeerMapping so the same JSON can be
 // written verbatim to /etc/kubernetes/static-pod-resources/frr-k8s/frr-peers.json.
 type bgpVIPConfigJSON struct {
-	LocalASN      int64                                `json:"localASN"`
-	DefaultPeers  []baremetal.BGPPeerConfig            `json:"defaultPeers"`
-	Communities   []string                             `json:"communities,omitempty"`
-	APIVIPs       []string                             `json:"apiVIPs"`
-	IngressVIPs   []string                             `json:"ingressVIPs"`
-	HostOverrides map[string][]baremetal.BGPPeerConfig `json:"hostOverrides,omitempty"`
+	LocalASN      int64                    `json:"localASN"`
+	DefaultPeers  []frrPeerJSON            `json:"defaultPeers"`
+	Communities   []string                 `json:"communities,omitempty"`
+	APIVIPs       []string                 `json:"apiVIPs"`
+	IngressVIPs   []string                 `json:"ingressVIPs"`
+	HostOverrides map[string][]frrPeerJSON `json:"hostOverrides,omitempty"`
 }
 
-// peersWithSecondsTimers converts the install-config's human-friendly
-// duration strings ("90s", "1m30s") into the whole-second decimal strings
-// ("90") the peer-data contract carries: FRR's "timers <keepalive> <hold>"
-// takes bare seconds, and the rendering templates emit the values verbatim.
-func peersWithSecondsTimers(peers []baremetal.BGPPeerConfig) []baremetal.BGPPeerConfig {
-	out := make([]baremetal.BGPPeerConfig, len(peers))
-	copy(out, peers)
-	for i := range out {
-		out[i].HoldTime = durationToSeconds(out[i].HoldTime)
-		out[i].KeepaliveTime = durationToSeconds(out[i].KeepaliveTime)
+// frrPeerJSON is one peer in the ConfigMap payload. It is a dedicated type
+// (not baremetal.BGPPeerConfig) because the install-config surface and this
+// contract evolve independently: the contract keeps the boolean-string and
+// bare-seconds shapes the merged runtimecfg/MCO/CNO consumers parse.
+type frrPeerJSON struct {
+	PeerAddress   string `json:"peerAddress"`
+	PeerASN       int64  `json:"peerASN"`
+	Password      string `json:"password,omitempty"` //nolint:gosec // BGP TCP MD5 session password carried to the renderers, not a hardcoded credential
+	Port          int32  `json:"port,omitempty"`
+	BFDEnabled    string `json:"bfdEnabled,omitempty"`
+	EBGPMultiHop  string `json:"ebgpMultiHop,omitempty"`
+	HoldTime      string `json:"holdTime,omitempty"`
+	KeepaliveTime string `json:"keepaliveTime,omitempty"`
+}
+
+// toFRRPeers maps the install-config peers onto the ConfigMap contract:
+// the failureDetection/peerReachability enums become the boolean strings
+// the consumers parse, and the integer-second timers become the bare-second
+// decimal strings FRR's "timers <keepalive> <hold>" takes.
+func toFRRPeers(peers []baremetal.BGPPeerConfig) []frrPeerJSON {
+	out := make([]frrPeerJSON, 0, len(peers))
+	for _, p := range peers {
+		j := frrPeerJSON{
+			PeerAddress: p.PeerAddress,
+			PeerASN:     p.PeerASN,
+			Password:    p.Password,
+			Port:        p.Port,
+		}
+		if p.FailureDetection == baremetal.BGPFailureDetectionBFD {
+			j.BFDEnabled = "true"
+		}
+		if p.PeerReachability == baremetal.BGPPeerReachabilityMultiHop {
+			j.EBGPMultiHop = "true"
+		}
+		if p.HoldTimeSeconds != 0 {
+			j.HoldTime = strconv.FormatInt(int64(p.HoldTimeSeconds), 10)
+		}
+		if p.KeepaliveTimeSeconds != 0 {
+			j.KeepaliveTime = strconv.FormatInt(int64(p.KeepaliveTimeSeconds), 10)
+		}
+		out = append(out, j)
 	}
 	return out
-}
-
-func durationToSeconds(value string) string {
-	if value == "" {
-		return ""
-	}
-	// Validated at install-config level to be a parseable whole-second
-	// duration; a bare number is passed through as seconds already.
-	if _, err := strconv.ParseInt(value, 10, 64); err == nil {
-		return value
-	}
-	d, err := time.ParseDuration(value)
-	if err != nil {
-		return value
-	}
-	return strconv.FormatInt(int64(d.Seconds()), 10)
 }
 
 // BGPVIPConfigMap generates the bgp-vip-config ConfigMap for CNO.
@@ -107,17 +121,17 @@ func (b *BGPVIPConfigMap) Generate(_ context.Context, dependencies asset.Parents
 
 	configData := bgpVIPConfigJSON{
 		LocalASN:     bgpConfig.LocalASN,
-		DefaultPeers: peersWithSecondsTimers(bgpConfig.Peers),
+		DefaultPeers: toFRRPeers(bgpConfig.Peers),
 		Communities:  bgpConfig.Communities,
 		APIVIPs:      bm.APIVIPs,
 		IngressVIPs:  bm.IngressVIPs,
 	}
 
 	// Collect per-host BGP peer overrides.
-	hostOverrides := make(map[string][]baremetal.BGPPeerConfig)
+	hostOverrides := make(map[string][]frrPeerJSON)
 	for _, host := range bm.Hosts {
 		if host != nil && len(host.BGPPeers) > 0 {
-			hostOverrides[host.Name] = peersWithSecondsTimers(host.BGPPeers)
+			hostOverrides[host.Name] = toFRRPeers(host.BGPPeers)
 		}
 	}
 	if len(hostOverrides) > 0 {
