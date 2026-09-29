@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	//"path"
 	"strings"
 	"time"
 
@@ -260,6 +261,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
+
+	logrus.Debugf("XXX: infraReady: storageURL=%s", storageURL)
+	logrus.Debugf("XXX: infraReady: blobURL=%s", blobURL)
 
 	var storageAccount *armstorage.Account
 	var storageClientFactory *armstorage.ClientFactory
@@ -998,6 +1002,7 @@ func isNotFoundError(err error) bool {
 // Ignition provisions the Azure container that holds the bootstrap ignition
 // file.
 func (p *Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	logrus.Debugf("XXX: Ignition()")
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -1011,6 +1016,8 @@ func (p *Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([
 	if err != nil {
 		return nil, err
 	}
+
+	logrus.Debugf("XXX: Igniton: blobURL=%s", blobURL)
 
 	publicAccess := armstorage.PublicAccessNone
 	// Create ignition blob storage container
@@ -1132,7 +1139,12 @@ func (p *Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([
 		if err != nil {
 			return nil, fmt.Errorf("failed to sign blob %s: %w", blobURL, err)
 		}
+		// XXX this is the culprit right here!
 		sasURL = fmt.Sprintf("https://%s.blob.%s/ignition/%s?%s", p.StorageAccountName, session.Environment.StorageEndpointSuffix, blobName, sasQueryParams.Encode())
+		logrus.Debugf("sasURL=%s", sasURL)
+		//sasURL = fmt.Sprintf("%s/%s?%s", path.Dir(blobURL), blobName, sasQueryParams.Encode())
+		//logrus.Debugf("XXX: 2 sasURL=%s", sasURL)
+
 	}
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {
