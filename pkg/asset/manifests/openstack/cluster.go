@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,10 +82,23 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			}
 		}
 	} else {
+		networkCIDR := capiutils.CIDRFromInstallConfig(installConfig)
+		allocationStart, err := cidr.Host(&networkCIDR.IPNet, 10)
+		if err != nil {
+			return nil, err
+		}
+		_, broadcastIP := cidr.AddressRange(&networkCIDR.IPNet)
+		allocationEnd := cidr.Dec(broadcastIP)
 		openStackCluster.Spec.ManagedSubnets = []capo.SubnetSpec{
 			{
-				CIDR:           capiutils.CIDRFromInstallConfig(installConfig).String(),
+				CIDR:           networkCIDR.String(),
 				DNSNameservers: openstackInstallConfig.ExternalDNS,
+				AllocationPools: []capo.AllocationPool{
+					{
+						Start: allocationStart.String(),
+						End:   allocationEnd.String(),
+					},
+				},
 			},
 		}
 	}
