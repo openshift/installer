@@ -5,10 +5,12 @@ import (
 
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -531,6 +533,82 @@ func TestProviderDataDiskEncryptionSet(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestOSDiskCachingType(t *testing.T) {
+	assert.Equal(t, "ReadOnly", osDiskCachingType(controlPlaneRoleName))
+	assert.Empty(t, osDiskCachingType("worker"))
+}
+
+func TestProviderControlPlaneOSDiskCachingReadOnly(t *testing.T) {
+	// Regression test for OCPBUGS-126380: https://issues.redhat.com/browse/OCPBUGS-126380
+	platform := &aztypes.Platform{Region: "eastus"}
+	session := &icazure.Session{
+		Credentials: icazure.Credentials{SubscriptionID: "test-sub"},
+		Environment: azureenv.Environment{StorageEndpointSuffix: "core.windows.net"},
+	}
+	mpool := &aztypes.MachinePool{
+		InstanceType: "Standard_D8s_v3",
+		OSDisk: aztypes.OSDisk{
+			DiskSizeGB: 1024,
+			DiskType:   "Premium_LRS",
+		},
+		Zones:    []string{"1"},
+		Identity: &aztypes.VMIdentity{},
+	}
+	capabilities := map[string]string{"HyperVGenerations": "V1,V2"}
+	azIdx := 0
+
+	masterSpec, err := provider(platform, mpool, "", "user-data", "test-cluster", controlPlaneRoleName, &azIdx, capabilities, session, "test-nrg", "test-vnet", "test-subnet")
+	require.NoError(t, err)
+	assert.Equal(t, "ReadOnly", masterSpec.OSDisk.CachingType)
+
+	workerSpec, err := provider(platform, mpool, "", "user-data", "test-cluster", "worker", &azIdx, capabilities, session, "test-nrg", "test-vnet", "test-subnet")
+	require.NoError(t, err)
+	assert.Empty(t, workerSpec.OSDisk.CachingType)
+}
+
+func TestGenerateMachinesControlPlaneOSDiskCachingReadOnly(t *testing.T) {
+	// Regression test for OCPBUGS-126380: https://issues.redhat.com/browse/OCPBUGS-126380
+	replicas := int64(1)
+	diskSize := int32(1024)
+	files, err := GenerateMachines("test-cluster", "test-rg", "test-sub", &icazure.Session{
+		Credentials: icazure.Credentials{SubscriptionID: "test-sub"},
+		Environment: azureenv.Environment{StorageEndpointSuffix: "core.windows.net"},
+	}, &MachineInput{
+		Subnet:      "test-subnet",
+		Role:        "master",
+		HyperVGen:   "V2",
+		Environment: aztypes.PublicCloud,
+		Platform:    &aztypes.Platform{Region: "eastus"},
+		Pool: &types.MachinePool{
+			Name:     "master",
+			Replicas: &replicas,
+			Platform: types.MachinePoolPlatform{
+				Azure: &aztypes.MachinePool{
+					InstanceType: "Standard_D8s_v3",
+					OSDisk: aztypes.OSDisk{
+						DiskSizeGB: diskSize,
+						DiskType:   "Premium_LRS",
+					},
+					Zones:    []string{"1"},
+					Identity: &aztypes.VMIdentity{},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	var azureMachines []*capz.AzureMachine
+	for _, file := range files {
+		if machine, ok := file.Object.(*capz.AzureMachine); ok {
+			azureMachines = append(azureMachines, machine)
+		}
+	}
+	require.NotEmpty(t, azureMachines)
+	for _, machine := range azureMachines {
+		assert.Equal(t, "ReadOnly", machine.Spec.OSDisk.CachingType, "OS disk caching for %s", machine.Name)
 	}
 }
 
