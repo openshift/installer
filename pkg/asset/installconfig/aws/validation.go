@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 type resourceRequirements struct {
@@ -342,6 +343,11 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, c
 	}
 
 	allErrs = append(allErrs, validateSharedSubnets(ctx, meta, fldPath)...)
+	allErrs = append(allErrs, validateSubnetAttributes(fldPath, subnetDataGroups.Private, config)...)
+	allErrs = append(allErrs, validateSubnetAttributes(fldPath, subnetDataGroups.Edge, config)...)
+	if publicOnlySubnet {
+		allErrs = append(allErrs, validateSubnetAttributes(fldPath, subnetDataGroups.Public, config)...)
+	}
 	allErrs = append(allErrs, validateSubnetCIDRs(fldPath, subnetDataGroups.Private, config)...)
 	allErrs = append(allErrs, validateSubnetCIDRs(fldPath, subnetDataGroups.Public, config)...)
 
@@ -922,6 +928,26 @@ func validateSharedSubnets(ctx context.Context, meta *Metadata, fldPath *field.P
 		clusterIDs := subnet.Tags.GetClusterIDs(TagValueOwned)
 		if len(clusterIDs) > 0 {
 			allErrs = append(allErrs, field.Forbidden(fldPath, fmt.Sprintf("subnet %s is owned by other clusters %v and cannot be used for new installations, another subnet must be created separately", id, clusterIDs)))
+		}
+	}
+
+	return allErrs
+}
+
+// validateSubnetAttributes ensures subnets have the required attributes for the install.
+func validateSubnetAttributes(fldPath *field.Path, subnetDataGroup map[string]subnetData, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// For DualStackIPv4Primary, AWS assigns IPv6 as a secondary address and only does so
+	// automatically when AssignIpv6AddressOnCreation is enabled on the subnet.
+	// Without it, nodes will not receive an IPv6 address and OVN-Kubernetes will fail to initialize.
+	if ic.AWS.IPFamily == network.DualStackIPv4Primary {
+		for id, subnetData := range subnetDataGroup {
+			fp := fldPath.Index(subnetData.Idx)
+
+			if !subnetData.AssignIpv6AddressOnCreation {
+				allErrs = append(allErrs, field.Invalid(fp, id, fmt.Sprintf("subnet must have AssignIpv6AddressOnCreation enabled for ipFamily %s; enable it with: aws ec2 modify-subnet-attribute --subnet-id %s --assign-ipv6-address-on-creation", ic.AWS.IPFamily, id)))
+			}
 		}
 	}
 

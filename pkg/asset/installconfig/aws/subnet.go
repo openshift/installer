@@ -52,6 +52,10 @@ type Subnet struct {
 
 	// VPCID is the ID of the VPC containing the subnet.
 	VPCID string
+
+	// AssignIpv6AddressOnCreation indicates whether a network interface created in this subnet
+	// receives an IPv6 address.
+	AssignIpv6AddressOnCreation bool
 }
 
 // Subnets is the map for the Subnet metadata indexed by subnetID.
@@ -133,14 +137,15 @@ func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID 
 
 			// At this point, we should be safe to dereference these fields.
 			metas[*subnet.SubnetId] = Subnet{
-				ID:       *subnet.SubnetId,
-				ARN:      *subnet.SubnetArn,
-				Zone:     &Zone{Name: *subnet.AvailabilityZone},
-				CIDR:     aws.ToString(subnet.CidrBlock),
-				IPv6CIDR: ipv6CIDR,
-				Public:   false,
-				Tags:     FromAWSTags(subnet.Tags),
-				VPCID:    *subnet.VpcId,
+				ID:                          *subnet.SubnetId,
+				ARN:                         *subnet.SubnetArn,
+				Zone:                        &Zone{Name: *subnet.AvailabilityZone},
+				CIDR:                        aws.ToString(subnet.CidrBlock),
+				IPv6CIDR:                    ipv6CIDR,
+				Public:                      false,
+				Tags:                        FromAWSTags(subnet.Tags),
+				VPCID:                       *subnet.VpcId,
+				AssignIpv6AddressOnCreation: ptr.Deref(subnet.AssignIpv6AddressOnCreation, false),
 			}
 			zoneNames = append(zoneNames, *subnet.AvailabilityZone)
 		}
