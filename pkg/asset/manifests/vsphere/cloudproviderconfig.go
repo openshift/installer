@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	cloudconfig "github.com/openshift/library-go/pkg/cloudprovider/vsphere"
@@ -75,22 +76,24 @@ func CloudProviderConfigYaml(infraID string, ic *installconfig.InstallConfig) (s
 	// in GetInfraPlatformSpec. If nodeNetworking is explicitly set in the
 	// install-config, use it directly; otherwise fall back to the machine
 	// network CIDRs (which should encompass the VIPs).
-	if p.NodeNetworking != nil {
-		setNodes(&cloudProviderConfig, p.NodeNetworking)
-	} else {
-		var cidrs []string
-		for _, machineNetwork := range ic.Config.MachineNetwork {
-			cidrs = append(cidrs, machineNetwork.CIDR.String())
+	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiNetworks) {
+		if p.NodeNetworking != nil {
+			setNodes(&cloudProviderConfig, p.NodeNetworking)
+		} else {
+			var cidrs []string
+			for _, machineNetwork := range ic.Config.MachineNetwork {
+				cidrs = append(cidrs, machineNetwork.CIDR.String())
+			}
+			nodeNetworking := &configv1.VSpherePlatformNodeNetworking{
+				External: configv1.VSpherePlatformNodeNetworkingSpec{
+					NetworkSubnetCIDR: cidrs,
+				},
+				Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+					NetworkSubnetCIDR: cidrs,
+				},
+			}
+			setNodes(&cloudProviderConfig, nodeNetworking)
 		}
-		nodeNetworking := &configv1.VSpherePlatformNodeNetworking{
-			External: configv1.VSpherePlatformNodeNetworkingSpec{
-				NetworkSubnetCIDR: cidrs,
-			},
-			Internal: configv1.VSpherePlatformNodeNetworkingSpec{
-				NetworkSubnetCIDR: cidrs,
-			},
-		}
-		setNodes(&cloudProviderConfig, nodeNetworking)
 	}
 
 	cloudProviderConfigYaml, err := yaml.Marshal(cloudProviderConfig)
