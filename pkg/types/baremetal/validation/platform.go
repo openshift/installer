@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
@@ -628,8 +628,13 @@ func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.Er
 
 	if peer.PeerAddress == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("peerAddress"), "peer address is required"))
-	} else if ip := net.ParseIP(peer.PeerAddress); ip == nil {
+	} else if addr, err := netip.ParseAddr(peer.PeerAddress); err != nil || addr.Zone() != "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("peerAddress"), peer.PeerAddress, "must be a valid IP address"))
+	} else if addr.String() != peer.PeerAddress {
+		// Mirrors the BGPVIPConfig CRD's canonical-form rule so day-0
+		// input cannot express what the API would reject (two spellings
+		// of one address forming duplicate peers).
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("peerAddress"), peer.PeerAddress, "must be in canonical form (lowercase, no leading zeros, IPv6 zero-compressed)"))
 	}
 
 	if peer.PeerASN < 1 || peer.PeerASN > 4294967295 {
@@ -637,14 +642,14 @@ func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.Er
 			"must be between 1 and 4294967295"))
 	}
 
-	if peer.BFDEnabled != "" && peer.BFDEnabled != "true" && peer.BFDEnabled != "false" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("bfdEnabled"), peer.BFDEnabled,
-			`must be "true", "false", or empty`))
+	if peer.FailureDetection != "" && peer.FailureDetection != baremetal.BGPFailureDetectionBFD && peer.FailureDetection != baremetal.BGPFailureDetectionHoldTimer {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("failureDetection"), peer.FailureDetection,
+			[]string{string(baremetal.BGPFailureDetectionBFD), string(baremetal.BGPFailureDetectionHoldTimer)}))
 	}
 
-	if peer.EBGPMultiHop != "" && peer.EBGPMultiHop != "true" && peer.EBGPMultiHop != "false" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ebgpMultiHop"), peer.EBGPMultiHop,
-			`must be "true", "false", or empty`))
+	if peer.PeerReachability != "" && peer.PeerReachability != baremetal.BGPPeerReachabilityDirectlyConnected && peer.PeerReachability != baremetal.BGPPeerReachabilityMultiHop {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("peerReachability"), peer.PeerReachability,
+			[]string{string(baremetal.BGPPeerReachabilityDirectlyConnected), string(baremetal.BGPPeerReachabilityMultiHop)}))
 	}
 
 	if peer.Port != 0 && (peer.Port < 1 || peer.Port > 65535) {
@@ -652,27 +657,21 @@ func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.Er
 			"must be between 1 and 65535, or omitted for the default 179"))
 	}
 
-	// FRR's "timers <keepalive> <hold>" takes whole seconds and requires the
-	// pair; the install-config accepts human-friendly duration strings and
-	// the manifest generation converts them to bare seconds for rendering.
-	if (peer.HoldTime == "") != (peer.KeepaliveTime == "") {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("holdTime"), peer.HoldTime,
-			"holdTime and keepaliveTime must be set together"))
+	// Mirrors the BGPVIPConfig CRD's timer rules: omission is the only
+	// "use the FRR default" path (180s/60s), a non-zero hold time is at
+	// least 3 seconds (RFC 4271), and the hold time is at least 3 times
+	// the keepalive interval when both are set.
+	if peer.HoldTimeSeconds != 0 && (peer.HoldTimeSeconds < 3 || peer.HoldTimeSeconds > 65535) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("holdTimeSeconds"), peer.HoldTimeSeconds,
+			"must be between 3 and 65535"))
 	}
-	for name, value := range map[string]string{"holdTime": peer.HoldTime, "keepaliveTime": peer.KeepaliveTime} {
-		if value == "" {
-			continue
-		}
-		d, err := time.ParseDuration(value)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child(name), value,
-				"must be a valid duration (e.g. 90s)"))
-			continue
-		}
-		if d != d.Truncate(time.Second) || d < 0 || d > 65535*time.Second {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child(name), value,
-				"must be a whole number of seconds between 0 and 65535 (BGP timers are second-granular)"))
-		}
+	if peer.KeepaliveTimeSeconds != 0 && (peer.KeepaliveTimeSeconds < 1 || peer.KeepaliveTimeSeconds > 65535) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("keepaliveTimeSeconds"), peer.KeepaliveTimeSeconds,
+			"must be between 1 and 65535"))
+	}
+	if peer.HoldTimeSeconds != 0 && peer.KeepaliveTimeSeconds != 0 && peer.HoldTimeSeconds < 3*peer.KeepaliveTimeSeconds {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("holdTimeSeconds"), peer.HoldTimeSeconds,
+			"must be at least 3 times keepaliveTimeSeconds"))
 	}
 
 	return allErrs
