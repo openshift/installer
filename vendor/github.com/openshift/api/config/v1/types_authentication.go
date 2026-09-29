@@ -672,7 +672,7 @@ type UsernameClaimMapping struct {
 // +enum
 type UsernamePrefixPolicy string
 
-var (
+const (
 	// NoOpinion let's the cluster assign prefixes.  If the username claim is email, there is no prefix
 	// If the username claim is anything else, it is prefixed by the issuerURL
 	NoOpinion UsernamePrefixPolicy = ""
@@ -723,7 +723,7 @@ type PrefixedClaimMapping struct {
 type TokenValidationRuleType string
 
 const (
-	TokenValidationRuleTypeRequiredClaim = "RequiredClaim"
+	TokenValidationRuleTypeRequiredClaim TokenValidationRuleType = "RequiredClaim"
 )
 
 type TokenClaimValidationRule struct {
