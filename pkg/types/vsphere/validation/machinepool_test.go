@@ -231,6 +231,86 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 		},
 		{
+			name:     "data disk duplicate name",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "Disk1",
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+							{
+								Name:             "Disk1",
+								SizeGiB:          20,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: `test-path.disks\[1].name: Duplicate value: "Disk1"`,
+		},
+		{
+			name:     "disk setup referencing a data disk that does not exist",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{Type: types.Etcd, Etcd: &types.DiskEtcd{PlatformDiskID: "etcddsk"}},
+				},
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "etcddisk",
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: `test-path.dataDisks: Invalid value: "etcddsk": no data disk is named "etcddsk" as declared in diskSetup\[0]`,
+		},
+		{
+			name:     "disk setup with no data disks at all",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{Type: types.Etcd, Etcd: &types.DiskEtcd{PlatformDiskID: "etcddisk"}},
+				},
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{},
+				},
+			},
+			expectedErrMsg: `test-path.dataDisks: Invalid value: "etcddisk": no data disk is named "etcddisk" as declared in diskSetup\[0]`,
+		},
+		{
+			name:     "disk setup matching a data disk",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{
+					{Type: types.Etcd, Etcd: &types.DiskEtcd{PlatformDiskID: "etcddisk"}},
+				},
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "etcddisk",
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:     "data disk name not set",
 			platform: validPlatform(),
 			pool: &types.MachinePool{
