@@ -55,7 +55,7 @@ func (s *AvailabilitySetSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the availability set.
-func (s *AvailabilitySetSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *AvailabilitySetSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armcompute.AvailabilitySet); !ok {
 			return nil, errors.Errorf("%T is not an armcompute.AvailabilitySet", existing)

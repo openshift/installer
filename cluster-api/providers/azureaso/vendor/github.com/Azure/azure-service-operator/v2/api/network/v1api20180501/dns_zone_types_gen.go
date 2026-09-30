@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}
 type DnsZone struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (zone *DnsZone) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}
 type DnsZoneList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -500,8 +501,6 @@ func (zone *DnsZone_Spec) AssignProperties_From_DnsZone_Spec(source *storage.Dns
 	if source.RegistrationVirtualNetworks != nil {
 		registrationVirtualNetworkList := make([]SubResource, len(source.RegistrationVirtualNetworks))
 		for registrationVirtualNetworkIndex, registrationVirtualNetworkItem := range source.RegistrationVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			registrationVirtualNetworkItem := registrationVirtualNetworkItem
 			var registrationVirtualNetwork SubResource
 			err := registrationVirtualNetwork.AssignProperties_From_SubResource(&registrationVirtualNetworkItem)
 			if err != nil {
@@ -518,8 +517,6 @@ func (zone *DnsZone_Spec) AssignProperties_From_DnsZone_Spec(source *storage.Dns
 	if source.ResolutionVirtualNetworks != nil {
 		resolutionVirtualNetworkList := make([]SubResource, len(source.ResolutionVirtualNetworks))
 		for resolutionVirtualNetworkIndex, resolutionVirtualNetworkItem := range source.ResolutionVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			resolutionVirtualNetworkItem := resolutionVirtualNetworkItem
 			var resolutionVirtualNetwork SubResource
 			err := resolutionVirtualNetwork.AssignProperties_From_SubResource(&resolutionVirtualNetworkItem)
 			if err != nil {
@@ -586,8 +583,6 @@ func (zone *DnsZone_Spec) AssignProperties_To_DnsZone_Spec(destination *storage.
 	if zone.RegistrationVirtualNetworks != nil {
 		registrationVirtualNetworkList := make([]storage.SubResource, len(zone.RegistrationVirtualNetworks))
 		for registrationVirtualNetworkIndex, registrationVirtualNetworkItem := range zone.RegistrationVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			registrationVirtualNetworkItem := registrationVirtualNetworkItem
 			var registrationVirtualNetwork storage.SubResource
 			err := registrationVirtualNetworkItem.AssignProperties_To_SubResource(&registrationVirtualNetwork)
 			if err != nil {
@@ -604,8 +599,6 @@ func (zone *DnsZone_Spec) AssignProperties_To_DnsZone_Spec(destination *storage.
 	if zone.ResolutionVirtualNetworks != nil {
 		resolutionVirtualNetworkList := make([]storage.SubResource, len(zone.ResolutionVirtualNetworks))
 		for resolutionVirtualNetworkIndex, resolutionVirtualNetworkItem := range zone.ResolutionVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			resolutionVirtualNetworkItem := resolutionVirtualNetworkItem
 			var resolutionVirtualNetwork storage.SubResource
 			err := resolutionVirtualNetworkItem.AssignProperties_To_SubResource(&resolutionVirtualNetwork)
 			if err != nil {
@@ -650,8 +643,6 @@ func (zone *DnsZone_Spec) Initialize_From_DnsZone_STATUS(source *DnsZone_STATUS)
 	if source.RegistrationVirtualNetworks != nil {
 		registrationVirtualNetworkList := make([]SubResource, len(source.RegistrationVirtualNetworks))
 		for registrationVirtualNetworkIndex, registrationVirtualNetworkItem := range source.RegistrationVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			registrationVirtualNetworkItem := registrationVirtualNetworkItem
 			var registrationVirtualNetwork SubResource
 			err := registrationVirtualNetwork.Initialize_From_SubResource_STATUS(&registrationVirtualNetworkItem)
 			if err != nil {
@@ -668,8 +659,6 @@ func (zone *DnsZone_Spec) Initialize_From_DnsZone_STATUS(source *DnsZone_STATUS)
 	if source.ResolutionVirtualNetworks != nil {
 		resolutionVirtualNetworkList := make([]SubResource, len(source.ResolutionVirtualNetworks))
 		for resolutionVirtualNetworkIndex, resolutionVirtualNetworkItem := range source.ResolutionVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			resolutionVirtualNetworkItem := resolutionVirtualNetworkItem
 			var resolutionVirtualNetwork SubResource
 			err := resolutionVirtualNetwork.Initialize_From_SubResource_STATUS(&resolutionVirtualNetworkItem)
 			if err != nil {
@@ -969,8 +958,6 @@ func (zone *DnsZone_STATUS) AssignProperties_From_DnsZone_STATUS(source *storage
 	if source.RegistrationVirtualNetworks != nil {
 		registrationVirtualNetworkList := make([]SubResource_STATUS, len(source.RegistrationVirtualNetworks))
 		for registrationVirtualNetworkIndex, registrationVirtualNetworkItem := range source.RegistrationVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			registrationVirtualNetworkItem := registrationVirtualNetworkItem
 			var registrationVirtualNetwork SubResource_STATUS
 			err := registrationVirtualNetwork.AssignProperties_From_SubResource_STATUS(&registrationVirtualNetworkItem)
 			if err != nil {
@@ -987,8 +974,6 @@ func (zone *DnsZone_STATUS) AssignProperties_From_DnsZone_STATUS(source *storage
 	if source.ResolutionVirtualNetworks != nil {
 		resolutionVirtualNetworkList := make([]SubResource_STATUS, len(source.ResolutionVirtualNetworks))
 		for resolutionVirtualNetworkIndex, resolutionVirtualNetworkItem := range source.ResolutionVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			resolutionVirtualNetworkItem := resolutionVirtualNetworkItem
 			var resolutionVirtualNetwork SubResource_STATUS
 			err := resolutionVirtualNetwork.AssignProperties_From_SubResource_STATUS(&resolutionVirtualNetworkItem)
 			if err != nil {
@@ -1056,8 +1041,6 @@ func (zone *DnsZone_STATUS) AssignProperties_To_DnsZone_STATUS(destination *stor
 	if zone.RegistrationVirtualNetworks != nil {
 		registrationVirtualNetworkList := make([]storage.SubResource_STATUS, len(zone.RegistrationVirtualNetworks))
 		for registrationVirtualNetworkIndex, registrationVirtualNetworkItem := range zone.RegistrationVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			registrationVirtualNetworkItem := registrationVirtualNetworkItem
 			var registrationVirtualNetwork storage.SubResource_STATUS
 			err := registrationVirtualNetworkItem.AssignProperties_To_SubResource_STATUS(&registrationVirtualNetwork)
 			if err != nil {
@@ -1074,8 +1057,6 @@ func (zone *DnsZone_STATUS) AssignProperties_To_DnsZone_STATUS(destination *stor
 	if zone.ResolutionVirtualNetworks != nil {
 		resolutionVirtualNetworkList := make([]storage.SubResource_STATUS, len(zone.ResolutionVirtualNetworks))
 		for resolutionVirtualNetworkIndex, resolutionVirtualNetworkItem := range zone.ResolutionVirtualNetworks {
-			// Shadow the loop variable to avoid aliasing
-			resolutionVirtualNetworkItem := resolutionVirtualNetworkItem
 			var resolutionVirtualNetwork storage.SubResource_STATUS
 			err := resolutionVirtualNetworkItem.AssignProperties_To_SubResource_STATUS(&resolutionVirtualNetwork)
 			if err != nil {
@@ -1129,8 +1110,6 @@ func (operator *DnsZoneOperatorSpec) AssignProperties_From_DnsZoneOperatorSpec(s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1147,8 +1126,6 @@ func (operator *DnsZoneOperatorSpec) AssignProperties_From_DnsZoneOperatorSpec(s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1174,8 +1151,6 @@ func (operator *DnsZoneOperatorSpec) AssignProperties_To_DnsZoneOperatorSpec(des
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1192,8 +1167,6 @@ func (operator *DnsZoneOperatorSpec) AssignProperties_To_DnsZoneOperatorSpec(des
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

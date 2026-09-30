@@ -167,6 +167,7 @@ type GlobalParameterSpecification struct {
 
 // Purview configuration.
 type PurviewConfiguration struct {
+	// PurviewResourceId: Purview resource id.
 	PurviewResourceId *string `json:"purviewResourceId,omitempty"`
 }
 
@@ -176,6 +177,7 @@ type UserAssignedIdentityDetails struct {
 
 // Managed Identity used for CMK.
 type CMKIdentityDefinition struct {
+	// UserAssignedIdentity: The resource id of the user assigned identity to authenticate to customer's key vault.
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }
 

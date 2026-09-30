@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,web}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/WebApps.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/WebApps.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web
 type SitesSourcecontrol struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &SitesSourcecontrol{}
 
 // ConvertFrom populates our SitesSourcecontrol from the provided hub SitesSourcecontrol
 func (sourcecontrol *SitesSourcecontrol) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SitesSourcecontrol)
-	if !ok {
-		return fmt.Errorf("expected web/v1api20220301/storage/SitesSourcecontrol but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SitesSourcecontrol
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return sourcecontrol.AssignProperties_From_SitesSourcecontrol(source)
+	err = sourcecontrol.AssignProperties_From_SitesSourcecontrol(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to sourcecontrol")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SitesSourcecontrol from our SitesSourcecontrol
 func (sourcecontrol *SitesSourcecontrol) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SitesSourcecontrol)
-	if !ok {
-		return fmt.Errorf("expected web/v1api20220301/storage/SitesSourcecontrol but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SitesSourcecontrol
+	err := sourcecontrol.AssignProperties_To_SitesSourcecontrol(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from sourcecontrol")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return sourcecontrol.AssignProperties_To_SitesSourcecontrol(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &SitesSourcecontrol{}
@@ -86,17 +101,6 @@ func (sourcecontrol *SitesSourcecontrol) SecretDestinationExpressions() []*core.
 		return nil
 	}
 	return sourcecontrol.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &SitesSourcecontrol{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (sourcecontrol *SitesSourcecontrol) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*SitesSourcecontrol_STATUS); ok {
-		return sourcecontrol.Spec.Initialize_From_SitesSourcecontrol_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type SitesSourcecontrol_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &SitesSourcecontrol{}
@@ -237,7 +241,7 @@ func (sourcecontrol *SitesSourcecontrol) OriginalGVK() *schema.GroupVersionKind 
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/WebApps.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/WebApps.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{name}/sourcecontrols/web
 type SitesSourcecontrolList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -319,7 +323,7 @@ func (sourcecontrol *SitesSourcecontrol_Spec) ConvertToARM(resolved genruntime.C
 		result.Properties.DeploymentRollbackEnabled = &deploymentRollbackEnabled
 	}
 	if sourcecontrol.GitHubActionConfiguration != nil {
-		gitHubActionConfiguration_ARM, err := (*sourcecontrol.GitHubActionConfiguration).ConvertToARM(resolved)
+		gitHubActionConfiguration_ARM, err := sourcecontrol.GitHubActionConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -660,66 +664,6 @@ func (sourcecontrol *SitesSourcecontrol_Spec) AssignProperties_To_SitesSourcecon
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SitesSourcecontrol_STATUS populates our SitesSourcecontrol_Spec from the provided source SitesSourcecontrol_STATUS
-func (sourcecontrol *SitesSourcecontrol_Spec) Initialize_From_SitesSourcecontrol_STATUS(source *SitesSourcecontrol_STATUS) error {
-
-	// Branch
-	sourcecontrol.Branch = genruntime.ClonePointerToString(source.Branch)
-
-	// DeploymentRollbackEnabled
-	if source.DeploymentRollbackEnabled != nil {
-		deploymentRollbackEnabled := *source.DeploymentRollbackEnabled
-		sourcecontrol.DeploymentRollbackEnabled = &deploymentRollbackEnabled
-	} else {
-		sourcecontrol.DeploymentRollbackEnabled = nil
-	}
-
-	// GitHubActionConfiguration
-	if source.GitHubActionConfiguration != nil {
-		var gitHubActionConfiguration GitHubActionConfiguration
-		err := gitHubActionConfiguration.Initialize_From_GitHubActionConfiguration_STATUS(source.GitHubActionConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_GitHubActionConfiguration_STATUS() to populate field GitHubActionConfiguration")
-		}
-		sourcecontrol.GitHubActionConfiguration = &gitHubActionConfiguration
-	} else {
-		sourcecontrol.GitHubActionConfiguration = nil
-	}
-
-	// IsGitHubAction
-	if source.IsGitHubAction != nil {
-		isGitHubAction := *source.IsGitHubAction
-		sourcecontrol.IsGitHubAction = &isGitHubAction
-	} else {
-		sourcecontrol.IsGitHubAction = nil
-	}
-
-	// IsManualIntegration
-	if source.IsManualIntegration != nil {
-		isManualIntegration := *source.IsManualIntegration
-		sourcecontrol.IsManualIntegration = &isManualIntegration
-	} else {
-		sourcecontrol.IsManualIntegration = nil
-	}
-
-	// IsMercurial
-	if source.IsMercurial != nil {
-		isMercurial := *source.IsMercurial
-		sourcecontrol.IsMercurial = &isMercurial
-	} else {
-		sourcecontrol.IsMercurial = nil
-	}
-
-	// Kind
-	sourcecontrol.Kind = genruntime.ClonePointerToString(source.Kind)
-
-	// RepoUrl
-	sourcecontrol.RepoUrl = genruntime.ClonePointerToString(source.RepoUrl)
 
 	// No error
 	return nil
@@ -1111,7 +1055,7 @@ func (configuration *GitHubActionConfiguration) ConvertToARM(resolved genruntime
 
 	// Set property "CodeConfiguration":
 	if configuration.CodeConfiguration != nil {
-		codeConfiguration_ARM, err := (*configuration.CodeConfiguration).ConvertToARM(resolved)
+		codeConfiguration_ARM, err := configuration.CodeConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1121,7 +1065,7 @@ func (configuration *GitHubActionConfiguration) ConvertToARM(resolved genruntime
 
 	// Set property "ContainerConfiguration":
 	if configuration.ContainerConfiguration != nil {
-		containerConfiguration_ARM, err := (*configuration.ContainerConfiguration).ConvertToARM(resolved)
+		containerConfiguration_ARM, err := configuration.ContainerConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1290,53 +1234,6 @@ func (configuration *GitHubActionConfiguration) AssignProperties_To_GitHubAction
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_GitHubActionConfiguration_STATUS populates our GitHubActionConfiguration from the provided source GitHubActionConfiguration_STATUS
-func (configuration *GitHubActionConfiguration) Initialize_From_GitHubActionConfiguration_STATUS(source *GitHubActionConfiguration_STATUS) error {
-
-	// CodeConfiguration
-	if source.CodeConfiguration != nil {
-		var codeConfiguration GitHubActionCodeConfiguration
-		err := codeConfiguration.Initialize_From_GitHubActionCodeConfiguration_STATUS(source.CodeConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_GitHubActionCodeConfiguration_STATUS() to populate field CodeConfiguration")
-		}
-		configuration.CodeConfiguration = &codeConfiguration
-	} else {
-		configuration.CodeConfiguration = nil
-	}
-
-	// ContainerConfiguration
-	if source.ContainerConfiguration != nil {
-		var containerConfiguration GitHubActionContainerConfiguration
-		err := containerConfiguration.Initialize_From_GitHubActionContainerConfiguration_STATUS(source.ContainerConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_GitHubActionContainerConfiguration_STATUS() to populate field ContainerConfiguration")
-		}
-		configuration.ContainerConfiguration = &containerConfiguration
-	} else {
-		configuration.ContainerConfiguration = nil
-	}
-
-	// GenerateWorkflowFile
-	if source.GenerateWorkflowFile != nil {
-		generateWorkflowFile := *source.GenerateWorkflowFile
-		configuration.GenerateWorkflowFile = &generateWorkflowFile
-	} else {
-		configuration.GenerateWorkflowFile = nil
-	}
-
-	// IsLinux
-	if source.IsLinux != nil {
-		isLinux := *source.IsLinux
-		configuration.IsLinux = &isLinux
-	} else {
-		configuration.IsLinux = nil
 	}
 
 	// No error
@@ -1530,8 +1427,6 @@ func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_From_SitesSourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1548,8 +1443,6 @@ func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_From_SitesSourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1575,8 +1468,6 @@ func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_To_SitesSourcec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1593,8 +1484,6 @@ func (operator *SitesSourcecontrolOperatorSpec) AssignProperties_To_SitesSourcec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1708,19 +1597,6 @@ func (configuration *GitHubActionCodeConfiguration) AssignProperties_To_GitHubAc
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_GitHubActionCodeConfiguration_STATUS populates our GitHubActionCodeConfiguration from the provided source GitHubActionCodeConfiguration_STATUS
-func (configuration *GitHubActionCodeConfiguration) Initialize_From_GitHubActionCodeConfiguration_STATUS(source *GitHubActionCodeConfiguration_STATUS) error {
-
-	// RuntimeStack
-	configuration.RuntimeStack = genruntime.ClonePointerToString(source.RuntimeStack)
-
-	// RuntimeVersion
-	configuration.RuntimeVersion = genruntime.ClonePointerToString(source.RuntimeVersion)
 
 	// No error
 	return nil
@@ -1942,22 +1818,6 @@ func (configuration *GitHubActionContainerConfiguration) AssignProperties_To_Git
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_GitHubActionContainerConfiguration_STATUS populates our GitHubActionContainerConfiguration from the provided source GitHubActionContainerConfiguration_STATUS
-func (configuration *GitHubActionContainerConfiguration) Initialize_From_GitHubActionContainerConfiguration_STATUS(source *GitHubActionContainerConfiguration_STATUS) error {
-
-	// ImageName
-	configuration.ImageName = genruntime.ClonePointerToString(source.ImageName)
-
-	// ServerUrl
-	configuration.ServerUrl = genruntime.ClonePointerToString(source.ServerUrl)
-
-	// Username
-	configuration.Username = genruntime.ClonePointerToString(source.Username)
 
 	// No error
 	return nil

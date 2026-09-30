@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbformariadb}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -295,7 +296,7 @@ func (server *Server_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Properties":
 	if server.Properties != nil {
-		properties_ARM, err := (*server.Properties).ConvertToARM(resolved)
+		properties_ARM, err := server.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -305,7 +306,7 @@ func (server *Server_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 
 	// Set property "Sku":
 	if server.Sku != nil {
-		sku_ARM, err := (*server.Sku).ConvertToARM(resolved)
+		sku_ARM, err := server.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -956,8 +957,6 @@ func (server *Server_STATUS) AssignProperties_From_Server_STATUS(source *storage
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]ServerPrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection ServerPrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_ServerPrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1087,8 +1086,6 @@ func (server *Server_STATUS) AssignProperties_To_Server_STATUS(destination *stor
 	if server.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.ServerPrivateEndpointConnection_STATUS, len(server.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range server.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.ServerPrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_ServerPrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1232,8 +1229,6 @@ func (operator *ServerOperatorSpec) AssignProperties_From_ServerOperatorSpec(sou
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1250,8 +1245,6 @@ func (operator *ServerOperatorSpec) AssignProperties_From_ServerOperatorSpec(sou
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1289,8 +1282,6 @@ func (operator *ServerOperatorSpec) AssignProperties_To_ServerOperatorSpec(desti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1307,8 +1298,6 @@ func (operator *ServerOperatorSpec) AssignProperties_To_ServerOperatorSpec(desti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1481,7 +1470,7 @@ func (create *ServerPropertiesForCreate) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "Default":
 	if create.Default != nil {
-		default_ARM, err := (*create.Default).ConvertToARM(resolved)
+		default_ARM, err := create.Default.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1491,7 +1480,7 @@ func (create *ServerPropertiesForCreate) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "GeoRestore":
 	if create.GeoRestore != nil {
-		geoRestore_ARM, err := (*create.GeoRestore).ConvertToARM(resolved)
+		geoRestore_ARM, err := create.GeoRestore.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1501,7 +1490,7 @@ func (create *ServerPropertiesForCreate) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "PointInTimeRestore":
 	if create.PointInTimeRestore != nil {
-		pointInTimeRestore_ARM, err := (*create.PointInTimeRestore).ConvertToARM(resolved)
+		pointInTimeRestore_ARM, err := create.PointInTimeRestore.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1511,7 +1500,7 @@ func (create *ServerPropertiesForCreate) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "Replica":
 	if create.Replica != nil {
-		replica_ARM, err := (*create.Replica).ConvertToARM(resolved)
+		replica_ARM, err := create.Replica.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2476,7 +2465,7 @@ func (create *ServerPropertiesForDefaultCreate) ConvertToARM(resolved genruntime
 
 	// Set property "StorageProfile":
 	if create.StorageProfile != nil {
-		storageProfile_ARM, err := (*create.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := create.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2798,7 +2787,7 @@ func (restore *ServerPropertiesForGeoRestore) ConvertToARM(resolved genruntime.C
 
 	// Set property "StorageProfile":
 	if restore.StorageProfile != nil {
-		storageProfile_ARM, err := (*restore.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := restore.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3102,7 +3091,7 @@ func (replica *ServerPropertiesForReplica) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "StorageProfile":
 	if replica.StorageProfile != nil {
-		storageProfile_ARM, err := (*replica.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := replica.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3416,7 +3405,7 @@ func (restore *ServerPropertiesForRestore) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "StorageProfile":
 	if restore.StorageProfile != nil {
-		storageProfile_ARM, err := (*restore.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := restore.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

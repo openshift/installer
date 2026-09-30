@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kusto}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}/dataConnections/{dataConnectionName}
 type DataConnection struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &DataConnection{}
 
 // ConvertFrom populates our DataConnection from the provided hub DataConnection
 func (connection *DataConnection) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.DataConnection)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/DataConnection but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.DataConnection
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return connection.AssignProperties_From_DataConnection(source)
+	err = connection.AssignProperties_From_DataConnection(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to connection")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub DataConnection from our DataConnection
 func (connection *DataConnection) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.DataConnection)
-	if !ok {
-		return fmt.Errorf("expected kusto/v1api20230815/storage/DataConnection but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.DataConnection
+	err := connection.AssignProperties_To_DataConnection(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from connection")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return connection.AssignProperties_To_DataConnection(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &DataConnection{}
@@ -86,17 +101,6 @@ func (connection *DataConnection) SecretDestinationExpressions() []*core.Destina
 		return nil
 	}
 	return connection.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &DataConnection{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (connection *DataConnection) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*DataConnection_STATUS); ok {
-		return connection.Spec.Initialize_From_DataConnection_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type DataConnection_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &DataConnection{}
@@ -237,7 +241,7 @@ func (connection *DataConnection) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}/dataConnections/{dataConnectionName}
 type DataConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -285,7 +289,7 @@ func (connection *DataConnection_Spec) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "CosmosDb":
 	if connection.CosmosDb != nil {
-		cosmosDb_ARM, err := (*connection.CosmosDb).ConvertToARM(resolved)
+		cosmosDb_ARM, err := connection.CosmosDb.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -296,7 +300,7 @@ func (connection *DataConnection_Spec) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "EventGrid":
 	if connection.EventGrid != nil {
-		eventGrid_ARM, err := (*connection.EventGrid).ConvertToARM(resolved)
+		eventGrid_ARM, err := connection.EventGrid.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +311,7 @@ func (connection *DataConnection_Spec) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "EventHub":
 	if connection.EventHub != nil {
-		eventHub_ARM, err := (*connection.EventHub).ConvertToARM(resolved)
+		eventHub_ARM, err := connection.EventHub.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -318,7 +322,7 @@ func (connection *DataConnection_Spec) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "IotHub":
 	if connection.IotHub != nil {
-		iotHub_ARM, err := (*connection.IotHub).ConvertToARM(resolved)
+		iotHub_ARM, err := connection.IotHub.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -619,61 +623,6 @@ func (connection *DataConnection_Spec) AssignProperties_To_DataConnection_Spec(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DataConnection_STATUS populates our DataConnection_Spec from the provided source DataConnection_STATUS
-func (connection *DataConnection_Spec) Initialize_From_DataConnection_STATUS(source *DataConnection_STATUS) error {
-
-	// CosmosDb
-	if source.CosmosDb != nil {
-		var cosmosDb CosmosDbDataConnection
-		err := cosmosDb.Initialize_From_CosmosDbDataConnection_STATUS(source.CosmosDb)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CosmosDbDataConnection_STATUS() to populate field CosmosDb")
-		}
-		connection.CosmosDb = &cosmosDb
-	} else {
-		connection.CosmosDb = nil
-	}
-
-	// EventGrid
-	if source.EventGrid != nil {
-		var eventGrid EventGridDataConnection
-		err := eventGrid.Initialize_From_EventGridDataConnection_STATUS(source.EventGrid)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EventGridDataConnection_STATUS() to populate field EventGrid")
-		}
-		connection.EventGrid = &eventGrid
-	} else {
-		connection.EventGrid = nil
-	}
-
-	// EventHub
-	if source.EventHub != nil {
-		var eventHub EventHubDataConnection
-		err := eventHub.Initialize_From_EventHubDataConnection_STATUS(source.EventHub)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EventHubDataConnection_STATUS() to populate field EventHub")
-		}
-		connection.EventHub = &eventHub
-	} else {
-		connection.EventHub = nil
-	}
-
-	// IotHub
-	if source.IotHub != nil {
-		var iotHub IotHubDataConnection
-		err := iotHub.Initialize_From_IotHubDataConnection_STATUS(source.IotHub)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_IotHubDataConnection_STATUS() to populate field IotHub")
-		}
-		connection.IotHub = &iotHub
-	} else {
-		connection.IotHub = nil
 	}
 
 	// No error
@@ -1264,55 +1213,6 @@ func (connection *CosmosDbDataConnection) AssignProperties_To_CosmosDbDataConnec
 	return nil
 }
 
-// Initialize_From_CosmosDbDataConnection_STATUS populates our CosmosDbDataConnection from the provided source CosmosDbDataConnection_STATUS
-func (connection *CosmosDbDataConnection) Initialize_From_CosmosDbDataConnection_STATUS(source *CosmosDbDataConnection_STATUS) error {
-
-	// CosmosDbAccountResourceReference
-	if source.CosmosDbAccountResourceId != nil {
-		cosmosDbAccountResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.CosmosDbAccountResourceId)
-		connection.CosmosDbAccountResourceReference = &cosmosDbAccountResourceReference
-	} else {
-		connection.CosmosDbAccountResourceReference = nil
-	}
-
-	// CosmosDbContainer
-	connection.CosmosDbContainer = genruntime.ClonePointerToString(source.CosmosDbContainer)
-
-	// CosmosDbDatabase
-	connection.CosmosDbDatabase = genruntime.ClonePointerToString(source.CosmosDbDatabase)
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), cosmosDbDataConnection_Kind_Values)
-		connection.Kind = &kind
-	} else {
-		connection.Kind = nil
-	}
-
-	// Location
-	connection.Location = genruntime.ClonePointerToString(source.Location)
-
-	// ManagedIdentityResourceReference
-	if source.ManagedIdentityResourceId != nil {
-		managedIdentityResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ManagedIdentityResourceId)
-		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
-	} else {
-		connection.ManagedIdentityResourceReference = nil
-	}
-
-	// MappingRuleName
-	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
-
-	// RetrievalStartDate
-	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
-
-	// TableName
-	connection.TableName = genruntime.ClonePointerToString(source.TableName)
-
-	// No error
-	return nil
-}
-
 type CosmosDbDataConnection_STATUS struct {
 	// CosmosDbAccountResourceId: The resource ID of the Cosmos DB account used to create the data connection.
 	CosmosDbAccountResourceId *string `json:"cosmosDbAccountResourceId,omitempty"`
@@ -1623,8 +1523,6 @@ func (operator *DataConnectionOperatorSpec) AssignProperties_From_DataConnection
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1641,8 +1539,6 @@ func (operator *DataConnectionOperatorSpec) AssignProperties_From_DataConnection
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1668,8 +1564,6 @@ func (operator *DataConnectionOperatorSpec) AssignProperties_To_DataConnectionOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1686,8 +1580,6 @@ func (operator *DataConnectionOperatorSpec) AssignProperties_To_DataConnectionOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2165,97 +2057,6 @@ func (connection *EventGridDataConnection) AssignProperties_To_EventGridDataConn
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EventGridDataConnection_STATUS populates our EventGridDataConnection from the provided source EventGridDataConnection_STATUS
-func (connection *EventGridDataConnection) Initialize_From_EventGridDataConnection_STATUS(source *EventGridDataConnection_STATUS) error {
-
-	// BlobStorageEventType
-	if source.BlobStorageEventType != nil {
-		blobStorageEventType := genruntime.ToEnum(string(*source.BlobStorageEventType), blobStorageEventType_Values)
-		connection.BlobStorageEventType = &blobStorageEventType
-	} else {
-		connection.BlobStorageEventType = nil
-	}
-
-	// ConsumerGroup
-	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
-
-	// DataFormat
-	if source.DataFormat != nil {
-		dataFormat := genruntime.ToEnum(string(*source.DataFormat), eventGridDataFormat_Values)
-		connection.DataFormat = &dataFormat
-	} else {
-		connection.DataFormat = nil
-	}
-
-	// DatabaseRouting
-	if source.DatabaseRouting != nil {
-		databaseRouting := genruntime.ToEnum(string(*source.DatabaseRouting), eventGridConnectionProperties_DatabaseRouting_Values)
-		connection.DatabaseRouting = &databaseRouting
-	} else {
-		connection.DatabaseRouting = nil
-	}
-
-	// EventGridResourceReference
-	if source.EventGridResourceId != nil {
-		eventGridResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.EventGridResourceId)
-		connection.EventGridResourceReference = &eventGridResourceReference
-	} else {
-		connection.EventGridResourceReference = nil
-	}
-
-	// EventHubResourceReference
-	if source.EventHubResourceId != nil {
-		eventHubResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.EventHubResourceId)
-		connection.EventHubResourceReference = &eventHubResourceReference
-	} else {
-		connection.EventHubResourceReference = nil
-	}
-
-	// IgnoreFirstRecord
-	if source.IgnoreFirstRecord != nil {
-		ignoreFirstRecord := *source.IgnoreFirstRecord
-		connection.IgnoreFirstRecord = &ignoreFirstRecord
-	} else {
-		connection.IgnoreFirstRecord = nil
-	}
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), eventGridDataConnection_Kind_Values)
-		connection.Kind = &kind
-	} else {
-		connection.Kind = nil
-	}
-
-	// Location
-	connection.Location = genruntime.ClonePointerToString(source.Location)
-
-	// ManagedIdentityResourceReference
-	if source.ManagedIdentityResourceId != nil {
-		managedIdentityResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ManagedIdentityResourceId)
-		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
-	} else {
-		connection.ManagedIdentityResourceReference = nil
-	}
-
-	// MappingRuleName
-	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
-
-	// StorageAccountResourceReference
-	if source.StorageAccountResourceId != nil {
-		storageAccountResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.StorageAccountResourceId)
-		connection.StorageAccountResourceReference = &storageAccountResourceReference
-	} else {
-		connection.StorageAccountResourceReference = nil
-	}
-
-	// TableName
-	connection.TableName = genruntime.ClonePointerToString(source.TableName)
 
 	// No error
 	return nil
@@ -3086,79 +2887,6 @@ func (connection *EventHubDataConnection) AssignProperties_To_EventHubDataConnec
 	return nil
 }
 
-// Initialize_From_EventHubDataConnection_STATUS populates our EventHubDataConnection from the provided source EventHubDataConnection_STATUS
-func (connection *EventHubDataConnection) Initialize_From_EventHubDataConnection_STATUS(source *EventHubDataConnection_STATUS) error {
-
-	// Compression
-	if source.Compression != nil {
-		compression := genruntime.ToEnum(string(*source.Compression), compression_Values)
-		connection.Compression = &compression
-	} else {
-		connection.Compression = nil
-	}
-
-	// ConsumerGroup
-	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
-
-	// DataFormat
-	if source.DataFormat != nil {
-		dataFormat := genruntime.ToEnum(string(*source.DataFormat), eventHubDataFormat_Values)
-		connection.DataFormat = &dataFormat
-	} else {
-		connection.DataFormat = nil
-	}
-
-	// DatabaseRouting
-	if source.DatabaseRouting != nil {
-		databaseRouting := genruntime.ToEnum(string(*source.DatabaseRouting), eventHubConnectionProperties_DatabaseRouting_Values)
-		connection.DatabaseRouting = &databaseRouting
-	} else {
-		connection.DatabaseRouting = nil
-	}
-
-	// EventHubResourceReference
-	if source.EventHubResourceId != nil {
-		eventHubResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.EventHubResourceId)
-		connection.EventHubResourceReference = &eventHubResourceReference
-	} else {
-		connection.EventHubResourceReference = nil
-	}
-
-	// EventSystemProperties
-	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), eventHubDataConnection_Kind_Values)
-		connection.Kind = &kind
-	} else {
-		connection.Kind = nil
-	}
-
-	// Location
-	connection.Location = genruntime.ClonePointerToString(source.Location)
-
-	// ManagedIdentityResourceReference
-	if source.ManagedIdentityResourceId != nil {
-		managedIdentityResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ManagedIdentityResourceId)
-		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
-	} else {
-		connection.ManagedIdentityResourceReference = nil
-	}
-
-	// MappingRuleName
-	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
-
-	// RetrievalStartDate
-	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
-
-	// TableName
-	connection.TableName = genruntime.ClonePointerToString(source.TableName)
-
-	// No error
-	return nil
-}
-
 type EventHubDataConnection_STATUS struct {
 	// Compression: The event hub messages compression type
 	Compression *Compression_STATUS `json:"compression,omitempty"`
@@ -3905,66 +3633,6 @@ func (connection *IotHubDataConnection) AssignProperties_To_IotHubDataConnection
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_IotHubDataConnection_STATUS populates our IotHubDataConnection from the provided source IotHubDataConnection_STATUS
-func (connection *IotHubDataConnection) Initialize_From_IotHubDataConnection_STATUS(source *IotHubDataConnection_STATUS) error {
-
-	// ConsumerGroup
-	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
-
-	// DataFormat
-	if source.DataFormat != nil {
-		dataFormat := genruntime.ToEnum(string(*source.DataFormat), iotHubDataFormat_Values)
-		connection.DataFormat = &dataFormat
-	} else {
-		connection.DataFormat = nil
-	}
-
-	// DatabaseRouting
-	if source.DatabaseRouting != nil {
-		databaseRouting := genruntime.ToEnum(string(*source.DatabaseRouting), iotHubConnectionProperties_DatabaseRouting_Values)
-		connection.DatabaseRouting = &databaseRouting
-	} else {
-		connection.DatabaseRouting = nil
-	}
-
-	// EventSystemProperties
-	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
-
-	// IotHubResourceReference
-	if source.IotHubResourceId != nil {
-		iotHubResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.IotHubResourceId)
-		connection.IotHubResourceReference = &iotHubResourceReference
-	} else {
-		connection.IotHubResourceReference = nil
-	}
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), iotHubDataConnection_Kind_Values)
-		connection.Kind = &kind
-	} else {
-		connection.Kind = nil
-	}
-
-	// Location
-	connection.Location = genruntime.ClonePointerToString(source.Location)
-
-	// MappingRuleName
-	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
-
-	// RetrievalStartDate
-	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
-
-	// SharedAccessPolicyName
-	connection.SharedAccessPolicyName = genruntime.ClonePointerToString(source.SharedAccessPolicyName)
-
-	// TableName
-	connection.TableName = genruntime.ClonePointerToString(source.TableName)
 
 	// No error
 	return nil

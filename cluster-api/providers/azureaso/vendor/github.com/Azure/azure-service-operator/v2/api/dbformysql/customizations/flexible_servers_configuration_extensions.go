@@ -8,7 +8,7 @@ package customizations
 import (
 	"context"
 
-	api "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
+	api "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
@@ -39,7 +39,7 @@ func (extension *FlexibleServersConfigurationExtension) Import(
 
 		// Skip readonly configuration
 		if config.Status.IsReadOnly != nil &&
-			*config.Status.IsReadOnly == api.ConfigurationProperties_IsReadOnly_STATUS_True {
+			*config.Status.IsReadOnly == api.IsReadOnly_STATUS_True {
 			return extensions.ImportSkipped("readonly configuration can't be set"), nil
 		}
 

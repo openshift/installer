@@ -116,7 +116,11 @@ func (alias *Alias) ValidateUpdate(ctx context.Context, oldResource runtime.Obje
 
 // createValidations validates the creation of the resource
 func (alias *Alias) createValidations() []func(ctx context.Context, obj *v20211001.Alias) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211001.Alias) (admission.Warnings, error){alias.validateResourceReferences, alias.validateSecretDestinations, alias.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211001.Alias) (admission.Warnings, error){
+		alias.validateResourceReferences,
+		alias.validateSecretDestinations,
+		alias.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

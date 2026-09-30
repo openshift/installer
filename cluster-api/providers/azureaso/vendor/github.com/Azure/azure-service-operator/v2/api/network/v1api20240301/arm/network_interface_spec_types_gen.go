@@ -148,11 +148,13 @@ var networkInterfacePropertiesFormat_NicType_Values = map[string]NetworkInterfac
 
 // NetworkSecurityGroup resource.
 type NetworkSecurityGroupSpec_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Private link service resource.
 type PrivateLinkServiceSpec struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -202,35 +204,42 @@ type NetworkInterfaceIPConfigurationPropertiesFormat struct {
 
 // Backend Address Pool of an application gateway.
 type ApplicationGatewayBackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // An application security group in a resource group.
 type ApplicationSecurityGroupSpec_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Pool of backend IP addresses.
 type BackendAddressPool_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Inbound NAT rule of the load balancer.
 type InboundNatRule_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Public IP address resource.
 type PublicIPAddressSpec_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Subnet in a virtual network resource.
 type Subnet_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Virtual Network Tap resource.
 type VirtualNetworkTapSpec_NetworkInterface_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }

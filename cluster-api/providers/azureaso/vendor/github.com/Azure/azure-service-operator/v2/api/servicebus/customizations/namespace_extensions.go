@@ -152,10 +152,11 @@ func namespaceSecretsToWrite(
 	obj *servicebus.Namespace,
 	response armservicebus.NamespacesClientListKeysResponse,
 ) ([]*v1.Secret, error) {
-	specSecrets := obj.Spec.OperatorSpec.Secrets
-	if specSecrets == nil {
+	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, nil
 	}
+
+	specSecrets := obj.Spec.OperatorSpec.Secrets
 
 	collector := secrets.NewCollector(obj.Namespace)
 	collector.AddValue(specSecrets.Endpoint, to.Value(obj.Status.ServiceBusEndpoint))

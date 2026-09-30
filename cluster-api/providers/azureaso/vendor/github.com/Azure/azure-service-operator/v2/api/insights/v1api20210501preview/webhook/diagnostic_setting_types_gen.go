@@ -116,7 +116,11 @@ func (setting *DiagnosticSetting) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (setting *DiagnosticSetting) createValidations() []func(ctx context.Context, obj *v20210501p.DiagnosticSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210501p.DiagnosticSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210501p.DiagnosticSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

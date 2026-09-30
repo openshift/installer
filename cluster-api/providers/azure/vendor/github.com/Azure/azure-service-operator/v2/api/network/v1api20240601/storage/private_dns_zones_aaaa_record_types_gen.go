@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={privatednszonesaaaarecords/status,privatednszonesaaaarecords/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240601.PrivateDnsZonesAAAARecord
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/AAAA/{relativeRecordSetName}
 type PrivateDnsZonesAAAARecord struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (record *PrivateDnsZonesAAAARecord) OriginalGVK() *schema.GroupVersionKind 
 // +kubebuilder:object:root=true
 // Storage version of v1api20240601.PrivateDnsZonesAAAARecord
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/AAAA/{relativeRecordSetName}
 type PrivateDnsZonesAAAARecordList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -230,6 +231,7 @@ type PrivateDnsZonesAAAARecord_STATUS struct {
 	PtrRecords       []PtrRecord_STATUS     `json:"ptrRecords,omitempty"`
 	SoaRecord        *SoaRecord_STATUS      `json:"soaRecord,omitempty"`
 	SrvRecords       []SrvRecord_STATUS     `json:"srvRecords,omitempty"`
+	SystemData       *SystemData_STATUS     `json:"systemData,omitempty"`
 	Ttl              *int                   `json:"ttl,omitempty"`
 	TxtRecords       []TxtRecord_STATUS     `json:"txtRecords,omitempty"`
 	Type             *string                `json:"type,omitempty"`
@@ -258,8 +260,9 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) ConvertStatusTo(destination genr
 // Storage version of v1api20240601.AaaaRecord
 // An AAAA record.
 type AaaaRecord struct {
-	Ipv6Address *string                `json:"ipv6Address,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Ipv6Address           *string                        `json:"ipv6Address,omitempty" optionalConfigMapPair:"Ipv6Address"`
+	Ipv6AddressFromConfig *genruntime.ConfigMapReference `json:"ipv6AddressFromConfig,omitempty" optionalConfigMapPair:"Ipv6Address"`
+	PropertyBag           genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20240601.AaaaRecord_STATUS
@@ -272,8 +275,9 @@ type AaaaRecord_STATUS struct {
 // Storage version of v1api20240601.ARecord
 // An A record.
 type ARecord struct {
-	Ipv4Address *string                `json:"ipv4Address,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Ipv4Address           *string                        `json:"ipv4Address,omitempty" optionalConfigMapPair:"Ipv4Address"`
+	Ipv4AddressFromConfig *genruntime.ConfigMapReference `json:"ipv4AddressFromConfig,omitempty" optionalConfigMapPair:"Ipv4Address"`
+	PropertyBag           genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20240601.ARecord_STATUS

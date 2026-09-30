@@ -6,7 +6,7 @@ APIVersion: Enum (1 value)
 
 DatabaseAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (40 properties)
+├── Spec: Object (39 properties)
 │   ├── AnalyticalStorageConfiguration: *Object (2 properties)
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── SchemaType: *string
@@ -60,7 +60,6 @@ DatabaseAccount: Resource
 │   │   ├── MaxAgeInSeconds: *int
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── CreateMode: *string
-│   ├── CustomerManagedKeyStatus: *string
 │   ├── DatabaseAccountOfferType: *string
 │   ├── DefaultIdentity: *string
 │   ├── DisableKeyBasedMetadataWriteAccess: *bool

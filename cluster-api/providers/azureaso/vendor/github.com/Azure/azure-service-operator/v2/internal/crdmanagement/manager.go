@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
 
@@ -77,10 +76,8 @@ func NewLeaderElector(
 	leaseReleasedWait := &sync.WaitGroup{}
 	leaseReleasedWait.Add(1)
 
-	// My assumption is that OnStoppedLeading is guaranteed to
-	// be called after OnStartedLeading and we don't need to protect this
-	// shared state with a mutex.
 	var leaderContext context.Context
+	var leaderContextLock sync.Mutex // used to ensure reads/writes of leaderContext are safe
 
 	leaderElector, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
 		Lock:          resourceLock,
@@ -91,16 +88,26 @@ func NewLeaderElector(
 			OnStartedLeading: func(ctx context.Context) {
 				log.V(Status).Info("Elected leader")
 				leaseAcquiredWait.Done()
+
+				leaderContextLock.Lock()
 				leaderContext = ctx
+				leaderContextLock.Unlock()
 			},
 			OnStoppedLeading: func() {
 				leaseReleasedWait.Done()
 
+				// Cache the channel from current leader context so it can't be changed while we're using it
+				leaderContextLock.Lock()
+				lc := leaderContext
+				leaderContextLock.Unlock()
+
 				exitCode := 1
-				select {
-				case <-leaderContext.Done():
-					exitCode = 0 // done is closed
-				default:
+				if lc != nil {
+					select {
+					case <-lc.Done():
+						exitCode = 0 // done is closed
+					default:
+					}
 				}
 
 				if exitCode == 0 {
@@ -146,6 +153,8 @@ func NewManager(logger logr.Logger, kubeClient kubeclient.Client, leaderElection
 // ListCRDs lists ASO CRDs.
 // This accepts a list rather than returning one to allow re-using the same list object (they're large and having multiple)
 // copies of the collection results in huge memory usage.
+// NOTE: This function also clears Versions[i].Schema.OpenAPIV3Schema for every CRD, as these are large and we don't use them for any of our comparisons
+// DO NOT use this function to inspect the schema.
 func (m *Manager) ListCRDs(ctx context.Context, list *apiextensions.CustomResourceDefinitionList) error {
 	// Clear the existing list, if there is one.
 	list.Items = nil
@@ -168,20 +177,30 @@ func (m *Manager) ListCRDs(ctx context.Context, list *apiextensions.CustomResour
 		return eris.Wrapf(err, "failed to list CRDs")
 	}
 
-	for _, crd := range list.Items {
+	// Don't iterate by value here as we need to modify the CRDs in-place to clear the schema fields
+	for i := range list.Items {
+		crd := &list.Items[i]
 		m.logger.V(Verbose).Info("Found an existing CRD", "CRD", crd.Name)
+		// manually clear the spec.versions[].schema.openAPIV3Schema fields because they're large and we don't use them
+		for j := range crd.Spec.Versions {
+			crd.Spec.Versions[j].Schema.OpenAPIV3Schema = nil
+		}
 	}
 
 	return nil
 }
 
-func (m *Manager) LoadOperatorCRDs(path string, podNamespace string) ([]apiextensions.CustomResourceDefinition, error) {
+func (m *Manager) LoadOperatorCRDs(
+	path string,
+	podNamespace string,
+	shouldLoad func(filename string) (bool, error),
+) ([]apiextensions.CustomResourceDefinition, error) {
 	if len(m.crds) > 0 {
 		// Nothing to do as they're already loaded. Pod has to restart for them to change
 		return m.crds, nil
 	}
 
-	crds, err := m.loadCRDs(path)
+	crds, err := m.loadCRDs(path, shouldLoad)
 	if err != nil {
 		return nil, err
 	}
@@ -283,8 +302,6 @@ func (m *Manager) DetermineCRDsToInstallOrUpgrade(
 		return nil, err
 	}
 
-	// Prealloc false positive: https://github.com/alexkohler/prealloc/issues/16
-	//nolint:prealloc
 	var filteredGoalCRDs []apiextensions.CustomResourceDefinition
 	for _, result := range resultMap {
 		if result.FilterResult == Excluded {
@@ -295,17 +312,6 @@ func (m *Manager) DetermineCRDsToInstallOrUpgrade(
 	}
 
 	goalCRDsWithDifferentVersion := m.FindNonMatchingCRDs(existingCRDs, filteredGoalCRDs, VersionEqual)
-	goalCRDsWithDifferentSpec := m.FindNonMatchingCRDs(existingCRDs, filteredGoalCRDs, SpecEqual)
-
-	// The same CRD may be in both sets, but we don't want to include it in the results twice
-	for name := range goalCRDsWithDifferentSpec {
-		result, ok := resultMap[name]
-		if !ok {
-			return nil, eris.Errorf("Couldn't find goal CRD %q. This is unexpected!", name)
-		}
-
-		result.DiffResult = SpecDifferent
-	}
 	for name := range goalCRDsWithDifferentVersion {
 		result, ok := resultMap[name]
 		if !ok {
@@ -370,8 +376,6 @@ func (m *Manager) applyCRDs(
 
 	i := 0
 	for _, instruction := range instructionsToApply {
-		instruction := instruction
-
 		i += 1
 		toApply := &apiextensions.CustomResourceDefinition{
 			ObjectMeta: metav1.ObjectMeta{
@@ -391,6 +395,9 @@ func (m *Manager) applyCRDs(
 			return nil
 		})
 		if err != nil {
+			// Logging here before returning because we may cancel the lease (due to defer cancel()) above, and we want to ensure
+			// we can see the error before the process is killed due to lease release.
+			m.logger.Error(err, "Failed to apply CRD", "name", instruction.CRD.Name)
 			return eris.Wrapf(err, "failed to apply CRD %s", instruction.CRD.Name)
 		}
 
@@ -421,7 +428,8 @@ type Options struct {
 }
 
 func (m *Manager) Install(ctx context.Context, options Options) error {
-	goalCRDs, err := m.LoadOperatorCRDs(options.Path, options.Namespace)
+	shouldLoad := m.BuildCRDFileFilter(options.CRDPatterns, options.ExistingCRDs.Items)
+	goalCRDs, err := m.LoadOperatorCRDs(options.Path, options.Namespace, shouldLoad)
 	if err != nil {
 		return eris.Wrap(err, "failed to load CRDs from disk")
 	}
@@ -446,7 +454,11 @@ func (m *Manager) Install(ctx context.Context, options Options) error {
 	return nil
 }
 
-func (m *Manager) loadCRDs(path string) ([]apiextensions.CustomResourceDefinition, error) {
+// loadCRDs loads CRD YAML files from the given directory.
+// shouldLoad is called with the filename (e.g. "apiextensions.k8s.io_v1_customresourcedefinition_virtualnetworks.network.azure.com.yaml")
+// before reading the file. If it returns false, the file is skipped entirely, avoiding the cost of reading
+// and unmarshalling.
+func (m *Manager) loadCRDs(path string, shouldLoad func(filename string) (bool, error)) ([]apiextensions.CustomResourceDefinition, error) {
 	// Expectation is that every file in this folder is a CRD
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -458,6 +470,15 @@ func (m *Manager) loadCRDs(path string) ([]apiextensions.CustomResourceDefinitio
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue // Ignore directories
+		}
+
+		load, loadErr := shouldLoad(entry.Name())
+		if loadErr != nil {
+			return nil, eris.Wrapf(loadErr, "failed to determine if %s should be loaded", entry.Name())
+		}
+		if !load {
+			m.logger.V(Verbose).Info("Skipping CRD file because shouldLoad returned false", "file", entry.Name())
+			continue
 		}
 
 		filePath := filepath.Join(path, entry.Name())
@@ -519,6 +540,69 @@ func (m *Manager) fixCRDNamespaceRefs(crds []apiextensions.CustomResourceDefinit
 	return results
 }
 
+// BuildCRDFileFilter returns a predicate that determines whether a CRD file should be loaded based on
+// patterns and existing CRDs. This allows skipping files that can't possibly be needed, avoiding the cost
+// of reading and unmarshalling them.
+//
+// A file should be loaded if:
+//   - Its derived CRD name matches an existing CRD in the cluster (needed for upgrades), OR
+//   - Its group (from the filename) could match one of the specified patterns
+//
+// If there are no patterns and no existing CRDs, no files are loaded.
+func (m *Manager) BuildCRDFileFilter(patterns string, existingCRDs []apiextensions.CustomResourceDefinition) func(filename string) (bool, error) {
+	// Build set of existing CRD names for quick lookup
+	existingCRDNames := make(map[string]bool, len(existingCRDs))
+	for _, crd := range existingCRDs {
+		existingCRDNames[crd.Name] = true
+	}
+
+	// Convert patterns from "group/Kind" format to just the group portion, so we can match
+	// against the group extracted from the filename. For example:
+	//   "containerservice.azure.com/*;network.azure.com/VirtualNetwork"
+	// becomes:
+	//   "containerservice.azure.com;network.azure.com"
+	// TODO: if we moved v2/tools/generator/names to a shared location we could use that logic to de-pluralize the
+	// TODO: kind name in the crd file path, and then match on kind + group. Not doing that now as this file loading
+	// TODO: stuff is just an optimization and dealing with flect/pluralization is a bit of a pain.
+	groupPatterns := patternsToGroupOnly(patterns)
+
+	// Nothing to load; no patterns and no existing CRDs - return early
+	if groupPatterns == "" && len(existingCRDNames) == 0 {
+		return func(filename string) (bool, error) {
+			return false, nil
+		}
+	}
+
+	// Build a matcher for the group patterns
+	var groupMatcher match.StringMatcher
+	if groupPatterns != "" {
+		groupMatcher = match.NewStringMatcher(groupPatterns)
+	}
+
+	return func(filename string) (bool, error) {
+		// Check if this file's CRD is already in the cluster - if it is we always load it for potential upgrade
+		crdName, err := crdNameFromFilename(filename)
+		if err != nil {
+			return false, err
+		}
+		if existingCRDNames[crdName] {
+			return true, nil
+		}
+
+		// If no patterns specified, only existing CRDs matter
+		if groupMatcher == nil {
+			return false, nil
+		}
+
+		// Check if this file's group could match any pattern
+		group, err := groupFromFilename(filename)
+		if err != nil {
+			return false, err
+		}
+		return groupMatcher.Matches(group).Matched, nil
+	}
+}
+
 func (m *Manager) filterCRDsByExisting(existingCRDs []apiextensions.CustomResourceDefinition, resultMap map[string]*CRDInstallationInstruction) {
 	for _, crd := range existingCRDs {
 		result, ok := resultMap[crd.Name]
@@ -556,6 +640,25 @@ func (m *Manager) filterCRDsByPatterns(patterns string, resultMap map[string]*CR
 	return nil
 }
 
+// patternsToGroupOnly takes a semicolon-separated CRD pattern string (format "group/Kind")
+// and strips the "/Kind" suffix from each pattern, returning just the group portions.
+// For example: "containerservice.azure.com/*;network.azure.com/VirtualNetwork"
+// becomes: "containerservice.azure.com;network.azure.com"
+func patternsToGroupOnly(patterns string) string {
+	if patterns == "" {
+		return ""
+	}
+
+	parts := strings.Split(patterns, ";")
+	for i, part := range parts {
+		if slashIdx := strings.Index(part, "/"); slashIdx >= 0 {
+			parts[i] = part[:slashIdx]
+		}
+	}
+
+	return strings.Join(parts, ";")
+}
+
 // fixCRDNamespace fixes up namespace references in the CRD to match the provided namespace.
 // This could in theory be done with a string replace across the JSON representation of the CRD, but that's risky given
 // we don't know what else might have the "azureserviceoperator-system" string in it. Instead, we hardcode specific places
@@ -583,37 +686,6 @@ func fixCRDNamespace(crd apiextensions.CustomResourceDefinition, namespace strin
 	}
 
 	return *result
-}
-
-func ignoreCABundle(a apiextensions.CustomResourceDefinition) apiextensions.CustomResourceDefinition {
-	if a.Spec.Conversion != nil && a.Spec.Conversion.Webhook != nil &&
-		a.Spec.Conversion.Webhook.ClientConfig != nil {
-		a.Spec.Conversion.Webhook.ClientConfig.CABundle = nil
-	}
-
-	return a
-}
-
-func ignoreConversionWebhook(a apiextensions.CustomResourceDefinition) apiextensions.CustomResourceDefinition {
-	if a.Spec.Conversion != nil && a.Spec.Conversion.Webhook != nil {
-		a.Spec.Conversion.Webhook = nil
-	}
-
-	return a
-}
-
-func SpecEqual(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool {
-	a = ignoreCABundle(a)
-	b = ignoreCABundle(b)
-
-	return reflect.DeepEqual(a.Spec, b.Spec)
-}
-
-func SpecEqualIgnoreConversionWebhook(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool {
-	a = ignoreConversionWebhook(a)
-	b = ignoreConversionWebhook(b)
-
-	return reflect.DeepEqual(a.Spec, b.Spec)
 }
 
 func VersionEqual(a apiextensions.CustomResourceDefinition, b apiextensions.CustomResourceDefinition) bool {

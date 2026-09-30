@@ -19,11 +19,12 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview"
 	"github.com/pkg/errors"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
 
@@ -155,7 +156,7 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 	}
 
 	var providerIDs = make([]string, len(instances))
-	for i := 0; i < len(instances); i++ {
+	for i := range instances {
 		// Transform the VMSS instance resource representation to conform to the cloud-provider-azure representation
 		providerID, err := azprovider.ConvertResourceGroupNameToLower(azureutil.ProviderIDPrefix + *instances[i].ID)
 		if err != nil {
@@ -164,6 +165,8 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 		providerIDs[i] = providerID
 	}
 
+	// Sort providerIDs to ensure deterministic ordering to prevent continuous reconciliation.
+	slices.Sort(providerIDs)
 	s.scope.SetAgentPoolProviderIDList(providerIDs)
 	s.scope.SetAgentPoolReplicas(int32(len(providerIDs)))
 	s.scope.SetAgentPoolReady(true)

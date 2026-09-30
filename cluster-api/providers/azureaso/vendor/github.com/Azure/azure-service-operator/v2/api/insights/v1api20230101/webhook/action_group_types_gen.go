@@ -116,7 +116,13 @@ func (group *ActionGroup) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (group *ActionGroup) createValidations() []func(ctx context.Context, obj *v20230101.ActionGroup) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230101.ActionGroup) (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230101.ActionGroup) (admission.Warnings, error){
+		group.validateResourceReferences,
+		group.validateOwnerReference,
+		group.validateSecretDestinations,
+		group.validateConfigMapDestinations,
+		group.validateOptionalSecretReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -140,6 +146,9 @@ func (group *ActionGroup) updateValidations() []func(ctx context.Context, oldObj
 		func(ctx context.Context, oldObj *v20230101.ActionGroup, newObj *v20230101.ActionGroup) (admission.Warnings, error) {
 			return group.validateConfigMapDestinations(ctx, newObj)
 		},
+		func(ctx context.Context, oldObj *v20230101.ActionGroup, newObj *v20230101.ActionGroup) (admission.Warnings, error) {
+			return group.validateOptionalSecretReferences(ctx, newObj)
+		},
 	}
 }
 
@@ -149,6 +158,15 @@ func (group *ActionGroup) validateConfigMapDestinations(ctx context.Context, obj
 		return nil, nil
 	}
 	return configmaps.ValidateDestinations(obj, nil, obj.Spec.OperatorSpec.ConfigMapExpressions)
+}
+
+// validateOptionalSecretReferences validates all optional secret reference pairs to ensure that at most 1 is set
+func (group *ActionGroup) validateOptionalSecretReferences(ctx context.Context, obj *v20230101.ActionGroup) (admission.Warnings, error) {
+	refs, err := reflecthelpers.FindOptionalSecretReferences(&obj.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return secrets.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field

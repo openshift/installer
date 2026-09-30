@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -2231,8 +2232,6 @@ func (identity *VirtualMachineScaleSetIdentity) AssignProperties_From_VirtualMac
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2277,8 +2276,6 @@ func (identity *VirtualMachineScaleSetIdentity) AssignProperties_To_VirtualMachi
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]v20220301s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity v20220301s.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2339,8 +2336,6 @@ func (identity *VirtualMachineScaleSetIdentity_STATUS) AssignProperties_From_Vir
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -2391,8 +2386,6 @@ func (identity *VirtualMachineScaleSetIdentity_STATUS) AssignProperties_To_Virtu
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v20220301s.VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity v20220301s.VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_VirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2442,8 +2435,6 @@ func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_From_Virtua
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2460,8 +2451,6 @@ func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_From_Virtua
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2503,8 +2492,6 @@ func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_To_VirtualM
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2521,8 +2508,6 @@ func (operator *VirtualMachineScaleSetOperatorSpec) AssignProperties_To_VirtualM
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3967,8 +3952,6 @@ func (profile *VirtualMachineScaleSetExtensionProfile) AssignProperties_From_Vir
 	if source.Extensions != nil {
 		extensionList := make([]VirtualMachineScaleSetExtension, len(source.Extensions))
 		for extensionIndex, extensionItem := range source.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension VirtualMachineScaleSetExtension
 			err := extension.AssignProperties_From_VirtualMachineScaleSetExtension(&extensionItem)
 			if err != nil {
@@ -4013,8 +3996,6 @@ func (profile *VirtualMachineScaleSetExtensionProfile) AssignProperties_To_Virtu
 	if profile.Extensions != nil {
 		extensionList := make([]v20220301s.VirtualMachineScaleSetExtension, len(profile.Extensions))
 		for extensionIndex, extensionItem := range profile.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension v20220301s.VirtualMachineScaleSetExtension
 			err := extensionItem.AssignProperties_To_VirtualMachineScaleSetExtension(&extension)
 			if err != nil {
@@ -4067,8 +4048,6 @@ func (profile *VirtualMachineScaleSetExtensionProfile_STATUS) AssignProperties_F
 	if source.Extensions != nil {
 		extensionList := make([]VirtualMachineScaleSetExtension_STATUS, len(source.Extensions))
 		for extensionIndex, extensionItem := range source.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension VirtualMachineScaleSetExtension_STATUS
 			err := extension.AssignProperties_From_VirtualMachineScaleSetExtension_STATUS(&extensionItem)
 			if err != nil {
@@ -4113,8 +4092,6 @@ func (profile *VirtualMachineScaleSetExtensionProfile_STATUS) AssignProperties_T
 	if profile.Extensions != nil {
 		extensionList := make([]v20220301s.VirtualMachineScaleSetExtension_STATUS, len(profile.Extensions))
 		for extensionIndex, extensionItem := range profile.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension v20220301s.VirtualMachineScaleSetExtension_STATUS
 			err := extensionItem.AssignProperties_To_VirtualMachineScaleSetExtension_STATUS(&extension)
 			if err != nil {
@@ -4255,8 +4232,6 @@ func (profile *VirtualMachineScaleSetNetworkProfile) AssignProperties_From_Virtu
 	if source.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]VirtualMachineScaleSetNetworkConfiguration, len(source.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range source.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration VirtualMachineScaleSetNetworkConfiguration
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineScaleSetNetworkConfiguration(&networkInterfaceConfigurationItem)
 			if err != nil {
@@ -4323,8 +4298,6 @@ func (profile *VirtualMachineScaleSetNetworkProfile) AssignProperties_To_Virtual
 	if profile.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]v20220301s.VirtualMachineScaleSetNetworkConfiguration, len(profile.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range profile.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration v20220301s.VirtualMachineScaleSetNetworkConfiguration
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineScaleSetNetworkConfiguration(&networkInterfaceConfiguration)
 			if err != nil {
@@ -4393,8 +4366,6 @@ func (profile *VirtualMachineScaleSetNetworkProfile_STATUS) AssignProperties_Fro
 	if source.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]VirtualMachineScaleSetNetworkConfiguration_STATUS, len(source.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range source.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration VirtualMachineScaleSetNetworkConfiguration_STATUS
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineScaleSetNetworkConfiguration_STATUS(&networkInterfaceConfigurationItem)
 			if err != nil {
@@ -4461,8 +4432,6 @@ func (profile *VirtualMachineScaleSetNetworkProfile_STATUS) AssignProperties_To_
 	if profile.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]v20220301s.VirtualMachineScaleSetNetworkConfiguration_STATUS, len(profile.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range profile.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration v20220301s.VirtualMachineScaleSetNetworkConfiguration_STATUS
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineScaleSetNetworkConfiguration_STATUS(&networkInterfaceConfiguration)
 			if err != nil {
@@ -4553,8 +4522,6 @@ func (profile *VirtualMachineScaleSetOSProfile) AssignProperties_From_VirtualMac
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup
 			err := secret.AssignProperties_From_VaultSecretGroup(&secretItem)
 			if err != nil {
@@ -4650,8 +4617,6 @@ func (profile *VirtualMachineScaleSetOSProfile) AssignProperties_To_VirtualMachi
 	if profile.Secrets != nil {
 		secretList := make([]v20220301s.VaultSecretGroup, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret v20220301s.VaultSecretGroup
 			err := secretItem.AssignProperties_To_VaultSecretGroup(&secret)
 			if err != nil {
@@ -4745,8 +4710,6 @@ func (profile *VirtualMachineScaleSetOSProfile_STATUS) AssignProperties_From_Vir
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup_STATUS, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup_STATUS
 			err := secret.AssignProperties_From_VaultSecretGroup_STATUS(&secretItem)
 			if err != nil {
@@ -4834,8 +4797,6 @@ func (profile *VirtualMachineScaleSetOSProfile_STATUS) AssignProperties_To_Virtu
 	if profile.Secrets != nil {
 		secretList := make([]v20220301s.VaultSecretGroup_STATUS, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret v20220301s.VaultSecretGroup_STATUS
 			err := secretItem.AssignProperties_To_VaultSecretGroup_STATUS(&secret)
 			if err != nil {
@@ -4898,8 +4859,6 @@ func (profile *VirtualMachineScaleSetStorageProfile) AssignProperties_From_Virtu
 	if source.DataDisks != nil {
 		dataDiskList := make([]VirtualMachineScaleSetDataDisk, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk VirtualMachineScaleSetDataDisk
 			err := dataDisk.AssignProperties_From_VirtualMachineScaleSetDataDisk(&dataDiskItem)
 			if err != nil {
@@ -4965,8 +4924,6 @@ func (profile *VirtualMachineScaleSetStorageProfile) AssignProperties_To_Virtual
 	if profile.DataDisks != nil {
 		dataDiskList := make([]v20220301s.VirtualMachineScaleSetDataDisk, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk v20220301s.VirtualMachineScaleSetDataDisk
 			err := dataDiskItem.AssignProperties_To_VirtualMachineScaleSetDataDisk(&dataDisk)
 			if err != nil {
@@ -5041,8 +4998,6 @@ func (profile *VirtualMachineScaleSetStorageProfile_STATUS) AssignProperties_Fro
 	if source.DataDisks != nil {
 		dataDiskList := make([]VirtualMachineScaleSetDataDisk_STATUS, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk VirtualMachineScaleSetDataDisk_STATUS
 			err := dataDisk.AssignProperties_From_VirtualMachineScaleSetDataDisk_STATUS(&dataDiskItem)
 			if err != nil {
@@ -5108,8 +5063,6 @@ func (profile *VirtualMachineScaleSetStorageProfile_STATUS) AssignProperties_To_
 	if profile.DataDisks != nil {
 		dataDiskList := make([]v20220301s.VirtualMachineScaleSetDataDisk_STATUS, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk v20220301s.VirtualMachineScaleSetDataDisk_STATUS
 			err := dataDiskItem.AssignProperties_To_VirtualMachineScaleSetDataDisk_STATUS(&dataDisk)
 			if err != nil {
@@ -5939,8 +5892,6 @@ func (extension *VirtualMachineScaleSetExtension) AssignProperties_From_VirtualM
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -6039,8 +5990,6 @@ func (extension *VirtualMachineScaleSetExtension) AssignProperties_To_VirtualMac
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -6158,8 +6107,6 @@ func (extension *VirtualMachineScaleSetExtension_STATUS) AssignProperties_From_V
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -6259,8 +6206,6 @@ func (extension *VirtualMachineScaleSetExtension_STATUS) AssignProperties_To_Vir
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -6376,8 +6321,6 @@ func (configuration *VirtualMachineScaleSetNetworkConfiguration) AssignPropertie
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualMachineScaleSetIPConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualMachineScaleSetIPConfiguration
 			err := ipConfiguration.AssignProperties_From_VirtualMachineScaleSetIPConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -6504,8 +6447,6 @@ func (configuration *VirtualMachineScaleSetNetworkConfiguration) AssignPropertie
 	if configuration.IpConfigurations != nil {
 		ipConfigurationList := make([]v20220301s.VirtualMachineScaleSetIPConfiguration, len(configuration.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range configuration.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration v20220301s.VirtualMachineScaleSetIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineScaleSetIPConfiguration(&ipConfiguration)
 			if err != nil {
@@ -6644,8 +6585,6 @@ func (configuration *VirtualMachineScaleSetNetworkConfiguration_STATUS) AssignPr
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualMachineScaleSetIPConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualMachineScaleSetIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_VirtualMachineScaleSetIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -6767,8 +6706,6 @@ func (configuration *VirtualMachineScaleSetNetworkConfiguration_STATUS) AssignPr
 	if configuration.IpConfigurations != nil {
 		ipConfigurationList := make([]v20220301s.VirtualMachineScaleSetIPConfiguration_STATUS, len(configuration.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range configuration.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration v20220301s.VirtualMachineScaleSetIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineScaleSetIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -7336,8 +7273,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_Fro
 	if source.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]SubResource, len(source.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := subResourceStash.AssignProperties_From_SubResource(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
@@ -7359,8 +7294,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_Fro
 	if source.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]SubResource, len(source.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var subResourceStash v20210701s.SubResource
 			err := subResourceStash.AssignProperties_From_SubResource(&applicationSecurityGroupItem)
 			if err != nil {
@@ -7382,8 +7315,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_Fro
 	if source.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]SubResource, len(source.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := subResourceStash.AssignProperties_From_SubResource(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
@@ -7405,8 +7336,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_Fro
 	if source.LoadBalancerInboundNatPools != nil {
 		loadBalancerInboundNatPoolList := make([]SubResource, len(source.LoadBalancerInboundNatPools))
 		for loadBalancerInboundNatPoolIndex, loadBalancerInboundNatPoolItem := range source.LoadBalancerInboundNatPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerInboundNatPoolItem := loadBalancerInboundNatPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := subResourceStash.AssignProperties_From_SubResource(&loadBalancerInboundNatPoolItem)
 			if err != nil {
@@ -7499,8 +7428,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_To_
 	if configuration.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]v20220301s.SubResource, len(configuration.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range configuration.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource(&subResourceStash)
 			if err != nil {
@@ -7522,8 +7449,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_To_
 	if configuration.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]v20220301s.SubResource, len(configuration.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range configuration.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var subResourceStash v20210701s.SubResource
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource(&subResourceStash)
 			if err != nil {
@@ -7545,8 +7470,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_To_
 	if configuration.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]v20220301s.SubResource, len(configuration.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range configuration.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource(&subResourceStash)
 			if err != nil {
@@ -7568,8 +7491,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration) AssignProperties_To_
 	if configuration.LoadBalancerInboundNatPools != nil {
 		loadBalancerInboundNatPoolList := make([]v20220301s.SubResource, len(configuration.LoadBalancerInboundNatPools))
 		for loadBalancerInboundNatPoolIndex, loadBalancerInboundNatPoolItem := range configuration.LoadBalancerInboundNatPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerInboundNatPoolItem := loadBalancerInboundNatPoolItem
 			var subResourceStash v20210701s.SubResource
 			err := loadBalancerInboundNatPoolItem.AssignProperties_To_SubResource(&subResourceStash)
 			if err != nil {
@@ -7678,8 +7599,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if source.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]SubResource_STATUS, len(source.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
@@ -7701,8 +7620,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if source.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]SubResource_STATUS, len(source.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&applicationSecurityGroupItem)
 			if err != nil {
@@ -7727,8 +7644,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if source.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]SubResource_STATUS, len(source.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
@@ -7750,8 +7665,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if source.LoadBalancerInboundNatPools != nil {
 		loadBalancerInboundNatPoolList := make([]SubResource_STATUS, len(source.LoadBalancerInboundNatPools))
 		for loadBalancerInboundNatPoolIndex, loadBalancerInboundNatPoolItem := range source.LoadBalancerInboundNatPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerInboundNatPoolItem := loadBalancerInboundNatPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(&loadBalancerInboundNatPoolItem)
 			if err != nil {
@@ -7836,8 +7749,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if configuration.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]v20220301s.SubResource_STATUS, len(configuration.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range configuration.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -7859,8 +7770,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if configuration.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]v20220301s.SubResource_STATUS, len(configuration.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range configuration.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -7885,8 +7794,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if configuration.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]v20220301s.SubResource_STATUS, len(configuration.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range configuration.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -7908,8 +7815,6 @@ func (configuration *VirtualMachineScaleSetIPConfiguration_STATUS) AssignPropert
 	if configuration.LoadBalancerInboundNatPools != nil {
 		loadBalancerInboundNatPoolList := make([]v20220301s.SubResource_STATUS, len(configuration.LoadBalancerInboundNatPools))
 		for loadBalancerInboundNatPoolIndex, loadBalancerInboundNatPoolItem := range configuration.LoadBalancerInboundNatPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerInboundNatPoolItem := loadBalancerInboundNatPoolItem
 			var subResourceSTATUSStash v20210701s.SubResource_STATUS
 			err := loadBalancerInboundNatPoolItem.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 			if err != nil {
@@ -8420,8 +8325,6 @@ func (configuration *VirtualMachineScaleSetPublicIPAddressConfiguration) AssignP
 	if source.IpTags != nil {
 		ipTagList := make([]VirtualMachineScaleSetIpTag, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag VirtualMachineScaleSetIpTag
 			err := ipTag.AssignProperties_From_VirtualMachineScaleSetIpTag(&ipTagItem)
 			if err != nil {
@@ -8521,8 +8424,6 @@ func (configuration *VirtualMachineScaleSetPublicIPAddressConfiguration) AssignP
 	if configuration.IpTags != nil {
 		ipTagList := make([]v20220301s.VirtualMachineScaleSetIpTag, len(configuration.IpTags))
 		for ipTagIndex, ipTagItem := range configuration.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag v20220301s.VirtualMachineScaleSetIpTag
 			err := ipTagItem.AssignProperties_To_VirtualMachineScaleSetIpTag(&ipTag)
 			if err != nil {
@@ -8634,8 +8535,6 @@ func (configuration *VirtualMachineScaleSetPublicIPAddressConfiguration_STATUS) 
 	if source.IpTags != nil {
 		ipTagList := make([]VirtualMachineScaleSetIpTag_STATUS, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag VirtualMachineScaleSetIpTag_STATUS
 			err := ipTag.AssignProperties_From_VirtualMachineScaleSetIpTag_STATUS(&ipTagItem)
 			if err != nil {
@@ -8735,8 +8634,6 @@ func (configuration *VirtualMachineScaleSetPublicIPAddressConfiguration_STATUS) 
 	if configuration.IpTags != nil {
 		ipTagList := make([]v20220301s.VirtualMachineScaleSetIpTag_STATUS, len(configuration.IpTags))
 		for ipTagIndex, ipTagItem := range configuration.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag v20220301s.VirtualMachineScaleSetIpTag_STATUS
 			err := ipTagItem.AssignProperties_To_VirtualMachineScaleSetIpTag_STATUS(&ipTag)
 			if err != nil {

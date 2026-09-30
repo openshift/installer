@@ -116,7 +116,12 @@ func (rule *NetworkSecurityGroupsSecurityRule) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (rule *NetworkSecurityGroupsSecurityRule) createValidations() []func(ctx context.Context, obj *v20240301.NetworkSecurityGroupsSecurityRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.NetworkSecurityGroupsSecurityRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.NetworkSecurityGroupsSecurityRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

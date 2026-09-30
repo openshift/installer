@@ -116,7 +116,12 @@ func (subnet *VirtualNetworksSubnet) ValidateUpdate(ctx context.Context, oldReso
 
 // createValidations validates the creation of the resource
 func (subnet *VirtualNetworksSubnet) createValidations() []func(ctx context.Context, obj *v20201101.VirtualNetworksSubnet) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201101.VirtualNetworksSubnet) (admission.Warnings, error){subnet.validateResourceReferences, subnet.validateOwnerReference, subnet.validateSecretDestinations, subnet.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201101.VirtualNetworksSubnet) (admission.Warnings, error){
+		subnet.validateResourceReferences,
+		subnet.validateOwnerReference,
+		subnet.validateSecretDestinations,
+		subnet.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

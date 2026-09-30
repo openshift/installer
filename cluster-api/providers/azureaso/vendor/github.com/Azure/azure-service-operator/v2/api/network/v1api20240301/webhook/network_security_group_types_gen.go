@@ -116,7 +116,12 @@ func (group *NetworkSecurityGroup) ValidateUpdate(ctx context.Context, oldResour
 
 // createValidations validates the creation of the resource
 func (group *NetworkSecurityGroup) createValidations() []func(ctx context.Context, obj *v20240301.NetworkSecurityGroup) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.NetworkSecurityGroup) (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.NetworkSecurityGroup) (admission.Warnings, error){
+		group.validateResourceReferences,
+		group.validateOwnerReference,
+		group.validateSecretDestinations,
+		group.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

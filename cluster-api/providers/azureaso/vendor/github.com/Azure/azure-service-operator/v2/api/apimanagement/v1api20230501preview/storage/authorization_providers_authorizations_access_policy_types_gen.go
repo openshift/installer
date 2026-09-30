@@ -4,8 +4,7 @@
 package storage
 
 import (
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -18,6 +17,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +25,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230501preview.AuthorizationProvidersAuthorizationsAccessPolicy
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}/accessPolicies/{authorizationAccessPolicyId}
 type AuthorizationProvidersAuthorizationsAccessPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +50,36 @@ var _ conversion.Convertible = &AuthorizationProvidersAuthorizationsAccessPolicy
 
 // ConvertFrom populates our AuthorizationProvidersAuthorizationsAccessPolicy from the provided hub AuthorizationProvidersAuthorizationsAccessPolicy
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvidersAuthorizationsAccessPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvidersAuthorizationsAccessPolicy
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy(source)
+	err = policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to policy")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub AuthorizationProvidersAuthorizationsAccessPolicy from our AuthorizationProvidersAuthorizationsAccessPolicy
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvidersAuthorizationsAccessPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvidersAuthorizationsAccessPolicy
+	err := policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from policy")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvidersAuthorizationsAccessPolicy{}
@@ -245,7 +259,7 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) OriginalGVK() *s
 // +kubebuilder:object:root=true
 // Storage version of v1api20230501preview.AuthorizationProvidersAuthorizationsAccessPolicy
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}/accessPolicies/{authorizationAccessPolicyId}
 type AuthorizationProvidersAuthorizationsAccessPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -336,17 +350,7 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) AssignPrope
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
 	// AppIds
-	if propertyBag.Contains("AppIds") {
-		var appId []string
-		err := propertyBag.Pull("AppIds", &appId)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'AppIds' from propertyBag")
-		}
-
-		policy.AppIds = appId
-	} else {
-		policy.AppIds = nil
-	}
+	policy.AppIds = genruntime.CloneSliceOfString(source.AppIds)
 
 	// AzureName
 	policy.AzureName = source.AzureName
@@ -422,11 +426,7 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) AssignPrope
 	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
 
 	// AppIds
-	if len(policy.AppIds) > 0 {
-		propertyBag.Add("AppIds", policy.AppIds)
-	} else {
-		propertyBag.Remove("AppIds")
-	}
+	destination.AppIds = genruntime.CloneSliceOfString(policy.AppIds)
 
 	// AzureName
 	destination.AzureName = policy.AzureName
@@ -564,17 +564,7 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) AssignPro
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
 	// AppIds
-	if propertyBag.Contains("AppIds") {
-		var appId []string
-		err := propertyBag.Pull("AppIds", &appId)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'AppIds' from propertyBag")
-		}
-
-		policy.AppIds = appId
-	} else {
-		policy.AppIds = nil
-	}
+	policy.AppIds = genruntime.CloneSliceOfString(source.AppIds)
 
 	// Conditions
 	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -620,11 +610,7 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) AssignPro
 	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
 
 	// AppIds
-	if len(policy.AppIds) > 0 {
-		propertyBag.Add("AppIds", policy.AppIds)
-	} else {
-		propertyBag.Remove("AppIds")
-	}
+	destination.AppIds = genruntime.CloneSliceOfString(policy.AppIds)
 
 	// Conditions
 	destination.Conditions = genruntime.CloneSliceOfCondition(policy.Conditions)
@@ -691,8 +677,6 @@ func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) As
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -709,8 +693,6 @@ func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) As
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -752,8 +734,6 @@ func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) As
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -770,8 +750,6 @@ func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) As
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

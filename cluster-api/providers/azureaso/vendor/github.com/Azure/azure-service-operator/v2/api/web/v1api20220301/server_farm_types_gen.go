@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,web}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/AppServicePlans.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/AppServicePlans.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}
 type ServerFarm struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &ServerFarm{}
 
 // ConvertFrom populates our ServerFarm from the provided hub ServerFarm
 func (farm *ServerFarm) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.ServerFarm)
-	if !ok {
-		return fmt.Errorf("expected web/v1api20220301/storage/ServerFarm but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.ServerFarm
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return farm.AssignProperties_From_ServerFarm(source)
+	err = farm.AssignProperties_From_ServerFarm(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to farm")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ServerFarm from our ServerFarm
 func (farm *ServerFarm) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.ServerFarm)
-	if !ok {
-		return fmt.Errorf("expected web/v1api20220301/storage/ServerFarm but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.ServerFarm
+	err := farm.AssignProperties_To_ServerFarm(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from farm")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return farm.AssignProperties_To_ServerFarm(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &ServerFarm{}
@@ -86,17 +101,6 @@ func (farm *ServerFarm) SecretDestinationExpressions() []*core.DestinationExpres
 		return nil
 	}
 	return farm.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &ServerFarm{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (farm *ServerFarm) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ServerFarm_STATUS); ok {
-		return farm.Spec.Initialize_From_ServerFarm_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ServerFarm_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServerFarm{}
@@ -237,7 +241,7 @@ func (farm *ServerFarm) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /web/resource-manager/Microsoft.Web/stable/2022-03-01/AppServicePlans.json
+// - Generated from: /web/resource-manager/Microsoft.Web/AppService/stable/2022-03-01/AppServicePlans.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/serverfarms/{name}
 type ServerFarmList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -341,7 +345,7 @@ func (farm *ServerFarm_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 	// Set property "ExtendedLocation":
 	if farm.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*farm.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := farm.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -391,7 +395,7 @@ func (farm *ServerFarm_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.FreeOfferExpirationTime = &freeOfferExpirationTime
 	}
 	if farm.HostingEnvironmentProfile != nil {
-		hostingEnvironmentProfile_ARM, err := (*farm.HostingEnvironmentProfile).ConvertToARM(resolved)
+		hostingEnvironmentProfile_ARM, err := farm.HostingEnvironmentProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -411,7 +415,7 @@ func (farm *ServerFarm_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.IsXenon = &isXenon
 	}
 	if farm.KubeEnvironmentProfile != nil {
-		kubeEnvironmentProfile_ARM, err := (*farm.KubeEnvironmentProfile).ConvertToARM(resolved)
+		kubeEnvironmentProfile_ARM, err := farm.KubeEnvironmentProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -453,7 +457,7 @@ func (farm *ServerFarm_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 	// Set property "Sku":
 	if farm.Sku != nil {
-		sku_ARM, err := (*farm.Sku).ConvertToARM(resolved)
+		sku_ARM, err := farm.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1063,144 +1067,6 @@ func (farm *ServerFarm_Spec) AssignProperties_To_ServerFarm_Spec(destination *st
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ServerFarm_STATUS populates our ServerFarm_Spec from the provided source ServerFarm_STATUS
-func (farm *ServerFarm_Spec) Initialize_From_ServerFarm_STATUS(source *ServerFarm_STATUS) error {
-
-	// ElasticScaleEnabled
-	if source.ElasticScaleEnabled != nil {
-		elasticScaleEnabled := *source.ElasticScaleEnabled
-		farm.ElasticScaleEnabled = &elasticScaleEnabled
-	} else {
-		farm.ElasticScaleEnabled = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		farm.ExtendedLocation = &extendedLocation
-	} else {
-		farm.ExtendedLocation = nil
-	}
-
-	// FreeOfferExpirationTime
-	farm.FreeOfferExpirationTime = genruntime.ClonePointerToString(source.FreeOfferExpirationTime)
-
-	// HostingEnvironmentProfile
-	if source.HostingEnvironmentProfile != nil {
-		var hostingEnvironmentProfile HostingEnvironmentProfile
-		err := hostingEnvironmentProfile.Initialize_From_HostingEnvironmentProfile_STATUS(source.HostingEnvironmentProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_HostingEnvironmentProfile_STATUS() to populate field HostingEnvironmentProfile")
-		}
-		farm.HostingEnvironmentProfile = &hostingEnvironmentProfile
-	} else {
-		farm.HostingEnvironmentProfile = nil
-	}
-
-	// HyperV
-	if source.HyperV != nil {
-		hyperV := *source.HyperV
-		farm.HyperV = &hyperV
-	} else {
-		farm.HyperV = nil
-	}
-
-	// IsSpot
-	if source.IsSpot != nil {
-		isSpot := *source.IsSpot
-		farm.IsSpot = &isSpot
-	} else {
-		farm.IsSpot = nil
-	}
-
-	// IsXenon
-	if source.IsXenon != nil {
-		isXenon := *source.IsXenon
-		farm.IsXenon = &isXenon
-	} else {
-		farm.IsXenon = nil
-	}
-
-	// Kind
-	farm.Kind = genruntime.ClonePointerToString(source.Kind)
-
-	// KubeEnvironmentProfile
-	if source.KubeEnvironmentProfile != nil {
-		var kubeEnvironmentProfile KubeEnvironmentProfile
-		err := kubeEnvironmentProfile.Initialize_From_KubeEnvironmentProfile_STATUS(source.KubeEnvironmentProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KubeEnvironmentProfile_STATUS() to populate field KubeEnvironmentProfile")
-		}
-		farm.KubeEnvironmentProfile = &kubeEnvironmentProfile
-	} else {
-		farm.KubeEnvironmentProfile = nil
-	}
-
-	// Location
-	farm.Location = genruntime.ClonePointerToString(source.Location)
-
-	// MaximumElasticWorkerCount
-	farm.MaximumElasticWorkerCount = genruntime.ClonePointerToInt(source.MaximumElasticWorkerCount)
-
-	// PerSiteScaling
-	if source.PerSiteScaling != nil {
-		perSiteScaling := *source.PerSiteScaling
-		farm.PerSiteScaling = &perSiteScaling
-	} else {
-		farm.PerSiteScaling = nil
-	}
-
-	// Reserved
-	if source.Reserved != nil {
-		reserved := *source.Reserved
-		farm.Reserved = &reserved
-	} else {
-		farm.Reserved = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku SkuDescription
-		err := sku.Initialize_From_SkuDescription_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SkuDescription_STATUS() to populate field Sku")
-		}
-		farm.Sku = &sku
-	} else {
-		farm.Sku = nil
-	}
-
-	// SpotExpirationTime
-	farm.SpotExpirationTime = genruntime.ClonePointerToString(source.SpotExpirationTime)
-
-	// Tags
-	farm.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// TargetWorkerCount
-	farm.TargetWorkerCount = genruntime.ClonePointerToInt(source.TargetWorkerCount)
-
-	// TargetWorkerSizeId
-	farm.TargetWorkerSizeId = genruntime.ClonePointerToInt(source.TargetWorkerSizeId)
-
-	// WorkerTierName
-	farm.WorkerTierName = genruntime.ClonePointerToString(source.WorkerTierName)
-
-	// ZoneRedundant
-	if source.ZoneRedundant != nil {
-		zoneRedundant := *source.ZoneRedundant
-		farm.ZoneRedundant = &zoneRedundant
-	} else {
-		farm.ZoneRedundant = nil
 	}
 
 	// No error
@@ -2120,16 +1986,6 @@ func (location *ExtendedLocation) AssignProperties_To_ExtendedLocation(destinati
 	return nil
 }
 
-// Initialize_From_ExtendedLocation_STATUS populates our ExtendedLocation from the provided source ExtendedLocation_STATUS
-func (location *ExtendedLocation) Initialize_From_ExtendedLocation_STATUS(source *ExtendedLocation_STATUS) error {
-
-	// Name
-	location.Name = genruntime.ClonePointerToString(source.Name)
-
-	// No error
-	return nil
-}
-
 // Extended Location.
 type ExtendedLocation_STATUS struct {
 	// Name: Name of extended location.
@@ -2282,21 +2138,6 @@ func (profile *HostingEnvironmentProfile) AssignProperties_To_HostingEnvironment
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_HostingEnvironmentProfile_STATUS populates our HostingEnvironmentProfile from the provided source HostingEnvironmentProfile_STATUS
-func (profile *HostingEnvironmentProfile) Initialize_From_HostingEnvironmentProfile_STATUS(source *HostingEnvironmentProfile_STATUS) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		profile.Reference = &reference
-	} else {
-		profile.Reference = nil
 	}
 
 	// No error
@@ -2476,21 +2317,6 @@ func (profile *KubeEnvironmentProfile) AssignProperties_To_KubeEnvironmentProfil
 	return nil
 }
 
-// Initialize_From_KubeEnvironmentProfile_STATUS populates our KubeEnvironmentProfile from the provided source KubeEnvironmentProfile_STATUS
-func (profile *KubeEnvironmentProfile) Initialize_From_KubeEnvironmentProfile_STATUS(source *KubeEnvironmentProfile_STATUS) error {
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		profile.Reference = &reference
-	} else {
-		profile.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Specification for a Kubernetes Environment to use for this resource.
 type KubeEnvironmentProfile_STATUS struct {
 	// Id: Resource ID of the Kubernetes Environment.
@@ -2630,8 +2456,6 @@ func (operator *ServerFarmOperatorSpec) AssignProperties_From_ServerFarmOperator
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2648,8 +2472,6 @@ func (operator *ServerFarmOperatorSpec) AssignProperties_From_ServerFarmOperator
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2675,8 +2497,6 @@ func (operator *ServerFarmOperatorSpec) AssignProperties_To_ServerFarmOperatorSp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2693,8 +2513,6 @@ func (operator *ServerFarmOperatorSpec) AssignProperties_To_ServerFarmOperatorSp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2794,7 +2612,7 @@ func (description *SkuDescription) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "SkuCapacity":
 	if description.SkuCapacity != nil {
-		skuCapacity_ARM, err := (*description.SkuCapacity).ConvertToARM(resolved)
+		skuCapacity_ARM, err := description.SkuCapacity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2889,8 +2707,6 @@ func (description *SkuDescription) AssignProperties_From_SkuDescription(source *
 	if source.Capabilities != nil {
 		capabilityList := make([]Capability, len(source.Capabilities))
 		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability Capability
 			err := capability.AssignProperties_From_Capability(&capabilityItem)
 			if err != nil {
@@ -2946,8 +2762,6 @@ func (description *SkuDescription) AssignProperties_To_SkuDescription(destinatio
 	if description.Capabilities != nil {
 		capabilityList := make([]storage.Capability, len(description.Capabilities))
 		for capabilityIndex, capabilityItem := range description.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability storage.Capability
 			err := capabilityItem.AssignProperties_To_Capability(&capability)
 			if err != nil {
@@ -2996,61 +2810,6 @@ func (description *SkuDescription) AssignProperties_To_SkuDescription(destinatio
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SkuDescription_STATUS populates our SkuDescription from the provided source SkuDescription_STATUS
-func (description *SkuDescription) Initialize_From_SkuDescription_STATUS(source *SkuDescription_STATUS) error {
-
-	// Capabilities
-	if source.Capabilities != nil {
-		capabilityList := make([]Capability, len(source.Capabilities))
-		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
-			var capability Capability
-			err := capability.Initialize_From_Capability_STATUS(&capabilityItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_Capability_STATUS() to populate field Capabilities")
-			}
-			capabilityList[capabilityIndex] = capability
-		}
-		description.Capabilities = capabilityList
-	} else {
-		description.Capabilities = nil
-	}
-
-	// Capacity
-	description.Capacity = genruntime.ClonePointerToInt(source.Capacity)
-
-	// Family
-	description.Family = genruntime.ClonePointerToString(source.Family)
-
-	// Locations
-	description.Locations = genruntime.CloneSliceOfString(source.Locations)
-
-	// Name
-	description.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Size
-	description.Size = genruntime.ClonePointerToString(source.Size)
-
-	// SkuCapacity
-	if source.SkuCapacity != nil {
-		var skuCapacity SkuCapacity
-		err := skuCapacity.Initialize_From_SkuCapacity_STATUS(source.SkuCapacity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SkuCapacity_STATUS() to populate field SkuCapacity")
-		}
-		description.SkuCapacity = &skuCapacity
-	} else {
-		description.SkuCapacity = nil
-	}
-
-	// Tier
-	description.Tier = genruntime.ClonePointerToString(source.Tier)
 
 	// No error
 	return nil
@@ -3164,8 +2923,6 @@ func (description *SkuDescription_STATUS) AssignProperties_From_SkuDescription_S
 	if source.Capabilities != nil {
 		capabilityList := make([]Capability_STATUS, len(source.Capabilities))
 		for capabilityIndex, capabilityItem := range source.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability Capability_STATUS
 			err := capability.AssignProperties_From_Capability_STATUS(&capabilityItem)
 			if err != nil {
@@ -3221,8 +2978,6 @@ func (description *SkuDescription_STATUS) AssignProperties_To_SkuDescription_STA
 	if description.Capabilities != nil {
 		capabilityList := make([]storage.Capability_STATUS, len(description.Capabilities))
 		for capabilityIndex, capabilityItem := range description.Capabilities {
-			// Shadow the loop variable to avoid aliasing
-			capabilityItem := capabilityItem
 			var capability storage.Capability_STATUS
 			err := capabilityItem.AssignProperties_To_Capability_STATUS(&capability)
 			if err != nil {
@@ -3387,22 +3142,6 @@ func (capability *Capability) AssignProperties_To_Capability(destination *storag
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Capability_STATUS populates our Capability from the provided source Capability_STATUS
-func (capability *Capability) Initialize_From_Capability_STATUS(source *Capability_STATUS) error {
-
-	// Name
-	capability.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Reason
-	capability.Reason = genruntime.ClonePointerToString(source.Reason)
-
-	// Value
-	capability.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -3650,28 +3389,6 @@ func (capacity *SkuCapacity) AssignProperties_To_SkuCapacity(destination *storag
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SkuCapacity_STATUS populates our SkuCapacity from the provided source SkuCapacity_STATUS
-func (capacity *SkuCapacity) Initialize_From_SkuCapacity_STATUS(source *SkuCapacity_STATUS) error {
-
-	// Default
-	capacity.Default = genruntime.ClonePointerToInt(source.Default)
-
-	// ElasticMaximum
-	capacity.ElasticMaximum = genruntime.ClonePointerToInt(source.ElasticMaximum)
-
-	// Maximum
-	capacity.Maximum = genruntime.ClonePointerToInt(source.Maximum)
-
-	// Minimum
-	capacity.Minimum = genruntime.ClonePointerToInt(source.Minimum)
-
-	// ScaleType
-	capacity.ScaleType = genruntime.ClonePointerToString(source.ScaleType)
 
 	// No error
 	return nil

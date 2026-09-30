@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -265,9 +266,6 @@ type Snapshot_Spec struct {
 	// allowed if the disk is not attached to a running VM, and can only increase the disk's size.
 	DiskSizeGB *int `json:"diskSizeGB,omitempty"`
 
-	// DiskState: The state of the snapshot.
-	DiskState *DiskState `json:"diskState,omitempty"`
-
 	// Encryption: Encryption property can be used to encrypt data at rest with customer managed keys or platform managed keys.
 	Encryption *Encryption `json:"encryption,omitempty"`
 
@@ -327,7 +325,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "ExtendedLocation":
 	if snapshot.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*snapshot.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := snapshot.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +346,6 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if snapshot.CreationData != nil ||
 		snapshot.DiskAccessReference != nil ||
 		snapshot.DiskSizeGB != nil ||
-		snapshot.DiskState != nil ||
 		snapshot.Encryption != nil ||
 		snapshot.EncryptionSettingsCollection != nil ||
 		snapshot.HyperVGeneration != nil ||
@@ -359,7 +356,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties = &arm.SnapshotProperties{}
 	}
 	if snapshot.CreationData != nil {
-		creationData_ARM, err := (*snapshot.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := snapshot.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -378,14 +375,8 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		diskSizeGB := *snapshot.DiskSizeGB
 		result.Properties.DiskSizeGB = &diskSizeGB
 	}
-	if snapshot.DiskState != nil {
-		var temp string
-		temp = string(*snapshot.DiskState)
-		diskState := arm.DiskState(temp)
-		result.Properties.DiskState = &diskState
-	}
 	if snapshot.Encryption != nil {
-		encryption_ARM, err := (*snapshot.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := snapshot.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -393,7 +384,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.Encryption = &encryption
 	}
 	if snapshot.EncryptionSettingsCollection != nil {
-		encryptionSettingsCollection_ARM, err := (*snapshot.EncryptionSettingsCollection).ConvertToARM(resolved)
+		encryptionSettingsCollection_ARM, err := snapshot.EncryptionSettingsCollection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -423,7 +414,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.OsType = &osType
 	}
 	if snapshot.PurchasePlan != nil {
-		purchasePlan_ARM, err := (*snapshot.PurchasePlan).ConvertToARM(resolved)
+		purchasePlan_ARM, err := snapshot.PurchasePlan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -433,7 +424,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Sku":
 	if snapshot.Sku != nil {
-		sku_ARM, err := (*snapshot.Sku).ConvertToARM(resolved)
+		sku_ARM, err := snapshot.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -488,17 +479,6 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 		if typedInput.Properties.DiskSizeGB != nil {
 			diskSizeGB := *typedInput.Properties.DiskSizeGB
 			snapshot.DiskSizeGB = &diskSizeGB
-		}
-	}
-
-	// Set property "DiskState":
-	// copying flattened property:
-	if typedInput.Properties != nil {
-		if typedInput.Properties.DiskState != nil {
-			var temp string
-			temp = string(*typedInput.Properties.DiskState)
-			diskState := DiskState(temp)
-			snapshot.DiskState = &diskState
 		}
 	}
 
@@ -713,15 +693,6 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *stora
 	// DiskSizeGB
 	snapshot.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
 
-	// DiskState
-	if source.DiskState != nil {
-		diskState := *source.DiskState
-		diskStateTemp := genruntime.ToEnum(diskState, diskState_Values)
-		snapshot.DiskState = &diskStateTemp
-	} else {
-		snapshot.DiskState = nil
-	}
-
 	// Encryption
 	if source.Encryption != nil {
 		var encryption Encryption
@@ -877,14 +848,6 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *st
 
 	// DiskSizeGB
 	destination.DiskSizeGB = genruntime.ClonePointerToInt(snapshot.DiskSizeGB)
-
-	// DiskState
-	if snapshot.DiskState != nil {
-		diskState := string(*snapshot.DiskState)
-		destination.DiskState = &diskState
-	} else {
-		destination.DiskState = nil
-	}
 
 	// Encryption
 	if snapshot.Encryption != nil {
@@ -1728,29 +1691,6 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 	return nil
 }
 
-// This enumerates the possible state of the disk.
-// +kubebuilder:validation:Enum={"ActiveSAS","ActiveUpload","Attached","ReadyToUpload","Reserved","Unattached"}
-type DiskState string
-
-const (
-	DiskState_ActiveSAS     = DiskState("ActiveSAS")
-	DiskState_ActiveUpload  = DiskState("ActiveUpload")
-	DiskState_Attached      = DiskState("Attached")
-	DiskState_ReadyToUpload = DiskState("ReadyToUpload")
-	DiskState_Reserved      = DiskState("Reserved")
-	DiskState_Unattached    = DiskState("Unattached")
-)
-
-// Mapping from string to DiskState
-var diskState_Values = map[string]DiskState{
-	"activesas":     DiskState_ActiveSAS,
-	"activeupload":  DiskState_ActiveUpload,
-	"attached":      DiskState_Attached,
-	"readytoupload": DiskState_ReadyToUpload,
-	"reserved":      DiskState_Reserved,
-	"unattached":    DiskState_Unattached,
-}
-
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type SnapshotOperatorSpec struct {
 	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
@@ -1767,8 +1707,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_From_SnapshotOperatorSpec
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1785,8 +1723,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_From_SnapshotOperatorSpec
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1812,8 +1748,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(d
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1830,8 +1764,6 @@ func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(d
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

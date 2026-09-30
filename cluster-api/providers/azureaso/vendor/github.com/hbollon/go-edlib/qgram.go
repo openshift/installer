@@ -52,5 +52,12 @@ func QgramSimilarity(str1, str2 string, splitLength int) float32 {
 	splittedStr1 := Shingle(str1, splitLength)
 	splittedStr2 := Shingle(str2, splitLength)
 	res := float32(QgramDistanceCustomNgram(splittedStr1, splittedStr2))
-	return 1 - (res / float32(len(splittedStr1)+len(splittedStr2)))
+	totalShingles := 0
+	for _, i := range splittedStr1 {
+		totalShingles += i
+	}
+	for _, i := range splittedStr2 {
+		totalShingles += i
+	}
+	return 1 - (res / float32(totalShingles))
 }

@@ -58,6 +58,17 @@ const (
 	// owner: @nawazkh
 	// alpha: v1.18
 	APIServerILB featuregate.Feature = "APIServerILB"
+
+	// SkipMachinePoolModelReconciliation is a CAPZ feature gate to skip automatic reconciliation
+	// of AzureMachinePool instances to match the latest VMSS model. When enabled, instances
+	// with stale models will persist until the pool is explicitly scaled. This is useful for
+	// testing scenarios where model changes should not trigger automatic instance replacement.
+	// This gate does not prevent VMSS template updates and does not block surge behavior for
+	// model changes in the VMSS reconciler.
+	// Defaults to false.
+	// owner: @jackfrancis
+	// alpha: v1.24
+	SkipMachinePoolModelReconciliation featuregate.Feature = "SkipMachinePoolModelReconciliation"
 )
 
 func init() {
@@ -68,9 +79,10 @@ func init() {
 // To add a new feature, define a key for it above and add it here.
 var defaultCAPZFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
-	AKS:               {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // Remove in 1.12
-	AKSResourceHealth: {Default: false, PreRelease: featuregate.Alpha},
-	EdgeZone:          {Default: false, PreRelease: featuregate.Alpha},
-	ASOAPI:            {Default: true, PreRelease: featuregate.GA},
-	APIServerILB:      {Default: false, PreRelease: featuregate.Alpha},
+	AKS:                                {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // Remove in 1.12
+	AKSResourceHealth:                  {Default: false, PreRelease: featuregate.Alpha},
+	EdgeZone:                           {Default: false, PreRelease: featuregate.Alpha},
+	ASOAPI:                             {Default: true, PreRelease: featuregate.GA},
+	APIServerILB:                       {Default: false, PreRelease: featuregate.Alpha},
+	SkipMachinePoolModelReconciliation: {Default: false, PreRelease: featuregate.Alpha},
 }

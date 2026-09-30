@@ -15,13 +15,21 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 )
 
-// ErrorClassifier can be implemented to customize how the reconciler reacts to specific errors
+// ErrorClassifier can be implemented to customize how the reconciler reacts to specific errors returned by Azure.
+// This extension is invoked whenever an ARM API call returns an error, allowing resources to classify errors
+// as retryable or fatal, and to provide better error messages to users.
+// Implement this extension when:
+// - Resource-specific error codes need special handling
+// - Certain errors should be retried that would normally be considered fatal (or vice versa)
+// - Error messages need resource-specific clarification
+// - Error behavior varies by API version
 type ErrorClassifier interface {
-	// ClassifyError evaluates the provided error, returning including whether it is fatal or can be retried.
+	// ClassifyError evaluates the provided error, returning details including whether it is fatal or can be retried.
 	// cloudError is the error returned from ARM.
 	// apiVersion is the ARM API version used for the request.
-	// log is a logger than can be used for telemetry.
-	// next is the next implementation to call.
+	// log is a logger that can be used for telemetry.
+	// next is the default classification implementation to call.
+	// Returns CloudErrorDetails with classification and an error if classification itself fails.
 	ClassifyError(
 		cloudError *genericarmclient.CloudError,
 		apiVersion string,

@@ -61,7 +61,7 @@ ConfigurationStore_STATUS: Object (9 properties)
 ├── Tags: map[string]string
 └── Type: *string
 
-ConfigurationStore_Spec: Object (7 properties)
+ConfigurationStore_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
 │   │   ├── "None"
@@ -87,20 +87,5 @@ ConfigurationStore_Spec: Object (7 properties)
 │   └── SoftDeleteRetentionInDays: *int
 ├── Sku: *Object (1 property)
 │   └── Name: *string
-├── SystemData: *Object (6 properties)
-│   ├── CreatedAt: *string
-│   ├── CreatedBy: *string
-│   ├── CreatedByType: *Enum (4 values)
-│   │   ├── "Application"
-│   │   ├── "Key"
-│   │   ├── "ManagedIdentity"
-│   │   └── "User"
-│   ├── LastModifiedAt: *string
-│   ├── LastModifiedBy: *string
-│   └── LastModifiedByType: *Enum (4 values)
-│       ├── "Application"
-│       ├── "Key"
-│       ├── "ManagedIdentity"
-│       └── "User"
 └── Tags: map[string]string
 

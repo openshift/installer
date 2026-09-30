@@ -27,19 +27,18 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
 	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
+	"sigs.k8s.io/cluster-api/internal/util/taints"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/version"
 )
@@ -49,31 +48,25 @@ func (webhook *MachineSet) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		webhook.decoder = admission.NewDecoder(mgr.GetScheme())
 	}
 
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&clusterv1.MachineSet{}).
+	return ctrl.NewWebhookManagedBy(mgr, &clusterv1.MachineSet{}).
 		WithDefaulter(webhook).
 		WithValidator(webhook).
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machineset,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=validation.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machineset,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=default.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machineset,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=validation.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machineset,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinesets,versions=v1beta2,name=default.machineset.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // MachineSet implements a validation and defaulting webhook for MachineSet.
 type MachineSet struct {
 	decoder admission.Decoder
 }
 
-var _ webhook.CustomDefaulter = &MachineSet{}
-var _ webhook.CustomValidator = &MachineSet{}
+var _ admission.Defaulter[*clusterv1.MachineSet] = &MachineSet{}
+var _ admission.Validator[*clusterv1.MachineSet] = &MachineSet{}
 
 // Default sets default MachineSet field values.
-func (webhook *MachineSet) Default(ctx context.Context, obj runtime.Object) error {
-	m, ok := obj.(*clusterv1.MachineSet)
-	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a MachineSet but got a %T", obj))
-	}
-
+func (webhook *MachineSet) Default(ctx context.Context, m *clusterv1.MachineSet) error {
 	req, err := admission.RequestFromContext(ctx)
 	if err != nil {
 		return err
@@ -126,31 +119,17 @@ func (webhook *MachineSet) Default(ctx context.Context, obj runtime.Object) erro
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *MachineSet) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	m, ok := obj.(*clusterv1.MachineSet)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a MachineSet but got a %T", obj))
-	}
-
+func (webhook *MachineSet) ValidateCreate(_ context.Context, m *clusterv1.MachineSet) (admission.Warnings, error) {
 	return nil, webhook.validate(nil, m)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *MachineSet) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	oldMS, ok := oldObj.(*clusterv1.MachineSet)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a MachineSet but got a %T", oldObj))
-	}
-	newMS, ok := newObj.(*clusterv1.MachineSet)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a MachineSet but got a %T", newObj))
-	}
-
+func (webhook *MachineSet) ValidateUpdate(_ context.Context, oldMS, newMS *clusterv1.MachineSet) (admission.Warnings, error) {
 	return nil, webhook.validate(oldMS, newMS)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *MachineSet) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *MachineSet) ValidateDelete(_ context.Context, _ *clusterv1.MachineSet) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -229,7 +208,7 @@ func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 		}
 	}
 
-	allErrs = append(allErrs, validateMachineTaints(newMS.Spec.Template.Spec.Taints, specPath.Child("template", "spec", "taints"))...)
+	allErrs = append(allErrs, taints.ValidateMachineTaints(newMS.Spec.Template.Spec.Taints, specPath.Child("template", "spec", "taints"))...)
 	allErrs = append(allErrs, validateMachineTaintsForWorkers(newMS.Spec.Template.Spec.Taints, nil, specPath.Child("template", "spec", "taints"))...)
 
 	allErrs = append(allErrs, validateMSMachineNaming(newMS.Spec.MachineNaming, specPath.Child("machineNaming"))...)

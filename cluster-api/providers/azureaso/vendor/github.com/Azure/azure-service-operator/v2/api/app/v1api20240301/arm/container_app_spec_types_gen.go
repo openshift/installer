@@ -14,7 +14,11 @@ type ContainerApp_Spec struct {
 	Identity *ManagedServiceIdentity `json:"identity,omitempty"`
 
 	// Location: The geo-location where the resource lives
-	Location  *string `json:"location,omitempty"`
+	Location *string `json:"location,omitempty"`
+
+	// ManagedBy: The fully qualified resource ID of the resource that manages this resource. Indicates if this resource is
+	// managed by another Azure resource. If this is present, complete mode deployment will not delete the resource if it is
+	// removed from the template since it is managed by another resource.
 	ManagedBy *string `json:"managedBy,omitempty"`
 	Name      string  `json:"name,omitempty"`
 
@@ -44,9 +48,13 @@ func (containerApp *ContainerApp_Spec) GetType() string {
 
 type ContainerApp_Properties_Spec struct {
 	// Configuration: Non versioned Container App configuration properties.
-	Configuration        *Configuration `json:"configuration,omitempty"`
-	EnvironmentId        *string        `json:"environmentId,omitempty"`
-	ManagedEnvironmentId *string        `json:"managedEnvironmentId,omitempty"`
+	Configuration *Configuration `json:"configuration,omitempty"`
+
+	// EnvironmentId: Resource ID of environment.
+	EnvironmentId *string `json:"environmentId,omitempty"`
+
+	// ManagedEnvironmentId: Deprecated. Resource ID of the Container App's environment.
+	ManagedEnvironmentId *string `json:"managedEnvironmentId,omitempty"`
 
 	// Template: Container App versioned application definition.
 	Template *Template `json:"template,omitempty"`
@@ -299,6 +307,8 @@ type Ingress struct {
 
 // Container App Private Registry
 type RegistryCredentials struct {
+	// Identity: A Managed Identity to use to authenticate with Azure Container Registry. For user-assigned identities, use the
+	// full user-assigned identity Resource ID. For system-assigned identities, use 'system'
 	Identity *string `json:"identity,omitempty"`
 
 	// PasswordSecretRef: The name of the Secret that contains the registry login password
@@ -325,6 +335,8 @@ type Scale struct {
 
 // Secret definition.
 type Secret struct {
+	// Identity: Resource ID of a managed identity to authenticate with Azure Key Vault, or System to use a system-assigned
+	// identity.
 	Identity *string `json:"identity,omitempty"`
 
 	// KeyVaultUrl: Azure Key Vault URL pointing to the secret referenced by the container app.
@@ -346,7 +358,9 @@ type Service struct {
 // Configuration to bind a ContainerApp to a dev ContainerApp Service
 type ServiceBind struct {
 	// Name: Name of the service bind
-	Name      *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// ServiceId: Resource id of the target service
 	ServiceId *string `json:"serviceId,omitempty"`
 }
 
@@ -444,8 +458,10 @@ type CorsPolicy struct {
 // Custom Domain of a Container App
 type CustomDomain struct {
 	// BindingType: Custom Domain binding type.
-	BindingType   *CustomDomain_BindingType `json:"bindingType,omitempty"`
-	CertificateId *string                   `json:"certificateId,omitempty"`
+	BindingType *CustomDomain_BindingType `json:"bindingType,omitempty"`
+
+	// CertificateId: Resource Id of the Certificate to be bound to this hostname. Must exist in the Managed Environment.
+	CertificateId *string `json:"certificateId,omitempty"`
 
 	// Name: Hostname.
 	Name *string `json:"name,omitempty"`

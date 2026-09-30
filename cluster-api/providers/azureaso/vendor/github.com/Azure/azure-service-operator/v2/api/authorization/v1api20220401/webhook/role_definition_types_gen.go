@@ -104,7 +104,11 @@ func (definition *RoleDefinition) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (definition *RoleDefinition) createValidations() []func(ctx context.Context, obj *v20220401.RoleDefinition) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220401.RoleDefinition) (admission.Warnings, error){definition.validateResourceReferences, definition.validateSecretDestinations, definition.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220401.RoleDefinition) (admission.Warnings, error){
+		definition.validateResourceReferences,
+		definition.validateSecretDestinations,
+		definition.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

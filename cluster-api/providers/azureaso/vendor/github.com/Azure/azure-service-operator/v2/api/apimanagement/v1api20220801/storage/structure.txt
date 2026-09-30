@@ -754,3 +754,235 @@ Subscription: Resource
     ├── StateComment: *string
     └── Type: *string
 
+augmentConversionForAdditionalLocation: Interface
+
+augmentConversionForAdditionalLocation_STATUS: Interface
+
+augmentConversionForApi: Interface
+
+augmentConversionForApiContactInformation: Interface
+
+augmentConversionForApiContactInformation_STATUS: Interface
+
+augmentConversionForApiCreateOrUpdateProperties_WsdlSelector: Interface
+
+augmentConversionForApiLicenseInformation: Interface
+
+augmentConversionForApiLicenseInformation_STATUS: Interface
+
+augmentConversionForApiManagementServiceIdentity: Interface
+
+augmentConversionForApiManagementServiceIdentity_STATUS: Interface
+
+augmentConversionForApiManagementServiceSkuProperties: Interface
+
+augmentConversionForApiManagementServiceSkuProperties_STATUS: Interface
+
+augmentConversionForApiOperatorSpec: Interface
+
+augmentConversionForApiVersionConstraint: Interface
+
+augmentConversionForApiVersionConstraint_STATUS: Interface
+
+augmentConversionForApiVersionSet: Interface
+
+augmentConversionForApiVersionSetContractDetails: Interface
+
+augmentConversionForApiVersionSetContractDetails_STATUS: Interface
+
+augmentConversionForApiVersionSetOperatorSpec: Interface
+
+augmentConversionForApiVersionSet_STATUS: Interface
+
+augmentConversionForApiVersionSet_Spec: Interface
+
+augmentConversionForApi_STATUS: Interface
+
+augmentConversionForApi_Spec: Interface
+
+augmentConversionForArmIdWrapper_STATUS: Interface
+
+augmentConversionForAuthenticationSettingsContract: Interface
+
+augmentConversionForAuthenticationSettingsContract_STATUS: Interface
+
+augmentConversionForAuthorizationError_STATUS: Interface
+
+augmentConversionForAuthorizationProvider: Interface
+
+augmentConversionForAuthorizationProviderOAuth2GrantTypes: Interface
+
+augmentConversionForAuthorizationProviderOAuth2GrantTypes_STATUS: Interface
+
+augmentConversionForAuthorizationProviderOAuth2Settings: Interface
+
+augmentConversionForAuthorizationProviderOAuth2Settings_STATUS: Interface
+
+augmentConversionForAuthorizationProviderOperatorSpec: Interface
+
+augmentConversionForAuthorizationProvider_STATUS: Interface
+
+augmentConversionForAuthorizationProvider_Spec: Interface
+
+augmentConversionForAuthorizationProvidersAuthorization: Interface
+
+augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec: Interface
+
+augmentConversionForAuthorizationProvidersAuthorization_STATUS: Interface
+
+augmentConversionForAuthorizationProvidersAuthorization_Spec: Interface
+
+augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy: Interface
+
+augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec: Interface
+
+augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS: Interface
+
+augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec: Interface
+
+augmentConversionForBackend: Interface
+
+augmentConversionForBackendAuthorizationHeaderCredentials: Interface
+
+augmentConversionForBackendAuthorizationHeaderCredentials_STATUS: Interface
+
+augmentConversionForBackendCredentialsContract: Interface
+
+augmentConversionForBackendCredentialsContract_STATUS: Interface
+
+augmentConversionForBackendOperatorSpec: Interface
+
+augmentConversionForBackendProperties: Interface
+
+augmentConversionForBackendProperties_STATUS: Interface
+
+augmentConversionForBackendProxyContract: Interface
+
+augmentConversionForBackendProxyContract_STATUS: Interface
+
+augmentConversionForBackendServiceFabricClusterProperties: Interface
+
+augmentConversionForBackendServiceFabricClusterProperties_STATUS: Interface
+
+augmentConversionForBackendTlsProperties: Interface
+
+augmentConversionForBackendTlsProperties_STATUS: Interface
+
+augmentConversionForBackend_STATUS: Interface
+
+augmentConversionForBackend_Spec: Interface
+
+augmentConversionForCertificateConfiguration: Interface
+
+augmentConversionForCertificateConfiguration_STATUS: Interface
+
+augmentConversionForCertificateInformation: Interface
+
+augmentConversionForCertificateInformation_STATUS: Interface
+
+augmentConversionForHostnameConfiguration: Interface
+
+augmentConversionForHostnameConfiguration_STATUS: Interface
+
+augmentConversionForKeyVaultContractCreateProperties: Interface
+
+augmentConversionForKeyVaultContractProperties_STATUS: Interface
+
+augmentConversionForKeyVaultLastAccessStatusContractProperties_STATUS: Interface
+
+augmentConversionForNamedValue: Interface
+
+augmentConversionForNamedValueOperatorSpec: Interface
+
+augmentConversionForNamedValue_STATUS: Interface
+
+augmentConversionForNamedValue_Spec: Interface
+
+augmentConversionForOAuth2AuthenticationSettingsContract: Interface
+
+augmentConversionForOAuth2AuthenticationSettingsContract_STATUS: Interface
+
+augmentConversionForOpenIdAuthenticationSettingsContract: Interface
+
+augmentConversionForOpenIdAuthenticationSettingsContract_STATUS: Interface
+
+augmentConversionForPolicy: Interface
+
+augmentConversionForPolicyFragment: Interface
+
+augmentConversionForPolicyFragmentOperatorSpec: Interface
+
+augmentConversionForPolicyFragment_STATUS: Interface
+
+augmentConversionForPolicyFragment_Spec: Interface
+
+augmentConversionForPolicyOperatorSpec: Interface
+
+augmentConversionForPolicy_STATUS: Interface
+
+augmentConversionForPolicy_Spec: Interface
+
+augmentConversionForPrivateLinkServiceConnectionState_STATUS: Interface
+
+augmentConversionForProduct: Interface
+
+augmentConversionForProductApi: Interface
+
+augmentConversionForProductApiOperatorSpec: Interface
+
+augmentConversionForProductApi_STATUS: Interface
+
+augmentConversionForProductApi_Spec: Interface
+
+augmentConversionForProductOperatorSpec: Interface
+
+augmentConversionForProductPolicy: Interface
+
+augmentConversionForProductPolicyOperatorSpec: Interface
+
+augmentConversionForProductPolicy_STATUS: Interface
+
+augmentConversionForProductPolicy_Spec: Interface
+
+augmentConversionForProduct_STATUS: Interface
+
+augmentConversionForProduct_Spec: Interface
+
+augmentConversionForRemotePrivateEndpointConnectionWrapper_STATUS: Interface
+
+augmentConversionForService: Interface
+
+augmentConversionForServiceOperatorSpec: Interface
+
+augmentConversionForService_STATUS: Interface
+
+augmentConversionForService_Spec: Interface
+
+augmentConversionForSubscription: Interface
+
+augmentConversionForSubscriptionKeyParameterNamesContract: Interface
+
+augmentConversionForSubscriptionKeyParameterNamesContract_STATUS: Interface
+
+augmentConversionForSubscriptionOperatorSecrets: Interface
+
+augmentConversionForSubscriptionOperatorSpec: Interface
+
+augmentConversionForSubscription_STATUS: Interface
+
+augmentConversionForSubscription_Spec: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserIdentityProperties_STATUS: Interface
+
+augmentConversionForVirtualNetworkConfiguration: Interface
+
+augmentConversionForVirtualNetworkConfiguration_STATUS: Interface
+
+augmentConversionForX509CertificateName: Interface
+
+augmentConversionForX509CertificateName_STATUS: Interface
+

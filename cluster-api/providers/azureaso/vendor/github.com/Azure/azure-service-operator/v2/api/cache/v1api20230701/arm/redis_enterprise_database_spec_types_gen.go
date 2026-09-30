@@ -142,6 +142,7 @@ type Persistence struct {
 
 // Specifies details of a linked database resource.
 type LinkedDatabase struct {
+	// Id: Resource ID of a database resource to link with this database.
 	Id *string `json:"id,omitempty"`
 }
 

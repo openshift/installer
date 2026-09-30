@@ -4,8 +4,10 @@
 package customizations
 
 import (
-	v20220301 "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301"
-	storage "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/storage"
+	web_v1api20220301 "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301"
+	web_v1api20220301s "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/storage"
+	web_v20220301 "github.com/Azure/azure-service-operator/v2/api/web/v20220301"
+	web_v20220301s "github.com/Azure/azure-service-operator/v2/api/web/v20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +17,8 @@ type SitesSourcecontrolExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *SitesSourcecontrolExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220301.SitesSourcecontrol{},
-		&storage.SitesSourcecontrol{}}
+		&web_v1api20220301.SitesSourcecontrol{},
+		&web_v1api20220301s.SitesSourcecontrol{},
+		&web_v20220301.SitesSourcecontrol{},
+		&web_v20220301s.SitesSourcecontrol{}}
 }

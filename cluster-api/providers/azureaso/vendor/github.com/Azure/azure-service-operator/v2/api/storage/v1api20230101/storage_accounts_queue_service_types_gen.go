@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &StorageAccountsQueueService{}
 
 // ConvertFrom populates our StorageAccountsQueueService from the provided hub StorageAccountsQueueService
 func (service *StorageAccountsQueueService) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.StorageAccountsQueueService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsQueueService but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.StorageAccountsQueueService
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return service.AssignProperties_From_StorageAccountsQueueService(source)
+	err = service.AssignProperties_From_StorageAccountsQueueService(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to service")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsQueueService from our StorageAccountsQueueService
 func (service *StorageAccountsQueueService) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.StorageAccountsQueueService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsQueueService but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.StorageAccountsQueueService
+	err := service.AssignProperties_To_StorageAccountsQueueService(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from service")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return service.AssignProperties_To_StorageAccountsQueueService(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &StorageAccountsQueueService{}
@@ -86,17 +101,6 @@ func (service *StorageAccountsQueueService) SecretDestinationExpressions() []*co
 		return nil
 	}
 	return service.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &StorageAccountsQueueService{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (service *StorageAccountsQueueService) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccountsQueueService_STATUS); ok {
-		return service.Spec.Initialize_From_StorageAccountsQueueService_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccountsQueueService_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &StorageAccountsQueueService{}
@@ -278,7 +282,7 @@ func (service *StorageAccountsQueueService_Spec) ConvertToARM(resolved genruntim
 		result.Properties = &arm.StorageAccounts_QueueService_Properties_Spec{}
 	}
 	if service.Cors != nil {
-		cors_ARM, err := (*service.Cors).ConvertToARM(resolved)
+		cors_ARM, err := service.Cors.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -460,25 +464,6 @@ func (service *StorageAccountsQueueService_Spec) AssignProperties_To_StorageAcco
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageAccountsQueueService_STATUS populates our StorageAccountsQueueService_Spec from the provided source StorageAccountsQueueService_STATUS
-func (service *StorageAccountsQueueService_Spec) Initialize_From_StorageAccountsQueueService_STATUS(source *StorageAccountsQueueService_STATUS) error {
-
-	// Cors
-	if source.Cors != nil {
-		var cor CorsRules
-		err := cor.Initialize_From_CorsRules_STATUS(source.Cors)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CorsRules_STATUS() to populate field Cors")
-		}
-		service.Cors = &cor
-	} else {
-		service.Cors = nil
 	}
 
 	// No error
@@ -699,8 +684,6 @@ func (operator *StorageAccountsQueueServiceOperatorSpec) AssignProperties_From_S
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -717,8 +700,6 @@ func (operator *StorageAccountsQueueServiceOperatorSpec) AssignProperties_From_S
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -744,8 +725,6 @@ func (operator *StorageAccountsQueueServiceOperatorSpec) AssignProperties_To_Sto
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -762,8 +741,6 @@ func (operator *StorageAccountsQueueServiceOperatorSpec) AssignProperties_To_Sto
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

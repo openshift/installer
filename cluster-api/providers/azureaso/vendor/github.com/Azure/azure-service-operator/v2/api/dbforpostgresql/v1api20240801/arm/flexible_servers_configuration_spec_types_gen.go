@@ -8,7 +8,7 @@ import "github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 type FlexibleServersConfiguration_Spec struct {
 	Name string `json:"name,omitempty"`
 
-	// Properties: The properties of a configuration.
+	// Properties: Properties of a server parameter.
 	Properties *ConfigurationProperties `json:"properties,omitempty"`
 }
 
@@ -29,11 +29,13 @@ func (configuration *FlexibleServersConfiguration_Spec) GetType() string {
 	return "Microsoft.DBforPostgreSQL/flexibleServers/configurations"
 }
 
-// The properties of a configuration.
+// Properties of a server parameter.
 type ConfigurationProperties struct {
-	// Source: Source of the configuration. Required to update the configuration.
+	// Source: Source of the value assigned to the server parameter. Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Source *string `json:"source,omitempty"`
 
-	// Value: Value of the configuration. Required to update the configuration.
+	// Value: Value of the server parameter (also known as configuration). Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Value *string `json:"value,omitempty"`
 }

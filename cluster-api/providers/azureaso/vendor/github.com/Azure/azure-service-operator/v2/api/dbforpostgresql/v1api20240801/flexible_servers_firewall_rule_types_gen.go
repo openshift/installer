@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FlexibleServersFirewallRule{}
 
 // ConvertFrom populates our FlexibleServersFirewallRule from the provided hub FlexibleServersFirewallRule
 func (rule *FlexibleServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersFirewallRule)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersFirewallRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersFirewallRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_FlexibleServersFirewallRule(source)
+	err = rule.AssignProperties_From_FlexibleServersFirewallRule(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersFirewallRule from our FlexibleServersFirewallRule
 func (rule *FlexibleServersFirewallRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersFirewallRule)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersFirewallRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersFirewallRule
+	err := rule.AssignProperties_To_FlexibleServersFirewallRule(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_FlexibleServersFirewallRule(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersFirewallRule{}
@@ -86,17 +101,6 @@ func (rule *FlexibleServersFirewallRule) SecretDestinationExpressions() []*core.
 		return nil
 	}
 	return rule.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersFirewallRule{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (rule *FlexibleServersFirewallRule) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersFirewallRule_STATUS); ok {
-		return rule.Spec.Initialize_From_FlexibleServersFirewallRule_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersFirewallRule_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersFirewallRule{}
@@ -254,7 +258,7 @@ type FlexibleServersFirewallRule_Spec struct {
 
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-	// EndIpAddress: The end IP address of the server firewall rule. Must be IPv4 format.
+	// EndIpAddress: IP address defining the end of the range of addresses of a firewall rule. Must be expressed in IPv4 format.
 	EndIpAddress *string `json:"endIpAddress,omitempty"`
 
 	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
@@ -269,7 +273,8 @@ type FlexibleServersFirewallRule_Spec struct {
 
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-	// StartIpAddress: The start IP address of the server firewall rule. Must be IPv4 format.
+	// StartIpAddress: IP address defining the start of the range of addresses of a firewall rule. Must be expressed in IPv4
+	// format.
 	StartIpAddress *string `json:"startIpAddress,omitempty"`
 }
 
@@ -479,19 +484,6 @@ func (rule *FlexibleServersFirewallRule_Spec) AssignProperties_To_FlexibleServer
 	return nil
 }
 
-// Initialize_From_FlexibleServersFirewallRule_STATUS populates our FlexibleServersFirewallRule_Spec from the provided source FlexibleServersFirewallRule_STATUS
-func (rule *FlexibleServersFirewallRule_Spec) Initialize_From_FlexibleServersFirewallRule_STATUS(source *FlexibleServersFirewallRule_STATUS) error {
-
-	// EndIpAddress
-	rule.EndIpAddress = genruntime.ClonePointerToString(source.EndIpAddress)
-
-	// StartIpAddress
-	rule.StartIpAddress = genruntime.ClonePointerToString(source.StartIpAddress)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (rule *FlexibleServersFirewallRule_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -506,7 +498,7 @@ type FlexibleServersFirewallRule_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
-	// EndIpAddress: The end IP address of the server firewall rule. Must be IPv4 format.
+	// EndIpAddress: IP address defining the end of the range of addresses of a firewall rule. Must be expressed in IPv4 format.
 	EndIpAddress *string `json:"endIpAddress,omitempty"`
 
 	// Id: Fully qualified resource ID for the resource. E.g.
@@ -516,7 +508,8 @@ type FlexibleServersFirewallRule_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// StartIpAddress: The start IP address of the server firewall rule. Must be IPv4 format.
+	// StartIpAddress: IP address defining the start of the range of addresses of a firewall rule. Must be expressed in IPv4
+	// format.
 	StartIpAddress *string `json:"startIpAddress,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -742,8 +735,6 @@ func (operator *FlexibleServersFirewallRuleOperatorSpec) AssignProperties_From_F
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -760,8 +751,6 @@ func (operator *FlexibleServersFirewallRuleOperatorSpec) AssignProperties_From_F
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -787,8 +776,6 @@ func (operator *FlexibleServersFirewallRuleOperatorSpec) AssignProperties_To_Fle
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -805,8 +792,6 @@ func (operator *FlexibleServersFirewallRuleOperatorSpec) AssignProperties_To_Fle
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

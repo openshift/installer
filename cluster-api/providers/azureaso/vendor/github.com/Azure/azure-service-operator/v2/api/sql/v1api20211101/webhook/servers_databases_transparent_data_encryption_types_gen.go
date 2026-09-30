@@ -104,7 +104,12 @@ func (encryption *ServersDatabasesTransparentDataEncryption) ValidateUpdate(ctx 
 
 // createValidations validates the creation of the resource
 func (encryption *ServersDatabasesTransparentDataEncryption) createValidations() []func(ctx context.Context, obj *v20211101.ServersDatabasesTransparentDataEncryption) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersDatabasesTransparentDataEncryption) (admission.Warnings, error){encryption.validateResourceReferences, encryption.validateOwnerReference, encryption.validateSecretDestinations, encryption.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersDatabasesTransparentDataEncryption) (admission.Warnings, error){
+		encryption.validateResourceReferences,
+		encryption.validateOwnerReference,
+		encryption.validateSecretDestinations,
+		encryption.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -83,9 +83,15 @@ type SystemData struct {
 // The properties of a machine learning workspace.
 type WorkspaceProperties struct {
 	// AllowPublicAccessWhenBehindVnet: The flag to indicate whether to allow public access when behind VNet.
-	AllowPublicAccessWhenBehindVnet *bool   `json:"allowPublicAccessWhenBehindVnet,omitempty"`
-	ApplicationInsights             *string `json:"applicationInsights,omitempty"`
-	ContainerRegistry               *string `json:"containerRegistry,omitempty"`
+	AllowPublicAccessWhenBehindVnet *bool `json:"allowPublicAccessWhenBehindVnet,omitempty"`
+
+	// ApplicationInsights: ARM id of the application insights associated with this workspace. This cannot be changed once the
+	// workspace has been created
+	ApplicationInsights *string `json:"applicationInsights,omitempty"`
+
+	// ContainerRegistry: ARM id of the container registry associated with this workspace. This cannot be changed once the
+	// workspace has been created
+	ContainerRegistry *string `json:"containerRegistry,omitempty"`
 
 	// Description: The description of this workspace.
 	Description *string `json:"description,omitempty"`
@@ -103,8 +109,13 @@ type WorkspaceProperties struct {
 	HbiWorkspace *bool `json:"hbiWorkspace,omitempty"`
 
 	// ImageBuildCompute: The compute name for image build
-	ImageBuildCompute           *string `json:"imageBuildCompute,omitempty"`
-	KeyVault                    *string `json:"keyVault,omitempty"`
+	ImageBuildCompute *string `json:"imageBuildCompute,omitempty"`
+
+	// KeyVault: ARM id of the key vault associated with this workspace. This cannot be changed once the workspace has been
+	// created
+	KeyVault *string `json:"keyVault,omitempty"`
+
+	// PrimaryUserAssignedIdentity: The user assigned identity resource id that represents the workspace identity.
 	PrimaryUserAssignedIdentity *string `json:"primaryUserAssignedIdentity,omitempty"`
 
 	// PublicNetworkAccess: Whether requests from Public Network are allowed.
@@ -115,7 +126,10 @@ type WorkspaceProperties struct {
 
 	// SharedPrivateLinkResources: The list of shared private link resources in this workspace.
 	SharedPrivateLinkResources []SharedPrivateLinkResource `json:"sharedPrivateLinkResources,omitempty"`
-	StorageAccount             *string                     `json:"storageAccount,omitempty"`
+
+	// StorageAccount: ARM id of the storage account associated with this workspace. This cannot be changed once the workspace
+	// has been created
+	StorageAccount *string `json:"storageAccount,omitempty"`
 }
 
 type EncryptionProperty struct {
@@ -236,7 +250,9 @@ type KeyVaultProperties struct {
 // Properties of a shared private link resource.
 type SharedPrivateLinkResourceProperty struct {
 	// GroupId: The private link resource group id.
-	GroupId               *string `json:"groupId,omitempty"`
+	GroupId *string `json:"groupId,omitempty"`
+
+	// PrivateLinkResourceId: The resource id that private link links to.
 	PrivateLinkResourceId *string `json:"privateLinkResourceId,omitempty"`
 
 	// RequestMessage: Request message.

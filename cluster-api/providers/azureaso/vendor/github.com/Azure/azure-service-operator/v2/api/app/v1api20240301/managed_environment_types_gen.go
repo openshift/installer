@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,app}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /app/resource-manager/Microsoft.App/stable/2024-03-01/ManagedEnvironments.json
+// - Generated from: /app/resource-manager/Microsoft.App/ContainerApps/stable/2024-03-01/ManagedEnvironments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/managedEnvironments/{environmentName}
 type ManagedEnvironment struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &ManagedEnvironment{}
 
 // ConvertFrom populates our ManagedEnvironment from the provided hub ManagedEnvironment
 func (environment *ManagedEnvironment) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.ManagedEnvironment)
-	if !ok {
-		return fmt.Errorf("expected app/v1api20240301/storage/ManagedEnvironment but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.ManagedEnvironment
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return environment.AssignProperties_From_ManagedEnvironment(source)
+	err = environment.AssignProperties_From_ManagedEnvironment(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to environment")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ManagedEnvironment from our ManagedEnvironment
 func (environment *ManagedEnvironment) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.ManagedEnvironment)
-	if !ok {
-		return fmt.Errorf("expected app/v1api20240301/storage/ManagedEnvironment but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.ManagedEnvironment
+	err := environment.AssignProperties_To_ManagedEnvironment(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from environment")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return environment.AssignProperties_To_ManagedEnvironment(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &ManagedEnvironment{}
@@ -86,17 +101,6 @@ func (environment *ManagedEnvironment) SecretDestinationExpressions() []*core.De
 		return nil
 	}
 	return environment.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &ManagedEnvironment{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (environment *ManagedEnvironment) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ManagedEnvironment_STATUS); ok {
-		return environment.Spec.Initialize_From_ManagedEnvironment_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ManagedEnvironment_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ManagedEnvironment{}
@@ -237,7 +241,7 @@ func (environment *ManagedEnvironment) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /app/resource-manager/Microsoft.App/stable/2024-03-01/ManagedEnvironments.json
+// - Generated from: /app/resource-manager/Microsoft.App/ContainerApps/stable/2024-03-01/ManagedEnvironments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/managedEnvironments/{environmentName}
 type ManagedEnvironmentList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -343,7 +347,7 @@ func (environment *ManagedEnvironment_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties = &arm.ManagedEnvironment_Properties_Spec{}
 	}
 	if environment.AppLogsConfiguration != nil {
-		appLogsConfiguration_ARM, err := (*environment.AppLogsConfiguration).ConvertToARM(resolved)
+		appLogsConfiguration_ARM, err := environment.AppLogsConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +355,7 @@ func (environment *ManagedEnvironment_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.AppLogsConfiguration = &appLogsConfiguration
 	}
 	if environment.CustomDomainConfiguration != nil {
-		customDomainConfiguration_ARM, err := (*environment.CustomDomainConfiguration).ConvertToARM(resolved)
+		customDomainConfiguration_ARM, err := environment.CustomDomainConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -379,7 +383,7 @@ func (environment *ManagedEnvironment_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.InfrastructureResourceGroup = &infrastructureResourceGroup
 	}
 	if environment.PeerAuthentication != nil {
-		peerAuthentication_ARM, err := (*environment.PeerAuthentication).ConvertToARM(resolved)
+		peerAuthentication_ARM, err := environment.PeerAuthentication.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -387,7 +391,7 @@ func (environment *ManagedEnvironment_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.PeerAuthentication = &peerAuthentication
 	}
 	if environment.PeerTrafficConfiguration != nil {
-		peerTrafficConfiguration_ARM, err := (*environment.PeerTrafficConfiguration).ConvertToARM(resolved)
+		peerTrafficConfiguration_ARM, err := environment.PeerTrafficConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +399,7 @@ func (environment *ManagedEnvironment_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.PeerTrafficConfiguration = &peerTrafficConfiguration
 	}
 	if environment.VnetConfiguration != nil {
-		vnetConfiguration_ARM, err := (*environment.VnetConfiguration).ConvertToARM(resolved)
+		vnetConfiguration_ARM, err := environment.VnetConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -744,8 +748,6 @@ func (environment *ManagedEnvironment_Spec) AssignProperties_From_ManagedEnviron
 	if source.WorkloadProfiles != nil {
 		workloadProfileList := make([]WorkloadProfile, len(source.WorkloadProfiles))
 		for workloadProfileIndex, workloadProfileItem := range source.WorkloadProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workloadProfileItem := workloadProfileItem
 			var workloadProfile WorkloadProfile
 			err := workloadProfile.AssignProperties_From_WorkloadProfile(&workloadProfileItem)
 			if err != nil {
@@ -893,8 +895,6 @@ func (environment *ManagedEnvironment_Spec) AssignProperties_To_ManagedEnvironme
 	if environment.WorkloadProfiles != nil {
 		workloadProfileList := make([]storage.WorkloadProfile, len(environment.WorkloadProfiles))
 		for workloadProfileIndex, workloadProfileItem := range environment.WorkloadProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workloadProfileItem := workloadProfileItem
 			var workloadProfile storage.WorkloadProfile
 			err := workloadProfileItem.AssignProperties_To_WorkloadProfile(&workloadProfile)
 			if err != nil {
@@ -920,111 +920,6 @@ func (environment *ManagedEnvironment_Spec) AssignProperties_To_ManagedEnvironme
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedEnvironment_STATUS populates our ManagedEnvironment_Spec from the provided source ManagedEnvironment_STATUS
-func (environment *ManagedEnvironment_Spec) Initialize_From_ManagedEnvironment_STATUS(source *ManagedEnvironment_STATUS) error {
-
-	// AppLogsConfiguration
-	if source.AppLogsConfiguration != nil {
-		var appLogsConfiguration AppLogsConfiguration
-		err := appLogsConfiguration.Initialize_From_AppLogsConfiguration_STATUS(source.AppLogsConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AppLogsConfiguration_STATUS() to populate field AppLogsConfiguration")
-		}
-		environment.AppLogsConfiguration = &appLogsConfiguration
-	} else {
-		environment.AppLogsConfiguration = nil
-	}
-
-	// CustomDomainConfiguration
-	if source.CustomDomainConfiguration != nil {
-		var customDomainConfiguration CustomDomainConfiguration
-		err := customDomainConfiguration.Initialize_From_CustomDomainConfiguration_STATUS(source.CustomDomainConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CustomDomainConfiguration_STATUS() to populate field CustomDomainConfiguration")
-		}
-		environment.CustomDomainConfiguration = &customDomainConfiguration
-	} else {
-		environment.CustomDomainConfiguration = nil
-	}
-
-	// InfrastructureResourceGroup
-	environment.InfrastructureResourceGroup = genruntime.ClonePointerToString(source.InfrastructureResourceGroup)
-
-	// Kind
-	environment.Kind = genruntime.ClonePointerToString(source.Kind)
-
-	// Location
-	environment.Location = genruntime.ClonePointerToString(source.Location)
-
-	// PeerAuthentication
-	if source.PeerAuthentication != nil {
-		var peerAuthentication ManagedEnvironment_Properties_PeerAuthentication_Spec
-		err := peerAuthentication.Initialize_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS(source.PeerAuthentication)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS() to populate field PeerAuthentication")
-		}
-		environment.PeerAuthentication = &peerAuthentication
-	} else {
-		environment.PeerAuthentication = nil
-	}
-
-	// PeerTrafficConfiguration
-	if source.PeerTrafficConfiguration != nil {
-		var peerTrafficConfiguration ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
-		err := peerTrafficConfiguration.Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(source.PeerTrafficConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS() to populate field PeerTrafficConfiguration")
-		}
-		environment.PeerTrafficConfiguration = &peerTrafficConfiguration
-	} else {
-		environment.PeerTrafficConfiguration = nil
-	}
-
-	// Tags
-	environment.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// VnetConfiguration
-	if source.VnetConfiguration != nil {
-		var vnetConfiguration VnetConfiguration
-		err := vnetConfiguration.Initialize_From_VnetConfiguration_STATUS(source.VnetConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VnetConfiguration_STATUS() to populate field VnetConfiguration")
-		}
-		environment.VnetConfiguration = &vnetConfiguration
-	} else {
-		environment.VnetConfiguration = nil
-	}
-
-	// WorkloadProfiles
-	if source.WorkloadProfiles != nil {
-		workloadProfileList := make([]WorkloadProfile, len(source.WorkloadProfiles))
-		for workloadProfileIndex, workloadProfileItem := range source.WorkloadProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workloadProfileItem := workloadProfileItem
-			var workloadProfile WorkloadProfile
-			err := workloadProfile.Initialize_From_WorkloadProfile_STATUS(&workloadProfileItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_WorkloadProfile_STATUS() to populate field WorkloadProfiles")
-			}
-			workloadProfileList[workloadProfileIndex] = workloadProfile
-		}
-		environment.WorkloadProfiles = workloadProfileList
-	} else {
-		environment.WorkloadProfiles = nil
-	}
-
-	// ZoneRedundant
-	if source.ZoneRedundant != nil {
-		zoneRedundant := *source.ZoneRedundant
-		environment.ZoneRedundant = &zoneRedundant
-	} else {
-		environment.ZoneRedundant = nil
 	}
 
 	// No error
@@ -1559,8 +1454,6 @@ func (environment *ManagedEnvironment_STATUS) AssignProperties_From_ManagedEnvir
 	if source.WorkloadProfiles != nil {
 		workloadProfileList := make([]WorkloadProfile_STATUS, len(source.WorkloadProfiles))
 		for workloadProfileIndex, workloadProfileItem := range source.WorkloadProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workloadProfileItem := workloadProfileItem
 			var workloadProfile WorkloadProfile_STATUS
 			err := workloadProfile.AssignProperties_From_WorkloadProfile_STATUS(&workloadProfileItem)
 			if err != nil {
@@ -1734,8 +1627,6 @@ func (environment *ManagedEnvironment_STATUS) AssignProperties_To_ManagedEnviron
 	if environment.WorkloadProfiles != nil {
 		workloadProfileList := make([]storage.WorkloadProfile_STATUS, len(environment.WorkloadProfiles))
 		for workloadProfileIndex, workloadProfileItem := range environment.WorkloadProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workloadProfileItem := workloadProfileItem
 			var workloadProfile storage.WorkloadProfile_STATUS
 			err := workloadProfileItem.AssignProperties_To_WorkloadProfile_STATUS(&workloadProfile)
 			if err != nil {
@@ -1794,7 +1685,7 @@ func (configuration *AppLogsConfiguration) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "LogAnalyticsConfiguration":
 	if configuration.LogAnalyticsConfiguration != nil {
-		logAnalyticsConfiguration_ARM, err := (*configuration.LogAnalyticsConfiguration).ConvertToARM(resolved)
+		logAnalyticsConfiguration_ARM, err := configuration.LogAnalyticsConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1884,28 +1775,6 @@ func (configuration *AppLogsConfiguration) AssignProperties_To_AppLogsConfigurat
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AppLogsConfiguration_STATUS populates our AppLogsConfiguration from the provided source AppLogsConfiguration_STATUS
-func (configuration *AppLogsConfiguration) Initialize_From_AppLogsConfiguration_STATUS(source *AppLogsConfiguration_STATUS) error {
-
-	// Destination
-	configuration.Destination = genruntime.ClonePointerToString(source.Destination)
-
-	// LogAnalyticsConfiguration
-	if source.LogAnalyticsConfiguration != nil {
-		var logAnalyticsConfiguration LogAnalyticsConfiguration
-		err := logAnalyticsConfiguration.Initialize_From_LogAnalyticsConfiguration_STATUS(source.LogAnalyticsConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LogAnalyticsConfiguration_STATUS() to populate field LogAnalyticsConfiguration")
-		}
-		configuration.LogAnalyticsConfiguration = &logAnalyticsConfiguration
-	} else {
-		configuration.LogAnalyticsConfiguration = nil
 	}
 
 	// No error
@@ -2141,16 +2010,6 @@ func (configuration *CustomDomainConfiguration) AssignProperties_To_CustomDomain
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CustomDomainConfiguration_STATUS populates our CustomDomainConfiguration from the provided source CustomDomainConfiguration_STATUS
-func (configuration *CustomDomainConfiguration) Initialize_From_CustomDomainConfiguration_STATUS(source *CustomDomainConfiguration_STATUS) error {
-
-	// DnsSuffix
-	configuration.DnsSuffix = genruntime.ClonePointerToString(source.DnsSuffix)
 
 	// No error
 	return nil
@@ -2409,7 +2268,7 @@ func (authentication *ManagedEnvironment_Properties_PeerAuthentication_Spec) Con
 
 	// Set property "Mtls":
 	if authentication.Mtls != nil {
-		mtls_ARM, err := (*authentication.Mtls).ConvertToARM(resolved)
+		mtls_ARM, err := authentication.Mtls.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2487,25 +2346,6 @@ func (authentication *ManagedEnvironment_Properties_PeerAuthentication_Spec) Ass
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS populates our ManagedEnvironment_Properties_PeerAuthentication_Spec from the provided source ManagedEnvironment_Properties_PeerAuthentication_STATUS
-func (authentication *ManagedEnvironment_Properties_PeerAuthentication_Spec) Initialize_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS(source *ManagedEnvironment_Properties_PeerAuthentication_STATUS) error {
-
-	// Mtls
-	if source.Mtls != nil {
-		var mtl Mtls
-		err := mtl.Initialize_From_Mtls_STATUS(source.Mtls)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Mtls_STATUS() to populate field Mtls")
-		}
-		authentication.Mtls = &mtl
-	} else {
-		authentication.Mtls = nil
 	}
 
 	// No error
@@ -2609,7 +2449,7 @@ func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
 
 	// Set property "Encryption":
 	if configuration.Encryption != nil {
-		encryption_ARM, err := (*configuration.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := configuration.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2687,25 +2527,6 @@ func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
-func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(source *ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) error {
-
-	// Encryption
-	if source.Encryption != nil {
-		var encryption ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
-		err := encryption.Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(source.Encryption)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS() to populate field Encryption")
-		}
-		configuration.Encryption = &encryption
-	} else {
-		configuration.Encryption = nil
 	}
 
 	// No error
@@ -2838,8 +2659,6 @@ func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_From_ManagedEnv
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2856,8 +2675,6 @@ func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_From_ManagedEnv
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2883,8 +2700,6 @@ func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_To_ManagedEnvir
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2901,8 +2716,6 @@ func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_To_ManagedEnvir
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3104,38 +2917,6 @@ func (configuration *VnetConfiguration) AssignProperties_To_VnetConfiguration(de
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VnetConfiguration_STATUS populates our VnetConfiguration from the provided source VnetConfiguration_STATUS
-func (configuration *VnetConfiguration) Initialize_From_VnetConfiguration_STATUS(source *VnetConfiguration_STATUS) error {
-
-	// DockerBridgeCidr
-	configuration.DockerBridgeCidr = genruntime.ClonePointerToString(source.DockerBridgeCidr)
-
-	// InfrastructureSubnetReference
-	if source.InfrastructureSubnetId != nil {
-		infrastructureSubnetReference := genruntime.CreateResourceReferenceFromARMID(*source.InfrastructureSubnetId)
-		configuration.InfrastructureSubnetReference = &infrastructureSubnetReference
-	} else {
-		configuration.InfrastructureSubnetReference = nil
-	}
-
-	// Internal
-	if source.Internal != nil {
-		internal := *source.Internal
-		configuration.Internal = &internal
-	} else {
-		configuration.Internal = nil
-	}
-
-	// PlatformReservedCidr
-	configuration.PlatformReservedCidr = genruntime.ClonePointerToString(source.PlatformReservedCidr)
-
-	// PlatformReservedDnsIP
-	configuration.PlatformReservedDnsIP = genruntime.ClonePointerToString(source.PlatformReservedDnsIP)
 
 	// No error
 	return nil
@@ -3414,25 +3195,6 @@ func (profile *WorkloadProfile) AssignProperties_To_WorkloadProfile(destination 
 	return nil
 }
 
-// Initialize_From_WorkloadProfile_STATUS populates our WorkloadProfile from the provided source WorkloadProfile_STATUS
-func (profile *WorkloadProfile) Initialize_From_WorkloadProfile_STATUS(source *WorkloadProfile_STATUS) error {
-
-	// MaximumCount
-	profile.MaximumCount = genruntime.ClonePointerToInt(source.MaximumCount)
-
-	// MinimumCount
-	profile.MinimumCount = genruntime.ClonePointerToInt(source.MinimumCount)
-
-	// Name
-	profile.Name = genruntime.ClonePointerToString(source.Name)
-
-	// WorkloadProfileType
-	profile.WorkloadProfileType = genruntime.ClonePointerToString(source.WorkloadProfileType)
-
-	// No error
-	return nil
-}
-
 // Workload profile to scope container app execution.
 type WorkloadProfile_STATUS struct {
 	// MaximumCount: The maximum capacity.
@@ -3642,16 +3404,6 @@ func (configuration *LogAnalyticsConfiguration) AssignProperties_To_LogAnalytics
 	return nil
 }
 
-// Initialize_From_LogAnalyticsConfiguration_STATUS populates our LogAnalyticsConfiguration from the provided source LogAnalyticsConfiguration_STATUS
-func (configuration *LogAnalyticsConfiguration) Initialize_From_LogAnalyticsConfiguration_STATUS(source *LogAnalyticsConfiguration_STATUS) error {
-
-	// CustomerId
-	configuration.CustomerId = genruntime.ClonePointerToString(source.CustomerId)
-
-	// No error
-	return nil
-}
-
 // Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'
 type LogAnalyticsConfiguration_STATUS struct {
 	// CustomerId: Log analytics customer id
@@ -3788,21 +3540,6 @@ func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encrypt
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
-func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) Initialize_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(source *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		encryption.Enabled = &enabled
-	} else {
-		encryption.Enabled = nil
 	}
 
 	// No error
@@ -3955,21 +3692,6 @@ func (mtls *Mtls) AssignProperties_To_Mtls(destination *storage.Mtls) error {
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Mtls_STATUS populates our Mtls from the provided source Mtls_STATUS
-func (mtls *Mtls) Initialize_From_Mtls_STATUS(source *Mtls_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		mtls.Enabled = &enabled
-	} else {
-		mtls.Enabled = nil
 	}
 
 	// No error

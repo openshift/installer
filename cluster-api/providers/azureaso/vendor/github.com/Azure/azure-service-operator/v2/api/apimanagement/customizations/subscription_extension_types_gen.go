@@ -4,10 +4,18 @@
 package customizations
 
 import (
-	v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
-	v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
+	apimanagement_v1api20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	apimanagement_v1api20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
+	apimanagement_v1api20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501"
+	apimanagement_v1api20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/storage"
+	apimanagement_v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801"
+	apimanagement_v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
+	apimanagement_v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview"
+	apimanagement_v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage"
+	apimanagement_v20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501"
+	apimanagement_v20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -17,8 +25,16 @@ type SubscriptionExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *SubscriptionExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220801.Subscription{},
-		&v20220801s.Subscription{},
-		&v20230501p.Subscription{},
-		&v20230501ps.Subscription{}}
+		&apimanagement_v1api20220801.Subscription{},
+		&apimanagement_v1api20220801s.Subscription{},
+		&apimanagement_v1api20230501p.Subscription{},
+		&apimanagement_v1api20230501ps.Subscription{},
+		&apimanagement_v1api20240501.Subscription{},
+		&apimanagement_v1api20240501s.Subscription{},
+		&apimanagement_v20220801.Subscription{},
+		&apimanagement_v20220801s.Subscription{},
+		&apimanagement_v20230501p.Subscription{},
+		&apimanagement_v20230501ps.Subscription{},
+		&apimanagement_v20240501.Subscription{},
+		&apimanagement_v20240501s.Subscription{}}
 }

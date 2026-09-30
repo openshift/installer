@@ -45,7 +45,7 @@ type EncryptionSetIdentity_STATUS struct {
 	// UserAssignedIdentities: The list of user identities associated with the disk encryption set. The user identity
 	// dictionary key references will be ARM resource ids in the form:
 	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}'.
-	UserAssignedIdentities map[string]EncryptionSetIdentity_UserAssignedIdentities_STATUS `json:"userAssignedIdentities,omitempty"`
+	UserAssignedIdentities map[string]UserAssignedIdentitiesValue_STATUS `json:"userAssignedIdentities,omitempty"`
 }
 
 type EncryptionSetProperties_STATUS struct {
@@ -129,14 +129,6 @@ var encryptionSetIdentity_Type_STATUS_Values = map[string]EncryptionSetIdentity_
 	"userassigned":                 EncryptionSetIdentity_Type_STATUS_UserAssigned,
 }
 
-type EncryptionSetIdentity_UserAssignedIdentities_STATUS struct {
-	// ClientId: The client id of user assigned identity.
-	ClientId *string `json:"clientId,omitempty"`
-
-	// PrincipalId: The principal id of user assigned identity.
-	PrincipalId *string `json:"principalId,omitempty"`
-}
-
 // Key Vault Key Url to be used for server side encryption of Managed Disks and Snapshots
 type KeyForDiskEncryptionSet_STATUS struct {
 	// KeyUrl: Fully versioned Key Url pointing to a key in KeyVault. Version segment of the Url is required regardless of
@@ -146,6 +138,14 @@ type KeyForDiskEncryptionSet_STATUS struct {
 	// SourceVault: Resource id of the KeyVault containing the key or secret. This property is optional and cannot be used if
 	// the KeyVault subscription is not the same as the Disk Encryption Set subscription.
 	SourceVault *SourceVault_STATUS `json:"sourceVault,omitempty"`
+}
+
+type UserAssignedIdentitiesValue_STATUS struct {
+	// ClientId: The client id of user assigned identity.
+	ClientId *string `json:"clientId,omitempty"`
+
+	// PrincipalId: The principal id of user assigned identity.
+	PrincipalId *string `json:"principalId,omitempty"`
 }
 
 // Api error base.

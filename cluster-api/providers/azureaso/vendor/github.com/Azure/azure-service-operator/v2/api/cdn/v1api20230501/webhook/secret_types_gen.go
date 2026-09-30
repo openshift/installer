@@ -116,7 +116,12 @@ func (secret *Secret) ValidateUpdate(ctx context.Context, oldResource runtime.Ob
 
 // createValidations validates the creation of the resource
 func (secret *Secret) createValidations() []func(ctx context.Context, obj *v20230501.Secret) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501.Secret) (admission.Warnings, error){secret.validateResourceReferences, secret.validateOwnerReference, secret.validateSecretDestinations, secret.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501.Secret) (admission.Warnings, error){
+		secret.validateResourceReferences,
+		secret.validateOwnerReference,
+		secret.validateSecretDestinations,
+		secret.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

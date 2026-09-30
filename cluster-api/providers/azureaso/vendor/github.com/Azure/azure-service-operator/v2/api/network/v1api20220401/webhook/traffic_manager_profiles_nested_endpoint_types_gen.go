@@ -116,7 +116,12 @@ func (endpoint *TrafficManagerProfilesNestedEndpoint) ValidateUpdate(ctx context
 
 // createValidations validates the creation of the resource
 func (endpoint *TrafficManagerProfilesNestedEndpoint) createValidations() []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesNestedEndpoint) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesNestedEndpoint) (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesNestedEndpoint) (admission.Warnings, error){
+		endpoint.validateResourceReferences,
+		endpoint.validateOwnerReference,
+		endpoint.validateSecretDestinations,
+		endpoint.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

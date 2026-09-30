@@ -116,7 +116,12 @@ func (prefix *PublicIPPrefix) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (prefix *PublicIPPrefix) createValidations() []func(ctx context.Context, obj *v20220701.PublicIPPrefix) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.PublicIPPrefix) (admission.Warnings, error){prefix.validateResourceReferences, prefix.validateOwnerReference, prefix.validateSecretDestinations, prefix.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.PublicIPPrefix) (admission.Warnings, error){
+		prefix.validateResourceReferences,
+		prefix.validateOwnerReference,
+		prefix.validateSecretDestinations,
+		prefix.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

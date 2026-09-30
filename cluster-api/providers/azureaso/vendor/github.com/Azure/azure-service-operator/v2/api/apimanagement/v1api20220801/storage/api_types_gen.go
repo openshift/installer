@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +13,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources=apis,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources={apis/status,apis/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220801.Api
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimapis.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimapis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}
 type Api struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -44,6 +43,42 @@ func (api *Api) GetConditions() conditions.Conditions {
 
 // SetConditions sets the conditions on the resource status
 func (api *Api) SetConditions(conditions conditions.Conditions) { api.Status.Conditions = conditions }
+
+var _ conversion.Convertible = &Api{}
+
+// ConvertFrom populates our Api from the provided hub Api
+func (api *Api) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.Api
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = api.AssignProperties_From_Api(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to api")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub Api from our Api
+func (api *Api) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.Api
+	err := api.AssignProperties_To_Api(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from api")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
+}
 
 var _ configmaps.Exporter = &Api{}
 
@@ -141,8 +176,75 @@ func (api *Api) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this Api is the hub type for conversion
-func (api *Api) Hub() {}
+// AssignProperties_From_Api populates our Api from the provided source Api
+func (api *Api) AssignProperties_From_Api(source *storage.Api) error {
+
+	// ObjectMeta
+	api.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec Api_Spec
+	err := spec.AssignProperties_From_Api_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Api_Spec() to populate field Spec")
+	}
+	api.Spec = spec
+
+	// Status
+	var status Api_STATUS
+	err = status.AssignProperties_From_Api_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Api_STATUS() to populate field Status")
+	}
+	api.Status = status
+
+	// Invoke the augmentConversionForApi interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi); ok {
+		err := augmentedApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Api populates the provided destination Api from our Api
+func (api *Api) AssignProperties_To_Api(destination *storage.Api) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *api.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.Api_Spec
+	err := api.Spec.AssignProperties_To_Api_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Api_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.Api_STATUS
+	err = api.Status.AssignProperties_To_Api_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Api_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForApi interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi); ok {
+		err := augmentedApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (api *Api) OriginalGVK() *schema.GroupVersionKind {
@@ -156,7 +258,7 @@ func (api *Api) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20220801.Api
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimapis.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimapis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}
 type ApiList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -214,20 +316,450 @@ var _ genruntime.ConvertibleSpec = &Api_Spec{}
 
 // ConvertSpecFrom populates our Api_Spec from the provided source
 func (api *Api_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == api {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.Api_Spec)
+	if ok {
+		// Populate our instance from source
+		return api.AssignProperties_From_Api_Spec(src)
 	}
 
-	return source.ConvertSpecTo(api)
+	// Convert to an intermediate form
+	src = &storage.Api_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = api.AssignProperties_From_Api_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our Api_Spec
 func (api *Api_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == api {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.Api_Spec)
+	if ok {
+		// Populate destination from our instance
+		return api.AssignProperties_To_Api_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(api)
+	// Convert to an intermediate form
+	dst = &storage.Api_Spec{}
+	err := api.AssignProperties_To_Api_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Api_Spec populates our Api_Spec from the provided source Api_Spec
+func (api *Api_Spec) AssignProperties_From_Api_Spec(source *storage.Api_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// APIVersion
+	api.APIVersion = genruntime.ClonePointerToString(source.APIVersion)
+
+	// ApiRevision
+	api.ApiRevision = genruntime.ClonePointerToString(source.ApiRevision)
+
+	// ApiRevisionDescription
+	api.ApiRevisionDescription = genruntime.ClonePointerToString(source.ApiRevisionDescription)
+
+	// ApiType
+	api.ApiType = genruntime.ClonePointerToString(source.ApiType)
+
+	// ApiVersionDescription
+	api.ApiVersionDescription = genruntime.ClonePointerToString(source.ApiVersionDescription)
+
+	// ApiVersionSet
+	if source.ApiVersionSet != nil {
+		var apiVersionSet ApiVersionSetContractDetails
+		err := apiVersionSet.AssignProperties_From_ApiVersionSetContractDetails(source.ApiVersionSet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiVersionSetContractDetails() to populate field ApiVersionSet")
+		}
+		api.ApiVersionSet = &apiVersionSet
+	} else {
+		api.ApiVersionSet = nil
+	}
+
+	// ApiVersionSetReference
+	if source.ApiVersionSetReference != nil {
+		apiVersionSetReference := source.ApiVersionSetReference.Copy()
+		api.ApiVersionSetReference = &apiVersionSetReference
+	} else {
+		api.ApiVersionSetReference = nil
+	}
+
+	// AuthenticationSettings
+	if source.AuthenticationSettings != nil {
+		var authenticationSetting AuthenticationSettingsContract
+		err := authenticationSetting.AssignProperties_From_AuthenticationSettingsContract(source.AuthenticationSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthenticationSettingsContract() to populate field AuthenticationSettings")
+		}
+		api.AuthenticationSettings = &authenticationSetting
+	} else {
+		api.AuthenticationSettings = nil
+	}
+
+	// AzureName
+	api.AzureName = source.AzureName
+
+	// Contact
+	if source.Contact != nil {
+		var contact ApiContactInformation
+		err := contact.AssignProperties_From_ApiContactInformation(source.Contact)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiContactInformation() to populate field Contact")
+		}
+		api.Contact = &contact
+	} else {
+		api.Contact = nil
+	}
+
+	// Description
+	api.Description = genruntime.ClonePointerToString(source.Description)
+
+	// DisplayName
+	api.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+
+	// Format
+	api.Format = genruntime.ClonePointerToString(source.Format)
+
+	// IsCurrent
+	if source.IsCurrent != nil {
+		isCurrent := *source.IsCurrent
+		api.IsCurrent = &isCurrent
+	} else {
+		api.IsCurrent = nil
+	}
+
+	// License
+	if source.License != nil {
+		var license ApiLicenseInformation
+		err := license.AssignProperties_From_ApiLicenseInformation(source.License)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiLicenseInformation() to populate field License")
+		}
+		api.License = &license
+	} else {
+		api.License = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ApiOperatorSpec
+		err := operatorSpec.AssignProperties_From_ApiOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiOperatorSpec() to populate field OperatorSpec")
+		}
+		api.OperatorSpec = &operatorSpec
+	} else {
+		api.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	api.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		api.Owner = &owner
+	} else {
+		api.Owner = nil
+	}
+
+	// Path
+	api.Path = genruntime.ClonePointerToString(source.Path)
+
+	// Protocols
+	api.Protocols = genruntime.CloneSliceOfString(source.Protocols)
+
+	// ServiceUrl
+	api.ServiceUrl = genruntime.ClonePointerToString(source.ServiceUrl)
+
+	// SourceApiReference
+	if source.SourceApiReference != nil {
+		sourceApiReference := source.SourceApiReference.Copy()
+		api.SourceApiReference = &sourceApiReference
+	} else {
+		api.SourceApiReference = nil
+	}
+
+	// SubscriptionKeyParameterNames
+	if source.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName SubscriptionKeyParameterNamesContract
+		err := subscriptionKeyParameterName.AssignProperties_From_SubscriptionKeyParameterNamesContract(source.SubscriptionKeyParameterNames)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubscriptionKeyParameterNamesContract() to populate field SubscriptionKeyParameterNames")
+		}
+		api.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+	} else {
+		api.SubscriptionKeyParameterNames = nil
+	}
+
+	// SubscriptionRequired
+	if source.SubscriptionRequired != nil {
+		subscriptionRequired := *source.SubscriptionRequired
+		api.SubscriptionRequired = &subscriptionRequired
+	} else {
+		api.SubscriptionRequired = nil
+	}
+
+	// TermsOfServiceUrl
+	api.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
+
+	// TranslateRequiredQueryParameters
+	api.TranslateRequiredQueryParameters = genruntime.ClonePointerToString(source.TranslateRequiredQueryParameters)
+
+	// Type
+	api.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Value
+	api.Value = genruntime.ClonePointerToString(source.Value)
+
+	// WsdlSelector
+	if source.WsdlSelector != nil {
+		var wsdlSelector ApiCreateOrUpdateProperties_WsdlSelector
+		err := wsdlSelector.AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector(source.WsdlSelector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector() to populate field WsdlSelector")
+		}
+		api.WsdlSelector = &wsdlSelector
+	} else {
+		api.WsdlSelector = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		api.PropertyBag = propertyBag
+	} else {
+		api.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApi_Spec interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi_Spec); ok {
+		err := augmentedApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Api_Spec populates the provided destination Api_Spec from our Api_Spec
+func (api *Api_Spec) AssignProperties_To_Api_Spec(destination *storage.Api_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(api.PropertyBag)
+
+	// APIVersion
+	destination.APIVersion = genruntime.ClonePointerToString(api.APIVersion)
+
+	// ApiRevision
+	destination.ApiRevision = genruntime.ClonePointerToString(api.ApiRevision)
+
+	// ApiRevisionDescription
+	destination.ApiRevisionDescription = genruntime.ClonePointerToString(api.ApiRevisionDescription)
+
+	// ApiType
+	destination.ApiType = genruntime.ClonePointerToString(api.ApiType)
+
+	// ApiVersionDescription
+	destination.ApiVersionDescription = genruntime.ClonePointerToString(api.ApiVersionDescription)
+
+	// ApiVersionSet
+	if api.ApiVersionSet != nil {
+		var apiVersionSet storage.ApiVersionSetContractDetails
+		err := api.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails(&apiVersionSet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiVersionSetContractDetails() to populate field ApiVersionSet")
+		}
+		destination.ApiVersionSet = &apiVersionSet
+	} else {
+		destination.ApiVersionSet = nil
+	}
+
+	// ApiVersionSetReference
+	if api.ApiVersionSetReference != nil {
+		apiVersionSetReference := api.ApiVersionSetReference.Copy()
+		destination.ApiVersionSetReference = &apiVersionSetReference
+	} else {
+		destination.ApiVersionSetReference = nil
+	}
+
+	// AuthenticationSettings
+	if api.AuthenticationSettings != nil {
+		var authenticationSetting storage.AuthenticationSettingsContract
+		err := api.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract(&authenticationSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthenticationSettingsContract() to populate field AuthenticationSettings")
+		}
+		destination.AuthenticationSettings = &authenticationSetting
+	} else {
+		destination.AuthenticationSettings = nil
+	}
+
+	// AzureName
+	destination.AzureName = api.AzureName
+
+	// Contact
+	if api.Contact != nil {
+		var contact storage.ApiContactInformation
+		err := api.Contact.AssignProperties_To_ApiContactInformation(&contact)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiContactInformation() to populate field Contact")
+		}
+		destination.Contact = &contact
+	} else {
+		destination.Contact = nil
+	}
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(api.Description)
+
+	// DisplayName
+	destination.DisplayName = genruntime.ClonePointerToString(api.DisplayName)
+
+	// Format
+	destination.Format = genruntime.ClonePointerToString(api.Format)
+
+	// IsCurrent
+	if api.IsCurrent != nil {
+		isCurrent := *api.IsCurrent
+		destination.IsCurrent = &isCurrent
+	} else {
+		destination.IsCurrent = nil
+	}
+
+	// License
+	if api.License != nil {
+		var license storage.ApiLicenseInformation
+		err := api.License.AssignProperties_To_ApiLicenseInformation(&license)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiLicenseInformation() to populate field License")
+		}
+		destination.License = &license
+	} else {
+		destination.License = nil
+	}
+
+	// OperatorSpec
+	if api.OperatorSpec != nil {
+		var operatorSpec storage.ApiOperatorSpec
+		err := api.OperatorSpec.AssignProperties_To_ApiOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = api.OriginalVersion
+
+	// Owner
+	if api.Owner != nil {
+		owner := api.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Path
+	destination.Path = genruntime.ClonePointerToString(api.Path)
+
+	// Protocols
+	destination.Protocols = genruntime.CloneSliceOfString(api.Protocols)
+
+	// ServiceUrl
+	destination.ServiceUrl = genruntime.ClonePointerToString(api.ServiceUrl)
+
+	// SourceApiReference
+	if api.SourceApiReference != nil {
+		sourceApiReference := api.SourceApiReference.Copy()
+		destination.SourceApiReference = &sourceApiReference
+	} else {
+		destination.SourceApiReference = nil
+	}
+
+	// SubscriptionKeyParameterNames
+	if api.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName storage.SubscriptionKeyParameterNamesContract
+		err := api.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract(&subscriptionKeyParameterName)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubscriptionKeyParameterNamesContract() to populate field SubscriptionKeyParameterNames")
+		}
+		destination.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+	} else {
+		destination.SubscriptionKeyParameterNames = nil
+	}
+
+	// SubscriptionRequired
+	if api.SubscriptionRequired != nil {
+		subscriptionRequired := *api.SubscriptionRequired
+		destination.SubscriptionRequired = &subscriptionRequired
+	} else {
+		destination.SubscriptionRequired = nil
+	}
+
+	// TermsOfServiceUrl
+	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(api.TermsOfServiceUrl)
+
+	// TranslateRequiredQueryParameters
+	destination.TranslateRequiredQueryParameters = genruntime.ClonePointerToString(api.TranslateRequiredQueryParameters)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(api.Type)
+
+	// Value
+	destination.Value = genruntime.ClonePointerToString(api.Value)
+
+	// WsdlSelector
+	if api.WsdlSelector != nil {
+		var wsdlSelector storage.ApiCreateOrUpdateProperties_WsdlSelector
+		err := api.WsdlSelector.AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(&wsdlSelector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector() to populate field WsdlSelector")
+		}
+		destination.WsdlSelector = &wsdlSelector
+	} else {
+		destination.WsdlSelector = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApi_Spec interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi_Spec); ok {
+		err := augmentedApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.Api_STATUS
@@ -264,20 +796,370 @@ var _ genruntime.ConvertibleStatus = &Api_STATUS{}
 
 // ConvertStatusFrom populates our Api_STATUS from the provided source
 func (api *Api_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == api {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.Api_STATUS)
+	if ok {
+		// Populate our instance from source
+		return api.AssignProperties_From_Api_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(api)
+	// Convert to an intermediate form
+	src = &storage.Api_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = api.AssignProperties_From_Api_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our Api_STATUS
 func (api *Api_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == api {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.Api_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return api.AssignProperties_To_Api_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(api)
+	// Convert to an intermediate form
+	dst = &storage.Api_STATUS{}
+	err := api.AssignProperties_To_Api_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Api_STATUS populates our Api_STATUS from the provided source Api_STATUS
+func (api *Api_STATUS) AssignProperties_From_Api_STATUS(source *storage.Api_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// APIVersion
+	api.APIVersion = genruntime.ClonePointerToString(source.APIVersion)
+
+	// ApiRevision
+	api.ApiRevision = genruntime.ClonePointerToString(source.ApiRevision)
+
+	// ApiRevisionDescription
+	api.ApiRevisionDescription = genruntime.ClonePointerToString(source.ApiRevisionDescription)
+
+	// ApiVersionDescription
+	api.ApiVersionDescription = genruntime.ClonePointerToString(source.ApiVersionDescription)
+
+	// ApiVersionSet
+	if source.ApiVersionSet != nil {
+		var apiVersionSet ApiVersionSetContractDetails_STATUS
+		err := apiVersionSet.AssignProperties_From_ApiVersionSetContractDetails_STATUS(source.ApiVersionSet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiVersionSetContractDetails_STATUS() to populate field ApiVersionSet")
+		}
+		api.ApiVersionSet = &apiVersionSet
+	} else {
+		api.ApiVersionSet = nil
+	}
+
+	// ApiVersionSetId
+	api.ApiVersionSetId = genruntime.ClonePointerToString(source.ApiVersionSetId)
+
+	// AuthenticationSettings
+	if source.AuthenticationSettings != nil {
+		var authenticationSetting AuthenticationSettingsContract_STATUS
+		err := authenticationSetting.AssignProperties_From_AuthenticationSettingsContract_STATUS(source.AuthenticationSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthenticationSettingsContract_STATUS() to populate field AuthenticationSettings")
+		}
+		api.AuthenticationSettings = &authenticationSetting
+	} else {
+		api.AuthenticationSettings = nil
+	}
+
+	// Conditions
+	api.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Contact
+	if source.Contact != nil {
+		var contact ApiContactInformation_STATUS
+		err := contact.AssignProperties_From_ApiContactInformation_STATUS(source.Contact)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiContactInformation_STATUS() to populate field Contact")
+		}
+		api.Contact = &contact
+	} else {
+		api.Contact = nil
+	}
+
+	// Description
+	api.Description = genruntime.ClonePointerToString(source.Description)
+
+	// DisplayName
+	api.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+
+	// Id
+	api.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IsCurrent
+	if source.IsCurrent != nil {
+		isCurrent := *source.IsCurrent
+		api.IsCurrent = &isCurrent
+	} else {
+		api.IsCurrent = nil
+	}
+
+	// IsOnline
+	if source.IsOnline != nil {
+		isOnline := *source.IsOnline
+		api.IsOnline = &isOnline
+	} else {
+		api.IsOnline = nil
+	}
+
+	// License
+	if source.License != nil {
+		var license ApiLicenseInformation_STATUS
+		err := license.AssignProperties_From_ApiLicenseInformation_STATUS(source.License)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ApiLicenseInformation_STATUS() to populate field License")
+		}
+		api.License = &license
+	} else {
+		api.License = nil
+	}
+
+	// Name
+	api.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Path
+	api.Path = genruntime.ClonePointerToString(source.Path)
+
+	// PropertiesType
+	api.PropertiesType = genruntime.ClonePointerToString(source.PropertiesType)
+
+	// Protocols
+	api.Protocols = genruntime.CloneSliceOfString(source.Protocols)
+
+	// ServiceUrl
+	api.ServiceUrl = genruntime.ClonePointerToString(source.ServiceUrl)
+
+	// SourceApiId
+	api.SourceApiId = genruntime.ClonePointerToString(source.SourceApiId)
+
+	// SubscriptionKeyParameterNames
+	if source.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName SubscriptionKeyParameterNamesContract_STATUS
+		err := subscriptionKeyParameterName.AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS(source.SubscriptionKeyParameterNames)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS() to populate field SubscriptionKeyParameterNames")
+		}
+		api.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+	} else {
+		api.SubscriptionKeyParameterNames = nil
+	}
+
+	// SubscriptionRequired
+	if source.SubscriptionRequired != nil {
+		subscriptionRequired := *source.SubscriptionRequired
+		api.SubscriptionRequired = &subscriptionRequired
+	} else {
+		api.SubscriptionRequired = nil
+	}
+
+	// TermsOfServiceUrl
+	api.TermsOfServiceUrl = genruntime.ClonePointerToString(source.TermsOfServiceUrl)
+
+	// Type
+	api.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		api.PropertyBag = propertyBag
+	} else {
+		api.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApi_STATUS interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi_STATUS); ok {
+		err := augmentedApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Api_STATUS populates the provided destination Api_STATUS from our Api_STATUS
+func (api *Api_STATUS) AssignProperties_To_Api_STATUS(destination *storage.Api_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(api.PropertyBag)
+
+	// APIVersion
+	destination.APIVersion = genruntime.ClonePointerToString(api.APIVersion)
+
+	// ApiRevision
+	destination.ApiRevision = genruntime.ClonePointerToString(api.ApiRevision)
+
+	// ApiRevisionDescription
+	destination.ApiRevisionDescription = genruntime.ClonePointerToString(api.ApiRevisionDescription)
+
+	// ApiVersionDescription
+	destination.ApiVersionDescription = genruntime.ClonePointerToString(api.ApiVersionDescription)
+
+	// ApiVersionSet
+	if api.ApiVersionSet != nil {
+		var apiVersionSet storage.ApiVersionSetContractDetails_STATUS
+		err := api.ApiVersionSet.AssignProperties_To_ApiVersionSetContractDetails_STATUS(&apiVersionSet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiVersionSetContractDetails_STATUS() to populate field ApiVersionSet")
+		}
+		destination.ApiVersionSet = &apiVersionSet
+	} else {
+		destination.ApiVersionSet = nil
+	}
+
+	// ApiVersionSetId
+	destination.ApiVersionSetId = genruntime.ClonePointerToString(api.ApiVersionSetId)
+
+	// AuthenticationSettings
+	if api.AuthenticationSettings != nil {
+		var authenticationSetting storage.AuthenticationSettingsContract_STATUS
+		err := api.AuthenticationSettings.AssignProperties_To_AuthenticationSettingsContract_STATUS(&authenticationSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthenticationSettingsContract_STATUS() to populate field AuthenticationSettings")
+		}
+		destination.AuthenticationSettings = &authenticationSetting
+	} else {
+		destination.AuthenticationSettings = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(api.Conditions)
+
+	// Contact
+	if api.Contact != nil {
+		var contact storage.ApiContactInformation_STATUS
+		err := api.Contact.AssignProperties_To_ApiContactInformation_STATUS(&contact)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiContactInformation_STATUS() to populate field Contact")
+		}
+		destination.Contact = &contact
+	} else {
+		destination.Contact = nil
+	}
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(api.Description)
+
+	// DisplayName
+	destination.DisplayName = genruntime.ClonePointerToString(api.DisplayName)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(api.Id)
+
+	// IsCurrent
+	if api.IsCurrent != nil {
+		isCurrent := *api.IsCurrent
+		destination.IsCurrent = &isCurrent
+	} else {
+		destination.IsCurrent = nil
+	}
+
+	// IsOnline
+	if api.IsOnline != nil {
+		isOnline := *api.IsOnline
+		destination.IsOnline = &isOnline
+	} else {
+		destination.IsOnline = nil
+	}
+
+	// License
+	if api.License != nil {
+		var license storage.ApiLicenseInformation_STATUS
+		err := api.License.AssignProperties_To_ApiLicenseInformation_STATUS(&license)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ApiLicenseInformation_STATUS() to populate field License")
+		}
+		destination.License = &license
+	} else {
+		destination.License = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(api.Name)
+
+	// Path
+	destination.Path = genruntime.ClonePointerToString(api.Path)
+
+	// PropertiesType
+	destination.PropertiesType = genruntime.ClonePointerToString(api.PropertiesType)
+
+	// Protocols
+	destination.Protocols = genruntime.CloneSliceOfString(api.Protocols)
+
+	// ServiceUrl
+	destination.ServiceUrl = genruntime.ClonePointerToString(api.ServiceUrl)
+
+	// SourceApiId
+	destination.SourceApiId = genruntime.ClonePointerToString(api.SourceApiId)
+
+	// SubscriptionKeyParameterNames
+	if api.SubscriptionKeyParameterNames != nil {
+		var subscriptionKeyParameterName storage.SubscriptionKeyParameterNamesContract_STATUS
+		err := api.SubscriptionKeyParameterNames.AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(&subscriptionKeyParameterName)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS() to populate field SubscriptionKeyParameterNames")
+		}
+		destination.SubscriptionKeyParameterNames = &subscriptionKeyParameterName
+	} else {
+		destination.SubscriptionKeyParameterNames = nil
+	}
+
+	// SubscriptionRequired
+	if api.SubscriptionRequired != nil {
+		subscriptionRequired := *api.SubscriptionRequired
+		destination.SubscriptionRequired = &subscriptionRequired
+	} else {
+		destination.SubscriptionRequired = nil
+	}
+
+	// TermsOfServiceUrl
+	destination.TermsOfServiceUrl = genruntime.ClonePointerToString(api.TermsOfServiceUrl)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(api.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApi_STATUS interface (if implemented) to customize the conversion
+	var apiAsAny any = api
+	if augmentedApi, ok := apiAsAny.(augmentConversionForApi_STATUS); ok {
+		err := augmentedApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.APIVersion
@@ -286,6 +1168,11 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-08-01")
 
+type augmentConversionForApi interface {
+	AssignPropertiesFrom(src *storage.Api) error
+	AssignPropertiesTo(dst *storage.Api) error
+}
+
 // Storage version of v1api20220801.ApiContactInformation
 // API contact information
 type ApiContactInformation struct {
@@ -293,6 +1180,74 @@ type ApiContactInformation struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Url         *string                `json:"url,omitempty"`
+}
+
+// AssignProperties_From_ApiContactInformation populates our ApiContactInformation from the provided source ApiContactInformation
+func (information *ApiContactInformation) AssignProperties_From_ApiContactInformation(source *storage.ApiContactInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Email
+	information.Email = genruntime.ClonePointerToString(source.Email)
+
+	// Name
+	information.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Url
+	information.Url = genruntime.ClonePointerToString(source.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiContactInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiContactInformation); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiContactInformation populates the provided destination ApiContactInformation from our ApiContactInformation
+func (information *ApiContactInformation) AssignProperties_To_ApiContactInformation(destination *storage.ApiContactInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Email
+	destination.Email = genruntime.ClonePointerToString(information.Email)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(information.Name)
+
+	// Url
+	destination.Url = genruntime.ClonePointerToString(information.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiContactInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiContactInformation); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.ApiContactInformation_STATUS
@@ -304,11 +1259,141 @@ type ApiContactInformation_STATUS struct {
 	Url         *string                `json:"url,omitempty"`
 }
 
+// AssignProperties_From_ApiContactInformation_STATUS populates our ApiContactInformation_STATUS from the provided source ApiContactInformation_STATUS
+func (information *ApiContactInformation_STATUS) AssignProperties_From_ApiContactInformation_STATUS(source *storage.ApiContactInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Email
+	information.Email = genruntime.ClonePointerToString(source.Email)
+
+	// Name
+	information.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Url
+	information.Url = genruntime.ClonePointerToString(source.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiContactInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiContactInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiContactInformation_STATUS populates the provided destination ApiContactInformation_STATUS from our ApiContactInformation_STATUS
+func (information *ApiContactInformation_STATUS) AssignProperties_To_ApiContactInformation_STATUS(destination *storage.ApiContactInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Email
+	destination.Email = genruntime.ClonePointerToString(information.Email)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(information.Name)
+
+	// Url
+	destination.Url = genruntime.ClonePointerToString(information.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiContactInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiContactInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.ApiCreateOrUpdateProperties_WsdlSelector
 type ApiCreateOrUpdateProperties_WsdlSelector struct {
 	PropertyBag      genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	WsdlEndpointName *string                `json:"wsdlEndpointName,omitempty"`
 	WsdlServiceName  *string                `json:"wsdlServiceName,omitempty"`
+}
+
+// AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector populates our ApiCreateOrUpdateProperties_WsdlSelector from the provided source ApiCreateOrUpdateProperties_WsdlSelector
+func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_From_ApiCreateOrUpdateProperties_WsdlSelector(source *storage.ApiCreateOrUpdateProperties_WsdlSelector) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// WsdlEndpointName
+	selector.WsdlEndpointName = genruntime.ClonePointerToString(source.WsdlEndpointName)
+
+	// WsdlServiceName
+	selector.WsdlServiceName = genruntime.ClonePointerToString(source.WsdlServiceName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		selector.PropertyBag = propertyBag
+	} else {
+		selector.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiCreateOrUpdateProperties_WsdlSelector interface (if implemented) to customize the conversion
+	var selectorAsAny any = selector
+	if augmentedSelector, ok := selectorAsAny.(augmentConversionForApiCreateOrUpdateProperties_WsdlSelector); ok {
+		err := augmentedSelector.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector populates the provided destination ApiCreateOrUpdateProperties_WsdlSelector from our ApiCreateOrUpdateProperties_WsdlSelector
+func (selector *ApiCreateOrUpdateProperties_WsdlSelector) AssignProperties_To_ApiCreateOrUpdateProperties_WsdlSelector(destination *storage.ApiCreateOrUpdateProperties_WsdlSelector) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(selector.PropertyBag)
+
+	// WsdlEndpointName
+	destination.WsdlEndpointName = genruntime.ClonePointerToString(selector.WsdlEndpointName)
+
+	// WsdlServiceName
+	destination.WsdlServiceName = genruntime.ClonePointerToString(selector.WsdlServiceName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiCreateOrUpdateProperties_WsdlSelector interface (if implemented) to customize the conversion
+	var selectorAsAny any = selector
+	if augmentedSelector, ok := selectorAsAny.(augmentConversionForApiCreateOrUpdateProperties_WsdlSelector); ok {
+		err := augmentedSelector.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.ApiLicenseInformation
@@ -319,6 +1404,68 @@ type ApiLicenseInformation struct {
 	Url         *string                `json:"url,omitempty"`
 }
 
+// AssignProperties_From_ApiLicenseInformation populates our ApiLicenseInformation from the provided source ApiLicenseInformation
+func (information *ApiLicenseInformation) AssignProperties_From_ApiLicenseInformation(source *storage.ApiLicenseInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	information.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Url
+	information.Url = genruntime.ClonePointerToString(source.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiLicenseInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiLicenseInformation); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiLicenseInformation populates the provided destination ApiLicenseInformation from our ApiLicenseInformation
+func (information *ApiLicenseInformation) AssignProperties_To_ApiLicenseInformation(destination *storage.ApiLicenseInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(information.Name)
+
+	// Url
+	destination.Url = genruntime.ClonePointerToString(information.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiLicenseInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiLicenseInformation); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.ApiLicenseInformation_STATUS
 // API license information
 type ApiLicenseInformation_STATUS struct {
@@ -327,12 +1474,188 @@ type ApiLicenseInformation_STATUS struct {
 	Url         *string                `json:"url,omitempty"`
 }
 
+// AssignProperties_From_ApiLicenseInformation_STATUS populates our ApiLicenseInformation_STATUS from the provided source ApiLicenseInformation_STATUS
+func (information *ApiLicenseInformation_STATUS) AssignProperties_From_ApiLicenseInformation_STATUS(source *storage.ApiLicenseInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	information.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Url
+	information.Url = genruntime.ClonePointerToString(source.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiLicenseInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiLicenseInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiLicenseInformation_STATUS populates the provided destination ApiLicenseInformation_STATUS from our ApiLicenseInformation_STATUS
+func (information *ApiLicenseInformation_STATUS) AssignProperties_To_ApiLicenseInformation_STATUS(destination *storage.ApiLicenseInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(information.Name)
+
+	// Url
+	destination.Url = genruntime.ClonePointerToString(information.Url)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiLicenseInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForApiLicenseInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.ApiOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type ApiOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ApiOperatorSpec populates our ApiOperatorSpec from the provided source ApiOperatorSpec
+func (operator *ApiOperatorSpec) AssignProperties_From_ApiOperatorSpec(source *storage.ApiOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForApiOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiOperatorSpec populates the provided destination ApiOperatorSpec from our ApiOperatorSpec
+func (operator *ApiOperatorSpec) AssignProperties_To_ApiOperatorSpec(destination *storage.ApiOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForApiOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.ApiVersionSetContractDetails
@@ -349,6 +1672,102 @@ type ApiVersionSetContractDetails struct {
 	VersioningScheme  *string                       `json:"versioningScheme,omitempty"`
 }
 
+// AssignProperties_From_ApiVersionSetContractDetails populates our ApiVersionSetContractDetails from the provided source ApiVersionSetContractDetails
+func (details *ApiVersionSetContractDetails) AssignProperties_From_ApiVersionSetContractDetails(source *storage.ApiVersionSetContractDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Description
+	details.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Name
+	details.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		details.Reference = &reference
+	} else {
+		details.Reference = nil
+	}
+
+	// VersionHeaderName
+	details.VersionHeaderName = genruntime.ClonePointerToString(source.VersionHeaderName)
+
+	// VersionQueryName
+	details.VersionQueryName = genruntime.ClonePointerToString(source.VersionQueryName)
+
+	// VersioningScheme
+	details.VersioningScheme = genruntime.ClonePointerToString(source.VersioningScheme)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiVersionSetContractDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForApiVersionSetContractDetails); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiVersionSetContractDetails populates the provided destination ApiVersionSetContractDetails from our ApiVersionSetContractDetails
+func (details *ApiVersionSetContractDetails) AssignProperties_To_ApiVersionSetContractDetails(destination *storage.ApiVersionSetContractDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(details.Description)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(details.Name)
+
+	// Reference
+	if details.Reference != nil {
+		reference := details.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// VersionHeaderName
+	destination.VersionHeaderName = genruntime.ClonePointerToString(details.VersionHeaderName)
+
+	// VersionQueryName
+	destination.VersionQueryName = genruntime.ClonePointerToString(details.VersionQueryName)
+
+	// VersioningScheme
+	destination.VersioningScheme = genruntime.ClonePointerToString(details.VersioningScheme)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiVersionSetContractDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForApiVersionSetContractDetails); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.ApiVersionSetContractDetails_STATUS
 // An API Version Set contains the common configuration for a set of API Versions relating
 type ApiVersionSetContractDetails_STATUS struct {
@@ -361,6 +1780,102 @@ type ApiVersionSetContractDetails_STATUS struct {
 	VersioningScheme  *string                `json:"versioningScheme,omitempty"`
 }
 
+// AssignProperties_From_ApiVersionSetContractDetails_STATUS populates our ApiVersionSetContractDetails_STATUS from the provided source ApiVersionSetContractDetails_STATUS
+func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_From_ApiVersionSetContractDetails_STATUS(source *storage.ApiVersionSetContractDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Description
+	details.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Id
+	details.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	details.Name = genruntime.ClonePointerToString(source.Name)
+
+	// VersionHeaderName
+	details.VersionHeaderName = genruntime.ClonePointerToString(source.VersionHeaderName)
+
+	// VersionQueryName
+	details.VersionQueryName = genruntime.ClonePointerToString(source.VersionQueryName)
+
+	// VersioningScheme
+	details.VersioningScheme = genruntime.ClonePointerToString(source.VersioningScheme)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiVersionSetContractDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForApiVersionSetContractDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ApiVersionSetContractDetails_STATUS populates the provided destination ApiVersionSetContractDetails_STATUS from our ApiVersionSetContractDetails_STATUS
+func (details *ApiVersionSetContractDetails_STATUS) AssignProperties_To_ApiVersionSetContractDetails_STATUS(destination *storage.ApiVersionSetContractDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(details.Description)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(details.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(details.Name)
+
+	// VersionHeaderName
+	destination.VersionHeaderName = genruntime.ClonePointerToString(details.VersionHeaderName)
+
+	// VersionQueryName
+	destination.VersionQueryName = genruntime.ClonePointerToString(details.VersionQueryName)
+
+	// VersioningScheme
+	destination.VersioningScheme = genruntime.ClonePointerToString(details.VersioningScheme)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForApiVersionSetContractDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForApiVersionSetContractDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForApi_Spec interface {
+	AssignPropertiesFrom(src *storage.Api_Spec) error
+	AssignPropertiesTo(dst *storage.Api_Spec) error
+}
+
+type augmentConversionForApi_STATUS interface {
+	AssignPropertiesFrom(src *storage.Api_STATUS) error
+	AssignPropertiesTo(dst *storage.Api_STATUS) error
+}
+
 // Storage version of v1api20220801.AuthenticationSettingsContract
 // API Authentication Settings.
 type AuthenticationSettingsContract struct {
@@ -369,6 +1884,168 @@ type AuthenticationSettingsContract struct {
 	Openid                       *OpenIdAuthenticationSettingsContract  `json:"openid,omitempty"`
 	OpenidAuthenticationSettings []OpenIdAuthenticationSettingsContract `json:"openidAuthenticationSettings,omitempty"`
 	PropertyBag                  genruntime.PropertyBag                 `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AuthenticationSettingsContract populates our AuthenticationSettingsContract from the provided source AuthenticationSettingsContract
+func (contract *AuthenticationSettingsContract) AssignProperties_From_AuthenticationSettingsContract(source *storage.AuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// OAuth2
+	if source.OAuth2 != nil {
+		var oAuth2 OAuth2AuthenticationSettingsContract
+		err := oAuth2.AssignProperties_From_OAuth2AuthenticationSettingsContract(source.OAuth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OAuth2AuthenticationSettingsContract() to populate field OAuth2")
+		}
+		contract.OAuth2 = &oAuth2
+	} else {
+		contract.OAuth2 = nil
+	}
+
+	// OAuth2AuthenticationSettings
+	if source.OAuth2AuthenticationSettings != nil {
+		oAuth2AuthenticationSettingList := make([]OAuth2AuthenticationSettingsContract, len(source.OAuth2AuthenticationSettings))
+		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range source.OAuth2AuthenticationSettings {
+			var oAuth2AuthenticationSetting OAuth2AuthenticationSettingsContract
+			err := oAuth2AuthenticationSetting.AssignProperties_From_OAuth2AuthenticationSettingsContract(&oAuth2AuthenticationSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_OAuth2AuthenticationSettingsContract() to populate field OAuth2AuthenticationSettings")
+			}
+			oAuth2AuthenticationSettingList[oAuth2AuthenticationSettingIndex] = oAuth2AuthenticationSetting
+		}
+		contract.OAuth2AuthenticationSettings = oAuth2AuthenticationSettingList
+	} else {
+		contract.OAuth2AuthenticationSettings = nil
+	}
+
+	// Openid
+	if source.Openid != nil {
+		var openid OpenIdAuthenticationSettingsContract
+		err := openid.AssignProperties_From_OpenIdAuthenticationSettingsContract(source.Openid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OpenIdAuthenticationSettingsContract() to populate field Openid")
+		}
+		contract.Openid = &openid
+	} else {
+		contract.Openid = nil
+	}
+
+	// OpenidAuthenticationSettings
+	if source.OpenidAuthenticationSettings != nil {
+		openidAuthenticationSettingList := make([]OpenIdAuthenticationSettingsContract, len(source.OpenidAuthenticationSettings))
+		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range source.OpenidAuthenticationSettings {
+			var openidAuthenticationSetting OpenIdAuthenticationSettingsContract
+			err := openidAuthenticationSetting.AssignProperties_From_OpenIdAuthenticationSettingsContract(&openidAuthenticationSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_OpenIdAuthenticationSettingsContract() to populate field OpenidAuthenticationSettings")
+			}
+			openidAuthenticationSettingList[openidAuthenticationSettingIndex] = openidAuthenticationSetting
+		}
+		contract.OpenidAuthenticationSettings = openidAuthenticationSettingList
+	} else {
+		contract.OpenidAuthenticationSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForAuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthenticationSettingsContract populates the provided destination AuthenticationSettingsContract from our AuthenticationSettingsContract
+func (contract *AuthenticationSettingsContract) AssignProperties_To_AuthenticationSettingsContract(destination *storage.AuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// OAuth2
+	if contract.OAuth2 != nil {
+		var oAuth2 storage.OAuth2AuthenticationSettingsContract
+		err := contract.OAuth2.AssignProperties_To_OAuth2AuthenticationSettingsContract(&oAuth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract() to populate field OAuth2")
+		}
+		destination.OAuth2 = &oAuth2
+	} else {
+		destination.OAuth2 = nil
+	}
+
+	// OAuth2AuthenticationSettings
+	if contract.OAuth2AuthenticationSettings != nil {
+		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract, len(contract.OAuth2AuthenticationSettings))
+		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
+			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract
+			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract(&oAuth2AuthenticationSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract() to populate field OAuth2AuthenticationSettings")
+			}
+			oAuth2AuthenticationSettingList[oAuth2AuthenticationSettingIndex] = oAuth2AuthenticationSetting
+		}
+		destination.OAuth2AuthenticationSettings = oAuth2AuthenticationSettingList
+	} else {
+		destination.OAuth2AuthenticationSettings = nil
+	}
+
+	// Openid
+	if contract.Openid != nil {
+		var openid storage.OpenIdAuthenticationSettingsContract
+		err := contract.Openid.AssignProperties_To_OpenIdAuthenticationSettingsContract(&openid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract() to populate field Openid")
+		}
+		destination.Openid = &openid
+	} else {
+		destination.Openid = nil
+	}
+
+	// OpenidAuthenticationSettings
+	if contract.OpenidAuthenticationSettings != nil {
+		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract, len(contract.OpenidAuthenticationSettings))
+		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
+			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract
+			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract(&openidAuthenticationSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract() to populate field OpenidAuthenticationSettings")
+			}
+			openidAuthenticationSettingList[openidAuthenticationSettingIndex] = openidAuthenticationSetting
+		}
+		destination.OpenidAuthenticationSettings = openidAuthenticationSettingList
+	} else {
+		destination.OpenidAuthenticationSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForAuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.AuthenticationSettingsContract_STATUS
@@ -381,12 +2058,236 @@ type AuthenticationSettingsContract_STATUS struct {
 	PropertyBag                  genruntime.PropertyBag                        `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AuthenticationSettingsContract_STATUS populates our AuthenticationSettingsContract_STATUS from the provided source AuthenticationSettingsContract_STATUS
+func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_From_AuthenticationSettingsContract_STATUS(source *storage.AuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// OAuth2
+	if source.OAuth2 != nil {
+		var oAuth2 OAuth2AuthenticationSettingsContract_STATUS
+		err := oAuth2.AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(source.OAuth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2")
+		}
+		contract.OAuth2 = &oAuth2
+	} else {
+		contract.OAuth2 = nil
+	}
+
+	// OAuth2AuthenticationSettings
+	if source.OAuth2AuthenticationSettings != nil {
+		oAuth2AuthenticationSettingList := make([]OAuth2AuthenticationSettingsContract_STATUS, len(source.OAuth2AuthenticationSettings))
+		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range source.OAuth2AuthenticationSettings {
+			var oAuth2AuthenticationSetting OAuth2AuthenticationSettingsContract_STATUS
+			err := oAuth2AuthenticationSetting.AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2AuthenticationSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2AuthenticationSettings")
+			}
+			oAuth2AuthenticationSettingList[oAuth2AuthenticationSettingIndex] = oAuth2AuthenticationSetting
+		}
+		contract.OAuth2AuthenticationSettings = oAuth2AuthenticationSettingList
+	} else {
+		contract.OAuth2AuthenticationSettings = nil
+	}
+
+	// Openid
+	if source.Openid != nil {
+		var openid OpenIdAuthenticationSettingsContract_STATUS
+		err := openid.AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(source.Openid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS() to populate field Openid")
+		}
+		contract.Openid = &openid
+	} else {
+		contract.Openid = nil
+	}
+
+	// OpenidAuthenticationSettings
+	if source.OpenidAuthenticationSettings != nil {
+		openidAuthenticationSettingList := make([]OpenIdAuthenticationSettingsContract_STATUS, len(source.OpenidAuthenticationSettings))
+		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range source.OpenidAuthenticationSettings {
+			var openidAuthenticationSetting OpenIdAuthenticationSettingsContract_STATUS
+			err := openidAuthenticationSetting.AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(&openidAuthenticationSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS() to populate field OpenidAuthenticationSettings")
+			}
+			openidAuthenticationSettingList[openidAuthenticationSettingIndex] = openidAuthenticationSetting
+		}
+		contract.OpenidAuthenticationSettings = openidAuthenticationSettingList
+	} else {
+		contract.OpenidAuthenticationSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForAuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthenticationSettingsContract_STATUS populates the provided destination AuthenticationSettingsContract_STATUS from our AuthenticationSettingsContract_STATUS
+func (contract *AuthenticationSettingsContract_STATUS) AssignProperties_To_AuthenticationSettingsContract_STATUS(destination *storage.AuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// OAuth2
+	if contract.OAuth2 != nil {
+		var oAuth2 storage.OAuth2AuthenticationSettingsContract_STATUS
+		err := contract.OAuth2.AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2")
+		}
+		destination.OAuth2 = &oAuth2
+	} else {
+		destination.OAuth2 = nil
+	}
+
+	// OAuth2AuthenticationSettings
+	if contract.OAuth2AuthenticationSettings != nil {
+		oAuth2AuthenticationSettingList := make([]storage.OAuth2AuthenticationSettingsContract_STATUS, len(contract.OAuth2AuthenticationSettings))
+		for oAuth2AuthenticationSettingIndex, oAuth2AuthenticationSettingItem := range contract.OAuth2AuthenticationSettings {
+			var oAuth2AuthenticationSetting storage.OAuth2AuthenticationSettingsContract_STATUS
+			err := oAuth2AuthenticationSettingItem.AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(&oAuth2AuthenticationSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS() to populate field OAuth2AuthenticationSettings")
+			}
+			oAuth2AuthenticationSettingList[oAuth2AuthenticationSettingIndex] = oAuth2AuthenticationSetting
+		}
+		destination.OAuth2AuthenticationSettings = oAuth2AuthenticationSettingList
+	} else {
+		destination.OAuth2AuthenticationSettings = nil
+	}
+
+	// Openid
+	if contract.Openid != nil {
+		var openid storage.OpenIdAuthenticationSettingsContract_STATUS
+		err := contract.Openid.AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(&openid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS() to populate field Openid")
+		}
+		destination.Openid = &openid
+	} else {
+		destination.Openid = nil
+	}
+
+	// OpenidAuthenticationSettings
+	if contract.OpenidAuthenticationSettings != nil {
+		openidAuthenticationSettingList := make([]storage.OpenIdAuthenticationSettingsContract_STATUS, len(contract.OpenidAuthenticationSettings))
+		for openidAuthenticationSettingIndex, openidAuthenticationSettingItem := range contract.OpenidAuthenticationSettings {
+			var openidAuthenticationSetting storage.OpenIdAuthenticationSettingsContract_STATUS
+			err := openidAuthenticationSettingItem.AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(&openidAuthenticationSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS() to populate field OpenidAuthenticationSettings")
+			}
+			openidAuthenticationSettingList[openidAuthenticationSettingIndex] = openidAuthenticationSetting
+		}
+		destination.OpenidAuthenticationSettings = openidAuthenticationSettingList
+	} else {
+		destination.OpenidAuthenticationSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForAuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.SubscriptionKeyParameterNamesContract
 // Subscription key parameter names details.
 type SubscriptionKeyParameterNamesContract struct {
 	Header      *string                `json:"header,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Query       *string                `json:"query,omitempty"`
+}
+
+// AssignProperties_From_SubscriptionKeyParameterNamesContract populates our SubscriptionKeyParameterNamesContract from the provided source SubscriptionKeyParameterNamesContract
+func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_From_SubscriptionKeyParameterNamesContract(source *storage.SubscriptionKeyParameterNamesContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Header
+	contract.Header = genruntime.ClonePointerToString(source.Header)
+
+	// Query
+	contract.Query = genruntime.ClonePointerToString(source.Query)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubscriptionKeyParameterNamesContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForSubscriptionKeyParameterNamesContract); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SubscriptionKeyParameterNamesContract populates the provided destination SubscriptionKeyParameterNamesContract from our SubscriptionKeyParameterNamesContract
+func (contract *SubscriptionKeyParameterNamesContract) AssignProperties_To_SubscriptionKeyParameterNamesContract(destination *storage.SubscriptionKeyParameterNamesContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// Header
+	destination.Header = genruntime.ClonePointerToString(contract.Header)
+
+	// Query
+	destination.Query = genruntime.ClonePointerToString(contract.Query)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubscriptionKeyParameterNamesContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForSubscriptionKeyParameterNamesContract); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.SubscriptionKeyParameterNamesContract_STATUS
@@ -397,12 +2298,196 @@ type SubscriptionKeyParameterNamesContract_STATUS struct {
 	Query       *string                `json:"query,omitempty"`
 }
 
+// AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS populates our SubscriptionKeyParameterNamesContract_STATUS from the provided source SubscriptionKeyParameterNamesContract_STATUS
+func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_From_SubscriptionKeyParameterNamesContract_STATUS(source *storage.SubscriptionKeyParameterNamesContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Header
+	contract.Header = genruntime.ClonePointerToString(source.Header)
+
+	// Query
+	contract.Query = genruntime.ClonePointerToString(source.Query)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubscriptionKeyParameterNamesContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForSubscriptionKeyParameterNamesContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS populates the provided destination SubscriptionKeyParameterNamesContract_STATUS from our SubscriptionKeyParameterNamesContract_STATUS
+func (contract *SubscriptionKeyParameterNamesContract_STATUS) AssignProperties_To_SubscriptionKeyParameterNamesContract_STATUS(destination *storage.SubscriptionKeyParameterNamesContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// Header
+	destination.Header = genruntime.ClonePointerToString(contract.Header)
+
+	// Query
+	destination.Query = genruntime.ClonePointerToString(contract.Query)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubscriptionKeyParameterNamesContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForSubscriptionKeyParameterNamesContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForApiContactInformation interface {
+	AssignPropertiesFrom(src *storage.ApiContactInformation) error
+	AssignPropertiesTo(dst *storage.ApiContactInformation) error
+}
+
+type augmentConversionForApiContactInformation_STATUS interface {
+	AssignPropertiesFrom(src *storage.ApiContactInformation_STATUS) error
+	AssignPropertiesTo(dst *storage.ApiContactInformation_STATUS) error
+}
+
+type augmentConversionForApiCreateOrUpdateProperties_WsdlSelector interface {
+	AssignPropertiesFrom(src *storage.ApiCreateOrUpdateProperties_WsdlSelector) error
+	AssignPropertiesTo(dst *storage.ApiCreateOrUpdateProperties_WsdlSelector) error
+}
+
+type augmentConversionForApiLicenseInformation interface {
+	AssignPropertiesFrom(src *storage.ApiLicenseInformation) error
+	AssignPropertiesTo(dst *storage.ApiLicenseInformation) error
+}
+
+type augmentConversionForApiLicenseInformation_STATUS interface {
+	AssignPropertiesFrom(src *storage.ApiLicenseInformation_STATUS) error
+	AssignPropertiesTo(dst *storage.ApiLicenseInformation_STATUS) error
+}
+
+type augmentConversionForApiOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.ApiOperatorSpec) error
+	AssignPropertiesTo(dst *storage.ApiOperatorSpec) error
+}
+
+type augmentConversionForApiVersionSetContractDetails interface {
+	AssignPropertiesFrom(src *storage.ApiVersionSetContractDetails) error
+	AssignPropertiesTo(dst *storage.ApiVersionSetContractDetails) error
+}
+
+type augmentConversionForApiVersionSetContractDetails_STATUS interface {
+	AssignPropertiesFrom(src *storage.ApiVersionSetContractDetails_STATUS) error
+	AssignPropertiesTo(dst *storage.ApiVersionSetContractDetails_STATUS) error
+}
+
+type augmentConversionForAuthenticationSettingsContract interface {
+	AssignPropertiesFrom(src *storage.AuthenticationSettingsContract) error
+	AssignPropertiesTo(dst *storage.AuthenticationSettingsContract) error
+}
+
+type augmentConversionForAuthenticationSettingsContract_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthenticationSettingsContract_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthenticationSettingsContract_STATUS) error
+}
+
+type augmentConversionForSubscriptionKeyParameterNamesContract interface {
+	AssignPropertiesFrom(src *storage.SubscriptionKeyParameterNamesContract) error
+	AssignPropertiesTo(dst *storage.SubscriptionKeyParameterNamesContract) error
+}
+
+type augmentConversionForSubscriptionKeyParameterNamesContract_STATUS interface {
+	AssignPropertiesFrom(src *storage.SubscriptionKeyParameterNamesContract_STATUS) error
+	AssignPropertiesTo(dst *storage.SubscriptionKeyParameterNamesContract_STATUS) error
+}
+
 // Storage version of v1api20220801.OAuth2AuthenticationSettingsContract
 // API OAuth2 Authentication settings details.
 type OAuth2AuthenticationSettingsContract struct {
 	AuthorizationServerId *string                `json:"authorizationServerId,omitempty"`
 	PropertyBag           genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Scope                 *string                `json:"scope,omitempty"`
+}
+
+// AssignProperties_From_OAuth2AuthenticationSettingsContract populates our OAuth2AuthenticationSettingsContract from the provided source OAuth2AuthenticationSettingsContract
+func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_From_OAuth2AuthenticationSettingsContract(source *storage.OAuth2AuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationServerId
+	contract.AuthorizationServerId = genruntime.ClonePointerToString(source.AuthorizationServerId)
+
+	// Scope
+	contract.Scope = genruntime.ClonePointerToString(source.Scope)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOAuth2AuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOAuth2AuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_OAuth2AuthenticationSettingsContract populates the provided destination OAuth2AuthenticationSettingsContract from our OAuth2AuthenticationSettingsContract
+func (contract *OAuth2AuthenticationSettingsContract) AssignProperties_To_OAuth2AuthenticationSettingsContract(destination *storage.OAuth2AuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// AuthorizationServerId
+	destination.AuthorizationServerId = genruntime.ClonePointerToString(contract.AuthorizationServerId)
+
+	// Scope
+	destination.Scope = genruntime.ClonePointerToString(contract.Scope)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOAuth2AuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOAuth2AuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.OAuth2AuthenticationSettingsContract_STATUS
@@ -413,6 +2498,68 @@ type OAuth2AuthenticationSettingsContract_STATUS struct {
 	Scope                 *string                `json:"scope,omitempty"`
 }
 
+// AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS populates our OAuth2AuthenticationSettingsContract_STATUS from the provided source OAuth2AuthenticationSettingsContract_STATUS
+func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_From_OAuth2AuthenticationSettingsContract_STATUS(source *storage.OAuth2AuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationServerId
+	contract.AuthorizationServerId = genruntime.ClonePointerToString(source.AuthorizationServerId)
+
+	// Scope
+	contract.Scope = genruntime.ClonePointerToString(source.Scope)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOAuth2AuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOAuth2AuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS populates the provided destination OAuth2AuthenticationSettingsContract_STATUS from our OAuth2AuthenticationSettingsContract_STATUS
+func (contract *OAuth2AuthenticationSettingsContract_STATUS) AssignProperties_To_OAuth2AuthenticationSettingsContract_STATUS(destination *storage.OAuth2AuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// AuthorizationServerId
+	destination.AuthorizationServerId = genruntime.ClonePointerToString(contract.AuthorizationServerId)
+
+	// Scope
+	destination.Scope = genruntime.ClonePointerToString(contract.Scope)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOAuth2AuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOAuth2AuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.OpenIdAuthenticationSettingsContract
 // API OAuth2 Authentication settings details.
 type OpenIdAuthenticationSettingsContract struct {
@@ -421,12 +2568,156 @@ type OpenIdAuthenticationSettingsContract struct {
 	PropertyBag               genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_OpenIdAuthenticationSettingsContract populates our OpenIdAuthenticationSettingsContract from the provided source OpenIdAuthenticationSettingsContract
+func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_From_OpenIdAuthenticationSettingsContract(source *storage.OpenIdAuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BearerTokenSendingMethods
+	contract.BearerTokenSendingMethods = genruntime.CloneSliceOfString(source.BearerTokenSendingMethods)
+
+	// OpenidProviderId
+	contract.OpenidProviderId = genruntime.ClonePointerToString(source.OpenidProviderId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOpenIdAuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOpenIdAuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_OpenIdAuthenticationSettingsContract populates the provided destination OpenIdAuthenticationSettingsContract from our OpenIdAuthenticationSettingsContract
+func (contract *OpenIdAuthenticationSettingsContract) AssignProperties_To_OpenIdAuthenticationSettingsContract(destination *storage.OpenIdAuthenticationSettingsContract) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// BearerTokenSendingMethods
+	destination.BearerTokenSendingMethods = genruntime.CloneSliceOfString(contract.BearerTokenSendingMethods)
+
+	// OpenidProviderId
+	destination.OpenidProviderId = genruntime.ClonePointerToString(contract.OpenidProviderId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOpenIdAuthenticationSettingsContract interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOpenIdAuthenticationSettingsContract); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.OpenIdAuthenticationSettingsContract_STATUS
 // API OAuth2 Authentication settings details.
 type OpenIdAuthenticationSettingsContract_STATUS struct {
 	BearerTokenSendingMethods []string               `json:"bearerTokenSendingMethods,omitempty"`
 	OpenidProviderId          *string                `json:"openidProviderId,omitempty"`
 	PropertyBag               genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS populates our OpenIdAuthenticationSettingsContract_STATUS from the provided source OpenIdAuthenticationSettingsContract_STATUS
+func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_From_OpenIdAuthenticationSettingsContract_STATUS(source *storage.OpenIdAuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BearerTokenSendingMethods
+	contract.BearerTokenSendingMethods = genruntime.CloneSliceOfString(source.BearerTokenSendingMethods)
+
+	// OpenidProviderId
+	contract.OpenidProviderId = genruntime.ClonePointerToString(source.OpenidProviderId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		contract.PropertyBag = propertyBag
+	} else {
+		contract.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOpenIdAuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOpenIdAuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS populates the provided destination OpenIdAuthenticationSettingsContract_STATUS from our OpenIdAuthenticationSettingsContract_STATUS
+func (contract *OpenIdAuthenticationSettingsContract_STATUS) AssignProperties_To_OpenIdAuthenticationSettingsContract_STATUS(destination *storage.OpenIdAuthenticationSettingsContract_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(contract.PropertyBag)
+
+	// BearerTokenSendingMethods
+	destination.BearerTokenSendingMethods = genruntime.CloneSliceOfString(contract.BearerTokenSendingMethods)
+
+	// OpenidProviderId
+	destination.OpenidProviderId = genruntime.ClonePointerToString(contract.OpenidProviderId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOpenIdAuthenticationSettingsContract_STATUS interface (if implemented) to customize the conversion
+	var contractAsAny any = contract
+	if augmentedContract, ok := contractAsAny.(augmentConversionForOpenIdAuthenticationSettingsContract_STATUS); ok {
+		err := augmentedContract.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForOAuth2AuthenticationSettingsContract interface {
+	AssignPropertiesFrom(src *storage.OAuth2AuthenticationSettingsContract) error
+	AssignPropertiesTo(dst *storage.OAuth2AuthenticationSettingsContract) error
+}
+
+type augmentConversionForOAuth2AuthenticationSettingsContract_STATUS interface {
+	AssignPropertiesFrom(src *storage.OAuth2AuthenticationSettingsContract_STATUS) error
+	AssignPropertiesTo(dst *storage.OAuth2AuthenticationSettingsContract_STATUS) error
+}
+
+type augmentConversionForOpenIdAuthenticationSettingsContract interface {
+	AssignPropertiesFrom(src *storage.OpenIdAuthenticationSettingsContract) error
+	AssignPropertiesTo(dst *storage.OpenIdAuthenticationSettingsContract) error
+}
+
+type augmentConversionForOpenIdAuthenticationSettingsContract_STATUS interface {
+	AssignPropertiesFrom(src *storage.OpenIdAuthenticationSettingsContract_STATUS) error
+	AssignPropertiesTo(dst *storage.OpenIdAuthenticationSettingsContract_STATUS) error
 }
 
 func init() {

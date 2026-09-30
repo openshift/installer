@@ -18,6 +18,7 @@ package loadbalancers
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
@@ -30,24 +31,26 @@ import (
 
 // LBSpec defines the specification for a Load Balancer.
 type LBSpec struct {
-	Name                 string
-	ResourceGroup        string
-	SubscriptionID       string
-	ClusterName          string
-	Location             string
-	ExtendedLocation     *infrav1.ExtendedLocationSpec
-	Role                 string
-	Type                 infrav1.LBType
-	SKU                  infrav1.SKU
-	VNetName             string
-	VNetResourceGroup    string
-	SubnetName           string
-	BackendPoolName      string
-	FrontendIPConfigs    []infrav1.FrontendIP
-	APIServerPort        int32
-	IdleTimeoutInMinutes *int32
-	AdditionalTags       map[string]string
-	AdditionalPorts      []infrav1.LoadBalancerPort
+	Name                  string
+	ResourceGroup         string
+	SubscriptionID        string
+	ClusterName           string
+	Location              string
+	ExtendedLocation      *infrav1.ExtendedLocationSpec
+	Role                  string
+	Type                  infrav1.LBType
+	SKU                   infrav1.SKU
+	VNetName              string
+	VNetResourceGroup     string
+	SubnetName            string
+	BackendPoolName       string
+	FrontendIPConfigs     []infrav1.FrontendIP
+	APIServerPort         int32
+	APIServerFrontendPort int32
+	IdleTimeoutInMinutes  *int32
+	AdditionalTags        map[string]string
+	AdditionalPorts       []infrav1.LoadBalancerPort
+	AvailabilityZones     []string
 }
 
 // ResourceName returns the name of the load balancer.
@@ -66,7 +69,7 @@ func (s *LBSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the load balancer.
-func (s *LBSpec) Parameters(_ context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *LBSpec) Parameters(_ context.Context, existing any) (parameters any, err error) {
 	var (
 		etag                *string
 		frontendIDs         []*armnetwork.SubResource
@@ -98,11 +101,9 @@ func (s *LBSpec) Parameters(_ context.Context, existing interface{}) (parameters
 		}
 
 		loadBalancingRules = existingLB.Properties.LoadBalancingRules
-		for _, rule := range getLoadBalancingRules(*s, wantedFrontendIDs) {
-			if !lbRuleExists(loadBalancingRules, *rule) {
-				update = true
-				loadBalancingRules = append(loadBalancingRules, rule)
-			}
+		if mergedRules, changed := mergeLoadBalancingRules(loadBalancingRules, getLoadBalancingRules(*s, wantedFrontendIDs)); changed {
+			update = true
+			loadBalancingRules = mergedRules
 		}
 
 		backendAddressPools = existingLB.Properties.BackendAddressPools
@@ -122,11 +123,9 @@ func (s *LBSpec) Parameters(_ context.Context, existing interface{}) (parameters
 		}
 
 		probes = existingLB.Properties.Probes
-		for _, probe := range getProbes(*s) {
-			if !probeExists(probes, *probe) {
-				update = true
-				probes = append(probes, probe)
-			}
+		if mergedProbes, changed := mergeProbes(probes, getProbes(*s)); changed {
+			update = true
+			probes = mergedProbes
 		}
 
 		if !update {
@@ -167,6 +166,27 @@ func (s *LBSpec) Parameters(_ context.Context, existing interface{}) (parameters
 func getFrontendIPConfigs(lbSpec LBSpec) ([]*armnetwork.FrontendIPConfiguration, []*armnetwork.SubResource) {
 	frontendIPConfigurations := make([]*armnetwork.FrontendIPConfiguration, 0)
 	frontendIDs := make([]*armnetwork.SubResource, 0)
+
+	// Convert availability zones to []*string for Azure SDK.
+	// IMPORTANT: Zones can only be set on frontend IP configurations for internal load balancers
+	// (where the frontend references a subnet). For public load balancers, zone-redundancy is
+	// achieved by setting zones on the associated public IP address resource, NOT on the load
+	// balancer's frontend IP configuration.
+	//
+	// Azure returns error "LoadBalancerFrontendIPConfigCannotHaveZoneWhenReferencingPublicIPAddress"
+	// if zones are specified on a frontend that references a public IP.
+	//
+	// See: https://learn.microsoft.com/en-us/azure/reliability/reliability-load-balancer#zone-redundant-load-balancer
+	// Section: "Zone-redundant load balancer" - "For public load balancers, if the public IP in the
+	// Load balancer's frontend is zone redundant then the load balancer is also zone-redundant."
+	var zones []*string
+	if len(lbSpec.AvailabilityZones) > 0 && lbSpec.Type == infrav1.Internal {
+		zones = make([]*string, len(lbSpec.AvailabilityZones))
+		for i, zone := range lbSpec.AvailabilityZones {
+			zones[i] = ptr.To(zone)
+		}
+	}
+
 	for _, ipConfig := range lbSpec.FrontendIPConfigs {
 		var properties armnetwork.FrontendIPConfigurationPropertiesFormat
 		if lbSpec.Type == infrav1.Internal {
@@ -187,6 +207,7 @@ func getFrontendIPConfigs(lbSpec LBSpec) ([]*armnetwork.FrontendIPConfiguration,
 		frontendIPConfigurations = append(frontendIPConfigurations, &armnetwork.FrontendIPConfiguration{
 			Properties: &properties,
 			Name:       ptr.To(ipConfig.Name),
+			Zones:      zones,
 		})
 		frontendIDs = append(frontendIDs, &armnetwork.SubResource{
 			ID: ptr.To(azure.FrontendIPConfigID(lbSpec.SubscriptionID, lbSpec.ResourceGroup, lbSpec.Name, ipConfig.Name)),
@@ -228,7 +249,7 @@ func getLoadBalancingRules(lbSpec LBSpec, frontendIDs []*armnetwork.SubResource)
 				Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
 					DisableOutboundSnat:     ptr.To(true),
 					Protocol:                ptr.To(armnetwork.TransportProtocolTCP),
-					FrontendPort:            ptr.To(lbSpec.APIServerPort),
+					FrontendPort:            ptr.To(lbSpec.apiServerFrontendPort()),
 					BackendPort:             ptr.To(lbSpec.APIServerPort),
 					IdleTimeoutInMinutes:    lbSpec.IdleTimeoutInMinutes,
 					EnableFloatingIP:        ptr.To(false),
@@ -297,13 +318,47 @@ func getProbes(lbSpec LBSpec) []*armnetwork.Probe {
 	return []*armnetwork.Probe{}
 }
 
-func probeExists(probes []*armnetwork.Probe, probe armnetwork.Probe) bool {
-	for _, p := range probes {
-		if ptr.Deref(p.Name, "") == ptr.Deref(probe.Name, "") {
-			return true
+func (s LBSpec) apiServerFrontendPort() int32 {
+	if s.APIServerFrontendPort != 0 {
+		return s.APIServerFrontendPort
+	}
+	return s.APIServerPort
+}
+
+func mergeProbes(existing, desired []*armnetwork.Probe) ([]*armnetwork.Probe, bool) {
+	merged := append([]*armnetwork.Probe(nil), existing...)
+	changed := false
+	for _, desiredProbe := range desired {
+		found := false
+		for i, existingProbe := range merged {
+			if !strings.EqualFold(ptr.Deref(existingProbe.Name, ""), ptr.Deref(desiredProbe.Name, "")) {
+				continue
+			}
+			found = true
+			if !probeMatches(existingProbe, desiredProbe) {
+				merged[i] = desiredProbe
+				changed = true
+			}
+			break
+		}
+		if !found {
+			merged = append(merged, desiredProbe)
+			changed = true
 		}
 	}
-	return false
+	return merged, changed
+}
+
+func probeMatches(existing, desired *armnetwork.Probe) bool {
+	if existing == nil || desired == nil || existing.Properties == nil || desired.Properties == nil {
+		return existing == desired
+	}
+	return strings.EqualFold(ptr.Deref(existing.Name, ""), ptr.Deref(desired.Name, "")) &&
+		pointerMatches(existing.Properties.Protocol, desired.Properties.Protocol) &&
+		pointerMatches(existing.Properties.Port, desired.Properties.Port) &&
+		pointerMatches(existing.Properties.RequestPath, desired.Properties.RequestPath) &&
+		pointerMatches(existing.Properties.IntervalInSeconds, desired.Properties.IntervalInSeconds) &&
+		pointerMatches(existing.Properties.ProbeThreshold, desired.Properties.ProbeThreshold)
 }
 
 func outboundRuleExists(rules []*armnetwork.OutboundRule, rule armnetwork.OutboundRule) bool {
@@ -324,13 +379,53 @@ func poolExists(pools []*armnetwork.BackendAddressPool, pool armnetwork.BackendA
 	return false
 }
 
-func lbRuleExists(rules []*armnetwork.LoadBalancingRule, rule armnetwork.LoadBalancingRule) bool {
-	for _, r := range rules {
-		if ptr.Deref(r.Name, "") == ptr.Deref(rule.Name, "") {
-			return true
+func mergeLoadBalancingRules(existing, desired []*armnetwork.LoadBalancingRule) ([]*armnetwork.LoadBalancingRule, bool) {
+	merged := append([]*armnetwork.LoadBalancingRule(nil), existing...)
+	changed := false
+	for _, desiredRule := range desired {
+		found := false
+		for i, existingRule := range merged {
+			if !strings.EqualFold(ptr.Deref(existingRule.Name, ""), ptr.Deref(desiredRule.Name, "")) {
+				continue
+			}
+			found = true
+			if !loadBalancingRuleMatches(existingRule, desiredRule) {
+				merged[i] = desiredRule
+				changed = true
+			}
+			break
+		}
+		if !found {
+			merged = append(merged, desiredRule)
+			changed = true
 		}
 	}
-	return false
+	return merged, changed
+}
+
+func loadBalancingRuleMatches(existing, desired *armnetwork.LoadBalancingRule) bool {
+	if existing == nil || desired == nil || existing.Properties == nil || desired.Properties == nil {
+		return existing == desired
+	}
+	return strings.EqualFold(ptr.Deref(existing.Name, ""), ptr.Deref(desired.Name, "")) &&
+		pointerMatches(existing.Properties.DisableOutboundSnat, desired.Properties.DisableOutboundSnat) &&
+		pointerMatches(existing.Properties.Protocol, desired.Properties.Protocol) &&
+		pointerMatches(existing.Properties.FrontendPort, desired.Properties.FrontendPort) &&
+		pointerMatches(existing.Properties.BackendPort, desired.Properties.BackendPort) &&
+		pointerMatches(existing.Properties.IdleTimeoutInMinutes, desired.Properties.IdleTimeoutInMinutes) &&
+		pointerMatches(existing.Properties.EnableFloatingIP, desired.Properties.EnableFloatingIP) &&
+		pointerMatches(existing.Properties.LoadDistribution, desired.Properties.LoadDistribution) &&
+		subResourceMatches(existing.Properties.FrontendIPConfiguration, desired.Properties.FrontendIPConfiguration) &&
+		subResourceMatches(existing.Properties.BackendAddressPool, desired.Properties.BackendAddressPool) &&
+		subResourceMatches(existing.Properties.Probe, desired.Properties.Probe)
+}
+
+func pointerMatches[T comparable](existing, desired *T) bool {
+	return desired == nil || existing != nil && *existing == *desired
+}
+
+func subResourceMatches(existing, desired *armnetwork.SubResource) bool {
+	return desired == nil || existing != nil && strings.EqualFold(ptr.Deref(existing.ID, ""), ptr.Deref(desired.ID, ""))
 }
 
 func ipExists(configs []*armnetwork.FrontendIPConfiguration, config armnetwork.FrontendIPConfiguration) bool {
