@@ -267,6 +267,29 @@ var NodeOutdatedRevisionTaint = corev1.Taint{
 	Effect: corev1.TaintEffectPreferNoSchedule,
 }
 
+// StatusVersion groups version-related status information.
+type StatusVersion struct {
+	// version is the Kubernetes version.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	Version string `json:"version,omitempty"`
+
+	// replicas is the number of replicas at this version.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	Replicas int32 `json:"replicas,omitempty"`
+}
+
+// StatusUpgradePlanVersion groups upgrade plan version-related status information.
+type StatusUpgradePlanVersion struct {
+	// version is the Kubernetes version.
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	Version string `json:"version,omitempty"`
+}
+
 // NodeUninitializedTaint can be added to Nodes at creation by the bootstrap provider, e.g. the
 // KubeadmBootstrap provider will add the taint.
 // This taint is used to prevent workloads to be scheduled on Nodes before the node is initialized by Cluster API.
@@ -411,6 +434,8 @@ func (r *ContractVersionedObjectReference) GroupKind() schema.GroupKind {
 
 // MachineTaint defines a taint equivalent to corev1.Taint, but additionally having a propagation field.
 type MachineTaint struct {
+	// Note: we do not use CEL for validating the key as qualified name, because it would be too expensive for Cluster and ClusterClass objects.
+
 	// key is the taint key to be applied to a node.
 	// Must be a valid qualified name of maximum size 63 characters
 	// with an optional subdomain prefix of maximum size 253 characters,
@@ -419,7 +444,6 @@ type MachineTaint struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=317
 	// +kubebuilder:validation:Pattern=^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/)?([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$
-	// +kubebuilder:validation:XValidation:rule="self.contains('/') ? ( self.split('/') [0].size() <= 253 && self.split('/') [1].size() <= 63 && self.split('/').size() == 2 ) : self.size() <= 63",message="key must be a valid qualified name of max size 63 characters with an optional subdomain prefix of max size 253 characters"
 	Key string `json:"key,omitempty"`
 
 	// value is the taint value corresponding to the taint key.

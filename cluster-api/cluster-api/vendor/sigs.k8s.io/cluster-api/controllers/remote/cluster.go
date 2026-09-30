@@ -20,7 +20,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,9 +33,13 @@ const (
 )
 
 // ClusterClientGetter returns a new remote client.
+//
+// Deprecated: This type is deprecated and will be removed in an upcoming release of Cluster API.
 type ClusterClientGetter func(ctx context.Context, sourceName string, c client.Client, cluster client.ObjectKey) (client.Client, error)
 
 // NewClusterClient returns a Client for interacting with a remote Cluster using the given scheme for encoding and decoding objects.
+//
+// Deprecated: This function is deprecated and will be removed in an upcoming release of Cluster API, please use ClusterCache or inline this function instead.
 func NewClusterClient(ctx context.Context, sourceName string, c client.Client, cluster client.ObjectKey) (client.Client, error) {
 	restConfig, err := RESTConfig(ctx, sourceName, c, cluster)
 	if err != nil {
@@ -43,21 +47,23 @@ func NewClusterClient(ctx context.Context, sourceName string, c client.Client, c
 	}
 	ret, err := client.New(restConfig, client.Options{Scheme: c.Scheme()})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create client for Cluster %s/%s", cluster.Namespace, cluster.Name)
+		return nil, pkgerrors.Wrapf(err, "failed to create client for Cluster %s/%s", cluster.Namespace, cluster.Name)
 	}
 	return ret, nil
 }
 
 // RESTConfig returns a configuration instance to be used with a Kubernetes client.
+//
+// Deprecated: This function is deprecated and will be removed in an upcoming release of Cluster API, please use ClusterCache or inline this function instead.
 func RESTConfig(ctx context.Context, sourceName string, c client.Reader, cluster client.ObjectKey) (*restclient.Config, error) {
 	kubeConfig, err := kcfg.FromSecret(ctx, c, cluster)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve kubeconfig secret for Cluster %s/%s", cluster.Namespace, cluster.Name)
+		return nil, pkgerrors.Wrapf(err, "failed to retrieve kubeconfig secret for Cluster %s/%s", cluster.Namespace, cluster.Name)
 	}
 
 	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create REST configuration for Cluster %s/%s", cluster.Namespace, cluster.Name)
+		return nil, pkgerrors.Wrapf(err, "failed to create REST configuration for Cluster %s/%s", cluster.Namespace, cluster.Name)
 	}
 
 	restConfig.UserAgent = DefaultClusterAPIUserAgent(sourceName)
