@@ -26,6 +26,11 @@ import (
 	"github.com/openshift/installer/pkg/utils"
 )
 
+const (
+	subnetScopePrivate = "private"
+	subnetScopePublic  = "public"
+)
+
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
 	Role           string
@@ -169,9 +174,9 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 			}
 			subnet.ID = ptr.To(subnetMeta.ID)
 		} else {
-			subnetInternetScope := "private"
+			subnetInternetScope := subnetScopePrivate
 			if in.PublicIP {
-				subnetInternetScope = "public"
+				subnetInternetScope = subnetScopePublic
 			}
 			subnet.Filters = []capa.Filter{
 				{

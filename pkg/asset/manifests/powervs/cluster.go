@@ -82,7 +82,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(installConfig.Config.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,28 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
+	// Handle COS instance - use existing if CRN provided, otherwise create new
+	if installConfig.Config.PowerVS.COSInstanceCRN != "" {
+		// User provided an existing COS instance CRN
+		// Extract the instance name from the CRN for CAPI to find it
+		logrus.Debugf("Using existing COS instance from CRN: %s", installConfig.Config.PowerVS.COSInstanceCRN)
+
+		// Get the COS instance details to extract its name
+		cosInstance, err := client.GetResourceInstanceByCRN(ctx, installConfig.Config.PowerVS.COSInstanceCRN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get COS instance details from CRN %s: %w", installConfig.Config.PowerVS.COSInstanceCRN, err)
+		}
+		if cosInstance == nil || cosInstance.Name == nil {
+			return nil, fmt.Errorf("COS instance not found or has no name for CRN: %s", installConfig.Config.PowerVS.COSInstanceCRN)
+		}
+
+		cosName = *cosInstance.Name
+		logrus.Infof("Using existing COS instance: %s", cosName)
+	} else {
+		// Generate a new COS instance name for CAPI to create
+		cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
+		logrus.Debugf("Will create new COS instance: %s", cosName)
+	}
 
 	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
 		return nil, fmt.Errorf("unable to derive cosRegion from region: %s %w", installConfig.Config.PowerVS.Region, err)
