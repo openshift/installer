@@ -4,6 +4,11 @@
 package storage
 
 import (
+	"fmt"
+	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
+	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	v20240901s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -13,14 +18,12 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleetsupdateruns,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources={fleetsupdateruns/status,fleetsupdateruns/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -46,6 +49,28 @@ func (updateRun *FleetsUpdateRun) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (updateRun *FleetsUpdateRun) SetConditions(conditions conditions.Conditions) {
 	updateRun.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &FleetsUpdateRun{}
+
+// ConvertFrom populates our FleetsUpdateRun from the provided hub FleetsUpdateRun
+func (updateRun *FleetsUpdateRun) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.FleetsUpdateRun)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250301/storage/FleetsUpdateRun but received %T instead", hub)
+	}
+
+	return updateRun.AssignProperties_From_FleetsUpdateRun(source)
+}
+
+// ConvertTo populates the provided hub FleetsUpdateRun from our FleetsUpdateRun
+func (updateRun *FleetsUpdateRun) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.FleetsUpdateRun)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250301/storage/FleetsUpdateRun but received %T instead", hub)
+	}
+
+	return updateRun.AssignProperties_To_FleetsUpdateRun(destination)
 }
 
 var _ configmaps.Exporter = &FleetsUpdateRun{}
@@ -143,8 +168,75 @@ func (updateRun *FleetsUpdateRun) SetStatus(status genruntime.ConvertibleStatus)
 	return nil
 }
 
-// Hub marks that this FleetsUpdateRun is the hub type for conversion
-func (updateRun *FleetsUpdateRun) Hub() {}
+// AssignProperties_From_FleetsUpdateRun populates our FleetsUpdateRun from the provided source FleetsUpdateRun
+func (updateRun *FleetsUpdateRun) AssignProperties_From_FleetsUpdateRun(source *v20250301s.FleetsUpdateRun) error {
+
+	// ObjectMeta
+	updateRun.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec FleetsUpdateRun_Spec
+	err := spec.AssignProperties_From_FleetsUpdateRun_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_Spec() to populate field Spec")
+	}
+	updateRun.Spec = spec
+
+	// Status
+	var status FleetsUpdateRun_STATUS
+	err = status.AssignProperties_From_FleetsUpdateRun_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRun_STATUS() to populate field Status")
+	}
+	updateRun.Status = status
+
+	// Invoke the augmentConversionForFleetsUpdateRun interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun); ok {
+		err := augmentedUpdateRun.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetsUpdateRun populates the provided destination FleetsUpdateRun from our FleetsUpdateRun
+func (updateRun *FleetsUpdateRun) AssignProperties_To_FleetsUpdateRun(destination *v20250301s.FleetsUpdateRun) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *updateRun.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.FleetsUpdateRun_Spec
+	err := updateRun.Spec.AssignProperties_To_FleetsUpdateRun_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.FleetsUpdateRun_STATUS
+	err = updateRun.Status.AssignProperties_To_FleetsUpdateRun_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRun_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForFleetsUpdateRun interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun); ok {
+		err := augmentedUpdateRun.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (updateRun *FleetsUpdateRun) OriginalGVK() *schema.GroupVersionKind {
@@ -164,6 +256,11 @@ type FleetsUpdateRunList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []FleetsUpdateRun `json:"items"`
+}
+
+type augmentConversionForFleetsUpdateRun interface {
+	AssignPropertiesFrom(src *v20250301s.FleetsUpdateRun) error
+	AssignPropertiesTo(dst *v20250301s.FleetsUpdateRun) error
 }
 
 // Storage version of v1api20230315preview.FleetsUpdateRun_Spec
@@ -188,20 +285,220 @@ var _ genruntime.ConvertibleSpec = &FleetsUpdateRun_Spec{}
 
 // ConvertSpecFrom populates our FleetsUpdateRun_Spec from the provided source
 func (updateRun *FleetsUpdateRun_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == updateRun {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.FleetsUpdateRun_Spec)
+	if ok {
+		// Populate our instance from source
+		return updateRun.AssignProperties_From_FleetsUpdateRun_Spec(src)
 	}
 
-	return source.ConvertSpecTo(updateRun)
+	// Convert to an intermediate form
+	src = &v20250301s.FleetsUpdateRun_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = updateRun.AssignProperties_From_FleetsUpdateRun_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our FleetsUpdateRun_Spec
 func (updateRun *FleetsUpdateRun_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == updateRun {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.FleetsUpdateRun_Spec)
+	if ok {
+		// Populate destination from our instance
+		return updateRun.AssignProperties_To_FleetsUpdateRun_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(updateRun)
+	// Convert to an intermediate form
+	dst = &v20250301s.FleetsUpdateRun_Spec{}
+	err := updateRun.AssignProperties_To_FleetsUpdateRun_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FleetsUpdateRun_Spec populates our FleetsUpdateRun_Spec from the provided source FleetsUpdateRun_Spec
+func (updateRun *FleetsUpdateRun_Spec) AssignProperties_From_FleetsUpdateRun_Spec(source *v20250301s.FleetsUpdateRun_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	updateRun.AzureName = source.AzureName
+
+	// ManagedClusterUpdate
+	if source.ManagedClusterUpdate != nil {
+		var managedClusterUpdate ManagedClusterUpdate
+		err := managedClusterUpdate.AssignProperties_From_ManagedClusterUpdate(source.ManagedClusterUpdate)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
+		}
+		updateRun.ManagedClusterUpdate = &managedClusterUpdate
+	} else {
+		updateRun.ManagedClusterUpdate = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FleetsUpdateRunOperatorSpec
+		err := operatorSpec.AssignProperties_From_FleetsUpdateRunOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
+		}
+		updateRun.OperatorSpec = &operatorSpec
+	} else {
+		updateRun.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	updateRun.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		updateRun.Owner = &owner
+	} else {
+		updateRun.Owner = nil
+	}
+
+	// Strategy
+	if source.Strategy != nil {
+		var strategy UpdateRunStrategy
+		err := strategy.AssignProperties_From_UpdateRunStrategy(source.Strategy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy() to populate field Strategy")
+		}
+		updateRun.Strategy = &strategy
+	} else {
+		updateRun.Strategy = nil
+	}
+
+	// UpdateStrategyReference
+	if source.UpdateStrategyReference != nil {
+		propertyBag.Add("UpdateStrategyReference", *source.UpdateStrategyReference)
+	} else {
+		propertyBag.Remove("UpdateStrategyReference")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		updateRun.PropertyBag = propertyBag
+	} else {
+		updateRun.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRun_Spec interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun_Spec); ok {
+		err := augmentedUpdateRun.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetsUpdateRun_Spec populates the provided destination FleetsUpdateRun_Spec from our FleetsUpdateRun_Spec
+func (updateRun *FleetsUpdateRun_Spec) AssignProperties_To_FleetsUpdateRun_Spec(destination *v20250301s.FleetsUpdateRun_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(updateRun.PropertyBag)
+
+	// AzureName
+	destination.AzureName = updateRun.AzureName
+
+	// ManagedClusterUpdate
+	if updateRun.ManagedClusterUpdate != nil {
+		var managedClusterUpdate v20250301s.ManagedClusterUpdate
+		err := updateRun.ManagedClusterUpdate.AssignProperties_To_ManagedClusterUpdate(&managedClusterUpdate)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate() to populate field ManagedClusterUpdate")
+		}
+		destination.ManagedClusterUpdate = &managedClusterUpdate
+	} else {
+		destination.ManagedClusterUpdate = nil
+	}
+
+	// OperatorSpec
+	if updateRun.OperatorSpec != nil {
+		var operatorSpec v20250301s.FleetsUpdateRunOperatorSpec
+		err := updateRun.OperatorSpec.AssignProperties_To_FleetsUpdateRunOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FleetsUpdateRunOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = updateRun.OriginalVersion
+
+	// Owner
+	if updateRun.Owner != nil {
+		owner := updateRun.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Strategy
+	if updateRun.Strategy != nil {
+		var strategy v20250301s.UpdateRunStrategy
+		err := updateRun.Strategy.AssignProperties_To_UpdateRunStrategy(&strategy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy() to populate field Strategy")
+		}
+		destination.Strategy = &strategy
+	} else {
+		destination.Strategy = nil
+	}
+
+	// UpdateStrategyReference
+	if propertyBag.Contains("UpdateStrategyReference") {
+		var updateStrategyReference genruntime.ResourceReference
+		err := propertyBag.Pull("UpdateStrategyReference", &updateStrategyReference)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'UpdateStrategyReference' from propertyBag")
+		}
+
+		destination.UpdateStrategyReference = &updateStrategyReference
+	} else {
+		destination.UpdateStrategyReference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRun_Spec interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun_Spec); ok {
+		err := augmentedUpdateRun.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.FleetsUpdateRun_STATUS
@@ -223,20 +520,312 @@ var _ genruntime.ConvertibleStatus = &FleetsUpdateRun_STATUS{}
 
 // ConvertStatusFrom populates our FleetsUpdateRun_STATUS from the provided source
 func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == updateRun {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.FleetsUpdateRun_STATUS)
+	if ok {
+		// Populate our instance from source
+		return updateRun.AssignProperties_From_FleetsUpdateRun_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(updateRun)
+	// Convert to an intermediate form
+	src = &v20250301s.FleetsUpdateRun_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = updateRun.AssignProperties_From_FleetsUpdateRun_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our FleetsUpdateRun_STATUS
 func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == updateRun {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.FleetsUpdateRun_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return updateRun.AssignProperties_To_FleetsUpdateRun_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(updateRun)
+	// Convert to an intermediate form
+	dst = &v20250301s.FleetsUpdateRun_STATUS{}
+	err := updateRun.AssignProperties_To_FleetsUpdateRun_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_FleetsUpdateRun_STATUS populates our FleetsUpdateRun_STATUS from the provided source FleetsUpdateRun_STATUS
+func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_From_FleetsUpdateRun_STATUS(source *v20250301s.FleetsUpdateRun_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoUpgradeProfileId
+	if source.AutoUpgradeProfileId != nil {
+		propertyBag.Add("AutoUpgradeProfileId", *source.AutoUpgradeProfileId)
+	} else {
+		propertyBag.Remove("AutoUpgradeProfileId")
+	}
+
+	// Conditions
+	updateRun.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// ETag
+	updateRun.ETag = genruntime.ClonePointerToString(source.ETag)
+
+	// Id
+	updateRun.Id = genruntime.ClonePointerToString(source.Id)
+
+	// ManagedClusterUpdate
+	if source.ManagedClusterUpdate != nil {
+		var managedClusterUpdate ManagedClusterUpdate_STATUS
+		err := managedClusterUpdate.AssignProperties_From_ManagedClusterUpdate_STATUS(source.ManagedClusterUpdate)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
+		}
+		updateRun.ManagedClusterUpdate = &managedClusterUpdate
+	} else {
+		updateRun.ManagedClusterUpdate = nil
+	}
+
+	// Name
+	updateRun.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ProvisioningState
+	updateRun.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Status
+	if source.Status != nil {
+		var status UpdateRunStatus_STATUS
+		err := status.AssignProperties_From_UpdateRunStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStatus_STATUS() to populate field Status")
+		}
+		updateRun.Status = &status
+	} else {
+		updateRun.Status = nil
+	}
+
+	// Strategy
+	if source.Strategy != nil {
+		var strategy UpdateRunStrategy_STATUS
+		err := strategy.AssignProperties_From_UpdateRunStrategy_STATUS(source.Strategy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateRunStrategy_STATUS() to populate field Strategy")
+		}
+		updateRun.Strategy = &strategy
+	} else {
+		updateRun.Strategy = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDataSTATUSStash v20240901s.SystemData_STATUS
+		err := systemDataSTATUSStash.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDataSTATUSStashLocal v20231001s.SystemData_STATUS
+		err = systemDataSTATUSStashLocal.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDataSTATUSStashCopy v20230201s.SystemData_STATUS
+		err = systemDataSTATUSStashCopy.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDatum SystemData_STATUS
+		err = systemDatum.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStashCopy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		updateRun.SystemData = &systemDatum
+	} else {
+		updateRun.SystemData = nil
+	}
+
+	// Type
+	updateRun.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UpdateStrategyId
+	if source.UpdateStrategyId != nil {
+		propertyBag.Add("UpdateStrategyId", *source.UpdateStrategyId)
+	} else {
+		propertyBag.Remove("UpdateStrategyId")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		updateRun.PropertyBag = propertyBag
+	} else {
+		updateRun.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRun_STATUS interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun_STATUS); ok {
+		err := augmentedUpdateRun.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetsUpdateRun_STATUS populates the provided destination FleetsUpdateRun_STATUS from our FleetsUpdateRun_STATUS
+func (updateRun *FleetsUpdateRun_STATUS) AssignProperties_To_FleetsUpdateRun_STATUS(destination *v20250301s.FleetsUpdateRun_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(updateRun.PropertyBag)
+
+	// AutoUpgradeProfileId
+	if propertyBag.Contains("AutoUpgradeProfileId") {
+		var autoUpgradeProfileId string
+		err := propertyBag.Pull("AutoUpgradeProfileId", &autoUpgradeProfileId)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AutoUpgradeProfileId' from propertyBag")
+		}
+
+		destination.AutoUpgradeProfileId = &autoUpgradeProfileId
+	} else {
+		destination.AutoUpgradeProfileId = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(updateRun.Conditions)
+
+	// ETag
+	destination.ETag = genruntime.ClonePointerToString(updateRun.ETag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(updateRun.Id)
+
+	// ManagedClusterUpdate
+	if updateRun.ManagedClusterUpdate != nil {
+		var managedClusterUpdate v20250301s.ManagedClusterUpdate_STATUS
+		err := updateRun.ManagedClusterUpdate.AssignProperties_To_ManagedClusterUpdate_STATUS(&managedClusterUpdate)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpdate_STATUS() to populate field ManagedClusterUpdate")
+		}
+		destination.ManagedClusterUpdate = &managedClusterUpdate
+	} else {
+		destination.ManagedClusterUpdate = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(updateRun.Name)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(updateRun.ProvisioningState)
+
+	// Status
+	if updateRun.Status != nil {
+		var status v20250301s.UpdateRunStatus_STATUS
+		err := updateRun.Status.AssignProperties_To_UpdateRunStatus_STATUS(&status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &status
+	} else {
+		destination.Status = nil
+	}
+
+	// Strategy
+	if updateRun.Strategy != nil {
+		var strategy v20250301s.UpdateRunStrategy_STATUS
+		err := updateRun.Strategy.AssignProperties_To_UpdateRunStrategy_STATUS(&strategy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateRunStrategy_STATUS() to populate field Strategy")
+		}
+		destination.Strategy = &strategy
+	} else {
+		destination.Strategy = nil
+	}
+
+	// SystemData
+	if updateRun.SystemData != nil {
+		var systemDataSTATUSStash v20230201s.SystemData_STATUS
+		err := updateRun.SystemData.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDataSTATUSStashLocal v20231001s.SystemData_STATUS
+		err = systemDataSTATUSStash.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDataSTATUSStashCopy v20240901s.SystemData_STATUS
+		err = systemDataSTATUSStashLocal.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStashCopy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDatum v20250301s.SystemData_STATUS
+		err = systemDataSTATUSStashCopy.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(updateRun.Type)
+
+	// UpdateStrategyId
+	if propertyBag.Contains("UpdateStrategyId") {
+		var updateStrategyId string
+		err := propertyBag.Pull("UpdateStrategyId", &updateStrategyId)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'UpdateStrategyId' from propertyBag")
+		}
+
+		destination.UpdateStrategyId = &updateStrategyId
+	} else {
+		destination.UpdateStrategyId = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRun_STATUS interface (if implemented) to customize the conversion
+	var updateRunAsAny any = updateRun
+	if augmentedUpdateRun, ok := updateRunAsAny.(augmentConversionForFleetsUpdateRun_STATUS); ok {
+		err := augmentedUpdateRun.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFleetsUpdateRun_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.FleetsUpdateRun_Spec) error
+	AssignPropertiesTo(dst *v20250301s.FleetsUpdateRun_Spec) error
+}
+
+type augmentConversionForFleetsUpdateRun_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.FleetsUpdateRun_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.FleetsUpdateRun_STATUS) error
 }
 
 // Storage version of v1api20230315preview.FleetsUpdateRunOperatorSpec
@@ -247,11 +836,219 @@ type FleetsUpdateRunOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_FleetsUpdateRunOperatorSpec populates our FleetsUpdateRunOperatorSpec from the provided source FleetsUpdateRunOperatorSpec
+func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_From_FleetsUpdateRunOperatorSpec(source *v20250301s.FleetsUpdateRunOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRunOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFleetsUpdateRunOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetsUpdateRunOperatorSpec populates the provided destination FleetsUpdateRunOperatorSpec from our FleetsUpdateRunOperatorSpec
+func (operator *FleetsUpdateRunOperatorSpec) AssignProperties_To_FleetsUpdateRunOperatorSpec(destination *v20250301s.FleetsUpdateRunOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetsUpdateRunOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFleetsUpdateRunOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.ManagedClusterUpdate
 // The update to be applied to the ManagedClusters.
 type ManagedClusterUpdate struct {
 	PropertyBag genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
 	Upgrade     *ManagedClusterUpgradeSpec `json:"upgrade,omitempty"`
+}
+
+// AssignProperties_From_ManagedClusterUpdate populates our ManagedClusterUpdate from the provided source ManagedClusterUpdate
+func (update *ManagedClusterUpdate) AssignProperties_From_ManagedClusterUpdate(source *v20250301s.ManagedClusterUpdate) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// NodeImageSelection
+	if source.NodeImageSelection != nil {
+		propertyBag.Add("NodeImageSelection", *source.NodeImageSelection)
+	} else {
+		propertyBag.Remove("NodeImageSelection")
+	}
+
+	// Upgrade
+	if source.Upgrade != nil {
+		var upgrade ManagedClusterUpgradeSpec
+		err := upgrade.AssignProperties_From_ManagedClusterUpgradeSpec(source.Upgrade)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec() to populate field Upgrade")
+		}
+		update.Upgrade = &upgrade
+	} else {
+		update.Upgrade = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		update.PropertyBag = propertyBag
+	} else {
+		update.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpdate interface (if implemented) to customize the conversion
+	var updateAsAny any = update
+	if augmentedUpdate, ok := updateAsAny.(augmentConversionForManagedClusterUpdate); ok {
+		err := augmentedUpdate.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedClusterUpdate populates the provided destination ManagedClusterUpdate from our ManagedClusterUpdate
+func (update *ManagedClusterUpdate) AssignProperties_To_ManagedClusterUpdate(destination *v20250301s.ManagedClusterUpdate) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(update.PropertyBag)
+
+	// NodeImageSelection
+	if propertyBag.Contains("NodeImageSelection") {
+		var nodeImageSelection v20250301s.NodeImageSelection
+		err := propertyBag.Pull("NodeImageSelection", &nodeImageSelection)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'NodeImageSelection' from propertyBag")
+		}
+
+		destination.NodeImageSelection = &nodeImageSelection
+	} else {
+		destination.NodeImageSelection = nil
+	}
+
+	// Upgrade
+	if update.Upgrade != nil {
+		var upgrade v20250301s.ManagedClusterUpgradeSpec
+		err := update.Upgrade.AssignProperties_To_ManagedClusterUpgradeSpec(&upgrade)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec() to populate field Upgrade")
+		}
+		destination.Upgrade = &upgrade
+	} else {
+		destination.Upgrade = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpdate interface (if implemented) to customize the conversion
+	var updateAsAny any = update
+	if augmentedUpdate, ok := updateAsAny.(augmentConversionForManagedClusterUpdate); ok {
+		err := augmentedUpdate.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.ManagedClusterUpdate_STATUS
@@ -261,12 +1058,232 @@ type ManagedClusterUpdate_STATUS struct {
 	Upgrade     *ManagedClusterUpgradeSpec_STATUS `json:"upgrade,omitempty"`
 }
 
+// AssignProperties_From_ManagedClusterUpdate_STATUS populates our ManagedClusterUpdate_STATUS from the provided source ManagedClusterUpdate_STATUS
+func (update *ManagedClusterUpdate_STATUS) AssignProperties_From_ManagedClusterUpdate_STATUS(source *v20250301s.ManagedClusterUpdate_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// NodeImageSelection
+	if source.NodeImageSelection != nil {
+		propertyBag.Add("NodeImageSelection", *source.NodeImageSelection)
+	} else {
+		propertyBag.Remove("NodeImageSelection")
+	}
+
+	// Upgrade
+	if source.Upgrade != nil {
+		var upgrade ManagedClusterUpgradeSpec_STATUS
+		err := upgrade.AssignProperties_From_ManagedClusterUpgradeSpec_STATUS(source.Upgrade)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
+		}
+		update.Upgrade = &upgrade
+	} else {
+		update.Upgrade = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		update.PropertyBag = propertyBag
+	} else {
+		update.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpdate_STATUS interface (if implemented) to customize the conversion
+	var updateAsAny any = update
+	if augmentedUpdate, ok := updateAsAny.(augmentConversionForManagedClusterUpdate_STATUS); ok {
+		err := augmentedUpdate.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedClusterUpdate_STATUS populates the provided destination ManagedClusterUpdate_STATUS from our ManagedClusterUpdate_STATUS
+func (update *ManagedClusterUpdate_STATUS) AssignProperties_To_ManagedClusterUpdate_STATUS(destination *v20250301s.ManagedClusterUpdate_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(update.PropertyBag)
+
+	// NodeImageSelection
+	if propertyBag.Contains("NodeImageSelection") {
+		var nodeImageSelection v20250301s.NodeImageSelection_STATUS
+		err := propertyBag.Pull("NodeImageSelection", &nodeImageSelection)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'NodeImageSelection' from propertyBag")
+		}
+
+		destination.NodeImageSelection = &nodeImageSelection
+	} else {
+		destination.NodeImageSelection = nil
+	}
+
+	// Upgrade
+	if update.Upgrade != nil {
+		var upgrade v20250301s.ManagedClusterUpgradeSpec_STATUS
+		err := update.Upgrade.AssignProperties_To_ManagedClusterUpgradeSpec_STATUS(&upgrade)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedClusterUpgradeSpec_STATUS() to populate field Upgrade")
+		}
+		destination.Upgrade = &upgrade
+	} else {
+		destination.Upgrade = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpdate_STATUS interface (if implemented) to customize the conversion
+	var updateAsAny any = update
+	if augmentedUpdate, ok := updateAsAny.(augmentConversionForManagedClusterUpdate_STATUS); ok {
+		err := augmentedUpdate.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateRunStatus_STATUS
 // The status of a UpdateRun.
 type UpdateRunStatus_STATUS struct {
 	PropertyBag genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
 	Stages      []UpdateStageStatus_STATUS `json:"stages,omitempty"`
 	Status      *UpdateStatus_STATUS       `json:"status,omitempty"`
+}
+
+// AssignProperties_From_UpdateRunStatus_STATUS populates our UpdateRunStatus_STATUS from the provided source UpdateRunStatus_STATUS
+func (status *UpdateRunStatus_STATUS) AssignProperties_From_UpdateRunStatus_STATUS(source *v20250301s.UpdateRunStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// NodeImageSelection
+	if source.NodeImageSelection != nil {
+		propertyBag.Add("NodeImageSelection", *source.NodeImageSelection)
+	} else {
+		propertyBag.Remove("NodeImageSelection")
+	}
+
+	// Stages
+	if source.Stages != nil {
+		stageList := make([]UpdateStageStatus_STATUS, len(source.Stages))
+		for stageIndex, stageItem := range source.Stages {
+			var stage UpdateStageStatus_STATUS
+			err := stage.AssignProperties_From_UpdateStageStatus_STATUS(&stageItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStageStatus_STATUS() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		status.Stages = stageList
+	} else {
+		status.Stages = nil
+	}
+
+	// Status
+	if source.Status != nil {
+		var statusLocal UpdateStatus_STATUS
+		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+		}
+		status.Status = &statusLocal
+	} else {
+		status.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateRunStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateRunStatus_STATUS populates the provided destination UpdateRunStatus_STATUS from our UpdateRunStatus_STATUS
+func (status *UpdateRunStatus_STATUS) AssignProperties_To_UpdateRunStatus_STATUS(destination *v20250301s.UpdateRunStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// NodeImageSelection
+	if propertyBag.Contains("NodeImageSelection") {
+		var nodeImageSelection v20250301s.NodeImageSelectionStatus_STATUS
+		err := propertyBag.Pull("NodeImageSelection", &nodeImageSelection)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'NodeImageSelection' from propertyBag")
+		}
+
+		destination.NodeImageSelection = &nodeImageSelection
+	} else {
+		destination.NodeImageSelection = nil
+	}
+
+	// Stages
+	if status.Stages != nil {
+		stageList := make([]v20250301s.UpdateStageStatus_STATUS, len(status.Stages))
+		for stageIndex, stageItem := range status.Stages {
+			var stage v20250301s.UpdateStageStatus_STATUS
+			err := stageItem.AssignProperties_To_UpdateStageStatus_STATUS(&stage)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStageStatus_STATUS() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		destination.Stages = stageList
+	} else {
+		destination.Stages = nil
+	}
+
+	// Status
+	if status.Status != nil {
+		var statusLocal v20250301s.UpdateStatus_STATUS
+		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &statusLocal
+	} else {
+		destination.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateRunStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.UpdateRunStrategy
@@ -282,6 +1299,88 @@ type UpdateRunStrategy struct {
 	Stages      []UpdateStage          `json:"stages,omitempty"`
 }
 
+// AssignProperties_From_UpdateRunStrategy populates our UpdateRunStrategy from the provided source UpdateRunStrategy
+func (strategy *UpdateRunStrategy) AssignProperties_From_UpdateRunStrategy(source *v20250301s.UpdateRunStrategy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Stages
+	if source.Stages != nil {
+		stageList := make([]UpdateStage, len(source.Stages))
+		for stageIndex, stageItem := range source.Stages {
+			var stage UpdateStage
+			err := stage.AssignProperties_From_UpdateStage(&stageItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStage() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		strategy.Stages = stageList
+	} else {
+		strategy.Stages = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		strategy.PropertyBag = propertyBag
+	} else {
+		strategy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStrategy interface (if implemented) to customize the conversion
+	var strategyAsAny any = strategy
+	if augmentedStrategy, ok := strategyAsAny.(augmentConversionForUpdateRunStrategy); ok {
+		err := augmentedStrategy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateRunStrategy populates the provided destination UpdateRunStrategy from our UpdateRunStrategy
+func (strategy *UpdateRunStrategy) AssignProperties_To_UpdateRunStrategy(destination *v20250301s.UpdateRunStrategy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(strategy.PropertyBag)
+
+	// Stages
+	if strategy.Stages != nil {
+		stageList := make([]v20250301s.UpdateStage, len(strategy.Stages))
+		for stageIndex, stageItem := range strategy.Stages {
+			var stage v20250301s.UpdateStage
+			err := stageItem.AssignProperties_To_UpdateStage(&stage)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStage() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		destination.Stages = stageList
+	} else {
+		destination.Stages = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStrategy interface (if implemented) to customize the conversion
+	var strategyAsAny any = strategy
+	if augmentedStrategy, ok := strategyAsAny.(augmentConversionForUpdateRunStrategy); ok {
+		err := augmentedStrategy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateRunStrategy_STATUS
 // Defines the update sequence of the clusters via stages and groups.
 // Stages within a run are executed sequentially one
@@ -295,6 +1394,118 @@ type UpdateRunStrategy_STATUS struct {
 	Stages      []UpdateStage_STATUS   `json:"stages,omitempty"`
 }
 
+// AssignProperties_From_UpdateRunStrategy_STATUS populates our UpdateRunStrategy_STATUS from the provided source UpdateRunStrategy_STATUS
+func (strategy *UpdateRunStrategy_STATUS) AssignProperties_From_UpdateRunStrategy_STATUS(source *v20250301s.UpdateRunStrategy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Stages
+	if source.Stages != nil {
+		stageList := make([]UpdateStage_STATUS, len(source.Stages))
+		for stageIndex, stageItem := range source.Stages {
+			var stage UpdateStage_STATUS
+			err := stage.AssignProperties_From_UpdateStage_STATUS(&stageItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateStage_STATUS() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		strategy.Stages = stageList
+	} else {
+		strategy.Stages = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		strategy.PropertyBag = propertyBag
+	} else {
+		strategy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStrategy_STATUS interface (if implemented) to customize the conversion
+	var strategyAsAny any = strategy
+	if augmentedStrategy, ok := strategyAsAny.(augmentConversionForUpdateRunStrategy_STATUS); ok {
+		err := augmentedStrategy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateRunStrategy_STATUS populates the provided destination UpdateRunStrategy_STATUS from our UpdateRunStrategy_STATUS
+func (strategy *UpdateRunStrategy_STATUS) AssignProperties_To_UpdateRunStrategy_STATUS(destination *v20250301s.UpdateRunStrategy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(strategy.PropertyBag)
+
+	// Stages
+	if strategy.Stages != nil {
+		stageList := make([]v20250301s.UpdateStage_STATUS, len(strategy.Stages))
+		for stageIndex, stageItem := range strategy.Stages {
+			var stage v20250301s.UpdateStage_STATUS
+			err := stageItem.AssignProperties_To_UpdateStage_STATUS(&stage)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateStage_STATUS() to populate field Stages")
+			}
+			stageList[stageIndex] = stage
+		}
+		destination.Stages = stageList
+	} else {
+		destination.Stages = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateRunStrategy_STATUS interface (if implemented) to customize the conversion
+	var strategyAsAny any = strategy
+	if augmentedStrategy, ok := strategyAsAny.(augmentConversionForUpdateRunStrategy_STATUS); ok {
+		err := augmentedStrategy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFleetsUpdateRunOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.FleetsUpdateRunOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.FleetsUpdateRunOperatorSpec) error
+}
+
+type augmentConversionForManagedClusterUpdate interface {
+	AssignPropertiesFrom(src *v20250301s.ManagedClusterUpdate) error
+	AssignPropertiesTo(dst *v20250301s.ManagedClusterUpdate) error
+}
+
+type augmentConversionForManagedClusterUpdate_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.ManagedClusterUpdate_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.ManagedClusterUpdate_STATUS) error
+}
+
+type augmentConversionForUpdateRunStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateRunStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateRunStatus_STATUS) error
+}
+
+type augmentConversionForUpdateRunStrategy interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateRunStrategy) error
+	AssignPropertiesTo(dst *v20250301s.UpdateRunStrategy) error
+}
+
+type augmentConversionForUpdateRunStrategy_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateRunStrategy_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateRunStrategy_STATUS) error
+}
+
 // Storage version of v1api20230315preview.ManagedClusterUpgradeSpec
 // The upgrade to apply to a ManagedCluster.
 type ManagedClusterUpgradeSpec struct {
@@ -303,12 +1514,136 @@ type ManagedClusterUpgradeSpec struct {
 	Type              *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_ManagedClusterUpgradeSpec populates our ManagedClusterUpgradeSpec from the provided source ManagedClusterUpgradeSpec
+func (upgrade *ManagedClusterUpgradeSpec) AssignProperties_From_ManagedClusterUpgradeSpec(source *v20250301s.ManagedClusterUpgradeSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KubernetesVersion
+	upgrade.KubernetesVersion = genruntime.ClonePointerToString(source.KubernetesVersion)
+
+	// Type
+	upgrade.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		upgrade.PropertyBag = propertyBag
+	} else {
+		upgrade.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpgradeSpec interface (if implemented) to customize the conversion
+	var upgradeAsAny any = upgrade
+	if augmentedUpgrade, ok := upgradeAsAny.(augmentConversionForManagedClusterUpgradeSpec); ok {
+		err := augmentedUpgrade.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedClusterUpgradeSpec populates the provided destination ManagedClusterUpgradeSpec from our ManagedClusterUpgradeSpec
+func (upgrade *ManagedClusterUpgradeSpec) AssignProperties_To_ManagedClusterUpgradeSpec(destination *v20250301s.ManagedClusterUpgradeSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(upgrade.PropertyBag)
+
+	// KubernetesVersion
+	destination.KubernetesVersion = genruntime.ClonePointerToString(upgrade.KubernetesVersion)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(upgrade.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpgradeSpec interface (if implemented) to customize the conversion
+	var upgradeAsAny any = upgrade
+	if augmentedUpgrade, ok := upgradeAsAny.(augmentConversionForManagedClusterUpgradeSpec); ok {
+		err := augmentedUpgrade.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.ManagedClusterUpgradeSpec_STATUS
 // The upgrade to apply to a ManagedCluster.
 type ManagedClusterUpgradeSpec_STATUS struct {
 	KubernetesVersion *string                `json:"kubernetesVersion,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type              *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_ManagedClusterUpgradeSpec_STATUS populates our ManagedClusterUpgradeSpec_STATUS from the provided source ManagedClusterUpgradeSpec_STATUS
+func (upgrade *ManagedClusterUpgradeSpec_STATUS) AssignProperties_From_ManagedClusterUpgradeSpec_STATUS(source *v20250301s.ManagedClusterUpgradeSpec_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KubernetesVersion
+	upgrade.KubernetesVersion = genruntime.ClonePointerToString(source.KubernetesVersion)
+
+	// Type
+	upgrade.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		upgrade.PropertyBag = propertyBag
+	} else {
+		upgrade.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpgradeSpec_STATUS interface (if implemented) to customize the conversion
+	var upgradeAsAny any = upgrade
+	if augmentedUpgrade, ok := upgradeAsAny.(augmentConversionForManagedClusterUpgradeSpec_STATUS); ok {
+		err := augmentedUpgrade.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedClusterUpgradeSpec_STATUS populates the provided destination ManagedClusterUpgradeSpec_STATUS from our ManagedClusterUpgradeSpec_STATUS
+func (upgrade *ManagedClusterUpgradeSpec_STATUS) AssignProperties_To_ManagedClusterUpgradeSpec_STATUS(destination *v20250301s.ManagedClusterUpgradeSpec_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(upgrade.PropertyBag)
+
+	// KubernetesVersion
+	destination.KubernetesVersion = genruntime.ClonePointerToString(upgrade.KubernetesVersion)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(upgrade.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedClusterUpgradeSpec_STATUS interface (if implemented) to customize the conversion
+	var upgradeAsAny any = upgrade
+	if augmentedUpgrade, ok := upgradeAsAny.(augmentConversionForManagedClusterUpgradeSpec_STATUS); ok {
+		err := augmentedUpgrade.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.UpdateStage
@@ -321,6 +1656,100 @@ type UpdateStage struct {
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_UpdateStage populates our UpdateStage from the provided source UpdateStage
+func (stage *UpdateStage) AssignProperties_From_UpdateStage(source *v20250301s.UpdateStage) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AfterStageWaitInSeconds
+	stage.AfterStageWaitInSeconds = genruntime.ClonePointerToInt(source.AfterStageWaitInSeconds)
+
+	// Groups
+	if source.Groups != nil {
+		groupList := make([]UpdateGroup, len(source.Groups))
+		for groupIndex, groupItem := range source.Groups {
+			var group UpdateGroup
+			err := group.AssignProperties_From_UpdateGroup(&groupItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroup() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		stage.Groups = groupList
+	} else {
+		stage.Groups = nil
+	}
+
+	// Name
+	stage.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		stage.PropertyBag = propertyBag
+	} else {
+		stage.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStage interface (if implemented) to customize the conversion
+	var stageAsAny any = stage
+	if augmentedStage, ok := stageAsAny.(augmentConversionForUpdateStage); ok {
+		err := augmentedStage.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateStage populates the provided destination UpdateStage from our UpdateStage
+func (stage *UpdateStage) AssignProperties_To_UpdateStage(destination *v20250301s.UpdateStage) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(stage.PropertyBag)
+
+	// AfterStageWaitInSeconds
+	destination.AfterStageWaitInSeconds = genruntime.ClonePointerToInt(stage.AfterStageWaitInSeconds)
+
+	// Groups
+	if stage.Groups != nil {
+		groupList := make([]v20250301s.UpdateGroup, len(stage.Groups))
+		for groupIndex, groupItem := range stage.Groups {
+			var group v20250301s.UpdateGroup
+			err := groupItem.AssignProperties_To_UpdateGroup(&group)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroup() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		destination.Groups = groupList
+	} else {
+		destination.Groups = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(stage.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStage interface (if implemented) to customize the conversion
+	var stageAsAny any = stage
+	if augmentedStage, ok := stageAsAny.(augmentConversionForUpdateStage); ok {
+		err := augmentedStage.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateStage_STATUS
 // Defines a stage which contains the groups to update and the steps to take (e.g., wait for a time period) before starting
 // the next stage.
@@ -329,6 +1758,100 @@ type UpdateStage_STATUS struct {
 	Groups                  []UpdateGroup_STATUS   `json:"groups,omitempty"`
 	Name                    *string                `json:"name,omitempty"`
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_UpdateStage_STATUS populates our UpdateStage_STATUS from the provided source UpdateStage_STATUS
+func (stage *UpdateStage_STATUS) AssignProperties_From_UpdateStage_STATUS(source *v20250301s.UpdateStage_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AfterStageWaitInSeconds
+	stage.AfterStageWaitInSeconds = genruntime.ClonePointerToInt(source.AfterStageWaitInSeconds)
+
+	// Groups
+	if source.Groups != nil {
+		groupList := make([]UpdateGroup_STATUS, len(source.Groups))
+		for groupIndex, groupItem := range source.Groups {
+			var group UpdateGroup_STATUS
+			err := group.AssignProperties_From_UpdateGroup_STATUS(&groupItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroup_STATUS() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		stage.Groups = groupList
+	} else {
+		stage.Groups = nil
+	}
+
+	// Name
+	stage.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		stage.PropertyBag = propertyBag
+	} else {
+		stage.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStage_STATUS interface (if implemented) to customize the conversion
+	var stageAsAny any = stage
+	if augmentedStage, ok := stageAsAny.(augmentConversionForUpdateStage_STATUS); ok {
+		err := augmentedStage.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateStage_STATUS populates the provided destination UpdateStage_STATUS from our UpdateStage_STATUS
+func (stage *UpdateStage_STATUS) AssignProperties_To_UpdateStage_STATUS(destination *v20250301s.UpdateStage_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(stage.PropertyBag)
+
+	// AfterStageWaitInSeconds
+	destination.AfterStageWaitInSeconds = genruntime.ClonePointerToInt(stage.AfterStageWaitInSeconds)
+
+	// Groups
+	if stage.Groups != nil {
+		groupList := make([]v20250301s.UpdateGroup_STATUS, len(stage.Groups))
+		for groupIndex, groupItem := range stage.Groups {
+			var group v20250301s.UpdateGroup_STATUS
+			err := groupItem.AssignProperties_To_UpdateGroup_STATUS(&group)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroup_STATUS() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		destination.Groups = groupList
+	} else {
+		destination.Groups = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(stage.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStage_STATUS interface (if implemented) to customize the conversion
+	var stageAsAny any = stage
+	if augmentedStage, ok := stageAsAny.(augmentConversionForUpdateStage_STATUS); ok {
+		err := augmentedStage.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.UpdateStageStatus_STATUS
@@ -341,6 +1864,142 @@ type UpdateStageStatus_STATUS struct {
 	Status               *UpdateStatus_STATUS       `json:"status,omitempty"`
 }
 
+// AssignProperties_From_UpdateStageStatus_STATUS populates our UpdateStageStatus_STATUS from the provided source UpdateStageStatus_STATUS
+func (status *UpdateStageStatus_STATUS) AssignProperties_From_UpdateStageStatus_STATUS(source *v20250301s.UpdateStageStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AfterStageWaitStatus
+	if source.AfterStageWaitStatus != nil {
+		var afterStageWaitStatus WaitStatus_STATUS
+		err := afterStageWaitStatus.AssignProperties_From_WaitStatus_STATUS(source.AfterStageWaitStatus)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
+		}
+		status.AfterStageWaitStatus = &afterStageWaitStatus
+	} else {
+		status.AfterStageWaitStatus = nil
+	}
+
+	// Groups
+	if source.Groups != nil {
+		groupList := make([]UpdateGroupStatus_STATUS, len(source.Groups))
+		for groupIndex, groupItem := range source.Groups {
+			var group UpdateGroupStatus_STATUS
+			err := group.AssignProperties_From_UpdateGroupStatus_STATUS(&groupItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_UpdateGroupStatus_STATUS() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		status.Groups = groupList
+	} else {
+		status.Groups = nil
+	}
+
+	// Name
+	status.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Status
+	if source.Status != nil {
+		var statusLocal UpdateStatus_STATUS
+		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+		}
+		status.Status = &statusLocal
+	} else {
+		status.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStageStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateStageStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateStageStatus_STATUS populates the provided destination UpdateStageStatus_STATUS from our UpdateStageStatus_STATUS
+func (status *UpdateStageStatus_STATUS) AssignProperties_To_UpdateStageStatus_STATUS(destination *v20250301s.UpdateStageStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// AfterStageWaitStatus
+	if status.AfterStageWaitStatus != nil {
+		var afterStageWaitStatus v20250301s.WaitStatus_STATUS
+		err := status.AfterStageWaitStatus.AssignProperties_To_WaitStatus_STATUS(&afterStageWaitStatus)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_WaitStatus_STATUS() to populate field AfterStageWaitStatus")
+		}
+		destination.AfterStageWaitStatus = &afterStageWaitStatus
+	} else {
+		destination.AfterStageWaitStatus = nil
+	}
+
+	// Groups
+	if status.Groups != nil {
+		groupList := make([]v20250301s.UpdateGroupStatus_STATUS, len(status.Groups))
+		for groupIndex, groupItem := range status.Groups {
+			var group v20250301s.UpdateGroupStatus_STATUS
+			err := groupItem.AssignProperties_To_UpdateGroupStatus_STATUS(&group)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_UpdateGroupStatus_STATUS() to populate field Groups")
+			}
+			groupList[groupIndex] = group
+		}
+		destination.Groups = groupList
+	} else {
+		destination.Groups = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(status.Name)
+
+	// Status
+	if status.Status != nil {
+		var statusLocal v20250301s.UpdateStatus_STATUS
+		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &statusLocal
+	} else {
+		destination.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStageStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateStageStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateStatus_STATUS
 // The status for an operation or group of operations.
 type UpdateStatus_STATUS struct {
@@ -349,6 +2008,128 @@ type UpdateStatus_STATUS struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	StartTime     *string                `json:"startTime,omitempty"`
 	State         *string                `json:"state,omitempty"`
+}
+
+// AssignProperties_From_UpdateStatus_STATUS populates our UpdateStatus_STATUS from the provided source UpdateStatus_STATUS
+func (status *UpdateStatus_STATUS) AssignProperties_From_UpdateStatus_STATUS(source *v20250301s.UpdateStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompletedTime
+	status.CompletedTime = genruntime.ClonePointerToString(source.CompletedTime)
+
+	// Error
+	if source.Error != nil {
+		var error ErrorDetail_STATUS
+		err := error.AssignProperties_From_ErrorDetail_STATUS(source.Error)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field Error")
+		}
+		status.Error = &error
+	} else {
+		status.Error = nil
+	}
+
+	// StartTime
+	status.StartTime = genruntime.ClonePointerToString(source.StartTime)
+
+	// State
+	status.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateStatus_STATUS populates the provided destination UpdateStatus_STATUS from our UpdateStatus_STATUS
+func (status *UpdateStatus_STATUS) AssignProperties_To_UpdateStatus_STATUS(destination *v20250301s.UpdateStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// CompletedTime
+	destination.CompletedTime = genruntime.ClonePointerToString(status.CompletedTime)
+
+	// Error
+	if status.Error != nil {
+		var error v20250301s.ErrorDetail_STATUS
+		err := status.Error.AssignProperties_To_ErrorDetail_STATUS(&error)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field Error")
+		}
+		destination.Error = &error
+	} else {
+		destination.Error = nil
+	}
+
+	// StartTime
+	destination.StartTime = genruntime.ClonePointerToString(status.StartTime)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(status.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForManagedClusterUpgradeSpec interface {
+	AssignPropertiesFrom(src *v20250301s.ManagedClusterUpgradeSpec) error
+	AssignPropertiesTo(dst *v20250301s.ManagedClusterUpgradeSpec) error
+}
+
+type augmentConversionForManagedClusterUpgradeSpec_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.ManagedClusterUpgradeSpec_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.ManagedClusterUpgradeSpec_STATUS) error
+}
+
+type augmentConversionForUpdateStage interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateStage) error
+	AssignPropertiesTo(dst *v20250301s.UpdateStage) error
+}
+
+type augmentConversionForUpdateStage_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateStage_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateStage_STATUS) error
+}
+
+type augmentConversionForUpdateStageStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateStageStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateStageStatus_STATUS) error
+}
+
+type augmentConversionForUpdateStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateStatus_STATUS) error
 }
 
 // Storage version of v1api20230315preview.ErrorDetail_STATUS
@@ -362,6 +2143,138 @@ type ErrorDetail_STATUS struct {
 	Target         *string                       `json:"target,omitempty"`
 }
 
+// AssignProperties_From_ErrorDetail_STATUS populates our ErrorDetail_STATUS from the provided source ErrorDetail_STATUS
+func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(source *v20250301s.ErrorDetail_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AdditionalInfo
+	if source.AdditionalInfo != nil {
+		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
+		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
+			var additionalInfo ErrorAdditionalInfo_STATUS
+			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+			}
+			additionalInfoList[additionalInfoIndex] = additionalInfo
+		}
+		detail.AdditionalInfo = additionalInfoList
+	} else {
+		detail.AdditionalInfo = nil
+	}
+
+	// Code
+	detail.Code = genruntime.ClonePointerToString(source.Code)
+
+	// Details
+	if source.Details != nil {
+		detailList := make([]ErrorDetail_STATUS_Unrolled, len(source.Details))
+		for detailIndex, detailItem := range source.Details {
+			var detailLocal ErrorDetail_STATUS_Unrolled
+			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
+			}
+			detailList[detailIndex] = detailLocal
+		}
+		detail.Details = detailList
+	} else {
+		detail.Details = nil
+	}
+
+	// Message
+	detail.Message = genruntime.ClonePointerToString(source.Message)
+
+	// Target
+	detail.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		detail.PropertyBag = propertyBag
+	} else {
+		detail.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorDetail_STATUS interface (if implemented) to customize the conversion
+	var detailAsAny any = detail
+	if augmentedDetail, ok := detailAsAny.(augmentConversionForErrorDetail_STATUS); ok {
+		err := augmentedDetail.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ErrorDetail_STATUS populates the provided destination ErrorDetail_STATUS from our ErrorDetail_STATUS
+func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destination *v20250301s.ErrorDetail_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(detail.PropertyBag)
+
+	// AdditionalInfo
+	if detail.AdditionalInfo != nil {
+		additionalInfoList := make([]v20250301s.ErrorAdditionalInfo_STATUS, len(detail.AdditionalInfo))
+		for additionalInfoIndex, additionalInfoItem := range detail.AdditionalInfo {
+			var additionalInfo v20250301s.ErrorAdditionalInfo_STATUS
+			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+			}
+			additionalInfoList[additionalInfoIndex] = additionalInfo
+		}
+		destination.AdditionalInfo = additionalInfoList
+	} else {
+		destination.AdditionalInfo = nil
+	}
+
+	// Code
+	destination.Code = genruntime.ClonePointerToString(detail.Code)
+
+	// Details
+	if detail.Details != nil {
+		detailList := make([]v20250301s.ErrorDetail_STATUS_Unrolled, len(detail.Details))
+		for detailIndex, detailItem := range detail.Details {
+			var detailLocal v20250301s.ErrorDetail_STATUS_Unrolled
+			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
+			}
+			detailList[detailIndex] = detailLocal
+		}
+		destination.Details = detailList
+	} else {
+		destination.Details = nil
+	}
+
+	// Message
+	destination.Message = genruntime.ClonePointerToString(detail.Message)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(detail.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorDetail_STATUS interface (if implemented) to customize the conversion
+	var detailAsAny any = detail
+	if augmentedDetail, ok := detailAsAny.(augmentConversionForErrorDetail_STATUS); ok {
+		err := augmentedDetail.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateGroup
 // A group to be updated.
 type UpdateGroup struct {
@@ -369,11 +2282,123 @@ type UpdateGroup struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_UpdateGroup populates our UpdateGroup from the provided source UpdateGroup
+func (group *UpdateGroup) AssignProperties_From_UpdateGroup(source *v20250301s.UpdateGroup) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForUpdateGroup); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateGroup populates the provided destination UpdateGroup from our UpdateGroup
+func (group *UpdateGroup) AssignProperties_To_UpdateGroup(destination *v20250301s.UpdateGroup) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForUpdateGroup); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.UpdateGroup_STATUS
 // A group to be updated.
 type UpdateGroup_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_UpdateGroup_STATUS populates our UpdateGroup_STATUS from the provided source UpdateGroup_STATUS
+func (group *UpdateGroup_STATUS) AssignProperties_From_UpdateGroup_STATUS(source *v20250301s.UpdateGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForUpdateGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateGroup_STATUS populates the provided destination UpdateGroup_STATUS from our UpdateGroup_STATUS
+func (group *UpdateGroup_STATUS) AssignProperties_To_UpdateGroup_STATUS(destination *v20250301s.UpdateGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForUpdateGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.UpdateGroupStatus_STATUS
@@ -385,6 +2410,118 @@ type UpdateGroupStatus_STATUS struct {
 	Status      *UpdateStatus_STATUS        `json:"status,omitempty"`
 }
 
+// AssignProperties_From_UpdateGroupStatus_STATUS populates our UpdateGroupStatus_STATUS from the provided source UpdateGroupStatus_STATUS
+func (status *UpdateGroupStatus_STATUS) AssignProperties_From_UpdateGroupStatus_STATUS(source *v20250301s.UpdateGroupStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Members
+	if source.Members != nil {
+		memberList := make([]MemberUpdateStatus_STATUS, len(source.Members))
+		for memberIndex, memberItem := range source.Members {
+			var member MemberUpdateStatus_STATUS
+			err := member.AssignProperties_From_MemberUpdateStatus_STATUS(&memberItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_MemberUpdateStatus_STATUS() to populate field Members")
+			}
+			memberList[memberIndex] = member
+		}
+		status.Members = memberList
+	} else {
+		status.Members = nil
+	}
+
+	// Name
+	status.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Status
+	if source.Status != nil {
+		var statusLocal UpdateStatus_STATUS
+		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+		}
+		status.Status = &statusLocal
+	} else {
+		status.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroupStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateGroupStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_UpdateGroupStatus_STATUS populates the provided destination UpdateGroupStatus_STATUS from our UpdateGroupStatus_STATUS
+func (status *UpdateGroupStatus_STATUS) AssignProperties_To_UpdateGroupStatus_STATUS(destination *v20250301s.UpdateGroupStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// Members
+	if status.Members != nil {
+		memberList := make([]v20250301s.MemberUpdateStatus_STATUS, len(status.Members))
+		for memberIndex, memberItem := range status.Members {
+			var member v20250301s.MemberUpdateStatus_STATUS
+			err := memberItem.AssignProperties_To_MemberUpdateStatus_STATUS(&member)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_MemberUpdateStatus_STATUS() to populate field Members")
+			}
+			memberList[memberIndex] = member
+		}
+		destination.Members = memberList
+	} else {
+		destination.Members = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(status.Name)
+
+	// Status
+	if status.Status != nil {
+		var statusLocal v20250301s.UpdateStatus_STATUS
+		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &statusLocal
+	} else {
+		destination.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForUpdateGroupStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForUpdateGroupStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.WaitStatus_STATUS
 // The status of the wait duration.
 type WaitStatus_STATUS struct {
@@ -393,12 +2530,195 @@ type WaitStatus_STATUS struct {
 	WaitDurationInSeconds *int                   `json:"waitDurationInSeconds,omitempty"`
 }
 
+// AssignProperties_From_WaitStatus_STATUS populates our WaitStatus_STATUS from the provided source WaitStatus_STATUS
+func (status *WaitStatus_STATUS) AssignProperties_From_WaitStatus_STATUS(source *v20250301s.WaitStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Status
+	if source.Status != nil {
+		var statusLocal UpdateStatus_STATUS
+		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+		}
+		status.Status = &statusLocal
+	} else {
+		status.Status = nil
+	}
+
+	// WaitDurationInSeconds
+	status.WaitDurationInSeconds = genruntime.ClonePointerToInt(source.WaitDurationInSeconds)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWaitStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForWaitStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WaitStatus_STATUS populates the provided destination WaitStatus_STATUS from our WaitStatus_STATUS
+func (status *WaitStatus_STATUS) AssignProperties_To_WaitStatus_STATUS(destination *v20250301s.WaitStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// Status
+	if status.Status != nil {
+		var statusLocal v20250301s.UpdateStatus_STATUS
+		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &statusLocal
+	} else {
+		destination.Status = nil
+	}
+
+	// WaitDurationInSeconds
+	destination.WaitDurationInSeconds = genruntime.ClonePointerToInt(status.WaitDurationInSeconds)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWaitStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForWaitStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForErrorDetail_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.ErrorDetail_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.ErrorDetail_STATUS) error
+}
+
+type augmentConversionForUpdateGroup interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateGroup) error
+	AssignPropertiesTo(dst *v20250301s.UpdateGroup) error
+}
+
+type augmentConversionForUpdateGroup_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateGroup_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateGroup_STATUS) error
+}
+
+type augmentConversionForUpdateGroupStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.UpdateGroupStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.UpdateGroupStatus_STATUS) error
+}
+
+type augmentConversionForWaitStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.WaitStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.WaitStatus_STATUS) error
+}
+
 // Storage version of v1api20230315preview.ErrorAdditionalInfo_STATUS
 // The resource management error additional info.
 type ErrorAdditionalInfo_STATUS struct {
 	Info        map[string]v1.JSON     `json:"info,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_ErrorAdditionalInfo_STATUS populates our ErrorAdditionalInfo_STATUS from the provided source ErrorAdditionalInfo_STATUS
+func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInfo_STATUS(source *v20250301s.ErrorAdditionalInfo_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Info
+	if source.Info != nil {
+		infoMap := make(map[string]v1.JSON, len(source.Info))
+		for infoKey, infoValue := range source.Info {
+			infoMap[infoKey] = *infoValue.DeepCopy()
+		}
+		info.Info = infoMap
+	} else {
+		info.Info = nil
+	}
+
+	// Type
+	info.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		info.PropertyBag = propertyBag
+	} else {
+		info.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorAdditionalInfo_STATUS interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForErrorAdditionalInfo_STATUS); ok {
+		err := augmentedInfo.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ErrorAdditionalInfo_STATUS populates the provided destination ErrorAdditionalInfo_STATUS from our ErrorAdditionalInfo_STATUS
+func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_STATUS(destination *v20250301s.ErrorAdditionalInfo_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(info.PropertyBag)
+
+	// Info
+	if info.Info != nil {
+		infoMap := make(map[string]v1.JSON, len(info.Info))
+		for infoKey, infoValue := range info.Info {
+			infoMap[infoKey] = *infoValue.DeepCopy()
+		}
+		destination.Info = infoMap
+	} else {
+		destination.Info = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(info.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorAdditionalInfo_STATUS interface (if implemented) to customize the conversion
+	var infoAsAny any = info
+	if augmentedInfo, ok := infoAsAny.(augmentConversionForErrorAdditionalInfo_STATUS); ok {
+		err := augmentedInfo.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.ErrorDetail_STATUS_Unrolled
@@ -410,6 +2730,106 @@ type ErrorDetail_STATUS_Unrolled struct {
 	Target         *string                      `json:"target,omitempty"`
 }
 
+// AssignProperties_From_ErrorDetail_STATUS_Unrolled populates our ErrorDetail_STATUS_Unrolled from the provided source ErrorDetail_STATUS_Unrolled
+func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_STATUS_Unrolled(source *v20250301s.ErrorDetail_STATUS_Unrolled) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AdditionalInfo
+	if source.AdditionalInfo != nil {
+		additionalInfoList := make([]ErrorAdditionalInfo_STATUS, len(source.AdditionalInfo))
+		for additionalInfoIndex, additionalInfoItem := range source.AdditionalInfo {
+			var additionalInfo ErrorAdditionalInfo_STATUS
+			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+			}
+			additionalInfoList[additionalInfoIndex] = additionalInfo
+		}
+		unrolled.AdditionalInfo = additionalInfoList
+	} else {
+		unrolled.AdditionalInfo = nil
+	}
+
+	// Code
+	unrolled.Code = genruntime.ClonePointerToString(source.Code)
+
+	// Message
+	unrolled.Message = genruntime.ClonePointerToString(source.Message)
+
+	// Target
+	unrolled.Target = genruntime.ClonePointerToString(source.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		unrolled.PropertyBag = propertyBag
+	} else {
+		unrolled.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorDetail_STATUS_Unrolled interface (if implemented) to customize the conversion
+	var unrolledAsAny any = unrolled
+	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForErrorDetail_STATUS_Unrolled); ok {
+		err := augmentedUnrolled.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ErrorDetail_STATUS_Unrolled populates the provided destination ErrorDetail_STATUS_Unrolled from our ErrorDetail_STATUS_Unrolled
+func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STATUS_Unrolled(destination *v20250301s.ErrorDetail_STATUS_Unrolled) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(unrolled.PropertyBag)
+
+	// AdditionalInfo
+	if unrolled.AdditionalInfo != nil {
+		additionalInfoList := make([]v20250301s.ErrorAdditionalInfo_STATUS, len(unrolled.AdditionalInfo))
+		for additionalInfoIndex, additionalInfoItem := range unrolled.AdditionalInfo {
+			var additionalInfo v20250301s.ErrorAdditionalInfo_STATUS
+			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+			}
+			additionalInfoList[additionalInfoIndex] = additionalInfo
+		}
+		destination.AdditionalInfo = additionalInfoList
+	} else {
+		destination.AdditionalInfo = nil
+	}
+
+	// Code
+	destination.Code = genruntime.ClonePointerToString(unrolled.Code)
+
+	// Message
+	destination.Message = genruntime.ClonePointerToString(unrolled.Message)
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(unrolled.Target)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForErrorDetail_STATUS_Unrolled interface (if implemented) to customize the conversion
+	var unrolledAsAny any = unrolled
+	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForErrorDetail_STATUS_Unrolled); ok {
+		err := augmentedUnrolled.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.MemberUpdateStatus_STATUS
 // The status of a member update operation.
 type MemberUpdateStatus_STATUS struct {
@@ -418,6 +2838,133 @@ type MemberUpdateStatus_STATUS struct {
 	OperationId       *string                `json:"operationId,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Status            *UpdateStatus_STATUS   `json:"status,omitempty"`
+}
+
+// AssignProperties_From_MemberUpdateStatus_STATUS populates our MemberUpdateStatus_STATUS from the provided source MemberUpdateStatus_STATUS
+func (status *MemberUpdateStatus_STATUS) AssignProperties_From_MemberUpdateStatus_STATUS(source *v20250301s.MemberUpdateStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ClusterResourceId
+	status.ClusterResourceId = genruntime.ClonePointerToString(source.ClusterResourceId)
+
+	// Message
+	if source.Message != nil {
+		propertyBag.Add("Message", *source.Message)
+	} else {
+		propertyBag.Remove("Message")
+	}
+
+	// Name
+	status.Name = genruntime.ClonePointerToString(source.Name)
+
+	// OperationId
+	status.OperationId = genruntime.ClonePointerToString(source.OperationId)
+
+	// Status
+	if source.Status != nil {
+		var statusLocal UpdateStatus_STATUS
+		err := statusLocal.AssignProperties_From_UpdateStatus_STATUS(source.Status)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_UpdateStatus_STATUS() to populate field Status")
+		}
+		status.Status = &statusLocal
+	} else {
+		status.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		status.PropertyBag = propertyBag
+	} else {
+		status.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMemberUpdateStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForMemberUpdateStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MemberUpdateStatus_STATUS populates the provided destination MemberUpdateStatus_STATUS from our MemberUpdateStatus_STATUS
+func (status *MemberUpdateStatus_STATUS) AssignProperties_To_MemberUpdateStatus_STATUS(destination *v20250301s.MemberUpdateStatus_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(status.PropertyBag)
+
+	// ClusterResourceId
+	destination.ClusterResourceId = genruntime.ClonePointerToString(status.ClusterResourceId)
+
+	// Message
+	if propertyBag.Contains("Message") {
+		var message string
+		err := propertyBag.Pull("Message", &message)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Message' from propertyBag")
+		}
+
+		destination.Message = &message
+	} else {
+		destination.Message = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(status.Name)
+
+	// OperationId
+	destination.OperationId = genruntime.ClonePointerToString(status.OperationId)
+
+	// Status
+	if status.Status != nil {
+		var statusLocal v20250301s.UpdateStatus_STATUS
+		err := status.Status.AssignProperties_To_UpdateStatus_STATUS(&statusLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_UpdateStatus_STATUS() to populate field Status")
+		}
+		destination.Status = &statusLocal
+	} else {
+		destination.Status = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMemberUpdateStatus_STATUS interface (if implemented) to customize the conversion
+	var statusAsAny any = status
+	if augmentedStatus, ok := statusAsAny.(augmentConversionForMemberUpdateStatus_STATUS); ok {
+		err := augmentedStatus.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForErrorAdditionalInfo_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.ErrorAdditionalInfo_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.ErrorAdditionalInfo_STATUS) error
+}
+
+type augmentConversionForErrorDetail_STATUS_Unrolled interface {
+	AssignPropertiesFrom(src *v20250301s.ErrorDetail_STATUS_Unrolled) error
+	AssignPropertiesTo(dst *v20250301s.ErrorDetail_STATUS_Unrolled) error
+}
+
+type augmentConversionForMemberUpdateStatus_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.MemberUpdateStatus_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.MemberUpdateStatus_STATUS) error
 }
 
 func init() {
