@@ -190,7 +190,7 @@ NodeIPFamilies=ipv4
 		if installConfig.Azure.CloudName == azuretypes.StackCloud || installConfig.Azure.CloudName == azuretypes.USSecCloud {
 			b, err := json.Marshal(session.Environment)
 			if err != nil {
-				return errors.Wrap(err, "could not serialize Azure endpoints")
+				return errors.Wrap(err, fmt.Sprintf("could not serialize endpoints for cloud %s: %w", installConfig.Azure.CloudName, err))
 			}
 			cm.Data[cloudProviderEndpointsKey] = string(b)
 		}
