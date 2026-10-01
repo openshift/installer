@@ -224,25 +224,18 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		case azure.StackCloud:
 			// Set provider so that the Azure Stack (forked) controller and CRDs are used.
 			azProvider = AzureStack
+			fallthrough
 
+		case azure.USSecCloud:
 			// Lay down the environment file so that cloud-provider-azure running in
 			// CAPZ & ASO controllers can load the environment.
 			b, err := json.Marshal(session.Environment)
 			if err != nil {
-				return errors.Wrap(err, "could not serialize Azure Stack endpoints")
+				return errors.Wrap(err, fmt.Sprintf("could not serialize Azure %s endpoints", cloudName))
 			}
 			envFP = filepath.Join(c.componentDir, "azurestackcloud.json")
 			if err = os.WriteFile(envFP, b, 0600); err != nil {
-				return fmt.Errorf("failed to write Azure Stack environment file: %w", err)
-			}
-		case azure.USSecCloud:
-			b, err := json.Marshal(session.Environment)
-			if err != nil {
-				return errors.Wrap(err, "could not serialize Azure Government Secret endpoints")
-			}
-			envFP = filepath.Join(c.componentDir, "azureusseccloud.json")
-			if err = os.WriteFile(envFP, b, 0600); err != nil {
-				return fmt.Errorf("failed to write Azure Government Secret environment file: %w", err)
+				return fmt.Errorf("failed to write Azure %s environment file: %w", cloudName, err)
 			}
 		}
 

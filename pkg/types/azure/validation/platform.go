@@ -428,11 +428,11 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 func validateUSSec(p *azure.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.ARMEndpoint == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be provided when installing on Azure Government Secret"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be provided when installing on Azure Government Secret Cloud"))
 	}
 
 	if p.ClusterOSImage == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "a VHD URL must be provided when installing on Azure Government Secret "+"(marketplace images are not available in air-gapped environments)"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "a VHD URL must be provided when installing on Azure Government Secret Cloud"))
 	}
 	return allErrs
 }
