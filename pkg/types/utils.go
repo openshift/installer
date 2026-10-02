@@ -106,6 +106,24 @@ func (c *InstallConfig) CreateAzureIdentity() bool {
 	return defaultNeedsID && (computeNeedsID || cpNeedsID)
 }
 
+// DiskSetupFeatureGate returns the feature gate that governs the diskSetup
+// machine pool field for the cluster platform. On Azure, attaching the data
+// disks and partitioning, formatting and mounting them are two halves of the
+// same feature, so both are gated on AzureMultiDisk and it can be promoted on
+// its own. Every other platform gates diskSetup on MultiDiskSetup.
+func (c *InstallConfig) DiskSetupFeatureGate() configv1.FeatureGateName {
+	if c.Platform.Name() == azure.Name {
+		return features.FeatureGateAzureMultiDisk
+	}
+	return features.FeatureGateMultiDiskSetup
+}
+
+// DiskSetupEnabled determines whether the feature gate governing the diskSetup
+// machine pool field is enabled.
+func (c *InstallConfig) DiskSetupEnabled() bool {
+	return c.Enabled(c.DiskSetupFeatureGate())
+}
+
 // DefaultArch returns the default release architecture.
 func DefaultArch() Architecture {
 	return Architecture(version.RawDefaultArch())
