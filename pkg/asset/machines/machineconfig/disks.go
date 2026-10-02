@@ -3,7 +3,6 @@ package machineconfig
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"text/template"
 
@@ -75,8 +74,7 @@ func ForDiskSetup(role, device, label, path string, diskType types.DiskType) (*m
 	}
 
 	// Remove all non-alphanumeric characters from the label
-	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
-	label = reg.ReplaceAllString(label, "")
+	label = types.SanitizeDiskLabel(label)
 
 	mountUnit := diskMount{
 		MountPath: path,
