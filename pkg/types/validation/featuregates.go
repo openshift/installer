@@ -19,24 +19,6 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 			Field:           field.NewPath("platform", "none", "fencingCredentials"),
 		},
 		{
-			FeatureGateName: features.FeatureGateMultiDiskSetup,
-			Condition:       c.ControlPlane != nil && len(c.ControlPlane.DiskSetup) != 0,
-			Field:           field.NewPath("controlPlane", "diskSetup"),
-		},
-		{
-			FeatureGateName: features.FeatureGateMultiDiskSetup,
-			Condition: func() bool {
-				computeMachinePool := c.Compute
-				for _, compute := range computeMachinePool {
-					if len(compute.DiskSetup) != 0 {
-						return true
-					}
-				}
-				return false
-			}(),
-			Field: field.NewPath("compute", "diskSetup"),
-		},
-		{
 			FeatureGateName: features.FeatureGateOSStreams,
 			Condition:       c.OSImageStream != rhcos.GetDefaultOSImageStream(c),
 			Field:           field.NewPath("osImageStream"),
