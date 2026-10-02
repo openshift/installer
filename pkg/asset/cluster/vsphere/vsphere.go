@@ -15,10 +15,11 @@ func Metadata(config *types.InstallConfig) *typesvsphere.Metadata {
 
 	vcenterList := []typesvsphere.VCenters{}
 	for _, vcenter := range config.VSphere.VCenters {
+		credentials, _ := config.VSphere.CredentialsForVCenter(vcenter.Server)
 		vcenterDef := typesvsphere.VCenters{
 			VCenter:  vcenter.Server,
-			Username: vcenter.Username,
-			Password: vcenter.Password,
+			Username: credentials.User,
+			Password: credentials.Password,
 		}
 		vcenterList = append(vcenterList, vcenterDef)
 	}

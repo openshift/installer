@@ -313,7 +313,9 @@ machineconfigurations.operator.openshift.io:
   FeatureGates:
   - BootImageSkewEnforcement
   - IrreconcilableMachineConfig
+  - ManagedBootImagesAWSCAPI
   - ManagedBootImagesCPMS
+  - ManagedBootImagesCPMS+ManagedBootImagesAWSCAPI
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"

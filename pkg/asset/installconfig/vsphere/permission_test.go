@@ -149,6 +149,54 @@ func validIPIMultiZoneInstallConfig() *types.InstallConfig {
 	return installConfig
 }
 
+func TestComponentPermissionMatrix(t *testing.T) {
+	tests := []struct {
+		component      credentialComponent
+		group          permissionGroup
+		mustContain    []string
+		mustNotContain []string
+	}{
+		{
+			component:   componentMachineManagement,
+			group:       permissionCluster,
+			mustContain: []string{"Host.Inventory.EditCluster", "Resource.AssignVMToPool"},
+		},
+		{
+			component:      componentStorage,
+			group:          permissionDatastore,
+			mustContain:    []string{"Datastore.FileManagement", "System.Read"},
+			mustNotContain: []string{"VirtualMachine.Provisioning.Clone"},
+		},
+		{
+			component:      componentCloudControllerManager,
+			group:          permissionVcenter,
+			mustContain:    []string{"System.Read"},
+			mustNotContain: []string{"InventoryService.Tagging.CreateTag", "VirtualMachine.Inventory.Delete"},
+		},
+		{
+			component:      componentVSphereProblemDetector,
+			group:          permissionDatastore,
+			mustContain:    []string{"Datastore.Browse"},
+			mustNotContain: []string{"Datastore.FileManagement", "VirtualMachine.Inventory.Delete"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(string(test.component)+"/"+string(test.group), func(t *testing.T) {
+			group, found := componentPermissionGroup(test.component, test.group)
+			if !found {
+				t.Fatalf("component permission group not found")
+			}
+			for _, privilege := range test.mustContain {
+				assert.Contains(t, group.Permissions, privilege)
+			}
+			for _, privilege := range test.mustNotContain {
+				assert.NotContains(t, group.Permissions, privilege)
+			}
+		})
+	}
+}
+
 func TestPermissionValidate(t *testing.T) {
 	ctx := context.TODO()
 	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)

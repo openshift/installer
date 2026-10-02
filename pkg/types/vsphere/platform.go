@@ -1,6 +1,8 @@
 package vsphere
 
 import (
+	"fmt"
+
 	configv1 "github.com/openshift/api/config/v1"
 )
 
@@ -13,6 +15,41 @@ type DiskType string
 // Each represents a vCenter object type within a vSphere environment.
 // +kubebuilder:validation:Enum=HostGroup;Datacenter;ComputeCluster
 type FailureDomainType string
+
+// CredentialType determines how vCenter credentials are supplied.
+// +kubebuilder:validation:Enum=global;component-scoped
+type CredentialType string
+
+const (
+	// CredentialTypeGlobal uses the vCenter credentials on each VCenter.
+	CredentialTypeGlobal CredentialType = "global"
+	// CredentialTypeComponentScoped uses credentials scoped to each vSphere component.
+	CredentialTypeComponentScoped CredentialType = "component-scoped"
+)
+
+// Credential contains a vCenter username and password.
+type Credential struct {
+	// User is the username used to authenticate to vCenter.
+	User string `json:"user"`
+	// Password is the password used to authenticate to vCenter.
+	Password string `json:"password"`
+}
+
+// ComponentCredentials contains credentials for vSphere components.
+type ComponentCredentials struct {
+	// MachineManagement is used by the Machine API, Cluster API, and installer-side
+	// operations to provision, configure, and remove virtual machines in vCenter.
+	MachineManagement Credential `json:"machineManagement"`
+	// Storage is used by the vSphere CSI driver to provision and manage storage
+	// volumes and related vSphere storage resources.
+	Storage Credential `json:"storage"`
+	// CloudControllerManager is used by the vSphere Cloud Controller Manager to
+	// manage cloud-provider integration, including node and load-balancer state.
+	CloudControllerManager Credential `json:"cloudControllerManager"`
+	// VSphereProblemDetector is used by the vSphere Problem Detector to inspect
+	// the vSphere environment and report configuration and permission problems.
+	VSphereProblemDetector Credential `json:"vsphereProblemDetector"`
+}
 
 const (
 	// DiskTypeThin uses Thin disk provisioning type for vsphere in the cluster.
@@ -51,6 +88,10 @@ const (
 
 // Platform stores any global configuration used for vsphere platforms.
 type Platform struct {
+	// CredentialType determines whether credentials are global or component-scoped.
+	// When omitted, global credentials are used for backward compatibility.
+	CredentialType CredentialType `json:"credentialType,omitempty"`
+
 	// VCenter is the domain name or IP address of the vCenter.
 	// Deprecated: Use VCenters.Server
 	DeprecatedVCenter string `json:"vCenter,omitempty"`
@@ -168,7 +209,32 @@ type Platform struct {
 	Hosts []*Host `json:"hosts,omitempty"`
 }
 
-// FailureDomain holds the region and zone failure domain and
+// CredentialsForVCenter returns the credentials the installer should use for a vCenter.
+// Component-scoped mode deliberately uses the machine API credential for installer-side
+// operations because the installer provisions and configures virtual machines.
+func (p *Platform) CredentialsForVCenter(server string) (Credential, error) {
+	for i := range p.VCenters {
+		vcenter := &p.VCenters[i]
+		if vcenter.Server != server {
+			continue
+		}
+
+		if p.CredentialType == CredentialTypeComponentScoped {
+			if vcenter.ComponentCredentials == nil {
+				return Credential{}, fmt.Errorf("vcenter %s is missing componentCredentials", server)
+			}
+			credential := vcenter.ComponentCredentials.MachineManagement
+			if credential.User == "" || credential.Password == "" {
+				return Credential{}, fmt.Errorf("vcenter %s is missing machineManagement credentials", server)
+			}
+			return credential, nil
+		}
+
+		return Credential{User: vcenter.Username, Password: vcenter.Password}, nil
+	}
+	return Credential{}, fmt.Errorf("vcenter %s not found", server)
+}
+
 // the vCenter topology of that failure domain.
 type FailureDomain struct {
 	// name defines the name of the FailureDomain
@@ -306,10 +372,14 @@ type VCenter struct {
 	// Password is the password for the user to use to connect to the vCenter.
 	// +kubebuilder:validation:Required
 	Password string `json:"password"`
-	// Datacenter in which VMs are located.
+	// Datacenters in which VMs are located.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	Datacenters []string `json:"datacenters"`
+	// ComponentCredentials contains credentials for each vSphere component when
+	// the platform uses component-scoped credentials.
+	// +optional
+	ComponentCredentials *ComponentCredentials `json:"componentCredentials,omitempty"`
 }
 
 // Host defines host VMs to generate as part of the installation.
