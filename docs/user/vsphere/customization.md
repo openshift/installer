@@ -89,6 +89,8 @@ sshKey: ssh-ed25519 AAAA...
 
 `platform.vSphere.credentialType` accepts `global` or `component-scoped`. If it is omitted, `global` is used for backward compatibility.
 
+`component-scoped` is protected by the `VSpherePerComponentScopedCreds` feature gate. Enable the gate through the `DevPreviewNoUpgrade` feature set or explicitly in a `CustomNoUpgrade` feature set before using component-scoped credentials.
+
 With `global`, each `vcenters` entry must contain `user` and `password`; `componentCredentials` must not be set. These credentials are used by the installer and by the generated vSphere credential Secret.
 
 With `component-scoped`, `user` and `password` must be omitted from every `vcenters` entry. Each entry must contain complete credentials for `machineManagement`, `storage`, `cloudControllerManager`, and `vsphereProblemDetector`:
@@ -116,7 +118,7 @@ platform:
           password: diagnostics-password
 ```
 
-The `machineManagement` credential is used for installer-side vCenter operations, including VM provisioning and cleanup. Its privileges must therefore include the installer provisioning privileges described in [Privileges](privileges.md). Each component credential must have the privileges required by its corresponding OpenShift component. Credentials are stored in the install configuration and generated Secrets; protect the install-config directory accordingly.
+The `machineManagement` credential is used for installer-side vCenter operations, including VM provisioning and cleanup. Its privileges must therefore include the installer provisioning privileges described in [Privileges](privileges.md). Each component credential must have the privileges required by its corresponding OpenShift component; see the [candidate component privilege matrix](component-privileges.md) for a review and human-test checklist. Credentials are stored in the install configuration and generated Secrets; protect the install-config directory accordingly.
 
 The installer creates these four Secrets for component-scoped manual installations:
 

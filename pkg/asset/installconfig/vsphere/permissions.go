@@ -31,6 +31,17 @@ type SessionManager interface {
 // permissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
 type permissionGroup string
 
+// credentialComponent identifies the vSphere consumer that uses a credential.
+// Component-scoped credentials must not rely on privileges held by another account.
+type credentialComponent string
+
+const (
+	componentMachineManagement      credentialComponent = "machineManagement"
+	componentStorage                credentialComponent = "storage"
+	componentCloudControllerManager credentialComponent = "cloudControllerManager"
+	componentVSphereProblemDetector credentialComponent = "vsphereProblemDetector"
+)
+
 // PermissionGroupDefinition defines a group of permissions and a related human friendly description
 type PermissionGroupDefinition struct {
 	/* Permissions array of privileges which correlate with the privileges listed in docs */
@@ -175,6 +186,74 @@ var permissions = map[permissionGroup]PermissionGroupDefinition{
 	},
 }
 
+// componentPermissions is the candidate component-scoped privilege matrix.
+// Keep these definitions separate from permissions: permissions is the legacy
+// combined installer/global-credential matrix used by existing validation.
+var componentPermissions = map[credentialComponent]map[permissionGroup]PermissionGroupDefinition{
+	componentMachineManagement: machineManagementPermissions(),
+	componentStorage: {
+		permissionVcenter: {
+			Permissions: []string{"Cns.Searchable", "StorageProfile.View"},
+			Description: "vSphere CSI vCenter and storage policy access",
+		},
+		permissionDatastore: {
+			Permissions: []string{"Datastore.FileManagement", "System.Read"},
+			Description: "vSphere CSI datastore access",
+		},
+		permissionCluster: {
+			Permissions: []string{"Host.Config.Storage"},
+			Description: "vSphere CSI file service cluster access",
+		},
+		permissionFolder: {
+			Permissions: []string{"VirtualMachine.Config.AddExistingDisk", "VirtualMachine.Config.AddRemoveDevice"},
+			Description: "vSphere CSI node VM access",
+		},
+	},
+	componentCloudControllerManager: {
+		permissionVcenter: {
+			Permissions: []string{"System.Read"},
+			Description: "vSphere Cloud Controller Manager inventory access",
+		},
+	},
+	componentVSphereProblemDetector: {
+		permissionVcenter: {
+			Permissions: []string{"System.Read", "StorageProfile.View"},
+			Description: "vSphere Problem Detector inventory and policy access",
+		},
+		permissionDatastore: {
+			Permissions: []string{"Datastore.Browse"},
+			Description: "vSphere Problem Detector datastore access",
+		},
+	},
+}
+
+func machineManagementPermissions() map[permissionGroup]PermissionGroupDefinition {
+	component := make(map[permissionGroup]PermissionGroupDefinition, len(permissions))
+	for group, definition := range permissions {
+		definition.Permissions = append([]string(nil), definition.Permissions...)
+		component[group] = definition
+	}
+	cluster := component[permissionCluster]
+	cluster.Permissions = append(cluster.Permissions, "Host.Inventory.EditCluster")
+	component[permissionCluster] = cluster
+	return component
+}
+
+// componentPermissionGroup returns a copy of the candidate requirements for a
+// component and object group. Copies prevent callers from mutating the matrix.
+func componentPermissionGroup(component credentialComponent, group permissionGroup) (PermissionGroupDefinition, bool) {
+	groups, found := componentPermissions[component]
+	if !found {
+		return PermissionGroupDefinition{}, false
+	}
+	definition, found := groups[group]
+	if !found {
+		return PermissionGroupDefinition{}, false
+	}
+	definition.Permissions = append([]string(nil), definition.Permissions...)
+	return definition, true
+}
+
 // pruneToAvailablePermissions different versions of vCenter support different privileges.  the intent of this method
 // is to prune privileges from the check that don't exist.
 func pruneToAvailablePermissions(ctx context.Context, manager AuthManager) error {
@@ -207,12 +286,16 @@ func newAuthManager(client *vim25.Client) AuthManager {
 
 func comparePrivileges(ctx context.Context, validationCtx *validationContext, moRef vim25types.ManagedObjectReference, permissionGroup PermissionGroupDefinition) error {
 	authManager := validationCtx.AuthManager
-	sessionMgr := session.NewManager(validationCtx.Client)
-	user, err := sessionMgr.UserSession(ctx)
-	if err != nil {
-		return errors.Wrap(err, "unable to get user session")
+	username := validationCtx.Username
+	if username == "" {
+		sessionMgr := session.NewManager(validationCtx.Client)
+		user, err := sessionMgr.UserSession(ctx)
+		if err != nil {
+			return errors.Wrap(err, "unable to get user session")
+		}
+		username = user.UserName
 	}
-	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, user.UserName)
+	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, username)
 	if err != nil {
 		return errors.Wrap(err, "unable to retrieve privileges")
 	}
