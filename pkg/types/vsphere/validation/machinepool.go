@@ -36,6 +36,39 @@ var (
 	vSphereDataDiskNamePattern = regexp.MustCompile(`^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$`)
 )
 
+// validateDiskSetupReferences checks that every diskSetup entry names a data disk
+// that actually exists on the pool. Generation matches the two by name and simply
+// skips an entry it cannot resolve, so without this an unmatched platformDiskID
+// yields no MachineConfig, no error, and a cluster installed with the disk
+// attached but never partitioned, formatted or mounted.
+func validateDiskSetupReferences(machinePool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if len(machinePool.DiskSetup) == 0 {
+		return allErrs
+	}
+
+	diskNames := sets.NewString()
+	for _, disk := range machinePool.Platform.VSphere.DataDisks {
+		diskNames.Insert(disk.Name)
+	}
+
+	for i, ds := range machinePool.DiskSetup {
+		// A malformed entry has no usable ID; the platform-agnostic disk setup
+		// validation reports it.
+		diskID, ok := ds.PlatformDiskID()
+		if !ok {
+			continue
+		}
+		if !diskNames.Has(diskID) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("dataDisks"), diskID,
+				fmt.Sprintf("no data disk is named %q as declared in diskSetup[%d]", diskID, i)))
+		}
+	}
+
+	return allErrs
+}
+
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	vspherePool := machinePool.Platform.VSphere
@@ -79,6 +112,8 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("dataDisks"), len(dataDisks), fmt.Sprintf("data disk count must not exceed %d", maxVSphereDataDisks)))
 		}
 
+		seenDiskNames := sets.NewString()
+
 		// Check each data disk
 		for i, disk := range dataDisks {
 			diskPath := disksPath.Index(i)
@@ -92,6 +127,11 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 				}
 				if vSphereDataDiskNamePattern.FindStringSubmatch(disk.Name) == nil {
 					allErrs = append(allErrs, field.Invalid(diskPath.Child("name"), disk.Name, "data disk name must consist only of alphanumeric characters, hyphens and underscores, and must start and end with an alphanumeric character."))
+				}
+				if seenDiskNames.Has(disk.Name) {
+					allErrs = append(allErrs, field.Duplicate(diskPath.Child("name"), disk.Name))
+				} else {
+					seenDiskNames.Insert(disk.Name)
 				}
 			}
 
@@ -117,6 +157,8 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 			}
 		}
 	}
+
+	allErrs = append(allErrs, validateDiskSetupReferences(machinePool, fldPath)...)
 
 	if len(vspherePool.Zones) > 0 {
 		var zoneRefs []string
