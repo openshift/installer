@@ -162,6 +162,30 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
+	// The mutual-exclusivity of ICSP and IDMS is an authoring constraint for
+	// user-written install-config; reject it only on the install path. In
+	// add-nodes the sources come from the live cluster, where ICSP and IDMS
+	// coexist during migration. Convert and merge, letting MergedMirrorSets
+	// handle deduplication.
+	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
+		if agentWorkflow.Workflow == workflow.AgentWorkflowTypeInstall {
+			return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
+		}
+		logrus.Warnf("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; merging with IDMS taking precedence")
+		idmsPolicy := make(map[string]configv1.MirrorSourcePolicy, len(imageDigestSources))
+		for _, ids := range imageDigestSources {
+			idmsPolicy[ids.Source] = ids.SourcePolicy
+		}
+		convertedICSP := bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
+		for i := range convertedICSP {
+			if policy, ok := idmsPolicy[convertedICSP[i].Source]; ok {
+				convertedICSP[i].SourcePolicy = policy
+			}
+		}
+		imageDigestSources = append(imageDigestSources, convertedICSP...)
+		deprecatedImageContentSources = nil
+	}
+
 	if len(deprecatedImageContentSources) == 0 && len(imageDigestSources) == 0 {
 		return i.generateDefaultRegistriesConf()
 	}
@@ -189,10 +213,6 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
-	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
-		return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
-	}
-
 	digestMirrorSources := []types.ImageDigestSource{}
 	if len(deprecatedImageContentSources) > 0 {
 		digestMirrorSources = bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
