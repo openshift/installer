@@ -10,6 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
@@ -26,6 +27,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		name           string
 		dependencies   []asset.Asset
 		expectedConfig string
+		expectedError  string
 	}{
 		{
 			name: "missing-config",
@@ -330,6 +332,179 @@ unqualified-search-registries = []
     location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
+		{
+			name: "install command - both ICSP and IDMS present should error",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				&agent.OptionalInstallConfig{
+					Supplied: true,
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageDigestSources: []types.ImageDigestSource{
+								{
+									Source: "registry.ci.openshift.org/ocp/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+									},
+								},
+							},
+							DeprecatedImageContentSources: []types.ImageContentSource{
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+									},
+								},
+							},
+						},
+					},
+				},
+				&releaseimage.Image{
+					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+				},
+			},
+			expectedError: "invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time",
+		},
+		{
+			name: "add-nodes command - both ICSP and IDMS present with disjoint sources",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+					DeprecatedImageContentSources: []types.ImageContentSource{
+						{
+							Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: `additional-layer-store-auth-helper = ""
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
+		{
+			name: "add-nodes command - overlapping ICSP and IDMS sources are merged",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+					DeprecatedImageContentSources: []types.ImageContentSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/old-icsp-mirror",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: `additional-layer-store-auth-helper = ""
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/old-icsp-mirror"
+`,
+		},
+		{
+			name: "add-nodes command - overlapping sources with NeverContactSource policy",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+							SourcePolicy: configv1.NeverContactSource,
+						},
+					},
+					DeprecatedImageContentSources: []types.ImageContentSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/old-icsp-mirror",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: `additional-layer-store-auth-helper = ""
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  blocked = true
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/old-icsp-mirror"
+`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -340,6 +515,10 @@ unqualified-search-registries = []
 			asset := &RegistriesConf{}
 			err := asset.Generate(context.Background(), parents)
 
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
+				return
+			}
 			assert.NoError(t, err)
 
 			files := asset.Files()
