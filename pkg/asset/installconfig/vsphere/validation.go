@@ -63,7 +63,7 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 	ctx := context.TODO()
 	for _, vcenter := range ic.VSphere.VCenters {
 		if vcenter.Server == server {
-			vim25Client, vim25RestClient, cleanup, err := CreateVSphereClients(ctx,
+			sess, cleanup, err := NewSession(ctx,
 				vcenter.Server,
 				vcenter.Username,
 				vcenter.Password)
@@ -73,12 +73,12 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 			}
 
 			validationCtx := validationContext{
-				TagManager:  vapitags.NewManager(vim25RestClient),
-				AuthManager: newAuthManager(vim25Client),
-				Finder:      find.NewFinder(vim25Client),
-				Client:      vim25Client,
+				TagManager:  vapitags.NewManager(sess.RestClient()),
+				AuthManager: newAuthManager(sess.Vim25Client()),
+				Finder:      find.NewFinder(sess.Vim25Client()),
+				Client:      sess.Vim25Client(),
 			}
-			return &validationCtx, cleanup, err
+			return &validationCtx, cleanup, nil
 		}
 	}
 	return nil, nil, fmt.Errorf("vcenter %s not defined in vcenters", server)
