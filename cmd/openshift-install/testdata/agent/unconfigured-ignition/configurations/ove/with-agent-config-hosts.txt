@@ -1,0 +1,141 @@
+# Test OVE unconfigured-ignition workflow with agent-config.yaml containing hosts
+# This tests the scenario where:
+# - No install-config.yaml exists (OVE SaaS workflow)
+# - agent-config.yaml contains hosts with networkConfig
+# - NMStateConfig should be generated from agent-config hosts
+# - Default cluster name "cluster" and namespace "cluster0" should be used
+
+expandFile cluster-manifests/cluster-image-set.yaml
+expandFile cluster-manifests/agent-config.yaml
+
+exec openshift-install agent create unconfigured-ignition --dir $WORK
+
+exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+# Verify NMStateConfig was generated from agent-config hosts
+exists $WORK/cluster-manifests/nmstateconfig.yaml
+
+# Verify network configuration files were generated for the two hosts
+unconfiguredIgnContains /etc/assisted/network/host0/eth0.nmconnection
+unconfiguredIgnContains /etc/assisted/network/host0/mac_interface.ini
+unconfiguredIgnContains /etc/assisted/network/host1/eth0.nmconnection
+unconfiguredIgnContains /etc/assisted/network/host1/mac_interface.ini
+
+unconfiguredIgnContains /etc/assisted/manifests/pull-secret.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+
+-- cluster-manifests/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }
+
+-- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- cluster-manifests/agent-config.yaml --
+apiVersion: v1alpha1
+rendezvousIP: 192.168.111.20
+hosts:
+  - hostname: control-0
+    role: master
+    interfaces:
+      - name: eth0
+        macAddress: 28:d2:44:d2:b2:1a
+    networkConfig: |
+      interfaces:
+      - ipv4:
+          address:
+          - ip: 192.168.111.20
+            prefix-length: 24
+          dhcp: false
+          enabled: true
+        mac-address: 28:d2:44:d2:b2:1a
+        name: eth0
+        state: up
+        type: ethernet
+    rootDeviceHints:
+      deviceName: /dev/sda
+  - hostname: control-1
+    role: master
+    interfaces:
+      - name: eth0
+        macAddress: 28:d2:44:d2:b2:1b
+    networkConfig: |
+      interfaces:
+      - ipv4:
+          address:
+          - ip: 192.168.111.21
+            prefix-length: 24
+          dhcp: false
+          enabled: true
+        mac-address: 28:d2:44:d2:b2:1b
+        name: eth0
+        state: up
+        type: ethernet
+    rootDeviceHints:
+      deviceName: /dev/sda
+
+-- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- expected/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  ipxeScriptType: ""
+  nmStateConfigLabelSelector: {}
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+status:
+  agentLabelSelector: {}
+  bootArtifacts:
+    discoveryIgnitionURL: ""
+    initrd: ""
+    ipxeScript: ""
+    kernel: ""
+    rootfs: ""
+  debugInfo:
+    eventsURL: ""
