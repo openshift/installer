@@ -1,7 +1,6 @@
 [Unit]
 Description=Service that starts cluster installation
-Wants=network-online.target
-Requires=apply-host-config.service
+Wants=network-online.target apply-host-config.service
 Conflicts=agent-add-node.service
 PartOf=assisted-service-pod.service
 After=network-online.target apply-host-config.service
@@ -12,6 +11,7 @@ ConditionPathExists=!/etc/assisted/add-nodes.env
 EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 EnvironmentFile=/usr/local/share/start-cluster/start-cluster.env
 EnvironmentFile=/etc/assisted/rendezvous-host.env
+ExecStartPre=/usr/local/bin/wait-for-service-active.sh apply-host-config.service
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
 ExecStart=/usr/local/bin/start-cluster-installation.sh
 
