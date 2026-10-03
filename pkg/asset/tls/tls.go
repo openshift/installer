@@ -159,7 +159,7 @@ func SelfSignedCertificate(cfg *CertCfg, key crypto.Signer) (*x509.Certificate, 
 		IsCA:                  cfg.IsCA,
 		KeyUsage:              cfg.KeyUsages,
 		NotAfter:              time.Now().Add(cfg.Validity),
-		NotBefore:             time.Now(),
+		NotBefore:             time.Now().Add(-24 * time.Hour),
 		SerialNumber:          serial,
 		Subject:               cfg.Subject,
 	}
