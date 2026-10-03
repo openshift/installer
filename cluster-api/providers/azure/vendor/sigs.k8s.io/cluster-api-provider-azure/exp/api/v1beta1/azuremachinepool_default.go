@@ -70,7 +70,7 @@ func (amp *AzureMachinePool) SetIdentityDefaults(client client.Client) error {
 		return nil
 	}
 	if amp.Spec.Identity == infrav1.VMIdentitySystemAssigned {
-		machinePool, err := azureutil.FindParentMachinePoolWithRetry(amp.Name, client, 5)
+		machinePool, err := azureutil.FindParentMachinePoolWithRetryV1Beta1(amp.Name, client, 5)
 		if err != nil {
 			return errors.Wrap(err, "failed to find parent machine pool")
 		}

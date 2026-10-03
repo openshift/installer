@@ -22,5 +22,6 @@ aliases:
     - willie-yao
     - nawazkh
   cluster-api-azure-reviewers:
+    - bryan-cox
     - jsturtevant
     - marosset

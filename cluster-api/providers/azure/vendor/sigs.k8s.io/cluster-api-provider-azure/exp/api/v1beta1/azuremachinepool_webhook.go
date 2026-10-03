@@ -299,15 +299,15 @@ func (amp *AzureMachinePool) ValidateOrchestrationMode(c client.Client) func() e
 	return func() error {
 		// Only Flexible orchestration mode requires validation.
 		if amp.Spec.OrchestrationMode == infrav1.OrchestrationModeType(armcompute.OrchestrationModeFlexible) {
-			parent, err := azureutil.FindParentMachinePoolWithRetry(amp.Name, c, 5)
+			parent, err := azureutil.FindParentMachinePoolWithRetryV1Beta1(amp.Name, c, 5)
 			if err != nil {
 				return errors.Wrap(err, "failed to find parent MachinePool")
 			}
 			// Kubernetes must be >= 1.26.0 for cloud-provider-azure Helm chart support.
-			if parent.Spec.Template.Spec.Version == nil {
+			if parent.Spec.Template.Spec.Version == "" {
 				return errors.New("could not find Kubernetes version in MachinePool")
 			}
-			k8sVersion, err := semver.ParseTolerant(*parent.Spec.Template.Spec.Version)
+			k8sVersion, err := semver.ParseTolerant(parent.Spec.Template.Spec.Version)
 			if err != nil {
 				return errors.Wrap(err, "failed to parse Kubernetes version")
 			}

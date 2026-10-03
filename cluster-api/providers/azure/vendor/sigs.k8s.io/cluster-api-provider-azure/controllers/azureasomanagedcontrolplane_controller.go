@@ -30,11 +30,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	"sigs.k8s.io/cluster-api/util/secret"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -77,7 +78,7 @@ func (r *AzureASOManagedControlPlaneReconciler) SetupWithManager(ctx context.Con
 			handler.EnqueueRequestsFromMapFunc(clusterToAzureASOManagedControlPlane),
 			builder.WithPredicates(
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
-				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 			),
 		).
 		// User errors that CAPZ passes through agentPoolProfiles on create must be fixed in the
@@ -113,10 +114,10 @@ func (r *AzureASOManagedControlPlaneReconciler) SetupWithManager(ctx context.Con
 
 func clusterToAzureASOManagedControlPlane(_ context.Context, o client.Object) []ctrl.Request {
 	controlPlaneRef := o.(*clusterv1.Cluster).Spec.ControlPlaneRef
-	if controlPlaneRef != nil &&
-		matchesASOManagedAPIGroup(controlPlaneRef.APIVersion) &&
+	if controlPlaneRef.IsDefined() &&
+		groupMatchesASOManagedAPIGroup(controlPlaneRef.APIGroup) &&
 		controlPlaneRef.Kind == infrav1.AzureASOManagedControlPlaneKind {
-		return []ctrl.Request{{NamespacedName: client.ObjectKey{Namespace: controlPlaneRef.Namespace, Name: controlPlaneRef.Name}}}
+		return []ctrl.Request{{NamespacedName: client.ObjectKey{Namespace: o.GetNamespace(), Name: controlPlaneRef.Name}}}
 	}
 	return nil
 }
@@ -154,7 +155,7 @@ func (r *AzureASOManagedControlPlaneReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	patchHelper, err := patch.NewHelper(asoManagedControlPlane, r.Client)
+	patchHelper, err := v1beta1patch.NewHelper(asoManagedControlPlane, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create patch helper: %w", err)
 	}
@@ -174,7 +175,7 @@ func (r *AzureASOManagedControlPlaneReconciler) Reconcile(ctx context.Context, r
 		return ctrl.Result{}, err
 	}
 
-	if cluster != nil && cluster.Spec.Paused ||
+	if cluster != nil && ptr.Deref(cluster.Spec.Paused, false) ||
 		annotations.HasPaused(asoManagedControlPlane) {
 		return r.reconcilePaused(ctx, asoManagedControlPlane)
 	}
@@ -197,8 +198,8 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcileNormal(ctx context.Cont
 		log.V(4).Info("Cluster Controller has not yet set OwnerRef")
 		return ctrl.Result{}, nil
 	}
-	if cluster.Spec.InfrastructureRef == nil ||
-		!matchesASOManagedAPIGroup(cluster.Spec.InfrastructureRef.APIVersion) ||
+	if !cluster.Spec.InfrastructureRef.IsDefined() ||
+		!groupMatchesASOManagedAPIGroup(cluster.Spec.InfrastructureRef.APIGroup) ||
 		cluster.Spec.InfrastructureRef.Kind != infrav1.AzureASOManagedClusterKind {
 		return ctrl.Result{}, reconcile.TerminalError(errInvalidClusterKind)
 	}
@@ -392,18 +393,18 @@ func (r *AzureASOManagedControlPlaneReconciler) reconcileDelete(ctx context.Cont
 	return ctrl.Result{}, nil
 }
 
-func getControlPlaneEndpoint(managedCluster *asocontainerservicev1.ManagedCluster) clusterv1.APIEndpoint {
+func getControlPlaneEndpoint(managedCluster *asocontainerservicev1.ManagedCluster) clusterv1beta1.APIEndpoint {
 	if managedCluster.Status.PrivateFQDN != nil {
-		return clusterv1.APIEndpoint{
+		return clusterv1beta1.APIEndpoint{
 			Host: *managedCluster.Status.PrivateFQDN,
 			Port: 443,
 		}
 	}
 	if managedCluster.Status.Fqdn != nil {
-		return clusterv1.APIEndpoint{
+		return clusterv1beta1.APIEndpoint{
 			Host: *managedCluster.Status.Fqdn,
 			Port: 443,
 		}
 	}
-	return clusterv1.APIEndpoint{}
+	return clusterv1beta1.APIEndpoint{}
 }
