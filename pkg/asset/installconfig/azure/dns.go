@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
@@ -19,6 +21,7 @@ type DNSConfig struct {
 // ZonesGetter fetches the DNS zones available for the installer
 type ZonesGetter interface {
 	GetAllPublicZones() (map[string]string, error)
+	ZoneExists(string, string) (bool, error)
 }
 
 // ZonesClient wraps the azure ZonesClient internal
@@ -101,6 +104,12 @@ func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relative
 	return recordsetsClient.GetRecordSet(rgName, zoneName, relativeRecordSetName, recordType)
 }
 
+// DNSZoneExists validates if a DNS zone exists in the provided resource group.
+func (config DNSConfig) DNSZoneExists(rgName, zoneName string) (bool, error) {
+	zonesClient := newZonesClient(config.session)
+	return zonesClient.ZoneExists(rgName, zoneName)
+}
+
 // NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
 // by querying your subscription and letting you choose
 // which domain you wish to use for the cluster
@@ -137,6 +146,23 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 		}
 	}
 	return allZones, nil
+}
+
+// DNSZoneExists validates if a DNS zone exists in the provided resource group
+func (client *ZonesClient) ZoneExists(rgName, zoneName string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	var responseErr *azcore.ResponseError
+	_, err := client.azureClient.Get(ctx, rgName, zoneName)
+	if err != nil && errors.As(err, &responseErr) {
+		if responseErr.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 // GetRecordSet gets an Azure DNS recordset by zone, name and recordset type
