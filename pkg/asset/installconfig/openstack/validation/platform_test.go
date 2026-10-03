@@ -3,6 +3,7 @@ package validation
 import (
 	"testing"
 
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/mtu"
@@ -721,6 +722,76 @@ func TestMachineSubnet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
 			if tc.expectedErrMsg != "" {
+				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestBootstrapFlavor(t *testing.T) {
+	const (
+		validBootstrapFlavor   = "valid-bootstrap-flavor"
+		invalidBootstrapFlavor = "invalid-bootstrap-flavor"
+	)
+
+	cases := []struct {
+		name           string
+		platform       *openstack.Platform
+		cloudInfo      *CloudInfo
+		networking     *types.Networking
+		expectedError  bool
+		expectedErrMsg string // NOTE: this is a REGEXP
+	}{
+		{
+			name:           "bootstrap flavor not specified",
+			platform:       validPlatform(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "valid bootstrap flavor",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = validBootstrapFlavor
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.Flavors = map[string]Flavor{
+					validBootstrapFlavor: {
+						Flavor: flavors.Flavor{
+							Name: validBootstrapFlavor,
+						},
+					},
+				}
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "bootstrap flavor not found in OpenStack",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.BootstrapFlavor = invalidBootstrapFlavor
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.bootstrapFlavor: Not found: "invalid-bootstrap-flavor"`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
+			if tc.expectedError {
 				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
