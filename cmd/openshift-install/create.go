@@ -549,6 +549,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	if err := assetStore.Fetch(ctx, lbConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
 	}
+	logrus.Infof("userProvisionedDNS configured so fetching load balancer information from %s", lbConfig.Name())
 
 	lbType := lbconfig.PublicLoadBalancer
 	if !installConfig.Config.PublicAPI() {
