@@ -3,9 +3,13 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 // listCloudControllerInstanceGroups returns instance groups created by the cloud controller.
@@ -21,22 +25,81 @@ func (o *ClusterUninstaller) listCloudControllerInstanceGroups(ctx context.Conte
 // It list all backend services matching the cloud controller name convention that contain
 // only cluster instance groups.
 func (o *ClusterUninstaller) listCloudControllerBackendServices(ctx context.Context, instanceGroups []cloudResource) ([]cloudResource, error) {
-	urls := sets.NewString()
+	o.Logger.Debugf("Listing cloud controller backend services")
+	urls := sets.Set[string]{}
 	for _, instanceGroup := range instanceGroups {
 		urls.Insert(instanceGroup.url)
 	}
+
 	filter := "name eq \"a[0-9a-f]{30,50}\""
-	return o.listBackendServicesWithFilter(ctx, "items(name,backends),nextPageToken", filter, func(item *compute.BackendService) bool {
-		if len(item.Backends) == 0 {
-			return false
-		}
-		for _, backend := range item.Backends {
-			if !urls.Has(backend.Group) {
-				return false
+	result := []cloudResource{}
+
+	// Fetch firewall rules once (fully paginated); used to validate backend
+	// services that have no backends.
+	var firewalls []*compute.Firewall
+	if err := o.computeSvc.Firewalls.List(o.ProjectID).
+		Fields(googleapi.Field("items(name,targetTags),nextPageToken")).
+		Pages(ctx, func(list *compute.FirewallList) error {
+			firewalls = append(firewalls, list.Items...)
+			return nil
+		}); err != nil {
+		return nil, err
+	}
+
+	req := o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Fields(googleapi.Field("items(name,backends),nextPageToken")).Filter(filter)
+	err := req.Pages(ctx, func(list *compute.BackendServiceList) error {
+		for _, item := range list.Items {
+			if len(item.Backends) == 0 {
+				o.Logger.Debugf("Backend service %s has no backends, checking firewall rules for cluster ID", item.Name)
+				found := false
+				for _, fw := range firewalls {
+					if strings.Contains(fw.Name, item.Name) {
+						for _, tag := range fw.TargetTags {
+							if strings.Contains(tag, o.ClusterID) {
+								found = true
+								break
+							}
+						}
+					}
+					if found {
+						break
+					}
+				}
+				if !found {
+					continue
+				}
+			} else {
+				allBackendsMatch := true
+				for _, backend := range item.Backends {
+					if !urls.Has(backend.Group) {
+						allBackendsMatch = false
+						break
+					}
+				}
+				if !allBackendsMatch {
+					continue
+				}
 			}
+			o.Logger.Debugf("Found backend service: %s", item.Name)
+			result = append(result, cloudResource{
+				key:      item.Name,
+				name:     item.Name,
+				typeName: regionBackendServiceResource,
+				quota: []gcp.QuotaUsage{{
+					Metric: &gcp.Metric{
+						Service: gcp.ServiceComputeEngineAPI,
+						Limit:   "backend_services",
+					},
+					Amount: 1,
+				}},
+			})
 		}
-		return true
-	}, gcpRegionalResource)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // listCloudControllerTargetPools returns target pools created by the cloud controller or owned by the cloud controller.
@@ -76,7 +139,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
+	found, err := o.listAddressesWithFilter(ctx, "regionaddress", "items(name),nextPageToken", loadBalancerNameFilter)
 	if err != nil {
 		return err
 	}
@@ -119,6 +182,13 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 		return err
 	}
 	o.insertPendingItems("forwardingrule", found)
+
+	// Discover associated target tcp proxies: loadBalancerName
+	found, err = o.listTargetTCPProxiesWithFilter(ctx, globalTargetTCPProxyResource, "items(name),nextPageToken", loadBalancerNameFilter)
+	if err != nil {
+		return err
+	}
+	o.insertPendingItems(globalTargetTCPProxyResource, found)
 
 	// Discover associated health checks: loadBalancerName
 	found, err = o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
