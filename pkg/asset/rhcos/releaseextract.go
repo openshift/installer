@@ -203,28 +203,20 @@ func (r *releasePayload) getImageFromRelease(imageName string, architecture stri
 	archName := arch.GoArch(architecture)
 	imagefor := "--image-for=" + imageName
 	filterbyos := "--filter-by-os=linux/" + archName
-	insecure := "--insecure=true"
 
-	var cmd = []string{
+	cmd := []string{
 		"oc",
 		"adm",
 		"release",
 		"info",
 		imagefor,
 		filterbyos,
-		insecure,
 	}
-	if r.mirrorConfig.HasMirrors() {
-		logrus.Debugf("Using mirror configuration")
-		mirrorArg, cleanup, err := getMirrorArg(r.mirrorConfig)
-		if err != nil {
-			return "", err
-		}
-		if mirrorArg != "" {
-			defer cleanup()
-			cmd = append(cmd, mirrorArg)
-		}
+	cmd, cleanup, err := r.appendMirrorArgs(cmd)
+	if err != nil {
+		return "", err
 	}
+	defer cleanup()
 	cmd = append(cmd, r.releaseImage)
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
 	image, err := agent.ExecuteOC(r.pullSecret, cmd)
@@ -242,28 +234,21 @@ func (r *releasePayload) extractFileFromImage(image, file, cacheDir string, arch
 	archName := arch.GoArch(architecture)
 	extractpath := "--path=" + file + ":" + cacheDir
 	filterbyos := "--filter-by-os=linux/" + archName
-	insecure := "--insecure=true"
 
-	var cmd = []string{
+	cmd := []string{
 		"oc",
 		"image",
 		"extract",
 		extractpath,
 		filterbyos,
-		insecure,
 		"--confirm",
 	}
-
-	if r.mirrorConfig.HasMirrors() {
-		mirrorArg, cleanup, err := getMirrorArg(r.mirrorConfig)
-		if err != nil {
-			return nil, err
-		}
-		if mirrorArg != "" {
-			defer cleanup()
-			cmd = append(cmd, mirrorArg)
-		}
+	cmd, cleanup, err := r.appendMirrorArgs(cmd)
+	if err != nil {
+		return nil, err
 	}
+	defer cleanup()
+
 	path := filepath.Join(cacheDir, path.Base(file))
 	// Remove file if it exists
 	if err := removeCacheFile(path); err != nil {
@@ -271,7 +256,7 @@ func (r *releasePayload) extractFileFromImage(image, file, cacheDir string, arch
 	}
 	cmd = append(cmd, image)
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
-	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, agent.ExecuteOC, r.pullSecret, cmd)
+	_, err = retry.Do(r.config.MaxTries, r.config.RetryDelay, agent.ExecuteOC, r.pullSecret, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +369,33 @@ func removeCacheFile(path string) error {
 		logrus.Debugf("Removed file %s", file)
 	}
 	return nil
+}
+
+// appendMirrorArgs appends the mirror-related oc arguments to cmd when a mirror
+// configuration is present, returning the updated command and a cleanup function
+// (which the caller must invoke) that removes any temporary ICSP file.
+//
+// A mirror registry may serve over HTTP or present a self-signed certificate, so
+// TLS verification is relaxed with --insecure only for mirrored installs;
+// connected installs keep full TLS verification against trusted registries.
+func (r *releasePayload) appendMirrorArgs(cmd []string) ([]string, func(), error) {
+	cleanup := func() {}
+	if !r.mirrorConfig.HasMirrors() {
+		return cmd, cleanup, nil
+	}
+
+	logrus.Debugf("Using mirror configuration")
+	cmd = append(cmd, "--insecure=true")
+
+	mirrorArg, mirrorCleanup, err := getMirrorArg(r.mirrorConfig)
+	if err != nil {
+		return nil, cleanup, err
+	}
+	if mirrorArg != "" {
+		cleanup = mirrorCleanup
+		cmd = append(cmd, mirrorArg)
+	}
+	return cmd, cleanup, nil
 }
 
 // Create a temporary file containing the ImageContentPolicySources.
