@@ -59,7 +59,7 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, assetStore asset.Store, rendezvousIP, kubeconfigPath, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
+func NewCluster(ctx context.Context, assetStore asset.Store, rendezvousIP, kubeconfigPath string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
 	czero := &Cluster{}
 	capi := &clientSet{}
 
@@ -81,7 +81,7 @@ func NewCluster(ctx context.Context, assetStore asset.Store, rendezvousIP, kubec
 		return nil, fmt.Errorf("AgentWorkflowType value not supported: %s", workflowType)
 	}
 
-	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, watcherAuthToken)
+	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, watcherAuthToken)
 
 	kubeclient, err := NewClusterKubeAPIClient(ctx, kubeconfigPath)
 	if err != nil {
