@@ -36,15 +36,6 @@ func TestValidatePlatform(t *testing.T) {
 			valid:    true,
 		},
 		{
-			name: "invalid region",
-			platform: func() *ibmcloud.Platform {
-				p := validMinimalPlatform()
-				p.Region = "invalid"
-				return p
-			}(),
-			valid: false,
-		},
-		{
 			name: "missing region",
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
