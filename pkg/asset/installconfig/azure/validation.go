@@ -866,7 +866,10 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 	if err != nil {
 		return field.Invalid(osImageFieldPath, osImage, err.Error())
 	}
-	imageHyperVGen := string(vmImage.HyperVGeneration)
+	imageHyperVGen := ""
+	if vmImage.Properties != nil && vmImage.Properties.HyperVGeneration != nil {
+		imageHyperVGen = string(*vmImage.Properties.HyperVGeneration)
+	}
 	if !instanceHyperVGenSet.Has(imageHyperVGen) {
 		errMsg := fmt.Sprintf("instance type supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceHyperVGenSet.UnsortedList(), imageHyperVGen)
 		return field.Invalid(osImageFieldPath, osImage.SKU, errMsg)
@@ -878,7 +881,7 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 		// Use the default if not set in the install-config
 		osImagePlan = aztypes.ImageWithPurchasePlan
 	}
-	if plan := vmImage.Plan; plan != nil {
+	if vmImage.Properties != nil && vmImage.Properties.Plan != nil {
 		if osImagePlan == aztypes.ImageNoPurchasePlan {
 			return field.Invalid(osImageFieldPath, osImage, "marketplace image requires license terms to be accepted")
 		}
