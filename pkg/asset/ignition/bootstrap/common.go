@@ -77,29 +77,30 @@ var (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	AdditionalTrustBundle string
-	FIPS                  bool
-	EtcdCluster           string
-	PullSecret            string
-	SSHKey                string
-	ReleaseImage          string
-	ClusterProfile        string
-	Proxy                 *configv1.ProxyStatus
-	Registries            []sysregistriesv2.Registry
-	BootImage             string
-	PlatformData          platformTemplateData
-	BootstrapInPlace      *types.BootstrapInPlace
-	UseIPv6ForNodeIP      bool
-	UseDualForNodeIP      bool
-	IsOKD                 bool
-	BootstrapNodeIP       string
-	APIServerURL          string
-	APIIntServerURL       string
-	FeatureSet            configv1.FeatureSet
-	Invoker               string
-	ClusterDomain         string
-	OSImageStream         types.OSImageStream
-	KonnectivityEnabled   bool
+	AdditionalTrustBundle    string
+	FIPS                     bool
+	EtcdCluster              string
+	PullSecret               string
+	SSHKey                   string
+	ReleaseImage             string
+	ClusterProfile           string
+	Proxy                    *configv1.ProxyStatus
+	Registries               []sysregistriesv2.Registry
+	BootImage                string
+	PlatformData             platformTemplateData
+	BootstrapInPlace         *types.BootstrapInPlace
+	UseIPv6ForNodeIP         bool
+	UseDualForNodeIP         bool
+	IsOKD                    bool
+	BootstrapNodeIP          string
+	APIServerURL             string
+	APIIntServerURL          string
+	FeatureSet               configv1.FeatureSet
+	Invoker                  string
+	ClusterDomain            string
+	OSImageStream            types.OSImageStream
+	KonnectivityEnabled      bool
+	ControlPlaneArchitecture types.Architecture
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -401,29 +402,30 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement))
 
 	return &bootstrapTemplateData{
-		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
-		FIPS:                  installConfig.Config.FIPS,
-		PullSecret:            pullSecret,
-		SSHKey:                installConfig.Config.SSHKey,
-		ReleaseImage:          releaseImage.PullSpec,
-		EtcdCluster:           strings.Join(etcdEndpoints, ","),
-		Proxy:                 &proxy.Config.Status,
-		Registries:            registries,
-		BootImage:             rhcosImage.ControlPlane,
-		PlatformData:          platformData,
-		ClusterProfile:        clusterProfile,
-		BootstrapInPlace:      bootstrapInPlaceConfig,
-		UseIPv6ForNodeIP:      ipv6Primary,
-		UseDualForNodeIP:      hasIPv4 && hasIPv6,
-		IsOKD:                 installConfig.Config.IsOKD(),
-		BootstrapNodeIP:       bootstrapNodeIP,
-		APIServerURL:          apiURL,
-		APIIntServerURL:       apiIntURL,
-		FeatureSet:            installConfig.Config.FeatureSet,
-		Invoker:               openshiftInstallInvoker,
-		ClusterDomain:         installConfig.Config.ClusterDomain(),
-		OSImageStream:         installConfig.Config.OSImageStream,
-		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
+		AdditionalTrustBundle:    installConfig.Config.AdditionalTrustBundle,
+		FIPS:                     installConfig.Config.FIPS,
+		PullSecret:               pullSecret,
+		SSHKey:                   installConfig.Config.SSHKey,
+		ReleaseImage:             releaseImage.PullSpec,
+		EtcdCluster:              strings.Join(etcdEndpoints, ","),
+		Proxy:                    &proxy.Config.Status,
+		Registries:               registries,
+		BootImage:                rhcosImage.ControlPlane,
+		PlatformData:             platformData,
+		ClusterProfile:           clusterProfile,
+		BootstrapInPlace:         bootstrapInPlaceConfig,
+		UseIPv6ForNodeIP:         ipv6Primary,
+		UseDualForNodeIP:         hasIPv4 && hasIPv6,
+		IsOKD:                    installConfig.Config.IsOKD(),
+		BootstrapNodeIP:          bootstrapNodeIP,
+		APIServerURL:             apiURL,
+		APIIntServerURL:          apiIntURL,
+		FeatureSet:               installConfig.Config.FeatureSet,
+		Invoker:                  openshiftInstallInvoker,
+		ClusterDomain:            installConfig.Config.ClusterDomain(),
+		OSImageStream:            installConfig.Config.OSImageStream,
+		KonnectivityEnabled:      konnectivityFeatureGateEnabled && !bootstrapInPlace,
+		ControlPlaneArchitecture: installConfig.Config.ControlPlane.Architecture,
 	}
 }
 
