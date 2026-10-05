@@ -17,6 +17,7 @@ import (
 	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	network "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	compute "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -209,10 +210,10 @@ func (mr *MockAPIMockRecorder) GetLocationInfo(ctx, region, instanceType any) *g
 }
 
 // GetMarketplaceImage mocks base method.
-func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute.VirtualMachineImage, error) {
+func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (armcompute.VirtualMachineImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMarketplaceImage", ctx, region, publisher, offer, sku, version)
-	ret0, _ := ret[0].(compute.VirtualMachineImage)
+	ret0, _ := ret[0].(armcompute.VirtualMachineImage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
