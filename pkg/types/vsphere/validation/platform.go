@@ -163,7 +163,7 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 					}
 				}
 			}
-			if vCenter.Datacenters == nil || len(vCenter.Datacenters) == 0 {
+			if len(vCenter.Datacenters) == 0 {
 				allErrs = append(allErrs, field.Required(vcenterPath.Child("datacenters"), "must specify at least one datacenter"))
 			}
 			continue

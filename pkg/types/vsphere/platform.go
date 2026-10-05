@@ -32,7 +32,7 @@ type Credential struct {
 	// User is the username used to authenticate to vCenter.
 	User string `json:"user"`
 	// Password is the password used to authenticate to vCenter.
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec // credential input is intentionally serialized in install-config
 }
 
 // ComponentCredentials contains credentials for vSphere components.

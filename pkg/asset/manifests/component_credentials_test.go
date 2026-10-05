@@ -13,7 +13,7 @@ func TestRedactedInstallConfigRemovesComponentCredentials(t *testing.T) {
 	config := types.InstallConfig{
 		Platform: types.Platform{VSphere: &vspheretypes.Platform{
 			CredentialType: vspheretypes.CredentialTypeComponentScoped,
-			VCenters: []vspheretypes.VCenter{{
+			VCenters: []vspheretypes.VCenter{{ //nolint:gosec // sentinel credentials intentionally exercise redaction
 				Server:   "vcenter.example.com",
 				Username: "must-not-leak",
 				Password: "must-not-leak-either",
