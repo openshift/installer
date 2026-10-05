@@ -2779,6 +2779,11 @@ func (rl *clientConnReadLoop) endStreamError(cs *clientStream, err error) {
 	cs.abortStream(err)
 }
 
+func (rl *clientConnReadLoop) endStreamErrorLocked(cs *clientStream, err error) {
+	cs.readAborted = true
+	cs.abortStreamLocked(err)
+}
+
 // Constants passed to streamByID for documentation purposes.
 const (
 	headerOrDataFrame    = true
@@ -2860,6 +2865,9 @@ func (rl *clientConnReadLoop) processSettingsNoWrite(f *SettingsFrame) error {
 
 	var seenMaxConcurrentStreams bool
 	err := f.ForeachSetting(func(s Setting) error {
+		if err := s.Valid(); err != nil {
+			return err
+		}
 		switch s.ID {
 		case SettingMaxFrameSize:
 			cc.maxFrameSize = s.Val
@@ -2891,9 +2899,6 @@ func (rl *clientConnReadLoop) processSettingsNoWrite(f *SettingsFrame) error {
 			cc.henc.SetMaxDynamicTableSize(s.Val)
 			cc.peerMaxHeaderTableSize = s.Val
 		case SettingEnableConnectProtocol:
-			if err := s.Valid(); err != nil {
-				return err
-			}
 			// If the peer wants to send us SETTINGS_ENABLE_CONNECT_PROTOCOL,
 			// we require that it do so in the first SETTINGS frame.
 			//
@@ -2946,7 +2951,7 @@ func (rl *clientConnReadLoop) processWindowUpdate(f *WindowUpdateFrame) error {
 	if !fl.add(int32(f.Increment)) {
 		// For stream, the sender sends RST_STREAM with an error code of FLOW_CONTROL_ERROR
 		if cs != nil {
-			rl.endStreamError(cs, StreamError{
+			rl.endStreamErrorLocked(cs, StreamError{
 				StreamID: f.StreamID,
 				Code:     ErrCodeFlowControl,
 			})

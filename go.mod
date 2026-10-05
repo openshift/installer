@@ -117,7 +117,7 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.47.1
 	go.uber.org/mock v0.5.0
-	golang.org/x/crypto v0.47.0
+	golang.org/x/crypto v0.48.0
 	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/sys v0.41.0
@@ -378,3 +378,5 @@ replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
 
 replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.48.0-sec.2
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
