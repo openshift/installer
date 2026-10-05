@@ -79,10 +79,14 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 	if err != nil {
 		return fmt.Errorf("failed to copy AMI: %w", err)
 	}
-	// Update manifests with the new ID
+	// Update both CAPI manifests — AWSMachine for control-plane nodes and AWSMachineTemplate for
+	// worker pools so CAPA never receives a non-nil empty AMI ID.
 	for i := range in.MachineManifests {
-		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
-			awsMachine.Spec.AMI.ID = ptr.To(amiID)
+		switch manifest := in.MachineManifests[i].(type) {
+		case *capa.AWSMachine:
+			manifest.Spec.AMI.ID = ptr.To(amiID)
+		case *capa.AWSMachineTemplate:
+			manifest.Spec.Template.Spec.AMI.ID = ptr.To(amiID)
 		}
 	}
 	return nil
