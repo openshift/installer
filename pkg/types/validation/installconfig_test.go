@@ -1970,7 +1970,12 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking: Invalid value: "DualStack": dual-stack IPv4/IPv6 can only be specified when platform.aws.ipFamily is DualStackIPv4Primary or DualStackIPv6Primary`,
 		},
 		{
-			name: "aws: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			// CIDR order is no longer validated on platforms with an ipFamily
+			// field: SetInstallConfigDefaults reorders the lists to agree with
+			// ipFamily before validation runs. These two cases guard against the
+			// order check being reintroduced here. Ordering itself is covered by
+			// TestOrderNetworksByIPFamily in pkg/types/defaults.
+			name: "aws: DualStackIPv4Primary with IPv6-primary networks is reordered, not rejected",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
@@ -1978,10 +1983,9 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "ffd2::/48, 192.168.1.0/24": DualStackIPv4Primary requires an IPv4 network first in this list, networking.machineNetwork: Invalid value: "ffd0::/48, 10.0.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list, networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list]\E$`,
 		},
 		{
-			name: "aws: invalid dual-stack with DualStackIPv6Primary but IPv4-primary networks",
+			name: "aws: DualStackIPv6Primary with IPv4-primary networks is reordered, not rejected",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = configv1.TechPreviewNoUpgrade
@@ -1989,7 +1993,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
-			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "192.168.1.0/24, ffd2::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.machineNetwork: Invalid value: "10.0.0.0/16, ffd0::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.serviceNetwork: Invalid value: "172.30.0.0/16, ffd1::/112": DualStackIPv6Primary requires an IPv6 network first in this list]\E$`,
 		},
 		{
 			name: "aws: invalid dual-stack with DualStackIPv4Primary but only IPv4 serviceNetwork",
@@ -2082,7 +2085,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "azure: invalid dual-stack with IPv6-first serviceNetwork",
+			name: "azure: valid dual-stack with DualStackIPv6Primary and IPv6-first networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzurePlatform()}
@@ -2092,7 +2095,11 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4`,
+			// IPv6-first CIDRs agree with DualStackIPv6Primary, so this is valid.
+			// serviceNetwork[0]'s family is what MCO turns into the kubelet
+			// --node-ip, so IPv6-first here is what actually yields IPv6-primary
+			// nodes and pods.
+			expectedError: ``,
 			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
 				t.Helper()
 				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
@@ -2100,7 +2107,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			name: "azure: DualStackIPv4Primary with IPv6-primary networks is reordered, not rejected",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzurePlatform()}
@@ -2110,7 +2117,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4\E$`,
 			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
 				t.Helper()
 				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")

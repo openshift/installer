@@ -12,6 +12,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	"github.com/openshift/installer/pkg/types/network"
 	"github.com/openshift/installer/pkg/types/none"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -292,6 +293,155 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			SetInstallConfigDefaults(tc.config)
 			assert.Equal(t, tc.expected, tc.config, "unexpected install config")
+		})
+	}
+}
+
+func TestOrderNetworksByIPFamily(t *testing.T) {
+	var (
+		v4Machine = *ipnet.MustParseCIDR("10.0.0.0/16")
+		v6Machine = *ipnet.MustParseCIDR("fd00::/48")
+		v4Service = *ipnet.MustParseCIDR("172.30.0.0/16")
+		v6Service = *ipnet.MustParseCIDR("fd02::/112")
+		v4Cluster = *ipnet.MustParseCIDR("10.128.0.0/14")
+		v6Cluster = *ipnet.MustParseCIDR("fd01::/48")
+	)
+
+	// networking builds a dual-stack config with the given CIDR ordering.
+	networking := func(machine, service, cluster []ipnet.IPNet) *types.Networking {
+		n := &types.Networking{}
+		for _, c := range machine {
+			n.MachineNetwork = append(n.MachineNetwork, types.MachineNetworkEntry{CIDR: c})
+		}
+		n.ServiceNetwork = append(n.ServiceNetwork, service...)
+		for _, c := range cluster {
+			n.ClusterNetwork = append(n.ClusterNetwork, types.ClusterNetworkEntry{CIDR: c, HostPrefix: 64})
+		}
+		return n
+	}
+
+	cases := []struct {
+		name            string
+		platform        types.Platform
+		networking      *types.Networking
+		expectedMachine []ipnet.IPNet
+		expectedService []ipnet.IPNet
+		expectedCluster []ipnet.IPNet
+	}{
+		{
+			name: "azure DualStackIPv6Primary moves IPv6 first",
+			platform: types.Platform{Azure: &azure.Platform{
+				IPFamily: network.DualStackIPv6Primary,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v4Machine, v6Machine},
+				[]ipnet.IPNet{v4Service, v6Service},
+				[]ipnet.IPNet{v4Cluster, v6Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v6Machine, v4Machine},
+			expectedService: []ipnet.IPNet{v6Service, v4Service},
+			expectedCluster: []ipnet.IPNet{v6Cluster, v4Cluster},
+		},
+		{
+			name: "azure DualStackIPv6Primary leaves already-IPv6-first alone",
+			platform: types.Platform{Azure: &azure.Platform{
+				IPFamily: network.DualStackIPv6Primary,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v6Machine, v4Machine},
+				[]ipnet.IPNet{v6Service, v4Service},
+				[]ipnet.IPNet{v6Cluster, v4Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v6Machine, v4Machine},
+			expectedService: []ipnet.IPNet{v6Service, v4Service},
+			expectedCluster: []ipnet.IPNet{v6Cluster, v4Cluster},
+		},
+		{
+			name: "azure DualStackIPv4Primary moves IPv4 first",
+			platform: types.Platform{Azure: &azure.Platform{
+				IPFamily: network.DualStackIPv4Primary,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v6Machine, v4Machine},
+				[]ipnet.IPNet{v6Service, v4Service},
+				[]ipnet.IPNet{v6Cluster, v4Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v4Machine, v6Machine},
+			expectedService: []ipnet.IPNet{v4Service, v6Service},
+			expectedCluster: []ipnet.IPNet{v4Cluster, v6Cluster},
+		},
+		{
+			name: "aws DualStackIPv6Primary moves IPv6 first",
+			platform: types.Platform{AWS: &aws.Platform{
+				IPFamily: network.DualStackIPv6Primary,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v4Machine, v6Machine},
+				[]ipnet.IPNet{v4Service, v6Service},
+				[]ipnet.IPNet{v4Cluster, v6Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v6Machine, v4Machine},
+			expectedService: []ipnet.IPNet{v6Service, v4Service},
+			expectedCluster: []ipnet.IPNet{v6Cluster, v4Cluster},
+		},
+		{
+			name: "aws DualStackIPv4Primary moves IPv4 first",
+			platform: types.Platform{AWS: &aws.Platform{
+				IPFamily: network.DualStackIPv4Primary,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v6Machine, v4Machine},
+				[]ipnet.IPNet{v6Service, v4Service},
+				[]ipnet.IPNet{v6Cluster, v4Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v4Machine, v6Machine},
+			expectedService: []ipnet.IPNet{v4Service, v6Service},
+			expectedCluster: []ipnet.IPNet{v4Cluster, v6Cluster},
+		},
+		{
+			name: "single-stack IPv4 is untouched",
+			platform: types.Platform{Azure: &azure.Platform{
+				IPFamily: network.IPv4,
+			}},
+			networking: networking(
+				[]ipnet.IPNet{v4Machine},
+				[]ipnet.IPNet{v4Service},
+				[]ipnet.IPNet{v4Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v4Machine},
+			expectedService: []ipnet.IPNet{v4Service},
+			expectedCluster: []ipnet.IPNet{v4Cluster},
+		},
+		{
+			name:     "platform without an ipFamily field is untouched",
+			platform: types.Platform{None: &none.Platform{}},
+			networking: networking(
+				[]ipnet.IPNet{v6Machine, v4Machine},
+				[]ipnet.IPNet{v6Service, v4Service},
+				[]ipnet.IPNet{v6Cluster, v4Cluster},
+			),
+			expectedMachine: []ipnet.IPNet{v6Machine, v4Machine},
+			expectedService: []ipnet.IPNet{v6Service, v4Service},
+			expectedCluster: []ipnet.IPNet{v6Cluster, v4Cluster},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &types.InstallConfig{Platform: tc.platform, Networking: tc.networking}
+			orderNetworksByIPFamily(c)
+
+			var gotMachine, gotCluster []ipnet.IPNet
+			for _, e := range c.Networking.MachineNetwork {
+				gotMachine = append(gotMachine, e.CIDR)
+			}
+			for _, e := range c.Networking.ClusterNetwork {
+				gotCluster = append(gotCluster, e.CIDR)
+			}
+
+			assert.Equal(t, tc.expectedMachine, gotMachine, "machineNetwork order")
+			assert.Equal(t, tc.expectedService, c.Networking.ServiceNetwork, "serviceNetwork order")
+			assert.Equal(t, tc.expectedCluster, gotCluster, "clusterNetwork order")
 		})
 	}
 }
