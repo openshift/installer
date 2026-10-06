@@ -463,9 +463,10 @@ func TestValidate(t *testing.T) {
 			instanceTypes: validInstanceTypes(),
 			subnets: SubnetGroups{
 				Private: mergeSubnets(validDualstackSubnets("private"), Subnets{"invalid-private-cidr-subnet": Subnet{
-					ID:   "invalid-private-cidr-subnet",
-					Zone: &Zone{Name: "zone-for-invalid-cidr-subnet"},
-					CIDR: "10.0.7.0/24",
+					ID:                          "invalid-private-cidr-subnet",
+					Zone:                        &Zone{Name: "zone-for-invalid-cidr-subnet"},
+					CIDR:                        "10.0.7.0/24",
+					AssignIpv6AddressOnCreation: true,
 				}}),
 				Public: mergeSubnets(validDualstackSubnets("public"), Subnets{"invalid-public-cidr-subnet": Subnet{
 					ID:   "invalid-public-cidr-subnet",
@@ -1005,6 +1006,52 @@ func TestValidate(t *testing.T) {
 			},
 			publicOnly: true,
 			expectErr:  `^publish: Invalid value: \"Internal\": cluster cannot be private with public subnets$`,
+		},
+		{
+			name: "valid public-only dual-stack byo subnets with AssignIpv6AddressOnCreation",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnetIDs(validSubnets("public").IDs(), true),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			subnets: SubnetGroups{
+				Private: Subnets{
+					"subnet-valid-public-a": {ID: "subnet-valid-public-a", Zone: &Zone{Name: "a"}, CIDR: "10.0.4.0/24", IPv6CIDR: "2600:1f13:fe4:3::/64", Public: true, AssignIpv6AddressOnCreation: true},
+					"subnet-valid-public-b": {ID: "subnet-valid-public-b", Zone: &Zone{Name: "b"}, CIDR: "10.0.5.0/24", IPv6CIDR: "2600:1f13:fe4:4::/64", Public: true, AssignIpv6AddressOnCreation: true},
+					"subnet-valid-public-c": {ID: "subnet-valid-public-c", Zone: &Zone{Name: "c"}, CIDR: "10.0.6.0/24", IPv6CIDR: "2600:1f13:fe4:5::/64", Public: true, AssignIpv6AddressOnCreation: true},
+				},
+				Public: Subnets{
+					"subnet-valid-public-a": {ID: "subnet-valid-public-a", Zone: &Zone{Name: "a"}, CIDR: "10.0.4.0/24", IPv6CIDR: "2600:1f13:fe4:3::/64", Public: true, AssignIpv6AddressOnCreation: true},
+					"subnet-valid-public-b": {ID: "subnet-valid-public-b", Zone: &Zone{Name: "b"}, CIDR: "10.0.5.0/24", IPv6CIDR: "2600:1f13:fe4:4::/64", Public: true, AssignIpv6AddressOnCreation: true},
+					"subnet-valid-public-c": {ID: "subnet-valid-public-c", Zone: &Zone{Name: "c"}, CIDR: "10.0.6.0/24", IPv6CIDR: "2600:1f13:fe4:5::/64", Public: true, AssignIpv6AddressOnCreation: true},
+				},
+				VpcID: validVPCID,
+			},
+			publicOnly: true,
+		},
+		{
+			name: "invalid public-only dual-stack byo subnets, public subnets missing AssignIpv6AddressOnCreation",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnetIDs(validSubnets("public").IDs(), true),
+				icBuild.withIPFamily(network.DualStackIPv4Primary),
+				icBuild.withDualStackMachineNetworks(network.DualStackIPv4Primary),
+			),
+			availRegions: validAvailRegions(),
+			availZones:   validAvailZones(),
+			subnets: SubnetGroups{
+				// In public-only mode the AWS layer puts public subnets in Private too,
+				// but subnetDataGroups.From overwrites with the Public entry, so the
+				// attribute check must target subnetDataGroups.Public.
+				Private: validDualstackSubnets("public"),
+				Public:  validDualstackSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			publicOnly: true,
+			expectErr:  `platform\.aws\.vpc\.subnets\[`,
 		},
 		{
 			name: "valid byo subnets, no roles and vpc has no untagged subnets",
@@ -2223,45 +2270,50 @@ func validDualstackSubnets(subnetType string) Subnets {
 	case "private":
 		return Subnets{
 			"subnet-valid-private-a": {
-				ID:       "subnet-valid-private-a",
-				Zone:     &Zone{Name: "a"},
-				CIDR:     "10.0.1.0/24",
-				IPv6CIDR: "2600:1f13:fe4:0::/64",
-				Public:   false,
+				ID:                          "subnet-valid-private-a",
+				Zone:                        &Zone{Name: "a"},
+				CIDR:                        "10.0.1.0/24",
+				IPv6CIDR:                    "2600:1f13:fe4:0::/64",
+				Public:                      false,
+				AssignIpv6AddressOnCreation: true,
 			},
 			"subnet-valid-private-b": {
-				ID:       "subnet-valid-private-b",
-				Zone:     &Zone{Name: "b"},
-				CIDR:     "10.0.2.0/24",
-				IPv6CIDR: "2600:1f13:fe4:1::/64",
-				Public:   false,
+				ID:                          "subnet-valid-private-b",
+				Zone:                        &Zone{Name: "b"},
+				CIDR:                        "10.0.2.0/24",
+				IPv6CIDR:                    "2600:1f13:fe4:1::/64",
+				Public:                      false,
+				AssignIpv6AddressOnCreation: true,
 			},
 			"subnet-valid-private-c": {
-				ID:       "subnet-valid-private-c",
-				Zone:     &Zone{Name: "c"},
-				CIDR:     "10.0.3.0/24",
-				IPv6CIDR: "2600:1f13:fe4:2::/64",
-				Public:   false,
+				ID:                          "subnet-valid-private-c",
+				Zone:                        &Zone{Name: "c"},
+				CIDR:                        "10.0.3.0/24",
+				IPv6CIDR:                    "2600:1f13:fe4:2::/64",
+				Public:                      false,
+				AssignIpv6AddressOnCreation: true,
 			},
 		}
 	case "edge-local":
 		return Subnets{
 			"subnet-valid-edge-local-a": {
-				ID:       "subnet-valid-edge-local-a",
-				Zone:     &Zone{Name: "nyc-1a", Type: aws.LocalZoneType},
-				CIDR:     "10.0.128.0/24",
-				IPv6CIDR: "2600:1f13:fe4:10::/64",
-				Public:   true,
+				ID:                          "subnet-valid-edge-local-a",
+				Zone:                        &Zone{Name: "nyc-1a", Type: aws.LocalZoneType},
+				CIDR:                        "10.0.128.0/24",
+				IPv6CIDR:                    "2600:1f13:fe4:10::/64",
+				Public:                      true,
+				AssignIpv6AddressOnCreation: true,
 			},
 		}
 	case "edge-wavelength":
 		return Subnets{
 			"subnet-valid-edge-wavelength-a": {
-				ID:       "subnet-valid-edge-wavelength-a",
-				Zone:     &Zone{Name: "wlz-1", Type: aws.WavelengthZoneType},
-				CIDR:     "10.0.129.0/24",
-				IPv6CIDR: "",
-				Public:   true,
+				ID:                          "subnet-valid-edge-wavelength-a",
+				Zone:                        &Zone{Name: "wlz-1", Type: aws.WavelengthZoneType},
+				CIDR:                        "10.0.129.0/24",
+				IPv6CIDR:                    "",
+				Public:                      true,
+				AssignIpv6AddressOnCreation: true,
 			},
 		}
 	}
@@ -2817,5 +2869,78 @@ func (icBuild icBuildForAWS) withDualStackMachineNetworks(ipFamily network.IPFam
 		if ipFamily == network.DualStackIPv6Primary {
 			slices.Reverse(ic.Networking.MachineNetwork)
 		}
+	}
+}
+
+func TestValidateSubnetAttributes(t *testing.T) {
+	fldPath := field.NewPath("platform", "aws", "vpc", "subnets")
+
+	tests := []struct {
+		name            string
+		ipFamily        network.IPFamily
+		subnetDataGroup map[string]subnetData
+		expectErrCount  int
+	}{
+		{
+			name:     "DualStackIPv4Primary all subnets have AssignIpv6AddressOnCreation enabled",
+			ipFamily: network.DualStackIPv4Primary,
+			subnetDataGroup: map[string]subnetData{
+				"subnet-a": {Subnet: Subnet{AssignIpv6AddressOnCreation: true}, Idx: 0},
+				"subnet-b": {Subnet: Subnet{AssignIpv6AddressOnCreation: true}, Idx: 1},
+			},
+			expectErrCount: 0,
+		},
+		{
+			name:     "DualStackIPv4Primary one subnet missing AssignIpv6AddressOnCreation",
+			ipFamily: network.DualStackIPv4Primary,
+			subnetDataGroup: map[string]subnetData{
+				"subnet-a": {Subnet: Subnet{AssignIpv6AddressOnCreation: true}, Idx: 0},
+				"subnet-b": {Subnet: Subnet{AssignIpv6AddressOnCreation: false}, Idx: 1},
+			},
+			expectErrCount: 1,
+		},
+		{
+			name:     "DualStackIPv4Primary all subnets missing AssignIpv6AddressOnCreation",
+			ipFamily: network.DualStackIPv4Primary,
+			subnetDataGroup: map[string]subnetData{
+				"subnet-a": {Subnet: Subnet{AssignIpv6AddressOnCreation: false}, Idx: 0},
+				"subnet-b": {Subnet: Subnet{AssignIpv6AddressOnCreation: false}, Idx: 1},
+			},
+			expectErrCount: 2,
+		},
+		{
+			name:     "IPv4 only AssignIpv6AddressOnCreation not required",
+			ipFamily: network.IPv4,
+			subnetDataGroup: map[string]subnetData{
+				"subnet-a": {Subnet: Subnet{AssignIpv6AddressOnCreation: false}, Idx: 0},
+			},
+			expectErrCount: 0,
+		},
+		{
+			name:     "DualStackIPv6Primary AssignIpv6AddressOnCreation not required",
+			ipFamily: network.DualStackIPv6Primary,
+			subnetDataGroup: map[string]subnetData{
+				"subnet-a": {Subnet: Subnet{AssignIpv6AddressOnCreation: false}, Idx: 0},
+			},
+			expectErrCount: 0,
+		},
+		{
+			name:            "empty subnet group no errors",
+			ipFamily:        network.DualStackIPv4Primary,
+			subnetDataGroup: map[string]subnetData{},
+			expectErrCount:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ic := &types.InstallConfig{
+				Platform: types.Platform{
+					AWS: &aws.Platform{IPFamily: tt.ipFamily},
+				},
+			}
+			errs := validateSubnetAttributes(fldPath, tt.subnetDataGroup, ic)
+			assert.Len(t, errs, tt.expectErrCount)
+		})
 	}
 }
