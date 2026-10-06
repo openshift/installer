@@ -1,0 +1,77 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// The Maestro related configuration of the Provision Shard.
+// The combination of `consumer_name` and `rest_api_config.url`
+// must be unique across shards.
+// The combination of `consumer_name` and `grpc_api_config.url`
+// must be unique across shards.
+struct ProvisionShardMaestroConfig {
+	// The name of the Maestro Consumer used by the shard.
+	// A Maestro Consumer with the provided name must pre-exist
+	// and be pre-registered in the Maestro Server associated
+	// to the REST and GRPC Maestro URLs specified in `rest_api_config.url`
+	// and `grpc_api_config.url`.
+	// Required during creation.
+	// Immutable.
+	ConsumerName String
+
+	// The Maestro Server REST API configuration used by the shard.
+	// Required during creation.
+	RestApiConfig ProvisionShardMaestroRestApiConfig
+
+	// The Maestro Server GRPC API configuration used by the shard.
+	// Required during creation.
+	GrpcApiConfig ProvisionShardMaestroGrpcApiConfig
+}
+
+// The Maestro REST API configuration of the provision shard.
+struct ProvisionShardMaestroRestApiConfig {
+	// A URL to the Maestro Server REST API used by the shard.
+	// The URL must point to the same Maestro Server as the
+	// Maestro Server associated to the Maestro Server GRPC API
+	// endpoint specified in `grpc_api_config.url`
+	// The URL must be a well-formed absolute URL.
+	// The expected url format naming scheme is: <scheme>://<host>:<port>
+	// where both <scheme>, <host> and <port> must be specified.
+	// The <host>:<port> combination cannot be the same as in
+	// `grpc_api_config.url`. This includes different DNS names
+	// pointing to the same underlying server.
+	// Example of URL: https://maestro.example.com:50052
+	// Required during creation.
+	// Immutable.
+	Url String
+}
+
+// The Maestro GRPC API configuration of the provision shard.
+struct ProvisionShardMaestroGrpcApiConfig {
+	// A GRPC endpoint to the Maestro Server GRPC API used by the shard.
+	// The GRPC endpoint must point to the same Maestro Server as
+	// the Maestro Server associated to the Maestro Server REST API URL
+	// specified in `rest_api_config.url`.
+	// The URL must be a well-formed absolute URL.
+	// The expected url format naming scheme is: <host>:<port>.
+	// where both <host> and <port> must be specified and they cannot
+	// be empty. No whitespace characters are allowed. No URI scheme
+	// is allowed as part of the URL.
+	// The <host>:<port> combination cannot be the same as in
+	// `rest_api_config.url`. This includes different DNS names
+	// pointing to the same underlying server.
+	// Example of a URL: maestro.example.com:50051
+	// Required during creation.
+	// Immutable.
+	Url String
+}

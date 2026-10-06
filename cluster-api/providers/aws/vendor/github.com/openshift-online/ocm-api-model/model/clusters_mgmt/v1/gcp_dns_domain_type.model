@@ -1,0 +1,30 @@
+/*
+Copyright (c) 2026 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+// GcpDnsDomain represents configuration for Google Cloud Platform DNS domain settings
+// used in cluster DNS configuration for GCP-hosted clusters.
+struct GcpDnsDomain {
+	// DomainPrefix specifies the DNS domain prefix that will be used for cluster DNS resolution.
+  // This prefix is combined with the base domain to form the full DNS domain for the cluster.
+	DomainPrefix String
+
+	// ProjectId is the Google Cloud Platform project identifier where the DNS zone is hosted.
+	ProjectId String
+
+  // NetworkId is the GCP VPC Network identifier where the DNS configuration will be applied.
+  NetworkId String
+}

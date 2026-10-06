@@ -73,6 +73,13 @@ const (
 
 	// DefaultReconcilerRequeue is the default value for the reconcile retry.
 	DefaultReconcilerRequeue = 30 * time.Second
+
+	// PendingInstanceRequeue is the requeue interval while waiting for an
+	// EC2 instance to reach Running state.  A short interval minimises the
+	// delay before the controller can register the instance with the API
+	// server load balancer — critical because kubeadm's upload-config phase
+	// races against a 60-second timeout to reach the API server via the LB.
+	PendingInstanceRequeue = 1 * time.Second
 )
 
 // AWSMachineReconciler reconciles a AwsMachine object.
@@ -700,7 +707,7 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 	machineScope.Debug("done reconciling instance", "instance", instance)
 	if shouldRequeue {
 		machineScope.Debug("but find the instance is pending, requeue", "instance", instance.ID)
-		return ctrl.Result{RequeueAfter: DefaultReconcilerRequeue}, nil
+		return ctrl.Result{RequeueAfter: PendingInstanceRequeue}, nil
 	}
 	return ctrl.Result{}, nil
 }

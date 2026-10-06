@@ -37,7 +37,7 @@ const ProvisionShardNilKind = api_v1alpha1.ProvisionShardNilKind
 
 // ProvisionShard represents the values of the 'provision_shard' type.
 //
-// Contains the properties of the provision shard, including AWS and GCP related configurations
+// Contains the properties of the provision shard
 type ProvisionShard = api_v1alpha1.ProvisionShard
 
 // ProvisionShardListKind is the name of the type used to represent list of objects of

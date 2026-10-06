@@ -78,7 +78,16 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		WriteAzureNodesOutboundConnectivity(object.nodesOutboundConnectivity, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4] && object.operatorsAuthentication != nil
+	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("oidc_issuer_url")
+		stream.WriteString(object.oidcIssuerUrl)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.operatorsAuthentication != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -87,7 +96,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		WriteAzureOperatorsAuthentication(object.operatorsAuthentication, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,7 +105,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.resourceGroupName)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -105,7 +114,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.resourceName)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -114,7 +123,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.subnetResourceID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -123,13 +132,22 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.subscriptionID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("tenant_id")
 		stream.WriteString(object.tenantID)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("vnet_integration_subnet_resource_id")
+		stream.WriteString(object.vnetIntegrationSubnetResourceID)
 	}
 	stream.WriteObjectEnd()
 }
@@ -149,7 +167,7 @@ func UnmarshalAzure(source interface{}) (object *Azure, err error) {
 // ReadAzure reads a value of the 'azure' type from the given iterator.
 func ReadAzure(iterator *jsoniter.Iterator) *Azure {
 	object := &Azure{
-		fieldSet_: make([]bool, 10),
+		fieldSet_: make([]bool, 12),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -173,30 +191,38 @@ func ReadAzure(iterator *jsoniter.Iterator) *Azure {
 			value := ReadAzureNodesOutboundConnectivity(iterator)
 			object.nodesOutboundConnectivity = value
 			object.fieldSet_[3] = true
+		case "oidc_issuer_url":
+			value := iterator.ReadString()
+			object.oidcIssuerUrl = value
+			object.fieldSet_[4] = true
 		case "operators_authentication":
 			value := ReadAzureOperatorsAuthentication(iterator)
 			object.operatorsAuthentication = value
-			object.fieldSet_[4] = true
+			object.fieldSet_[5] = true
 		case "resource_group_name":
 			value := iterator.ReadString()
 			object.resourceGroupName = value
-			object.fieldSet_[5] = true
+			object.fieldSet_[6] = true
 		case "resource_name":
 			value := iterator.ReadString()
 			object.resourceName = value
-			object.fieldSet_[6] = true
+			object.fieldSet_[7] = true
 		case "subnet_resource_id":
 			value := iterator.ReadString()
 			object.subnetResourceID = value
-			object.fieldSet_[7] = true
+			object.fieldSet_[8] = true
 		case "subscription_id":
 			value := iterator.ReadString()
 			object.subscriptionID = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[9] = true
 		case "tenant_id":
 			value := iterator.ReadString()
 			object.tenantID = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[10] = true
+		case "vnet_integration_subnet_resource_id":
+			value := iterator.ReadString()
+			object.vnetIntegrationSubnetResourceID = value
+			object.fieldSet_[11] = true
 		default:
 			iterator.ReadAny()
 		}

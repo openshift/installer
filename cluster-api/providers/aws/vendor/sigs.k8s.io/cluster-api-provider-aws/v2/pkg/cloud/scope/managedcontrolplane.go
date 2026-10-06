@@ -265,10 +265,16 @@ func (s *ManagedControlPlaneScope) ListOptionsLabelSelector() client.ListOption 
 
 // PatchObject persists the control plane configuration and status.
 func (s *ManagedControlPlaneScope) PatchObject() error {
-	return s.patchHelper.Patch(
-		context.TODO(),
-		s.ControlPlane,
+	return s.PatchObjectWithOptions()
+}
+
+// PatchObjectWithOptions persists the control plane configuration and status
+// with additional patch options.
+func (s *ManagedControlPlaneScope) PatchObjectWithOptions(opts ...v1beta1patch.Option) error {
+	allOpts := append([]v1beta1patch.Option{
 		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
+			infrav1.PrincipalUsageAllowedCondition,
+			infrav1.PrincipalCredentialRetrievedCondition,
 			infrav1.VpcReadyCondition,
 			infrav1.SubnetsReadyCondition,
 			infrav1.ClusterSecurityGroupsReadyCondition,
@@ -282,7 +288,12 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 			ekscontrolplanev1.EKSControlPlaneReadyCondition,
 			ekscontrolplanev1.EKSControlPlaneUpdatingCondition,
 			ekscontrolplanev1.IAMControlPlaneRolesReadyCondition,
-		}})
+		}},
+	}, opts...)
+	return s.patchHelper.Patch(
+		context.TODO(),
+		s.ControlPlane,
+		allOpts...)
 }
 
 // Close closes the current scope persisting the control plane configuration and status.

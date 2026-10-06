@@ -159,8 +159,8 @@ E2E_SKIP_EKS_UPGRADE ?= "false"
 EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
 # set up `setup-envtest` to install kubebuilder dependency
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.32.0
-SETUP_ENVTEST_VER := release-0.20
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.34.0
+SETUP_ENVTEST_VER := release-0.22
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
@@ -467,7 +467,7 @@ test-e2e: $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) generate-test-flavors e2e-image ## 
 
 .PHONY: test-e2e-eks ## Run EKS e2e tests using clusterctl
 test-e2e-eks: generate-test-flavors $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) e2e-image ## Run eks e2e tests
-	time go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e $(GINKGO_ARGS) ./test/e2e/suites/managed/... -- -config-path="$(E2E_EKS_CONF_PATH)" --source-template="$(EKS_SOURCE_TEMPLATE)" $(E2E_ARGS) $(EKS_E2E_ARGS)
+	time go run github.com/onsi/ginkgo/v2/ginkgo -tags=e2e $(GINKGO_ARGS) -p ./test/e2e/suites/managed/... -- -config-path="$(E2E_EKS_CONF_PATH)" --source-template="$(EKS_SOURCE_TEMPLATE)" $(E2E_ARGS) $(EKS_E2E_ARGS)
 
 CONFORMANCE_E2E_ARGS ?= -kubetest.config-file=$(KUBETEST_CONF_PATH)
 CONFORMANCE_E2E_ARGS += $(E2E_ARGS)
@@ -620,7 +620,7 @@ release-manifests: ## Release manifest files
 
 .PHONY: release-changelog
 release-changelog: $(RELEASE_NOTES) check-release-tag check-previous-release-tag check-github-token $(RELEASE_DIR)
-	$(RELEASE_NOTES) --debug --org $(GH_ORG_NAME) --repo $(GH_REPO_NAME) --start-sha $(shell git rev-list -n 1 ${PREVIOUS_VERSION}) --end-sha $(shell git rev-list -n 1 ${RELEASE_TAG}) --output $(RELEASE_DIR)/CHANGELOG.md --go-template go-template:$(REPO_ROOT)/hack/changelog.tpl --dependencies=false --branch=${RELEASE_BRANCH} --required-author=""
+	$(RELEASE_NOTES) --debug --org $(GH_ORG_NAME) --repo $(GH_REPO_NAME) --start-sha $(shell git rev-list -n 1 ${PREVIOUS_VERSION}) --end-sha $(shell git rev-list -n 1 ${RELEASE_TAG}) --output $(RELEASE_DIR)/CHANGELOG.md --go-template go-template:$(REPO_ROOT)/hack/changelog.tpl --dependencies=true --branch=${RELEASE_BRANCH} --required-author=""
 
 .PHONY: promote-images
 promote-images: $(KPROMO) $(YQ)

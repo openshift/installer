@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/pkg/errors"
@@ -268,7 +269,7 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		}
 	}
 
-	if err := networkSvc.DeleteNetwork(); err != nil {
+	if err := networkSvc.DeleteNetwork(ctx); err != nil {
 		allErrs = append(allErrs, errors.Wrap(err, "error deleting network"))
 	}
 
@@ -301,6 +302,17 @@ func (r *AWSClusterReconciler) reconcileLoadBalancer(ctx context.Context, cluste
 		v1beta1conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameReason, clusterv1beta1.ConditionSeverityInfo, "")
 		clusterScope.Info("Waiting on API server ELB DNS name")
 		return &retryAfterDuration, nil
+	}
+
+	lbSpec := awsCluster.Spec.ControlPlaneLoadBalancer
+	if lbSpec.DNSResolutionCheck == nil || *lbSpec.DNSResolutionCheck != infrav1.AWSLoadBalancerDNSResolutionCheckNone {
+		clusterScope.Debug("Looking up IP address for DNS", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
+		if _, err := net.DefaultResolver.LookupIPAddr(ctx, awsCluster.Status.Network.APIServerELB.DNSName); err != nil {
+			clusterScope.Error(err, "failed to get IP address for dns name", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
+			v1beta1conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameResolveReason, clusterv1beta1.ConditionSeverityInfo, "")
+			clusterScope.Info("Waiting on API server ELB DNS name to resolve")
+			return &retryAfterDuration, nil
+		}
 	}
 
 	v1beta1conditions.MarkTrue(awsCluster, infrav1.LoadBalancerReadyCondition)

@@ -44,6 +44,7 @@ type OCMClient interface {
 	DeleteCluster(clusterKey string, bestEffort bool, creator *aws.Creator) (*v1.Cluster, error)
 	DeleteNodePool(clusterID string, nodePoolID string) error
 	DeleteUser(clusterID string, group string, username string) error
+	GetAvailableChannels(versionID string) ([]string, error)
 	GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error)
 	GetControlPlaneUpgradePolicies(clusterID string) (controlPlaneUpgradePolicies []*v1.ControlPlaneUpgradePolicy, err error)
 	GetHTPasswdUserList(clusterID string, htpasswdIDPId string) (*v1.HTPasswdUserList, error)
@@ -72,9 +73,11 @@ func (c *ocmclient) AckVersionGate(clusterID string, gateID string) error {
 func (c *ocmclient) AddHTPasswdUser(username string, password string, clusterID string, idpID string) error {
 	return c.ocmClient.AddHTPasswdUser(username, password, clusterID, idpID)
 }
+
 func (c *ocmclient) CreateIdentityProvider(clusterID string, idp *v1.IdentityProvider) (*v1.IdentityProvider, error) {
 	return c.ocmClient.CreateIdentityProvider(clusterID, idp)
 }
+
 func (c *ocmclient) CreateNodePool(clusterID string, nodePool *v1.NodePool) (*v1.NodePool, error) {
 	return c.ocmClient.CreateNodePool(clusterID, nodePool)
 }
@@ -82,6 +85,7 @@ func (c *ocmclient) CreateNodePool(clusterID string, nodePool *v1.NodePool) (*v1
 func (c *ocmclient) CreateCluster(config ocm.Spec) (*v1.Cluster, error) {
 	return c.ocmClient.CreateCluster(config)
 }
+
 func (c *ocmclient) CreateUser(clusterID string, group string, user *v1.User) (*v1.User, error) {
 	return c.ocmClient.CreateUser(clusterID, group, user)
 }
@@ -124,6 +128,10 @@ func (c *ocmclient) GetNodePools(clusterID string) ([]*v1.NodePool, error) {
 
 func (c *ocmclient) GetHypershiftNodePoolUpgrade(clusterID string, clusterKey string, nodePoolID string) (*v1.NodePool, *v1.NodePoolUpgradePolicy, error) {
 	return c.ocmClient.GetHypershiftNodePoolUpgrade(clusterID, clusterKey, nodePoolID)
+}
+
+func (c *ocmclient) GetAvailableChannels(versionID string) ([]string, error) {
+	return c.ocmClient.GetAvailableChannels(versionID)
 }
 
 func (c *ocmclient) GetCluster(clusterKey string, creator *aws.Creator) (*v1.Cluster, error) {

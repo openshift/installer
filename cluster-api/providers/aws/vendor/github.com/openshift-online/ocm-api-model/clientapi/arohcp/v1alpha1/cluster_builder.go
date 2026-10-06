@@ -872,7 +872,7 @@ func (b *ClusterBuilder) Properties(value map[string]string) *ClusterBuilder {
 
 // ProvisionShard sets the value of the 'provision_shard' attribute to the given value.
 //
-// Contains the properties of the provision shard, including AWS and GCP related configurations
+// Contains the properties of the provision shard
 func (b *ClusterBuilder) ProvisionShard(value *ProvisionShardBuilder) *ClusterBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 63)

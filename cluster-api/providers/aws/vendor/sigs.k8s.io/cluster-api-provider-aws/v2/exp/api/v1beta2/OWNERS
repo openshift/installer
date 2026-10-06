@@ -3,7 +3,6 @@
 filters:
   "^(rosa|zz_).*\\.go$":
     approvers:
-      - muraee
-      - serngawy
+      - cluster-api-aws-rosa-reviewers
     reviewers:
-      - serngawy
+      - cluster-api-aws-rosa-reviewers

@@ -38,6 +38,9 @@ const (
 	LaunchTemplateCreateFailedReason = "LaunchTemplateCreateFailed"
 	// LaunchTemplateReconcileFailedReason used for failures during Launch Template reconciliation.
 	LaunchTemplateReconcileFailedReason = "LaunchTemplateReconcileFailed"
+	// LaunchTemplateNitroEnclaveEdgeZoneReason used when enclaveOptions is enabled but the pool
+	// targets a Local Zone or Wavelength Zone, which does not support Nitro Enclaves.
+	LaunchTemplateNitroEnclaveEdgeZoneReason = "NitroEnclaveEdgeZoneUnsupported"
 
 	// PreLaunchTemplateUpdateCheckCondition reports if all prerequisite are met for launch template update.
 	PreLaunchTemplateUpdateCheckCondition clusterv1beta1.ConditionType = "PreLaunchTemplateUpdateCheckSuccess"

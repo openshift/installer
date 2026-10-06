@@ -1242,6 +1242,7 @@ func autoConvert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(in *
 	// WARNING: in.DisableHostsRewrite requires manual conversion: does not exist in peer-type
 	// WARNING: in.PreserveClientIP requires manual conversion: does not exist in peer-type
 	// WARNING: in.TargetGroupIPType requires manual conversion: does not exist in peer-type
+	// WARNING: in.DNSResolutionCheck requires manual conversion: does not exist in peer-type
 	return nil
 }
 

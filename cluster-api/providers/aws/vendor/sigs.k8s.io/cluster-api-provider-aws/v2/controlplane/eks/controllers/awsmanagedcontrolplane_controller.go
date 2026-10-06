@@ -57,6 +57,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -287,7 +288,11 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 
 		v1beta1conditions.SetSummary(managedScope.ControlPlane, v1beta1conditions.WithConditions(applicableConditions...), v1beta1conditions.WithStepCounter())
 
-		if err := managedScope.Close(); err != nil && reterr == nil {
+		patchOpts := []v1beta1patch.Option{}
+		if reterr == nil {
+			patchOpts = append(patchOpts, v1beta1patch.WithStatusObservedGeneration{})
+		}
+		if err := managedScope.PatchObjectWithOptions(patchOpts...); err != nil && reterr == nil {
 			reterr = err
 		}
 	}()
@@ -382,6 +387,13 @@ func (r *AWSManagedControlPlaneReconciler) reconcileNormal(ctx context.Context, 
 		})
 	}
 
+	if awsManagedControlPlane.Status.ObservedGeneration < awsManagedControlPlane.Generation {
+		managedScope.Info("Observed generation behind current generation, requeueing",
+			"observedGeneration", awsManagedControlPlane.Status.ObservedGeneration,
+			"generation", awsManagedControlPlane.Generation)
+		return reconcile.Result{RequeueAfter: r.WaitInfraPeriod}, nil
+	}
+
 	return reconcile.Result{}, nil
 }
 
@@ -430,7 +442,7 @@ func (r *AWSManagedControlPlaneReconciler) reconcileDelete(ctx context.Context, 
 		}
 	}
 
-	if err := networkSvc.DeleteNetwork(); err != nil {
+	if err := networkSvc.DeleteNetwork(ctx); err != nil {
 		log.Error(err, "error deleting network for AWSManagedControlPlane", "namespace", controlPlane.Namespace, "name", controlPlane.Name)
 		return reconcile.Result{}, err
 	}

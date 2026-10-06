@@ -512,7 +512,7 @@ Resources:
         - IpProtocol: -1
           FromPort: 0
           ToPort: 0
-          CidrIp: "10.0.0.0/16"
+          CidrIp: !Ref VpcCidr
       SecurityGroupEgress:
         - IpProtocol: -1
           FromPort: 0

@@ -4,6 +4,7 @@ import (
 	errors "github.com/zgalor/weberr"
 
 	"github.com/openshift/rosa/pkg/arguments"
+	"github.com/openshift/rosa/pkg/ocm"
 )
 
 func ValidateSharedVpcInputs(vpcEndpointRoleArn string, route53RoleArn string,
@@ -29,4 +30,8 @@ func ValidateSharedVpcInputs(vpcEndpointRoleArn string, route53RoleArn string,
 	}
 
 	return false, nil
+}
+
+func ClassicManagedPoliciesUnsupportedInEnv(isManagedSet bool, managedPolicies bool, env string) bool {
+	return isManagedSet && managedPolicies && env == ocm.Production
 }

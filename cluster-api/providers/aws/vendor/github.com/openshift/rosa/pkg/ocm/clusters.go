@@ -69,6 +69,7 @@ type Spec struct {
 	MultiAZ                   bool
 	Version                   string
 	ChannelGroup              string
+	Channel                   string
 	Expiration                time.Time
 	Flavour                   string
 	DisableWorkloadMonitoring *bool
@@ -238,7 +239,7 @@ type Hypershift struct {
 func getClusterFilter(creator *aws.Creator) string {
 	filter := "product.id = 'rosa'"
 	if creator != nil {
-		filter = fmt.Sprintf("%s AND (properties.%s LIKE '%%:%s:%%' OR aws.sts.role_arn LIKE '%%:%s:%%')",
+		filter = fmt.Sprintf("%s AND (properties.%s LIKE 'arn:%%:%s:%%' OR aws.sts.role_arn LIKE 'arn:%%:%s:%%')",
 			filter,
 			ocmConsts.CreatorArn,
 			creator.AccountID,
@@ -456,7 +457,7 @@ func (c *Client) GetClusterUsingSubscription(clusterKey string, creator *aws.Cre
 // Gets only pending non-STS clusters that are installed in the same AWS account
 func (c *Client) GetPendingClusterForARN(creator *aws.Creator) (cluster *cmv1.Cluster, err error) {
 	query := fmt.Sprintf(
-		"state = 'pending' AND product.id = 'rosa' AND aws.sts.role_arn = '' AND properties.%s LIKE '%%:%s:%%'",
+		"state = 'pending' AND product.id = 'rosa' AND aws.sts.role_arn = '' AND properties.%s LIKE 'arn:%%:%s:%%'",
 		ocmConsts.CreatorArn,
 		creator.AccountID,
 	)
@@ -526,7 +527,7 @@ func (c *Client) IsSTSClusterExists(creator *aws.Creator, count int, roleARN str
 	}
 	query := fmt.Sprintf(
 		"product.id = 'rosa' AND ("+
-			"properties.%s LIKE '%%:%s:%%' OR "+
+			"properties.%s LIKE 'arn:%%:%s:%%' OR "+
 			"aws.sts.role_arn = '%s' OR "+
 			"aws.sts.support_role_arn = '%s' OR "+
 			"aws.sts.instance_iam_roles.master_role_arn = '%s' OR "+
@@ -589,6 +590,24 @@ func (c *Client) getClusterNodesBuilder(config Spec) (clusterNodesBuilder *cmv1.
 
 }
 
+func buildVersion(config Spec, builder *cmv1.ClusterBuilder) error {
+	if channel := config.Channel; channel != "" {
+		builder.Channel(channel)
+	}
+	if config.Version == "" && (config.ChannelGroup == "" || config.Channel != "") {
+		return nil
+	}
+	versionBuilder := cmv1.NewVersion()
+	if config.Version != "" {
+		versionBuilder.ID(config.Version)
+	}
+	if config.Channel == "" && config.ChannelGroup != "" {
+		versionBuilder.ChannelGroup(config.ChannelGroup)
+	}
+	builder.Version(versionBuilder)
+	return nil
+}
+
 func (c *Client) UpdateCluster(clusterKey string, creator *aws.Creator, config Spec) error {
 	cluster, err := c.GetCluster(clusterKey, creator)
 	if err != nil {
@@ -597,16 +616,13 @@ func (c *Client) UpdateCluster(clusterKey string, creator *aws.Creator, config S
 
 	clusterBuilder := cmv1.NewCluster()
 
+	if err := buildVersion(config, clusterBuilder); err != nil {
+		return fmt.Errorf("failed to build Version information in cluster builder for update: %w", err)
+	}
+
 	// Update expiration timestamp
 	if !config.Expiration.IsZero() {
 		clusterBuilder = clusterBuilder.ExpirationTimestamp(config.Expiration)
-	}
-
-	// Update channel group
-	if config.ChannelGroup != "" {
-		clusterBuilder.Version(cmv1.NewVersion().
-			ChannelGroup(config.ChannelGroup),
-		)
 	}
 
 	// Scale cluster
@@ -866,6 +882,10 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 		EtcdEncryption(config.EtcdEncryption).
 		Properties(clusterProperties)
 
+	if err := buildVersion(config, clusterBuilder); err != nil {
+		return nil, fmt.Errorf("failed to build Version information in cluster builder for creation: %w", err)
+	}
+
 	if config.DomainPrefix != "" {
 		clusterBuilder.DomainPrefix(config.DomainPrefix)
 	}
@@ -888,18 +908,6 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 				ID(config.Flavour),
 		)
 		reporter.Debugf("Using cluster flavour '%s'", config.Flavour)
-	}
-
-	if config.Version != "" {
-		clusterBuilder = clusterBuilder.Version(
-			cmv1.NewVersion().
-				ID(config.Version).
-				ChannelGroup(config.ChannelGroup),
-		)
-
-		reporter.Debugf(
-			"Using OpenShift version '%s' on channel group '%s'",
-			config.Version, config.ChannelGroup)
 	}
 
 	if !config.Expiration.IsZero() {

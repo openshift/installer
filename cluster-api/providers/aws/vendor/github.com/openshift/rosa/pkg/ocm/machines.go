@@ -63,14 +63,18 @@ func (c *Client) GetMachineTypesInRegion(cloudProviderData *cmv1.CloudProviderDa
 	return machineTypes, nil
 }
 
-func (c *Client) GetMachineTypes() (machineTypes MachineTypeList, err error) {
+func (c *Client) GetMachineTypes(featureFilters FeatureFilters) (machineTypes MachineTypeList, err error) {
 	collection := c.ocm.ClustersMgmt().V1().MachineTypes()
 	page := 1
 	size := 100
+	filter := "cloud_provider.id = 'aws'"
+	if f := featureFilters.String(); f != "" {
+		filter = fmt.Sprintf("%s AND %s", filter, f)
+	}
 	for {
 		var response *cmv1.MachineTypesListResponse
 		response, err := collection.List().
-			Search("cloud_provider.id = 'aws'").
+			Search(filter).
 			Order("category asc").
 			Page(page).
 			Size(size).
@@ -151,8 +155,8 @@ func (c *Client) GetAvailableMachineTypesInRegion(region string, availabilityZon
 	return machineTypes, nil
 }
 
-func (c *Client) GetAvailableMachineTypes() (MachineTypeList, error) {
-	machineTypes, err := c.GetMachineTypes()
+func (c *Client) GetAvailableMachineTypes(featureFilters FeatureFilters) (MachineTypeList, error) {
+	machineTypes, err := c.GetMachineTypes(featureFilters)
 	if err != nil {
 		return MachineTypeList{}, err
 	}

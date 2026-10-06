@@ -34,6 +34,9 @@ class Ingress {
 	// A set of excluded namespaces for the ingress.
 	ExcludedNamespaces []String
 
+	// A set of excluded exclude namespaces via labels for ingress.
+	ExcludedNamespaceSelectors []NamespaceSelector
+
 	// Wildcard policy for the ingress.
 	RouteWildcardPolicy WildcardPolicy
 

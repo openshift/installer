@@ -21,18 +21,15 @@ import (
 	"fmt"
 
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
-	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
-	stsservice "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
@@ -47,7 +44,6 @@ type ROSAControlPlaneScopeParams struct {
 	Cluster        *clusterv1.Cluster
 	ControlPlane   *rosacontrolplanev1.ROSAControlPlane
 	ControllerName string
-	NewStsClient   func(cloud.ScopeUsage, cloud.Session, logger.Wrapper, runtime.Object) stsservice.STSClient
 }
 
 // NewROSAControlPlaneScope creates a new ROSAControlPlaneScope from the supplied parameters.
@@ -86,13 +82,6 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 	managedScope.session = *session
 	managedScope.serviceLimiters = serviceLimiters
 
-	stsClient := params.NewStsClient(managedScope, managedScope, managedScope, managedScope.ControlPlane)
-	identity, err := stsClient.GetCallerIdentity(context.TODO(), &stsv2.GetCallerIdentityInput{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to identify the AWS caller: %w", err)
-	}
-	managedScope.Identity = identity
-
 	return managedScope, nil
 }
 
@@ -108,7 +97,6 @@ type ROSAControlPlaneScope struct {
 	session         awsv2.Config
 	serviceLimiters throttle.ServiceLimiters
 	controllerName  string
-	Identity        *stsv2.GetCallerIdentityOutput
 }
 
 // InfraCluster returns the AWSManagedControlPlane object.
@@ -124,6 +112,11 @@ func (s *ROSAControlPlaneScope) IdentityRef() *infrav1.AWSIdentityReference {
 // Session returns the AWS SDK V2 session. Used for creating clients.
 func (s *ROSAControlPlaneScope) Session() awsv2.Config {
 	return s.session
+}
+
+// SetSession replaces the AWS SDK V2 session. Intended for use in tests to inject a pre-configured session.
+func (s *ROSAControlPlaneScope) SetSession(session awsv2.Config) {
+	s.session = session
 }
 
 // ServiceLimiter returns the AWS SDK session. Used for creating clients.

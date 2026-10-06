@@ -402,6 +402,9 @@ type AWSManagedControlPlaneStatus struct {
 	// in the cluster.
 	// +optional
 	Version *string `json:"version,omitempty"`
+	// ObservedGeneration is the latest generation observed by the controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true

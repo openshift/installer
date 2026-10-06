@@ -25,7 +25,7 @@ import (
 
 // ProvisionShardBuilder contains the data and logic needed to build 'provision_shard' objects.
 //
-// Contains the properties of the provision shard, including AWS and GCP related configurations
+// Contains the properties of the provision shard
 type ProvisionShardBuilder = api_v1alpha1.ProvisionShardBuilder
 
 // NewProvisionShard creates a new builder of 'provision_shard' objects.

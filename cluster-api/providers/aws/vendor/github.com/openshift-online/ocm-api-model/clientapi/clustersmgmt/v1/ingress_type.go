@@ -42,6 +42,7 @@ type Ingress struct {
 	clusterRoutesHostname         string
 	clusterRoutesTlsSecretRef     string
 	componentRoutes               map[string]*ComponentRoute
+	excludedNamespaceSelectors    []*NamespaceSelector
 	excludedNamespaces            []string
 	listening                     ListeningMethod
 	loadBalancerType              LoadBalancerFlavor
@@ -233,12 +234,35 @@ func (o *Ingress) GetDefault() (value bool, ok bool) {
 	return
 }
 
+// ExcludedNamespaceSelectors returns the value of the 'excluded_namespace_selectors' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// A set of excluded exclude namespaces via labels for ingress.
+func (o *Ingress) ExcludedNamespaceSelectors() []*NamespaceSelector {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+		return o.excludedNamespaceSelectors
+	}
+	return nil
+}
+
+// GetExcludedNamespaceSelectors returns the value of the 'excluded_namespace_selectors' attribute and
+// a flag indicating if the attribute has a value.
+//
+// A set of excluded exclude namespaces via labels for ingress.
+func (o *Ingress) GetExcludedNamespaceSelectors() (value []*NamespaceSelector, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	if ok {
+		value = o.excludedNamespaceSelectors
+	}
+	return
+}
+
 // ExcludedNamespaces returns the value of the 'excluded_namespaces' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // A set of excluded namespaces for the ingress.
 func (o *Ingress) ExcludedNamespaces() []string {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.excludedNamespaces
 	}
 	return nil
@@ -249,7 +273,7 @@ func (o *Ingress) ExcludedNamespaces() []string {
 //
 // A set of excluded namespaces for the ingress.
 func (o *Ingress) GetExcludedNamespaces() (value []string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.excludedNamespaces
 	}
@@ -261,7 +285,7 @@ func (o *Ingress) GetExcludedNamespaces() (value []string, ok bool) {
 //
 // Listening method of the ingress
 func (o *Ingress) Listening() ListeningMethod {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
 		return o.listening
 	}
 	return ListeningMethod("")
@@ -272,7 +296,7 @@ func (o *Ingress) Listening() ListeningMethod {
 //
 // Listening method of the ingress
 func (o *Ingress) GetListening() (value ListeningMethod, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
 	if ok {
 		value = o.listening
 	}
@@ -284,7 +308,7 @@ func (o *Ingress) GetListening() (value ListeningMethod, ok bool) {
 //
 // Load Balancer type of the ingress
 func (o *Ingress) LoadBalancerType() LoadBalancerFlavor {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
 		return o.loadBalancerType
 	}
 	return LoadBalancerFlavor("")
@@ -295,7 +319,7 @@ func (o *Ingress) LoadBalancerType() LoadBalancerFlavor {
 //
 // Load Balancer type of the ingress
 func (o *Ingress) GetLoadBalancerType() (value LoadBalancerFlavor, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
 	if ok {
 		value = o.loadBalancerType
 	}
@@ -307,7 +331,7 @@ func (o *Ingress) GetLoadBalancerType() (value LoadBalancerFlavor, ok bool) {
 //
 // Namespace Ownership Policy for the ingress.
 func (o *Ingress) RouteNamespaceOwnershipPolicy() NamespaceOwnershipPolicy {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
 		return o.routeNamespaceOwnershipPolicy
 	}
 	return NamespaceOwnershipPolicy("")
@@ -318,7 +342,7 @@ func (o *Ingress) RouteNamespaceOwnershipPolicy() NamespaceOwnershipPolicy {
 //
 // Namespace Ownership Policy for the ingress.
 func (o *Ingress) GetRouteNamespaceOwnershipPolicy() (value NamespaceOwnershipPolicy, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
 	if ok {
 		value = o.routeNamespaceOwnershipPolicy
 	}
@@ -330,7 +354,7 @@ func (o *Ingress) GetRouteNamespaceOwnershipPolicy() (value NamespaceOwnershipPo
 //
 // A set of labels for the ingress.
 func (o *Ingress) RouteSelectors() map[string]string {
-	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
+	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
 		return o.routeSelectors
 	}
 	return nil
@@ -341,7 +365,7 @@ func (o *Ingress) RouteSelectors() map[string]string {
 //
 // A set of labels for the ingress.
 func (o *Ingress) GetRouteSelectors() (value map[string]string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
+	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
 	if ok {
 		value = o.routeSelectors
 	}
@@ -353,7 +377,7 @@ func (o *Ingress) GetRouteSelectors() (value map[string]string, ok bool) {
 //
 // Wildcard policy for the ingress.
 func (o *Ingress) RouteWildcardPolicy() WildcardPolicy {
-	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
+	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
 		return o.routeWildcardPolicy
 	}
 	return WildcardPolicy("")
@@ -364,7 +388,7 @@ func (o *Ingress) RouteWildcardPolicy() WildcardPolicy {
 //
 // Wildcard policy for the ingress.
 func (o *Ingress) GetRouteWildcardPolicy() (value WildcardPolicy, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
+	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
 	if ok {
 		value = o.routeWildcardPolicy
 	}

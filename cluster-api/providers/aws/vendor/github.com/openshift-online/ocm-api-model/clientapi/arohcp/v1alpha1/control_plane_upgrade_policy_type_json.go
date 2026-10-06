@@ -89,47 +89,11 @@ func WriteControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, stream *j
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("enable_minor_version_upgrades")
-		stream.WriteBool(object.enableMinorVersionUpgrades)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
 		stream.WriteObjectField("last_update_timestamp")
 		stream.WriteString((object.lastUpdateTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("next_run")
-		stream.WriteString((object.nextRun).Format(time.RFC3339))
-		count++
-	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("schedule")
-		stream.WriteString(object.schedule)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("schedule_type")
-		stream.WriteString(string(object.scheduleType))
-		count++
-	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.state != nil
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6] && object.state != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -138,16 +102,7 @@ func WriteControlPlaneUpgradePolicy(object *ControlPlaneUpgradePolicy, stream *j
 		WriteUpgradePolicyState(object.state, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("upgrade_type")
-		stream.WriteString(string(object.upgradeType))
-		count++
-	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -173,7 +128,7 @@ func UnmarshalControlPlaneUpgradePolicy(source interface{}) (object *ControlPlan
 // ReadControlPlaneUpgradePolicy reads a value of the 'control_plane_upgrade_policy' type from the given iterator.
 func ReadControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpgradePolicy {
 	object := &ControlPlaneUpgradePolicy{
-		fieldSet_: make([]bool, 13),
+		fieldSet_: make([]bool, 8),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -204,10 +159,6 @@ func ReadControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpg
 			}
 			object.creationTimestamp = value
 			object.fieldSet_[4] = true
-		case "enable_minor_version_upgrades":
-			value := iterator.ReadBool()
-			object.enableMinorVersionUpgrades = value
-			object.fieldSet_[5] = true
 		case "last_update_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -215,37 +166,15 @@ func ReadControlPlaneUpgradePolicy(iterator *jsoniter.Iterator) *ControlPlaneUpg
 				iterator.ReportError("", err.Error())
 			}
 			object.lastUpdateTimestamp = value
-			object.fieldSet_[6] = true
-		case "next_run":
-			text := iterator.ReadString()
-			value, err := time.Parse(time.RFC3339, text)
-			if err != nil {
-				iterator.ReportError("", err.Error())
-			}
-			object.nextRun = value
-			object.fieldSet_[7] = true
-		case "schedule":
-			value := iterator.ReadString()
-			object.schedule = value
-			object.fieldSet_[8] = true
-		case "schedule_type":
-			text := iterator.ReadString()
-			value := ScheduleType(text)
-			object.scheduleType = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[5] = true
 		case "state":
 			value := ReadUpgradePolicyState(iterator)
 			object.state = value
-			object.fieldSet_[10] = true
-		case "upgrade_type":
-			text := iterator.ReadString()
-			value := UpgradeType(text)
-			object.upgradeType = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[6] = true
 		case "version":
 			value := iterator.ReadString()
 			object.version = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[7] = true
 		default:
 			iterator.ReadAny()
 		}
