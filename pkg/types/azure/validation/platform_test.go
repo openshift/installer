@@ -247,12 +247,13 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 		},
 		{
-			name: "valid ipFamily DualStackIPv6Primary",
+			name: "invalid ipFamily DualStackIPv6Primary (not supported on Azure)",
 			platform: func() *azure.Platform {
 				p := validPlatform()
 				p.IPFamily = network.DualStackIPv6Primary
 				return p
 			}(),
+			expected: `^test-path\.ipFamily: Invalid value: "DualStackIPv6Primary": DualStackIPv6Primary is not supported on Azure`,
 		},
 		{
 			name: "valid ipFamily empty",
@@ -371,7 +372,7 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			expected: `^\Qnetworking.machineNetwork: Required value: at least one IPv6 machine network must be specified when dual-stack is enabled\E$`,
+			expected: `^\Q[test-path.ipFamily: Invalid value: "DualStackIPv6Primary": DualStackIPv6Primary is not supported on Azure because node primary addresses and the serviceNetwork must be IPv4; use DualStackIPv4Primary for dual-stack installs, networking.machineNetwork: Required value: at least one IPv6 machine network must be specified when dual-stack is enabled]\E$`,
 		},
 		{
 			name:     "valid dual-stack with IPv6 /56",
