@@ -25,7 +25,6 @@ import (
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	container "cloud.google.com/go/container/apiv1"
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
 	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +42,7 @@ const (
 
 // ManagedControlPlaneScopeParams defines the input parameters used to create a new Scope.
 type ManagedControlPlaneScopeParams struct {
-	CredentialsClient      *credentials.IamCredentialsClient
+	TokenClient            *TokenClient
 	ManagedClusterClient   *container.ClusterManagerClient
 	TagBindingsClient      *resourcemanager.TagBindingsClient
 	Client                 client.Client
@@ -65,11 +64,6 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		return nil, errors.New("failed to generate new scope from nil GCPManagedControlPlane")
 	}
 
-	credential, err := getCredentials(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
-	if err != nil {
-		return nil, fmt.Errorf("getting gcp credentials: %w", err)
-	}
-
 	if params.ManagedClusterClient == nil {
 		managedClusterClient, err := newClusterManagerClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
 		if err != nil {
@@ -84,13 +78,12 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		}
 		params.TagBindingsClient = tagBindingsClient
 	}
-	if params.CredentialsClient == nil {
-		var credentialsClient *credentials.IamCredentialsClient
-		credentialsClient, err = newIamCredentialsClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
+	if params.TokenClient == nil {
+		tokenClient, err := NewTokenClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
 		if err != nil {
-			return nil, errors.Errorf("failed to create gcp credentials client: %v", err)
+			return nil, errors.Errorf("failed to create gcp token client: %v", err)
 		}
-		params.CredentialsClient = credentialsClient
+		params.TokenClient = &tokenClient
 	}
 
 	helper, err := v1beta1patch.NewHelper(params.GCPManagedControlPlane, params.Client)
@@ -105,8 +98,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		GCPManagedControlPlane: params.GCPManagedControlPlane,
 		mcClient:               params.ManagedClusterClient,
 		tagBindingsClient:      params.TagBindingsClient,
-		credentialsClient:      params.CredentialsClient,
-		credential:             credential,
+		tokenClient:            *params.TokenClient,
 		patchHelper:            helper,
 	}, nil
 }
@@ -121,8 +113,7 @@ type ManagedControlPlaneScope struct {
 	GCPManagedControlPlane *infrav1exp.GCPManagedControlPlane
 	mcClient               *container.ClusterManagerClient
 	tagBindingsClient      *resourcemanager.TagBindingsClient
-	credentialsClient      *credentials.IamCredentialsClient
-	credential             *Credential
+	tokenClient            TokenClient
 
 	AllMachinePools        []clusterv1.MachinePool
 	AllManagedMachinePools []infrav1exp.GCPManagedMachinePool
@@ -145,7 +136,6 @@ func (s *ManagedControlPlaneScope) PatchObject(ctx context.Context) error {
 func (s *ManagedControlPlaneScope) Close(ctx context.Context) error {
 	s.mcClient.Close()
 	s.tagBindingsClient.Close()
-	s.credentialsClient.Close()
 	return s.PatchObject(ctx)
 }
 
@@ -169,14 +159,10 @@ func (s *ManagedControlPlaneScope) TagBindingsClient() *resourcemanager.TagBindi
 	return s.tagBindingsClient
 }
 
-// CredentialsClient returns a client used to interact with IAM.
-func (s *ManagedControlPlaneScope) CredentialsClient() *credentials.IamCredentialsClient {
-	return s.credentialsClient
-}
-
-// GetCredential returns the credential data.
-func (s *ManagedControlPlaneScope) GetCredential() *Credential {
-	return s.credential
+// TokenClient returns the client used to mint short-lived access tokens
+// for the GCP identity configured for this control plane.
+func (s *ManagedControlPlaneScope) TokenClient() TokenClient {
+	return s.tokenClient
 }
 
 // GetAllNodePools gets all node pools for the control plane.

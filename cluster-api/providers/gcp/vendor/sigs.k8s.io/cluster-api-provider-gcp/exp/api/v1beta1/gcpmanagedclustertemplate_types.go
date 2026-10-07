@@ -46,11 +46,11 @@ type GCPManagedClusterTemplateList struct {
 	Items           []GCPManagedClusterTemplate `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&GCPManagedClusterTemplate{}, &GCPManagedClusterTemplateList{})
-}
-
 // GCPManagedClusterTemplateResource describes the data needed to create an GCPManagedCluster from a template.
 type GCPManagedClusterTemplateResource struct {
 	Spec GCPManagedClusterTemplateResourceSpec `json:"spec"`
+}
+
+func init() {
+	objectTypes = append(objectTypes, &GCPManagedClusterTemplate{}, &GCPManagedClusterTemplateList{})
 }

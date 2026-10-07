@@ -45,6 +45,10 @@ type GCPMachinePoolSpec struct {
 	// +optional
 	Subnet *string `json:"subnet,omitempty"`
 
+	// AliasIPRanges let you assign ranges of internal IP addresses as aliases to a VM's network interfaces.
+	// +optional
+	AliasIPRanges []capg.AliasIPRange `json:"aliasIPRanges,omitempty"`
+
 	// ImageFamily is the full reference to a valid image family to be used for this machine.
 	// +optional
 	ImageFamily *string `json:"imageFamily,omitempty"`
@@ -177,7 +181,7 @@ type GCPMachinePoolStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=gcpmachinepools,scope=Namespaced,categories=cluster-api,shortName=gcpmp
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="MachinePool ready status"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="MachinePool ready status"
 // +kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".status.replicas",description="Number of replicas"
 
 // GCPMachinePool is the Schema for the gcpmachinepools API.
@@ -197,10 +201,6 @@ type GCPMachinePoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GCPMachinePool `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&GCPMachinePool{}, &GCPMachinePoolList{})
 }
 
 // GetObjectKind will return the ObjectKind of an GCPMachinePool.
@@ -224,4 +224,8 @@ func (r *GCPMachinePool) SetConditions(conditions []metav1.Condition) {
 // GetConditions gets conditions for a MachinePool.
 func (r *GCPMachinePool) GetConditions() []metav1.Condition {
 	return r.Status.Conditions
+}
+
+func init() {
+	objectTypes = append(objectTypes, &GCPMachinePool{}, &GCPMachinePoolList{})
 }

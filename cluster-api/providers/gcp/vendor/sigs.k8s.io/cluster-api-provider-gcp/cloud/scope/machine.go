@@ -45,6 +45,9 @@ import (
 const (
 	onHostMaintenanceTerminate = "TERMINATE"
 	onHostMaintenanceMigrate   = "MIGRATE"
+
+	// defaultServiceAccountEmail is the GCP alias for a VM's default service account.
+	defaultServiceAccountEmail = "default"
 )
 
 // MachineScopeParams defines the input parameters used to create a new MachineScope.
@@ -368,7 +371,7 @@ func InstanceNetworkInterfaceAliasIPRangesSpec(spec []infrav1.AliasIPRange) []*c
 // instanceServiceAccountsSpec returns service-account spec.
 func instanceServiceAccountsSpec(serviceAccount *infrav1.ServiceAccount) *compute.ServiceAccount {
 	out := &compute.ServiceAccount{
-		Email: "default",
+		Email: defaultServiceAccountEmail,
 		Scopes: []string{
 			compute.CloudPlatformScope,
 		},

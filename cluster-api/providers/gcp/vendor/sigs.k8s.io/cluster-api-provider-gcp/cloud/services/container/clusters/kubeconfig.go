@@ -21,9 +21,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/container/apiv1/containerpb"
-	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -35,11 +33,6 @@ import (
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/cluster-api/util/secret"
-)
-
-const (
-	// GkeScope is the scope to request when generating access token.
-	GkeScope = "https://www.googleapis.com/auth/cloud-platform"
 )
 
 func (s *Service) reconcileKubeconfig(ctx context.Context, cluster *containerpb.Cluster, log *logr.Logger) error {
@@ -145,7 +138,7 @@ func (s *Service) createCAPIKubeconfigSecret(ctx context.Context, cluster *conta
 		return fmt.Errorf("creating base kubeconfig: %w", err)
 	}
 
-	token, err := s.generateToken(ctx)
+	token, err := s.generateToken()
 	if err != nil {
 		log.Error(err, "failed generating token")
 		return err
@@ -182,7 +175,7 @@ func (s *Service) updateCAPIKubeconfigSecret(ctx context.Context, configSecret *
 		return errors.Wrap(err, "failed to convert kubeconfig Secret into a clientcmdapi.Config")
 	}
 
-	token, err := s.generateToken(ctx)
+	token, err := s.generateToken()
 	if err != nil {
 		return err
 	}
@@ -238,41 +231,11 @@ func (s *Service) createBaseKubeConfig(contextName string, cluster *containerpb.
 	return cfg, nil
 }
 
-// tokenEmailResolver resolves the service account email used for token generation.
-type tokenEmailResolver interface {
-	Email(ctx context.Context) (string, error)
-}
-
-// credentialEmailResolver uses an explicit service account email from loaded credentials.
-type credentialEmailResolver struct {
-	email string
-}
-
-func (r credentialEmailResolver) Email(_ context.Context) (string, error) {
-	return r.email, nil
-}
-
-// metadataEmailResolver discovers the bound service account email from the GKE
-// metadata server, used when running under Workload Identity Federation.
-type metadataEmailResolver struct{}
-
-func (r metadataEmailResolver) Email(ctx context.Context) (string, error) {
-	return metadata.EmailWithContext(ctx, "default")
-}
-
-func (s *Service) generateToken(ctx context.Context) (string, error) {
-	email, err := s.emailResolver.Email(ctx)
+func (s *Service) generateToken() (string, error) {
+	token, err := s.scope.TokenClient().Token()
 	if err != nil {
-		return "", fmt.Errorf("resolving service account email: %w", err)
-	}
-	req := &credentialspb.GenerateAccessTokenRequest{
-		Name:  "projects/-/serviceAccounts/" + email,
-		Scope: []string{GkeScope},
-	}
-	resp, err := s.scope.CredentialsClient().GenerateAccessToken(ctx, req)
-	if err != nil {
-		return "", errors.Errorf("error generating access token: %v", err)
+		return "", fmt.Errorf("generating access token: %w", err)
 	}
 
-	return resp.GetAccessToken(), nil
+	return token, nil
 }

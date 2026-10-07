@@ -94,10 +94,17 @@ type GCPManagedMachinePoolClassSpec struct {
 	// MachineType is the name of a Google Compute Engine [machine
 	// type](https://cloud.google.com/compute/docs/machine-types).
 	// If unspecified, the default machine type is `e2-medium`.
+	//
+	// Deprecated: MachineType duplicates InstanceType (both configure the same
+	// underlying GKE node pool machine type) and is retained only for backward
+	// compatibility with existing resources that already set it. This field
+	// remains immutable and will not gain new functionality; use InstanceType
+	// for new manifests. If both fields are set, InstanceType takes precedence.
 	// +optional
 	MachineType *string `json:"machineType,omitempty"`
 	// DiskSizeGb is the size of the disk attached to each node, specified in GB.
 	// The smallest allowed disk size is 10GB. If unspecified, the default disk size is 100GB.
+	// If DiskSizeGB is also set, DiskSizeGb takes precedence.
 	// +optional
 	DiskSizeGb *int32 `json:"diskSizeGb,omitempty"`
 	// LocalSsdCount is the number of local SSD disks to be attached to the node.
@@ -121,6 +128,12 @@ type GCPManagedMachinePoolClassSpec struct {
 	DiskType *DiskType `json:"diskType,omitempty"`
 	// DiskSizeGB is size of the disk attached to each node,
 	// specified in GB.
+	//
+	// Deprecated: DiskSizeGB duplicates DiskSizeGb (both configure the same
+	// underlying GKE node pool disk size) and is retained only for backward
+	// compatibility with existing resources that already set it. This field
+	// remains immutable and will not gain new functionality; use DiskSizeGb
+	// for new manifests. If both fields are set, DiskSizeGb takes precedence.
 	// +kubebuilder:validation:Minimum:=10
 	// +optional
 	DiskSizeGB *int64 `json:"diskSizeGB,omitempty"`
