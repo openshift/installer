@@ -152,6 +152,21 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
+	if p.LoadBalancer != nil {
+		allErrs = append(allErrs, validateLoadBalancer(p.LoadBalancer, fldPath.Child("loadBalancer"))...)
+	}
+
+	return allErrs
+}
+
+func validateLoadBalancer(lb *gcp.LoadBalancer, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if lb.ClientAccess != "" {
+		supported := sets.New(gcp.ClientAccessGlobal, gcp.ClientAccessLocal)
+		if !supported.Has(lb.ClientAccess) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("clientAccess"), lb.ClientAccess, sets.List(supported)))
+		}
+	}
 	return allErrs
 }
 
