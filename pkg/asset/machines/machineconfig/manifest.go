@@ -30,8 +30,10 @@ func Manifests(configs []*mcfgv1.MachineConfig, role, directory string) ([]*asse
 			return nil, err
 		}
 		ret = append(ret, &asset.File{
-			// Note that we should always be generating the role name in our MCs,
-			// but just to ensure uniqueness we add the array index and the role too.
+			// The filename is derived from the MachineConfig name alone, so two
+			// configs sharing a name produce one file and the second silently wins.
+			// Callers are responsible for keeping those names unique; disk setup
+			// does so by rejecting colliding labels during validation.
 			Filename: filepath.Join(directory, fmt.Sprintf(machineConfigFileName, c.ObjectMeta.Name)),
 			Data:     configData,
 		})

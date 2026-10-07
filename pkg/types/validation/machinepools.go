@@ -2,7 +2,9 @@ package validation
 
 import (
 	"fmt"
+	"strings"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -56,6 +58,22 @@ var (
 		}
 		return v
 	}()
+
+	validDiskTypeValues = []string{
+		string(types.Etcd),
+		string(types.Swap),
+		string(types.UserDefined),
+	}
+
+	// diskSetupFieldNames maps a disk type to the install-config field holding its
+	// configuration. The two are not interchangeable: the user-defined type is
+	// spelled "user-defined" but its field is userDefined, so building a path out
+	// of the type string would point the user at a field that does not exist.
+	diskSetupFieldNames = map[types.DiskType]string{
+		types.Etcd:        "etcd",
+		types.Swap:        "swap",
+		types.UserDefined: "userDefined",
+	}
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -89,7 +107,13 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 
 	foundEtcd := false
 	foundSwap := false
-	for _, ds := range p.DiskSetup {
+	// platformDiskID is what pairs an entry with a platform data disk. Two entries
+	// claiming the same ID resolve to the same underlying disk.
+	seenDiskIDs := sets.New[string]()
+	// The resolved label names the generated MachineConfig. Colliding names
+	// silently overwrite each other and one disk is never configured.
+	seenLabels := sets.New[string]()
+	for i, ds := range p.DiskSetup {
 		// outputting the yaml to make recognizing the issue easier for the user
 		dsBytes, err := yaml.Marshal(ds)
 		if err != nil {
@@ -102,9 +126,18 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("userDefined"), dsYaml, "userDefined configuration must be created"))
 				continue
 			}
+			userDefinedPath := fldPath.Child("userDefined")
 			if len(ds.UserDefined.PlatformDiskID) > 12 {
-				userDefinedPath := fldPath.Child("userDefined")
-				allErrs = append(allErrs, field.Invalid(userDefinedPath.Child("platformDiskId"), dsYaml, "cannot be longer than 12 characters"))
+				allErrs = append(allErrs, field.Invalid(userDefinedPath.Child("platformDiskID"), dsYaml, "cannot be longer than 12 characters"))
+				continue
+			}
+			// The partition label is the platform disk ID stripped of every
+			// non-alphanumeric character, so an ID carrying none at all resolves
+			// to an empty label: a MachineConfig named after nothing and a mount
+			// unit pointing at /dev/disk/by-partlabel/ with no disk behind it.
+			if types.SanitizeDiskLabel(ds.UserDefined.PlatformDiskID) == "" {
+				allErrs = append(allErrs, field.Invalid(userDefinedPath.Child("platformDiskID"), ds.UserDefined.PlatformDiskID,
+					"must contain at least one alphanumeric character"))
 				continue
 			}
 		case types.Etcd:
@@ -136,6 +169,32 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 				continue
 			}
 			foundSwap = true
+		default:
+			allErrs = append(allErrs, field.NotSupported(fldPath.Index(i).Child("type"), ds.Type, validDiskTypeValues))
+			continue
+		}
+
+		// Only entries that are otherwise well-formed can be checked for collisions,
+		// since a malformed entry has no disk ID or label to compare.
+		diskID, ok := ds.PlatformDiskID()
+		if !ok {
+			continue
+		}
+		if seenDiskIDs.Has(diskID) {
+			allErrs = append(allErrs, field.Duplicate(fldPath.Index(i).Child(diskSetupFieldNames[ds.Type], "platformDiskID"), diskID))
+		} else {
+			seenDiskIDs.Insert(diskID)
+		}
+
+		// Labels are compared case-insensitively because the MachineConfig name is
+		// lower-cased, so "Data" and "data" name the same object.
+		label := strings.ToLower(ds.MachineConfigLabel())
+		if seenLabels.Has(label) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), dsYaml,
+				fmt.Sprintf("resolves to disk label %q, which is already used by an earlier diskSetup entry in this pool; "+
+					"etcd and swap disks are labelled after their type, user-defined disks after their platformDiskID stripped of non-alphanumeric characters", label)))
+		} else {
+			seenLabels.Insert(label)
 		}
 	}
 

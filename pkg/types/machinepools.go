@@ -1,6 +1,8 @@
 package types
 
 import (
+	"regexp"
+
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -90,6 +92,52 @@ type DiskSwap struct {
 // DiskEtcd defines a disk type of etcd.
 type DiskEtcd struct {
 	PlatformDiskID string `json:"platformDiskID,omitempty"`
+}
+
+// diskLabelUnsafeChars matches every character that is not allowed in a disk
+// partition label.
+var diskLabelUnsafeChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+
+// SanitizeDiskLabel strips the characters that are not allowed in a disk
+// partition label. This is the only definition of that transformation:
+// validation uses it to predict the labels that will be generated, and the
+// MachineConfig generator uses it to produce them, so the two cannot drift.
+func SanitizeDiskLabel(label string) string {
+	return diskLabelUnsafeChars.ReplaceAllString(label, "")
+}
+
+// PlatformDiskID returns the identifier that pairs this disk setup entry with a
+// platform data disk, along with whether the entry carries the configuration
+// block its type calls for.
+func (d *Disk) PlatformDiskID() (string, bool) {
+	switch d.Type {
+	case Etcd:
+		if d.Etcd != nil {
+			return d.Etcd.PlatformDiskID, true
+		}
+	case Swap:
+		if d.Swap != nil {
+			return d.Swap.PlatformDiskID, true
+		}
+	case UserDefined:
+		if d.UserDefined != nil {
+			return d.UserDefined.PlatformDiskID, true
+		}
+	}
+	return "", false
+}
+
+// MachineConfigLabel returns the sanitized partition label this disk setup
+// entry resolves to. Etcd and swap disks are labelled after their type,
+// user-defined disks after their platform disk ID. The label also names the
+// generated MachineConfig, so two entries in one pool resolving to the same
+// label overwrite each other.
+func (d *Disk) MachineConfigLabel() string {
+	label := string(d.Type)
+	if d.Type == UserDefined && d.UserDefined != nil {
+		label = d.UserDefined.PlatformDiskID
+	}
+	return SanitizeDiskLabel(label)
 }
 
 // MachinePool is a pool of machines to be installed.
