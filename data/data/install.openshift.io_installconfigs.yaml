@@ -5694,7 +5694,7 @@ spec:
                     type: boolean
                   armEndpoint:
                     description: ARMEndpoint is the endpoint for the Azure API when
-                      installing on Azure Stack.
+                      installing on Azure Stack, AzureUSSecCloud, or AzureUSNatCloud.
                     type: string
                   baseDomainResourceGroupName:
                     description: BaseDomainResourceGroupName specifies the resource
@@ -5719,8 +5719,7 @@ spec:
                     type: string
                   clusterOSImage:
                     description: ClusterOSImage is the url of a storage blob in the
-                      Azure Stack environment containing an RHCOS VHD. This field
-                      is required for Azure Stack and not applicable to Azure.
+                      Azure environment containing an RHCOS VHD.
                     type: string
                   computeSubnet:
                     description: |-

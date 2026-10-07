@@ -327,7 +327,7 @@ Default value is false.
 Needs the permission "Storage Blob Data Contributor" in azure.
 
     armEndpoint <string>
-      ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
+      ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack, AzureUSSecCloud, or AzureUSNatCloud.
 
     baseDomainResourceGroupName <string>
       BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
