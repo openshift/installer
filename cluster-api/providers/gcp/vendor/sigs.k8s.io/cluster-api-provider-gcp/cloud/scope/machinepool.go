@@ -342,8 +342,7 @@ func (m *MachinePoolScope) InstanceTemplateResource(ctx context.Context) (*compu
 	instance.Disks = append(instance.Disks, m.InstanceAdditionalDiskSpec()...)
 	instance.Metadata = InstanceAdditionalMetadataSpec(m.GCPMachinePool.Spec.AdditionalMetadata)
 	instance.ServiceAccounts = append(instance.ServiceAccounts, instanceServiceAccountsSpec(m.GCPMachinePool.Spec.ServiceAccount))
-	var aliasIPRanges []infrav1.AliasIPRange // Not supported by MachinePool
-	instance.NetworkInterfaces = append(instance.NetworkInterfaces, InstanceNetworkInterfaceSpec(m.ClusterGetter, m.GCPMachinePool.Spec.PublicIP, m.GCPMachinePool.Spec.Subnet, aliasIPRanges))
+	instance.NetworkInterfaces = append(instance.NetworkInterfaces, InstanceNetworkInterfaceSpec(m.ClusterGetter, m.GCPMachinePool.Spec.PublicIP, m.GCPMachinePool.Spec.Subnet, m.GCPMachinePool.Spec.AliasIPRanges))
 	instance.GuestAccelerators = instanceGuestAcceleratorsSpec(m.GCPMachinePool.Spec.GuestAccelerators)
 	if len(instance.GuestAccelerators) > 0 {
 		instance.Scheduling.OnHostMaintenance = onHostMaintenanceTerminate

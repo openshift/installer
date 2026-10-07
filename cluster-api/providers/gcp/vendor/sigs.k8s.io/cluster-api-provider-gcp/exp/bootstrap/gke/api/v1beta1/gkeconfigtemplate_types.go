@@ -50,5 +50,5 @@ type GKEConfigTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GKEConfigTemplate{}, &GKEConfigTemplateList{})
+	objectTypes = append(objectTypes, &GKEConfigTemplate{}, &GKEConfigTemplateList{})
 }

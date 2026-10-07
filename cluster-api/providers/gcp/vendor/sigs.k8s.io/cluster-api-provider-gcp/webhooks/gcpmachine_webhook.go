@@ -20,9 +20,8 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
-
-	"k8s.io/utils/strings/slices"
 
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -48,7 +48,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/flags"
-	"sigs.k8s.io/cluster-api/util/record"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -165,9 +164,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize event recorder.
-	record.InitFromRecorder(mgr.GetEventRecorderFor("gcp-controller"))
-
 	// Setup the context that's going to be used in controllers and for the manager.
 	ctx := ctrl.SetupSignalHandler()
 
@@ -201,6 +197,13 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) error {
 		WatchFilterValue: watchFilterValue,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: gcpMachineConcurrency}); err != nil {
 		return fmt.Errorf("setting up GCPMachine controller: %w", err)
+	}
+	if err := (&controllers.GCPMachineTemplateReconciler{
+		Client:           mgr.GetClient(),
+		ReconcileTimeout: reconcileTimeout,
+		WatchFilterValue: watchFilterValue,
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: gcpMachineConcurrency}); err != nil {
+		return fmt.Errorf("setting up GCPMachineTemplate controller: %w", err)
 	}
 	if err := (&controllers.GCPClusterReconciler{
 		Client:           mgr.GetClient(),
