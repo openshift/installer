@@ -440,7 +440,7 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 network in this list"))
 			}
 
-			allErrs = append(allErrs, validateNetworkEntryOrder(p, v, addresses[k], allowV6Primary, k, field.NewPath("networking", k))...)
+			allErrs = append(allErrs, validateNetworkEntryOrder(p, v, addresses[k], allowV6Primary, field.NewPath("networking", k))...)
 		}
 
 	case hasIPv6:
@@ -490,8 +490,9 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 // validateNetworkEntryOrder ensures the order of CIDR entries is correct in networking configurations.
 // - IPv4 primary dual-stack: IPv4 CIDR first in list
 // - IPv6 primary dual-stack: IPv6 CIDR first in list
-// Some platforms have an explicit field to define the dual-stack variant, for example, platform.aws.ipFamily on AWS.
-func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, networks []ipnet.IPNet, allowV6Primary bool, networkType string, fldPath *field.Path) field.ErrorList {
+// Some platforms have an explicit field to define the dual-stack variant, for example, platform.aws.ipFamily on AWS
+// and platform.azure.ipFamily on Azure.
+func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, networks []ipnet.IPNet, allowV6Primary bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// If missing either IPv4 or IPv6 CIDR, order validation is not applicable
@@ -512,13 +513,15 @@ func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, n
 			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv6Primary requires an IPv6 network first in this list"))
 		}
 	case p.Azure != nil:
-		// Azure nodes always have IPv4 as the primary NIC address, so serviceNetwork
-		// must have IPv4 first regardless of ipFamily. The kube-apiserver requires the
-		// primary service IP family to match the node's address family.
-		if networkType == networkTypeService && ipAddressType.Primary != corev1.IPv4Protocol {
-			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4"))
+		ipFamily := p.Azure.IPFamily
+
+		if ipFamily == network.DualStackIPv4Primary && ipAddressType.Primary == corev1.IPv6Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv4Primary requires an IPv4 network first in this list"))
 		}
 
+		if ipFamily == network.DualStackIPv6Primary && ipAddressType.Primary == corev1.IPv4Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv6Primary requires an IPv6 network first in this list"))
+		}
 	default:
 		// For platforms that don't support IPv6-primary dual-stack, reject configurations with IPv6 CIDRs listed first.
 		if !allowV6Primary && ipAddressType.Primary != corev1.IPv4Protocol {
