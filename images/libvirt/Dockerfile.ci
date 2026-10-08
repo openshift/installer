@@ -21,7 +21,6 @@ RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     genisoimage \
     gettext \
-    google-cloud-sdk-365.0.1 \
     libvirt-client \
     libvirt-libs \
     nss_wrapper \
@@ -30,11 +29,17 @@ RUN yum update -y && \
 
 COPY --from=yq3 /yq /bin/yq-go
 COPY --from=yq4 /usr/bin/yq /bin/yq-v4
+
+# Install gcloud 365.0.1 from versioned archive
+RUN curl -fsSL https://storage.googleapis.com/cloud-sdk-release/google-cloud-sdk-365.0.1-linux-x86_64.tar.gz -o /tmp/google-cloud-sdk.tar.gz && \
+    tar -xzf /tmp/google-cloud-sdk.tar.gz -C /usr/local && \
+    rm /tmp/google-cloud-sdk.tar.gz
+
 # This symlink is provided for backwards compatibility
 RUN ln -s /bin/yq-go /bin/yq && chmod +x /bin/yq
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
-ENV PATH /bin
+ENV PATH /bin::/usr/local/google-cloud-sdk/bin
 ENV HOME /output
 WORKDIR /output
