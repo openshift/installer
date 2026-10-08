@@ -181,6 +181,8 @@ func (o *ClusterUninstaller) deleteIAM(ctx context.Context, client *iamv2.Client
 	switch resourceType {
 	case "instance-profile":
 		return deleteIAMInstanceProfile(ctx, client, arn, logger)
+	case "oidc-provider":
+		return deleteOIDCProvider(ctx, client, arn, logger)
 	case "role":
 		return deleteIAMRole(ctx, client, arn, logger)
 	case "user":
@@ -342,6 +344,22 @@ func deleteIAMRole(ctx context.Context, client *iamv2.Client, roleARN arn.ARN, l
 
 	_, err = client.DeleteRole(ctx, &iamv2.DeleteRoleInput{RoleName: &name})
 	if err != nil {
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteOIDCProvider(ctx context.Context, client *iamv2.Client, providerARN arn.ARN, logger logrus.FieldLogger) error {
+	arnString := providerARN.String()
+	_, err := client.DeleteOpenIDConnectProvider(ctx, &iamv2.DeleteOpenIDConnectProviderInput{
+		OpenIDConnectProviderArn: &arnString,
+	})
+	if err != nil {
+		if strings.Contains(HandleErrorCode(err), "NoSuchEntity") {
+			return nil
+		}
 		return err
 	}
 

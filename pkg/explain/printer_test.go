@@ -298,6 +298,12 @@ There must be only one ServiceEndpoint for a service.
       ServiceEndpoint store the configuration for services to
 override existing defaults of AWS Services.
 
+    sts <object>
+      STS configures the use of AWS Security Token Service for
+short-term credential provisioning. When set, the cluster
+components use IAM roles with OIDC-based web identity tokens
+instead of long-lived credentials.
+
     subnets <[]string>
       Subnets specifies existing subnets (by ID) where cluster
 resources will be created.  Leave unset to have the installer
