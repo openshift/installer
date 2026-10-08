@@ -1,5 +1,36 @@
 # Changes
 
+## [2.26.0](https://github.com/googleapis/gax-go/compare/v2.25.0...v2.26.0) (2026-09-22)
+
+
+### Features
+
+* **o11y:** add ClientLogging configuration ([95a5614](https://github.com/googleapis/gax-go/commit/95a5614930f1be8b152b9df8d05fa27e4b1ad9ac))
+* **o11y:** add recordActionableLog helper for L3 error logs ([3d6918a](https://github.com/googleapis/gax-go/commit/3d6918a7e86ee2e55b25f0c09e69f73bf91b6838))
+* **o11y:** add WithClientLogging CallOption ([0393829](https://github.com/googleapis/gax-go/commit/03938291cc30c7d01ad17a885f48e7edfe2623a5))
+* **o11y:** implement actionable error logging in Invoke ([a6867ed](https://github.com/googleapis/gax-go/commit/a6867ed2ea6da971192ba3a89aa9fcb3fa90cdc0))
+
+## [2.25.0](https://github.com/googleapis/gax-go/compare/v2.24.1...v2.25.0) (2026-09-21)
+
+
+### Features
+
+* update go min version to 1.26 ([#548](https://github.com/googleapis/gax-go/issues/548)) ([b943a7d](https://github.com/googleapis/gax-go/commit/b943a7d2b80b8c2acd519311084c92ec0a972b8b))
+
+## [2.24.1](https://github.com/googleapis/gax-go/compare/v2.24.0...v2.24.1) (2026-09-03)
+
+
+### Bug Fixes
+
+* split implementation of ProtoJSONStream for 1.27 and later ([#532](https://github.com/googleapis/gax-go/issues/532)) ([d0623a1](https://github.com/googleapis/gax-go/commit/d0623a1d3c843a64e85ad8b4d4ea37695a668868))
+
+## [2.24.0](https://github.com/googleapis/gax-go/compare/v2.23.0...v2.24.0) (2026-08-20)
+
+
+### Features
+
+* **iterator:** remove build constraint ([#525](https://github.com/googleapis/gax-go/issues/525)) ([b3f4053](https://github.com/googleapis/gax-go/commit/b3f40539135c909c38030fda9b1a25503d576051))
+
 ## [2.23.0](https://github.com/googleapis/gax-go/compare/v2.22.0...v2.23.0) (2026-07-07)
 
 

@@ -52,7 +52,7 @@ func asVirtualMachineMO(obj mo.Reference) (*mo.VirtualMachine, bool) {
 func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *types.VirtualMachineConfigSpec) (*VirtualMachine, types.BaseMethodFault) {
 	vm := &VirtualMachine{}
 	vm.Parent = &parent
-	ctx.Map.reference(vm)
+	ref := ctx.Map.reference(vm)
 
 	folder := ctx.Map.Get(parent)
 
@@ -164,6 +164,9 @@ func NewVirtualMachine(ctx *Context, parent types.ManagedObjectReference, spec *
 	// put vm in the folder only if no errors occurred
 	f, _ := asFolderMO(folder)
 	folderPutChild(ctx, f, vm)
+
+	// add available fields
+	vm.AvailableField = GetCustomFieldsAvailable(ctx, &ref)
 
 	return vm, nil
 }
@@ -1260,7 +1263,12 @@ func (vm *VirtualMachine) create(ctx *Context, spec *types.VirtualMachineConfigS
 
 	vm.logPrintf("created")
 
-	return vm.configureDevices(ctx, spec)
+	err := vm.configureDevices(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	return vm.applyExtraConfig(ctx, spec)
 }
 
 var vmwOUI = net.HardwareAddr([]byte{0x0, 0xc, 0x29})
@@ -1428,6 +1436,32 @@ func (vm *VirtualMachine) configureDevice(
 		var net types.ManagedObjectReference
 		var name string
 
+		if card := x.GetVirtualEthernetCard(); card.SubnetId != "" && d.Backing == nil {
+			var dvpg *DistributedVirtualPortgroup
+
+			var find func(types.ManagedObjectReference)
+			find = func(child types.ManagedObjectReference) {
+				d, ok := ctx.Map.Get(child).(*DistributedVirtualPortgroup)
+				if ok && d.Config.SubnetId == card.SubnetId {
+					dvpg = d
+					return
+				}
+				walk(ctx.Map.Get(child), find)
+			}
+			f := ctx.Map.getEntityDatacenter(vm).NetworkFolder
+			walk(ctx.Map.Get(f), find) // search in NetworkFolder and any sub folders
+
+			if dvpg != nil {
+				dvs := ctx.Map.Get(*dvpg.Config.DistributedVirtualSwitch).(*DistributedVirtualSwitch)
+				d.Backing = &types.VirtualEthernetCardDistributedVirtualPortBackingInfo{
+					Port: types.DistributedVirtualSwitchPortConnection{
+						PortgroupKey: dvpg.Key,
+						SwitchUuid:   dvs.Uuid,
+					},
+				}
+			}
+		}
+
 		if b, ok := d.Backing.(*types.VirtualEthernetCardOpaqueNetworkBackingInfo); ok &&
 			b.OpaqueNetworkType == "nsx.LogicalSwitch" {
 
@@ -1481,6 +1515,12 @@ func (vm *VirtualMachine) configureDevice(
 			net.Value = b.Port.PortgroupKey
 			if err := vm.validateSwitchMembers(ctx, b.Port.SwitchUuid); err != nil {
 				return err
+			}
+			pgRef := types.ManagedObjectReference{Type: "DistributedVirtualPortgroup", Value: b.Port.PortgroupKey}
+			if pgObj := ctx.Map.Get(pgRef); pgObj != nil {
+				if pg, ok := pgObj.(*DistributedVirtualPortgroup); ok {
+					x.GetVirtualEthernetCard().SubnetId = pg.Config.SubnetId
+				}
 			}
 		}
 
@@ -2652,7 +2692,13 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 		destHost = req.Spec.Location.Host
 	}
 
-	folder, _ := asFolderMO(ctx.Map.Get(req.Folder))
+	folder, ok := asFolderMO(ctx.Map.Get(req.Folder))
+	if !ok {
+		return &methods.CloneVM_TaskBody{
+			Fault_: Fault("Invalid folder", &types.RuntimeFault{}),
+		}
+	}
+
 	host := ctx.Map.Get(*destHost).(*HostSystem)
 	event := vm.event(ctx)
 
@@ -2728,7 +2774,7 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 			})
 		}
 
-		if dst, src := config, req.Spec.Config; src != nil {
+		if dst, src := &config, req.Spec.Config; src != nil {
 			dst.ExtraConfig = src.ExtraConfig
 			copyNonEmptyValue(&dst.Uuid, &src.Uuid)
 			copyNonEmptyValue(&dst.InstanceUuid, &src.InstanceUuid)
@@ -3528,4 +3574,125 @@ func (vm *VirtualMachine) updateTagSpec(
 	}
 
 	return nil
+}
+
+// multiWriterDiskShareKey returns the normalized backing identity for a
+// VirtualDisk that uses sharingMultiWriter. Two attachments (on any VMs)
+// that produce the same key are treated as referring to the same shared
+// multi-writer disk. Mirrors vCenter's URL-based grouping in
+// vpx/vpxd/vm/moVm.cpp::VmMo::GetSharedVmDisks; vcsim does not normalize
+// to a URL so the backing file name from config is used directly.
+func multiWriterDiskShareKey(d *types.VirtualDisk) (shareKey string, ok bool) {
+	const want = string(types.VirtualDiskSharingSharingMultiWriter)
+	var name, sharing string
+	switch b := d.Backing.(type) {
+	case *types.VirtualDiskFlatVer2BackingInfo:
+		name = b.FileName
+		sharing = b.Sharing
+	case *types.VirtualDiskRawDiskMappingVer1BackingInfo:
+		name = b.FileName
+		sharing = b.Sharing
+	case *types.VirtualDiskRawDiskVer2BackingInfo:
+		name = b.DescriptorFileName
+		sharing = b.Sharing
+	default:
+		return "", false
+	}
+	if sharing != want || name == "" {
+		return "", false
+	}
+	return name, true
+}
+
+// vmMultiWriterDisks returns (deviceKey, shareKey) for every multi-writer
+// disk on the given VM, in device order. Mirrors VC's
+// VmMo::GetAllMultiwriterDiskUrls.
+func vmMultiWriterDisks(vm *VirtualMachine) []struct {
+	Key      int32
+	ShareKey string
+} {
+	var out []struct {
+		Key      int32
+		ShareKey string
+	}
+	for _, dev := range vm.Config.Hardware.Device {
+		d, ok := dev.(*types.VirtualDisk)
+		if !ok {
+			continue
+		}
+		sk, ok := multiWriterDiskShareKey(d)
+		if !ok {
+			continue
+		}
+		out = append(out, struct {
+			Key      int32
+			ShareKey string
+		}{Key: d.Key, ShareKey: sk})
+	}
+	return out
+}
+
+// FetchVmGroupForMultiwriterDisks is a vcsim implementation of
+// VirtualMachine.fetchVmGroupForMultiwriterDisks (see
+// vpx/vpxd/vm/moVm.cpp::VmMo::FetchVmGroupForMultiwriterDisks).
+//
+// vcsim behavior (aligned with VC where noted):
+//
+//  1. Enumerate THIS VM's multi-writer disks: FlatVer2, RawDiskVer2, or
+//     RawDiskMappingVer1 backing with sharing=sharingMultiWriter (same
+//     backing families as VpxdVmprovUtil::IsMultiWriterDisk).
+//
+//  2. For each such disk, emit one SharedDiskVmInfo with DiskKey set to the
+//     caller's device key and VirtualDiskId listing every OTHER VM (caller
+//     excluded) that has a multi-writer disk on the same backing share key
+//
+//     Peer discovery in vcsim is implemented as a full scan of every
+//     VirtualMachine in the simulator map and each VM's in-memory device
+//     list (config.hardware.device), comparing multiWriterDiskShareKey to the
+//     caller disk's share key. Real VC runs a VCDB query per disk and applies
+//     session privilege checks; vcsim does neither.
+//
+//  3. A row is emitted for every multi-writer disk on the caller, even when
+//     no peer shares that backing (empty VirtualDiskId), matching VC.
+//
+// Simplification: req.DiskIds is ignored. Real VC de-duplicates diskIds,
+// restricts to those keys, and faults with InvalidArgument(diskIds) if any
+// id is not a multi-writer disk on this VM. vcsim always reports all MW disks
+// on the VM so tests and clients do not need to pass diskIds.
+func (vm *VirtualMachine) FetchVmGroupForMultiwriterDisks(ctx *Context, req *types.FetchVmGroupForMultiwriterDisks) soap.HasFault {
+	body := new(methods.FetchVmGroupForMultiwriterDisksBody)
+	_ = req
+
+	mw := vmMultiWriterDisks(vm)
+
+	rows := make([]types.SharedDiskVmGroupInfoSharedDiskVmInfo, 0, len(mw))
+	for _, e := range mw {
+		var peers []types.VirtualDiskId
+		for _, ent := range ctx.Map.All("VirtualMachine") {
+			ovm, ok := ent.(*VirtualMachine)
+			if !ok || ovm.Self.Value == vm.Self.Value {
+				continue
+			}
+			for _, dev := range ovm.Config.Hardware.Device {
+				od, ok := dev.(*types.VirtualDisk)
+				if !ok {
+					continue
+				}
+				osk, ok := multiWriterDiskShareKey(od)
+				if !ok || osk != e.ShareKey {
+					continue
+				}
+				peers = append(peers, types.VirtualDiskId{Vm: ovm.Self, DiskId: od.Key})
+			}
+		}
+		rows = append(rows, types.SharedDiskVmGroupInfoSharedDiskVmInfo{
+			DiskKey:       e.Key,
+			VirtualDiskId: peers,
+		})
+	}
+
+	body.Res = &types.FetchVmGroupForMultiwriterDisksResponse{
+		Returnval: &types.SharedDiskVmGroupInfo{SharedDiskVmInfo: rows},
+	}
+	return body
 }
