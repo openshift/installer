@@ -19,12 +19,12 @@ func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.Gate
 			Field:           field.NewPath("platform", "none", "fencingCredentials"),
 		},
 		{
-			FeatureGateName: features.FeatureGateMultiDiskSetup,
+			FeatureGateName: c.DiskSetupFeatureGate(),
 			Condition:       c.ControlPlane != nil && len(c.ControlPlane.DiskSetup) != 0,
 			Field:           field.NewPath("controlPlane", "diskSetup"),
 		},
 		{
-			FeatureGateName: features.FeatureGateMultiDiskSetup,
+			FeatureGateName: c.DiskSetupFeatureGate(),
 			Condition: func() bool {
 				computeMachinePool := c.Compute
 				for _, compute := range computeMachinePool {
