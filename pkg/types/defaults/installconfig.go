@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"sort"
+
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -11,6 +13,7 @@ import (
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
 	ibmclouddefaults "github.com/openshift/installer/pkg/types/ibmcloud/defaults"
+	"github.com/openshift/installer/pkg/types/network"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -28,6 +31,59 @@ var (
 	defaultHostPrefix     = 23
 	defaultNetworkType    = string(operv1.NetworkTypeOVNKubernetes)
 )
+
+// orderNetworksByIPFamily reorders the dual-stack CIDR lists in the networking
+// config so that the address family designated primary by the platform's
+// ipFamily setting is listed first.
+//
+// The ordering of these lists is semantically meaningful: downstream components
+// derive the cluster's primary address family from the first entry. The
+// machine-config-operator, for example, keys the kubelet's --node-ip
+// (0.0.0.0 vs ::) off it, which in turn determines Node.status.addresses order,
+// the kube-apiserver's --advertise-address, and ultimately the order of
+// every pod's status.podIPs.
+//
+// Requiring users to hand-order the lists to agree with ipFamily is redundant
+// and easy to get wrong, so the ordering is derived from ipFamily instead. The
+// sort is stable, so the relative order of CIDRs within the same family is
+// preserved.
+func orderNetworksByIPFamily(c *types.InstallConfig) {
+	var ipFamily network.IPFamily
+	switch {
+	case c.Platform.AWS != nil:
+		ipFamily = c.Platform.AWS.IPFamily
+	case c.Platform.Azure != nil:
+		ipFamily = c.Platform.Azure.IPFamily
+	default:
+		// Other platforms have no ipFamily field to derive an ordering from.
+		return
+	}
+
+	if !ipFamily.DualStackEnabled() {
+		return
+	}
+	primaryIsIPv6 := ipFamily == network.DualStackIPv6Primary
+
+	// rank returns 0 for the primary family and 1 for the secondary, so a
+	// stable sort moves the primary family to the front.
+	rank := func(cidr ipnet.IPNet) int {
+		isIPv6 := cidr.IP.To4() == nil
+		if isIPv6 == primaryIsIPv6 {
+			return 0
+		}
+		return 1
+	}
+
+	sort.SliceStable(c.Networking.MachineNetwork, func(i, j int) bool {
+		return rank(c.Networking.MachineNetwork[i].CIDR) < rank(c.Networking.MachineNetwork[j].CIDR)
+	})
+	sort.SliceStable(c.Networking.ServiceNetwork, func(i, j int) bool {
+		return rank(c.Networking.ServiceNetwork[i]) < rank(c.Networking.ServiceNetwork[j])
+	})
+	sort.SliceStable(c.Networking.ClusterNetwork, func(i, j int) bool {
+		return rank(c.Networking.ClusterNetwork[i].CIDR) < rank(c.Networking.ClusterNetwork[j].CIDR)
+	})
+}
 
 // SetInstallConfigDefaults sets the defaults for the install config.
 func SetInstallConfigDefaults(c *types.InstallConfig) {
@@ -59,6 +115,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
+	orderNetworksByIPFamily(c)
 	if c.Publish == "" {
 		c.Publish = types.ExternalPublishingStrategy
 	}
