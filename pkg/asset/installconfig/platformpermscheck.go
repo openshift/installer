@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -46,14 +47,17 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 
-	if ic.Config.CredentialsMode != "" {
+	platform := ic.Config.Platform.Name()
+	// IBM Cloud IPI requires credentialsMode: Manual. That only means CCO will
+	// not mint in-cluster credentials; the installer API key still provisions
+	// infrastructure and must be checked. Other platforms skip when the mode is set.
+	if skipPermsCheckForCredentialsMode(platform, string(ic.Config.CredentialsMode)) {
 		logrus.Debug("CredentialsMode is set. Skipping platform permissions checks before attempting installation.")
 		return nil
 	}
-	logrus.Debug("CredentialsMode is not set. Performing platform permissions checks before attempting installation.")
+	logrus.Debug("Performing platform permissions checks before attempting installation.")
 
 	var err error
-	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
 		permissionGroups := awsconfig.RequiredPermissionGroups(ic.Config)
@@ -89,7 +93,16 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrap(err, "failed to validate services in this project")
 		}
 	case ibmcloud.Name:
-		// TODO: IBM[#90]: platformpermscheck
+		if ic.Config.Platform.IBMCloud == nil {
+			return fmt.Errorf("ibmcloud platform configuration is required")
+		}
+		client, clientErr := ibmcloudconfig.NewClient(ic.Config.Platform.IBMCloud.ServiceEndpoints)
+		if clientErr != nil {
+			return errors.Wrap(clientErr, "creating IBM Cloud session")
+		}
+		if err = ibmcloudconfig.ValidatePerms(ctx, client, ic.Config); err != nil {
+			return errors.Wrap(err, "validate IBM Cloud permissions")
+		}
 	case powervs.Name:
 		// Nothing needs to be done here
 	case azure.Name, baremetal.Name, external.Name, none.Name, openstack.Name, powervc.Name, ovirt.Name, vsphere.Name, nutanix.Name:
@@ -103,4 +116,14 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 // Name returns the human-friendly name of the asset.
 func (a *PlatformPermsCheck) Name() string {
 	return "Platform Permissions Check"
+}
+
+// skipPermsCheckForCredentialsMode reports whether PlatformPermsCheck should
+// skip because credentialsMode is set. IBM Cloud is excluded: Manual is
+// required there, but the installer API key still needs IAM probes.
+func skipPermsCheckForCredentialsMode(platform, credentialsMode string) bool {
+	if credentialsMode == "" {
+		return false
+	}
+	return platform != ibmcloud.Name
 }
