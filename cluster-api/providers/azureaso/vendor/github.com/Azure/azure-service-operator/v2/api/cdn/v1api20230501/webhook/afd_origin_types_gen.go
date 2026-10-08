@@ -116,7 +116,13 @@ func (origin *AfdOrigin) ValidateUpdate(ctx context.Context, oldResource runtime
 
 // createValidations validates the creation of the resource
 func (origin *AfdOrigin) createValidations() []func(ctx context.Context, obj *v20230501.AfdOrigin) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501.AfdOrigin) (admission.Warnings, error){origin.validateResourceReferences, origin.validateOwnerReference, origin.validateSecretDestinations, origin.validateConfigMapDestinations, origin.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20230501.AfdOrigin) (admission.Warnings, error){
+		origin.validateResourceReferences,
+		origin.validateOwnerReference,
+		origin.validateSecretDestinations,
+		origin.validateConfigMapDestinations,
+		origin.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

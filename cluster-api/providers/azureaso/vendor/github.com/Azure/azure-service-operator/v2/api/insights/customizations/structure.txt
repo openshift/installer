@@ -3,15 +3,27 @@ github.com/Azure/azure-service-operator/v2/api/insights/customizations
 ----------------------------------------------------------------------
 ActionGroupExtension: Object (0 properties)
 
+ActivityLogAlertExtension: Object (0 properties)
+
 AutoscaleSettingExtension: Object (0 properties)
 
 ComponentExtension: Object (0 properties)
+
+DataCollectionEndpointExtension: Object (0 properties)
+
+DataCollectionRuleAssociationExtension: Object (0 properties)
+
+DataCollectionRuleExtension: Object (0 properties)
 
 DiagnosticSettingExtension: Object (0 properties)
 
 MetricAlertExtension: Object (0 properties)
 
+PricingPlanExtension: Object (0 properties)
+
 ScheduledQueryRuleExtension: Object (0 properties)
 
 WebtestExtension: Object (0 properties)
+
+WorkbookExtension: Object (0 properties)
 

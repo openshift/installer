@@ -6793,7 +6793,7 @@ func (in *RegistryCredentials) DeepCopyInto(out *RegistryCredentials) {
 	*out = *in
 	if in.IdentityReference != nil {
 		in, out := &in.IdentityReference, &out.IdentityReference
-		*out = new(genruntime.ResourceReference)
+		*out = new(genruntime.WellKnownResourceReference)
 		**out = **in
 	}
 	if in.PasswordSecretRef != nil {
@@ -7113,7 +7113,7 @@ func (in *Secret) DeepCopyInto(out *Secret) {
 	*out = *in
 	if in.IdentityReference != nil {
 		in, out := &in.IdentityReference, &out.IdentityReference
-		*out = new(genruntime.ResourceReference)
+		*out = new(genruntime.WellKnownResourceReference)
 		**out = **in
 	}
 	if in.KeyVaultUrl != nil {

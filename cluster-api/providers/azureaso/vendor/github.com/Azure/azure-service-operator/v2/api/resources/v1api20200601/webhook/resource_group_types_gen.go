@@ -116,7 +116,11 @@ func (group *ResourceGroup) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (group *ResourceGroup) createValidations() []func(ctx context.Context, obj *v20200601.ResourceGroup) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200601.ResourceGroup) (admission.Warnings, error){group.validateResourceReferences, group.validateSecretDestinations, group.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200601.ResourceGroup) (admission.Warnings, error){
+		group.validateResourceReferences,
+		group.validateSecretDestinations,
+		group.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/mongorbac.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/mongorbac.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbUserDefinitions/{mongoUserDefinitionId}
 type MongodbUserDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (definition *MongodbUserDefinition) OriginalGVK() *schema.GroupVersionKind 
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/mongorbac.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/mongorbac.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbUserDefinitions/{mongoUserDefinitionId}
 type MongodbUserDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -509,8 +510,6 @@ func (definition *MongodbUserDefinition_Spec) AssignProperties_From_MongodbUserD
 	if source.Roles != nil {
 		roleList := make([]Role, len(source.Roles))
 		for roleIndex, roleItem := range source.Roles {
-			// Shadow the loop variable to avoid aliasing
-			roleItem := roleItem
 			var role Role
 			err := role.AssignProperties_From_Role(&roleItem)
 			if err != nil {
@@ -582,8 +581,6 @@ func (definition *MongodbUserDefinition_Spec) AssignProperties_To_MongodbUserDef
 	if definition.Roles != nil {
 		roleList := make([]storage.Role, len(definition.Roles))
 		for roleIndex, roleItem := range definition.Roles {
-			// Shadow the loop variable to avoid aliasing
-			roleItem := roleItem
 			var role storage.Role
 			err := roleItem.AssignProperties_To_Role(&role)
 			if err != nil {
@@ -626,8 +623,6 @@ func (definition *MongodbUserDefinition_Spec) Initialize_From_MongodbUserDefinit
 	if source.Roles != nil {
 		roleList := make([]Role, len(source.Roles))
 		for roleIndex, roleItem := range source.Roles {
-			// Shadow the loop variable to avoid aliasing
-			roleItem := roleItem
 			var role Role
 			err := role.Initialize_From_Role_STATUS(&roleItem)
 			if err != nil {
@@ -848,8 +843,6 @@ func (definition *MongodbUserDefinition_STATUS) AssignProperties_From_MongodbUse
 	if source.Roles != nil {
 		roleList := make([]Role_STATUS, len(source.Roles))
 		for roleIndex, roleItem := range source.Roles {
-			// Shadow the loop variable to avoid aliasing
-			roleItem := roleItem
 			var role Role_STATUS
 			err := role.AssignProperties_From_Role_STATUS(&roleItem)
 			if err != nil {
@@ -899,8 +892,6 @@ func (definition *MongodbUserDefinition_STATUS) AssignProperties_To_MongodbUserD
 	if definition.Roles != nil {
 		roleList := make([]storage.Role_STATUS, len(definition.Roles))
 		for roleIndex, roleItem := range definition.Roles {
-			// Shadow the loop variable to avoid aliasing
-			roleItem := roleItem
 			var role storage.Role_STATUS
 			err := roleItem.AssignProperties_To_Role_STATUS(&role)
 			if err != nil {
@@ -946,8 +937,6 @@ func (operator *MongodbUserDefinitionOperatorSpec) AssignProperties_From_Mongodb
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -964,8 +953,6 @@ func (operator *MongodbUserDefinitionOperatorSpec) AssignProperties_From_Mongodb
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -991,8 +978,6 @@ func (operator *MongodbUserDefinitionOperatorSpec) AssignProperties_To_MongodbUs
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1009,8 +994,6 @@ func (operator *MongodbUserDefinitionOperatorSpec) AssignProperties_To_MongodbUs
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1022,188 +1005,6 @@ func (operator *MongodbUserDefinitionOperatorSpec) AssignProperties_To_MongodbUs
 	} else {
 		destination.SecretExpressions = nil
 	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// The set of roles permitted through this Role Definition.
-type Role struct {
-	// Db: The database name the role is applied.
-	Db *string `json:"db,omitempty"`
-
-	// Role: The role name.
-	Role *string `json:"role,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &Role{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (role *Role) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if role == nil {
-		return nil, nil
-	}
-	result := &arm.Role{}
-
-	// Set property "Db":
-	if role.Db != nil {
-		db := *role.Db
-		result.Db = &db
-	}
-
-	// Set property "Role":
-	if role.Role != nil {
-		role1 := *role.Role
-		result.Role = &role1
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (role *Role) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.Role{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (role *Role) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.Role)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Role, got %T", armInput)
-	}
-
-	// Set property "Db":
-	if typedInput.Db != nil {
-		db := *typedInput.Db
-		role.Db = &db
-	}
-
-	// Set property "Role":
-	if typedInput.Role != nil {
-		role1 := *typedInput.Role
-		role.Role = &role1
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_Role populates our Role from the provided source Role
-func (role *Role) AssignProperties_From_Role(source *storage.Role) error {
-
-	// Db
-	role.Db = genruntime.ClonePointerToString(source.Db)
-
-	// Role
-	role.Role = genruntime.ClonePointerToString(source.Role)
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_Role populates the provided destination Role from our Role
-func (role *Role) AssignProperties_To_Role(destination *storage.Role) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Db
-	destination.Db = genruntime.ClonePointerToString(role.Db)
-
-	// Role
-	destination.Role = genruntime.ClonePointerToString(role.Role)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Role_STATUS populates our Role from the provided source Role_STATUS
-func (role *Role) Initialize_From_Role_STATUS(source *Role_STATUS) error {
-
-	// Db
-	role.Db = genruntime.ClonePointerToString(source.Db)
-
-	// Role
-	role.Role = genruntime.ClonePointerToString(source.Role)
-
-	// No error
-	return nil
-}
-
-// The set of roles permitted through this Role Definition.
-type Role_STATUS struct {
-	// Db: The database name the role is applied.
-	Db *string `json:"db,omitempty"`
-
-	// Role: The role name.
-	Role *string `json:"role,omitempty"`
-}
-
-var _ genruntime.FromARMConverter = &Role_STATUS{}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (role *Role_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.Role_STATUS{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (role *Role_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.Role_STATUS)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Role_STATUS, got %T", armInput)
-	}
-
-	// Set property "Db":
-	if typedInput.Db != nil {
-		db := *typedInput.Db
-		role.Db = &db
-	}
-
-	// Set property "Role":
-	if typedInput.Role != nil {
-		role1 := *typedInput.Role
-		role.Role = &role1
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_Role_STATUS populates our Role_STATUS from the provided source Role_STATUS
-func (role *Role_STATUS) AssignProperties_From_Role_STATUS(source *storage.Role_STATUS) error {
-
-	// Db
-	role.Db = genruntime.ClonePointerToString(source.Db)
-
-	// Role
-	role.Role = genruntime.ClonePointerToString(source.Role)
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_Role_STATUS populates the provided destination Role_STATUS from our Role_STATUS
-func (role *Role_STATUS) AssignProperties_To_Role_STATUS(destination *storage.Role_STATUS) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Db
-	destination.Db = genruntime.ClonePointerToString(role.Db)
-
-	// Role
-	destination.Role = genruntime.ClonePointerToString(role.Role)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

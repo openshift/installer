@@ -4,7 +4,6 @@
 package storage
 
 import (
-	"fmt"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240101/storage"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
@@ -20,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -27,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20201101.PublicIPAddress
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/publicIpAddress.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/publicIpAddress.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}
 type PublicIPAddress struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -52,22 +52,36 @@ var _ conversion.Convertible = &PublicIPAddress{}
 
 // ConvertFrom populates our PublicIPAddress from the provided hub PublicIPAddress
 func (address *PublicIPAddress) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20240301s.PublicIPAddress)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/PublicIPAddress but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20240301s.PublicIPAddress
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return address.AssignProperties_From_PublicIPAddress(source)
+	err = address.AssignProperties_From_PublicIPAddress(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to address")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub PublicIPAddress from our PublicIPAddress
 func (address *PublicIPAddress) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20240301s.PublicIPAddress)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/PublicIPAddress but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20240301s.PublicIPAddress
+	err := address.AssignProperties_To_PublicIPAddress(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from address")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return address.AssignProperties_To_PublicIPAddress(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &PublicIPAddress{}
@@ -247,7 +261,7 @@ func (address *PublicIPAddress) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20201101.PublicIPAddress
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/publicIpAddress.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/publicIpAddress.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}
 type PublicIPAddressList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -408,8 +422,6 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 	if source.IpTags != nil {
 		ipTagList := make([]IpTag, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagStash v20220701s.IpTag
 			err := ipTagStash.AssignProperties_From_IpTag(&ipTagItem)
 			if err != nil {
@@ -622,8 +634,6 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 	if address.IpTags != nil {
 		ipTagList := make([]v20240301s.IpTag, len(address.IpTags))
 		for ipTagIndex, ipTagItem := range address.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagStash v20220701s.IpTag
 			err := ipTagItem.AssignProperties_To_IpTag(&ipTagStash)
 			if err != nil {
@@ -927,8 +937,6 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 	if source.IpTags != nil {
 		ipTagList := make([]IpTag_STATUS, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagSTATUSStash.AssignProperties_From_IpTag_STATUS(&ipTagItem)
 			if err != nil {
@@ -1132,8 +1140,6 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 	if address.IpTags != nil {
 		ipTagList := make([]v20240301s.IpTag_STATUS, len(address.IpTags))
 		for ipTagIndex, ipTagItem := range address.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagItem.AssignProperties_To_IpTag_STATUS(&ipTagSTATUSStash)
 			if err != nil {
@@ -2127,8 +2133,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddre
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2145,8 +2149,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddre
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2188,8 +2190,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddress
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2206,8 +2206,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddress
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

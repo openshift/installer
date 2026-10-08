@@ -14,13 +14,15 @@ Workspace: Resource
 │   ├── Description: *string
 │   ├── DiscoveryUrl: *string
 │   ├── Encryption: *Object (3 properties)
-│   │   ├── Identity: *Object (2 properties)
+│   │   ├── Identity: *Object (3 properties)
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │   └── UserAssignedIdentity: *string
-│   │   ├── KeyVaultProperties: *Object (4 properties)
+│   │   │   ├── UserAssignedIdentity: *string
+│   │   │   └── UserAssignedIdentityReference: *genruntime.ResourceReference
+│   │   ├── KeyVaultProperties: *Object (5 properties)
 │   │   │   ├── IdentityClientId: *string
 │   │   │   ├── KeyIdentifier: *string
 │   │   │   ├── KeyVaultArmId: *string
+│   │   │   ├── KeyVaultArmReference: *genruntime.ResourceReference
 │   │   │   └── PropertyBag: genruntime.PropertyBag
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── FriendlyName: *string

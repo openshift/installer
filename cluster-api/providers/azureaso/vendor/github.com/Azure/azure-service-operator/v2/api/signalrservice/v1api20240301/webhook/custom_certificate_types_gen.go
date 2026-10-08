@@ -116,7 +116,13 @@ func (certificate *CustomCertificate) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (certificate *CustomCertificate) createValidations() []func(ctx context.Context, obj *v20240301.CustomCertificate) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.CustomCertificate) (admission.Warnings, error){certificate.validateResourceReferences, certificate.validateOwnerReference, certificate.validateSecretDestinations, certificate.validateConfigMapDestinations, certificate.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20240301.CustomCertificate) (admission.Warnings, error){
+		certificate.validateResourceReferences,
+		certificate.validateOwnerReference,
+		certificate.validateSecretDestinations,
+		certificate.validateConfigMapDestinations,
+		certificate.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -261,3 +261,93 @@ WorkspacesBigDataPool: Resource
     ├── Tags: map[string]string
     └── Type: *string
 
+augmentConversionForAutoPauseProperties: Interface
+
+augmentConversionForAutoPauseProperties_STATUS: Interface
+
+augmentConversionForAutoScaleProperties: Interface
+
+augmentConversionForAutoScaleProperties_STATUS: Interface
+
+augmentConversionForCspWorkspaceAdminProperties: Interface
+
+augmentConversionForCspWorkspaceAdminProperties_STATUS: Interface
+
+augmentConversionForCustomerManagedKeyDetails: Interface
+
+augmentConversionForCustomerManagedKeyDetails_STATUS: Interface
+
+augmentConversionForDataLakeStorageAccountDetails: Interface
+
+augmentConversionForDataLakeStorageAccountDetails_STATUS: Interface
+
+augmentConversionForDynamicExecutorAllocation: Interface
+
+augmentConversionForDynamicExecutorAllocation_STATUS: Interface
+
+augmentConversionForEncryptionDetails: Interface
+
+augmentConversionForEncryptionDetails_STATUS: Interface
+
+augmentConversionForKekIdentityProperties: Interface
+
+augmentConversionForKekIdentityProperties_STATUS: Interface
+
+augmentConversionForLibraryInfo: Interface
+
+augmentConversionForLibraryInfo_STATUS: Interface
+
+augmentConversionForLibraryRequirements: Interface
+
+augmentConversionForLibraryRequirements_STATUS: Interface
+
+augmentConversionForManagedIdentity: Interface
+
+augmentConversionForManagedIdentity_STATUS: Interface
+
+augmentConversionForManagedVirtualNetworkSettings: Interface
+
+augmentConversionForManagedVirtualNetworkSettings_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForPurviewConfiguration: Interface
+
+augmentConversionForPurviewConfiguration_STATUS: Interface
+
+augmentConversionForSparkConfigProperties: Interface
+
+augmentConversionForSparkConfigProperties_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedManagedIdentity_STATUS: Interface
+
+augmentConversionForVirtualNetworkProfile: Interface
+
+augmentConversionForVirtualNetworkProfile_STATUS: Interface
+
+augmentConversionForWorkspace: Interface
+
+augmentConversionForWorkspaceKeyDetails: Interface
+
+augmentConversionForWorkspaceKeyDetails_STATUS: Interface
+
+augmentConversionForWorkspaceOperatorSpec: Interface
+
+augmentConversionForWorkspaceRepositoryConfiguration: Interface
+
+augmentConversionForWorkspaceRepositoryConfiguration_STATUS: Interface
+
+augmentConversionForWorkspace_STATUS: Interface
+
+augmentConversionForWorkspace_Spec: Interface
+
+augmentConversionForWorkspacesBigDataPool: Interface
+
+augmentConversionForWorkspacesBigDataPoolOperatorSpec: Interface
+
+augmentConversionForWorkspacesBigDataPool_STATUS: Interface
+
+augmentConversionForWorkspacesBigDataPool_Spec: Interface
+

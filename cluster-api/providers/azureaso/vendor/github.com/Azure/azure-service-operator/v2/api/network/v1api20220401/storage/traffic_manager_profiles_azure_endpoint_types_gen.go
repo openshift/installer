@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={trafficmanagerprofilesazureendpoints/status,trafficmanagerprofilesazureendpoints/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220401.TrafficManagerProfilesAzureEndpoint
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}/AzureEndpoints/{endpointName}
 type TrafficManagerProfilesAzureEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) OriginalGVK() *schema.Group
 // +kubebuilder:object:root=true
 // Storage version of v1api20220401.TrafficManagerProfilesAzureEndpoint
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}/AzureEndpoints/{endpointName}
 type TrafficManagerProfilesAzureEndpointList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -172,7 +173,7 @@ type TrafficManagerProfilesAzureEndpoint_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName             string                                           `json:"azureName,omitempty"`
-	CustomHeaders         []EndpointProperties_CustomHeaders               `json:"customHeaders,omitempty"`
+	CustomHeaders         []EndpointPropertiesCustomHeadersItem            `json:"customHeaders,omitempty"`
 	EndpointLocation      *string                                          `json:"endpointLocation,omitempty"`
 	EndpointMonitorStatus *string                                          `json:"endpointMonitorStatus,omitempty"`
 	EndpointStatus        *string                                          `json:"endpointStatus,omitempty"`
@@ -190,7 +191,7 @@ type TrafficManagerProfilesAzureEndpoint_Spec struct {
 	Owner       *genruntime.KnownResourceReference `group:"network.azure.com" json:"owner,omitempty" kind:"TrafficManagerProfile"`
 	Priority    *int                               `json:"priority,omitempty"`
 	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
-	Subnets     []EndpointProperties_Subnets       `json:"subnets,omitempty"`
+	Subnets     []EndpointPropertiesSubnetsItem    `json:"subnets,omitempty"`
 	Target      *string                            `json:"target,omitempty"`
 
 	// TargetResourceReference: The Azure Resource URI of the of the endpoint. Not applicable to endpoints of type
@@ -222,25 +223,25 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecTo(destinat
 
 // Storage version of v1api20220401.TrafficManagerProfilesAzureEndpoint_STATUS
 type TrafficManagerProfilesAzureEndpoint_STATUS struct {
-	AlwaysServe           *string                                   `json:"alwaysServe,omitempty"`
-	Conditions            []conditions.Condition                    `json:"conditions,omitempty"`
-	CustomHeaders         []EndpointProperties_CustomHeaders_STATUS `json:"customHeaders,omitempty"`
-	EndpointLocation      *string                                   `json:"endpointLocation,omitempty"`
-	EndpointMonitorStatus *string                                   `json:"endpointMonitorStatus,omitempty"`
-	EndpointStatus        *string                                   `json:"endpointStatus,omitempty"`
-	GeoMapping            []string                                  `json:"geoMapping,omitempty"`
-	Id                    *string                                   `json:"id,omitempty"`
-	MinChildEndpoints     *int                                      `json:"minChildEndpoints,omitempty"`
-	MinChildEndpointsIPv4 *int                                      `json:"minChildEndpointsIPv4,omitempty"`
-	MinChildEndpointsIPv6 *int                                      `json:"minChildEndpointsIPv6,omitempty"`
-	Name                  *string                                   `json:"name,omitempty"`
-	Priority              *int                                      `json:"priority,omitempty"`
-	PropertyBag           genruntime.PropertyBag                    `json:"$propertyBag,omitempty"`
-	Subnets               []EndpointProperties_Subnets_STATUS       `json:"subnets,omitempty"`
-	Target                *string                                   `json:"target,omitempty"`
-	TargetResourceId      *string                                   `json:"targetResourceId,omitempty"`
-	Type                  *string                                   `json:"type,omitempty"`
-	Weight                *int                                      `json:"weight,omitempty"`
+	AlwaysServe           *string                                      `json:"alwaysServe,omitempty"`
+	Conditions            []conditions.Condition                       `json:"conditions,omitempty"`
+	CustomHeaders         []EndpointPropertiesCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
+	EndpointLocation      *string                                      `json:"endpointLocation,omitempty"`
+	EndpointMonitorStatus *string                                      `json:"endpointMonitorStatus,omitempty"`
+	EndpointStatus        *string                                      `json:"endpointStatus,omitempty"`
+	GeoMapping            []string                                     `json:"geoMapping,omitempty"`
+	Id                    *string                                      `json:"id,omitempty"`
+	MinChildEndpoints     *int                                         `json:"minChildEndpoints,omitempty"`
+	MinChildEndpointsIPv4 *int                                         `json:"minChildEndpointsIPv4,omitempty"`
+	MinChildEndpointsIPv6 *int                                         `json:"minChildEndpointsIPv6,omitempty"`
+	Name                  *string                                      `json:"name,omitempty"`
+	Priority              *int                                         `json:"priority,omitempty"`
+	PropertyBag           genruntime.PropertyBag                       `json:"$propertyBag,omitempty"`
+	Subnets               []EndpointPropertiesSubnetsItem_STATUS       `json:"subnets,omitempty"`
+	Target                *string                                      `json:"target,omitempty"`
+	TargetResourceId      *string                                      `json:"targetResourceId,omitempty"`
+	Type                  *string                                      `json:"type,omitempty"`
+	Weight                *int                                         `json:"weight,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &TrafficManagerProfilesAzureEndpoint_STATUS{}
@@ -263,30 +264,34 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusTo(dest
 	return destination.ConvertStatusFrom(endpoint)
 }
 
-// Storage version of v1api20220401.EndpointProperties_CustomHeaders
-type EndpointProperties_CustomHeaders struct {
+// Storage version of v1api20220401.EndpointPropertiesCustomHeadersItem
+// Custom header name and value.
+type EndpointPropertiesCustomHeadersItem struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Value       *string                `json:"value,omitempty"`
 }
 
-// Storage version of v1api20220401.EndpointProperties_CustomHeaders_STATUS
-type EndpointProperties_CustomHeaders_STATUS struct {
+// Storage version of v1api20220401.EndpointPropertiesCustomHeadersItem_STATUS
+// Custom header name and value.
+type EndpointPropertiesCustomHeadersItem_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Value       *string                `json:"value,omitempty"`
 }
 
-// Storage version of v1api20220401.EndpointProperties_Subnets
-type EndpointProperties_Subnets struct {
+// Storage version of v1api20220401.EndpointPropertiesSubnetsItem
+// Subnet first address, scope, and/or last address.
+type EndpointPropertiesSubnetsItem struct {
 	First       *string                `json:"first,omitempty"`
 	Last        *string                `json:"last,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Scope       *int                   `json:"scope,omitempty"`
 }
 
-// Storage version of v1api20220401.EndpointProperties_Subnets_STATUS
-type EndpointProperties_Subnets_STATUS struct {
+// Storage version of v1api20220401.EndpointPropertiesSubnetsItem_STATUS
+// Subnet first address, scope, and/or last address.
+type EndpointPropertiesSubnetsItem_STATUS struct {
 	First       *string                `json:"first,omitempty"`
 	Last        *string                `json:"last,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`

@@ -69,7 +69,7 @@ func (i *CRDInstallationInstruction) ShouldApply() (bool, string) {
 
 func IncludedCRDs(instructions []*CRDInstallationInstruction) []*CRDInstallationInstruction {
 	// Prealloc false positive: https://github.com/alexkohler/prealloc/issues/16
-	//nolint:prealloc
+
 	var result []*CRDInstallationInstruction
 	for _, instruction := range instructions {
 		if instruction.FilterResult == Excluded {

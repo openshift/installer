@@ -504,7 +504,9 @@ type ImageReference struct {
 	// CommunityGalleryImageId: Specified the community gallery image unique id for vm deployment. This can be fetched from
 	// community gallery image GET call.
 	CommunityGalleryImageId *string `json:"communityGalleryImageId,omitempty"`
-	Id                      *string `json:"id,omitempty"`
+
+	// Id: Resource Id
+	Id *string `json:"id,omitempty"`
 
 	// Offer: Specifies the offer of the platform image or marketplace image used to create the virtual machine.
 	Offer *string `json:"offer,omitempty"`
@@ -552,6 +554,7 @@ type LinuxConfiguration struct {
 
 // Describes a network interface reference.
 type NetworkInterfaceReference struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 
 	// Properties: Describes a network interface reference properties.
@@ -699,7 +702,10 @@ type VMGalleryApplication struct {
 	EnableAutomaticUpgrade *bool `json:"enableAutomaticUpgrade,omitempty"`
 
 	// Order: Optional, Specifies the order in which the packages have to be installed
-	Order              *int    `json:"order,omitempty"`
+	Order *int `json:"order,omitempty"`
+
+	// PackageReferenceId: Specifies the GalleryApplicationVersion resource id on the form of
+	// /subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Compute/galleries/{galleryName}/applications/{application}/versions/{version}
 	PackageReferenceId *string `json:"packageReferenceId,omitempty"`
 
 	// Tags: Optional, Specifies a passthrough value for more generic context.
@@ -914,7 +920,9 @@ type LinuxPatchSettings struct {
 type ManagedDiskParameters struct {
 	// DiskEncryptionSet: Specifies the customer managed disk encryption set resource id for the managed disk.
 	DiskEncryptionSet *SubResource `json:"diskEncryptionSet,omitempty"`
-	Id                *string      `json:"id,omitempty"`
+
+	// Id: Resource Id
+	Id *string `json:"id,omitempty"`
 
 	// SecurityProfile: Specifies the security profile for the managed disk.
 	SecurityProfile *VMDiskSecurityProfile `json:"securityProfile,omitempty"`

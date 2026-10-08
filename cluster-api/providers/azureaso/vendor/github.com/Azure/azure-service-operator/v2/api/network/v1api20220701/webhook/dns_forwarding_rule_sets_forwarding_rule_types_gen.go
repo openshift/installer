@@ -116,7 +116,13 @@ func (rule *DnsForwardingRuleSetsForwardingRule) ValidateUpdate(ctx context.Cont
 
 // createValidations validates the creation of the resource
 func (rule *DnsForwardingRuleSetsForwardingRule) createValidations() []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsForwardingRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsForwardingRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations, rule.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsForwardingRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+		rule.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

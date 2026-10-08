@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=app.azure.com,resources=managedenvironments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=app.azure.com,resources={managedenvironments/status,managedenvironments/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,app}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.ManagedEnvironment
 // Generator information:
-// - Generated from: /app/resource-manager/Microsoft.App/stable/2024-03-01/ManagedEnvironments.json
+// - Generated from: /app/resource-manager/Microsoft.App/ContainerApps/stable/2024-03-01/ManagedEnvironments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/managedEnvironments/{environmentName}
 type ManagedEnvironment struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (environment *ManagedEnvironment) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (environment *ManagedEnvironment) SetConditions(conditions conditions.Conditions) {
 	environment.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &ManagedEnvironment{}
+
+// ConvertFrom populates our ManagedEnvironment from the provided hub ManagedEnvironment
+func (environment *ManagedEnvironment) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.ManagedEnvironment)
+	if !ok {
+		return fmt.Errorf("expected app/v1api20250101/storage/ManagedEnvironment but received %T instead", hub)
+	}
+
+	return environment.AssignProperties_From_ManagedEnvironment(source)
+}
+
+// ConvertTo populates the provided hub ManagedEnvironment from our ManagedEnvironment
+func (environment *ManagedEnvironment) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.ManagedEnvironment)
+	if !ok {
+		return fmt.Errorf("expected app/v1api20250101/storage/ManagedEnvironment but received %T instead", hub)
+	}
+
+	return environment.AssignProperties_To_ManagedEnvironment(destination)
 }
 
 var _ configmaps.Exporter = &ManagedEnvironment{}
@@ -142,8 +164,75 @@ func (environment *ManagedEnvironment) SetStatus(status genruntime.ConvertibleSt
 	return nil
 }
 
-// Hub marks that this ManagedEnvironment is the hub type for conversion
-func (environment *ManagedEnvironment) Hub() {}
+// AssignProperties_From_ManagedEnvironment populates our ManagedEnvironment from the provided source ManagedEnvironment
+func (environment *ManagedEnvironment) AssignProperties_From_ManagedEnvironment(source *storage.ManagedEnvironment) error {
+
+	// ObjectMeta
+	environment.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec ManagedEnvironment_Spec
+	err := spec.AssignProperties_From_ManagedEnvironment_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Spec() to populate field Spec")
+	}
+	environment.Spec = spec
+
+	// Status
+	var status ManagedEnvironment_STATUS
+	err = status.AssignProperties_From_ManagedEnvironment_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_STATUS() to populate field Status")
+	}
+	environment.Status = status
+
+	// Invoke the augmentConversionForManagedEnvironment interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment); ok {
+		err := augmentedEnvironment.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment populates the provided destination ManagedEnvironment from our ManagedEnvironment
+func (environment *ManagedEnvironment) AssignProperties_To_ManagedEnvironment(destination *storage.ManagedEnvironment) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *environment.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.ManagedEnvironment_Spec
+	err := environment.Spec.AssignProperties_To_ManagedEnvironment_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.ManagedEnvironment_STATUS
+	err = environment.Status.AssignProperties_To_ManagedEnvironment_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForManagedEnvironment interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment); ok {
+		err := augmentedEnvironment.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (environment *ManagedEnvironment) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (environment *ManagedEnvironment) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.ManagedEnvironment
 // Generator information:
-// - Generated from: /app/resource-manager/Microsoft.App/stable/2024-03-01/ManagedEnvironments.json
+// - Generated from: /app/resource-manager/Microsoft.App/ContainerApps/stable/2024-03-01/ManagedEnvironments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.App/managedEnvironments/{environmentName}
 type ManagedEnvironmentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ManagedEnvironment `json:"items"`
+}
+
+type augmentConversionForManagedEnvironment interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment) error
 }
 
 // Storage version of v1api20240301.ManagedEnvironment_Spec
@@ -199,20 +293,396 @@ var _ genruntime.ConvertibleSpec = &ManagedEnvironment_Spec{}
 
 // ConvertSpecFrom populates our ManagedEnvironment_Spec from the provided source
 func (environment *ManagedEnvironment_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == environment {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.ManagedEnvironment_Spec)
+	if ok {
+		// Populate our instance from source
+		return environment.AssignProperties_From_ManagedEnvironment_Spec(src)
 	}
 
-	return source.ConvertSpecTo(environment)
+	// Convert to an intermediate form
+	src = &storage.ManagedEnvironment_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = environment.AssignProperties_From_ManagedEnvironment_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our ManagedEnvironment_Spec
 func (environment *ManagedEnvironment_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == environment {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.ManagedEnvironment_Spec)
+	if ok {
+		// Populate destination from our instance
+		return environment.AssignProperties_To_ManagedEnvironment_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(environment)
+	// Convert to an intermediate form
+	dst = &storage.ManagedEnvironment_Spec{}
+	err := environment.AssignProperties_To_ManagedEnvironment_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_ManagedEnvironment_Spec populates our ManagedEnvironment_Spec from the provided source ManagedEnvironment_Spec
+func (environment *ManagedEnvironment_Spec) AssignProperties_From_ManagedEnvironment_Spec(source *storage.ManagedEnvironment_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AppLogsConfiguration
+	if source.AppLogsConfiguration != nil {
+		var appLogsConfiguration AppLogsConfiguration
+		err := appLogsConfiguration.AssignProperties_From_AppLogsConfiguration(source.AppLogsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AppLogsConfiguration() to populate field AppLogsConfiguration")
+		}
+		environment.AppLogsConfiguration = &appLogsConfiguration
+	} else {
+		environment.AppLogsConfiguration = nil
+	}
+
+	// AzureName
+	environment.AzureName = source.AzureName
+
+	// CustomDomainConfiguration
+	if source.CustomDomainConfiguration != nil {
+		var customDomainConfiguration CustomDomainConfiguration
+		err := customDomainConfiguration.AssignProperties_From_CustomDomainConfiguration(source.CustomDomainConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CustomDomainConfiguration() to populate field CustomDomainConfiguration")
+		}
+		environment.CustomDomainConfiguration = &customDomainConfiguration
+	} else {
+		environment.CustomDomainConfiguration = nil
+	}
+
+	// DaprAIConnectionString
+	if source.DaprAIConnectionString != nil {
+		daprAIConnectionString := source.DaprAIConnectionString.Copy()
+		environment.DaprAIConnectionString = &daprAIConnectionString
+	} else {
+		environment.DaprAIConnectionString = nil
+	}
+
+	// DaprAIInstrumentationKey
+	if source.DaprAIInstrumentationKey != nil {
+		daprAIInstrumentationKey := source.DaprAIInstrumentationKey.Copy()
+		environment.DaprAIInstrumentationKey = &daprAIInstrumentationKey
+	} else {
+		environment.DaprAIInstrumentationKey = nil
+	}
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// InfrastructureResourceGroup
+	environment.InfrastructureResourceGroup = genruntime.ClonePointerToString(source.InfrastructureResourceGroup)
+
+	// Kind
+	environment.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	environment.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ManagedEnvironmentOperatorSpec
+		err := operatorSpec.AssignProperties_From_ManagedEnvironmentOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironmentOperatorSpec() to populate field OperatorSpec")
+		}
+		environment.OperatorSpec = &operatorSpec
+	} else {
+		environment.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	environment.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		environment.Owner = &owner
+	} else {
+		environment.Owner = nil
+	}
+
+	// PeerAuthentication
+	if source.PeerAuthentication != nil {
+		var peerAuthentication ManagedEnvironment_Properties_PeerAuthentication_Spec
+		err := peerAuthentication.AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_Spec(source.PeerAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_Spec() to populate field PeerAuthentication")
+		}
+		environment.PeerAuthentication = &peerAuthentication
+	} else {
+		environment.PeerAuthentication = nil
+	}
+
+	// PeerTrafficConfiguration
+	if source.PeerTrafficConfiguration != nil {
+		var peerTrafficConfiguration ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
+		err := peerTrafficConfiguration.AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec(source.PeerTrafficConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec() to populate field PeerTrafficConfiguration")
+		}
+		environment.PeerTrafficConfiguration = &peerTrafficConfiguration
+	} else {
+		environment.PeerTrafficConfiguration = nil
+	}
+
+	// Tags
+	environment.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// VnetConfiguration
+	if source.VnetConfiguration != nil {
+		var vnetConfiguration VnetConfiguration
+		err := vnetConfiguration.AssignProperties_From_VnetConfiguration(source.VnetConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VnetConfiguration() to populate field VnetConfiguration")
+		}
+		environment.VnetConfiguration = &vnetConfiguration
+	} else {
+		environment.VnetConfiguration = nil
+	}
+
+	// WorkloadProfiles
+	if source.WorkloadProfiles != nil {
+		workloadProfileList := make([]WorkloadProfile, len(source.WorkloadProfiles))
+		for workloadProfileIndex, workloadProfileItem := range source.WorkloadProfiles {
+			var workloadProfile WorkloadProfile
+			err := workloadProfile.AssignProperties_From_WorkloadProfile(&workloadProfileItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_WorkloadProfile() to populate field WorkloadProfiles")
+			}
+			workloadProfileList[workloadProfileIndex] = workloadProfile
+		}
+		environment.WorkloadProfiles = workloadProfileList
+	} else {
+		environment.WorkloadProfiles = nil
+	}
+
+	// ZoneRedundant
+	if source.ZoneRedundant != nil {
+		zoneRedundant := *source.ZoneRedundant
+		environment.ZoneRedundant = &zoneRedundant
+	} else {
+		environment.ZoneRedundant = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		environment.PropertyBag = propertyBag
+	} else {
+		environment.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Spec interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment_Spec); ok {
+		err := augmentedEnvironment.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Spec populates the provided destination ManagedEnvironment_Spec from our ManagedEnvironment_Spec
+func (environment *ManagedEnvironment_Spec) AssignProperties_To_ManagedEnvironment_Spec(destination *storage.ManagedEnvironment_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(environment.PropertyBag)
+
+	// AppLogsConfiguration
+	if environment.AppLogsConfiguration != nil {
+		var appLogsConfiguration storage.AppLogsConfiguration
+		err := environment.AppLogsConfiguration.AssignProperties_To_AppLogsConfiguration(&appLogsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AppLogsConfiguration() to populate field AppLogsConfiguration")
+		}
+		destination.AppLogsConfiguration = &appLogsConfiguration
+	} else {
+		destination.AppLogsConfiguration = nil
+	}
+
+	// AzureName
+	destination.AzureName = environment.AzureName
+
+	// CustomDomainConfiguration
+	if environment.CustomDomainConfiguration != nil {
+		var customDomainConfiguration storage.CustomDomainConfiguration
+		err := environment.CustomDomainConfiguration.AssignProperties_To_CustomDomainConfiguration(&customDomainConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CustomDomainConfiguration() to populate field CustomDomainConfiguration")
+		}
+		destination.CustomDomainConfiguration = &customDomainConfiguration
+	} else {
+		destination.CustomDomainConfiguration = nil
+	}
+
+	// DaprAIConnectionString
+	if environment.DaprAIConnectionString != nil {
+		daprAIConnectionString := environment.DaprAIConnectionString.Copy()
+		destination.DaprAIConnectionString = &daprAIConnectionString
+	} else {
+		destination.DaprAIConnectionString = nil
+	}
+
+	// DaprAIInstrumentationKey
+	if environment.DaprAIInstrumentationKey != nil {
+		daprAIInstrumentationKey := environment.DaprAIInstrumentationKey.Copy()
+		destination.DaprAIInstrumentationKey = &daprAIInstrumentationKey
+	} else {
+		destination.DaprAIInstrumentationKey = nil
+	}
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity storage.ManagedServiceIdentity
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// InfrastructureResourceGroup
+	destination.InfrastructureResourceGroup = genruntime.ClonePointerToString(environment.InfrastructureResourceGroup)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(environment.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(environment.Location)
+
+	// OperatorSpec
+	if environment.OperatorSpec != nil {
+		var operatorSpec storage.ManagedEnvironmentOperatorSpec
+		err := environment.OperatorSpec.AssignProperties_To_ManagedEnvironmentOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironmentOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = environment.OriginalVersion
+
+	// Owner
+	if environment.Owner != nil {
+		owner := environment.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PeerAuthentication
+	if environment.PeerAuthentication != nil {
+		var peerAuthentication storage.ManagedEnvironment_Properties_PeerAuthentication_Spec
+		err := environment.PeerAuthentication.AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_Spec(&peerAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_Spec() to populate field PeerAuthentication")
+		}
+		destination.PeerAuthentication = &peerAuthentication
+	} else {
+		destination.PeerAuthentication = nil
+	}
+
+	// PeerTrafficConfiguration
+	if environment.PeerTrafficConfiguration != nil {
+		var peerTrafficConfiguration storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
+		err := environment.PeerTrafficConfiguration.AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec(&peerTrafficConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec() to populate field PeerTrafficConfiguration")
+		}
+		destination.PeerTrafficConfiguration = &peerTrafficConfiguration
+	} else {
+		destination.PeerTrafficConfiguration = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(environment.Tags)
+
+	// VnetConfiguration
+	if environment.VnetConfiguration != nil {
+		var vnetConfiguration storage.VnetConfiguration
+		err := environment.VnetConfiguration.AssignProperties_To_VnetConfiguration(&vnetConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VnetConfiguration() to populate field VnetConfiguration")
+		}
+		destination.VnetConfiguration = &vnetConfiguration
+	} else {
+		destination.VnetConfiguration = nil
+	}
+
+	// WorkloadProfiles
+	if environment.WorkloadProfiles != nil {
+		workloadProfileList := make([]storage.WorkloadProfile, len(environment.WorkloadProfiles))
+		for workloadProfileIndex, workloadProfileItem := range environment.WorkloadProfiles {
+			var workloadProfile storage.WorkloadProfile
+			err := workloadProfileItem.AssignProperties_To_WorkloadProfile(&workloadProfile)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_WorkloadProfile() to populate field WorkloadProfiles")
+			}
+			workloadProfileList[workloadProfileIndex] = workloadProfile
+		}
+		destination.WorkloadProfiles = workloadProfileList
+	} else {
+		destination.WorkloadProfiles = nil
+	}
+
+	// ZoneRedundant
+	if environment.ZoneRedundant != nil {
+		zoneRedundant := *environment.ZoneRedundant
+		destination.ZoneRedundant = &zoneRedundant
+	} else {
+		destination.ZoneRedundant = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Spec interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment_Spec); ok {
+		err := augmentedEnvironment.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.ManagedEnvironment_STATUS
@@ -248,20 +718,438 @@ var _ genruntime.ConvertibleStatus = &ManagedEnvironment_STATUS{}
 
 // ConvertStatusFrom populates our ManagedEnvironment_STATUS from the provided source
 func (environment *ManagedEnvironment_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == environment {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.ManagedEnvironment_STATUS)
+	if ok {
+		// Populate our instance from source
+		return environment.AssignProperties_From_ManagedEnvironment_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(environment)
+	// Convert to an intermediate form
+	src = &storage.ManagedEnvironment_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = environment.AssignProperties_From_ManagedEnvironment_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our ManagedEnvironment_STATUS
 func (environment *ManagedEnvironment_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == environment {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.ManagedEnvironment_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return environment.AssignProperties_To_ManagedEnvironment_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(environment)
+	// Convert to an intermediate form
+	dst = &storage.ManagedEnvironment_STATUS{}
+	err := environment.AssignProperties_To_ManagedEnvironment_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_ManagedEnvironment_STATUS populates our ManagedEnvironment_STATUS from the provided source ManagedEnvironment_STATUS
+func (environment *ManagedEnvironment_STATUS) AssignProperties_From_ManagedEnvironment_STATUS(source *storage.ManagedEnvironment_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AppLogsConfiguration
+	if source.AppLogsConfiguration != nil {
+		var appLogsConfiguration AppLogsConfiguration_STATUS
+		err := appLogsConfiguration.AssignProperties_From_AppLogsConfiguration_STATUS(source.AppLogsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AppLogsConfiguration_STATUS() to populate field AppLogsConfiguration")
+		}
+		environment.AppLogsConfiguration = &appLogsConfiguration
+	} else {
+		environment.AppLogsConfiguration = nil
+	}
+
+	// Conditions
+	environment.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CustomDomainConfiguration
+	if source.CustomDomainConfiguration != nil {
+		var customDomainConfiguration CustomDomainConfiguration_STATUS
+		err := customDomainConfiguration.AssignProperties_From_CustomDomainConfiguration_STATUS(source.CustomDomainConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CustomDomainConfiguration_STATUS() to populate field CustomDomainConfiguration")
+		}
+		environment.CustomDomainConfiguration = &customDomainConfiguration
+	} else {
+		environment.CustomDomainConfiguration = nil
+	}
+
+	// DaprConfiguration
+	if source.DaprConfiguration != nil {
+		var daprConfiguration DaprConfiguration_STATUS
+		err := daprConfiguration.AssignProperties_From_DaprConfiguration_STATUS(source.DaprConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DaprConfiguration_STATUS() to populate field DaprConfiguration")
+		}
+		environment.DaprConfiguration = &daprConfiguration
+	} else {
+		environment.DaprConfiguration = nil
+	}
+
+	// DefaultDomain
+	environment.DefaultDomain = genruntime.ClonePointerToString(source.DefaultDomain)
+
+	// DeploymentErrors
+	environment.DeploymentErrors = genruntime.ClonePointerToString(source.DeploymentErrors)
+
+	// EventStreamEndpoint
+	environment.EventStreamEndpoint = genruntime.ClonePointerToString(source.EventStreamEndpoint)
+
+	// Id
+	environment.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// InfrastructureResourceGroup
+	environment.InfrastructureResourceGroup = genruntime.ClonePointerToString(source.InfrastructureResourceGroup)
+
+	// KedaConfiguration
+	if source.KedaConfiguration != nil {
+		var kedaConfiguration KedaConfiguration_STATUS
+		err := kedaConfiguration.AssignProperties_From_KedaConfiguration_STATUS(source.KedaConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KedaConfiguration_STATUS() to populate field KedaConfiguration")
+		}
+		environment.KedaConfiguration = &kedaConfiguration
+	} else {
+		environment.KedaConfiguration = nil
+	}
+
+	// Kind
+	environment.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	environment.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	environment.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PeerAuthentication
+	if source.PeerAuthentication != nil {
+		var peerAuthentication ManagedEnvironment_Properties_PeerAuthentication_STATUS
+		err := peerAuthentication.AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS(source.PeerAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS() to populate field PeerAuthentication")
+		}
+		environment.PeerAuthentication = &peerAuthentication
+	} else {
+		environment.PeerAuthentication = nil
+	}
+
+	// PeerTrafficConfiguration
+	if source.PeerTrafficConfiguration != nil {
+		var peerTrafficConfiguration ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
+		err := peerTrafficConfiguration.AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(source.PeerTrafficConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS() to populate field PeerTrafficConfiguration")
+		}
+		environment.PeerTrafficConfiguration = &peerTrafficConfiguration
+	} else {
+		environment.PeerTrafficConfiguration = nil
+	}
+
+	// ProvisioningState
+	environment.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// StaticIp
+	environment.StaticIp = genruntime.ClonePointerToString(source.StaticIp)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		environment.SystemData = &systemDatum
+	} else {
+		environment.SystemData = nil
+	}
+
+	// Tags
+	environment.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	environment.Type = genruntime.ClonePointerToString(source.Type)
+
+	// VnetConfiguration
+	if source.VnetConfiguration != nil {
+		var vnetConfiguration VnetConfiguration_STATUS
+		err := vnetConfiguration.AssignProperties_From_VnetConfiguration_STATUS(source.VnetConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VnetConfiguration_STATUS() to populate field VnetConfiguration")
+		}
+		environment.VnetConfiguration = &vnetConfiguration
+	} else {
+		environment.VnetConfiguration = nil
+	}
+
+	// WorkloadProfiles
+	if source.WorkloadProfiles != nil {
+		workloadProfileList := make([]WorkloadProfile_STATUS, len(source.WorkloadProfiles))
+		for workloadProfileIndex, workloadProfileItem := range source.WorkloadProfiles {
+			var workloadProfile WorkloadProfile_STATUS
+			err := workloadProfile.AssignProperties_From_WorkloadProfile_STATUS(&workloadProfileItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_WorkloadProfile_STATUS() to populate field WorkloadProfiles")
+			}
+			workloadProfileList[workloadProfileIndex] = workloadProfile
+		}
+		environment.WorkloadProfiles = workloadProfileList
+	} else {
+		environment.WorkloadProfiles = nil
+	}
+
+	// ZoneRedundant
+	if source.ZoneRedundant != nil {
+		zoneRedundant := *source.ZoneRedundant
+		environment.ZoneRedundant = &zoneRedundant
+	} else {
+		environment.ZoneRedundant = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		environment.PropertyBag = propertyBag
+	} else {
+		environment.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_STATUS interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment_STATUS); ok {
+		err := augmentedEnvironment.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_STATUS populates the provided destination ManagedEnvironment_STATUS from our ManagedEnvironment_STATUS
+func (environment *ManagedEnvironment_STATUS) AssignProperties_To_ManagedEnvironment_STATUS(destination *storage.ManagedEnvironment_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(environment.PropertyBag)
+
+	// AppLogsConfiguration
+	if environment.AppLogsConfiguration != nil {
+		var appLogsConfiguration storage.AppLogsConfiguration_STATUS
+		err := environment.AppLogsConfiguration.AssignProperties_To_AppLogsConfiguration_STATUS(&appLogsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AppLogsConfiguration_STATUS() to populate field AppLogsConfiguration")
+		}
+		destination.AppLogsConfiguration = &appLogsConfiguration
+	} else {
+		destination.AppLogsConfiguration = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(environment.Conditions)
+
+	// CustomDomainConfiguration
+	if environment.CustomDomainConfiguration != nil {
+		var customDomainConfiguration storage.CustomDomainConfiguration_STATUS
+		err := environment.CustomDomainConfiguration.AssignProperties_To_CustomDomainConfiguration_STATUS(&customDomainConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CustomDomainConfiguration_STATUS() to populate field CustomDomainConfiguration")
+		}
+		destination.CustomDomainConfiguration = &customDomainConfiguration
+	} else {
+		destination.CustomDomainConfiguration = nil
+	}
+
+	// DaprConfiguration
+	if environment.DaprConfiguration != nil {
+		var daprConfiguration storage.DaprConfiguration_STATUS
+		err := environment.DaprConfiguration.AssignProperties_To_DaprConfiguration_STATUS(&daprConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DaprConfiguration_STATUS() to populate field DaprConfiguration")
+		}
+		destination.DaprConfiguration = &daprConfiguration
+	} else {
+		destination.DaprConfiguration = nil
+	}
+
+	// DefaultDomain
+	destination.DefaultDomain = genruntime.ClonePointerToString(environment.DefaultDomain)
+
+	// DeploymentErrors
+	destination.DeploymentErrors = genruntime.ClonePointerToString(environment.DeploymentErrors)
+
+	// EventStreamEndpoint
+	destination.EventStreamEndpoint = genruntime.ClonePointerToString(environment.EventStreamEndpoint)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(environment.Id)
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity storage.ManagedServiceIdentity_STATUS
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// InfrastructureResourceGroup
+	destination.InfrastructureResourceGroup = genruntime.ClonePointerToString(environment.InfrastructureResourceGroup)
+
+	// KedaConfiguration
+	if environment.KedaConfiguration != nil {
+		var kedaConfiguration storage.KedaConfiguration_STATUS
+		err := environment.KedaConfiguration.AssignProperties_To_KedaConfiguration_STATUS(&kedaConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KedaConfiguration_STATUS() to populate field KedaConfiguration")
+		}
+		destination.KedaConfiguration = &kedaConfiguration
+	} else {
+		destination.KedaConfiguration = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(environment.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(environment.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(environment.Name)
+
+	// PeerAuthentication
+	if environment.PeerAuthentication != nil {
+		var peerAuthentication storage.ManagedEnvironment_Properties_PeerAuthentication_STATUS
+		err := environment.PeerAuthentication.AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_STATUS(&peerAuthentication)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_STATUS() to populate field PeerAuthentication")
+		}
+		destination.PeerAuthentication = &peerAuthentication
+	} else {
+		destination.PeerAuthentication = nil
+	}
+
+	// PeerTrafficConfiguration
+	if environment.PeerTrafficConfiguration != nil {
+		var peerTrafficConfiguration storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
+		err := environment.PeerTrafficConfiguration.AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(&peerTrafficConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS() to populate field PeerTrafficConfiguration")
+		}
+		destination.PeerTrafficConfiguration = &peerTrafficConfiguration
+	} else {
+		destination.PeerTrafficConfiguration = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(environment.ProvisioningState)
+
+	// StaticIp
+	destination.StaticIp = genruntime.ClonePointerToString(environment.StaticIp)
+
+	// SystemData
+	if environment.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := environment.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(environment.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(environment.Type)
+
+	// VnetConfiguration
+	if environment.VnetConfiguration != nil {
+		var vnetConfiguration storage.VnetConfiguration_STATUS
+		err := environment.VnetConfiguration.AssignProperties_To_VnetConfiguration_STATUS(&vnetConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VnetConfiguration_STATUS() to populate field VnetConfiguration")
+		}
+		destination.VnetConfiguration = &vnetConfiguration
+	} else {
+		destination.VnetConfiguration = nil
+	}
+
+	// WorkloadProfiles
+	if environment.WorkloadProfiles != nil {
+		workloadProfileList := make([]storage.WorkloadProfile_STATUS, len(environment.WorkloadProfiles))
+		for workloadProfileIndex, workloadProfileItem := range environment.WorkloadProfiles {
+			var workloadProfile storage.WorkloadProfile_STATUS
+			err := workloadProfileItem.AssignProperties_To_WorkloadProfile_STATUS(&workloadProfile)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_WorkloadProfile_STATUS() to populate field WorkloadProfiles")
+			}
+			workloadProfileList[workloadProfileIndex] = workloadProfile
+		}
+		destination.WorkloadProfiles = workloadProfileList
+	} else {
+		destination.WorkloadProfiles = nil
+	}
+
+	// ZoneRedundant
+	if environment.ZoneRedundant != nil {
+		zoneRedundant := *environment.ZoneRedundant
+		destination.ZoneRedundant = &zoneRedundant
+	} else {
+		destination.ZoneRedundant = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_STATUS interface (if implemented) to customize the conversion
+	var environmentAsAny any = environment
+	if augmentedEnvironment, ok := environmentAsAny.(augmentConversionForManagedEnvironment_STATUS); ok {
+		err := augmentedEnvironment.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.AppLogsConfiguration
@@ -272,12 +1160,182 @@ type AppLogsConfiguration struct {
 	PropertyBag               genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AppLogsConfiguration populates our AppLogsConfiguration from the provided source AppLogsConfiguration
+func (configuration *AppLogsConfiguration) AssignProperties_From_AppLogsConfiguration(source *storage.AppLogsConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Destination
+	configuration.Destination = genruntime.ClonePointerToString(source.Destination)
+
+	// LogAnalyticsConfiguration
+	if source.LogAnalyticsConfiguration != nil {
+		var logAnalyticsConfiguration LogAnalyticsConfiguration
+		err := logAnalyticsConfiguration.AssignProperties_From_LogAnalyticsConfiguration(source.LogAnalyticsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_LogAnalyticsConfiguration() to populate field LogAnalyticsConfiguration")
+		}
+		configuration.LogAnalyticsConfiguration = &logAnalyticsConfiguration
+	} else {
+		configuration.LogAnalyticsConfiguration = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAppLogsConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAppLogsConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AppLogsConfiguration populates the provided destination AppLogsConfiguration from our AppLogsConfiguration
+func (configuration *AppLogsConfiguration) AssignProperties_To_AppLogsConfiguration(destination *storage.AppLogsConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Destination
+	destination.Destination = genruntime.ClonePointerToString(configuration.Destination)
+
+	// LogAnalyticsConfiguration
+	if configuration.LogAnalyticsConfiguration != nil {
+		var logAnalyticsConfiguration storage.LogAnalyticsConfiguration
+		err := configuration.LogAnalyticsConfiguration.AssignProperties_To_LogAnalyticsConfiguration(&logAnalyticsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_LogAnalyticsConfiguration() to populate field LogAnalyticsConfiguration")
+		}
+		destination.LogAnalyticsConfiguration = &logAnalyticsConfiguration
+	} else {
+		destination.LogAnalyticsConfiguration = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAppLogsConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAppLogsConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.AppLogsConfiguration_STATUS
 // Configuration of application logs
 type AppLogsConfiguration_STATUS struct {
 	Destination               *string                           `json:"destination,omitempty"`
 	LogAnalyticsConfiguration *LogAnalyticsConfiguration_STATUS `json:"logAnalyticsConfiguration,omitempty"`
 	PropertyBag               genruntime.PropertyBag            `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AppLogsConfiguration_STATUS populates our AppLogsConfiguration_STATUS from the provided source AppLogsConfiguration_STATUS
+func (configuration *AppLogsConfiguration_STATUS) AssignProperties_From_AppLogsConfiguration_STATUS(source *storage.AppLogsConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Destination
+	configuration.Destination = genruntime.ClonePointerToString(source.Destination)
+
+	// LogAnalyticsConfiguration
+	if source.LogAnalyticsConfiguration != nil {
+		var logAnalyticsConfiguration LogAnalyticsConfiguration_STATUS
+		err := logAnalyticsConfiguration.AssignProperties_From_LogAnalyticsConfiguration_STATUS(source.LogAnalyticsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_LogAnalyticsConfiguration_STATUS() to populate field LogAnalyticsConfiguration")
+		}
+		configuration.LogAnalyticsConfiguration = &logAnalyticsConfiguration
+	} else {
+		configuration.LogAnalyticsConfiguration = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAppLogsConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAppLogsConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AppLogsConfiguration_STATUS populates the provided destination AppLogsConfiguration_STATUS from our AppLogsConfiguration_STATUS
+func (configuration *AppLogsConfiguration_STATUS) AssignProperties_To_AppLogsConfiguration_STATUS(destination *storage.AppLogsConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Destination
+	destination.Destination = genruntime.ClonePointerToString(configuration.Destination)
+
+	// LogAnalyticsConfiguration
+	if configuration.LogAnalyticsConfiguration != nil {
+		var logAnalyticsConfiguration storage.LogAnalyticsConfiguration_STATUS
+		err := configuration.LogAnalyticsConfiguration.AssignProperties_To_LogAnalyticsConfiguration_STATUS(&logAnalyticsConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_LogAnalyticsConfiguration_STATUS() to populate field LogAnalyticsConfiguration")
+		}
+		destination.LogAnalyticsConfiguration = &logAnalyticsConfiguration
+	} else {
+		destination.LogAnalyticsConfiguration = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAppLogsConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAppLogsConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForManagedEnvironment_Spec interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Spec) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Spec) error
+}
+
+type augmentConversionForManagedEnvironment_STATUS interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_STATUS) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_STATUS) error
 }
 
 // Storage version of v1api20240301.CustomDomainConfiguration
@@ -287,6 +1345,114 @@ type CustomDomainConfiguration struct {
 	CertificateValue    *genruntime.SecretReference `json:"certificateValue,omitempty"`
 	DnsSuffix           *string                     `json:"dnsSuffix,omitempty"`
 	PropertyBag         genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_CustomDomainConfiguration populates our CustomDomainConfiguration from the provided source CustomDomainConfiguration
+func (configuration *CustomDomainConfiguration) AssignProperties_From_CustomDomainConfiguration(source *storage.CustomDomainConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CertificateKeyVaultProperties
+	if source.CertificateKeyVaultProperties != nil {
+		propertyBag.Add("CertificateKeyVaultProperties", *source.CertificateKeyVaultProperties)
+	} else {
+		propertyBag.Remove("CertificateKeyVaultProperties")
+	}
+
+	// CertificatePassword
+	if source.CertificatePassword != nil {
+		certificatePassword := source.CertificatePassword.Copy()
+		configuration.CertificatePassword = &certificatePassword
+	} else {
+		configuration.CertificatePassword = nil
+	}
+
+	// CertificateValue
+	if source.CertificateValue != nil {
+		certificateValue := source.CertificateValue.Copy()
+		configuration.CertificateValue = &certificateValue
+	} else {
+		configuration.CertificateValue = nil
+	}
+
+	// DnsSuffix
+	configuration.DnsSuffix = genruntime.ClonePointerToString(source.DnsSuffix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomDomainConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForCustomDomainConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CustomDomainConfiguration populates the provided destination CustomDomainConfiguration from our CustomDomainConfiguration
+func (configuration *CustomDomainConfiguration) AssignProperties_To_CustomDomainConfiguration(destination *storage.CustomDomainConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CertificateKeyVaultProperties
+	if propertyBag.Contains("CertificateKeyVaultProperties") {
+		var certificateKeyVaultProperty storage.CertificateKeyVaultProperties
+		err := propertyBag.Pull("CertificateKeyVaultProperties", &certificateKeyVaultProperty)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'CertificateKeyVaultProperties' from propertyBag")
+		}
+
+		destination.CertificateKeyVaultProperties = &certificateKeyVaultProperty
+	} else {
+		destination.CertificateKeyVaultProperties = nil
+	}
+
+	// CertificatePassword
+	if configuration.CertificatePassword != nil {
+		certificatePassword := configuration.CertificatePassword.Copy()
+		destination.CertificatePassword = &certificatePassword
+	} else {
+		destination.CertificatePassword = nil
+	}
+
+	// CertificateValue
+	if configuration.CertificateValue != nil {
+		certificateValue := configuration.CertificateValue.Copy()
+		destination.CertificateValue = &certificateValue
+	} else {
+		destination.CertificateValue = nil
+	}
+
+	// DnsSuffix
+	destination.DnsSuffix = genruntime.ClonePointerToString(configuration.DnsSuffix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomDomainConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForCustomDomainConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.CustomDomainConfiguration_STATUS
@@ -300,11 +1466,167 @@ type CustomDomainConfiguration_STATUS struct {
 	Thumbprint                 *string                `json:"thumbprint,omitempty"`
 }
 
+// AssignProperties_From_CustomDomainConfiguration_STATUS populates our CustomDomainConfiguration_STATUS from the provided source CustomDomainConfiguration_STATUS
+func (configuration *CustomDomainConfiguration_STATUS) AssignProperties_From_CustomDomainConfiguration_STATUS(source *storage.CustomDomainConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CertificateKeyVaultProperties
+	if source.CertificateKeyVaultProperties != nil {
+		propertyBag.Add("CertificateKeyVaultProperties", *source.CertificateKeyVaultProperties)
+	} else {
+		propertyBag.Remove("CertificateKeyVaultProperties")
+	}
+
+	// CustomDomainVerificationId
+	configuration.CustomDomainVerificationId = genruntime.ClonePointerToString(source.CustomDomainVerificationId)
+
+	// DnsSuffix
+	configuration.DnsSuffix = genruntime.ClonePointerToString(source.DnsSuffix)
+
+	// ExpirationDate
+	configuration.ExpirationDate = genruntime.ClonePointerToString(source.ExpirationDate)
+
+	// SubjectName
+	configuration.SubjectName = genruntime.ClonePointerToString(source.SubjectName)
+
+	// Thumbprint
+	configuration.Thumbprint = genruntime.ClonePointerToString(source.Thumbprint)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomDomainConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForCustomDomainConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CustomDomainConfiguration_STATUS populates the provided destination CustomDomainConfiguration_STATUS from our CustomDomainConfiguration_STATUS
+func (configuration *CustomDomainConfiguration_STATUS) AssignProperties_To_CustomDomainConfiguration_STATUS(destination *storage.CustomDomainConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CertificateKeyVaultProperties
+	if propertyBag.Contains("CertificateKeyVaultProperties") {
+		var certificateKeyVaultProperty storage.CertificateKeyVaultProperties_STATUS
+		err := propertyBag.Pull("CertificateKeyVaultProperties", &certificateKeyVaultProperty)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'CertificateKeyVaultProperties' from propertyBag")
+		}
+
+		destination.CertificateKeyVaultProperties = &certificateKeyVaultProperty
+	} else {
+		destination.CertificateKeyVaultProperties = nil
+	}
+
+	// CustomDomainVerificationId
+	destination.CustomDomainVerificationId = genruntime.ClonePointerToString(configuration.CustomDomainVerificationId)
+
+	// DnsSuffix
+	destination.DnsSuffix = genruntime.ClonePointerToString(configuration.DnsSuffix)
+
+	// ExpirationDate
+	destination.ExpirationDate = genruntime.ClonePointerToString(configuration.ExpirationDate)
+
+	// SubjectName
+	destination.SubjectName = genruntime.ClonePointerToString(configuration.SubjectName)
+
+	// Thumbprint
+	destination.Thumbprint = genruntime.ClonePointerToString(configuration.Thumbprint)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomDomainConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForCustomDomainConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.DaprConfiguration_STATUS
 // Configuration properties Dapr component
 type DaprConfiguration_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Version     *string                `json:"version,omitempty"`
+}
+
+// AssignProperties_From_DaprConfiguration_STATUS populates our DaprConfiguration_STATUS from the provided source DaprConfiguration_STATUS
+func (configuration *DaprConfiguration_STATUS) AssignProperties_From_DaprConfiguration_STATUS(source *storage.DaprConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Version
+	configuration.Version = genruntime.ClonePointerToString(source.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDaprConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForDaprConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DaprConfiguration_STATUS populates the provided destination DaprConfiguration_STATUS from our DaprConfiguration_STATUS
+func (configuration *DaprConfiguration_STATUS) AssignProperties_To_DaprConfiguration_STATUS(destination *storage.DaprConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Version
+	destination.Version = genruntime.ClonePointerToString(configuration.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDaprConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForDaprConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.KedaConfiguration_STATUS
@@ -314,10 +1636,140 @@ type KedaConfiguration_STATUS struct {
 	Version     *string                `json:"version,omitempty"`
 }
 
+// AssignProperties_From_KedaConfiguration_STATUS populates our KedaConfiguration_STATUS from the provided source KedaConfiguration_STATUS
+func (configuration *KedaConfiguration_STATUS) AssignProperties_From_KedaConfiguration_STATUS(source *storage.KedaConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Version
+	configuration.Version = genruntime.ClonePointerToString(source.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKedaConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForKedaConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KedaConfiguration_STATUS populates the provided destination KedaConfiguration_STATUS from our KedaConfiguration_STATUS
+func (configuration *KedaConfiguration_STATUS) AssignProperties_To_KedaConfiguration_STATUS(destination *storage.KedaConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Version
+	destination.Version = genruntime.ClonePointerToString(configuration.Version)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKedaConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForKedaConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerAuthentication_Spec
 type ManagedEnvironment_Properties_PeerAuthentication_Spec struct {
 	Mtls        *Mtls                  `json:"mtls,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_Spec populates our ManagedEnvironment_Properties_PeerAuthentication_Spec from the provided source ManagedEnvironment_Properties_PeerAuthentication_Spec
+func (authentication *ManagedEnvironment_Properties_PeerAuthentication_Spec) AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_Spec(source *storage.ManagedEnvironment_Properties_PeerAuthentication_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Mtls
+	if source.Mtls != nil {
+		var mtl Mtls
+		err := mtl.AssignProperties_From_Mtls(source.Mtls)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Mtls() to populate field Mtls")
+		}
+		authentication.Mtls = &mtl
+	} else {
+		authentication.Mtls = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		authentication.PropertyBag = propertyBag
+	} else {
+		authentication.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec interface (if implemented) to customize the conversion
+	var authenticationAsAny any = authentication
+	if augmentedAuthentication, ok := authenticationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec); ok {
+		err := augmentedAuthentication.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_Spec populates the provided destination ManagedEnvironment_Properties_PeerAuthentication_Spec from our ManagedEnvironment_Properties_PeerAuthentication_Spec
+func (authentication *ManagedEnvironment_Properties_PeerAuthentication_Spec) AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_Spec(destination *storage.ManagedEnvironment_Properties_PeerAuthentication_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(authentication.PropertyBag)
+
+	// Mtls
+	if authentication.Mtls != nil {
+		var mtl storage.Mtls
+		err := authentication.Mtls.AssignProperties_To_Mtls(&mtl)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Mtls() to populate field Mtls")
+		}
+		destination.Mtls = &mtl
+	} else {
+		destination.Mtls = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec interface (if implemented) to customize the conversion
+	var authenticationAsAny any = authentication
+	if augmentedAuthentication, ok := authenticationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec); ok {
+		err := augmentedAuthentication.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerAuthentication_STATUS
@@ -326,10 +1778,158 @@ type ManagedEnvironment_Properties_PeerAuthentication_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS populates our ManagedEnvironment_Properties_PeerAuthentication_STATUS from the provided source ManagedEnvironment_Properties_PeerAuthentication_STATUS
+func (authentication *ManagedEnvironment_Properties_PeerAuthentication_STATUS) AssignProperties_From_ManagedEnvironment_Properties_PeerAuthentication_STATUS(source *storage.ManagedEnvironment_Properties_PeerAuthentication_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Mtls
+	if source.Mtls != nil {
+		var mtl Mtls_STATUS
+		err := mtl.AssignProperties_From_Mtls_STATUS(source.Mtls)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Mtls_STATUS() to populate field Mtls")
+		}
+		authentication.Mtls = &mtl
+	} else {
+		authentication.Mtls = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		authentication.PropertyBag = propertyBag
+	} else {
+		authentication.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS interface (if implemented) to customize the conversion
+	var authenticationAsAny any = authentication
+	if augmentedAuthentication, ok := authenticationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS); ok {
+		err := augmentedAuthentication.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_STATUS populates the provided destination ManagedEnvironment_Properties_PeerAuthentication_STATUS from our ManagedEnvironment_Properties_PeerAuthentication_STATUS
+func (authentication *ManagedEnvironment_Properties_PeerAuthentication_STATUS) AssignProperties_To_ManagedEnvironment_Properties_PeerAuthentication_STATUS(destination *storage.ManagedEnvironment_Properties_PeerAuthentication_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(authentication.PropertyBag)
+
+	// Mtls
+	if authentication.Mtls != nil {
+		var mtl storage.Mtls_STATUS
+		err := authentication.Mtls.AssignProperties_To_Mtls_STATUS(&mtl)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Mtls_STATUS() to populate field Mtls")
+		}
+		destination.Mtls = &mtl
+	} else {
+		destination.Mtls = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS interface (if implemented) to customize the conversion
+	var authenticationAsAny any = authentication
+	if augmentedAuthentication, ok := authenticationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS); ok {
+		err := augmentedAuthentication.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
 type ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec struct {
 	Encryption  *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec `json:"encryption,omitempty"`
 	PropertyBag genruntime.PropertyBag                                                  `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
+func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec(source *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Encryption
+	if source.Encryption != nil {
+		var encryption ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
+		err := encryption.AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec(source.Encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec() to populate field Encryption")
+		}
+		configuration.Encryption = &encryption
+	} else {
+		configuration.Encryption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec populates the provided destination ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec from our ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec
+func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec(destination *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Encryption
+	if configuration.Encryption != nil {
+		var encryption storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
+		err := configuration.Encryption.AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec(&encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec() to populate field Encryption")
+		}
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
@@ -338,12 +1938,200 @@ type ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS struct {
 	PropertyBag genruntime.PropertyBag                                                    `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
+func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(source *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Encryption
+	if source.Encryption != nil {
+		var encryption ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
+		err := encryption.AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(source.Encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS() to populate field Encryption")
+		}
+		configuration.Encryption = &encryption
+	} else {
+		configuration.Encryption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS populates the provided destination ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS from our ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS
+func (configuration *ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS(destination *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Encryption
+	if configuration.Encryption != nil {
+		var encryption storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
+		err := configuration.Encryption.AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(&encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS() to populate field Encryption")
+		}
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ManagedEnvironmentOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type ManagedEnvironmentOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ManagedEnvironmentOperatorSpec populates our ManagedEnvironmentOperatorSpec from the provided source ManagedEnvironmentOperatorSpec
+func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_From_ManagedEnvironmentOperatorSpec(source *storage.ManagedEnvironmentOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironmentOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForManagedEnvironmentOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironmentOperatorSpec populates the provided destination ManagedEnvironmentOperatorSpec from our ManagedEnvironmentOperatorSpec
+func (operator *ManagedEnvironmentOperatorSpec) AssignProperties_To_ManagedEnvironmentOperatorSpec(destination *storage.ManagedEnvironmentOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironmentOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForManagedEnvironmentOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.VnetConfiguration
@@ -360,6 +2148,106 @@ type VnetConfiguration struct {
 	PropertyBag                   genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_VnetConfiguration populates our VnetConfiguration from the provided source VnetConfiguration
+func (configuration *VnetConfiguration) AssignProperties_From_VnetConfiguration(source *storage.VnetConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DockerBridgeCidr
+	configuration.DockerBridgeCidr = genruntime.ClonePointerToString(source.DockerBridgeCidr)
+
+	// InfrastructureSubnetReference
+	if source.InfrastructureSubnetReference != nil {
+		infrastructureSubnetReference := source.InfrastructureSubnetReference.Copy()
+		configuration.InfrastructureSubnetReference = &infrastructureSubnetReference
+	} else {
+		configuration.InfrastructureSubnetReference = nil
+	}
+
+	// Internal
+	if source.Internal != nil {
+		internal := *source.Internal
+		configuration.Internal = &internal
+	} else {
+		configuration.Internal = nil
+	}
+
+	// PlatformReservedCidr
+	configuration.PlatformReservedCidr = genruntime.ClonePointerToString(source.PlatformReservedCidr)
+
+	// PlatformReservedDnsIP
+	configuration.PlatformReservedDnsIP = genruntime.ClonePointerToString(source.PlatformReservedDnsIP)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVnetConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForVnetConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VnetConfiguration populates the provided destination VnetConfiguration from our VnetConfiguration
+func (configuration *VnetConfiguration) AssignProperties_To_VnetConfiguration(destination *storage.VnetConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// DockerBridgeCidr
+	destination.DockerBridgeCidr = genruntime.ClonePointerToString(configuration.DockerBridgeCidr)
+
+	// InfrastructureSubnetReference
+	if configuration.InfrastructureSubnetReference != nil {
+		infrastructureSubnetReference := configuration.InfrastructureSubnetReference.Copy()
+		destination.InfrastructureSubnetReference = &infrastructureSubnetReference
+	} else {
+		destination.InfrastructureSubnetReference = nil
+	}
+
+	// Internal
+	if configuration.Internal != nil {
+		internal := *configuration.Internal
+		destination.Internal = &internal
+	} else {
+		destination.Internal = nil
+	}
+
+	// PlatformReservedCidr
+	destination.PlatformReservedCidr = genruntime.ClonePointerToString(configuration.PlatformReservedCidr)
+
+	// PlatformReservedDnsIP
+	destination.PlatformReservedDnsIP = genruntime.ClonePointerToString(configuration.PlatformReservedDnsIP)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVnetConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForVnetConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.VnetConfiguration_STATUS
 // Configuration properties for apps environment to join a Virtual Network
 type VnetConfiguration_STATUS struct {
@@ -369,6 +2257,96 @@ type VnetConfiguration_STATUS struct {
 	PlatformReservedCidr   *string                `json:"platformReservedCidr,omitempty"`
 	PlatformReservedDnsIP  *string                `json:"platformReservedDnsIP,omitempty"`
 	PropertyBag            genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_VnetConfiguration_STATUS populates our VnetConfiguration_STATUS from the provided source VnetConfiguration_STATUS
+func (configuration *VnetConfiguration_STATUS) AssignProperties_From_VnetConfiguration_STATUS(source *storage.VnetConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DockerBridgeCidr
+	configuration.DockerBridgeCidr = genruntime.ClonePointerToString(source.DockerBridgeCidr)
+
+	// InfrastructureSubnetId
+	configuration.InfrastructureSubnetId = genruntime.ClonePointerToString(source.InfrastructureSubnetId)
+
+	// Internal
+	if source.Internal != nil {
+		internal := *source.Internal
+		configuration.Internal = &internal
+	} else {
+		configuration.Internal = nil
+	}
+
+	// PlatformReservedCidr
+	configuration.PlatformReservedCidr = genruntime.ClonePointerToString(source.PlatformReservedCidr)
+
+	// PlatformReservedDnsIP
+	configuration.PlatformReservedDnsIP = genruntime.ClonePointerToString(source.PlatformReservedDnsIP)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVnetConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForVnetConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VnetConfiguration_STATUS populates the provided destination VnetConfiguration_STATUS from our VnetConfiguration_STATUS
+func (configuration *VnetConfiguration_STATUS) AssignProperties_To_VnetConfiguration_STATUS(destination *storage.VnetConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// DockerBridgeCidr
+	destination.DockerBridgeCidr = genruntime.ClonePointerToString(configuration.DockerBridgeCidr)
+
+	// InfrastructureSubnetId
+	destination.InfrastructureSubnetId = genruntime.ClonePointerToString(configuration.InfrastructureSubnetId)
+
+	// Internal
+	if configuration.Internal != nil {
+		internal := *configuration.Internal
+		destination.Internal = &internal
+	} else {
+		destination.Internal = nil
+	}
+
+	// PlatformReservedCidr
+	destination.PlatformReservedCidr = genruntime.ClonePointerToString(configuration.PlatformReservedCidr)
+
+	// PlatformReservedDnsIP
+	destination.PlatformReservedDnsIP = genruntime.ClonePointerToString(configuration.PlatformReservedDnsIP)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVnetConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForVnetConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.WorkloadProfile
@@ -381,6 +2359,80 @@ type WorkloadProfile struct {
 	WorkloadProfileType *string                `json:"workloadProfileType,omitempty"`
 }
 
+// AssignProperties_From_WorkloadProfile populates our WorkloadProfile from the provided source WorkloadProfile
+func (profile *WorkloadProfile) AssignProperties_From_WorkloadProfile(source *storage.WorkloadProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// MaximumCount
+	profile.MaximumCount = genruntime.ClonePointerToInt(source.MaximumCount)
+
+	// MinimumCount
+	profile.MinimumCount = genruntime.ClonePointerToInt(source.MinimumCount)
+
+	// Name
+	profile.Name = genruntime.ClonePointerToString(source.Name)
+
+	// WorkloadProfileType
+	profile.WorkloadProfileType = genruntime.ClonePointerToString(source.WorkloadProfileType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkloadProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForWorkloadProfile); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkloadProfile populates the provided destination WorkloadProfile from our WorkloadProfile
+func (profile *WorkloadProfile) AssignProperties_To_WorkloadProfile(destination *storage.WorkloadProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// MaximumCount
+	destination.MaximumCount = genruntime.ClonePointerToInt(profile.MaximumCount)
+
+	// MinimumCount
+	destination.MinimumCount = genruntime.ClonePointerToInt(profile.MinimumCount)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(profile.Name)
+
+	// WorkloadProfileType
+	destination.WorkloadProfileType = genruntime.ClonePointerToString(profile.WorkloadProfileType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkloadProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForWorkloadProfile); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.WorkloadProfile_STATUS
 // Workload profile to scope container app execution.
 type WorkloadProfile_STATUS struct {
@@ -391,12 +2443,233 @@ type WorkloadProfile_STATUS struct {
 	WorkloadProfileType *string                `json:"workloadProfileType,omitempty"`
 }
 
+// AssignProperties_From_WorkloadProfile_STATUS populates our WorkloadProfile_STATUS from the provided source WorkloadProfile_STATUS
+func (profile *WorkloadProfile_STATUS) AssignProperties_From_WorkloadProfile_STATUS(source *storage.WorkloadProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// MaximumCount
+	profile.MaximumCount = genruntime.ClonePointerToInt(source.MaximumCount)
+
+	// MinimumCount
+	profile.MinimumCount = genruntime.ClonePointerToInt(source.MinimumCount)
+
+	// Name
+	profile.Name = genruntime.ClonePointerToString(source.Name)
+
+	// WorkloadProfileType
+	profile.WorkloadProfileType = genruntime.ClonePointerToString(source.WorkloadProfileType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkloadProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForWorkloadProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkloadProfile_STATUS populates the provided destination WorkloadProfile_STATUS from our WorkloadProfile_STATUS
+func (profile *WorkloadProfile_STATUS) AssignProperties_To_WorkloadProfile_STATUS(destination *storage.WorkloadProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// MaximumCount
+	destination.MaximumCount = genruntime.ClonePointerToInt(profile.MaximumCount)
+
+	// MinimumCount
+	destination.MinimumCount = genruntime.ClonePointerToInt(profile.MinimumCount)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(profile.Name)
+
+	// WorkloadProfileType
+	destination.WorkloadProfileType = genruntime.ClonePointerToString(profile.WorkloadProfileType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForWorkloadProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForWorkloadProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAppLogsConfiguration interface {
+	AssignPropertiesFrom(src *storage.AppLogsConfiguration) error
+	AssignPropertiesTo(dst *storage.AppLogsConfiguration) error
+}
+
+type augmentConversionForAppLogsConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.AppLogsConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.AppLogsConfiguration_STATUS) error
+}
+
+type augmentConversionForCustomDomainConfiguration interface {
+	AssignPropertiesFrom(src *storage.CustomDomainConfiguration) error
+	AssignPropertiesTo(dst *storage.CustomDomainConfiguration) error
+}
+
+type augmentConversionForCustomDomainConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.CustomDomainConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.CustomDomainConfiguration_STATUS) error
+}
+
+type augmentConversionForDaprConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.DaprConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.DaprConfiguration_STATUS) error
+}
+
+type augmentConversionForKedaConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.KedaConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.KedaConfiguration_STATUS) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerAuthentication_Spec) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerAuthentication_Spec) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerAuthentication_STATUS) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerAuthentication_STATUS) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Spec) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS) error
+}
+
+type augmentConversionForManagedEnvironmentOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironmentOperatorSpec) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironmentOperatorSpec) error
+}
+
+type augmentConversionForVnetConfiguration interface {
+	AssignPropertiesFrom(src *storage.VnetConfiguration) error
+	AssignPropertiesTo(dst *storage.VnetConfiguration) error
+}
+
+type augmentConversionForVnetConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.VnetConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.VnetConfiguration_STATUS) error
+}
+
+type augmentConversionForWorkloadProfile interface {
+	AssignPropertiesFrom(src *storage.WorkloadProfile) error
+	AssignPropertiesTo(dst *storage.WorkloadProfile) error
+}
+
+type augmentConversionForWorkloadProfile_STATUS interface {
+	AssignPropertiesFrom(src *storage.WorkloadProfile_STATUS) error
+	AssignPropertiesTo(dst *storage.WorkloadProfile_STATUS) error
+}
+
 // Storage version of v1api20240301.LogAnalyticsConfiguration
 // Log Analytics configuration, must only be provided when destination is configured as 'log-analytics'
 type LogAnalyticsConfiguration struct {
 	CustomerId  *string                     `json:"customerId,omitempty"`
 	PropertyBag genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 	SharedKey   *genruntime.SecretReference `json:"sharedKey,omitempty"`
+}
+
+// AssignProperties_From_LogAnalyticsConfiguration populates our LogAnalyticsConfiguration from the provided source LogAnalyticsConfiguration
+func (configuration *LogAnalyticsConfiguration) AssignProperties_From_LogAnalyticsConfiguration(source *storage.LogAnalyticsConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomerId
+	configuration.CustomerId = genruntime.ClonePointerToString(source.CustomerId)
+
+	// SharedKey
+	if source.SharedKey != nil {
+		sharedKey := source.SharedKey.Copy()
+		configuration.SharedKey = &sharedKey
+	} else {
+		configuration.SharedKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLogAnalyticsConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForLogAnalyticsConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LogAnalyticsConfiguration populates the provided destination LogAnalyticsConfiguration from our LogAnalyticsConfiguration
+func (configuration *LogAnalyticsConfiguration) AssignProperties_To_LogAnalyticsConfiguration(destination *storage.LogAnalyticsConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CustomerId
+	destination.CustomerId = genruntime.ClonePointerToString(configuration.CustomerId)
+
+	// SharedKey
+	if configuration.SharedKey != nil {
+		sharedKey := configuration.SharedKey.Copy()
+		destination.SharedKey = &sharedKey
+	} else {
+		destination.SharedKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLogAnalyticsConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForLogAnalyticsConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.LogAnalyticsConfiguration_STATUS
@@ -406,16 +2679,204 @@ type LogAnalyticsConfiguration_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_LogAnalyticsConfiguration_STATUS populates our LogAnalyticsConfiguration_STATUS from the provided source LogAnalyticsConfiguration_STATUS
+func (configuration *LogAnalyticsConfiguration_STATUS) AssignProperties_From_LogAnalyticsConfiguration_STATUS(source *storage.LogAnalyticsConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomerId
+	configuration.CustomerId = genruntime.ClonePointerToString(source.CustomerId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLogAnalyticsConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForLogAnalyticsConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_LogAnalyticsConfiguration_STATUS populates the provided destination LogAnalyticsConfiguration_STATUS from our LogAnalyticsConfiguration_STATUS
+func (configuration *LogAnalyticsConfiguration_STATUS) AssignProperties_To_LogAnalyticsConfiguration_STATUS(destination *storage.LogAnalyticsConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// CustomerId
+	destination.CustomerId = genruntime.ClonePointerToString(configuration.CustomerId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForLogAnalyticsConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForLogAnalyticsConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
 type ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec struct {
 	Enabled     *bool                  `json:"enabled,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
+func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec(source *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		encryption.Enabled = &enabled
+	} else {
+		encryption.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec populates the provided destination ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec from our ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec
+func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec(destination *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// Enabled
+	if encryption.Enabled != nil {
+		enabled := *encryption.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
 type ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS struct {
 	Enabled     *bool                  `json:"enabled,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS populates our ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS from the provided source ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
+func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) AssignProperties_From_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(source *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		encryption.Enabled = &enabled
+	} else {
+		encryption.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS populates the provided destination ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS from our ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS
+func (encryption *ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) AssignProperties_To_ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS(destination *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// Enabled
+	if encryption.Enabled != nil {
+		enabled := *encryption.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.Mtls
@@ -425,11 +2886,173 @@ type Mtls struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Mtls populates our Mtls from the provided source Mtls
+func (mtls *Mtls) AssignProperties_From_Mtls(source *storage.Mtls) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		mtls.Enabled = &enabled
+	} else {
+		mtls.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mtls.PropertyBag = propertyBag
+	} else {
+		mtls.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMtls interface (if implemented) to customize the conversion
+	var mtlsAsAny any = mtls
+	if augmentedMtls, ok := mtlsAsAny.(augmentConversionForMtls); ok {
+		err := augmentedMtls.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Mtls populates the provided destination Mtls from our Mtls
+func (mtls *Mtls) AssignProperties_To_Mtls(destination *storage.Mtls) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mtls.PropertyBag)
+
+	// Enabled
+	if mtls.Enabled != nil {
+		enabled := *mtls.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMtls interface (if implemented) to customize the conversion
+	var mtlsAsAny any = mtls
+	if augmentedMtls, ok := mtlsAsAny.(augmentConversionForMtls); ok {
+		err := augmentedMtls.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Mtls_STATUS
 // Configuration properties for mutual TLS authentication
 type Mtls_STATUS struct {
 	Enabled     *bool                  `json:"enabled,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Mtls_STATUS populates our Mtls_STATUS from the provided source Mtls_STATUS
+func (mtls *Mtls_STATUS) AssignProperties_From_Mtls_STATUS(source *storage.Mtls_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		mtls.Enabled = &enabled
+	} else {
+		mtls.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mtls.PropertyBag = propertyBag
+	} else {
+		mtls.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMtls_STATUS interface (if implemented) to customize the conversion
+	var mtlsAsAny any = mtls
+	if augmentedMtls, ok := mtlsAsAny.(augmentConversionForMtls_STATUS); ok {
+		err := augmentedMtls.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Mtls_STATUS populates the provided destination Mtls_STATUS from our Mtls_STATUS
+func (mtls *Mtls_STATUS) AssignProperties_To_Mtls_STATUS(destination *storage.Mtls_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mtls.PropertyBag)
+
+	// Enabled
+	if mtls.Enabled != nil {
+		enabled := *mtls.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMtls_STATUS interface (if implemented) to customize the conversion
+	var mtlsAsAny any = mtls
+	if augmentedMtls, ok := mtlsAsAny.(augmentConversionForMtls_STATUS); ok {
+		err := augmentedMtls.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForLogAnalyticsConfiguration interface {
+	AssignPropertiesFrom(src *storage.LogAnalyticsConfiguration) error
+	AssignPropertiesTo(dst *storage.LogAnalyticsConfiguration) error
+}
+
+type augmentConversionForLogAnalyticsConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.LogAnalyticsConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.LogAnalyticsConfiguration_STATUS) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec) error
+}
+
+type augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS interface {
+	AssignPropertiesFrom(src *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) error
+	AssignPropertiesTo(dst *storage.ManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS) error
+}
+
+type augmentConversionForMtls interface {
+	AssignPropertiesFrom(src *storage.Mtls) error
+	AssignPropertiesTo(dst *storage.Mtls) error
+}
+
+type augmentConversionForMtls_STATUS interface {
+	AssignPropertiesFrom(src *storage.Mtls_STATUS) error
+	AssignPropertiesTo(dst *storage.Mtls_STATUS) error
 }
 
 func init() {

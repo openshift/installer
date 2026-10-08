@@ -36,7 +36,7 @@ type NSGScope interface {
 	azure.AsyncStatusUpdater
 	NSGSpecs() []azure.ResourceSpecGetter
 	IsVnetManaged() bool
-	UpdateAnnotationJSON(string, map[string]interface{}) error
+	UpdateAnnotationJSON(string, map[string]any) error
 }
 
 // Service provides operations on Azure resources.
@@ -86,7 +86,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 
 	var resErr error
 
-	newAnnotation := make(map[string]interface{})
+	newAnnotation := make(map[string]any)
 
 	// We go through the list of security groups to reconcile each one, independently of the result of the previous one.
 	// If multiple errors occur, we return the most pressing one.
@@ -134,26 +134,7 @@ func (s *Service) Delete(ctx context.Context) error {
 		return errors.Wrap(err, "failed to check if security groups are managed")
 	}
 
-	specs := s.Scope.NSGSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	var result error
-
-	// We go through the list of security groups to delete each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error deleting) -> operationNotDoneError (i.e. deleting in progress) -> no error (i.e. deleted)
-	for _, nsgSpec := range specs {
-		if err := s.DeleteResource(ctx, nsgSpec, serviceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-
-	s.Scope.UpdateDeleteStatus(infrav1.SecurityGroupsReadyCondition, serviceName, result)
-	return result
+	return azure.DeleteAll(ctx, s.Reconciler, s.Scope, s.Scope.NSGSpecs(), serviceName, infrav1.SecurityGroupsReadyCondition)
 }
 
 // IsManaged returns true if the security groups' lifecycles are managed.

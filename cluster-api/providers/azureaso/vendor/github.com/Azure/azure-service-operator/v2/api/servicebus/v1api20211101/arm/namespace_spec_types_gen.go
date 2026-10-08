@@ -165,5 +165,6 @@ type KeyVaultProperties struct {
 }
 
 type UserAssignedIdentityProperties struct {
+	// UserAssignedIdentity: ARM ID of user Identity selected for encryption
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }

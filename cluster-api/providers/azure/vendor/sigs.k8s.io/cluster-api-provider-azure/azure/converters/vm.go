@@ -32,8 +32,8 @@ type VM struct {
 	// Hardware profile
 	VMSize string `json:"vmSize,omitempty"`
 	// Storage profile
-	Image         infrav1.Image  `json:"image,omitempty"`
-	OSDisk        infrav1.OSDisk `json:"osDisk,omitempty"`
+	Image         infrav1.Image  `json:"image"`
+	OSDisk        infrav1.OSDisk `json:"osDisk"`
 	StartupScript string         `json:"startupScript,omitempty"`
 	// State - The provisioning state, which only appears in the response.
 	State    infrav1.ProvisioningState `json:"vmState,omitempty"`

@@ -1,12 +1,12 @@
-# cel.dev/expr v0.22.1
-## explicit; go 1.21.1
+# cel.dev/expr v0.25.1
+## explicit; go 1.23.0
 cel.dev/expr
-# filippo.io/edwards25519 v1.1.0
+# filippo.io/edwards25519 v1.1.1
 ## explicit; go 1.20
 filippo.io/edwards25519
 filippo.io/edwards25519/field
-# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0
-## explicit; go 1.23.0
+# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
+## explicit; go 1.25.0
 github.com/Azure/azure-sdk-for-go/sdk/azcore
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm/internal/resource
@@ -28,12 +28,12 @@ github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime
 github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming
 github.com/Azure/azure-sdk-for-go/sdk/azcore/to
 github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing
-# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.9.0
+# github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 ## explicit; go 1.23.0
 github.com/Azure/azure-sdk-for-go/sdk/azidentity
 github.com/Azure/azure-sdk-for-go/sdk/azidentity/internal
-# github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1
-## explicit; go 1.23.0
+# github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0
+## explicit; go 1.24.0
 github.com/Azure/azure-sdk-for-go/sdk/internal/diag
 github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo
 github.com/Azure/azure-sdk-for-go/sdk/internal/exported
@@ -47,6 +47,15 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/apimanagement/armapimanage
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appconfiguration/armappconfiguration v1.1.1
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appconfiguration/armappconfiguration
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2 v2.2.0
+## explicit; go 1.18
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cognitiveservices/armcognitiveservices v1.8.0
+## explicit; go 1.23.0
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cognitiveservices/armcognitiveservices
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/communication/armcommunication v1.0.0
+## explicit; go 1.18
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/communication/armcommunication
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice v1.0.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice
@@ -77,14 +86,20 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/notificationhubs/armnotificationhubs v1.2.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/notificationhubs/armnotificationhubs
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights v1.2.0
+## explicit; go 1.18
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/operationalinsights/armoperationalinsights
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift v1.6.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redis/armredis v1.0.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redis/armredis
-# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/search/armsearch v1.3.0
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redisenterprise/armredisenterprise v1.2.0
 ## explicit; go 1.18
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redisenterprise/armredisenterprise
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/search/armsearch v1.4.0
+## explicit; go 1.23.0
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/search/armsearch
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/servicebus/armservicebus v1.2.0
 ## explicit; go 1.18
@@ -92,8 +107,8 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/servicebus/armservicebus
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr v1.2.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr
-# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.7.0
-## explicit; go 1.18
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.8.1
+## explicit; go 1.23.0
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription v1.2.0
 ## explicit; go 1.18
@@ -101,11 +116,11 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscripti
 # github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.3.1
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets
-# github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.1.1
-## explicit; go 1.18
-github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal
-# github.com/Azure/azure-service-operator/v2 v2.13.0
+# github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0
 ## explicit; go 1.23.0
+github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal
+# github.com/Azure/azure-service-operator/v2 v2.19.0
+## explicit; go 1.25.7
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/customizations
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401/arm
@@ -115,6 +130,14 @@ github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301/arm
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301/storage
 github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301/webhook
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401/arm
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401/storage
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401/webhook
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301/arm
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301/storage
+github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301/webhook
 github.com/Azure/azure-service-operator/v2/api/apimanagement/customizations
 github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801
 github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm
@@ -124,16 +147,45 @@ github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501previe
 github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/arm
 github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage
 github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/webhook
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/arm
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/storage
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/webhook
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/arm
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage/compat
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/webhook
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/arm
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/webhook
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/arm
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/storage
+github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/webhook
 github.com/Azure/azure-service-operator/v2/api/app/customizations
 github.com/Azure/azure-service-operator/v2/api/app/v1api20240301
 github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/arm
 github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/storage
 github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/webhook
+github.com/Azure/azure-service-operator/v2/api/app/v1api20250101
+github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/arm
+github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/storage
+github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/webhook
 github.com/Azure/azure-service-operator/v2/api/appconfiguration/customizations
 github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501
 github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/arm
 github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/storage
 github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/webhook
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20220501
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20220501/arm
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20220501/storage
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20220501/webhook
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20240601
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20240601/arm
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20240601/storage
+github.com/Azure/azure-service-operator/v2/api/appconfiguration/v20240601/webhook
 github.com/Azure/azure-service-operator/v2/api/authorization/customizations
 github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801preview
 github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801preview/arm
@@ -148,6 +200,14 @@ github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101
 github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/arm
 github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/storage
 github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/webhook
+github.com/Azure/azure-service-operator/v2/api/batch/v20210101
+github.com/Azure/azure-service-operator/v2/api/batch/v20210101/arm
+github.com/Azure/azure-service-operator/v2/api/batch/v20210101/storage
+github.com/Azure/azure-service-operator/v2/api/batch/v20210101/webhook
+github.com/Azure/azure-service-operator/v2/api/batch/v20240701
+github.com/Azure/azure-service-operator/v2/api/batch/v20240701/arm
+github.com/Azure/azure-service-operator/v2/api/batch/v20240701/storage
+github.com/Azure/azure-service-operator/v2/api/batch/v20240701/webhook
 github.com/Azure/azure-service-operator/v2/api/cache/customizations
 github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201
 github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201/arm
@@ -169,6 +229,18 @@ github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801
 github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/arm
 github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage
 github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/webhook
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/arm
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/storage
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20241101/webhook
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401/arm
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401/storage
+github.com/Azure/azure-service-operator/v2/api/cache/v1api20250401/webhook
+github.com/Azure/azure-service-operator/v2/api/cache/v20250401
+github.com/Azure/azure-service-operator/v2/api/cache/v20250401/arm
+github.com/Azure/azure-service-operator/v2/api/cache/v20250401/storage
+github.com/Azure/azure-service-operator/v2/api/cache/v20250401/webhook
 github.com/Azure/azure-service-operator/v2/api/cdn/customizations
 github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601
 github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601/arm
@@ -178,6 +250,16 @@ github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501
 github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/arm
 github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage
 github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/webhook
+github.com/Azure/azure-service-operator/v2/api/cognitiveservices/customizations
+github.com/Azure/azure-service-operator/v2/api/cognitiveservices/v1api20250601
+github.com/Azure/azure-service-operator/v2/api/cognitiveservices/v1api20250601/arm
+github.com/Azure/azure-service-operator/v2/api/cognitiveservices/v1api20250601/storage
+github.com/Azure/azure-service-operator/v2/api/cognitiveservices/v1api20250601/webhook
+github.com/Azure/azure-service-operator/v2/api/communication/customizations
+github.com/Azure/azure-service-operator/v2/api/communication/v20230401
+github.com/Azure/azure-service-operator/v2/api/communication/v20230401/arm
+github.com/Azure/azure-service-operator/v2/api/communication/v20230401/storage
+github.com/Azure/azure-service-operator/v2/api/communication/v20230401/webhook
 github.com/Azure/azure-service-operator/v2/api/compute/customizations
 github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930
 github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/arm
@@ -203,6 +285,14 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302
 github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/arm
 github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage
 github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/webhook
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20241101
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20241101/arm
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20241101/storage
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20241101/webhook
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20250401
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20250401/arm
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20250401/storage
+github.com/Azure/azure-service-operator/v2/api/compute/v1api20250401/webhook
 github.com/Azure/azure-service-operator/v2/api/containerinstance/customizations
 github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001
 github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001/arm
@@ -218,35 +308,22 @@ github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20230701/a
 github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20230701/storage
 github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20230701/webhook
 github.com/Azure/azure-service-operator/v2/api/containerservice/customizations
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/webhook
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/webhook
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/webhook
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage/compat
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/webhook
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview/webhook
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview/arm
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview/storage
-github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview/webhook
 github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901
 github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/arm
 github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage
 github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/webhook
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/arm
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/storage
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/webhook
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/arm
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/storage
+github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/webhook
+github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview
+github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview/arm
+github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview/storage
+github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview/webhook
 github.com/Azure/azure-service-operator/v2/api/datafactory/customizations
 github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601
 github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/arm
@@ -285,6 +362,30 @@ github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230
 github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/arm
 github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage
 github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20210501
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20210501/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20210501/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20210501/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230/webhook
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview/arm
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview/storage
+github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview/webhook
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/customizations
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1/webhook
@@ -308,6 +409,10 @@ github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/arm
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/storage
 github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801/webhook
+github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801
+github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/arm
+github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/storage
+github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v20250801/webhook
 github.com/Azure/azure-service-operator/v2/api/devices/customizations
 github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702
 github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702/arm
@@ -322,10 +427,20 @@ github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/arm
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/webhook
+github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240701
+github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240701/arm
+github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240701/storage
+github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240701/webhook
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/arm
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage
 github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/webhook
+github.com/Azure/azure-service-operator/v2/api/documentdb/v20251015
+github.com/Azure/azure-service-operator/v2/api/documentdb/v20251015/arm
+github.com/Azure/azure-service-operator/v2/api/documentdb/v20251015/storage
+github.com/Azure/azure-service-operator/v2/api/documentdb/v20251015/webhook
+github.com/Azure/azure-service-operator/v2/api/entra/v1
+github.com/Azure/azure-service-operator/v2/api/entra/v1/webhook
 github.com/Azure/azure-service-operator/v2/api/eventgrid/customizations
 github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601
 github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/arm
@@ -341,6 +456,10 @@ github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20240101/arm
 github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20240101/storage
 github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20240101/webhook
 github.com/Azure/azure-service-operator/v2/api/insights/customizations
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20171001
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20171001/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20171001/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20171001/webhook
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/arm
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/storage
@@ -353,6 +472,10 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/arm
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/storage
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/webhook
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20201001
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20201001/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20201001/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20201001/webhook
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview/arm
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20210501preview/storage
@@ -369,10 +492,22 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/arm
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage
 github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/webhook
-github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview
-github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview/arm
-github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview/storage
-github.com/Azure/azure-service-operator/v2/api/insights/v1api20240101preview/webhook
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230311
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230311/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230311/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230311/webhook
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230601
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230601/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230601/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20230601/webhook
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20240311
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20240311/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20240311/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20240311/webhook
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20250101preview
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20250101preview/arm
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20250101preview/storage
+github.com/Azure/azure-service-operator/v2/api/insights/v1api20250101preview/webhook
 github.com/Azure/azure-service-operator/v2/api/keyvault/customizations
 github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview/arm
@@ -396,6 +531,10 @@ github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815
 github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/arm
 github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/storage
 github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/webhook
+github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413
+github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/arm
+github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/storage
+github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/webhook
 github.com/Azure/azure-service-operator/v2/api/machinelearningservices/customizations
 github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701
 github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701/arm
@@ -465,6 +604,14 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20240601
 github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/arm
 github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage
 github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/webhook
+github.com/Azure/azure-service-operator/v2/api/network/v1api20241001
+github.com/Azure/azure-service-operator/v2/api/network/v1api20241001/arm
+github.com/Azure/azure-service-operator/v2/api/network/v1api20241001/storage
+github.com/Azure/azure-service-operator/v2/api/network/v1api20241001/webhook
+github.com/Azure/azure-service-operator/v2/api/network/v20250301
+github.com/Azure/azure-service-operator/v2/api/network/v20250301/arm
+github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage
+github.com/Azure/azure-service-operator/v2/api/network/v20250301/webhook
 github.com/Azure/azure-service-operator/v2/api/notificationhubs/customizations
 github.com/Azure/azure-service-operator/v2/api/notificationhubs/v1api20230901
 github.com/Azure/azure-service-operator/v2/api/notificationhubs/v1api20230901/arm
@@ -475,6 +622,15 @@ github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601
 github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601/arm
 github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601/storage
 github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601/webhook
+github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701
+github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701/arm
+github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701/storage
+github.com/Azure/azure-service-operator/v2/api/operationalinsights/v20250701/webhook
+github.com/Azure/azure-service-operator/v2/api/quota/customizations
+github.com/Azure/azure-service-operator/v2/api/quota/v1api20250901
+github.com/Azure/azure-service-operator/v2/api/quota/v1api20250901/arm
+github.com/Azure/azure-service-operator/v2/api/quota/v1api20250901/storage
+github.com/Azure/azure-service-operator/v2/api/quota/v1api20250901/webhook
 github.com/Azure/azure-service-operator/v2/api/redhatopenshift/customizations
 github.com/Azure/azure-service-operator/v2/api/redhatopenshift/v1api20231122
 github.com/Azure/azure-service-operator/v2/api/redhatopenshift/v1api20231122/arm
@@ -490,6 +646,10 @@ github.com/Azure/azure-service-operator/v2/api/search/v1api20220901
 github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/arm
 github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/storage
 github.com/Azure/azure-service-operator/v2/api/search/v1api20220901/webhook
+github.com/Azure/azure-service-operator/v2/api/search/v1api20231101
+github.com/Azure/azure-service-operator/v2/api/search/v1api20231101/arm
+github.com/Azure/azure-service-operator/v2/api/search/v1api20231101/storage
+github.com/Azure/azure-service-operator/v2/api/search/v1api20231101/webhook
 github.com/Azure/azure-service-operator/v2/api/servicebus/customizations
 github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview
 github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/arm
@@ -536,6 +696,22 @@ github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101
 github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/arm
 github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage
 github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/webhook
+github.com/Azure/azure-service-operator/v2/api/storage/v20210401
+github.com/Azure/azure-service-operator/v2/api/storage/v20210401/arm
+github.com/Azure/azure-service-operator/v2/api/storage/v20210401/storage
+github.com/Azure/azure-service-operator/v2/api/storage/v20210401/webhook
+github.com/Azure/azure-service-operator/v2/api/storage/v20220901
+github.com/Azure/azure-service-operator/v2/api/storage/v20220901/arm
+github.com/Azure/azure-service-operator/v2/api/storage/v20220901/storage
+github.com/Azure/azure-service-operator/v2/api/storage/v20220901/webhook
+github.com/Azure/azure-service-operator/v2/api/storage/v20230101
+github.com/Azure/azure-service-operator/v2/api/storage/v20230101/arm
+github.com/Azure/azure-service-operator/v2/api/storage/v20230101/storage
+github.com/Azure/azure-service-operator/v2/api/storage/v20230101/webhook
+github.com/Azure/azure-service-operator/v2/api/storage/v20250601
+github.com/Azure/azure-service-operator/v2/api/storage/v20250601/arm
+github.com/Azure/azure-service-operator/v2/api/storage/v20250601/storage
+github.com/Azure/azure-service-operator/v2/api/storage/v20250601/webhook
 github.com/Azure/azure-service-operator/v2/api/subscription/customizations
 github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001
 github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001/arm
@@ -546,17 +722,26 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
 github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/arm
 github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage
 github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/webhook
+github.com/Azure/azure-service-operator/v2/api/synapse/v20210601
+github.com/Azure/azure-service-operator/v2/api/synapse/v20210601/arm
+github.com/Azure/azure-service-operator/v2/api/synapse/v20210601/storage
+github.com/Azure/azure-service-operator/v2/api/synapse/v20210601/webhook
 github.com/Azure/azure-service-operator/v2/api/web/customizations
 github.com/Azure/azure-service-operator/v2/api/web/v1api20220301
 github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/arm
 github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/storage
 github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/webhook
+github.com/Azure/azure-service-operator/v2/api/web/v20220301
+github.com/Azure/azure-service-operator/v2/api/web/v20220301/arm
+github.com/Azure/azure-service-operator/v2/api/web/v20220301/storage
+github.com/Azure/azure-service-operator/v2/api/web/v20220301/webhook
 github.com/Azure/azure-service-operator/v2/cmd/controller
 github.com/Azure/azure-service-operator/v2/cmd/controller/app
 github.com/Azure/azure-service-operator/v2/cmd/controller/logging
 github.com/Azure/azure-service-operator/v2/internal/config
 github.com/Azure/azure-service-operator/v2/internal/controllers
 github.com/Azure/azure-service-operator/v2/internal/crdmanagement
+github.com/Azure/azure-service-operator/v2/internal/errwrap
 github.com/Azure/azure-service-operator/v2/internal/genericarmclient
 github.com/Azure/azure-service-operator/v2/internal/identity
 github.com/Azure/azure-service-operator/v2/internal/logging
@@ -564,8 +749,11 @@ github.com/Azure/azure-service-operator/v2/internal/metrics
 github.com/Azure/azure-service-operator/v2/internal/ownerutil
 github.com/Azure/azure-service-operator/v2/internal/reconcilers
 github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm
+github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm/errorclassification
 github.com/Azure/azure-service-operator/v2/internal/reconcilers/azuresql
+github.com/Azure/azure-service-operator/v2/internal/reconcilers/entra
 github.com/Azure/azure-service-operator/v2/internal/reconcilers/generic
+github.com/Azure/azure-service-operator/v2/internal/reconcilers/migration/crd
 github.com/Azure/azure-service-operator/v2/internal/reconcilers/mysql
 github.com/Azure/azure-service-operator/v2/internal/reconcilers/postgresql
 github.com/Azure/azure-service-operator/v2/internal/reflecthelpers
@@ -587,6 +775,7 @@ github.com/Azure/azure-service-operator/v2/internal/version
 github.com/Azure/azure-service-operator/v2/pkg/common/annotations
 github.com/Azure/azure-service-operator/v2/pkg/common/cloud
 github.com/Azure/azure-service-operator/v2/pkg/common/config
+github.com/Azure/azure-service-operator/v2/pkg/common/controllerutils/singleton
 github.com/Azure/azure-service-operator/v2/pkg/common/labels
 github.com/Azure/azure-service-operator/v2/pkg/genruntime
 github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions
@@ -602,7 +791,7 @@ github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets
 github.com/Azure/msi-dataplane/pkg/dataplane
 github.com/Azure/msi-dataplane/pkg/dataplane/internal/challenge
 github.com/Azure/msi-dataplane/pkg/dataplane/internal/client
-# github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2
+# github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0
 ## explicit; go 1.18
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential
@@ -629,9 +818,6 @@ github.com/AzureAD/microsoft-authentication-library-for-go/apps/public
 # github.com/antlr4-go/antlr/v4 v4.13.1
 ## explicit; go 1.22
 github.com/antlr4-go/antlr/v4
-# github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
-## explicit; go 1.13
-github.com/asaskevich/govalidator
 # github.com/benbjohnson/clock v1.3.5
 ## explicit; go 1.15
 github.com/benbjohnson/clock
@@ -661,14 +847,14 @@ github.com/evanphx/json-patch/v5/internal/json
 # github.com/felixge/httpsnoop v1.0.4
 ## explicit; go 1.13
 github.com/felixge/httpsnoop
-# github.com/fsnotify/fsnotify v1.8.0
+# github.com/fsnotify/fsnotify v1.9.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/fxamacker/cbor/v2 v2.7.0
-## explicit; go 1.17
+# github.com/fxamacker/cbor/v2 v2.9.0
+## explicit; go 1.20
 github.com/fxamacker/cbor/v2
-# github.com/go-logr/logr v1.4.2
+# github.com/go-logr/logr v1.4.3
 ## explicit; go 1.18
 github.com/go-logr/logr
 github.com/go-logr/logr/funcr
@@ -679,8 +865,8 @@ github.com/go-logr/stdr
 # github.com/go-logr/zapr v1.3.0
 ## explicit; go 1.18
 github.com/go-logr/zapr
-# github.com/go-openapi/jsonpointer v0.21.1
-## explicit; go 1.20
+# github.com/go-openapi/jsonpointer v0.23.1
+## explicit; go 1.25.0
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.21.0
 ## explicit; go 1.20
@@ -689,15 +875,14 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/swag v0.23.1
 ## explicit; go 1.20
 github.com/go-openapi/swag
-# github.com/go-sql-driver/mysql v1.9.2
+# github.com/go-openapi/swag/jsonname v0.26.0
+## explicit; go 1.25.0
+github.com/go-openapi/swag/jsonname
+# github.com/go-sql-driver/mysql v1.9.3
 ## explicit; go 1.21.0
 github.com/go-sql-driver/mysql
-# github.com/gogo/protobuf v1.3.2
-## explicit; go 1.15
-github.com/gogo/protobuf/proto
-github.com/gogo/protobuf/sortkeys
-# github.com/golang-jwt/jwt/v5 v5.2.2
-## explicit; go 1.18
+# github.com/golang-jwt/jwt/v5 v5.3.1
+## explicit; go 1.21
 github.com/golang-jwt/jwt/v5
 # github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9
 ## explicit
@@ -705,14 +890,11 @@ github.com/golang-sql/civil
 # github.com/golang-sql/sqlexp v0.1.0
 ## explicit; go 1.16
 github.com/golang-sql/sqlexp
-# github.com/golang/protobuf v1.5.4
-## explicit; go 1.17
-github.com/golang/protobuf/proto
 # github.com/google/btree v1.1.3
 ## explicit; go 1.18
 github.com/google/btree
-# github.com/google/cel-go v0.22.1
-## explicit; go 1.21.1
+# github.com/google/cel-go v0.28.0
+## explicit; go 1.23.0
 github.com/google/cel-go/cel
 github.com/google/cel-go/checker
 github.com/google/cel-go/checker/decls
@@ -721,6 +903,7 @@ github.com/google/cel-go/common/ast
 github.com/google/cel-go/common/containers
 github.com/google/cel-go/common/debug
 github.com/google/cel-go/common/decls
+github.com/google/cel-go/common/env
 github.com/google/cel-go/common/functions
 github.com/google/cel-go/common/operators
 github.com/google/cel-go/common/overloads
@@ -735,8 +918,8 @@ github.com/google/cel-go/interpreter
 github.com/google/cel-go/interpreter/functions
 github.com/google/cel-go/parser
 github.com/google/cel-go/parser/gen
-# github.com/google/gnostic-models v0.6.9
-## explicit; go 1.21
+# github.com/google/gnostic-models v0.7.0
+## explicit; go 1.22
 github.com/google/gnostic-models/compiler
 github.com/google/gnostic-models/extensions
 github.com/google/gnostic-models/jsonschema
@@ -749,10 +932,6 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/gofuzz v1.2.0
-## explicit; go 1.12
-github.com/google/gofuzz
-github.com/google/gofuzz/bytesource
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -761,7 +940,7 @@ github.com/google/uuid
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
 github.com/grpc-ecosystem/grpc-gateway/v2/utilities
-# github.com/hbollon/go-edlib v1.6.0
+# github.com/hbollon/go-edlib v1.7.0
 ## explicit; go 1.13
 github.com/hbollon/go-edlib
 github.com/hbollon/go-edlib/internal/orderedmap
@@ -775,8 +954,8 @@ github.com/jackc/pgpassfile
 # github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgx/v5 v5.7.4
-## explicit; go 1.21
+# github.com/jackc/pgx/v5 v5.9.2
+## explicit; go 1.25.0
 github.com/jackc/pgx/v5
 github.com/jackc/pgx/v5/internal/iobufpool
 github.com/jackc/pgx/v5/internal/pgio
@@ -793,8 +972,8 @@ github.com/jackc/pgx/v5/stdlib
 ## explicit; go 1.19
 github.com/jackc/puddle/v2
 github.com/jackc/puddle/v2/internal/genstack
-# github.com/jellydator/ttlcache/v3 v3.3.0
-## explicit; go 1.18
+# github.com/jellydator/ttlcache/v3 v3.4.0
+## explicit; go 1.23.0
 github.com/jellydator/ttlcache/v3
 # github.com/josharian/intern v1.0.0
 ## explicit; go 1.5
@@ -811,8 +990,8 @@ github.com/kylelemons/godebug/pretty
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/microsoft/go-mssqldb v1.8.0
-## explicit; go 1.18
+# github.com/microsoft/go-mssqldb v1.9.8
+## explicit; go 1.25.7
 github.com/microsoft/go-mssqldb
 github.com/microsoft/go-mssqldb/aecmk
 github.com/microsoft/go-mssqldb/integratedauth
@@ -827,10 +1006,126 @@ github.com/microsoft/go-mssqldb/internal/github.com/swisscom/mssql-always-encryp
 github.com/microsoft/go-mssqldb/internal/github.com/swisscom/mssql-always-encrypted/pkg/utils
 github.com/microsoft/go-mssqldb/internal/querytext
 github.com/microsoft/go-mssqldb/msdsn
+# github.com/microsoft/kiota-abstractions-go v1.9.4
+## explicit; go 1.23.0
+github.com/microsoft/kiota-abstractions-go
+github.com/microsoft/kiota-abstractions-go/authentication
+github.com/microsoft/kiota-abstractions-go/serialization
+github.com/microsoft/kiota-abstractions-go/store
+# github.com/microsoft/kiota-authentication-azure-go v1.3.1
+## explicit; go 1.23.0
+github.com/microsoft/kiota-authentication-azure-go
+# github.com/microsoft/kiota-http-go v1.5.4
+## explicit; go 1.23.0
+github.com/microsoft/kiota-http-go
+# github.com/microsoft/kiota-serialization-form-go v1.1.3
+## explicit; go 1.23.0
+github.com/microsoft/kiota-serialization-form-go
+# github.com/microsoft/kiota-serialization-json-go v1.1.2
+## explicit; go 1.23.0
+github.com/microsoft/kiota-serialization-json-go
+# github.com/microsoft/kiota-serialization-multipart-go v1.1.2
+## explicit; go 1.23.0
+github.com/microsoft/kiota-serialization-multipart-go
+# github.com/microsoft/kiota-serialization-text-go v1.1.3
+## explicit; go 1.23.0
+github.com/microsoft/kiota-serialization-text-go
+# github.com/microsoftgraph/msgraph-sdk-go v1.97.0
+## explicit; go 1.24.0
+github.com/microsoftgraph/msgraph-sdk-go
+github.com/microsoftgraph/msgraph-sdk-go/admin
+github.com/microsoftgraph/msgraph-sdk-go/agreementacceptances
+github.com/microsoftgraph/msgraph-sdk-go/agreements
+github.com/microsoftgraph/msgraph-sdk-go/appcatalogs
+github.com/microsoftgraph/msgraph-sdk-go/applications
+github.com/microsoftgraph/msgraph-sdk-go/applicationswithappid
+github.com/microsoftgraph/msgraph-sdk-go/applicationswithuniquename
+github.com/microsoftgraph/msgraph-sdk-go/applicationtemplates
+github.com/microsoftgraph/msgraph-sdk-go/auditlogs
+github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodconfigurations
+github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodspolicy
+github.com/microsoftgraph/msgraph-sdk-go/certificatebasedauthconfiguration
+github.com/microsoftgraph/msgraph-sdk-go/chats
+github.com/microsoftgraph/msgraph-sdk-go/communications
+github.com/microsoftgraph/msgraph-sdk-go/compliance
+github.com/microsoftgraph/msgraph-sdk-go/connections
+github.com/microsoftgraph/msgraph-sdk-go/contacts
+github.com/microsoftgraph/msgraph-sdk-go/contracts
+github.com/microsoftgraph/msgraph-sdk-go/datapolicyoperations
+github.com/microsoftgraph/msgraph-sdk-go/deviceappmanagement
+github.com/microsoftgraph/msgraph-sdk-go/devicemanagement
+github.com/microsoftgraph/msgraph-sdk-go/devices
+github.com/microsoftgraph/msgraph-sdk-go/deviceswithdeviceid
+github.com/microsoftgraph/msgraph-sdk-go/directory
+github.com/microsoftgraph/msgraph-sdk-go/directoryobjects
+github.com/microsoftgraph/msgraph-sdk-go/directoryroles
+github.com/microsoftgraph/msgraph-sdk-go/directoryroleswithroletemplateid
+github.com/microsoftgraph/msgraph-sdk-go/directoryroletemplates
+github.com/microsoftgraph/msgraph-sdk-go/domaindnsrecords
+github.com/microsoftgraph/msgraph-sdk-go/domains
+github.com/microsoftgraph/msgraph-sdk-go/drives
+github.com/microsoftgraph/msgraph-sdk-go/education
+github.com/microsoftgraph/msgraph-sdk-go/employeeexperience
+github.com/microsoftgraph/msgraph-sdk-go/external
+github.com/microsoftgraph/msgraph-sdk-go/filteroperators
+github.com/microsoftgraph/msgraph-sdk-go/functions
+github.com/microsoftgraph/msgraph-sdk-go/grouplifecyclepolicies
+github.com/microsoftgraph/msgraph-sdk-go/groups
+github.com/microsoftgraph/msgraph-sdk-go/groupsettings
+github.com/microsoftgraph/msgraph-sdk-go/groupsettingtemplates
+github.com/microsoftgraph/msgraph-sdk-go/groupswithuniquename
+github.com/microsoftgraph/msgraph-sdk-go/identity
+github.com/microsoftgraph/msgraph-sdk-go/identitygovernance
+github.com/microsoftgraph/msgraph-sdk-go/identityprotection
+github.com/microsoftgraph/msgraph-sdk-go/identityproviders
+github.com/microsoftgraph/msgraph-sdk-go/informationprotection
+github.com/microsoftgraph/msgraph-sdk-go/invitations
+github.com/microsoftgraph/msgraph-sdk-go/models
+github.com/microsoftgraph/msgraph-sdk-go/models/callrecords
+github.com/microsoftgraph/msgraph-sdk-go/models/externalconnectors
+github.com/microsoftgraph/msgraph-sdk-go/models/identitygovernance
+github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors
+github.com/microsoftgraph/msgraph-sdk-go/models/partners/billing
+github.com/microsoftgraph/msgraph-sdk-go/models/search
+github.com/microsoftgraph/msgraph-sdk-go/models/security
+github.com/microsoftgraph/msgraph-sdk-go/models/teamsadministration
+github.com/microsoftgraph/msgraph-sdk-go/models/termstore
+github.com/microsoftgraph/msgraph-sdk-go/oauth2permissiongrants
+github.com/microsoftgraph/msgraph-sdk-go/organization
+github.com/microsoftgraph/msgraph-sdk-go/permissiongrants
+github.com/microsoftgraph/msgraph-sdk-go/places
+github.com/microsoftgraph/msgraph-sdk-go/planner
+github.com/microsoftgraph/msgraph-sdk-go/policies
+github.com/microsoftgraph/msgraph-sdk-go/print
+github.com/microsoftgraph/msgraph-sdk-go/privacy
+github.com/microsoftgraph/msgraph-sdk-go/reports
+github.com/microsoftgraph/msgraph-sdk-go/rolemanagement
+github.com/microsoftgraph/msgraph-sdk-go/schemaextensions
+github.com/microsoftgraph/msgraph-sdk-go/scopedrolememberships
+github.com/microsoftgraph/msgraph-sdk-go/search
+github.com/microsoftgraph/msgraph-sdk-go/security
+github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals
+github.com/microsoftgraph/msgraph-sdk-go/serviceprincipalswithappid
+github.com/microsoftgraph/msgraph-sdk-go/shares
+github.com/microsoftgraph/msgraph-sdk-go/sites
+github.com/microsoftgraph/msgraph-sdk-go/solutions
+github.com/microsoftgraph/msgraph-sdk-go/storage
+github.com/microsoftgraph/msgraph-sdk-go/subscribedskus
+github.com/microsoftgraph/msgraph-sdk-go/subscriptions
+github.com/microsoftgraph/msgraph-sdk-go/teams
+github.com/microsoftgraph/msgraph-sdk-go/teamstemplates
+github.com/microsoftgraph/msgraph-sdk-go/teamwork
+github.com/microsoftgraph/msgraph-sdk-go/tenantrelationships
+github.com/microsoftgraph/msgraph-sdk-go/users
+github.com/microsoftgraph/msgraph-sdk-go/userswithuserprincipalname
+# github.com/microsoftgraph/msgraph-sdk-go-core v1.4.0
+## explicit; go 1.23.0
+github.com/microsoftgraph/msgraph-sdk-go-core
+github.com/microsoftgraph/msgraph-sdk-go-core/authentication
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 ## explicit
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.2
+# github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee
 ## explicit; go 1.12
 github.com/modern-go/reflect2
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
@@ -839,11 +1134,11 @@ github.com/munnerz/goautoneg
 # github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 ## explicit; go 1.14
 github.com/pkg/browser
-# github.com/pkg/errors v0.9.1
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
-github.com/pkg/errors
-# github.com/prometheus/client_golang v1.22.0
-## explicit; go 1.22
+github.com/pmezard/go-difflib/difflib
+# github.com/prometheus/client_golang v1.23.2
+## explicit; go 1.23.0
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
 github.com/prometheus/client_golang/prometheus
@@ -851,63 +1146,71 @@ github.com/prometheus/client_golang/prometheus/collectors
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/promhttp/internal
-# github.com/prometheus/client_model v0.6.1
-## explicit; go 1.19
+# github.com/prometheus/client_model v0.6.2
+## explicit; go 1.22.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.63.0
-## explicit; go 1.21
+# github.com/prometheus/common v0.66.1
+## explicit; go 1.23.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.16.0
-## explicit; go 1.21
+# github.com/prometheus/procfs v0.16.1
+## explicit; go 1.23.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
 # github.com/rotisserie/eris v0.5.4
 ## explicit; go 1.18
 github.com/rotisserie/eris
-# github.com/samber/lo v1.49.1
+# github.com/samber/lo v1.53.0
 ## explicit; go 1.18
 github.com/samber/lo
 github.com/samber/lo/internal/constraints
-github.com/samber/lo/internal/rand
+github.com/samber/lo/internal/xrand
+github.com/samber/lo/internal/xtime
 github.com/samber/lo/mutable
-# github.com/spf13/cobra v1.9.1
+# github.com/shopspring/decimal v1.4.0
+## explicit; go 1.10
+github.com/shopspring/decimal
+# github.com/spf13/cobra v1.10.2
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.6
+# github.com/spf13/pflag v1.0.10
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/stoewer/go-strcase v1.3.0
-## explicit; go 1.11
-github.com/stoewer/go-strcase
+# github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3
+## explicit; go 1.20
+github.com/std-uritemplate/std-uritemplate/go/v2
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
-# go.opentelemetry.io/auto/sdk v1.1.0
-## explicit; go 1.22.0
+# go.opentelemetry.io/auto/sdk v1.2.1
+## explicit; go 1.24.0
 go.opentelemetry.io/auto/sdk
 go.opentelemetry.io/auto/sdk/internal/telemetry
-# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
-## explicit; go 1.22.0
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
+## explicit; go 1.23.0
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/request
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconv
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconvutil
-# go.opentelemetry.io/otel v1.35.0
-## explicit; go 1.22.0
+# go.opentelemetry.io/otel v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
+go.opentelemetry.io/otel/attribute/internal
+go.opentelemetry.io/otel/attribute/internal/xxhash
 go.opentelemetry.io/otel/baggage
 go.opentelemetry.io/otel/codes
-go.opentelemetry.io/otel/internal
-go.opentelemetry.io/otel/internal/attribute
 go.opentelemetry.io/otel/internal/baggage
+go.opentelemetry.io/otel/internal/errorhandler
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
 go.opentelemetry.io/otel/semconv/v1.17.0
 go.opentelemetry.io/otel/semconv/v1.20.0
 go.opentelemetry.io/otel/semconv/v1.26.0
+go.opentelemetry.io/otel/semconv/v1.37.0
+go.opentelemetry.io/otel/semconv/v1.40.0
+go.opentelemetry.io/otel/semconv/v1.40.0/otelconv
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.35.0
 ## explicit; go 1.22.0
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
@@ -919,21 +1222,22 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/envconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry
-# go.opentelemetry.io/otel/metric v1.35.0
-## explicit; go 1.22.0
+# go.opentelemetry.io/otel/metric v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.35.0
-## explicit; go 1.22.0
+# go.opentelemetry.io/otel/sdk v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
-go.opentelemetry.io/otel/sdk/internal/env
 go.opentelemetry.io/otel/sdk/internal/x
 go.opentelemetry.io/otel/sdk/resource
 go.opentelemetry.io/otel/sdk/trace
-# go.opentelemetry.io/otel/trace v1.35.0
-## explicit; go 1.22.0
+go.opentelemetry.io/otel/sdk/trace/internal/env
+go.opentelemetry.io/otel/sdk/trace/internal/observ
+# go.opentelemetry.io/otel/trace v1.43.0
+## explicit; go 1.25.0
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
@@ -947,7 +1251,7 @@ go.opentelemetry.io/proto/otlp/trace/v1
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# go.uber.org/zap v1.27.0
+# go.uber.org/zap v1.27.1
 ## explicit; go 1.19
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -958,10 +1262,15 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.37.0
-## explicit; go 1.23.0
+# go.yaml.in/yaml/v2 v2.4.3
+## explicit; go 1.15
+go.yaml.in/yaml/v2
+# go.yaml.in/yaml/v3 v3.0.4
+## explicit; go 1.16
+go.yaml.in/yaml/v3
+# golang.org/x/crypto v0.50.0
+## explicit; go 1.25.0
 golang.org/x/crypto/md4
-golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
 # golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
@@ -969,36 +1278,37 @@ golang.org/x/crypto/pkcs12/internal/rc2
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/net v0.39.0
-## explicit; go 1.23.0
+# golang.org/x/net v0.53.0
+## explicit; go 1.25.0
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/httpcommon
+golang.org/x/net/internal/httpsfv
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/oauth2 v0.28.0
-## explicit; go 1.23.0
+# golang.org/x/oauth2 v0.34.0
+## explicit; go 1.24.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.13.0
-## explicit; go 1.23.0
+# golang.org/x/sync v0.20.0
+## explicit; go 1.25.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.32.0
-## explicit; go 1.23.0
+# golang.org/x/sys v0.43.0
+## explicit; go 1.25.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.31.0
-## explicit; go 1.23.0
+# golang.org/x/term v0.42.0
+## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.24.0
-## explicit; go 1.23.0
+# golang.org/x/text v0.36.0
+## explicit; go 1.25.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
@@ -1024,22 +1334,22 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/time v0.11.0
-## explicit; go 1.23.0
+# golang.org/x/time v0.15.0
+## explicit; go 1.25.0
 golang.org/x/time/rate
 # gomodules.xyz/jsonpatch/v2 v2.5.0
 ## explicit; go 1.20
 gomodules.xyz/jsonpatch/v2
-# google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463
-## explicit; go 1.23.0
+# google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217
+## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/api/expr/v1alpha1
 google.golang.org/genproto/googleapis/api/httpbody
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463
-## explicit; go 1.23.0
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217
+## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.71.0
-## explicit; go 1.22.0
+# google.golang.org/grpc v1.79.3
+## explicit; go 1.24.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -1049,7 +1359,6 @@ google.golang.org/grpc/balancer/endpointsharding
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/pickfirst
 google.golang.org/grpc/balancer/pickfirst/internal
-google.golang.org/grpc/balancer/pickfirst/pickfirstleaf
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/channelz
@@ -1059,6 +1368,7 @@ google.golang.org/grpc/credentials
 google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/gzip
+google.golang.org/grpc/encoding/internal
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
@@ -1067,6 +1377,7 @@ google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
+google.golang.org/grpc/internal/balancer/weight
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
@@ -1102,8 +1413,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.36.6
-## explicit; go 1.22
+# google.golang.org/protobuf v1.36.10
+## explicit; go 1.23
 google.golang.org/protobuf/encoding/protodelim
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
@@ -1147,7 +1458,7 @@ google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/structpb
 google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/known/wrapperspb
-# gopkg.in/evanphx/json-patch.v4 v4.12.0
+# gopkg.in/evanphx/json-patch.v4 v4.13.0
 ## explicit
 gopkg.in/evanphx/json-patch.v4
 # gopkg.in/inf.v0 v0.9.1
@@ -1156,8 +1467,8 @@ gopkg.in/inf.v0
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.32.3
-## explicit; go 1.23.0
+# k8s.io/api v0.35.4
+## explicit; go 1.25.0
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -1197,7 +1508,6 @@ k8s.io/api/flowcontrol/v1beta1
 k8s.io/api/flowcontrol/v1beta2
 k8s.io/api/flowcontrol/v1beta3
 k8s.io/api/networking/v1
-k8s.io/api/networking/v1alpha1
 k8s.io/api/networking/v1beta1
 k8s.io/api/node/v1
 k8s.io/api/node/v1alpha1
@@ -1207,28 +1517,36 @@ k8s.io/api/policy/v1beta1
 k8s.io/api/rbac/v1
 k8s.io/api/rbac/v1alpha1
 k8s.io/api/rbac/v1beta1
+k8s.io/api/resource/v1
 k8s.io/api/resource/v1alpha3
 k8s.io/api/resource/v1beta1
+k8s.io/api/resource/v1beta2
 k8s.io/api/scheduling/v1
 k8s.io/api/scheduling/v1alpha1
 k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apiextensions-apiserver v0.32.3
-## explicit; go 1.23.0
+k8s.io/api/storagemigration/v1beta1
+# k8s.io/apiextensions-apiserver v0.35.4
+## explicit; go 1.25.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-# k8s.io/apimachinery v0.32.3
-## explicit; go 1.23.0
+# k8s.io/apimachinery v0.35.4
+## explicit; go 1.25.0
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/meta/testrestmapper
+k8s.io/apimachinery/pkg/api/operation
 k8s.io/apimachinery/pkg/api/resource
+k8s.io/apimachinery/pkg/api/safe
+k8s.io/apimachinery/pkg/api/validate
+k8s.io/apimachinery/pkg/api/validate/constraints
+k8s.io/apimachinery/pkg/api/validate/content
 k8s.io/apimachinery/pkg/api/validation
 k8s.io/apimachinery/pkg/api/validation/path
+k8s.io/apimachinery/pkg/apis/asn1
 k8s.io/apimachinery/pkg/apis/meta/internalversion
 k8s.io/apimachinery/pkg/apis/meta/internalversion/scheme
 k8s.io/apimachinery/pkg/apis/meta/internalversion/validation
@@ -1282,8 +1600,8 @@ k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/apiserver v0.32.3
-## explicit; go 1.23.0
+# k8s.io/apiserver v0.35.4
+## explicit; go 1.25.0
 k8s.io/apiserver/pkg/apis/apiserver
 k8s.io/apiserver/pkg/apis/apiserver/install
 k8s.io/apiserver/pkg/apis/apiserver/v1
@@ -1319,6 +1637,7 @@ k8s.io/apiserver/pkg/features
 k8s.io/apiserver/pkg/server/dynamiccertificates
 k8s.io/apiserver/pkg/server/egressselector
 k8s.io/apiserver/pkg/server/egressselector/metrics
+k8s.io/apiserver/pkg/util/compatibility
 k8s.io/apiserver/pkg/util/feature
 k8s.io/apiserver/pkg/util/webhook
 k8s.io/apiserver/pkg/util/x509metrics
@@ -1326,8 +1645,8 @@ k8s.io/apiserver/pkg/warning
 k8s.io/apiserver/plugin/pkg/authenticator/token/webhook
 k8s.io/apiserver/plugin/pkg/authorizer/webhook
 k8s.io/apiserver/plugin/pkg/authorizer/webhook/metrics
-# k8s.io/client-go v0.32.3
-## explicit; go 1.23.0
+# k8s.io/client-go v0.35.4
+## explicit; go 1.25.0
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1beta1
@@ -1360,7 +1679,6 @@ k8s.io/client-go/applyconfigurations/flowcontrol/v1beta3
 k8s.io/client-go/applyconfigurations/internal
 k8s.io/client-go/applyconfigurations/meta/v1
 k8s.io/client-go/applyconfigurations/networking/v1
-k8s.io/client-go/applyconfigurations/networking/v1alpha1
 k8s.io/client-go/applyconfigurations/networking/v1beta1
 k8s.io/client-go/applyconfigurations/node/v1
 k8s.io/client-go/applyconfigurations/node/v1alpha1
@@ -1370,15 +1688,17 @@ k8s.io/client-go/applyconfigurations/policy/v1beta1
 k8s.io/client-go/applyconfigurations/rbac/v1
 k8s.io/client-go/applyconfigurations/rbac/v1alpha1
 k8s.io/client-go/applyconfigurations/rbac/v1beta1
+k8s.io/client-go/applyconfigurations/resource/v1
 k8s.io/client-go/applyconfigurations/resource/v1alpha3
 k8s.io/client-go/applyconfigurations/resource/v1beta1
+k8s.io/client-go/applyconfigurations/resource/v1beta2
 k8s.io/client-go/applyconfigurations/scheduling/v1
 k8s.io/client-go/applyconfigurations/scheduling/v1alpha1
 k8s.io/client-go/applyconfigurations/scheduling/v1beta1
 k8s.io/client-go/applyconfigurations/storage/v1
 k8s.io/client-go/applyconfigurations/storage/v1alpha1
 k8s.io/client-go/applyconfigurations/storage/v1beta1
-k8s.io/client-go/applyconfigurations/storagemigration/v1alpha1
+k8s.io/client-go/applyconfigurations/storagemigration/v1beta1
 k8s.io/client-go/discovery
 k8s.io/client-go/dynamic
 k8s.io/client-go/features
@@ -1428,7 +1748,6 @@ k8s.io/client-go/informers/flowcontrol/v1beta3
 k8s.io/client-go/informers/internalinterfaces
 k8s.io/client-go/informers/networking
 k8s.io/client-go/informers/networking/v1
-k8s.io/client-go/informers/networking/v1alpha1
 k8s.io/client-go/informers/networking/v1beta1
 k8s.io/client-go/informers/node
 k8s.io/client-go/informers/node/v1
@@ -1442,8 +1761,10 @@ k8s.io/client-go/informers/rbac/v1
 k8s.io/client-go/informers/rbac/v1alpha1
 k8s.io/client-go/informers/rbac/v1beta1
 k8s.io/client-go/informers/resource
+k8s.io/client-go/informers/resource/v1
 k8s.io/client-go/informers/resource/v1alpha3
 k8s.io/client-go/informers/resource/v1beta1
+k8s.io/client-go/informers/resource/v1beta2
 k8s.io/client-go/informers/scheduling
 k8s.io/client-go/informers/scheduling/v1
 k8s.io/client-go/informers/scheduling/v1alpha1
@@ -1453,7 +1774,7 @@ k8s.io/client-go/informers/storage/v1
 k8s.io/client-go/informers/storage/v1alpha1
 k8s.io/client-go/informers/storage/v1beta1
 k8s.io/client-go/informers/storagemigration
-k8s.io/client-go/informers/storagemigration/v1alpha1
+k8s.io/client-go/informers/storagemigration/v1beta1
 k8s.io/client-go/kubernetes
 k8s.io/client-go/kubernetes/scheme
 k8s.io/client-go/kubernetes/typed/admissionregistration/v1
@@ -1491,7 +1812,6 @@ k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1
 k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2
 k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta3
 k8s.io/client-go/kubernetes/typed/networking/v1
-k8s.io/client-go/kubernetes/typed/networking/v1alpha1
 k8s.io/client-go/kubernetes/typed/networking/v1beta1
 k8s.io/client-go/kubernetes/typed/node/v1
 k8s.io/client-go/kubernetes/typed/node/v1alpha1
@@ -1501,15 +1821,17 @@ k8s.io/client-go/kubernetes/typed/policy/v1beta1
 k8s.io/client-go/kubernetes/typed/rbac/v1
 k8s.io/client-go/kubernetes/typed/rbac/v1alpha1
 k8s.io/client-go/kubernetes/typed/rbac/v1beta1
+k8s.io/client-go/kubernetes/typed/resource/v1
 k8s.io/client-go/kubernetes/typed/resource/v1alpha3
 k8s.io/client-go/kubernetes/typed/resource/v1beta1
+k8s.io/client-go/kubernetes/typed/resource/v1beta2
 k8s.io/client-go/kubernetes/typed/scheduling/v1
 k8s.io/client-go/kubernetes/typed/scheduling/v1alpha1
 k8s.io/client-go/kubernetes/typed/scheduling/v1beta1
 k8s.io/client-go/kubernetes/typed/storage/v1
 k8s.io/client-go/kubernetes/typed/storage/v1alpha1
 k8s.io/client-go/kubernetes/typed/storage/v1beta1
-k8s.io/client-go/kubernetes/typed/storagemigration/v1alpha1
+k8s.io/client-go/kubernetes/typed/storagemigration/v1beta1
 k8s.io/client-go/listers
 k8s.io/client-go/listers/admissionregistration/v1
 k8s.io/client-go/listers/admissionregistration/v1alpha1
@@ -1541,7 +1863,6 @@ k8s.io/client-go/listers/flowcontrol/v1beta1
 k8s.io/client-go/listers/flowcontrol/v1beta2
 k8s.io/client-go/listers/flowcontrol/v1beta3
 k8s.io/client-go/listers/networking/v1
-k8s.io/client-go/listers/networking/v1alpha1
 k8s.io/client-go/listers/networking/v1beta1
 k8s.io/client-go/listers/node/v1
 k8s.io/client-go/listers/node/v1alpha1
@@ -1551,15 +1872,17 @@ k8s.io/client-go/listers/policy/v1beta1
 k8s.io/client-go/listers/rbac/v1
 k8s.io/client-go/listers/rbac/v1alpha1
 k8s.io/client-go/listers/rbac/v1beta1
+k8s.io/client-go/listers/resource/v1
 k8s.io/client-go/listers/resource/v1alpha3
 k8s.io/client-go/listers/resource/v1beta1
+k8s.io/client-go/listers/resource/v1beta2
 k8s.io/client-go/listers/scheduling/v1
 k8s.io/client-go/listers/scheduling/v1alpha1
 k8s.io/client-go/listers/scheduling/v1beta1
 k8s.io/client-go/listers/storage/v1
 k8s.io/client-go/listers/storage/v1alpha1
 k8s.io/client-go/listers/storage/v1beta1
-k8s.io/client-go/listers/storagemigration/v1alpha1
+k8s.io/client-go/listers/storagemigration/v1beta1
 k8s.io/client-go/metadata
 k8s.io/client-go/openapi
 k8s.io/client-go/pkg/apis/clientauthentication
@@ -1599,19 +1922,22 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/watchlist
 k8s.io/client-go/util/workqueue
-# k8s.io/component-base v0.32.3
-## explicit; go 1.23.0
+# k8s.io/component-base v0.35.4
+## explicit; go 1.25.0
 k8s.io/component-base/cli/flag
+k8s.io/component-base/compatibility
 k8s.io/component-base/featuregate
 k8s.io/component-base/metrics
 k8s.io/component-base/metrics/legacyregistry
+k8s.io/component-base/metrics/prometheus/compatversion
 k8s.io/component-base/metrics/prometheus/feature
 k8s.io/component-base/metrics/prometheusextension
 k8s.io/component-base/tracing
 k8s.io/component-base/tracing/api/v1
 k8s.io/component-base/version
-# k8s.io/klog/v2 v2.130.1
-## explicit; go 1.18
+k8s.io/component-base/zpages/features
+# k8s.io/klog/v2 v2.140.0
+## explicit; go 1.21
 k8s.io/klog/v2
 k8s.io/klog/v2/internal/buffer
 k8s.io/klog/v2/internal/clock
@@ -1621,8 +1947,8 @@ k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
 k8s.io/klog/v2/internal/verbosity
 k8s.io/klog/v2/textlogger
-# k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
-## explicit; go 1.21
+# k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
+## explicit; go 1.23.0
 k8s.io/kube-openapi/pkg/cached
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/handler3
@@ -1631,22 +1957,21 @@ k8s.io/kube-openapi/pkg/internal/third_party/go-json-experiment/json
 k8s.io/kube-openapi/pkg/internal/third_party/govalidator
 k8s.io/kube-openapi/pkg/schemaconv
 k8s.io/kube-openapi/pkg/spec3
+k8s.io/kube-openapi/pkg/util
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/validation/errors
 k8s.io/kube-openapi/pkg/validation/spec
 k8s.io/kube-openapi/pkg/validation/strfmt
 k8s.io/kube-openapi/pkg/validation/strfmt/bson
-# k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e
+# k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 ## explicit; go 1.18
 k8s.io/utils/buffer
 k8s.io/utils/clock
-k8s.io/utils/clock/testing
 k8s.io/utils/internal/third_party/forked/golang/golang-lru
 k8s.io/utils/internal/third_party/forked/golang/net
 k8s.io/utils/lru
 k8s.io/utils/net
 k8s.io/utils/path
-k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/trace
 # sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.32.0
@@ -1655,8 +1980,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/common/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
-# sigs.k8s.io/controller-runtime v0.20.4
-## explicit; go 1.23.0
+# sigs.k8s.io/controller-runtime v0.23.3
+## explicit; go 1.25.0
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder
 sigs.k8s.io/controller-runtime/pkg/cache
@@ -1700,8 +2025,9 @@ sigs.k8s.io/controller-runtime/pkg/webhook
 sigs.k8s.io/controller-runtime/pkg/webhook/admission
 sigs.k8s.io/controller-runtime/pkg/webhook/admission/metrics
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
+sigs.k8s.io/controller-runtime/pkg/webhook/conversion/metrics
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
-# sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8
+# sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730
 ## explicit; go 1.23
 sigs.k8s.io/json
 sigs.k8s.io/json/internal/golang/encoding/json
@@ -1709,14 +2035,13 @@ sigs.k8s.io/json/internal/golang/encoding/json
 ## explicit; go 1.18
 sigs.k8s.io/randfill
 sigs.k8s.io/randfill/bytesource
-# sigs.k8s.io/structured-merge-diff/v4 v4.6.0
-## explicit; go 1.13
-sigs.k8s.io/structured-merge-diff/v4/fieldpath
-sigs.k8s.io/structured-merge-diff/v4/merge
-sigs.k8s.io/structured-merge-diff/v4/schema
-sigs.k8s.io/structured-merge-diff/v4/typed
-sigs.k8s.io/structured-merge-diff/v4/value
-# sigs.k8s.io/yaml v1.4.0
-## explicit; go 1.12
+# sigs.k8s.io/structured-merge-diff/v6 v6.3.2-0.20260122202528-d9cc6641c482
+## explicit; go 1.23
+sigs.k8s.io/structured-merge-diff/v6/fieldpath
+sigs.k8s.io/structured-merge-diff/v6/merge
+sigs.k8s.io/structured-merge-diff/v6/schema
+sigs.k8s.io/structured-merge-diff/v6/typed
+sigs.k8s.io/structured-merge-diff/v6/value
+# sigs.k8s.io/yaml v1.6.0
+## explicit; go 1.22
 sigs.k8s.io/yaml
-sigs.k8s.io/yaml/goyaml.v2

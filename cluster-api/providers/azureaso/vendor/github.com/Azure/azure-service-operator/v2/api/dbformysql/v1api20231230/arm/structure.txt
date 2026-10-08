@@ -93,9 +93,7 @@ FlexibleServer_STATUS: Object (9 properties)
 │   │   │   └── "Enabled"
 │   │   ├── StorageSizeGB: *int
 │   │   └── StorageSku: *string
-│   └── Version: *Enum (2 values)
-│       ├── "5.7"
-│       └── "8.0.21"
+│   └── Version: *string
 ├── Sku: *Object (2 properties)
 │   ├── Name: *string
 │   └── Tier: *Enum (3 values)
@@ -191,9 +189,7 @@ FlexibleServer_Spec: Object (6 properties)
 │   │   │   ├── "Disabled"
 │   │   │   └── "Enabled"
 │   │   └── StorageSizeGB: *int
-│   └── Version: *Enum (2 values)
-│       ├── "5.7"
-│       └── "8.0.21"
+│   └── Version: *string
 ├── Sku: *Object (2 properties)
 │   ├── Name: *string
 │   └── Tier: *Enum (3 values)

@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=insights.azure.com,resources={actiongroups/status,actiongroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,insights}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -297,13 +298,14 @@ type ArmRoleReceiver_STATUS struct {
 // Storage version of v1api20230101.AutomationRunbookReceiver
 // The Azure Automation Runbook notification receiver.
 type AutomationRunbookReceiver struct {
-	AutomationAccountId  *string                `json:"automationAccountId,omitempty"`
-	IsGlobalRunbook      *bool                  `json:"isGlobalRunbook,omitempty"`
-	Name                 *string                `json:"name,omitempty"`
-	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	RunbookName          *string                `json:"runbookName,omitempty"`
-	ServiceUri           *string                `json:"serviceUri,omitempty"`
-	UseCommonAlertSchema *bool                  `json:"useCommonAlertSchema,omitempty"`
+	AutomationAccountId  *string                     `json:"automationAccountId,omitempty"`
+	IsGlobalRunbook      *bool                       `json:"isGlobalRunbook,omitempty"`
+	Name                 *string                     `json:"name,omitempty"`
+	PropertyBag          genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
+	RunbookName          *string                     `json:"runbookName,omitempty"`
+	ServiceUri           *string                     `json:"serviceUri,omitempty" optionalSecretPair:"ServiceUri"`
+	ServiceUriFromSecret *genruntime.SecretReference `json:"serviceUriFromSecret,omitempty" optionalSecretPair:"ServiceUri"`
+	UseCommonAlertSchema *bool                       `json:"useCommonAlertSchema,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// WebhookResourceReference: The resource id for webhook linked to this runbook.
@@ -318,7 +320,6 @@ type AutomationRunbookReceiver_STATUS struct {
 	Name                 *string                `json:"name,omitempty"`
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RunbookName          *string                `json:"runbookName,omitempty"`
-	ServiceUri           *string                `json:"serviceUri,omitempty"`
 	UseCommonAlertSchema *bool                  `json:"useCommonAlertSchema,omitempty"`
 	WebhookResourceId    *string                `json:"webhookResourceId,omitempty"`
 }
@@ -491,14 +492,15 @@ type VoiceReceiver_STATUS struct {
 // Storage version of v1api20230101.WebhookReceiver
 // A webhook receiver.
 type WebhookReceiver struct {
-	IdentifierUri        *string                `json:"identifierUri,omitempty"`
-	Name                 *string                `json:"name,omitempty"`
-	ObjectId             *string                `json:"objectId,omitempty"`
-	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	ServiceUri           *string                `json:"serviceUri,omitempty"`
-	TenantId             *string                `json:"tenantId,omitempty"`
-	UseAadAuth           *bool                  `json:"useAadAuth,omitempty"`
-	UseCommonAlertSchema *bool                  `json:"useCommonAlertSchema,omitempty"`
+	IdentifierUri        *string                     `json:"identifierUri,omitempty"`
+	Name                 *string                     `json:"name,omitempty"`
+	ObjectId             *string                     `json:"objectId,omitempty"`
+	PropertyBag          genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
+	ServiceUri           *string                     `json:"serviceUri,omitempty" optionalSecretPair:"ServiceUri"`
+	ServiceUriFromSecret *genruntime.SecretReference `json:"serviceUriFromSecret,omitempty" optionalSecretPair:"ServiceUri"`
+	TenantId             *string                     `json:"tenantId,omitempty"`
+	UseAadAuth           *bool                       `json:"useAadAuth,omitempty"`
+	UseCommonAlertSchema *bool                       `json:"useCommonAlertSchema,omitempty"`
 }
 
 // Storage version of v1api20230101.WebhookReceiver_STATUS
@@ -508,7 +510,6 @@ type WebhookReceiver_STATUS struct {
 	Name                 *string                `json:"name,omitempty"`
 	ObjectId             *string                `json:"objectId,omitempty"`
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	ServiceUri           *string                `json:"serviceUri,omitempty"`
 	TenantId             *string                `json:"tenantId,omitempty"`
 	UseAadAuth           *bool                  `json:"useAadAuth,omitempty"`
 	UseCommonAlertSchema *bool                  `json:"useCommonAlertSchema,omitempty"`

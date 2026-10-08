@@ -114,9 +114,8 @@ Autoscalesetting_STATUS: Object (7 properties)
 │   │   │   └── SendToSubscriptionCoAdministrators: *bool
 │   │   ├── Operation: *Enum (1 value)
 │   │   │   └── "Scale"
-│   │   └── Webhooks: Object (2 properties)[]
-│   │       ├── Properties: map[string]string
-│   │       └── ServiceUri: *string
+│   │   └── Webhooks: Object (1 property)[]
+│   │       └── Properties: map[string]string
 │   ├── PredictiveAutoscalePolicy: *Object (2 properties)
 │   │   ├── ScaleLookAheadTime: *string
 │   │   └── ScaleMode: *Enum (3 values)

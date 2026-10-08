@@ -79,8 +79,11 @@ type ServerProperties struct {
 	PointInTimeUTC *string `json:"pointInTimeUTC,omitempty"`
 
 	// ReplicationRole: Replication role of the server
-	ReplicationRole        *ReplicationRole `json:"replicationRole,omitempty"`
-	SourceServerResourceId *string          `json:"sourceServerResourceId,omitempty"`
+	ReplicationRole *ReplicationRole `json:"replicationRole,omitempty"`
+
+	// SourceServerResourceId: The source server resource ID to restore from. It's required when 'createMode' is
+	// 'PointInTimeRestore' or 'GeoRestore' or 'Replica'. This property is returned only for Replica server
+	SourceServerResourceId *string `json:"sourceServerResourceId,omitempty"`
 
 	// Storage: Storage properties of a server.
 	Storage *Storage `json:"storage,omitempty"`
@@ -129,7 +132,10 @@ type Backup struct {
 // Data encryption properties of a server
 type DataEncryption struct {
 	// PrimaryKeyURI: URI for the key for data encryption for primary server.
-	PrimaryKeyURI                 *string `json:"primaryKeyURI,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
+	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
+
+	// PrimaryUserAssignedIdentityId: Resource Id for the User assigned identity to be used for data encryption for primary
+	// server.
 	PrimaryUserAssignedIdentityId *string `json:"primaryUserAssignedIdentityId,omitempty"`
 
 	// Type: Data encryption type to depict if it is System Managed vs Azure Key vault.
@@ -162,7 +168,14 @@ type MaintenanceWindow struct {
 
 // Network properties of a server.
 type Network struct {
-	DelegatedSubnetResourceId   *string `json:"delegatedSubnetResourceId,omitempty"`
+	// DelegatedSubnetResourceId: Delegated subnet arm resource id. This is required to be passed during create, in case we
+	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
+	// value for Private DNS zone.
+	DelegatedSubnetResourceId *string `json:"delegatedSubnetResourceId,omitempty"`
+
+	// PrivateDnsZoneArmResourceId: Private dns zone arm resource id. This is required to be passed during create, in case we
+	// want the server to be VNET injected, i.e. Private access server. During update, pass this only if we want to update the
+	// value for Private DNS zone.
 	PrivateDnsZoneArmResourceId *string `json:"privateDnsZoneArmResourceId,omitempty"`
 }
 

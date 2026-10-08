@@ -23,13 +23,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}
 type TrafficManagerProfile struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -260,7 +261,7 @@ func (profile *TrafficManagerProfile) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}
 type TrafficManagerProfileList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -304,17 +305,17 @@ type TrafficManagerProfile_Spec struct {
 	Owner *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 
 	// ProfileStatus: The status of the Traffic Manager profile.
-	ProfileStatus *ProfileProperties_ProfileStatus `json:"profileStatus,omitempty"`
+	ProfileStatus *ProfileStatus `json:"profileStatus,omitempty"`
 
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// TrafficRoutingMethod: The traffic routing method of the Traffic Manager profile.
-	TrafficRoutingMethod *ProfileProperties_TrafficRoutingMethod `json:"trafficRoutingMethod,omitempty"`
+	TrafficRoutingMethod *TrafficRoutingMethod `json:"trafficRoutingMethod,omitempty"`
 
 	// TrafficViewEnrollmentStatus: Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile.
 	// Null, indicates 'Disabled'. Enabling this feature will increase the cost of the Traffic Manage profile.
-	TrafficViewEnrollmentStatus *ProfileProperties_TrafficViewEnrollmentStatus `json:"trafficViewEnrollmentStatus,omitempty"`
+	TrafficViewEnrollmentStatus *TrafficViewEnrollmentStatus `json:"trafficViewEnrollmentStatus,omitempty"`
 
 	// Type: The type of the resource. Ex- Microsoft.Network/trafficManagerProfiles.
 	Type *string `json:"type,omitempty"`
@@ -354,7 +355,7 @@ func (profile *TrafficManagerProfile_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.AllowedEndpointRecordTypes = append(result.Properties.AllowedEndpointRecordTypes, arm.AllowedEndpointRecordType(temp))
 	}
 	if profile.DnsConfig != nil {
-		dnsConfig_ARM, err := (*profile.DnsConfig).ConvertToARM(resolved)
+		dnsConfig_ARM, err := profile.DnsConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -366,7 +367,7 @@ func (profile *TrafficManagerProfile_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.MaxReturn = &maxReturn
 	}
 	if profile.MonitorConfig != nil {
-		monitorConfig_ARM, err := (*profile.MonitorConfig).ConvertToARM(resolved)
+		monitorConfig_ARM, err := profile.MonitorConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -376,19 +377,19 @@ func (profile *TrafficManagerProfile_Spec) ConvertToARM(resolved genruntime.Conv
 	if profile.ProfileStatus != nil {
 		var temp string
 		temp = string(*profile.ProfileStatus)
-		profileStatus := arm.ProfileProperties_ProfileStatus(temp)
+		profileStatus := arm.ProfileStatus(temp)
 		result.Properties.ProfileStatus = &profileStatus
 	}
 	if profile.TrafficRoutingMethod != nil {
 		var temp string
 		temp = string(*profile.TrafficRoutingMethod)
-		trafficRoutingMethod := arm.ProfileProperties_TrafficRoutingMethod(temp)
+		trafficRoutingMethod := arm.TrafficRoutingMethod(temp)
 		result.Properties.TrafficRoutingMethod = &trafficRoutingMethod
 	}
 	if profile.TrafficViewEnrollmentStatus != nil {
 		var temp string
 		temp = string(*profile.TrafficViewEnrollmentStatus)
-		trafficViewEnrollmentStatus := arm.ProfileProperties_TrafficViewEnrollmentStatus(temp)
+		trafficViewEnrollmentStatus := arm.TrafficViewEnrollmentStatus(temp)
 		result.Properties.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatus
 	}
 
@@ -490,7 +491,7 @@ func (profile *TrafficManagerProfile_Spec) PopulateFromARM(owner genruntime.Arbi
 		if typedInput.Properties.ProfileStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.ProfileStatus)
-			profileStatus := ProfileProperties_ProfileStatus(temp)
+			profileStatus := ProfileStatus(temp)
 			profile.ProfileStatus = &profileStatus
 		}
 	}
@@ -509,7 +510,7 @@ func (profile *TrafficManagerProfile_Spec) PopulateFromARM(owner genruntime.Arbi
 		if typedInput.Properties.TrafficRoutingMethod != nil {
 			var temp string
 			temp = string(*typedInput.Properties.TrafficRoutingMethod)
-			trafficRoutingMethod := ProfileProperties_TrafficRoutingMethod(temp)
+			trafficRoutingMethod := TrafficRoutingMethod(temp)
 			profile.TrafficRoutingMethod = &trafficRoutingMethod
 		}
 	}
@@ -520,7 +521,7 @@ func (profile *TrafficManagerProfile_Spec) PopulateFromARM(owner genruntime.Arbi
 		if typedInput.Properties.TrafficViewEnrollmentStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.TrafficViewEnrollmentStatus)
-			trafficViewEnrollmentStatus := ProfileProperties_TrafficViewEnrollmentStatus(temp)
+			trafficViewEnrollmentStatus := TrafficViewEnrollmentStatus(temp)
 			profile.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatus
 		}
 	}
@@ -592,8 +593,6 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 	if source.AllowedEndpointRecordTypes != nil {
 		allowedEndpointRecordTypeList := make([]AllowedEndpointRecordType, len(source.AllowedEndpointRecordTypes))
 		for allowedEndpointRecordTypeIndex, allowedEndpointRecordTypeItem := range source.AllowedEndpointRecordTypes {
-			// Shadow the loop variable to avoid aliasing
-			allowedEndpointRecordTypeItem := allowedEndpointRecordTypeItem
 			allowedEndpointRecordTypeList[allowedEndpointRecordTypeIndex] = genruntime.ToEnum(allowedEndpointRecordTypeItem, allowedEndpointRecordType_Values)
 		}
 		profile.AllowedEndpointRecordTypes = allowedEndpointRecordTypeList
@@ -657,7 +656,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 	// ProfileStatus
 	if source.ProfileStatus != nil {
 		profileStatus := *source.ProfileStatus
-		profileStatusTemp := genruntime.ToEnum(profileStatus, profileProperties_ProfileStatus_Values)
+		profileStatusTemp := genruntime.ToEnum(profileStatus, profileStatus_Values)
 		profile.ProfileStatus = &profileStatusTemp
 	} else {
 		profile.ProfileStatus = nil
@@ -669,7 +668,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 	// TrafficRoutingMethod
 	if source.TrafficRoutingMethod != nil {
 		trafficRoutingMethod := *source.TrafficRoutingMethod
-		trafficRoutingMethodTemp := genruntime.ToEnum(trafficRoutingMethod, profileProperties_TrafficRoutingMethod_Values)
+		trafficRoutingMethodTemp := genruntime.ToEnum(trafficRoutingMethod, trafficRoutingMethod_Values)
 		profile.TrafficRoutingMethod = &trafficRoutingMethodTemp
 	} else {
 		profile.TrafficRoutingMethod = nil
@@ -678,7 +677,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 	// TrafficViewEnrollmentStatus
 	if source.TrafficViewEnrollmentStatus != nil {
 		trafficViewEnrollmentStatus := *source.TrafficViewEnrollmentStatus
-		trafficViewEnrollmentStatusTemp := genruntime.ToEnum(trafficViewEnrollmentStatus, profileProperties_TrafficViewEnrollmentStatus_Values)
+		trafficViewEnrollmentStatusTemp := genruntime.ToEnum(trafficViewEnrollmentStatus, trafficViewEnrollmentStatus_Values)
 		profile.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatusTemp
 	} else {
 		profile.TrafficViewEnrollmentStatus = nil
@@ -700,8 +699,6 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_To_TrafficManagerPro
 	if profile.AllowedEndpointRecordTypes != nil {
 		allowedEndpointRecordTypeList := make([]string, len(profile.AllowedEndpointRecordTypes))
 		for allowedEndpointRecordTypeIndex, allowedEndpointRecordTypeItem := range profile.AllowedEndpointRecordTypes {
-			// Shadow the loop variable to avoid aliasing
-			allowedEndpointRecordTypeItem := allowedEndpointRecordTypeItem
 			allowedEndpointRecordTypeList[allowedEndpointRecordTypeIndex] = string(allowedEndpointRecordTypeItem)
 		}
 		destination.AllowedEndpointRecordTypes = allowedEndpointRecordTypeList
@@ -813,8 +810,6 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 	if source.AllowedEndpointRecordTypes != nil {
 		allowedEndpointRecordTypeList := make([]AllowedEndpointRecordType, len(source.AllowedEndpointRecordTypes))
 		for allowedEndpointRecordTypeIndex, allowedEndpointRecordTypeItem := range source.AllowedEndpointRecordTypes {
-			// Shadow the loop variable to avoid aliasing
-			allowedEndpointRecordTypeItem := allowedEndpointRecordTypeItem
 			allowedEndpointRecordType := genruntime.ToEnum(string(allowedEndpointRecordTypeItem), allowedEndpointRecordType_Values)
 			allowedEndpointRecordTypeList[allowedEndpointRecordTypeIndex] = allowedEndpointRecordType
 		}
@@ -855,7 +850,7 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 
 	// ProfileStatus
 	if source.ProfileStatus != nil {
-		profileStatus := genruntime.ToEnum(string(*source.ProfileStatus), profileProperties_ProfileStatus_Values)
+		profileStatus := genruntime.ToEnum(string(*source.ProfileStatus), profileStatus_Values)
 		profile.ProfileStatus = &profileStatus
 	} else {
 		profile.ProfileStatus = nil
@@ -866,7 +861,7 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 
 	// TrafficRoutingMethod
 	if source.TrafficRoutingMethod != nil {
-		trafficRoutingMethod := genruntime.ToEnum(string(*source.TrafficRoutingMethod), profileProperties_TrafficRoutingMethod_Values)
+		trafficRoutingMethod := genruntime.ToEnum(string(*source.TrafficRoutingMethod), trafficRoutingMethod_Values)
 		profile.TrafficRoutingMethod = &trafficRoutingMethod
 	} else {
 		profile.TrafficRoutingMethod = nil
@@ -874,7 +869,7 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 
 	// TrafficViewEnrollmentStatus
 	if source.TrafficViewEnrollmentStatus != nil {
-		trafficViewEnrollmentStatus := genruntime.ToEnum(string(*source.TrafficViewEnrollmentStatus), profileProperties_TrafficViewEnrollmentStatus_Values)
+		trafficViewEnrollmentStatus := genruntime.ToEnum(string(*source.TrafficViewEnrollmentStatus), trafficViewEnrollmentStatus_Values)
 		profile.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatus
 	} else {
 		profile.TrafficViewEnrollmentStatus = nil
@@ -927,17 +922,17 @@ type TrafficManagerProfile_STATUS struct {
 	Name *string `json:"name,omitempty"`
 
 	// ProfileStatus: The status of the Traffic Manager profile.
-	ProfileStatus *ProfileProperties_ProfileStatus_STATUS `json:"profileStatus,omitempty"`
+	ProfileStatus *ProfileStatus_STATUS `json:"profileStatus,omitempty"`
 
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// TrafficRoutingMethod: The traffic routing method of the Traffic Manager profile.
-	TrafficRoutingMethod *ProfileProperties_TrafficRoutingMethod_STATUS `json:"trafficRoutingMethod,omitempty"`
+	TrafficRoutingMethod *TrafficRoutingMethod_STATUS `json:"trafficRoutingMethod,omitempty"`
 
 	// TrafficViewEnrollmentStatus: Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile.
 	// Null, indicates 'Disabled'. Enabling this feature will increase the cost of the Traffic Manage profile.
-	TrafficViewEnrollmentStatus *ProfileProperties_TrafficViewEnrollmentStatus_STATUS `json:"trafficViewEnrollmentStatus,omitempty"`
+	TrafficViewEnrollmentStatus *TrafficViewEnrollmentStatus_STATUS `json:"trafficViewEnrollmentStatus,omitempty"`
 
 	// Type: The type of the resource. Ex- Microsoft.Network/trafficManagerProfiles.
 	Type *string `json:"type,omitempty"`
@@ -1093,7 +1088,7 @@ func (profile *TrafficManagerProfile_STATUS) PopulateFromARM(owner genruntime.Ar
 		if typedInput.Properties.ProfileStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.ProfileStatus)
-			profileStatus := ProfileProperties_ProfileStatus_STATUS(temp)
+			profileStatus := ProfileStatus_STATUS(temp)
 			profile.ProfileStatus = &profileStatus
 		}
 	}
@@ -1112,7 +1107,7 @@ func (profile *TrafficManagerProfile_STATUS) PopulateFromARM(owner genruntime.Ar
 		if typedInput.Properties.TrafficRoutingMethod != nil {
 			var temp string
 			temp = string(*typedInput.Properties.TrafficRoutingMethod)
-			trafficRoutingMethod := ProfileProperties_TrafficRoutingMethod_STATUS(temp)
+			trafficRoutingMethod := TrafficRoutingMethod_STATUS(temp)
 			profile.TrafficRoutingMethod = &trafficRoutingMethod
 		}
 	}
@@ -1123,7 +1118,7 @@ func (profile *TrafficManagerProfile_STATUS) PopulateFromARM(owner genruntime.Ar
 		if typedInput.Properties.TrafficViewEnrollmentStatus != nil {
 			var temp string
 			temp = string(*typedInput.Properties.TrafficViewEnrollmentStatus)
-			trafficViewEnrollmentStatus := ProfileProperties_TrafficViewEnrollmentStatus_STATUS(temp)
+			trafficViewEnrollmentStatus := TrafficViewEnrollmentStatus_STATUS(temp)
 			profile.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatus
 		}
 	}
@@ -1145,8 +1140,6 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 	if source.AllowedEndpointRecordTypes != nil {
 		allowedEndpointRecordTypeList := make([]AllowedEndpointRecordType_STATUS, len(source.AllowedEndpointRecordTypes))
 		for allowedEndpointRecordTypeIndex, allowedEndpointRecordTypeItem := range source.AllowedEndpointRecordTypes {
-			// Shadow the loop variable to avoid aliasing
-			allowedEndpointRecordTypeItem := allowedEndpointRecordTypeItem
 			allowedEndpointRecordTypeList[allowedEndpointRecordTypeIndex] = genruntime.ToEnum(allowedEndpointRecordTypeItem, allowedEndpointRecordType_STATUS_Values)
 		}
 		profile.AllowedEndpointRecordTypes = allowedEndpointRecordTypeList
@@ -1173,8 +1166,6 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 	if source.Endpoints != nil {
 		endpointList := make([]Endpoint_STATUS, len(source.Endpoints))
 		for endpointIndex, endpointItem := range source.Endpoints {
-			// Shadow the loop variable to avoid aliasing
-			endpointItem := endpointItem
 			var endpoint Endpoint_STATUS
 			err := endpoint.AssignProperties_From_Endpoint_STATUS(&endpointItem)
 			if err != nil {
@@ -1214,7 +1205,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 	// ProfileStatus
 	if source.ProfileStatus != nil {
 		profileStatus := *source.ProfileStatus
-		profileStatusTemp := genruntime.ToEnum(profileStatus, profileProperties_ProfileStatus_STATUS_Values)
+		profileStatusTemp := genruntime.ToEnum(profileStatus, profileStatus_STATUS_Values)
 		profile.ProfileStatus = &profileStatusTemp
 	} else {
 		profile.ProfileStatus = nil
@@ -1226,7 +1217,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 	// TrafficRoutingMethod
 	if source.TrafficRoutingMethod != nil {
 		trafficRoutingMethod := *source.TrafficRoutingMethod
-		trafficRoutingMethodTemp := genruntime.ToEnum(trafficRoutingMethod, profileProperties_TrafficRoutingMethod_STATUS_Values)
+		trafficRoutingMethodTemp := genruntime.ToEnum(trafficRoutingMethod, trafficRoutingMethod_STATUS_Values)
 		profile.TrafficRoutingMethod = &trafficRoutingMethodTemp
 	} else {
 		profile.TrafficRoutingMethod = nil
@@ -1235,7 +1226,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 	// TrafficViewEnrollmentStatus
 	if source.TrafficViewEnrollmentStatus != nil {
 		trafficViewEnrollmentStatus := *source.TrafficViewEnrollmentStatus
-		trafficViewEnrollmentStatusTemp := genruntime.ToEnum(trafficViewEnrollmentStatus, profileProperties_TrafficViewEnrollmentStatus_STATUS_Values)
+		trafficViewEnrollmentStatusTemp := genruntime.ToEnum(trafficViewEnrollmentStatus, trafficViewEnrollmentStatus_STATUS_Values)
 		profile.TrafficViewEnrollmentStatus = &trafficViewEnrollmentStatusTemp
 	} else {
 		profile.TrafficViewEnrollmentStatus = nil
@@ -1257,8 +1248,6 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_To_TrafficManagerP
 	if profile.AllowedEndpointRecordTypes != nil {
 		allowedEndpointRecordTypeList := make([]string, len(profile.AllowedEndpointRecordTypes))
 		for allowedEndpointRecordTypeIndex, allowedEndpointRecordTypeItem := range profile.AllowedEndpointRecordTypes {
-			// Shadow the loop variable to avoid aliasing
-			allowedEndpointRecordTypeItem := allowedEndpointRecordTypeItem
 			allowedEndpointRecordTypeList[allowedEndpointRecordTypeIndex] = string(allowedEndpointRecordTypeItem)
 		}
 		destination.AllowedEndpointRecordTypes = allowedEndpointRecordTypeList
@@ -1285,8 +1274,6 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_To_TrafficManagerP
 	if profile.Endpoints != nil {
 		endpointList := make([]storage.Endpoint_STATUS, len(profile.Endpoints))
 		for endpointIndex, endpointItem := range profile.Endpoints {
-			// Shadow the loop variable to avoid aliasing
-			endpointItem := endpointItem
 			var endpoint storage.Endpoint_STATUS
 			err := endpointItem.AssignProperties_To_Endpoint_STATUS(&endpoint)
 			if err != nil {
@@ -1605,9 +1592,70 @@ func (config *DnsConfig_STATUS) AssignProperties_To_DnsConfig_STATUS(destination
 
 // Class representing a Traffic Manager endpoint.
 type Endpoint_STATUS struct {
+	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
+	// the traffic routing method.
+	AlwaysServe *AlwaysServe_STATUS `json:"alwaysServe,omitempty"`
+
+	// CustomHeaders: List of custom headers.
+	CustomHeaders []EndpointPropertiesCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
+
+	// EndpointLocation: Specifies the location of the external or nested endpoints when using the 'Performance' traffic
+	// routing method.
+	EndpointLocation *string `json:"endpointLocation,omitempty"`
+
+	// EndpointMonitorStatus: The monitoring status of the endpoint.
+	EndpointMonitorStatus *EndpointMonitorStatus_STATUS `json:"endpointMonitorStatus,omitempty"`
+
+	// EndpointStatus: The status of the endpoint. If the endpoint is Enabled, it is probed for endpoint health and is included
+	// in the traffic routing method.
+	EndpointStatus *EndpointStatus_STATUS `json:"endpointStatus,omitempty"`
+
+	// GeoMapping: The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
+	// Please consult Traffic Manager Geographic documentation for a full list of accepted values.
+	GeoMapping []string `json:"geoMapping,omitempty"`
+
 	// Id: Fully qualified resource Id for the resource. Ex -
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficManagerProfiles/{resourceName}
 	Id *string `json:"id,omitempty"`
+
+	// MinChildEndpoints: The minimum number of endpoints that must be available in the child profile in order for the parent
+	// profile to be considered available. Only applicable to endpoint of type 'NestedEndpoints'.
+	MinChildEndpoints *int `json:"minChildEndpoints,omitempty"`
+
+	// MinChildEndpointsIPv4: The minimum number of IPv4 (DNS record type A) endpoints that must be available in the child
+	// profile in order for the parent profile to be considered available. Only applicable to endpoint of type
+	// 'NestedEndpoints'.
+	MinChildEndpointsIPv4 *int `json:"minChildEndpointsIPv4,omitempty"`
+
+	// MinChildEndpointsIPv6: The minimum number of IPv6 (DNS record type AAAA) endpoints that must be available in the child
+	// profile in order for the parent profile to be considered available. Only applicable to endpoint of type
+	// 'NestedEndpoints'.
+	MinChildEndpointsIPv6 *int `json:"minChildEndpointsIPv6,omitempty"`
+
+	// Name: The name of the resource
+	Name *string `json:"name,omitempty"`
+
+	// Priority: The priority of this endpoint when using the 'Priority' traffic routing method. Possible values are from 1 to
+	// 1000, lower values represent higher priority. This is an optional parameter.  If specified, it must be specified on all
+	// endpoints, and no two endpoints can share the same priority value.
+	Priority *int `json:"priority,omitempty"`
+
+	// Subnets: The list of subnets, IP addresses, and/or address ranges mapped to this endpoint when using the 'Subnet'
+	// traffic routing method. An empty list will match all ranges not covered by other endpoints.
+	Subnets []EndpointPropertiesSubnetsItem_STATUS `json:"subnets,omitempty"`
+
+	// Target: The fully-qualified DNS name or IP address of the endpoint. Traffic Manager returns this value in DNS responses
+	// to direct traffic to this endpoint.
+	Target *string `json:"target,omitempty"`
+
+	// TargetResourceId: The Azure Resource URI of the of the endpoint. Not applicable to endpoints of type 'ExternalEndpoints'.
+	TargetResourceId *string `json:"targetResourceId,omitempty"`
+
+	// Type: The type of the resource. Ex- Microsoft.Network/trafficManagerProfiles.
+	Type *string `json:"type,omitempty"`
+
+	// Weight: The weight of this endpoint when using the 'Weighted' traffic routing method. Possible values are from 1 to 1000.
+	Weight *int `json:"weight,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &Endpoint_STATUS{}
@@ -1624,10 +1672,161 @@ func (endpoint *Endpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Endpoint_STATUS, got %T", armInput)
 	}
 
+	// Set property "AlwaysServe":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.AlwaysServe != nil {
+			var temp string
+			temp = string(*typedInput.Properties.AlwaysServe)
+			alwaysServe := AlwaysServe_STATUS(temp)
+			endpoint.AlwaysServe = &alwaysServe
+		}
+	}
+
+	// Set property "CustomHeaders":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		for _, item := range typedInput.Properties.CustomHeaders {
+			var item1 EndpointPropertiesCustomHeadersItem_STATUS
+			err := item1.PopulateFromARM(owner, item)
+			if err != nil {
+				return err
+			}
+			endpoint.CustomHeaders = append(endpoint.CustomHeaders, item1)
+		}
+	}
+
+	// Set property "EndpointLocation":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.EndpointLocation != nil {
+			endpointLocation := *typedInput.Properties.EndpointLocation
+			endpoint.EndpointLocation = &endpointLocation
+		}
+	}
+
+	// Set property "EndpointMonitorStatus":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.EndpointMonitorStatus != nil {
+			var temp string
+			temp = string(*typedInput.Properties.EndpointMonitorStatus)
+			endpointMonitorStatus := EndpointMonitorStatus_STATUS(temp)
+			endpoint.EndpointMonitorStatus = &endpointMonitorStatus
+		}
+	}
+
+	// Set property "EndpointStatus":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.EndpointStatus != nil {
+			var temp string
+			temp = string(*typedInput.Properties.EndpointStatus)
+			endpointStatus := EndpointStatus_STATUS(temp)
+			endpoint.EndpointStatus = &endpointStatus
+		}
+	}
+
+	// Set property "GeoMapping":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		for _, item := range typedInput.Properties.GeoMapping {
+			endpoint.GeoMapping = append(endpoint.GeoMapping, item)
+		}
+	}
+
 	// Set property "Id":
 	if typedInput.Id != nil {
 		id := *typedInput.Id
 		endpoint.Id = &id
+	}
+
+	// Set property "MinChildEndpoints":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.MinChildEndpoints != nil {
+			minChildEndpoints := *typedInput.Properties.MinChildEndpoints
+			endpoint.MinChildEndpoints = &minChildEndpoints
+		}
+	}
+
+	// Set property "MinChildEndpointsIPv4":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.MinChildEndpointsIPv4 != nil {
+			minChildEndpointsIPv4 := *typedInput.Properties.MinChildEndpointsIPv4
+			endpoint.MinChildEndpointsIPv4 = &minChildEndpointsIPv4
+		}
+	}
+
+	// Set property "MinChildEndpointsIPv6":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.MinChildEndpointsIPv6 != nil {
+			minChildEndpointsIPv6 := *typedInput.Properties.MinChildEndpointsIPv6
+			endpoint.MinChildEndpointsIPv6 = &minChildEndpointsIPv6
+		}
+	}
+
+	// Set property "Name":
+	if typedInput.Name != nil {
+		name := *typedInput.Name
+		endpoint.Name = &name
+	}
+
+	// Set property "Priority":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.Priority != nil {
+			priority := *typedInput.Properties.Priority
+			endpoint.Priority = &priority
+		}
+	}
+
+	// Set property "Subnets":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		for _, item := range typedInput.Properties.Subnets {
+			var item1 EndpointPropertiesSubnetsItem_STATUS
+			err := item1.PopulateFromARM(owner, item)
+			if err != nil {
+				return err
+			}
+			endpoint.Subnets = append(endpoint.Subnets, item1)
+		}
+	}
+
+	// Set property "Target":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.Target != nil {
+			target := *typedInput.Properties.Target
+			endpoint.Target = &target
+		}
+	}
+
+	// Set property "TargetResourceId":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.TargetResourceId != nil {
+			targetResourceId := *typedInput.Properties.TargetResourceId
+			endpoint.TargetResourceId = &targetResourceId
+		}
+	}
+
+	// Set property "Type":
+	if typedInput.Type != nil {
+		typeVar := *typedInput.Type
+		endpoint.Type = &typeVar
+	}
+
+	// Set property "Weight":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.Weight != nil {
+			weight := *typedInput.Properties.Weight
+			endpoint.Weight = &weight
+		}
 	}
 
 	// No error
@@ -1637,8 +1836,100 @@ func (endpoint *Endpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 // AssignProperties_From_Endpoint_STATUS populates our Endpoint_STATUS from the provided source Endpoint_STATUS
 func (endpoint *Endpoint_STATUS) AssignProperties_From_Endpoint_STATUS(source *storage.Endpoint_STATUS) error {
 
+	// AlwaysServe
+	if source.AlwaysServe != nil {
+		alwaysServe := *source.AlwaysServe
+		alwaysServeTemp := genruntime.ToEnum(alwaysServe, alwaysServe_STATUS_Values)
+		endpoint.AlwaysServe = &alwaysServeTemp
+	} else {
+		endpoint.AlwaysServe = nil
+	}
+
+	// CustomHeaders
+	if source.CustomHeaders != nil {
+		customHeaderList := make([]EndpointPropertiesCustomHeadersItem_STATUS, len(source.CustomHeaders))
+		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
+			var customHeader EndpointPropertiesCustomHeadersItem_STATUS
+			err := customHeader.AssignProperties_From_EndpointPropertiesCustomHeadersItem_STATUS(&customHeaderItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesCustomHeadersItem_STATUS() to populate field CustomHeaders")
+			}
+			customHeaderList[customHeaderIndex] = customHeader
+		}
+		endpoint.CustomHeaders = customHeaderList
+	} else {
+		endpoint.CustomHeaders = nil
+	}
+
+	// EndpointLocation
+	endpoint.EndpointLocation = genruntime.ClonePointerToString(source.EndpointLocation)
+
+	// EndpointMonitorStatus
+	if source.EndpointMonitorStatus != nil {
+		endpointMonitorStatus := *source.EndpointMonitorStatus
+		endpointMonitorStatusTemp := genruntime.ToEnum(endpointMonitorStatus, endpointMonitorStatus_STATUS_Values)
+		endpoint.EndpointMonitorStatus = &endpointMonitorStatusTemp
+	} else {
+		endpoint.EndpointMonitorStatus = nil
+	}
+
+	// EndpointStatus
+	if source.EndpointStatus != nil {
+		endpointStatus := *source.EndpointStatus
+		endpointStatusTemp := genruntime.ToEnum(endpointStatus, endpointStatus_STATUS_Values)
+		endpoint.EndpointStatus = &endpointStatusTemp
+	} else {
+		endpoint.EndpointStatus = nil
+	}
+
+	// GeoMapping
+	endpoint.GeoMapping = genruntime.CloneSliceOfString(source.GeoMapping)
+
 	// Id
 	endpoint.Id = genruntime.ClonePointerToString(source.Id)
+
+	// MinChildEndpoints
+	endpoint.MinChildEndpoints = genruntime.ClonePointerToInt(source.MinChildEndpoints)
+
+	// MinChildEndpointsIPv4
+	endpoint.MinChildEndpointsIPv4 = genruntime.ClonePointerToInt(source.MinChildEndpointsIPv4)
+
+	// MinChildEndpointsIPv6
+	endpoint.MinChildEndpointsIPv6 = genruntime.ClonePointerToInt(source.MinChildEndpointsIPv6)
+
+	// Name
+	endpoint.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Priority
+	endpoint.Priority = genruntime.ClonePointerToInt(source.Priority)
+
+	// Subnets
+	if source.Subnets != nil {
+		subnetList := make([]EndpointPropertiesSubnetsItem_STATUS, len(source.Subnets))
+		for subnetIndex, subnetItem := range source.Subnets {
+			var subnet EndpointPropertiesSubnetsItem_STATUS
+			err := subnet.AssignProperties_From_EndpointPropertiesSubnetsItem_STATUS(&subnetItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_EndpointPropertiesSubnetsItem_STATUS() to populate field Subnets")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		endpoint.Subnets = subnetList
+	} else {
+		endpoint.Subnets = nil
+	}
+
+	// Target
+	endpoint.Target = genruntime.ClonePointerToString(source.Target)
+
+	// TargetResourceId
+	endpoint.TargetResourceId = genruntime.ClonePointerToString(source.TargetResourceId)
+
+	// Type
+	endpoint.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Weight
+	endpoint.Weight = genruntime.ClonePointerToInt(source.Weight)
 
 	// No error
 	return nil
@@ -1649,8 +1940,97 @@ func (endpoint *Endpoint_STATUS) AssignProperties_To_Endpoint_STATUS(destination
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
+	// AlwaysServe
+	if endpoint.AlwaysServe != nil {
+		alwaysServe := string(*endpoint.AlwaysServe)
+		destination.AlwaysServe = &alwaysServe
+	} else {
+		destination.AlwaysServe = nil
+	}
+
+	// CustomHeaders
+	if endpoint.CustomHeaders != nil {
+		customHeaderList := make([]storage.EndpointPropertiesCustomHeadersItem_STATUS, len(endpoint.CustomHeaders))
+		for customHeaderIndex, customHeaderItem := range endpoint.CustomHeaders {
+			var customHeader storage.EndpointPropertiesCustomHeadersItem_STATUS
+			err := customHeaderItem.AssignProperties_To_EndpointPropertiesCustomHeadersItem_STATUS(&customHeader)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesCustomHeadersItem_STATUS() to populate field CustomHeaders")
+			}
+			customHeaderList[customHeaderIndex] = customHeader
+		}
+		destination.CustomHeaders = customHeaderList
+	} else {
+		destination.CustomHeaders = nil
+	}
+
+	// EndpointLocation
+	destination.EndpointLocation = genruntime.ClonePointerToString(endpoint.EndpointLocation)
+
+	// EndpointMonitorStatus
+	if endpoint.EndpointMonitorStatus != nil {
+		endpointMonitorStatus := string(*endpoint.EndpointMonitorStatus)
+		destination.EndpointMonitorStatus = &endpointMonitorStatus
+	} else {
+		destination.EndpointMonitorStatus = nil
+	}
+
+	// EndpointStatus
+	if endpoint.EndpointStatus != nil {
+		endpointStatus := string(*endpoint.EndpointStatus)
+		destination.EndpointStatus = &endpointStatus
+	} else {
+		destination.EndpointStatus = nil
+	}
+
+	// GeoMapping
+	destination.GeoMapping = genruntime.CloneSliceOfString(endpoint.GeoMapping)
+
 	// Id
 	destination.Id = genruntime.ClonePointerToString(endpoint.Id)
+
+	// MinChildEndpoints
+	destination.MinChildEndpoints = genruntime.ClonePointerToInt(endpoint.MinChildEndpoints)
+
+	// MinChildEndpointsIPv4
+	destination.MinChildEndpointsIPv4 = genruntime.ClonePointerToInt(endpoint.MinChildEndpointsIPv4)
+
+	// MinChildEndpointsIPv6
+	destination.MinChildEndpointsIPv6 = genruntime.ClonePointerToInt(endpoint.MinChildEndpointsIPv6)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(endpoint.Name)
+
+	// Priority
+	destination.Priority = genruntime.ClonePointerToInt(endpoint.Priority)
+
+	// Subnets
+	if endpoint.Subnets != nil {
+		subnetList := make([]storage.EndpointPropertiesSubnetsItem_STATUS, len(endpoint.Subnets))
+		for subnetIndex, subnetItem := range endpoint.Subnets {
+			var subnet storage.EndpointPropertiesSubnetsItem_STATUS
+			err := subnetItem.AssignProperties_To_EndpointPropertiesSubnetsItem_STATUS(&subnet)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_EndpointPropertiesSubnetsItem_STATUS() to populate field Subnets")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		destination.Subnets = subnetList
+	} else {
+		destination.Subnets = nil
+	}
+
+	// Target
+	destination.Target = genruntime.ClonePointerToString(endpoint.Target)
+
+	// TargetResourceId
+	destination.TargetResourceId = genruntime.ClonePointerToString(endpoint.TargetResourceId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(endpoint.Type)
+
+	// Weight
+	destination.Weight = genruntime.ClonePointerToInt(endpoint.Weight)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -1666,10 +2046,10 @@ func (endpoint *Endpoint_STATUS) AssignProperties_To_Endpoint_STATUS(destination
 // Class containing endpoint monitoring settings in a Traffic Manager profile.
 type MonitorConfig struct {
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []MonitorConfig_CustomHeaders `json:"customHeaders,omitempty"`
+	CustomHeaders []MonitorConfigCustomHeadersItem `json:"customHeaders,omitempty"`
 
 	// ExpectedStatusCodeRanges: List of expected status code ranges.
-	ExpectedStatusCodeRanges []MonitorConfig_ExpectedStatusCodeRanges `json:"expectedStatusCodeRanges,omitempty"`
+	ExpectedStatusCodeRanges []MonitorConfigExpectedStatusCodeRangesItem `json:"expectedStatusCodeRanges,omitempty"`
 
 	// IntervalInSeconds: The monitor interval for endpoints in this profile. This is the interval at which Traffic Manager
 	// will check the health of each endpoint in this profile.
@@ -1682,10 +2062,10 @@ type MonitorConfig struct {
 	Port *int `json:"port,omitempty"`
 
 	// ProfileMonitorStatus: The profile-level monitoring status of the Traffic Manager profile.
-	ProfileMonitorStatus *MonitorConfig_ProfileMonitorStatus `json:"profileMonitorStatus,omitempty"`
+	ProfileMonitorStatus *ProfileMonitorStatus `json:"profileMonitorStatus,omitempty"`
 
 	// Protocol: The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
-	Protocol *MonitorConfig_Protocol `json:"protocol,omitempty"`
+	Protocol *MonitorProtocol `json:"protocol,omitempty"`
 
 	// TimeoutInSeconds: The monitor timeout for endpoints in this profile. This is the time that Traffic Manager allows
 	// endpoints in this profile to response to the health check.
@@ -1711,7 +2091,7 @@ func (config *MonitorConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		result.CustomHeaders = append(result.CustomHeaders, *item_ARM.(*arm.MonitorConfig_CustomHeaders))
+		result.CustomHeaders = append(result.CustomHeaders, *item_ARM.(*arm.MonitorConfigCustomHeadersItem))
 	}
 
 	// Set property "ExpectedStatusCodeRanges":
@@ -1720,7 +2100,7 @@ func (config *MonitorConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		result.ExpectedStatusCodeRanges = append(result.ExpectedStatusCodeRanges, *item_ARM.(*arm.MonitorConfig_ExpectedStatusCodeRanges))
+		result.ExpectedStatusCodeRanges = append(result.ExpectedStatusCodeRanges, *item_ARM.(*arm.MonitorConfigExpectedStatusCodeRangesItem))
 	}
 
 	// Set property "IntervalInSeconds":
@@ -1745,7 +2125,7 @@ func (config *MonitorConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if config.ProfileMonitorStatus != nil {
 		var temp string
 		temp = string(*config.ProfileMonitorStatus)
-		profileMonitorStatus := arm.MonitorConfig_ProfileMonitorStatus(temp)
+		profileMonitorStatus := arm.ProfileMonitorStatus(temp)
 		result.ProfileMonitorStatus = &profileMonitorStatus
 	}
 
@@ -1753,7 +2133,7 @@ func (config *MonitorConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if config.Protocol != nil {
 		var temp string
 		temp = string(*config.Protocol)
-		protocol := arm.MonitorConfig_Protocol(temp)
+		protocol := arm.MonitorProtocol(temp)
 		result.Protocol = &protocol
 	}
 
@@ -1785,7 +2165,7 @@ func (config *MonitorConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 
 	// Set property "CustomHeaders":
 	for _, item := range typedInput.CustomHeaders {
-		var item1 MonitorConfig_CustomHeaders
+		var item1 MonitorConfigCustomHeadersItem
 		err := item1.PopulateFromARM(owner, item)
 		if err != nil {
 			return err
@@ -1795,7 +2175,7 @@ func (config *MonitorConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 
 	// Set property "ExpectedStatusCodeRanges":
 	for _, item := range typedInput.ExpectedStatusCodeRanges {
-		var item1 MonitorConfig_ExpectedStatusCodeRanges
+		var item1 MonitorConfigExpectedStatusCodeRangesItem
 		err := item1.PopulateFromARM(owner, item)
 		if err != nil {
 			return err
@@ -1825,7 +2205,7 @@ func (config *MonitorConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	if typedInput.ProfileMonitorStatus != nil {
 		var temp string
 		temp = string(*typedInput.ProfileMonitorStatus)
-		profileMonitorStatus := MonitorConfig_ProfileMonitorStatus(temp)
+		profileMonitorStatus := ProfileMonitorStatus(temp)
 		config.ProfileMonitorStatus = &profileMonitorStatus
 	}
 
@@ -1833,7 +2213,7 @@ func (config *MonitorConfig) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	if typedInput.Protocol != nil {
 		var temp string
 		temp = string(*typedInput.Protocol)
-		protocol := MonitorConfig_Protocol(temp)
+		protocol := MonitorProtocol(temp)
 		config.Protocol = &protocol
 	}
 
@@ -1858,14 +2238,12 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]MonitorConfig_CustomHeaders, len(source.CustomHeaders))
+		customHeaderList := make([]MonitorConfigCustomHeadersItem, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader MonitorConfig_CustomHeaders
-			err := customHeader.AssignProperties_From_MonitorConfig_CustomHeaders(&customHeaderItem)
+			var customHeader MonitorConfigCustomHeadersItem
+			err := customHeader.AssignProperties_From_MonitorConfigCustomHeadersItem(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfigCustomHeadersItem() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -1876,14 +2254,12 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 
 	// ExpectedStatusCodeRanges
 	if source.ExpectedStatusCodeRanges != nil {
-		expectedStatusCodeRangeList := make([]MonitorConfig_ExpectedStatusCodeRanges, len(source.ExpectedStatusCodeRanges))
+		expectedStatusCodeRangeList := make([]MonitorConfigExpectedStatusCodeRangesItem, len(source.ExpectedStatusCodeRanges))
 		for expectedStatusCodeRangeIndex, expectedStatusCodeRangeItem := range source.ExpectedStatusCodeRanges {
-			// Shadow the loop variable to avoid aliasing
-			expectedStatusCodeRangeItem := expectedStatusCodeRangeItem
-			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges
-			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges(&expectedStatusCodeRangeItem)
+			var expectedStatusCodeRange MonitorConfigExpectedStatusCodeRangesItem
+			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -1904,7 +2280,7 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 	// ProfileMonitorStatus
 	if source.ProfileMonitorStatus != nil {
 		profileMonitorStatus := *source.ProfileMonitorStatus
-		profileMonitorStatusTemp := genruntime.ToEnum(profileMonitorStatus, monitorConfig_ProfileMonitorStatus_Values)
+		profileMonitorStatusTemp := genruntime.ToEnum(profileMonitorStatus, profileMonitorStatus_Values)
 		config.ProfileMonitorStatus = &profileMonitorStatusTemp
 	} else {
 		config.ProfileMonitorStatus = nil
@@ -1913,7 +2289,7 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 	// Protocol
 	if source.Protocol != nil {
 		protocol := *source.Protocol
-		protocolTemp := genruntime.ToEnum(protocol, monitorConfig_Protocol_Values)
+		protocolTemp := genruntime.ToEnum(protocol, monitorProtocol_Values)
 		config.Protocol = &protocolTemp
 	} else {
 		config.Protocol = nil
@@ -1936,14 +2312,12 @@ func (config *MonitorConfig) AssignProperties_To_MonitorConfig(destination *stor
 
 	// CustomHeaders
 	if config.CustomHeaders != nil {
-		customHeaderList := make([]storage.MonitorConfig_CustomHeaders, len(config.CustomHeaders))
+		customHeaderList := make([]storage.MonitorConfigCustomHeadersItem, len(config.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range config.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader storage.MonitorConfig_CustomHeaders
-			err := customHeaderItem.AssignProperties_To_MonitorConfig_CustomHeaders(&customHeader)
+			var customHeader storage.MonitorConfigCustomHeadersItem
+			err := customHeaderItem.AssignProperties_To_MonitorConfigCustomHeadersItem(&customHeader)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfigCustomHeadersItem() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -1954,14 +2328,12 @@ func (config *MonitorConfig) AssignProperties_To_MonitorConfig(destination *stor
 
 	// ExpectedStatusCodeRanges
 	if config.ExpectedStatusCodeRanges != nil {
-		expectedStatusCodeRangeList := make([]storage.MonitorConfig_ExpectedStatusCodeRanges, len(config.ExpectedStatusCodeRanges))
+		expectedStatusCodeRangeList := make([]storage.MonitorConfigExpectedStatusCodeRangesItem, len(config.ExpectedStatusCodeRanges))
 		for expectedStatusCodeRangeIndex, expectedStatusCodeRangeItem := range config.ExpectedStatusCodeRanges {
-			// Shadow the loop variable to avoid aliasing
-			expectedStatusCodeRangeItem := expectedStatusCodeRangeItem
-			var expectedStatusCodeRange storage.MonitorConfig_ExpectedStatusCodeRanges
-			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges(&expectedStatusCodeRange)
+			var expectedStatusCodeRange storage.MonitorConfigExpectedStatusCodeRangesItem
+			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem(&expectedStatusCodeRange)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2017,14 +2389,12 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]MonitorConfig_CustomHeaders, len(source.CustomHeaders))
+		customHeaderList := make([]MonitorConfigCustomHeadersItem, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader MonitorConfig_CustomHeaders
-			err := customHeader.Initialize_From_MonitorConfig_CustomHeaders_STATUS(&customHeaderItem)
+			var customHeader MonitorConfigCustomHeadersItem
+			err := customHeader.Initialize_From_MonitorConfigCustomHeadersItem_STATUS(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling Initialize_From_MonitorConfigCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2035,14 +2405,12 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 
 	// ExpectedStatusCodeRanges
 	if source.ExpectedStatusCodeRanges != nil {
-		expectedStatusCodeRangeList := make([]MonitorConfig_ExpectedStatusCodeRanges, len(source.ExpectedStatusCodeRanges))
+		expectedStatusCodeRangeList := make([]MonitorConfigExpectedStatusCodeRangesItem, len(source.ExpectedStatusCodeRanges))
 		for expectedStatusCodeRangeIndex, expectedStatusCodeRangeItem := range source.ExpectedStatusCodeRanges {
-			// Shadow the loop variable to avoid aliasing
-			expectedStatusCodeRangeItem := expectedStatusCodeRangeItem
-			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges
-			err := expectedStatusCodeRange.Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRangeItem)
+			var expectedStatusCodeRange MonitorConfigExpectedStatusCodeRangesItem
+			err := expectedStatusCodeRange.Initialize_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling Initialize_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2062,7 +2430,7 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 
 	// ProfileMonitorStatus
 	if source.ProfileMonitorStatus != nil {
-		profileMonitorStatus := genruntime.ToEnum(string(*source.ProfileMonitorStatus), monitorConfig_ProfileMonitorStatus_Values)
+		profileMonitorStatus := genruntime.ToEnum(string(*source.ProfileMonitorStatus), profileMonitorStatus_Values)
 		config.ProfileMonitorStatus = &profileMonitorStatus
 	} else {
 		config.ProfileMonitorStatus = nil
@@ -2070,7 +2438,7 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 
 	// Protocol
 	if source.Protocol != nil {
-		protocol := genruntime.ToEnum(string(*source.Protocol), monitorConfig_Protocol_Values)
+		protocol := genruntime.ToEnum(string(*source.Protocol), monitorProtocol_Values)
 		config.Protocol = &protocol
 	} else {
 		config.Protocol = nil
@@ -2089,10 +2457,10 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 // Class containing endpoint monitoring settings in a Traffic Manager profile.
 type MonitorConfig_STATUS struct {
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []MonitorConfig_CustomHeaders_STATUS `json:"customHeaders,omitempty"`
+	CustomHeaders []MonitorConfigCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
 
 	// ExpectedStatusCodeRanges: List of expected status code ranges.
-	ExpectedStatusCodeRanges []MonitorConfig_ExpectedStatusCodeRanges_STATUS `json:"expectedStatusCodeRanges,omitempty"`
+	ExpectedStatusCodeRanges []MonitorConfigExpectedStatusCodeRangesItem_STATUS `json:"expectedStatusCodeRanges,omitempty"`
 
 	// IntervalInSeconds: The monitor interval for endpoints in this profile. This is the interval at which Traffic Manager
 	// will check the health of each endpoint in this profile.
@@ -2105,10 +2473,10 @@ type MonitorConfig_STATUS struct {
 	Port *int `json:"port,omitempty"`
 
 	// ProfileMonitorStatus: The profile-level monitoring status of the Traffic Manager profile.
-	ProfileMonitorStatus *MonitorConfig_ProfileMonitorStatus_STATUS `json:"profileMonitorStatus,omitempty"`
+	ProfileMonitorStatus *ProfileMonitorStatus_STATUS `json:"profileMonitorStatus,omitempty"`
 
 	// Protocol: The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
-	Protocol *MonitorConfig_Protocol_STATUS `json:"protocol,omitempty"`
+	Protocol *MonitorProtocol_STATUS `json:"protocol,omitempty"`
 
 	// TimeoutInSeconds: The monitor timeout for endpoints in this profile. This is the time that Traffic Manager allows
 	// endpoints in this profile to response to the health check.
@@ -2135,7 +2503,7 @@ func (config *MonitorConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 
 	// Set property "CustomHeaders":
 	for _, item := range typedInput.CustomHeaders {
-		var item1 MonitorConfig_CustomHeaders_STATUS
+		var item1 MonitorConfigCustomHeadersItem_STATUS
 		err := item1.PopulateFromARM(owner, item)
 		if err != nil {
 			return err
@@ -2145,7 +2513,7 @@ func (config *MonitorConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 
 	// Set property "ExpectedStatusCodeRanges":
 	for _, item := range typedInput.ExpectedStatusCodeRanges {
-		var item1 MonitorConfig_ExpectedStatusCodeRanges_STATUS
+		var item1 MonitorConfigExpectedStatusCodeRangesItem_STATUS
 		err := item1.PopulateFromARM(owner, item)
 		if err != nil {
 			return err
@@ -2175,7 +2543,7 @@ func (config *MonitorConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.ProfileMonitorStatus != nil {
 		var temp string
 		temp = string(*typedInput.ProfileMonitorStatus)
-		profileMonitorStatus := MonitorConfig_ProfileMonitorStatus_STATUS(temp)
+		profileMonitorStatus := ProfileMonitorStatus_STATUS(temp)
 		config.ProfileMonitorStatus = &profileMonitorStatus
 	}
 
@@ -2183,7 +2551,7 @@ func (config *MonitorConfig_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.Protocol != nil {
 		var temp string
 		temp = string(*typedInput.Protocol)
-		protocol := MonitorConfig_Protocol_STATUS(temp)
+		protocol := MonitorProtocol_STATUS(temp)
 		config.Protocol = &protocol
 	}
 
@@ -2208,14 +2576,12 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 
 	// CustomHeaders
 	if source.CustomHeaders != nil {
-		customHeaderList := make([]MonitorConfig_CustomHeaders_STATUS, len(source.CustomHeaders))
+		customHeaderList := make([]MonitorConfigCustomHeadersItem_STATUS, len(source.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range source.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader MonitorConfig_CustomHeaders_STATUS
-			err := customHeader.AssignProperties_From_MonitorConfig_CustomHeaders_STATUS(&customHeaderItem)
+			var customHeader MonitorConfigCustomHeadersItem_STATUS
+			err := customHeader.AssignProperties_From_MonitorConfigCustomHeadersItem_STATUS(&customHeaderItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfigCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2226,14 +2592,12 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 
 	// ExpectedStatusCodeRanges
 	if source.ExpectedStatusCodeRanges != nil {
-		expectedStatusCodeRangeList := make([]MonitorConfig_ExpectedStatusCodeRanges_STATUS, len(source.ExpectedStatusCodeRanges))
+		expectedStatusCodeRangeList := make([]MonitorConfigExpectedStatusCodeRangesItem_STATUS, len(source.ExpectedStatusCodeRanges))
 		for expectedStatusCodeRangeIndex, expectedStatusCodeRangeItem := range source.ExpectedStatusCodeRanges {
-			// Shadow the loop variable to avoid aliasing
-			expectedStatusCodeRangeItem := expectedStatusCodeRangeItem
-			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges_STATUS
-			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRangeItem)
+			var expectedStatusCodeRange MonitorConfigExpectedStatusCodeRangesItem_STATUS
+			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2254,7 +2618,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 	// ProfileMonitorStatus
 	if source.ProfileMonitorStatus != nil {
 		profileMonitorStatus := *source.ProfileMonitorStatus
-		profileMonitorStatusTemp := genruntime.ToEnum(profileMonitorStatus, monitorConfig_ProfileMonitorStatus_STATUS_Values)
+		profileMonitorStatusTemp := genruntime.ToEnum(profileMonitorStatus, profileMonitorStatus_STATUS_Values)
 		config.ProfileMonitorStatus = &profileMonitorStatusTemp
 	} else {
 		config.ProfileMonitorStatus = nil
@@ -2263,7 +2627,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 	// Protocol
 	if source.Protocol != nil {
 		protocol := *source.Protocol
-		protocolTemp := genruntime.ToEnum(protocol, monitorConfig_Protocol_STATUS_Values)
+		protocolTemp := genruntime.ToEnum(protocol, monitorProtocol_STATUS_Values)
 		config.Protocol = &protocolTemp
 	} else {
 		config.Protocol = nil
@@ -2286,14 +2650,12 @@ func (config *MonitorConfig_STATUS) AssignProperties_To_MonitorConfig_STATUS(des
 
 	// CustomHeaders
 	if config.CustomHeaders != nil {
-		customHeaderList := make([]storage.MonitorConfig_CustomHeaders_STATUS, len(config.CustomHeaders))
+		customHeaderList := make([]storage.MonitorConfigCustomHeadersItem_STATUS, len(config.CustomHeaders))
 		for customHeaderIndex, customHeaderItem := range config.CustomHeaders {
-			// Shadow the loop variable to avoid aliasing
-			customHeaderItem := customHeaderItem
-			var customHeader storage.MonitorConfig_CustomHeaders_STATUS
-			err := customHeaderItem.AssignProperties_To_MonitorConfig_CustomHeaders_STATUS(&customHeader)
+			var customHeader storage.MonitorConfigCustomHeadersItem_STATUS
+			err := customHeaderItem.AssignProperties_To_MonitorConfigCustomHeadersItem_STATUS(&customHeader)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfigCustomHeadersItem_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2304,14 +2666,12 @@ func (config *MonitorConfig_STATUS) AssignProperties_To_MonitorConfig_STATUS(des
 
 	// ExpectedStatusCodeRanges
 	if config.ExpectedStatusCodeRanges != nil {
-		expectedStatusCodeRangeList := make([]storage.MonitorConfig_ExpectedStatusCodeRanges_STATUS, len(config.ExpectedStatusCodeRanges))
+		expectedStatusCodeRangeList := make([]storage.MonitorConfigExpectedStatusCodeRangesItem_STATUS, len(config.ExpectedStatusCodeRanges))
 		for expectedStatusCodeRangeIndex, expectedStatusCodeRangeItem := range config.ExpectedStatusCodeRanges {
-			// Shadow the loop variable to avoid aliasing
-			expectedStatusCodeRangeItem := expectedStatusCodeRangeItem
-			var expectedStatusCodeRange storage.MonitorConfig_ExpectedStatusCodeRanges_STATUS
-			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRange)
+			var expectedStatusCodeRange storage.MonitorConfigExpectedStatusCodeRangesItem_STATUS
+			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem_STATUS(&expectedStatusCodeRange)
 			if err != nil {
-				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2362,101 +2722,33 @@ func (config *MonitorConfig_STATUS) AssignProperties_To_MonitorConfig_STATUS(des
 	return nil
 }
 
+// The status of the Traffic Manager profile.
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
-type ProfileProperties_ProfileStatus string
+type ProfileStatus string
 
 const (
-	ProfileProperties_ProfileStatus_Disabled = ProfileProperties_ProfileStatus("Disabled")
-	ProfileProperties_ProfileStatus_Enabled  = ProfileProperties_ProfileStatus("Enabled")
+	ProfileStatus_Disabled = ProfileStatus("Disabled")
+	ProfileStatus_Enabled  = ProfileStatus("Enabled")
 )
 
-// Mapping from string to ProfileProperties_ProfileStatus
-var profileProperties_ProfileStatus_Values = map[string]ProfileProperties_ProfileStatus{
-	"disabled": ProfileProperties_ProfileStatus_Disabled,
-	"enabled":  ProfileProperties_ProfileStatus_Enabled,
+// Mapping from string to ProfileStatus
+var profileStatus_Values = map[string]ProfileStatus{
+	"disabled": ProfileStatus_Disabled,
+	"enabled":  ProfileStatus_Enabled,
 }
 
-type ProfileProperties_ProfileStatus_STATUS string
+// The status of the Traffic Manager profile.
+type ProfileStatus_STATUS string
 
 const (
-	ProfileProperties_ProfileStatus_STATUS_Disabled = ProfileProperties_ProfileStatus_STATUS("Disabled")
-	ProfileProperties_ProfileStatus_STATUS_Enabled  = ProfileProperties_ProfileStatus_STATUS("Enabled")
+	ProfileStatus_STATUS_Disabled = ProfileStatus_STATUS("Disabled")
+	ProfileStatus_STATUS_Enabled  = ProfileStatus_STATUS("Enabled")
 )
 
-// Mapping from string to ProfileProperties_ProfileStatus_STATUS
-var profileProperties_ProfileStatus_STATUS_Values = map[string]ProfileProperties_ProfileStatus_STATUS{
-	"disabled": ProfileProperties_ProfileStatus_STATUS_Disabled,
-	"enabled":  ProfileProperties_ProfileStatus_STATUS_Enabled,
-}
-
-// +kubebuilder:validation:Enum={"Geographic","MultiValue","Performance","Priority","Subnet","Weighted"}
-type ProfileProperties_TrafficRoutingMethod string
-
-const (
-	ProfileProperties_TrafficRoutingMethod_Geographic  = ProfileProperties_TrafficRoutingMethod("Geographic")
-	ProfileProperties_TrafficRoutingMethod_MultiValue  = ProfileProperties_TrafficRoutingMethod("MultiValue")
-	ProfileProperties_TrafficRoutingMethod_Performance = ProfileProperties_TrafficRoutingMethod("Performance")
-	ProfileProperties_TrafficRoutingMethod_Priority    = ProfileProperties_TrafficRoutingMethod("Priority")
-	ProfileProperties_TrafficRoutingMethod_Subnet      = ProfileProperties_TrafficRoutingMethod("Subnet")
-	ProfileProperties_TrafficRoutingMethod_Weighted    = ProfileProperties_TrafficRoutingMethod("Weighted")
-)
-
-// Mapping from string to ProfileProperties_TrafficRoutingMethod
-var profileProperties_TrafficRoutingMethod_Values = map[string]ProfileProperties_TrafficRoutingMethod{
-	"geographic":  ProfileProperties_TrafficRoutingMethod_Geographic,
-	"multivalue":  ProfileProperties_TrafficRoutingMethod_MultiValue,
-	"performance": ProfileProperties_TrafficRoutingMethod_Performance,
-	"priority":    ProfileProperties_TrafficRoutingMethod_Priority,
-	"subnet":      ProfileProperties_TrafficRoutingMethod_Subnet,
-	"weighted":    ProfileProperties_TrafficRoutingMethod_Weighted,
-}
-
-type ProfileProperties_TrafficRoutingMethod_STATUS string
-
-const (
-	ProfileProperties_TrafficRoutingMethod_STATUS_Geographic  = ProfileProperties_TrafficRoutingMethod_STATUS("Geographic")
-	ProfileProperties_TrafficRoutingMethod_STATUS_MultiValue  = ProfileProperties_TrafficRoutingMethod_STATUS("MultiValue")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Performance = ProfileProperties_TrafficRoutingMethod_STATUS("Performance")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Priority    = ProfileProperties_TrafficRoutingMethod_STATUS("Priority")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Subnet      = ProfileProperties_TrafficRoutingMethod_STATUS("Subnet")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Weighted    = ProfileProperties_TrafficRoutingMethod_STATUS("Weighted")
-)
-
-// Mapping from string to ProfileProperties_TrafficRoutingMethod_STATUS
-var profileProperties_TrafficRoutingMethod_STATUS_Values = map[string]ProfileProperties_TrafficRoutingMethod_STATUS{
-	"geographic":  ProfileProperties_TrafficRoutingMethod_STATUS_Geographic,
-	"multivalue":  ProfileProperties_TrafficRoutingMethod_STATUS_MultiValue,
-	"performance": ProfileProperties_TrafficRoutingMethod_STATUS_Performance,
-	"priority":    ProfileProperties_TrafficRoutingMethod_STATUS_Priority,
-	"subnet":      ProfileProperties_TrafficRoutingMethod_STATUS_Subnet,
-	"weighted":    ProfileProperties_TrafficRoutingMethod_STATUS_Weighted,
-}
-
-// +kubebuilder:validation:Enum={"Disabled","Enabled"}
-type ProfileProperties_TrafficViewEnrollmentStatus string
-
-const (
-	ProfileProperties_TrafficViewEnrollmentStatus_Disabled = ProfileProperties_TrafficViewEnrollmentStatus("Disabled")
-	ProfileProperties_TrafficViewEnrollmentStatus_Enabled  = ProfileProperties_TrafficViewEnrollmentStatus("Enabled")
-)
-
-// Mapping from string to ProfileProperties_TrafficViewEnrollmentStatus
-var profileProperties_TrafficViewEnrollmentStatus_Values = map[string]ProfileProperties_TrafficViewEnrollmentStatus{
-	"disabled": ProfileProperties_TrafficViewEnrollmentStatus_Disabled,
-	"enabled":  ProfileProperties_TrafficViewEnrollmentStatus_Enabled,
-}
-
-type ProfileProperties_TrafficViewEnrollmentStatus_STATUS string
-
-const (
-	ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Disabled = ProfileProperties_TrafficViewEnrollmentStatus_STATUS("Disabled")
-	ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Enabled  = ProfileProperties_TrafficViewEnrollmentStatus_STATUS("Enabled")
-)
-
-// Mapping from string to ProfileProperties_TrafficViewEnrollmentStatus_STATUS
-var profileProperties_TrafficViewEnrollmentStatus_STATUS_Values = map[string]ProfileProperties_TrafficViewEnrollmentStatus_STATUS{
-	"disabled": ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Disabled,
-	"enabled":  ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Enabled,
+// Mapping from string to ProfileStatus_STATUS
+var profileStatus_STATUS_Values = map[string]ProfileStatus_STATUS{
+	"disabled": ProfileStatus_STATUS_Disabled,
+	"enabled":  ProfileStatus_STATUS_Enabled,
 }
 
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
@@ -2478,8 +2770,6 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_From_Traffic
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2508,8 +2798,6 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_From_Traffic
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2535,8 +2823,6 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_To_TrafficMa
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2565,8 +2851,6 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_To_TrafficMa
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2590,7 +2874,84 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_To_TrafficMa
 	return nil
 }
 
-type MonitorConfig_CustomHeaders struct {
+// The traffic routing method of the Traffic Manager profile.
+// +kubebuilder:validation:Enum={"Geographic","MultiValue","Performance","Priority","Subnet","Weighted"}
+type TrafficRoutingMethod string
+
+const (
+	TrafficRoutingMethod_Geographic  = TrafficRoutingMethod("Geographic")
+	TrafficRoutingMethod_MultiValue  = TrafficRoutingMethod("MultiValue")
+	TrafficRoutingMethod_Performance = TrafficRoutingMethod("Performance")
+	TrafficRoutingMethod_Priority    = TrafficRoutingMethod("Priority")
+	TrafficRoutingMethod_Subnet      = TrafficRoutingMethod("Subnet")
+	TrafficRoutingMethod_Weighted    = TrafficRoutingMethod("Weighted")
+)
+
+// Mapping from string to TrafficRoutingMethod
+var trafficRoutingMethod_Values = map[string]TrafficRoutingMethod{
+	"geographic":  TrafficRoutingMethod_Geographic,
+	"multivalue":  TrafficRoutingMethod_MultiValue,
+	"performance": TrafficRoutingMethod_Performance,
+	"priority":    TrafficRoutingMethod_Priority,
+	"subnet":      TrafficRoutingMethod_Subnet,
+	"weighted":    TrafficRoutingMethod_Weighted,
+}
+
+// The traffic routing method of the Traffic Manager profile.
+type TrafficRoutingMethod_STATUS string
+
+const (
+	TrafficRoutingMethod_STATUS_Geographic  = TrafficRoutingMethod_STATUS("Geographic")
+	TrafficRoutingMethod_STATUS_MultiValue  = TrafficRoutingMethod_STATUS("MultiValue")
+	TrafficRoutingMethod_STATUS_Performance = TrafficRoutingMethod_STATUS("Performance")
+	TrafficRoutingMethod_STATUS_Priority    = TrafficRoutingMethod_STATUS("Priority")
+	TrafficRoutingMethod_STATUS_Subnet      = TrafficRoutingMethod_STATUS("Subnet")
+	TrafficRoutingMethod_STATUS_Weighted    = TrafficRoutingMethod_STATUS("Weighted")
+)
+
+// Mapping from string to TrafficRoutingMethod_STATUS
+var trafficRoutingMethod_STATUS_Values = map[string]TrafficRoutingMethod_STATUS{
+	"geographic":  TrafficRoutingMethod_STATUS_Geographic,
+	"multivalue":  TrafficRoutingMethod_STATUS_MultiValue,
+	"performance": TrafficRoutingMethod_STATUS_Performance,
+	"priority":    TrafficRoutingMethod_STATUS_Priority,
+	"subnet":      TrafficRoutingMethod_STATUS_Subnet,
+	"weighted":    TrafficRoutingMethod_STATUS_Weighted,
+}
+
+// Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile. Null, indicates 'Disabled'.
+// Enabling this feature will increase the cost of the Traffic Manage profile.
+// +kubebuilder:validation:Enum={"Disabled","Enabled"}
+type TrafficViewEnrollmentStatus string
+
+const (
+	TrafficViewEnrollmentStatus_Disabled = TrafficViewEnrollmentStatus("Disabled")
+	TrafficViewEnrollmentStatus_Enabled  = TrafficViewEnrollmentStatus("Enabled")
+)
+
+// Mapping from string to TrafficViewEnrollmentStatus
+var trafficViewEnrollmentStatus_Values = map[string]TrafficViewEnrollmentStatus{
+	"disabled": TrafficViewEnrollmentStatus_Disabled,
+	"enabled":  TrafficViewEnrollmentStatus_Enabled,
+}
+
+// Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile. Null, indicates 'Disabled'.
+// Enabling this feature will increase the cost of the Traffic Manage profile.
+type TrafficViewEnrollmentStatus_STATUS string
+
+const (
+	TrafficViewEnrollmentStatus_STATUS_Disabled = TrafficViewEnrollmentStatus_STATUS("Disabled")
+	TrafficViewEnrollmentStatus_STATUS_Enabled  = TrafficViewEnrollmentStatus_STATUS("Enabled")
+)
+
+// Mapping from string to TrafficViewEnrollmentStatus_STATUS
+var trafficViewEnrollmentStatus_STATUS_Values = map[string]TrafficViewEnrollmentStatus_STATUS{
+	"disabled": TrafficViewEnrollmentStatus_STATUS_Disabled,
+	"enabled":  TrafficViewEnrollmentStatus_STATUS_Enabled,
+}
+
+// Custom header name and value.
+type MonitorConfigCustomHeadersItem struct {
 	// Name: Header name.
 	Name *string `json:"name,omitempty"`
 
@@ -2598,80 +2959,80 @@ type MonitorConfig_CustomHeaders struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &MonitorConfig_CustomHeaders{}
+var _ genruntime.ARMTransformer = &MonitorConfigCustomHeadersItem{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (headers *MonitorConfig_CustomHeaders) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if headers == nil {
+func (item *MonitorConfigCustomHeadersItem) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+	if item == nil {
 		return nil, nil
 	}
-	result := &arm.MonitorConfig_CustomHeaders{}
+	result := &arm.MonitorConfigCustomHeadersItem{}
 
 	// Set property "Name":
-	if headers.Name != nil {
-		name := *headers.Name
+	if item.Name != nil {
+		name := *item.Name
 		result.Name = &name
 	}
 
 	// Set property "Value":
-	if headers.Value != nil {
-		value := *headers.Value
+	if item.Value != nil {
+		value := *item.Value
 		result.Value = &value
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (headers *MonitorConfig_CustomHeaders) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.MonitorConfig_CustomHeaders{}
+func (item *MonitorConfigCustomHeadersItem) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.MonitorConfigCustomHeadersItem{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (headers *MonitorConfig_CustomHeaders) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.MonitorConfig_CustomHeaders)
+func (item *MonitorConfigCustomHeadersItem) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.MonitorConfigCustomHeadersItem)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfig_CustomHeaders, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfigCustomHeadersItem, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
 		name := *typedInput.Name
-		headers.Name = &name
+		item.Name = &name
 	}
 
 	// Set property "Value":
 	if typedInput.Value != nil {
 		value := *typedInput.Value
-		headers.Value = &value
+		item.Value = &value
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_From_MonitorConfig_CustomHeaders populates our MonitorConfig_CustomHeaders from the provided source MonitorConfig_CustomHeaders
-func (headers *MonitorConfig_CustomHeaders) AssignProperties_From_MonitorConfig_CustomHeaders(source *storage.MonitorConfig_CustomHeaders) error {
+// AssignProperties_From_MonitorConfigCustomHeadersItem populates our MonitorConfigCustomHeadersItem from the provided source MonitorConfigCustomHeadersItem
+func (item *MonitorConfigCustomHeadersItem) AssignProperties_From_MonitorConfigCustomHeadersItem(source *storage.MonitorConfigCustomHeadersItem) error {
 
 	// Name
-	headers.Name = genruntime.ClonePointerToString(source.Name)
+	item.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Value
-	headers.Value = genruntime.ClonePointerToString(source.Value)
+	item.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_MonitorConfig_CustomHeaders populates the provided destination MonitorConfig_CustomHeaders from our MonitorConfig_CustomHeaders
-func (headers *MonitorConfig_CustomHeaders) AssignProperties_To_MonitorConfig_CustomHeaders(destination *storage.MonitorConfig_CustomHeaders) error {
+// AssignProperties_To_MonitorConfigCustomHeadersItem populates the provided destination MonitorConfigCustomHeadersItem from our MonitorConfigCustomHeadersItem
+func (item *MonitorConfigCustomHeadersItem) AssignProperties_To_MonitorConfigCustomHeadersItem(destination *storage.MonitorConfigCustomHeadersItem) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Name
-	destination.Name = genruntime.ClonePointerToString(headers.Name)
+	destination.Name = genruntime.ClonePointerToString(item.Name)
 
 	// Value
-	destination.Value = genruntime.ClonePointerToString(headers.Value)
+	destination.Value = genruntime.ClonePointerToString(item.Value)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2684,20 +3045,21 @@ func (headers *MonitorConfig_CustomHeaders) AssignProperties_To_MonitorConfig_Cu
 	return nil
 }
 
-// Initialize_From_MonitorConfig_CustomHeaders_STATUS populates our MonitorConfig_CustomHeaders from the provided source MonitorConfig_CustomHeaders_STATUS
-func (headers *MonitorConfig_CustomHeaders) Initialize_From_MonitorConfig_CustomHeaders_STATUS(source *MonitorConfig_CustomHeaders_STATUS) error {
+// Initialize_From_MonitorConfigCustomHeadersItem_STATUS populates our MonitorConfigCustomHeadersItem from the provided source MonitorConfigCustomHeadersItem_STATUS
+func (item *MonitorConfigCustomHeadersItem) Initialize_From_MonitorConfigCustomHeadersItem_STATUS(source *MonitorConfigCustomHeadersItem_STATUS) error {
 
 	// Name
-	headers.Name = genruntime.ClonePointerToString(source.Name)
+	item.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Value
-	headers.Value = genruntime.ClonePointerToString(source.Value)
+	item.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
 }
 
-type MonitorConfig_CustomHeaders_STATUS struct {
+// Custom header name and value.
+type MonitorConfigCustomHeadersItem_STATUS struct {
 	// Name: Header name.
 	Name *string `json:"name,omitempty"`
 
@@ -2705,59 +3067,59 @@ type MonitorConfig_CustomHeaders_STATUS struct {
 	Value *string `json:"value,omitempty"`
 }
 
-var _ genruntime.FromARMConverter = &MonitorConfig_CustomHeaders_STATUS{}
+var _ genruntime.FromARMConverter = &MonitorConfigCustomHeadersItem_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (headers *MonitorConfig_CustomHeaders_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.MonitorConfig_CustomHeaders_STATUS{}
+func (item *MonitorConfigCustomHeadersItem_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.MonitorConfigCustomHeadersItem_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (headers *MonitorConfig_CustomHeaders_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.MonitorConfig_CustomHeaders_STATUS)
+func (item *MonitorConfigCustomHeadersItem_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.MonitorConfigCustomHeadersItem_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfig_CustomHeaders_STATUS, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfigCustomHeadersItem_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
 		name := *typedInput.Name
-		headers.Name = &name
+		item.Name = &name
 	}
 
 	// Set property "Value":
 	if typedInput.Value != nil {
 		value := *typedInput.Value
-		headers.Value = &value
+		item.Value = &value
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_From_MonitorConfig_CustomHeaders_STATUS populates our MonitorConfig_CustomHeaders_STATUS from the provided source MonitorConfig_CustomHeaders_STATUS
-func (headers *MonitorConfig_CustomHeaders_STATUS) AssignProperties_From_MonitorConfig_CustomHeaders_STATUS(source *storage.MonitorConfig_CustomHeaders_STATUS) error {
+// AssignProperties_From_MonitorConfigCustomHeadersItem_STATUS populates our MonitorConfigCustomHeadersItem_STATUS from the provided source MonitorConfigCustomHeadersItem_STATUS
+func (item *MonitorConfigCustomHeadersItem_STATUS) AssignProperties_From_MonitorConfigCustomHeadersItem_STATUS(source *storage.MonitorConfigCustomHeadersItem_STATUS) error {
 
 	// Name
-	headers.Name = genruntime.ClonePointerToString(source.Name)
+	item.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Value
-	headers.Value = genruntime.ClonePointerToString(source.Value)
+	item.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_MonitorConfig_CustomHeaders_STATUS populates the provided destination MonitorConfig_CustomHeaders_STATUS from our MonitorConfig_CustomHeaders_STATUS
-func (headers *MonitorConfig_CustomHeaders_STATUS) AssignProperties_To_MonitorConfig_CustomHeaders_STATUS(destination *storage.MonitorConfig_CustomHeaders_STATUS) error {
+// AssignProperties_To_MonitorConfigCustomHeadersItem_STATUS populates the provided destination MonitorConfigCustomHeadersItem_STATUS from our MonitorConfigCustomHeadersItem_STATUS
+func (item *MonitorConfigCustomHeadersItem_STATUS) AssignProperties_To_MonitorConfigCustomHeadersItem_STATUS(destination *storage.MonitorConfigCustomHeadersItem_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Name
-	destination.Name = genruntime.ClonePointerToString(headers.Name)
+	destination.Name = genruntime.ClonePointerToString(item.Name)
 
 	// Value
-	destination.Value = genruntime.ClonePointerToString(headers.Value)
+	destination.Value = genruntime.ClonePointerToString(item.Value)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2770,7 +3132,8 @@ func (headers *MonitorConfig_CustomHeaders_STATUS) AssignProperties_To_MonitorCo
 	return nil
 }
 
-type MonitorConfig_ExpectedStatusCodeRanges struct {
+// Min and max value of a status code range.
+type MonitorConfigExpectedStatusCodeRangesItem struct {
 	// Max: Max status code.
 	Max *int `json:"max,omitempty"`
 
@@ -2778,80 +3141,80 @@ type MonitorConfig_ExpectedStatusCodeRanges struct {
 	Min *int `json:"min,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &MonitorConfig_ExpectedStatusCodeRanges{}
+var _ genruntime.ARMTransformer = &MonitorConfigExpectedStatusCodeRangesItem{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if ranges == nil {
+func (item *MonitorConfigExpectedStatusCodeRangesItem) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+	if item == nil {
 		return nil, nil
 	}
-	result := &arm.MonitorConfig_ExpectedStatusCodeRanges{}
+	result := &arm.MonitorConfigExpectedStatusCodeRangesItem{}
 
 	// Set property "Max":
-	if ranges.Max != nil {
-		max := *ranges.Max
+	if item.Max != nil {
+		max := *item.Max
 		result.Max = &max
 	}
 
 	// Set property "Min":
-	if ranges.Min != nil {
-		min := *ranges.Min
+	if item.Min != nil {
+		min := *item.Min
 		result.Min = &min
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.MonitorConfig_ExpectedStatusCodeRanges{}
+func (item *MonitorConfigExpectedStatusCodeRangesItem) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.MonitorConfigExpectedStatusCodeRangesItem{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.MonitorConfig_ExpectedStatusCodeRanges)
+func (item *MonitorConfigExpectedStatusCodeRangesItem) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.MonitorConfigExpectedStatusCodeRangesItem)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfig_ExpectedStatusCodeRanges, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfigExpectedStatusCodeRangesItem, got %T", armInput)
 	}
 
 	// Set property "Max":
 	if typedInput.Max != nil {
 		max := *typedInput.Max
-		ranges.Max = &max
+		item.Max = &max
 	}
 
 	// Set property "Min":
 	if typedInput.Min != nil {
 		min := *typedInput.Min
-		ranges.Min = &min
+		item.Min = &min
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges populates our MonitorConfig_ExpectedStatusCodeRanges from the provided source MonitorConfig_ExpectedStatusCodeRanges
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges(source *storage.MonitorConfig_ExpectedStatusCodeRanges) error {
+// AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem populates our MonitorConfigExpectedStatusCodeRangesItem from the provided source MonitorConfigExpectedStatusCodeRangesItem
+func (item *MonitorConfigExpectedStatusCodeRangesItem) AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem(source *storage.MonitorConfigExpectedStatusCodeRangesItem) error {
 
 	// Max
-	ranges.Max = genruntime.ClonePointerToInt(source.Max)
+	item.Max = genruntime.ClonePointerToInt(source.Max)
 
 	// Min
-	ranges.Min = genruntime.ClonePointerToInt(source.Min)
+	item.Min = genruntime.ClonePointerToInt(source.Min)
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges populates the provided destination MonitorConfig_ExpectedStatusCodeRanges from our MonitorConfig_ExpectedStatusCodeRanges
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges(destination *storage.MonitorConfig_ExpectedStatusCodeRanges) error {
+// AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem populates the provided destination MonitorConfigExpectedStatusCodeRangesItem from our MonitorConfigExpectedStatusCodeRangesItem
+func (item *MonitorConfigExpectedStatusCodeRangesItem) AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem(destination *storage.MonitorConfigExpectedStatusCodeRangesItem) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Max
-	destination.Max = genruntime.ClonePointerToInt(ranges.Max)
+	destination.Max = genruntime.ClonePointerToInt(item.Max)
 
 	// Min
-	destination.Min = genruntime.ClonePointerToInt(ranges.Min)
+	destination.Min = genruntime.ClonePointerToInt(item.Min)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2864,20 +3227,21 @@ func (ranges *MonitorConfig_ExpectedStatusCodeRanges) AssignProperties_To_Monito
 	return nil
 }
 
-// Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS populates our MonitorConfig_ExpectedStatusCodeRanges from the provided source MonitorConfig_ExpectedStatusCodeRanges_STATUS
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges) Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(source *MonitorConfig_ExpectedStatusCodeRanges_STATUS) error {
+// Initialize_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS populates our MonitorConfigExpectedStatusCodeRangesItem from the provided source MonitorConfigExpectedStatusCodeRangesItem_STATUS
+func (item *MonitorConfigExpectedStatusCodeRangesItem) Initialize_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS(source *MonitorConfigExpectedStatusCodeRangesItem_STATUS) error {
 
 	// Max
-	ranges.Max = genruntime.ClonePointerToInt(source.Max)
+	item.Max = genruntime.ClonePointerToInt(source.Max)
 
 	// Min
-	ranges.Min = genruntime.ClonePointerToInt(source.Min)
+	item.Min = genruntime.ClonePointerToInt(source.Min)
 
 	// No error
 	return nil
 }
 
-type MonitorConfig_ExpectedStatusCodeRanges_STATUS struct {
+// Min and max value of a status code range.
+type MonitorConfigExpectedStatusCodeRangesItem_STATUS struct {
 	// Max: Max status code.
 	Max *int `json:"max,omitempty"`
 
@@ -2885,59 +3249,59 @@ type MonitorConfig_ExpectedStatusCodeRanges_STATUS struct {
 	Min *int `json:"min,omitempty"`
 }
 
-var _ genruntime.FromARMConverter = &MonitorConfig_ExpectedStatusCodeRanges_STATUS{}
+var _ genruntime.FromARMConverter = &MonitorConfigExpectedStatusCodeRangesItem_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.MonitorConfig_ExpectedStatusCodeRanges_STATUS{}
+func (item *MonitorConfigExpectedStatusCodeRangesItem_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.MonitorConfigExpectedStatusCodeRangesItem_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.MonitorConfig_ExpectedStatusCodeRanges_STATUS)
+func (item *MonitorConfigExpectedStatusCodeRangesItem_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.MonitorConfigExpectedStatusCodeRangesItem_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfig_ExpectedStatusCodeRanges_STATUS, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MonitorConfigExpectedStatusCodeRangesItem_STATUS, got %T", armInput)
 	}
 
 	// Set property "Max":
 	if typedInput.Max != nil {
 		max := *typedInput.Max
-		ranges.Max = &max
+		item.Max = &max
 	}
 
 	// Set property "Min":
 	if typedInput.Min != nil {
 		min := *typedInput.Min
-		ranges.Min = &min
+		item.Min = &min
 	}
 
 	// No error
 	return nil
 }
 
-// AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS populates our MonitorConfig_ExpectedStatusCodeRanges_STATUS from the provided source MonitorConfig_ExpectedStatusCodeRanges_STATUS
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges_STATUS) AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(source *storage.MonitorConfig_ExpectedStatusCodeRanges_STATUS) error {
+// AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS populates our MonitorConfigExpectedStatusCodeRangesItem_STATUS from the provided source MonitorConfigExpectedStatusCodeRangesItem_STATUS
+func (item *MonitorConfigExpectedStatusCodeRangesItem_STATUS) AssignProperties_From_MonitorConfigExpectedStatusCodeRangesItem_STATUS(source *storage.MonitorConfigExpectedStatusCodeRangesItem_STATUS) error {
 
 	// Max
-	ranges.Max = genruntime.ClonePointerToInt(source.Max)
+	item.Max = genruntime.ClonePointerToInt(source.Max)
 
 	// Min
-	ranges.Min = genruntime.ClonePointerToInt(source.Min)
+	item.Min = genruntime.ClonePointerToInt(source.Min)
 
 	// No error
 	return nil
 }
 
-// AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS populates the provided destination MonitorConfig_ExpectedStatusCodeRanges_STATUS from our MonitorConfig_ExpectedStatusCodeRanges_STATUS
-func (ranges *MonitorConfig_ExpectedStatusCodeRanges_STATUS) AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS(destination *storage.MonitorConfig_ExpectedStatusCodeRanges_STATUS) error {
+// AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem_STATUS populates the provided destination MonitorConfigExpectedStatusCodeRangesItem_STATUS from our MonitorConfigExpectedStatusCodeRangesItem_STATUS
+func (item *MonitorConfigExpectedStatusCodeRangesItem_STATUS) AssignProperties_To_MonitorConfigExpectedStatusCodeRangesItem_STATUS(destination *storage.MonitorConfigExpectedStatusCodeRangesItem_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Max
-	destination.Max = genruntime.ClonePointerToInt(ranges.Max)
+	destination.Max = genruntime.ClonePointerToInt(item.Max)
 
 	// Min
-	destination.Min = genruntime.ClonePointerToInt(ranges.Min)
+	destination.Min = genruntime.ClonePointerToInt(item.Min)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -2950,74 +3314,78 @@ func (ranges *MonitorConfig_ExpectedStatusCodeRanges_STATUS) AssignProperties_To
 	return nil
 }
 
-// +kubebuilder:validation:Enum={"CheckingEndpoints","Degraded","Disabled","Inactive","Online"}
-type MonitorConfig_ProfileMonitorStatus string
-
-const (
-	MonitorConfig_ProfileMonitorStatus_CheckingEndpoints = MonitorConfig_ProfileMonitorStatus("CheckingEndpoints")
-	MonitorConfig_ProfileMonitorStatus_Degraded          = MonitorConfig_ProfileMonitorStatus("Degraded")
-	MonitorConfig_ProfileMonitorStatus_Disabled          = MonitorConfig_ProfileMonitorStatus("Disabled")
-	MonitorConfig_ProfileMonitorStatus_Inactive          = MonitorConfig_ProfileMonitorStatus("Inactive")
-	MonitorConfig_ProfileMonitorStatus_Online            = MonitorConfig_ProfileMonitorStatus("Online")
-)
-
-// Mapping from string to MonitorConfig_ProfileMonitorStatus
-var monitorConfig_ProfileMonitorStatus_Values = map[string]MonitorConfig_ProfileMonitorStatus{
-	"checkingendpoints": MonitorConfig_ProfileMonitorStatus_CheckingEndpoints,
-	"degraded":          MonitorConfig_ProfileMonitorStatus_Degraded,
-	"disabled":          MonitorConfig_ProfileMonitorStatus_Disabled,
-	"inactive":          MonitorConfig_ProfileMonitorStatus_Inactive,
-	"online":            MonitorConfig_ProfileMonitorStatus_Online,
-}
-
-type MonitorConfig_ProfileMonitorStatus_STATUS string
-
-const (
-	MonitorConfig_ProfileMonitorStatus_STATUS_CheckingEndpoints = MonitorConfig_ProfileMonitorStatus_STATUS("CheckingEndpoints")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Degraded          = MonitorConfig_ProfileMonitorStatus_STATUS("Degraded")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Disabled          = MonitorConfig_ProfileMonitorStatus_STATUS("Disabled")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Inactive          = MonitorConfig_ProfileMonitorStatus_STATUS("Inactive")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Online            = MonitorConfig_ProfileMonitorStatus_STATUS("Online")
-)
-
-// Mapping from string to MonitorConfig_ProfileMonitorStatus_STATUS
-var monitorConfig_ProfileMonitorStatus_STATUS_Values = map[string]MonitorConfig_ProfileMonitorStatus_STATUS{
-	"checkingendpoints": MonitorConfig_ProfileMonitorStatus_STATUS_CheckingEndpoints,
-	"degraded":          MonitorConfig_ProfileMonitorStatus_STATUS_Degraded,
-	"disabled":          MonitorConfig_ProfileMonitorStatus_STATUS_Disabled,
-	"inactive":          MonitorConfig_ProfileMonitorStatus_STATUS_Inactive,
-	"online":            MonitorConfig_ProfileMonitorStatus_STATUS_Online,
-}
-
+// The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
 // +kubebuilder:validation:Enum={"HTTP","HTTPS","TCP"}
-type MonitorConfig_Protocol string
+type MonitorProtocol string
 
 const (
-	MonitorConfig_Protocol_HTTP  = MonitorConfig_Protocol("HTTP")
-	MonitorConfig_Protocol_HTTPS = MonitorConfig_Protocol("HTTPS")
-	MonitorConfig_Protocol_TCP   = MonitorConfig_Protocol("TCP")
+	MonitorProtocol_HTTP  = MonitorProtocol("HTTP")
+	MonitorProtocol_HTTPS = MonitorProtocol("HTTPS")
+	MonitorProtocol_TCP   = MonitorProtocol("TCP")
 )
 
-// Mapping from string to MonitorConfig_Protocol
-var monitorConfig_Protocol_Values = map[string]MonitorConfig_Protocol{
-	"http":  MonitorConfig_Protocol_HTTP,
-	"https": MonitorConfig_Protocol_HTTPS,
-	"tcp":   MonitorConfig_Protocol_TCP,
+// Mapping from string to MonitorProtocol
+var monitorProtocol_Values = map[string]MonitorProtocol{
+	"http":  MonitorProtocol_HTTP,
+	"https": MonitorProtocol_HTTPS,
+	"tcp":   MonitorProtocol_TCP,
 }
 
-type MonitorConfig_Protocol_STATUS string
+// The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+type MonitorProtocol_STATUS string
 
 const (
-	MonitorConfig_Protocol_STATUS_HTTP  = MonitorConfig_Protocol_STATUS("HTTP")
-	MonitorConfig_Protocol_STATUS_HTTPS = MonitorConfig_Protocol_STATUS("HTTPS")
-	MonitorConfig_Protocol_STATUS_TCP   = MonitorConfig_Protocol_STATUS("TCP")
+	MonitorProtocol_STATUS_HTTP  = MonitorProtocol_STATUS("HTTP")
+	MonitorProtocol_STATUS_HTTPS = MonitorProtocol_STATUS("HTTPS")
+	MonitorProtocol_STATUS_TCP   = MonitorProtocol_STATUS("TCP")
 )
 
-// Mapping from string to MonitorConfig_Protocol_STATUS
-var monitorConfig_Protocol_STATUS_Values = map[string]MonitorConfig_Protocol_STATUS{
-	"http":  MonitorConfig_Protocol_STATUS_HTTP,
-	"https": MonitorConfig_Protocol_STATUS_HTTPS,
-	"tcp":   MonitorConfig_Protocol_STATUS_TCP,
+// Mapping from string to MonitorProtocol_STATUS
+var monitorProtocol_STATUS_Values = map[string]MonitorProtocol_STATUS{
+	"http":  MonitorProtocol_STATUS_HTTP,
+	"https": MonitorProtocol_STATUS_HTTPS,
+	"tcp":   MonitorProtocol_STATUS_TCP,
+}
+
+// The profile-level monitoring status of the Traffic Manager profile.
+// +kubebuilder:validation:Enum={"CheckingEndpoints","Degraded","Disabled","Inactive","Online"}
+type ProfileMonitorStatus string
+
+const (
+	ProfileMonitorStatus_CheckingEndpoints = ProfileMonitorStatus("CheckingEndpoints")
+	ProfileMonitorStatus_Degraded          = ProfileMonitorStatus("Degraded")
+	ProfileMonitorStatus_Disabled          = ProfileMonitorStatus("Disabled")
+	ProfileMonitorStatus_Inactive          = ProfileMonitorStatus("Inactive")
+	ProfileMonitorStatus_Online            = ProfileMonitorStatus("Online")
+)
+
+// Mapping from string to ProfileMonitorStatus
+var profileMonitorStatus_Values = map[string]ProfileMonitorStatus{
+	"checkingendpoints": ProfileMonitorStatus_CheckingEndpoints,
+	"degraded":          ProfileMonitorStatus_Degraded,
+	"disabled":          ProfileMonitorStatus_Disabled,
+	"inactive":          ProfileMonitorStatus_Inactive,
+	"online":            ProfileMonitorStatus_Online,
+}
+
+// The profile-level monitoring status of the Traffic Manager profile.
+type ProfileMonitorStatus_STATUS string
+
+const (
+	ProfileMonitorStatus_STATUS_CheckingEndpoints = ProfileMonitorStatus_STATUS("CheckingEndpoints")
+	ProfileMonitorStatus_STATUS_Degraded          = ProfileMonitorStatus_STATUS("Degraded")
+	ProfileMonitorStatus_STATUS_Disabled          = ProfileMonitorStatus_STATUS("Disabled")
+	ProfileMonitorStatus_STATUS_Inactive          = ProfileMonitorStatus_STATUS("Inactive")
+	ProfileMonitorStatus_STATUS_Online            = ProfileMonitorStatus_STATUS("Online")
+)
+
+// Mapping from string to ProfileMonitorStatus_STATUS
+var profileMonitorStatus_STATUS_Values = map[string]ProfileMonitorStatus_STATUS{
+	"checkingendpoints": ProfileMonitorStatus_STATUS_CheckingEndpoints,
+	"degraded":          ProfileMonitorStatus_STATUS_Degraded,
+	"disabled":          ProfileMonitorStatus_STATUS_Disabled,
+	"inactive":          ProfileMonitorStatus_STATUS_Inactive,
+	"online":            ProfileMonitorStatus_STATUS_Online,
 }
 
 type TrafficManagerProfileOperatorConfigMaps struct {

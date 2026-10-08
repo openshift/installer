@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=kusto.azure.com,resources=dataconnections,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kusto.azure.com,resources={dataconnections/status,dataconnections/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,kusto}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230815.DataConnection
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}/dataConnections/{dataConnectionName}
 type DataConnection struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (connection *DataConnection) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (connection *DataConnection) SetConditions(conditions conditions.Conditions) {
 	connection.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &DataConnection{}
+
+// ConvertFrom populates our DataConnection from the provided hub DataConnection
+func (connection *DataConnection) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.DataConnection)
+	if !ok {
+		return fmt.Errorf("expected kusto/v1api20240413/storage/DataConnection but received %T instead", hub)
+	}
+
+	return connection.AssignProperties_From_DataConnection(source)
+}
+
+// ConvertTo populates the provided hub DataConnection from our DataConnection
+func (connection *DataConnection) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.DataConnection)
+	if !ok {
+		return fmt.Errorf("expected kusto/v1api20240413/storage/DataConnection but received %T instead", hub)
+	}
+
+	return connection.AssignProperties_To_DataConnection(destination)
 }
 
 var _ configmaps.Exporter = &DataConnection{}
@@ -142,8 +164,75 @@ func (connection *DataConnection) SetStatus(status genruntime.ConvertibleStatus)
 	return nil
 }
 
-// Hub marks that this DataConnection is the hub type for conversion
-func (connection *DataConnection) Hub() {}
+// AssignProperties_From_DataConnection populates our DataConnection from the provided source DataConnection
+func (connection *DataConnection) AssignProperties_From_DataConnection(source *storage.DataConnection) error {
+
+	// ObjectMeta
+	connection.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec DataConnection_Spec
+	err := spec.AssignProperties_From_DataConnection_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_DataConnection_Spec() to populate field Spec")
+	}
+	connection.Spec = spec
+
+	// Status
+	var status DataConnection_STATUS
+	err = status.AssignProperties_From_DataConnection_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_DataConnection_STATUS() to populate field Status")
+	}
+	connection.Status = status
+
+	// Invoke the augmentConversionForDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataConnection populates the provided destination DataConnection from our DataConnection
+func (connection *DataConnection) AssignProperties_To_DataConnection(destination *storage.DataConnection) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *connection.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.DataConnection_Spec
+	err := connection.Spec.AssignProperties_To_DataConnection_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_DataConnection_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.DataConnection_STATUS
+	err = connection.Status.AssignProperties_To_DataConnection_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_DataConnection_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (connection *DataConnection) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (connection *DataConnection) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230815.DataConnection
 // Generator information:
-// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/stable/2023-08-15/kusto.json
+// - Generated from: /azure-kusto/resource-manager/Microsoft.Kusto/Kusto/stable/2023-08-15/kusto.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Kusto/clusters/{clusterName}/databases/{databaseName}/dataConnections/{dataConnectionName}
 type DataConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DataConnection `json:"items"`
+}
+
+type augmentConversionForDataConnection interface {
+	AssignPropertiesFrom(src *storage.DataConnection) error
+	AssignPropertiesTo(dst *storage.DataConnection) error
 }
 
 // Storage version of v1api20230815.DataConnection_Spec
@@ -189,20 +283,248 @@ var _ genruntime.ConvertibleSpec = &DataConnection_Spec{}
 
 // ConvertSpecFrom populates our DataConnection_Spec from the provided source
 func (connection *DataConnection_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == connection {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.DataConnection_Spec)
+	if ok {
+		// Populate our instance from source
+		return connection.AssignProperties_From_DataConnection_Spec(src)
 	}
 
-	return source.ConvertSpecTo(connection)
+	// Convert to an intermediate form
+	src = &storage.DataConnection_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = connection.AssignProperties_From_DataConnection_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our DataConnection_Spec
 func (connection *DataConnection_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == connection {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.DataConnection_Spec)
+	if ok {
+		// Populate destination from our instance
+		return connection.AssignProperties_To_DataConnection_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(connection)
+	// Convert to an intermediate form
+	dst = &storage.DataConnection_Spec{}
+	err := connection.AssignProperties_To_DataConnection_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DataConnection_Spec populates our DataConnection_Spec from the provided source DataConnection_Spec
+func (connection *DataConnection_Spec) AssignProperties_From_DataConnection_Spec(source *storage.DataConnection_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	connection.AzureName = source.AzureName
+
+	// CosmosDb
+	if source.CosmosDb != nil {
+		var cosmosDb CosmosDbDataConnection
+		err := cosmosDb.AssignProperties_From_CosmosDbDataConnection(source.CosmosDb)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CosmosDbDataConnection() to populate field CosmosDb")
+		}
+		connection.CosmosDb = &cosmosDb
+	} else {
+		connection.CosmosDb = nil
+	}
+
+	// EventGrid
+	if source.EventGrid != nil {
+		var eventGrid EventGridDataConnection
+		err := eventGrid.AssignProperties_From_EventGridDataConnection(source.EventGrid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EventGridDataConnection() to populate field EventGrid")
+		}
+		connection.EventGrid = &eventGrid
+	} else {
+		connection.EventGrid = nil
+	}
+
+	// EventHub
+	if source.EventHub != nil {
+		var eventHub EventHubDataConnection
+		err := eventHub.AssignProperties_From_EventHubDataConnection(source.EventHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EventHubDataConnection() to populate field EventHub")
+		}
+		connection.EventHub = &eventHub
+	} else {
+		connection.EventHub = nil
+	}
+
+	// IotHub
+	if source.IotHub != nil {
+		var iotHub IotHubDataConnection
+		err := iotHub.AssignProperties_From_IotHubDataConnection(source.IotHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_IotHubDataConnection() to populate field IotHub")
+		}
+		connection.IotHub = &iotHub
+	} else {
+		connection.IotHub = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DataConnectionOperatorSpec
+		err := operatorSpec.AssignProperties_From_DataConnectionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DataConnectionOperatorSpec() to populate field OperatorSpec")
+		}
+		connection.OperatorSpec = &operatorSpec
+	} else {
+		connection.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	connection.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		connection.Owner = &owner
+	} else {
+		connection.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnection_Spec interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection_Spec); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataConnection_Spec populates the provided destination DataConnection_Spec from our DataConnection_Spec
+func (connection *DataConnection_Spec) AssignProperties_To_DataConnection_Spec(destination *storage.DataConnection_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// AzureName
+	destination.AzureName = connection.AzureName
+
+	// CosmosDb
+	if connection.CosmosDb != nil {
+		var cosmosDb storage.CosmosDbDataConnection
+		err := connection.CosmosDb.AssignProperties_To_CosmosDbDataConnection(&cosmosDb)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CosmosDbDataConnection() to populate field CosmosDb")
+		}
+		destination.CosmosDb = &cosmosDb
+	} else {
+		destination.CosmosDb = nil
+	}
+
+	// EventGrid
+	if connection.EventGrid != nil {
+		var eventGrid storage.EventGridDataConnection
+		err := connection.EventGrid.AssignProperties_To_EventGridDataConnection(&eventGrid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EventGridDataConnection() to populate field EventGrid")
+		}
+		destination.EventGrid = &eventGrid
+	} else {
+		destination.EventGrid = nil
+	}
+
+	// EventHub
+	if connection.EventHub != nil {
+		var eventHub storage.EventHubDataConnection
+		err := connection.EventHub.AssignProperties_To_EventHubDataConnection(&eventHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EventHubDataConnection() to populate field EventHub")
+		}
+		destination.EventHub = &eventHub
+	} else {
+		destination.EventHub = nil
+	}
+
+	// IotHub
+	if connection.IotHub != nil {
+		var iotHub storage.IotHubDataConnection
+		err := connection.IotHub.AssignProperties_To_IotHubDataConnection(&iotHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_IotHubDataConnection() to populate field IotHub")
+		}
+		destination.IotHub = &iotHub
+	} else {
+		destination.IotHub = nil
+	}
+
+	// OperatorSpec
+	if connection.OperatorSpec != nil {
+		var operatorSpec storage.DataConnectionOperatorSpec
+		err := connection.OperatorSpec.AssignProperties_To_DataConnectionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DataConnectionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = connection.OriginalVersion
+
+	// Owner
+	if connection.Owner != nil {
+		owner := connection.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnection_Spec interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection_Spec); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.DataConnection_STATUS
@@ -220,20 +542,218 @@ var _ genruntime.ConvertibleStatus = &DataConnection_STATUS{}
 
 // ConvertStatusFrom populates our DataConnection_STATUS from the provided source
 func (connection *DataConnection_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == connection {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.DataConnection_STATUS)
+	if ok {
+		// Populate our instance from source
+		return connection.AssignProperties_From_DataConnection_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(connection)
+	// Convert to an intermediate form
+	src = &storage.DataConnection_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = connection.AssignProperties_From_DataConnection_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our DataConnection_STATUS
 func (connection *DataConnection_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == connection {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.DataConnection_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return connection.AssignProperties_To_DataConnection_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(connection)
+	// Convert to an intermediate form
+	dst = &storage.DataConnection_STATUS{}
+	err := connection.AssignProperties_To_DataConnection_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DataConnection_STATUS populates our DataConnection_STATUS from the provided source DataConnection_STATUS
+func (connection *DataConnection_STATUS) AssignProperties_From_DataConnection_STATUS(source *storage.DataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	connection.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CosmosDb
+	if source.CosmosDb != nil {
+		var cosmosDb CosmosDbDataConnection_STATUS
+		err := cosmosDb.AssignProperties_From_CosmosDbDataConnection_STATUS(source.CosmosDb)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CosmosDbDataConnection_STATUS() to populate field CosmosDb")
+		}
+		connection.CosmosDb = &cosmosDb
+	} else {
+		connection.CosmosDb = nil
+	}
+
+	// EventGrid
+	if source.EventGrid != nil {
+		var eventGrid EventGridDataConnection_STATUS
+		err := eventGrid.AssignProperties_From_EventGridDataConnection_STATUS(source.EventGrid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EventGridDataConnection_STATUS() to populate field EventGrid")
+		}
+		connection.EventGrid = &eventGrid
+	} else {
+		connection.EventGrid = nil
+	}
+
+	// EventHub
+	if source.EventHub != nil {
+		var eventHub EventHubDataConnection_STATUS
+		err := eventHub.AssignProperties_From_EventHubDataConnection_STATUS(source.EventHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EventHubDataConnection_STATUS() to populate field EventHub")
+		}
+		connection.EventHub = &eventHub
+	} else {
+		connection.EventHub = nil
+	}
+
+	// IotHub
+	if source.IotHub != nil {
+		var iotHub IotHubDataConnection_STATUS
+		err := iotHub.AssignProperties_From_IotHubDataConnection_STATUS(source.IotHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_IotHubDataConnection_STATUS() to populate field IotHub")
+		}
+		connection.IotHub = &iotHub
+	} else {
+		connection.IotHub = nil
+	}
+
+	// Name
+	connection.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataConnection_STATUS populates the provided destination DataConnection_STATUS from our DataConnection_STATUS
+func (connection *DataConnection_STATUS) AssignProperties_To_DataConnection_STATUS(destination *storage.DataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(connection.Conditions)
+
+	// CosmosDb
+	if connection.CosmosDb != nil {
+		var cosmosDb storage.CosmosDbDataConnection_STATUS
+		err := connection.CosmosDb.AssignProperties_To_CosmosDbDataConnection_STATUS(&cosmosDb)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CosmosDbDataConnection_STATUS() to populate field CosmosDb")
+		}
+		destination.CosmosDb = &cosmosDb
+	} else {
+		destination.CosmosDb = nil
+	}
+
+	// EventGrid
+	if connection.EventGrid != nil {
+		var eventGrid storage.EventGridDataConnection_STATUS
+		err := connection.EventGrid.AssignProperties_To_EventGridDataConnection_STATUS(&eventGrid)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EventGridDataConnection_STATUS() to populate field EventGrid")
+		}
+		destination.EventGrid = &eventGrid
+	} else {
+		destination.EventGrid = nil
+	}
+
+	// EventHub
+	if connection.EventHub != nil {
+		var eventHub storage.EventHubDataConnection_STATUS
+		err := connection.EventHub.AssignProperties_To_EventHubDataConnection_STATUS(&eventHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EventHubDataConnection_STATUS() to populate field EventHub")
+		}
+		destination.EventHub = &eventHub
+	} else {
+		destination.EventHub = nil
+	}
+
+	// IotHub
+	if connection.IotHub != nil {
+		var iotHub storage.IotHubDataConnection_STATUS
+		err := connection.IotHub.AssignProperties_To_IotHubDataConnection_STATUS(&iotHub)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_IotHubDataConnection_STATUS() to populate field IotHub")
+		}
+		destination.IotHub = &iotHub
+	} else {
+		destination.IotHub = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(connection.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDataConnection_Spec interface {
+	AssignPropertiesFrom(src *storage.DataConnection_Spec) error
+	AssignPropertiesTo(dst *storage.DataConnection_Spec) error
+}
+
+type augmentConversionForDataConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.DataConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.DataConnection_STATUS) error
 }
 
 // Storage version of v1api20230815.CosmosDbDataConnection
@@ -256,6 +776,130 @@ type CosmosDbDataConnection struct {
 	TableName                        *string                       `json:"tableName,omitempty"`
 }
 
+// AssignProperties_From_CosmosDbDataConnection populates our CosmosDbDataConnection from the provided source CosmosDbDataConnection
+func (connection *CosmosDbDataConnection) AssignProperties_From_CosmosDbDataConnection(source *storage.CosmosDbDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CosmosDbAccountResourceReference
+	if source.CosmosDbAccountResourceReference != nil {
+		cosmosDbAccountResourceReference := source.CosmosDbAccountResourceReference.Copy()
+		connection.CosmosDbAccountResourceReference = &cosmosDbAccountResourceReference
+	} else {
+		connection.CosmosDbAccountResourceReference = nil
+	}
+
+	// CosmosDbContainer
+	connection.CosmosDbContainer = genruntime.ClonePointerToString(source.CosmosDbContainer)
+
+	// CosmosDbDatabase
+	connection.CosmosDbDatabase = genruntime.ClonePointerToString(source.CosmosDbDatabase)
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityResourceReference
+	if source.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := source.ManagedIdentityResourceReference.Copy()
+		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		connection.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCosmosDbDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForCosmosDbDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CosmosDbDataConnection populates the provided destination CosmosDbDataConnection from our CosmosDbDataConnection
+func (connection *CosmosDbDataConnection) AssignProperties_To_CosmosDbDataConnection(destination *storage.CosmosDbDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// CosmosDbAccountResourceReference
+	if connection.CosmosDbAccountResourceReference != nil {
+		cosmosDbAccountResourceReference := connection.CosmosDbAccountResourceReference.Copy()
+		destination.CosmosDbAccountResourceReference = &cosmosDbAccountResourceReference
+	} else {
+		destination.CosmosDbAccountResourceReference = nil
+	}
+
+	// CosmosDbContainer
+	destination.CosmosDbContainer = genruntime.ClonePointerToString(connection.CosmosDbContainer)
+
+	// CosmosDbDatabase
+	destination.CosmosDbDatabase = genruntime.ClonePointerToString(connection.CosmosDbDatabase)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityResourceReference
+	if connection.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := connection.ManagedIdentityResourceReference.Copy()
+		destination.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		destination.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCosmosDbDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForCosmosDbDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.CosmosDbDataConnection_STATUS
 type CosmosDbDataConnection_STATUS struct {
 	CosmosDbAccountResourceId *string                `json:"cosmosDbAccountResourceId,omitempty"`
@@ -274,12 +918,254 @@ type CosmosDbDataConnection_STATUS struct {
 	Type                      *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_CosmosDbDataConnection_STATUS populates our CosmosDbDataConnection_STATUS from the provided source CosmosDbDataConnection_STATUS
+func (connection *CosmosDbDataConnection_STATUS) AssignProperties_From_CosmosDbDataConnection_STATUS(source *storage.CosmosDbDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CosmosDbAccountResourceId
+	connection.CosmosDbAccountResourceId = genruntime.ClonePointerToString(source.CosmosDbAccountResourceId)
+
+	// CosmosDbContainer
+	connection.CosmosDbContainer = genruntime.ClonePointerToString(source.CosmosDbContainer)
+
+	// CosmosDbDatabase
+	connection.CosmosDbDatabase = genruntime.ClonePointerToString(source.CosmosDbDatabase)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityObjectId
+	connection.ManagedIdentityObjectId = genruntime.ClonePointerToString(source.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	connection.ManagedIdentityResourceId = genruntime.ClonePointerToString(source.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// ProvisioningState
+	connection.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Type
+	connection.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCosmosDbDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForCosmosDbDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CosmosDbDataConnection_STATUS populates the provided destination CosmosDbDataConnection_STATUS from our CosmosDbDataConnection_STATUS
+func (connection *CosmosDbDataConnection_STATUS) AssignProperties_To_CosmosDbDataConnection_STATUS(destination *storage.CosmosDbDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// CosmosDbAccountResourceId
+	destination.CosmosDbAccountResourceId = genruntime.ClonePointerToString(connection.CosmosDbAccountResourceId)
+
+	// CosmosDbContainer
+	destination.CosmosDbContainer = genruntime.ClonePointerToString(connection.CosmosDbContainer)
+
+	// CosmosDbDatabase
+	destination.CosmosDbDatabase = genruntime.ClonePointerToString(connection.CosmosDbDatabase)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityObjectId
+	destination.ManagedIdentityObjectId = genruntime.ClonePointerToString(connection.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	destination.ManagedIdentityResourceId = genruntime.ClonePointerToString(connection.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(connection.ProvisioningState)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(connection.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCosmosDbDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForCosmosDbDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.DataConnectionOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type DataConnectionOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_DataConnectionOperatorSpec populates our DataConnectionOperatorSpec from the provided source DataConnectionOperatorSpec
+func (operator *DataConnectionOperatorSpec) AssignProperties_From_DataConnectionOperatorSpec(source *storage.DataConnectionOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnectionOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDataConnectionOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataConnectionOperatorSpec populates the provided destination DataConnectionOperatorSpec from our DataConnectionOperatorSpec
+func (operator *DataConnectionOperatorSpec) AssignProperties_To_DataConnectionOperatorSpec(destination *storage.DataConnectionOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataConnectionOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDataConnectionOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.EventGridDataConnection
@@ -311,6 +1197,184 @@ type EventGridDataConnection struct {
 	TableName                       *string                       `json:"tableName,omitempty"`
 }
 
+// AssignProperties_From_EventGridDataConnection populates our EventGridDataConnection from the provided source EventGridDataConnection
+func (connection *EventGridDataConnection) AssignProperties_From_EventGridDataConnection(source *storage.EventGridDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BlobStorageEventType
+	connection.BlobStorageEventType = genruntime.ClonePointerToString(source.BlobStorageEventType)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventGridResourceReference
+	if source.EventGridResourceReference != nil {
+		eventGridResourceReference := source.EventGridResourceReference.Copy()
+		connection.EventGridResourceReference = &eventGridResourceReference
+	} else {
+		connection.EventGridResourceReference = nil
+	}
+
+	// EventHubResourceReference
+	if source.EventHubResourceReference != nil {
+		eventHubResourceReference := source.EventHubResourceReference.Copy()
+		connection.EventHubResourceReference = &eventHubResourceReference
+	} else {
+		connection.EventHubResourceReference = nil
+	}
+
+	// IgnoreFirstRecord
+	if source.IgnoreFirstRecord != nil {
+		ignoreFirstRecord := *source.IgnoreFirstRecord
+		connection.IgnoreFirstRecord = &ignoreFirstRecord
+	} else {
+		connection.IgnoreFirstRecord = nil
+	}
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityResourceReference
+	if source.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := source.ManagedIdentityResourceReference.Copy()
+		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		connection.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// StorageAccountResourceReference
+	if source.StorageAccountResourceReference != nil {
+		storageAccountResourceReference := source.StorageAccountResourceReference.Copy()
+		connection.StorageAccountResourceReference = &storageAccountResourceReference
+	} else {
+		connection.StorageAccountResourceReference = nil
+	}
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventGridDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventGridDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EventGridDataConnection populates the provided destination EventGridDataConnection from our EventGridDataConnection
+func (connection *EventGridDataConnection) AssignProperties_To_EventGridDataConnection(destination *storage.EventGridDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// BlobStorageEventType
+	destination.BlobStorageEventType = genruntime.ClonePointerToString(connection.BlobStorageEventType)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventGridResourceReference
+	if connection.EventGridResourceReference != nil {
+		eventGridResourceReference := connection.EventGridResourceReference.Copy()
+		destination.EventGridResourceReference = &eventGridResourceReference
+	} else {
+		destination.EventGridResourceReference = nil
+	}
+
+	// EventHubResourceReference
+	if connection.EventHubResourceReference != nil {
+		eventHubResourceReference := connection.EventHubResourceReference.Copy()
+		destination.EventHubResourceReference = &eventHubResourceReference
+	} else {
+		destination.EventHubResourceReference = nil
+	}
+
+	// IgnoreFirstRecord
+	if connection.IgnoreFirstRecord != nil {
+		ignoreFirstRecord := *connection.IgnoreFirstRecord
+		destination.IgnoreFirstRecord = &ignoreFirstRecord
+	} else {
+		destination.IgnoreFirstRecord = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityResourceReference
+	if connection.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := connection.ManagedIdentityResourceReference.Copy()
+		destination.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		destination.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// StorageAccountResourceReference
+	if connection.StorageAccountResourceReference != nil {
+		storageAccountResourceReference := connection.StorageAccountResourceReference.Copy()
+		destination.StorageAccountResourceReference = &storageAccountResourceReference
+	} else {
+		destination.StorageAccountResourceReference = nil
+	}
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventGridDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventGridDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.EventGridDataConnection_STATUS
 type EventGridDataConnection_STATUS struct {
 	BlobStorageEventType      *string                `json:"blobStorageEventType,omitempty"`
@@ -331,6 +1395,168 @@ type EventGridDataConnection_STATUS struct {
 	StorageAccountResourceId  *string                `json:"storageAccountResourceId,omitempty"`
 	TableName                 *string                `json:"tableName,omitempty"`
 	Type                      *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_EventGridDataConnection_STATUS populates our EventGridDataConnection_STATUS from the provided source EventGridDataConnection_STATUS
+func (connection *EventGridDataConnection_STATUS) AssignProperties_From_EventGridDataConnection_STATUS(source *storage.EventGridDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BlobStorageEventType
+	connection.BlobStorageEventType = genruntime.ClonePointerToString(source.BlobStorageEventType)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventGridResourceId
+	connection.EventGridResourceId = genruntime.ClonePointerToString(source.EventGridResourceId)
+
+	// EventHubResourceId
+	connection.EventHubResourceId = genruntime.ClonePointerToString(source.EventHubResourceId)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IgnoreFirstRecord
+	if source.IgnoreFirstRecord != nil {
+		ignoreFirstRecord := *source.IgnoreFirstRecord
+		connection.IgnoreFirstRecord = &ignoreFirstRecord
+	} else {
+		connection.IgnoreFirstRecord = nil
+	}
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityObjectId
+	connection.ManagedIdentityObjectId = genruntime.ClonePointerToString(source.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	connection.ManagedIdentityResourceId = genruntime.ClonePointerToString(source.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// ProvisioningState
+	connection.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// StorageAccountResourceId
+	connection.StorageAccountResourceId = genruntime.ClonePointerToString(source.StorageAccountResourceId)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Type
+	connection.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventGridDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventGridDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EventGridDataConnection_STATUS populates the provided destination EventGridDataConnection_STATUS from our EventGridDataConnection_STATUS
+func (connection *EventGridDataConnection_STATUS) AssignProperties_To_EventGridDataConnection_STATUS(destination *storage.EventGridDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// BlobStorageEventType
+	destination.BlobStorageEventType = genruntime.ClonePointerToString(connection.BlobStorageEventType)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventGridResourceId
+	destination.EventGridResourceId = genruntime.ClonePointerToString(connection.EventGridResourceId)
+
+	// EventHubResourceId
+	destination.EventHubResourceId = genruntime.ClonePointerToString(connection.EventHubResourceId)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// IgnoreFirstRecord
+	if connection.IgnoreFirstRecord != nil {
+		ignoreFirstRecord := *connection.IgnoreFirstRecord
+		destination.IgnoreFirstRecord = &ignoreFirstRecord
+	} else {
+		destination.IgnoreFirstRecord = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityObjectId
+	destination.ManagedIdentityObjectId = genruntime.ClonePointerToString(connection.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	destination.ManagedIdentityResourceId = genruntime.ClonePointerToString(connection.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(connection.ProvisioningState)
+
+	// StorageAccountResourceId
+	destination.StorageAccountResourceId = genruntime.ClonePointerToString(connection.StorageAccountResourceId)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(connection.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventGridDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventGridDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230815.EventHubDataConnection
@@ -356,6 +1582,148 @@ type EventHubDataConnection struct {
 	TableName                        *string                       `json:"tableName,omitempty"`
 }
 
+// AssignProperties_From_EventHubDataConnection populates our EventHubDataConnection from the provided source EventHubDataConnection
+func (connection *EventHubDataConnection) AssignProperties_From_EventHubDataConnection(source *storage.EventHubDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Compression
+	connection.Compression = genruntime.ClonePointerToString(source.Compression)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventHubResourceReference
+	if source.EventHubResourceReference != nil {
+		eventHubResourceReference := source.EventHubResourceReference.Copy()
+		connection.EventHubResourceReference = &eventHubResourceReference
+	} else {
+		connection.EventHubResourceReference = nil
+	}
+
+	// EventSystemProperties
+	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityResourceReference
+	if source.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := source.ManagedIdentityResourceReference.Copy()
+		connection.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		connection.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventHubDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventHubDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EventHubDataConnection populates the provided destination EventHubDataConnection from our EventHubDataConnection
+func (connection *EventHubDataConnection) AssignProperties_To_EventHubDataConnection(destination *storage.EventHubDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Compression
+	destination.Compression = genruntime.ClonePointerToString(connection.Compression)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventHubResourceReference
+	if connection.EventHubResourceReference != nil {
+		eventHubResourceReference := connection.EventHubResourceReference.Copy()
+		destination.EventHubResourceReference = &eventHubResourceReference
+	} else {
+		destination.EventHubResourceReference = nil
+	}
+
+	// EventSystemProperties
+	destination.EventSystemProperties = genruntime.CloneSliceOfString(connection.EventSystemProperties)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityResourceReference
+	if connection.ManagedIdentityResourceReference != nil {
+		managedIdentityResourceReference := connection.ManagedIdentityResourceReference.Copy()
+		destination.ManagedIdentityResourceReference = &managedIdentityResourceReference
+	} else {
+		destination.ManagedIdentityResourceReference = nil
+	}
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventHubDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventHubDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.EventHubDataConnection_STATUS
 type EventHubDataConnection_STATUS struct {
 	Compression               *string                `json:"compression,omitempty"`
@@ -377,6 +1745,152 @@ type EventHubDataConnection_STATUS struct {
 	Type                      *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_EventHubDataConnection_STATUS populates our EventHubDataConnection_STATUS from the provided source EventHubDataConnection_STATUS
+func (connection *EventHubDataConnection_STATUS) AssignProperties_From_EventHubDataConnection_STATUS(source *storage.EventHubDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Compression
+	connection.Compression = genruntime.ClonePointerToString(source.Compression)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventHubResourceId
+	connection.EventHubResourceId = genruntime.ClonePointerToString(source.EventHubResourceId)
+
+	// EventSystemProperties
+	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedIdentityObjectId
+	connection.ManagedIdentityObjectId = genruntime.ClonePointerToString(source.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	connection.ManagedIdentityResourceId = genruntime.ClonePointerToString(source.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// ProvisioningState
+	connection.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Type
+	connection.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventHubDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventHubDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EventHubDataConnection_STATUS populates the provided destination EventHubDataConnection_STATUS from our EventHubDataConnection_STATUS
+func (connection *EventHubDataConnection_STATUS) AssignProperties_To_EventHubDataConnection_STATUS(destination *storage.EventHubDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Compression
+	destination.Compression = genruntime.ClonePointerToString(connection.Compression)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventHubResourceId
+	destination.EventHubResourceId = genruntime.ClonePointerToString(connection.EventHubResourceId)
+
+	// EventSystemProperties
+	destination.EventSystemProperties = genruntime.CloneSliceOfString(connection.EventSystemProperties)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// ManagedIdentityObjectId
+	destination.ManagedIdentityObjectId = genruntime.ClonePointerToString(connection.ManagedIdentityObjectId)
+
+	// ManagedIdentityResourceId
+	destination.ManagedIdentityResourceId = genruntime.ClonePointerToString(connection.ManagedIdentityResourceId)
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(connection.ProvisioningState)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(connection.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEventHubDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForEventHubDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.IotHubDataConnection
 type IotHubDataConnection struct {
 	ConsumerGroup         *string  `json:"consumerGroup,omitempty"`
@@ -396,6 +1910,132 @@ type IotHubDataConnection struct {
 	TableName               *string                       `json:"tableName,omitempty"`
 }
 
+// AssignProperties_From_IotHubDataConnection populates our IotHubDataConnection from the provided source IotHubDataConnection
+func (connection *IotHubDataConnection) AssignProperties_From_IotHubDataConnection(source *storage.IotHubDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventSystemProperties
+	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
+
+	// IotHubResourceReference
+	if source.IotHubResourceReference != nil {
+		iotHubResourceReference := source.IotHubResourceReference.Copy()
+		connection.IotHubResourceReference = &iotHubResourceReference
+	} else {
+		connection.IotHubResourceReference = nil
+	}
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// SharedAccessPolicyName
+	connection.SharedAccessPolicyName = genruntime.ClonePointerToString(source.SharedAccessPolicyName)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIotHubDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForIotHubDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IotHubDataConnection populates the provided destination IotHubDataConnection from our IotHubDataConnection
+func (connection *IotHubDataConnection) AssignProperties_To_IotHubDataConnection(destination *storage.IotHubDataConnection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventSystemProperties
+	destination.EventSystemProperties = genruntime.CloneSliceOfString(connection.EventSystemProperties)
+
+	// IotHubResourceReference
+	if connection.IotHubResourceReference != nil {
+		iotHubResourceReference := connection.IotHubResourceReference.Copy()
+		destination.IotHubResourceReference = &iotHubResourceReference
+	} else {
+		destination.IotHubResourceReference = nil
+	}
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// SharedAccessPolicyName
+	destination.SharedAccessPolicyName = genruntime.ClonePointerToString(connection.SharedAccessPolicyName)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIotHubDataConnection interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForIotHubDataConnection); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230815.IotHubDataConnection_STATUS
 type IotHubDataConnection_STATUS struct {
 	ConsumerGroup          *string                `json:"consumerGroup,omitempty"`
@@ -413,6 +2053,185 @@ type IotHubDataConnection_STATUS struct {
 	SharedAccessPolicyName *string                `json:"sharedAccessPolicyName,omitempty"`
 	TableName              *string                `json:"tableName,omitempty"`
 	Type                   *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_IotHubDataConnection_STATUS populates our IotHubDataConnection_STATUS from the provided source IotHubDataConnection_STATUS
+func (connection *IotHubDataConnection_STATUS) AssignProperties_From_IotHubDataConnection_STATUS(source *storage.IotHubDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConsumerGroup
+	connection.ConsumerGroup = genruntime.ClonePointerToString(source.ConsumerGroup)
+
+	// DataFormat
+	connection.DataFormat = genruntime.ClonePointerToString(source.DataFormat)
+
+	// DatabaseRouting
+	connection.DatabaseRouting = genruntime.ClonePointerToString(source.DatabaseRouting)
+
+	// EventSystemProperties
+	connection.EventSystemProperties = genruntime.CloneSliceOfString(source.EventSystemProperties)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IotHubResourceId
+	connection.IotHubResourceId = genruntime.ClonePointerToString(source.IotHubResourceId)
+
+	// Kind
+	connection.Kind = genruntime.ClonePointerToString(source.Kind)
+
+	// Location
+	connection.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MappingRuleName
+	connection.MappingRuleName = genruntime.ClonePointerToString(source.MappingRuleName)
+
+	// ProvisioningState
+	connection.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RetrievalStartDate
+	connection.RetrievalStartDate = genruntime.ClonePointerToString(source.RetrievalStartDate)
+
+	// SharedAccessPolicyName
+	connection.SharedAccessPolicyName = genruntime.ClonePointerToString(source.SharedAccessPolicyName)
+
+	// TableName
+	connection.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Type
+	connection.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIotHubDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForIotHubDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IotHubDataConnection_STATUS populates the provided destination IotHubDataConnection_STATUS from our IotHubDataConnection_STATUS
+func (connection *IotHubDataConnection_STATUS) AssignProperties_To_IotHubDataConnection_STATUS(destination *storage.IotHubDataConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// ConsumerGroup
+	destination.ConsumerGroup = genruntime.ClonePointerToString(connection.ConsumerGroup)
+
+	// DataFormat
+	destination.DataFormat = genruntime.ClonePointerToString(connection.DataFormat)
+
+	// DatabaseRouting
+	destination.DatabaseRouting = genruntime.ClonePointerToString(connection.DatabaseRouting)
+
+	// EventSystemProperties
+	destination.EventSystemProperties = genruntime.CloneSliceOfString(connection.EventSystemProperties)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// IotHubResourceId
+	destination.IotHubResourceId = genruntime.ClonePointerToString(connection.IotHubResourceId)
+
+	// Kind
+	destination.Kind = genruntime.ClonePointerToString(connection.Kind)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(connection.Location)
+
+	// MappingRuleName
+	destination.MappingRuleName = genruntime.ClonePointerToString(connection.MappingRuleName)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(connection.ProvisioningState)
+
+	// RetrievalStartDate
+	destination.RetrievalStartDate = genruntime.ClonePointerToString(connection.RetrievalStartDate)
+
+	// SharedAccessPolicyName
+	destination.SharedAccessPolicyName = genruntime.ClonePointerToString(connection.SharedAccessPolicyName)
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(connection.TableName)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(connection.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIotHubDataConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForIotHubDataConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForCosmosDbDataConnection interface {
+	AssignPropertiesFrom(src *storage.CosmosDbDataConnection) error
+	AssignPropertiesTo(dst *storage.CosmosDbDataConnection) error
+}
+
+type augmentConversionForCosmosDbDataConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.CosmosDbDataConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.CosmosDbDataConnection_STATUS) error
+}
+
+type augmentConversionForDataConnectionOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DataConnectionOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DataConnectionOperatorSpec) error
+}
+
+type augmentConversionForEventGridDataConnection interface {
+	AssignPropertiesFrom(src *storage.EventGridDataConnection) error
+	AssignPropertiesTo(dst *storage.EventGridDataConnection) error
+}
+
+type augmentConversionForEventGridDataConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.EventGridDataConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.EventGridDataConnection_STATUS) error
+}
+
+type augmentConversionForEventHubDataConnection interface {
+	AssignPropertiesFrom(src *storage.EventHubDataConnection) error
+	AssignPropertiesTo(dst *storage.EventHubDataConnection) error
+}
+
+type augmentConversionForEventHubDataConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.EventHubDataConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.EventHubDataConnection_STATUS) error
+}
+
+type augmentConversionForIotHubDataConnection interface {
+	AssignPropertiesFrom(src *storage.IotHubDataConnection) error
+	AssignPropertiesTo(dst *storage.IotHubDataConnection) error
+}
+
+type augmentConversionForIotHubDataConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.IotHubDataConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.IotHubDataConnection_STATUS) error
 }
 
 func init() {

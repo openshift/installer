@@ -116,7 +116,12 @@ func (database *RedisEnterpriseDatabase) ValidateUpdate(ctx context.Context, old
 
 // createValidations validates the creation of the resource
 func (database *RedisEnterpriseDatabase) createValidations() []func(ctx context.Context, obj *v20230701.RedisEnterpriseDatabase) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230701.RedisEnterpriseDatabase) (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230701.RedisEnterpriseDatabase) (admission.Warnings, error){
+		database.validateResourceReferences,
+		database.validateOwnerReference,
+		database.validateSecretDestinations,
+		database.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -170,7 +175,14 @@ func (database *RedisEnterpriseDatabase) validateSecretDestinations(ctx context.
 	if obj.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	return secrets.ValidateDestinations(obj, nil, obj.Spec.OperatorSpec.SecretExpressions)
+	var toValidate []*genruntime.SecretDestination
+	if obj.Spec.OperatorSpec.Secrets != nil {
+		toValidate = []*genruntime.SecretDestination{
+			obj.Spec.OperatorSpec.Secrets.PrimaryKey,
+			obj.Spec.OperatorSpec.Secrets.SecondaryKey,
+		}
+	}
+	return secrets.ValidateDestinations(obj, toValidate, obj.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties

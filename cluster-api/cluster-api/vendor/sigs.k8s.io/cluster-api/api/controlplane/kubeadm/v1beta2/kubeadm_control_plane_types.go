@@ -125,6 +125,10 @@ const (
 	// Cluster certificates include: certificate authorities for ca, sa, front-proxy, etcd, and if external etcd is used,
 	// also the apiserver-etcd-client client certificate.
 	KubeadmControlPlaneCertificatesAvailableReason = clusterv1.AvailableReason
+
+	// KubeadmControlPlaneCertificatesNotAvailableReason surfaces when cluster certificates are not available
+	// after control plane initialized, which might happen when a user accidentally deletes certificates.
+	KubeadmControlPlaneCertificatesNotAvailableReason = clusterv1.NotAvailableReason
 )
 
 // KubeadmControlPlane's EtcdClusterHealthy condition and corresponding reasons.
@@ -188,7 +192,7 @@ const (
 // KubeadmControlPlane's MachinesReady condition and corresponding reasons.
 const (
 	// KubeadmControlPlaneMachinesReadyCondition surfaces detail of issues on the controlled machines, if any.
-	// Please note this will include also APIServerPodHealthy, ControllerManagerPodHealthy, SchedulerPodHealthy conditions.
+	// Please note this will include also NodeKubeadmLabelsAndTaintsSet, APIServerPodHealthy, ControllerManagerPodHealthy, SchedulerPodHealthy conditions.
 	// If not using an external etcd also EtcdPodHealthy, EtcdMemberHealthy conditions are included.
 	KubeadmControlPlaneMachinesReadyCondition = clusterv1.MachinesReadyCondition
 
@@ -411,6 +415,30 @@ const (
 	KubeadmControlPlaneMachineEtcdMemberDeletingReason = "Deleting"
 )
 
+// NodeKubeadmLabelsAndTaintsSet condition and corresponding reasons that will be used for KubeadmControlPlane controlled machines in v1Beta2 API version.
+const (
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetCondition surfaces the status of node labels and taints that should exist for KubeadmControlPlane controlled machine.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetCondition = "NodeKubeadmLabelsAndTaintsSet"
+
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsInspectionFailedReason documents a failure when inspecting the status of a
+	// node hosted on a KubeadmControlPlane controlled machine.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsInspectionFailedReason = clusterv1.InspectionFailedReason
+
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsConnectionDownReason surfaces that the connection to the workload
+	// cluster is down.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsConnectionDownReason = clusterv1.ConnectionDownReason
+
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsNotSetReason surfaces when node labels and taints that should exist for KubeadmControlPlane controlled machine are not set.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsNotSetReason = "NotSet"
+
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetReason surfaces when node labels and taints that should exist for KubeadmControlPlane controlled machine are set.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsSetReason = "Set"
+
+	// KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsDeletingReason surfaces when the machine hosting control plane components
+	// is being deleted.
+	KubeadmControlPlaneMachineNodeKubeadmLabelsAndTaintsDeletingReason = "Deleting"
+)
+
 // KubeadmControlPlaneSpec defines the desired state of KubeadmControlPlane.
 type KubeadmControlPlaneSpec struct {
 	// replicas is the number of desired machines. Defaults to 1. When stacked etcd is used only
@@ -475,7 +503,7 @@ type KubeadmControlPlaneMachineTemplateSpec struct {
 
 	// readinessGates specifies additional conditions to include when evaluating Machine Ready condition;
 	// KubeadmControlPlane will always add readinessGates for the condition it is setting on the Machine:
-	// APIServerPodHealthy, SchedulerPodHealthy, ControllerManagerPodHealthy, and if etcd is managed by CKP also
+	// NodeKubeadmLabelsAndTaintsSet, APIServerPodHealthy, SchedulerPodHealthy, ControllerManagerPodHealthy, and if etcd is managed by CKP also
 	// EtcdPodHealthy, EtcdMemberHealthy.
 	//
 	// This field can be used e.g. to instruct the machine controller to include in the computation for Machine's ready
@@ -491,6 +519,23 @@ type KubeadmControlPlaneMachineTemplateSpec struct {
 	// deletion contains configuration options for Machine deletion.
 	// +optional
 	Deletion KubeadmControlPlaneMachineTemplateDeletionSpec `json:"deletion,omitempty,omitzero"`
+
+	// taints are the node taints that Cluster API will manage.
+	// This list is not necessarily complete: other Kubernetes components may add or remove other taints from nodes,
+	// e.g. the node controller might add the node.kubernetes.io/not-ready taint.
+	// Only those taints defined in this list will be added or removed by core Cluster API controllers.
+	//
+	// There can be at most 64 taints.
+	// A pod would have to tolerate all existing taints to run on the corresponding node.
+	//
+	// NOTE: This list is implemented as a "map" type, meaning that individual elements can be managed by different owners.
+	// +optional
+	// +listType=map
+	// +listMapKey=key
+	// +listMapKey=effect
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=64
+	Taints []clusterv1.MachineTaint `json:"taints,omitempty"`
 }
 
 // KubeadmControlPlaneMachineTemplateDeletionSpec contains configuration options for Machine deletion.

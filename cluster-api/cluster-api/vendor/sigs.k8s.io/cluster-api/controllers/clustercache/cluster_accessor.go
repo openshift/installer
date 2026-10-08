@@ -18,7 +18,6 @@ package clustercache
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"sync"
 	"time"
@@ -29,11 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"sigs.k8s.io/cluster-api/util/certs"
 )
 
 // clusterAccessor is the object used to create and manage connections to a specific workload cluster.
@@ -82,10 +80,6 @@ type clusterAccessorConfig struct {
 	// connection after creating a connection failed.
 	ConnectionCreationRetryInterval time.Duration
 
-	// DisableClientCertificatePrivateKey is the flag to disable the creation of the client
-	// certificate private key.
-	DisableClientCertificatePrivateKey bool
-
 	// Cache is the config used for the cache that the clusterAccessor creates.
 	Cache *clusterAccessorCacheConfig
 
@@ -103,6 +97,9 @@ type clusterAccessorCacheConfig struct {
 
 	// SyncPeriod is the sync period of the cache.
 	SyncPeriod *time.Duration
+
+	// DefaultTransform is applied to all objects before they are stored in the cache.
+	DefaultTransform toolscache.TransformFunc
 
 	// ByObject restricts the cache's ListWatch to the desired fields per GVK at the specified object.
 	ByObject map[client.Object]cache.ByObject
@@ -163,13 +160,6 @@ type clusterAccessorLockedState struct {
 
 	// connection holds the connection state (e.g. client, cache) of the clusterAccessor.
 	connection *clusterAccessorLockedConnectionState
-
-	// clientCertificatePrivateKey is a private key that is generated once for a clusterAccessor
-	// and can then be used to generate client certificates. This is e.g. used in KCP to generate a client
-	// cert to communicate with etcd.
-	// This private key is stored and cached in the ClusterCache because it's expensive to generate a new
-	// private key in every single Reconcile.
-	clientCertificatePrivateKey *rsa.PrivateKey
 
 	// healthChecking holds the health checking state (e.g. lastProbeSuccessTime, consecutiveFailures)
 	// of the clusterAccessor.
@@ -257,17 +247,20 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 		return nil
 	}
 
-	log.Info("Connecting")
+	start := time.Now()
+	log.V(4).Info("Connecting")
 
 	// Creating clients, cache etc. is intentionally done without a lock to avoid blocking other reconcilers.
 	connection, err := ca.createConnection(ctx)
+
+	duration := time.Since(start)
 
 	ca.lock(ctx)
 	defer ca.unlock(ctx)
 
 	defer func() {
 		if retErr != nil {
-			log.Error(retErr, "Connect failed")
+			log.Error(retErr, "Connect failed", "duration", duration)
 			connectionUp.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(0)
 			ca.lockedState.lastConnectionCreationErrorTime = time.Now()
 			// A client creation just failed, so let's count this as a failed probe.
@@ -283,19 +276,7 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 		return err
 	}
 
-	log.Info("Connected")
-
-	// Only generate the clientCertificatePrivateKey once as there is no need to regenerate it after disconnect/connect.
-	// Note: This has to be done before setting connection, because otherwise this code wouldn't be re-entrant if the
-	// private key generation fails because we check Connected above.
-	if ca.lockedState.clientCertificatePrivateKey == nil && !ca.config.DisableClientCertificatePrivateKey {
-		log.V(6).Info("Generating client certificate private key")
-		clientCertificatePrivateKey, err := certs.NewPrivateKey()
-		if err != nil {
-			return errors.Wrapf(err, "error creating client certificate private key")
-		}
-		ca.lockedState.clientCertificatePrivateKey = clientCertificatePrivateKey
-	}
+	log.Info("Connected", "duration", duration)
 
 	now := time.Now()
 	ca.lockedState.healthChecking = clusterAccessorLockedHealthCheckingState{
@@ -330,7 +311,7 @@ func (ca *clusterAccessor) Disconnect(ctx context.Context) {
 		ca.unlock(ctx)
 		connectionUp.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(0)
 	}()
-	log.Info("Disconnecting")
+	log.V(4).Info("Disconnecting")
 
 	// Stopping the cache is non-blocking, so it's okay to do it while holding the lock.
 	// Note: Stopping the cache will also trigger shutdown of all informers that have been added to the cache.
@@ -399,7 +380,7 @@ func (ca *clusterAccessor) GetClient(ctx context.Context) (client.Client, error)
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting client")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting client")
 	}
 
 	return ca.lockedState.connection.cachedClient, nil
@@ -410,7 +391,7 @@ func (ca *clusterAccessor) GetReader(ctx context.Context) (client.Reader, error)
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting client reader")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting client reader")
 	}
 
 	return ca.lockedState.connection.cachedClient, nil
@@ -422,7 +403,7 @@ func (ca *clusterAccessor) GetUncachedClient(ctx context.Context) (client.Client
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting uncached client")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting uncached client")
 	}
 
 	return ca.lockedState.connection.uncachedClient, nil
@@ -433,17 +414,10 @@ func (ca *clusterAccessor) GetRESTConfig(ctx context.Context) (*rest.Config, err
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting REST config")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting REST config")
 	}
 
 	return ca.lockedState.connection.restConfig, nil
-}
-
-func (ca *clusterAccessor) GetClientCertificatePrivateKey(ctx context.Context) *rsa.PrivateKey {
-	ca.rLock(ctx)
-	defer ca.rUnlock(ctx)
-
-	return ca.lockedState.clientCertificatePrivateKey
 }
 
 // Watch watches a workload cluster for events.
@@ -456,7 +430,7 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 	}
 
 	if !ca.Connected(ctx) {
-		return errors.Wrapf(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	log := ctrl.LoggerFrom(ctx)
@@ -469,7 +443,7 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 
 	// Checking connection again while holding the lock, because maybe Disconnect was called since checking above.
 	if ca.lockedState.connection == nil {
-		return errors.Wrapf(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	// Return early if the watch was already added.
@@ -480,7 +454,7 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 
 	log.Info(fmt.Sprintf("Creating watch %s for %T", watcher.Name(), watcher.Object()))
 	if err := watcher.Watch(ca.lockedState.connection.cache); err != nil {
-		return errors.Wrapf(err, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(err, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	ca.lockedState.connection.watches.Insert(watcher.Name())

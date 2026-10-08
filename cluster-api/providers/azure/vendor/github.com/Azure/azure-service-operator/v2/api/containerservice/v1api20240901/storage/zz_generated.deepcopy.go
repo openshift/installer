@@ -4506,6 +4506,11 @@ func (in *ManagedClusterOperatorConfigMaps) DeepCopyInto(out *ManagedClusterOper
 		*out = new(genruntime.ConfigMapDestination)
 		**out = **in
 	}
+	if in.PrincipalId != nil {
+		in, out := &in.PrincipalId, &out.PrincipalId
+		*out = new(genruntime.ConfigMapDestination)
+		**out = **in
+	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
 		*out = make(genruntime.PropertyBag, len(*in))
@@ -8709,9 +8714,19 @@ func (in *UserAssignedIdentity) DeepCopyInto(out *UserAssignedIdentity) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ClientIdFromConfig != nil {
+		in, out := &in.ClientIdFromConfig, &out.ClientIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
+		**out = **in
+	}
 	if in.ObjectId != nil {
 		in, out := &in.ObjectId, &out.ObjectId
 		*out = new(string)
+		**out = **in
+	}
+	if in.ObjectIdFromConfig != nil {
+		in, out := &in.ObjectIdFromConfig, &out.ObjectIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
 		**out = **in
 	}
 	if in.PropertyBag != nil {

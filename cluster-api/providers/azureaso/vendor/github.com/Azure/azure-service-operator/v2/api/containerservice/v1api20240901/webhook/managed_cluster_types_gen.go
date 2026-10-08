@@ -116,7 +116,13 @@ func (cluster *ManagedCluster) ValidateUpdate(ctx context.Context, oldResource r
 
 // createValidations validates the creation of the resource
 func (cluster *ManagedCluster) createValidations() []func(ctx context.Context, obj *v20240901.ManagedCluster) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240901.ManagedCluster) (admission.Warnings, error){cluster.validateResourceReferences, cluster.validateOwnerReference, cluster.validateSecretDestinations, cluster.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240901.ManagedCluster) (admission.Warnings, error){
+		cluster.validateResourceReferences,
+		cluster.validateOwnerReference,
+		cluster.validateSecretDestinations,
+		cluster.validateConfigMapDestinations,
+		cluster.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -140,6 +146,9 @@ func (cluster *ManagedCluster) updateValidations() []func(ctx context.Context, o
 		func(ctx context.Context, oldObj *v20240901.ManagedCluster, newObj *v20240901.ManagedCluster) (admission.Warnings, error) {
 			return cluster.validateConfigMapDestinations(ctx, newObj)
 		},
+		func(ctx context.Context, oldObj *v20240901.ManagedCluster, newObj *v20240901.ManagedCluster) (admission.Warnings, error) {
+			return cluster.validateOptionalConfigMapReferences(ctx, newObj)
+		},
 	}
 }
 
@@ -152,9 +161,19 @@ func (cluster *ManagedCluster) validateConfigMapDestinations(ctx context.Context
 	if obj.Spec.OperatorSpec.ConfigMaps != nil {
 		toValidate = []*genruntime.ConfigMapDestination{
 			obj.Spec.OperatorSpec.ConfigMaps.OIDCIssuerProfile,
+			obj.Spec.OperatorSpec.ConfigMaps.PrincipalId,
 		}
 	}
 	return configmaps.ValidateDestinations(obj, toValidate, obj.Spec.OperatorSpec.ConfigMapExpressions)
+}
+
+// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
+func (cluster *ManagedCluster) validateOptionalConfigMapReferences(ctx context.Context, obj *v20240901.ManagedCluster) (admission.Warnings, error) {
+	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&obj.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field

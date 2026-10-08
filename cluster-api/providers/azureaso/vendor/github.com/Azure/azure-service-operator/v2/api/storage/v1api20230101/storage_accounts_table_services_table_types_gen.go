@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &StorageAccountsTableServicesTable{}
 
 // ConvertFrom populates our StorageAccountsTableServicesTable from the provided hub StorageAccountsTableServicesTable
 func (table *StorageAccountsTableServicesTable) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.StorageAccountsTableServicesTable)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsTableServicesTable but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.StorageAccountsTableServicesTable
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return table.AssignProperties_From_StorageAccountsTableServicesTable(source)
+	err = table.AssignProperties_From_StorageAccountsTableServicesTable(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to table")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsTableServicesTable from our StorageAccountsTableServicesTable
 func (table *StorageAccountsTableServicesTable) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.StorageAccountsTableServicesTable)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccountsTableServicesTable but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.StorageAccountsTableServicesTable
+	err := table.AssignProperties_To_StorageAccountsTableServicesTable(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from table")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return table.AssignProperties_To_StorageAccountsTableServicesTable(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &StorageAccountsTableServicesTable{}
@@ -86,17 +101,6 @@ func (table *StorageAccountsTableServicesTable) SecretDestinationExpressions() [
 		return nil
 	}
 	return table.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &StorageAccountsTableServicesTable{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (table *StorageAccountsTableServicesTable) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccountsTableServicesTable_STATUS); ok {
-		return table.Spec.Initialize_From_StorageAccountsTableServicesTable_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccountsTableServicesTable_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &StorageAccountsTableServicesTable{}
@@ -413,8 +417,6 @@ func (table *StorageAccountsTableServicesTable_Spec) AssignProperties_From_Stora
 	if source.SignedIdentifiers != nil {
 		signedIdentifierList := make([]TableSignedIdentifier, len(source.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier TableSignedIdentifier
 			err := signedIdentifier.AssignProperties_From_TableSignedIdentifier(&signedIdentifierItem)
 			if err != nil {
@@ -466,8 +468,6 @@ func (table *StorageAccountsTableServicesTable_Spec) AssignProperties_To_Storage
 	if table.SignedIdentifiers != nil {
 		signedIdentifierList := make([]storage.TableSignedIdentifier, len(table.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range table.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier storage.TableSignedIdentifier
 			err := signedIdentifierItem.AssignProperties_To_TableSignedIdentifier(&signedIdentifier)
 			if err != nil {
@@ -485,31 +485,6 @@ func (table *StorageAccountsTableServicesTable_Spec) AssignProperties_To_Storage
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageAccountsTableServicesTable_STATUS populates our StorageAccountsTableServicesTable_Spec from the provided source StorageAccountsTableServicesTable_STATUS
-func (table *StorageAccountsTableServicesTable_Spec) Initialize_From_StorageAccountsTableServicesTable_STATUS(source *StorageAccountsTableServicesTable_STATUS) error {
-
-	// SignedIdentifiers
-	if source.SignedIdentifiers != nil {
-		signedIdentifierList := make([]TableSignedIdentifier, len(source.SignedIdentifiers))
-		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
-			var signedIdentifier TableSignedIdentifier
-			err := signedIdentifier.Initialize_From_TableSignedIdentifier_STATUS(&signedIdentifierItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_TableSignedIdentifier_STATUS() to populate field SignedIdentifiers")
-			}
-			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
-		}
-		table.SignedIdentifiers = signedIdentifierList
-	} else {
-		table.SignedIdentifiers = nil
 	}
 
 	// No error
@@ -673,8 +648,6 @@ func (table *StorageAccountsTableServicesTable_STATUS) AssignProperties_From_Sto
 	if source.SignedIdentifiers != nil {
 		signedIdentifierList := make([]TableSignedIdentifier_STATUS, len(source.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier TableSignedIdentifier_STATUS
 			err := signedIdentifier.AssignProperties_From_TableSignedIdentifier_STATUS(&signedIdentifierItem)
 			if err != nil {
@@ -715,8 +688,6 @@ func (table *StorageAccountsTableServicesTable_STATUS) AssignProperties_To_Stora
 	if table.SignedIdentifiers != nil {
 		signedIdentifierList := make([]storage.TableSignedIdentifier_STATUS, len(table.SignedIdentifiers))
 		for signedIdentifierIndex, signedIdentifierItem := range table.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
 			var signedIdentifier storage.TableSignedIdentifier_STATUS
 			err := signedIdentifierItem.AssignProperties_To_TableSignedIdentifier_STATUS(&signedIdentifier)
 			if err != nil {
@@ -762,8 +733,6 @@ func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -780,8 +749,6 @@ func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -807,8 +774,6 @@ func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -825,8 +790,6 @@ func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -871,7 +834,7 @@ func (identifier *TableSignedIdentifier) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "AccessPolicy":
 	if identifier.AccessPolicy != nil {
-		accessPolicy_ARM, err := (*identifier.AccessPolicy).ConvertToARM(resolved)
+		accessPolicy_ARM, err := identifier.AccessPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -977,33 +940,6 @@ func (identifier *TableSignedIdentifier) AssignProperties_To_TableSignedIdentifi
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_TableSignedIdentifier_STATUS populates our TableSignedIdentifier from the provided source TableSignedIdentifier_STATUS
-func (identifier *TableSignedIdentifier) Initialize_From_TableSignedIdentifier_STATUS(source *TableSignedIdentifier_STATUS) error {
-
-	// AccessPolicy
-	if source.AccessPolicy != nil {
-		var accessPolicy TableAccessPolicy
-		err := accessPolicy.Initialize_From_TableAccessPolicy_STATUS(source.AccessPolicy)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_TableAccessPolicy_STATUS() to populate field AccessPolicy")
-		}
-		identifier.AccessPolicy = &accessPolicy
-	} else {
-		identifier.AccessPolicy = nil
-	}
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		identifier.Reference = &reference
-	} else {
-		identifier.Reference = nil
 	}
 
 	// No error
@@ -1219,22 +1155,6 @@ func (policy *TableAccessPolicy) AssignProperties_To_TableAccessPolicy(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_TableAccessPolicy_STATUS populates our TableAccessPolicy from the provided source TableAccessPolicy_STATUS
-func (policy *TableAccessPolicy) Initialize_From_TableAccessPolicy_STATUS(source *TableAccessPolicy_STATUS) error {
-
-	// ExpiryTime
-	policy.ExpiryTime = genruntime.ClonePointerToString(source.ExpiryTime)
-
-	// Permission
-	policy.Permission = genruntime.ClonePointerToString(source.Permission)
-
-	// StartTime
-	policy.StartTime = genruntime.ClonePointerToString(source.StartTime)
 
 	// No error
 	return nil

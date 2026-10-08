@@ -335,9 +335,28 @@ ApplicationGateway: Resource
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   └── Reference: *genruntime.ResourceReference
 │   │   ├── Name: *string
-│   │   ├── PathRules: Object (2 properties)[]
+│   │   ├── PathRules: Object (9 properties)[]
+│   │   │   ├── BackendAddressPool: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── BackendHttpSettings: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── FirewallPolicy: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── LoadDistributionPolicy: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Name: *string
+│   │   │   ├── Paths: string[]
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── RedirectConfiguration: *Object (2 properties)
+│   │   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── RewriteRuleSet: *Object (2 properties)
+│   │   │       ├── PropertyBag: genruntime.PropertyBag
+│   │   │       └── Reference: *genruntime.ResourceReference
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── WebApplicationFirewallConfiguration: *Object (11 properties)
 │   │   ├── DisabledRuleGroups: Object (3 properties)[]
@@ -875,7 +894,7 @@ PrivateEndpoint: Resource
 │   │   │   ├── Description: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   └── Status: *string
-│   │   ├── PrivateLinkServiceReference: *genruntime.ResourceReference
+│   │   ├── PrivateLinkServiceReference: *genruntime.WellKnownResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── RequestMessage: *string
 │   ├── OperatorSpec: *Object (4 properties)
@@ -895,7 +914,7 @@ PrivateEndpoint: Resource
 │   │   │   ├── Description: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   └── Status: *string
-│   │   ├── PrivateLinkServiceReference: *genruntime.ResourceReference
+│   │   ├── PrivateLinkServiceReference: *genruntime.WellKnownResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── RequestMessage: *string
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -1239,7 +1258,7 @@ augmentConversionForPrivateEndpointOperatorConfigMaps: Interface
 
 augmentConversionForPrivateEndpointOperatorSpec: Interface
 
-augmentConversionForPrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForPrivateEndpoint_STATUS: Interface
 
 augmentConversionForPrivateEndpoint_Spec: Interface
 
@@ -1269,7 +1288,7 @@ augmentConversionForPrivateLinkServiceOperatorConfigMaps: Interface
 
 augmentConversionForPrivateLinkServiceOperatorSpec: Interface
 
-augmentConversionForPrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForPrivateLinkService_STATUS: Interface
 
 augmentConversionForPrivateLinkService_Spec: Interface
 
@@ -1308,6 +1327,8 @@ augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded: Interface
 augmentConversionForSubnet_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
 
 augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+
+augmentConversionForSystemData_STATUS: Interface
 
 augmentConversionForUserAssignedIdentityDetails: Interface
 

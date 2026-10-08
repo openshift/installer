@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +13,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources=authorizationprovidersauthorizations,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources={authorizationprovidersauthorizations/status,authorizationprovidersauthorizations/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220801.AuthorizationProvidersAuthorization
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}
 type AuthorizationProvidersAuthorization struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +44,42 @@ func (authorization *AuthorizationProvidersAuthorization) GetConditions() condit
 // SetConditions sets the conditions on the resource status
 func (authorization *AuthorizationProvidersAuthorization) SetConditions(conditions conditions.Conditions) {
 	authorization.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &AuthorizationProvidersAuthorization{}
+
+// ConvertFrom populates our AuthorizationProvidersAuthorization from the provided hub AuthorizationProvidersAuthorization
+func (authorization *AuthorizationProvidersAuthorization) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvidersAuthorization
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to authorization")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub AuthorizationProvidersAuthorization from our AuthorizationProvidersAuthorization
+func (authorization *AuthorizationProvidersAuthorization) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvidersAuthorization
+	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from authorization")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvidersAuthorization{}
@@ -142,8 +177,75 @@ func (authorization *AuthorizationProvidersAuthorization) SetStatus(status genru
 	return nil
 }
 
-// Hub marks that this AuthorizationProvidersAuthorization is the hub type for conversion
-func (authorization *AuthorizationProvidersAuthorization) Hub() {}
+// AssignProperties_From_AuthorizationProvidersAuthorization populates our AuthorizationProvidersAuthorization from the provided source AuthorizationProvidersAuthorization
+func (authorization *AuthorizationProvidersAuthorization) AssignProperties_From_AuthorizationProvidersAuthorization(source *storage.AuthorizationProvidersAuthorization) error {
+
+	// ObjectMeta
+	authorization.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec AuthorizationProvidersAuthorization_Spec
+	err := spec.AssignProperties_From_AuthorizationProvidersAuthorization_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
+	}
+	authorization.Spec = spec
+
+	// Status
+	var status AuthorizationProvidersAuthorization_STATUS
+	err = status.AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
+	}
+	authorization.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization); ok {
+		err := augmentedAuthorization.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorization populates the provided destination AuthorizationProvidersAuthorization from our AuthorizationProvidersAuthorization
+func (authorization *AuthorizationProvidersAuthorization) AssignProperties_To_AuthorizationProvidersAuthorization(destination *storage.AuthorizationProvidersAuthorization) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *authorization.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.AuthorizationProvidersAuthorization_Spec
+	err := authorization.Spec.AssignProperties_To_AuthorizationProvidersAuthorization_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.AuthorizationProvidersAuthorization_STATUS
+	err = authorization.Status.AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization); ok {
+		err := augmentedAuthorization.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (authorization *AuthorizationProvidersAuthorization) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +259,17 @@ func (authorization *AuthorizationProvidersAuthorization) OriginalGVK() *schema.
 // +kubebuilder:object:root=true
 // Storage version of v1api20220801.AuthorizationProvidersAuthorization
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}
 type AuthorizationProvidersAuthorizationList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AuthorizationProvidersAuthorization `json:"items"`
+}
+
+type augmentConversionForAuthorizationProvidersAuthorization interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorization) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorization) error
 }
 
 // Storage version of v1api20220801.AuthorizationProvidersAuthorization_Spec
@@ -189,20 +296,180 @@ var _ genruntime.ConvertibleSpec = &AuthorizationProvidersAuthorization_Spec{}
 
 // ConvertSpecFrom populates our AuthorizationProvidersAuthorization_Spec from the provided source
 func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == authorization {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.AuthorizationProvidersAuthorization_Spec)
+	if ok {
+		// Populate our instance from source
+		return authorization.AssignProperties_From_AuthorizationProvidersAuthorization_Spec(src)
 	}
 
-	return source.ConvertSpecTo(authorization)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvidersAuthorization_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our AuthorizationProvidersAuthorization_Spec
 func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == authorization {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.AuthorizationProvidersAuthorization_Spec)
+	if ok {
+		// Populate destination from our instance
+		return authorization.AssignProperties_To_AuthorizationProvidersAuthorization_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(authorization)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvidersAuthorization_Spec{}
+	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorization_Spec populates our AuthorizationProvidersAuthorization_Spec from the provided source AuthorizationProvidersAuthorization_Spec
+func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_From_AuthorizationProvidersAuthorization_Spec(source *storage.AuthorizationProvidersAuthorization_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationType
+	authorization.AuthorizationType = genruntime.ClonePointerToString(source.AuthorizationType)
+
+	// AzureName
+	authorization.AzureName = source.AzureName
+
+	// Oauth2GrantType
+	authorization.Oauth2GrantType = genruntime.ClonePointerToString(source.Oauth2GrantType)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec AuthorizationProvidersAuthorizationOperatorSpec
+		err := operatorSpec.AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
+		}
+		authorization.OperatorSpec = &operatorSpec
+	} else {
+		authorization.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	authorization.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		authorization.Owner = &owner
+	} else {
+		authorization.Owner = nil
+	}
+
+	// Parameters
+	if source.Parameters != nil {
+		parameter := source.Parameters.Copy()
+		authorization.Parameters = &parameter
+	} else {
+		authorization.Parameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		authorization.PropertyBag = propertyBag
+	} else {
+		authorization.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization_Spec interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_Spec); ok {
+		err := augmentedAuthorization.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorization_Spec populates the provided destination AuthorizationProvidersAuthorization_Spec from our AuthorizationProvidersAuthorization_Spec
+func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_To_AuthorizationProvidersAuthorization_Spec(destination *storage.AuthorizationProvidersAuthorization_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(authorization.PropertyBag)
+
+	// AuthorizationType
+	destination.AuthorizationType = genruntime.ClonePointerToString(authorization.AuthorizationType)
+
+	// AzureName
+	destination.AzureName = authorization.AzureName
+
+	// Oauth2GrantType
+	destination.Oauth2GrantType = genruntime.ClonePointerToString(authorization.Oauth2GrantType)
+
+	// OperatorSpec
+	if authorization.OperatorSpec != nil {
+		var operatorSpec storage.AuthorizationProvidersAuthorizationOperatorSpec
+		err := authorization.OperatorSpec.AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = authorization.OriginalVersion
+
+	// Owner
+	if authorization.Owner != nil {
+		owner := authorization.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Parameters
+	if authorization.Parameters != nil {
+		parameter := authorization.Parameters.Copy()
+		destination.Parameters = &parameter
+	} else {
+		destination.Parameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization_Spec interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_Spec); ok {
+		err := augmentedAuthorization.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.AuthorizationProvidersAuthorization_STATUS
@@ -223,20 +490,182 @@ var _ genruntime.ConvertibleStatus = &AuthorizationProvidersAuthorization_STATUS
 
 // ConvertStatusFrom populates our AuthorizationProvidersAuthorization_STATUS from the provided source
 func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == authorization {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.AuthorizationProvidersAuthorization_STATUS)
+	if ok {
+		// Populate our instance from source
+		return authorization.AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(authorization)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvidersAuthorization_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our AuthorizationProvidersAuthorization_STATUS
 func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == authorization {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.AuthorizationProvidersAuthorization_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return authorization.AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(authorization)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvidersAuthorization_STATUS{}
+	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorization_STATUS populates our AuthorizationProvidersAuthorization_STATUS from the provided source AuthorizationProvidersAuthorization_STATUS
+func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(source *storage.AuthorizationProvidersAuthorization_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AuthorizationType
+	authorization.AuthorizationType = genruntime.ClonePointerToString(source.AuthorizationType)
+
+	// Conditions
+	authorization.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Error
+	if source.Error != nil {
+		var error AuthorizationError_STATUS
+		err := error.AssignProperties_From_AuthorizationError_STATUS(source.Error)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationError_STATUS() to populate field Error")
+		}
+		authorization.Error = &error
+	} else {
+		authorization.Error = nil
+	}
+
+	// Id
+	authorization.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	authorization.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Oauth2GrantType
+	authorization.Oauth2GrantType = genruntime.ClonePointerToString(source.Oauth2GrantType)
+
+	// Parameters
+	authorization.Parameters = genruntime.CloneMapOfStringToString(source.Parameters)
+
+	// Status
+	authorization.Status = genruntime.ClonePointerToString(source.Status)
+
+	// Type
+	authorization.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		authorization.PropertyBag = propertyBag
+	} else {
+		authorization.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization_STATUS interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_STATUS); ok {
+		err := augmentedAuthorization.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorization_STATUS populates the provided destination AuthorizationProvidersAuthorization_STATUS from our AuthorizationProvidersAuthorization_STATUS
+func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(destination *storage.AuthorizationProvidersAuthorization_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(authorization.PropertyBag)
+
+	// AuthorizationType
+	destination.AuthorizationType = genruntime.ClonePointerToString(authorization.AuthorizationType)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(authorization.Conditions)
+
+	// Error
+	if authorization.Error != nil {
+		var error storage.AuthorizationError_STATUS
+		err := authorization.Error.AssignProperties_To_AuthorizationError_STATUS(&error)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationError_STATUS() to populate field Error")
+		}
+		destination.Error = &error
+	} else {
+		destination.Error = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(authorization.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(authorization.Name)
+
+	// Oauth2GrantType
+	destination.Oauth2GrantType = genruntime.ClonePointerToString(authorization.Oauth2GrantType)
+
+	// Parameters
+	destination.Parameters = genruntime.CloneMapOfStringToString(authorization.Parameters)
+
+	// Status
+	destination.Status = genruntime.ClonePointerToString(authorization.Status)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(authorization.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorization_STATUS interface (if implemented) to customize the conversion
+	var authorizationAsAny any = authorization
+	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_STATUS); ok {
+		err := augmentedAuthorization.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProvidersAuthorization_Spec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorization_Spec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorization_Spec) error
+}
+
+type augmentConversionForAuthorizationProvidersAuthorization_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorization_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorization_STATUS) error
 }
 
 // Storage version of v1api20220801.AuthorizationError_STATUS
@@ -247,12 +676,198 @@ type AuthorizationError_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AuthorizationError_STATUS populates our AuthorizationError_STATUS from the provided source AuthorizationError_STATUS
+func (error *AuthorizationError_STATUS) AssignProperties_From_AuthorizationError_STATUS(source *storage.AuthorizationError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Code
+	error.Code = genruntime.ClonePointerToString(source.Code)
+
+	// Message
+	error.Message = genruntime.ClonePointerToString(source.Message)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		error.PropertyBag = propertyBag
+	} else {
+		error.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForAuthorizationError_STATUS); ok {
+		err := augmentedError.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationError_STATUS populates the provided destination AuthorizationError_STATUS from our AuthorizationError_STATUS
+func (error *AuthorizationError_STATUS) AssignProperties_To_AuthorizationError_STATUS(destination *storage.AuthorizationError_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(error.PropertyBag)
+
+	// Code
+	destination.Code = genruntime.ClonePointerToString(error.Code)
+
+	// Message
+	destination.Message = genruntime.ClonePointerToString(error.Message)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationError_STATUS interface (if implemented) to customize the conversion
+	var errorAsAny any = error
+	if augmentedError, ok := errorAsAny.(augmentConversionForAuthorizationError_STATUS); ok {
+		err := augmentedError.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type AuthorizationProvidersAuthorizationOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec populates our AuthorizationProvidersAuthorizationOperatorSpec from the provided source AuthorizationProvidersAuthorizationOperatorSpec
+func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec(source *storage.AuthorizationProvidersAuthorizationOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec populates the provided destination AuthorizationProvidersAuthorizationOperatorSpec from our AuthorizationProvidersAuthorizationOperatorSpec
+func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec(destination *storage.AuthorizationProvidersAuthorizationOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationError_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationError_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationError_STATUS) error
+}
+
+type augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorizationOperatorSpec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorizationOperatorSpec) error
 }
 
 func init() {

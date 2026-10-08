@@ -450,6 +450,7 @@ type DataDisk struct {
 // machine image, but is not used in other creation operations. NOTE: Image reference publisher and offer can only be set
 // when you create the scale set.
 type ImageReference struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 
 	// Offer: Specifies the offer of the platform image or marketplace image used to create the virtual machine.
@@ -492,6 +493,7 @@ type LinuxConfiguration struct {
 
 // Describes a network interface reference.
 type NetworkInterfaceReference struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 
 	// Properties: Describes a network interface reference properties.
@@ -745,7 +747,9 @@ type LinuxPatchSettings struct {
 type ManagedDiskParameters struct {
 	// DiskEncryptionSet: Specifies the customer managed disk encryption set resource id for the managed disk.
 	DiskEncryptionSet *SubResource `json:"diskEncryptionSet,omitempty"`
-	Id                *string      `json:"id,omitempty"`
+
+	// Id: Resource Id
+	Id *string `json:"id,omitempty"`
 
 	// StorageAccountType: Specifies the storage account type for the managed disk. Managed OS disk storage account type can
 	// only be set when you create the scale set. NOTE: UltraSSD_LRS can only be used with data disks, it cannot be used with

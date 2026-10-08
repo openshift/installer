@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2023-11-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2023-11-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/sqlDatabases/{databaseName}
 type SqlDatabase struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (database *SqlDatabase) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2023-11-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2023-11-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/sqlDatabases/{databaseName}
 type SqlDatabaseList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -299,7 +300,7 @@ func (database *SqlDatabase_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 		result.Properties = &arm.SqlDatabaseCreateUpdateProperties{}
 	}
 	if database.Options != nil {
-		options_ARM, err := (*database.Options).ConvertToARM(resolved)
+		options_ARM, err := database.Options.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +308,7 @@ func (database *SqlDatabase_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 		result.Properties.Options = &options
 	}
 	if database.Resource != nil {
-		resource_ARM, err := (*database.Resource).ConvertToARM(resolved)
+		resource_ARM, err := database.Resource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1068,8 +1069,6 @@ func (operator *SqlDatabaseOperatorSpec) AssignProperties_From_SqlDatabaseOperat
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1086,8 +1085,6 @@ func (operator *SqlDatabaseOperatorSpec) AssignProperties_From_SqlDatabaseOperat
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1113,8 +1110,6 @@ func (operator *SqlDatabaseOperatorSpec) AssignProperties_To_SqlDatabaseOperator
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1131,8 +1126,6 @@ func (operator *SqlDatabaseOperatorSpec) AssignProperties_To_SqlDatabaseOperator
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1194,7 +1187,7 @@ func (resource *SqlDatabaseResource) ConvertToARM(resolved genruntime.ConvertToA
 
 	// Set property "RestoreParameters":
 	if resource.RestoreParameters != nil {
-		restoreParameters_ARM, err := (*resource.RestoreParameters).ConvertToARM(resolved)
+		restoreParameters_ARM, err := resource.RestoreParameters.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

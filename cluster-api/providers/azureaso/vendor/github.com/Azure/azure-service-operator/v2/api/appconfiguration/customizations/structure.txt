@@ -3,3 +3,9 @@ github.com/Azure/azure-service-operator/v2/api/appconfiguration/customizations
 ------------------------------------------------------------------------------
 ConfigurationStoreExtension: Object (0 properties)
 
+KeyValueExtension: Object (0 properties)
+
+ReplicaExtension: Object (0 properties)
+
+SnapshotExtension: Object (0 properties)
+

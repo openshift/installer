@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,synapse}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &WorkspacesBigDataPool{}
 
 // ConvertFrom populates our WorkspacesBigDataPool from the provided hub WorkspacesBigDataPool
 func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.WorkspacesBigDataPool)
-	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.WorkspacesBigDataPool
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return pool.AssignProperties_From_WorkspacesBigDataPool(source)
+	err = pool.AssignProperties_From_WorkspacesBigDataPool(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to pool")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub WorkspacesBigDataPool from our WorkspacesBigDataPool
 func (pool *WorkspacesBigDataPool) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.WorkspacesBigDataPool)
-	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.WorkspacesBigDataPool
+	err := pool.AssignProperties_To_WorkspacesBigDataPool(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from pool")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return pool.AssignProperties_To_WorkspacesBigDataPool(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &WorkspacesBigDataPool{}
@@ -86,17 +101,6 @@ func (pool *WorkspacesBigDataPool) SecretDestinationExpressions() []*core.Destin
 		return nil
 	}
 	return pool.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &WorkspacesBigDataPool{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (pool *WorkspacesBigDataPool) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*WorkspacesBigDataPool_STATUS); ok {
-		return pool.Spec.Initialize_From_WorkspacesBigDataPool_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type WorkspacesBigDataPool_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &WorkspacesBigDataPool{}
@@ -358,7 +362,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties = &arm.BigDataPoolResourceProperties{}
 	}
 	if pool.AutoPause != nil {
-		autoPause_ARM, err := (*pool.AutoPause).ConvertToARM(resolved)
+		autoPause_ARM, err := pool.AutoPause.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -366,7 +370,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.AutoPause = &autoPause
 	}
 	if pool.AutoScale != nil {
-		autoScale_ARM, err := (*pool.AutoScale).ConvertToARM(resolved)
+		autoScale_ARM, err := pool.AutoScale.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -389,7 +393,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.DefaultSparkLogFolder = &defaultSparkLogFolder
 	}
 	if pool.DynamicExecutorAllocation != nil {
-		dynamicExecutorAllocation_ARM, err := (*pool.DynamicExecutorAllocation).ConvertToARM(resolved)
+		dynamicExecutorAllocation_ARM, err := pool.DynamicExecutorAllocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -405,7 +409,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.IsComputeIsolationEnabled = &isComputeIsolationEnabled
 	}
 	if pool.LibraryRequirements != nil {
-		libraryRequirements_ARM, err := (*pool.LibraryRequirements).ConvertToARM(resolved)
+		libraryRequirements_ARM, err := pool.LibraryRequirements.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -437,7 +441,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
 	}
 	if pool.SparkConfigProperties != nil {
-		sparkConfigProperties_ARM, err := (*pool.SparkConfigProperties).ConvertToARM(resolved)
+		sparkConfigProperties_ARM, err := pool.SparkConfigProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -777,8 +781,6 @@ func (pool *WorkspacesBigDataPool_Spec) AssignProperties_From_WorkspacesBigDataP
 	if source.CustomLibraries != nil {
 		customLibraryList := make([]LibraryInfo, len(source.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range source.CustomLibraries {
-			// Shadow the loop variable to avoid aliasing
-			customLibraryItem := customLibraryItem
 			var customLibrary LibraryInfo
 			err := customLibrary.AssignProperties_From_LibraryInfo(&customLibraryItem)
 			if err != nil {
@@ -953,8 +955,6 @@ func (pool *WorkspacesBigDataPool_Spec) AssignProperties_To_WorkspacesBigDataPoo
 	if pool.CustomLibraries != nil {
 		customLibraryList := make([]storage.LibraryInfo, len(pool.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
-			// Shadow the loop variable to avoid aliasing
-			customLibraryItem := customLibraryItem
 			var customLibrary storage.LibraryInfo
 			err := customLibraryItem.AssignProperties_To_LibraryInfo(&customLibrary)
 			if err != nil {
@@ -1093,155 +1093,6 @@ func (pool *WorkspacesBigDataPool_Spec) AssignProperties_To_WorkspacesBigDataPoo
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WorkspacesBigDataPool_STATUS populates our WorkspacesBigDataPool_Spec from the provided source WorkspacesBigDataPool_STATUS
-func (pool *WorkspacesBigDataPool_Spec) Initialize_From_WorkspacesBigDataPool_STATUS(source *WorkspacesBigDataPool_STATUS) error {
-
-	// AutoPause
-	if source.AutoPause != nil {
-		var autoPause AutoPauseProperties
-		err := autoPause.Initialize_From_AutoPauseProperties_STATUS(source.AutoPause)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AutoPauseProperties_STATUS() to populate field AutoPause")
-		}
-		pool.AutoPause = &autoPause
-	} else {
-		pool.AutoPause = nil
-	}
-
-	// AutoScale
-	if source.AutoScale != nil {
-		var autoScale AutoScaleProperties
-		err := autoScale.Initialize_From_AutoScaleProperties_STATUS(source.AutoScale)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AutoScaleProperties_STATUS() to populate field AutoScale")
-		}
-		pool.AutoScale = &autoScale
-	} else {
-		pool.AutoScale = nil
-	}
-
-	// CacheSize
-	pool.CacheSize = genruntime.ClonePointerToInt(source.CacheSize)
-
-	// CustomLibraries
-	if source.CustomLibraries != nil {
-		customLibraryList := make([]LibraryInfo, len(source.CustomLibraries))
-		for customLibraryIndex, customLibraryItem := range source.CustomLibraries {
-			// Shadow the loop variable to avoid aliasing
-			customLibraryItem := customLibraryItem
-			var customLibrary LibraryInfo
-			err := customLibrary.Initialize_From_LibraryInfo_STATUS(&customLibraryItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_LibraryInfo_STATUS() to populate field CustomLibraries")
-			}
-			customLibraryList[customLibraryIndex] = customLibrary
-		}
-		pool.CustomLibraries = customLibraryList
-	} else {
-		pool.CustomLibraries = nil
-	}
-
-	// DefaultSparkLogFolder
-	pool.DefaultSparkLogFolder = genruntime.ClonePointerToString(source.DefaultSparkLogFolder)
-
-	// DynamicExecutorAllocation
-	if source.DynamicExecutorAllocation != nil {
-		var dynamicExecutorAllocation DynamicExecutorAllocation
-		err := dynamicExecutorAllocation.Initialize_From_DynamicExecutorAllocation_STATUS(source.DynamicExecutorAllocation)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DynamicExecutorAllocation_STATUS() to populate field DynamicExecutorAllocation")
-		}
-		pool.DynamicExecutorAllocation = &dynamicExecutorAllocation
-	} else {
-		pool.DynamicExecutorAllocation = nil
-	}
-
-	// IsAutotuneEnabled
-	if source.IsAutotuneEnabled != nil {
-		isAutotuneEnabled := *source.IsAutotuneEnabled
-		pool.IsAutotuneEnabled = &isAutotuneEnabled
-	} else {
-		pool.IsAutotuneEnabled = nil
-	}
-
-	// IsComputeIsolationEnabled
-	if source.IsComputeIsolationEnabled != nil {
-		isComputeIsolationEnabled := *source.IsComputeIsolationEnabled
-		pool.IsComputeIsolationEnabled = &isComputeIsolationEnabled
-	} else {
-		pool.IsComputeIsolationEnabled = nil
-	}
-
-	// LibraryRequirements
-	if source.LibraryRequirements != nil {
-		var libraryRequirement LibraryRequirements
-		err := libraryRequirement.Initialize_From_LibraryRequirements_STATUS(source.LibraryRequirements)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LibraryRequirements_STATUS() to populate field LibraryRequirements")
-		}
-		pool.LibraryRequirements = &libraryRequirement
-	} else {
-		pool.LibraryRequirements = nil
-	}
-
-	// Location
-	pool.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NodeCount
-	pool.NodeCount = genruntime.ClonePointerToInt(source.NodeCount)
-
-	// NodeSize
-	if source.NodeSize != nil {
-		nodeSize := genruntime.ToEnum(string(*source.NodeSize), bigDataPoolResourceProperties_NodeSize_Values)
-		pool.NodeSize = &nodeSize
-	} else {
-		pool.NodeSize = nil
-	}
-
-	// NodeSizeFamily
-	if source.NodeSizeFamily != nil {
-		nodeSizeFamily := genruntime.ToEnum(string(*source.NodeSizeFamily), bigDataPoolResourceProperties_NodeSizeFamily_Values)
-		pool.NodeSizeFamily = &nodeSizeFamily
-	} else {
-		pool.NodeSizeFamily = nil
-	}
-
-	// ProvisioningState
-	pool.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
-
-	// SessionLevelPackagesEnabled
-	if source.SessionLevelPackagesEnabled != nil {
-		sessionLevelPackagesEnabled := *source.SessionLevelPackagesEnabled
-		pool.SessionLevelPackagesEnabled = &sessionLevelPackagesEnabled
-	} else {
-		pool.SessionLevelPackagesEnabled = nil
-	}
-
-	// SparkConfigProperties
-	if source.SparkConfigProperties != nil {
-		var sparkConfigProperty SparkConfigProperties
-		err := sparkConfigProperty.Initialize_From_SparkConfigProperties_STATUS(source.SparkConfigProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SparkConfigProperties_STATUS() to populate field SparkConfigProperties")
-		}
-		pool.SparkConfigProperties = &sparkConfigProperty
-	} else {
-		pool.SparkConfigProperties = nil
-	}
-
-	// SparkEventsFolder
-	pool.SparkEventsFolder = genruntime.ClonePointerToString(source.SparkEventsFolder)
-
-	// SparkVersion
-	pool.SparkVersion = genruntime.ClonePointerToString(source.SparkVersion)
-
-	// Tags
-	pool.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1679,8 +1530,6 @@ func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_From_WorkspacesBigDat
 	if source.CustomLibraries != nil {
 		customLibraryList := make([]LibraryInfo_STATUS, len(source.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range source.CustomLibraries {
-			// Shadow the loop variable to avoid aliasing
-			customLibraryItem := customLibraryItem
 			var customLibrary LibraryInfo_STATUS
 			err := customLibrary.AssignProperties_From_LibraryInfo_STATUS(&customLibraryItem)
 			if err != nil {
@@ -1850,8 +1699,6 @@ func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_To_WorkspacesBigDataP
 	if pool.CustomLibraries != nil {
 		customLibraryList := make([]storage.LibraryInfo_STATUS, len(pool.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
-			// Shadow the loop variable to avoid aliasing
-			customLibraryItem := customLibraryItem
 			var customLibrary storage.LibraryInfo_STATUS
 			err := customLibraryItem.AssignProperties_To_LibraryInfo_STATUS(&customLibrary)
 			if err != nil {
@@ -2089,24 +1936,6 @@ func (properties *AutoPauseProperties) AssignProperties_To_AutoPauseProperties(d
 	return nil
 }
 
-// Initialize_From_AutoPauseProperties_STATUS populates our AutoPauseProperties from the provided source AutoPauseProperties_STATUS
-func (properties *AutoPauseProperties) Initialize_From_AutoPauseProperties_STATUS(source *AutoPauseProperties_STATUS) error {
-
-	// DelayInMinutes
-	properties.DelayInMinutes = genruntime.ClonePointerToInt(source.DelayInMinutes)
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		properties.Enabled = &enabled
-	} else {
-		properties.Enabled = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Auto-pausing properties of a Big Data pool powered by Apache Spark
 type AutoPauseProperties_STATUS struct {
 	// DelayInMinutes: Number of minutes of idle time before the Big Data pool is automatically paused.
@@ -2312,27 +2141,6 @@ func (properties *AutoScaleProperties) AssignProperties_To_AutoScaleProperties(d
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AutoScaleProperties_STATUS populates our AutoScaleProperties from the provided source AutoScaleProperties_STATUS
-func (properties *AutoScaleProperties) Initialize_From_AutoScaleProperties_STATUS(source *AutoScaleProperties_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		properties.Enabled = &enabled
-	} else {
-		properties.Enabled = nil
-	}
-
-	// MaxNodeCount
-	properties.MaxNodeCount = genruntime.ClonePointerToInt(source.MaxNodeCount)
-
-	// MinNodeCount
-	properties.MinNodeCount = genruntime.ClonePointerToInt(source.MinNodeCount)
 
 	// No error
 	return nil
@@ -2645,27 +2453,6 @@ func (allocation *DynamicExecutorAllocation) AssignProperties_To_DynamicExecutor
 	return nil
 }
 
-// Initialize_From_DynamicExecutorAllocation_STATUS populates our DynamicExecutorAllocation from the provided source DynamicExecutorAllocation_STATUS
-func (allocation *DynamicExecutorAllocation) Initialize_From_DynamicExecutorAllocation_STATUS(source *DynamicExecutorAllocation_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		allocation.Enabled = &enabled
-	} else {
-		allocation.Enabled = nil
-	}
-
-	// MaxExecutors
-	allocation.MaxExecutors = genruntime.ClonePointerToInt(source.MaxExecutors)
-
-	// MinExecutors
-	allocation.MinExecutors = genruntime.ClonePointerToInt(source.MinExecutors)
-
-	// No error
-	return nil
-}
-
 // Dynamic Executor Allocation Properties
 type DynamicExecutorAllocation_STATUS struct {
 	// Enabled: Indicates whether Dynamic Executor Allocation is enabled or not.
@@ -2897,25 +2684,6 @@ func (info *LibraryInfo) AssignProperties_To_LibraryInfo(destination *storage.Li
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LibraryInfo_STATUS populates our LibraryInfo from the provided source LibraryInfo_STATUS
-func (info *LibraryInfo) Initialize_From_LibraryInfo_STATUS(source *LibraryInfo_STATUS) error {
-
-	// ContainerName
-	info.ContainerName = genruntime.ClonePointerToString(source.ContainerName)
-
-	// Name
-	info.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Path
-	info.Path = genruntime.ClonePointerToString(source.Path)
-
-	// Type
-	info.Type = genruntime.ClonePointerToString(source.Type)
 
 	// No error
 	return nil
@@ -3165,19 +2933,6 @@ func (requirements *LibraryRequirements) AssignProperties_To_LibraryRequirements
 	return nil
 }
 
-// Initialize_From_LibraryRequirements_STATUS populates our LibraryRequirements from the provided source LibraryRequirements_STATUS
-func (requirements *LibraryRequirements) Initialize_From_LibraryRequirements_STATUS(source *LibraryRequirements_STATUS) error {
-
-	// Content
-	requirements.Content = genruntime.ClonePointerToString(source.Content)
-
-	// Filename
-	requirements.Filename = genruntime.ClonePointerToString(source.Filename)
-
-	// No error
-	return nil
-}
-
 // Library requirements for a Big Data pool powered by Apache Spark
 type LibraryRequirements_STATUS struct {
 	// Content: The library requirements.
@@ -3398,27 +3153,6 @@ func (properties *SparkConfigProperties) AssignProperties_To_SparkConfigProperti
 	return nil
 }
 
-// Initialize_From_SparkConfigProperties_STATUS populates our SparkConfigProperties from the provided source SparkConfigProperties_STATUS
-func (properties *SparkConfigProperties) Initialize_From_SparkConfigProperties_STATUS(source *SparkConfigProperties_STATUS) error {
-
-	// ConfigurationType
-	if source.ConfigurationType != nil {
-		configurationType := genruntime.ToEnum(string(*source.ConfigurationType), sparkConfigProperties_ConfigurationType_Values)
-		properties.ConfigurationType = &configurationType
-	} else {
-		properties.ConfigurationType = nil
-	}
-
-	// Content
-	properties.Content = genruntime.ClonePointerToString(source.Content)
-
-	// Filename
-	properties.Filename = genruntime.ClonePointerToString(source.Filename)
-
-	// No error
-	return nil
-}
-
 // SparkConfig Properties for a Big Data pool powered by Apache Spark
 type SparkConfigProperties_STATUS struct {
 	// ConfigurationType: The type of the spark config properties file.
@@ -3552,8 +3286,6 @@ func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_From_Workspa
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3570,8 +3302,6 @@ func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_From_Workspa
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3597,8 +3327,6 @@ func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_To_Workspace
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3615,8 +3343,6 @@ func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_To_Workspace
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

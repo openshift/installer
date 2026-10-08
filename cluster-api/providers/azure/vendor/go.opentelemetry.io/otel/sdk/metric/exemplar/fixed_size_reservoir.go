@@ -7,9 +7,11 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/metric/internal/reservoir"
 )
 
 // FixedSizeReservoirProvider returns a provider of [FixedSizeReservoir].
@@ -34,7 +36,9 @@ var _ Reservoir = &FixedSizeReservoir{}
 // If there are more than k, the Reservoir will then randomly sample all
 // additional measurement with a decreasing probability.
 type FixedSizeReservoir struct {
+	reservoir.ConcurrentSafe
 	*storage
+	mu sync.Mutex
 
 	// count is the number of measurement seen.
 	count int64
@@ -50,7 +54,9 @@ func newFixedSizeReservoir(s *storage) *FixedSizeReservoir {
 	r := &FixedSizeReservoir{
 		storage: s,
 	}
-	r.reset()
+	if cap(r.measurements) > 0 {
+		r.reset()
+	}
 	return r
 }
 
@@ -82,6 +88,10 @@ func (*FixedSizeReservoir) randomFloat64() float64 {
 // parameters are the value and dropped (filtered) attributes of the
 // measurement respectively.
 func (r *FixedSizeReservoir) Offer(ctx context.Context, t time.Time, n Value, a []attribute.KeyValue) {
+	if cap(r.measurements) == 0 {
+		return
+	}
+
 	// The following algorithm is "Algorithm L" from Li, Kim-Hung (4 December
 	// 1994). "Reservoir-Sampling Algorithms of Time Complexity
 	// O(n(1+log(N/n)))". ACM Transactions on Mathematical Software. 20 (4):
@@ -123,12 +133,14 @@ func (r *FixedSizeReservoir) Offer(ctx context.Context, t time.Time, n Value, a 
 	// https://github.com/MrAlias/reservoir-sampling for a performance
 	// comparison of reservoir sampling algorithms.
 
-	if int(r.count) < cap(r.store) {
-		r.store[r.count] = newMeasurement(ctx, t, n, a)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if int(r.count) < cap(r.measurements) {
+		r.store(ctx, int(r.count), t, n, a)
 	} else if r.count == r.next {
 		// Overwrite a random existing measurement with the one offered.
-		idx := int(rand.Int64N(int64(cap(r.store))))
-		r.store[idx] = newMeasurement(ctx, t, n, a)
+		idx := int(rand.Int64N(int64(cap(r.measurements))))
+		r.store(ctx, idx, t, n, a)
 		r.advance()
 	}
 	r.count++
@@ -139,7 +151,7 @@ func (r *FixedSizeReservoir) reset() {
 	// This resets the number of exemplars known.
 	r.count = 0
 	// Random index inserts should only happen after the storage is full.
-	r.next = int64(cap(r.store))
+	r.next = int64(cap(r.measurements))
 
 	// Initial random number in the series used to generate r.next.
 	//
@@ -150,7 +162,7 @@ func (r *FixedSizeReservoir) reset() {
 	// This maps the uniform random number in (0,1) to a geometric distribution
 	// over the same interval. The mean of the distribution is inversely
 	// proportional to the storage capacity.
-	r.w = math.Exp(math.Log(r.randomFloat64()) / float64(cap(r.store)))
+	r.w = math.Exp(math.Log(r.randomFloat64()) / float64(cap(r.measurements)))
 
 	r.advance()
 }
@@ -170,7 +182,7 @@ func (r *FixedSizeReservoir) advance() {
 	// therefore the next r.w will be based on the same distribution (i.e.
 	// `max(u_1,u_2,...,u_k)`). Therefore, we can sample the next r.w by
 	// computing the next random number `u` and take r.w as `w * u^(1/k)`.
-	r.w *= math.Exp(math.Log(r.randomFloat64()) / float64(cap(r.store)))
+	r.w *= math.Exp(math.Log(r.randomFloat64()) / float64(cap(r.measurements)))
 	// Use the new random number in the series to calculate the count of the
 	// next measurement that will be stored.
 	//
@@ -188,6 +200,12 @@ func (r *FixedSizeReservoir) advance() {
 //
 // The Reservoir state is preserved after this call.
 func (r *FixedSizeReservoir) Collect(dest *[]Exemplar) {
+	if cap(r.measurements) == 0 {
+		*dest = (*dest)[:0]
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.storage.Collect(dest)
 	// Call reset here even though it will reset r.count and restart the random
 	// number series. This will persist any old exemplars as long as no new

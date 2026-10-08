@@ -4,10 +4,18 @@
 package customizations
 
 import (
-	v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
-	v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
+	apimanagement_v1api20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	apimanagement_v1api20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
+	apimanagement_v1api20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501"
+	apimanagement_v1api20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/storage"
+	apimanagement_v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801"
+	apimanagement_v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
+	apimanagement_v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview"
+	apimanagement_v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage"
+	apimanagement_v20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501"
+	apimanagement_v20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -17,8 +25,16 @@ type AuthorizationProvidersAuthorizationsAccessPolicyExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *AuthorizationProvidersAuthorizationsAccessPolicyExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220801.AuthorizationProvidersAuthorizationsAccessPolicy{},
-		&v20220801s.AuthorizationProvidersAuthorizationsAccessPolicy{},
-		&v20230501p.AuthorizationProvidersAuthorizationsAccessPolicy{},
-		&v20230501ps.AuthorizationProvidersAuthorizationsAccessPolicy{}}
+		&apimanagement_v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v1api20220801s.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v1api20230501p.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v1api20230501ps.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v1api20240501.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v1api20240501s.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20220801.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20220801s.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20230501p.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20230501ps.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20240501.AuthorizationProvidersAuthorizationsAccessPolicy{},
+		&apimanagement_v20240501s.AuthorizationProvidersAuthorizationsAccessPolicy{}}
 }

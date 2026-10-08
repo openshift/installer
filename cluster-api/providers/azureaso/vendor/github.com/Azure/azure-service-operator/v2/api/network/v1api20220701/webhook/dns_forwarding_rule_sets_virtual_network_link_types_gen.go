@@ -116,7 +116,12 @@ func (link *DnsForwardingRuleSetsVirtualNetworkLink) ValidateUpdate(ctx context.
 
 // createValidations validates the creation of the resource
 func (link *DnsForwardingRuleSetsVirtualNetworkLink) createValidations() []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsVirtualNetworkLink) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsVirtualNetworkLink) (admission.Warnings, error){link.validateResourceReferences, link.validateOwnerReference, link.validateSecretDestinations, link.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.DnsForwardingRuleSetsVirtualNetworkLink) (admission.Warnings, error){
+		link.validateResourceReferences,
+		link.validateOwnerReference,
+		link.validateSecretDestinations,
+		link.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

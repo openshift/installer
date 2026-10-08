@@ -4,12 +4,22 @@
 package customizations
 
 import (
-	v20220101 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101"
-	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
-	v20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
-	v20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
-	v20231230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
-	v20231230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
+	dbformysql_v1api20220101 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101"
+	dbformysql_v1api20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
+	dbformysql_v1api20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
+	dbformysql_v1api20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
+	dbformysql_v1api20231230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
+	dbformysql_v1api20231230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
+	dbformysql_v20220101 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101"
+	dbformysql_v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20220101/storage"
+	dbformysql_v20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630"
+	dbformysql_v20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/storage"
+	dbformysql_v20231230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230"
+	dbformysql_v20231230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20231230/storage"
+	dbformysql_v20241230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230"
+	dbformysql_v20241230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20241230/storage"
+	dbformysql_v20250601p "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview"
+	dbformysql_v20250601ps "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20250601preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -19,10 +29,20 @@ type FlexibleServersConfigurationExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *FlexibleServersConfigurationExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220101.FlexibleServersConfiguration{},
-		&v20220101s.FlexibleServersConfiguration{},
-		&v20230630.FlexibleServersConfiguration{},
-		&v20230630s.FlexibleServersConfiguration{},
-		&v20231230.FlexibleServersConfiguration{},
-		&v20231230s.FlexibleServersConfiguration{}}
+		&dbformysql_v1api20220101.FlexibleServersConfiguration{},
+		&dbformysql_v1api20220101s.FlexibleServersConfiguration{},
+		&dbformysql_v1api20230630.FlexibleServersConfiguration{},
+		&dbformysql_v1api20230630s.FlexibleServersConfiguration{},
+		&dbformysql_v1api20231230.FlexibleServersConfiguration{},
+		&dbformysql_v1api20231230s.FlexibleServersConfiguration{},
+		&dbformysql_v20220101.FlexibleServersConfiguration{},
+		&dbformysql_v20220101s.FlexibleServersConfiguration{},
+		&dbformysql_v20230630.FlexibleServersConfiguration{},
+		&dbformysql_v20230630s.FlexibleServersConfiguration{},
+		&dbformysql_v20231230.FlexibleServersConfiguration{},
+		&dbformysql_v20231230s.FlexibleServersConfiguration{},
+		&dbformysql_v20241230.FlexibleServersConfiguration{},
+		&dbformysql_v20241230s.FlexibleServersConfiguration{},
+		&dbformysql_v20250601p.FlexibleServersConfiguration{},
+		&dbformysql_v20250601ps.FlexibleServersConfiguration{}}
 }

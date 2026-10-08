@@ -104,7 +104,13 @@ func (administrator *ServersAdministrator) ValidateUpdate(ctx context.Context, o
 
 // createValidations validates the creation of the resource
 func (administrator *ServersAdministrator) createValidations() []func(ctx context.Context, obj *v20211101.ServersAdministrator) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersAdministrator) (admission.Warnings, error){administrator.validateResourceReferences, administrator.validateOwnerReference, administrator.validateSecretDestinations, administrator.validateConfigMapDestinations, administrator.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20211101.ServersAdministrator) (admission.Warnings, error){
+		administrator.validateResourceReferences,
+		administrator.validateOwnerReference,
+		administrator.validateSecretDestinations,
+		administrator.validateConfigMapDestinations,
+		administrator.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

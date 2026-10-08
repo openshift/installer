@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/stable/2022-07-01/dnsresolver.json
+// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/DnsResolver/stable/2022-07-01/dnsresolver.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsForwardingRulesets/{dnsForwardingRulesetName}
 type DnsForwardingRuleset struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (ruleset *DnsForwardingRuleset) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/stable/2022-07-01/dnsresolver.json
+// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/DnsResolver/stable/2022-07-01/dnsresolver.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsForwardingRulesets/{dnsForwardingRulesetName}
 type DnsForwardingRulesetList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -427,8 +428,6 @@ func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_From_DnsForwardingRul
 	if source.DnsResolverOutboundEndpoints != nil {
 		dnsResolverOutboundEndpointList := make([]SubResource, len(source.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range source.DnsResolverOutboundEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
 			var dnsResolverOutboundEndpoint SubResource
 			err := dnsResolverOutboundEndpoint.AssignProperties_From_SubResource(&dnsResolverOutboundEndpointItem)
 			if err != nil {
@@ -483,8 +482,6 @@ func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_To_DnsForwardingRules
 	if ruleset.DnsResolverOutboundEndpoints != nil {
 		dnsResolverOutboundEndpointList := make([]storage.SubResource, len(ruleset.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range ruleset.DnsResolverOutboundEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
 			var dnsResolverOutboundEndpoint storage.SubResource
 			err := dnsResolverOutboundEndpointItem.AssignProperties_To_SubResource(&dnsResolverOutboundEndpoint)
 			if err != nil {
@@ -544,8 +541,6 @@ func (ruleset *DnsForwardingRuleset_Spec) Initialize_From_DnsForwardingRuleset_S
 	if source.DnsResolverOutboundEndpoints != nil {
 		dnsResolverOutboundEndpointList := make([]SubResource, len(source.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range source.DnsResolverOutboundEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
 			var dnsResolverOutboundEndpoint SubResource
 			err := dnsResolverOutboundEndpoint.Initialize_From_SubResource_STATUS(&dnsResolverOutboundEndpointItem)
 			if err != nil {
@@ -779,8 +774,6 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_From_DnsForwardingR
 	if source.DnsResolverOutboundEndpoints != nil {
 		dnsResolverOutboundEndpointList := make([]SubResource_STATUS, len(source.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range source.DnsResolverOutboundEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
 			var dnsResolverOutboundEndpoint SubResource_STATUS
 			err := dnsResolverOutboundEndpoint.AssignProperties_From_SubResource_STATUS(&dnsResolverOutboundEndpointItem)
 			if err != nil {
@@ -851,8 +844,6 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_To_DnsForwardingRul
 	if ruleset.DnsResolverOutboundEndpoints != nil {
 		dnsResolverOutboundEndpointList := make([]storage.SubResource_STATUS, len(ruleset.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range ruleset.DnsResolverOutboundEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
 			var dnsResolverOutboundEndpoint storage.SubResource_STATUS
 			err := dnsResolverOutboundEndpointItem.AssignProperties_To_SubResource_STATUS(&dnsResolverOutboundEndpoint)
 			if err != nil {
@@ -933,8 +924,6 @@ func (operator *DnsForwardingRulesetOperatorSpec) AssignProperties_From_DnsForwa
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -951,8 +940,6 @@ func (operator *DnsForwardingRulesetOperatorSpec) AssignProperties_From_DnsForwa
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -978,8 +965,6 @@ func (operator *DnsForwardingRulesetOperatorSpec) AssignProperties_To_DnsForward
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -996,8 +981,6 @@ func (operator *DnsForwardingRulesetOperatorSpec) AssignProperties_To_DnsForward
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

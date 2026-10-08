@@ -104,10 +104,11 @@ StorageAccount: Resource
 │   │   ├── DefaultAction: *Enum (2 values)
 │   │   │   ├── "Allow"
 │   │   │   └── "Deny"
-│   │   ├── IpRules: Object (2 properties)[]
+│   │   ├── IpRules: Object (3 properties)[]
 │   │   │   ├── Action: *Enum (1 value)
 │   │   │   │   └── "Allow"
-│   │   │   └── Value: *string
+│   │   │   ├── Value: *string
+│   │   │   └── ValueFromConfig: *genruntime.ConfigMapReference
 │   │   ├── ResourceAccessRules: Object (2 properties)[]
 │   │   │   ├── ResourceReference: *genruntime.ResourceReference
 │   │   │   └── TenantId: *string

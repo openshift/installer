@@ -5,6 +5,8 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -16,27 +18,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=privatelinkservices,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={privatelinkservices/status,privatelinkservices/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.PrivateLinkService
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/privateLinkService.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/privateLinkService.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateLinkServices/{serviceName}
 type PrivateLinkService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              PrivateLinkService_Spec                                          `json:"spec,omitempty"`
-	Status            PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              PrivateLinkService_Spec   `json:"spec,omitempty"`
+	Status            PrivateLinkService_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &PrivateLinkService{}
@@ -49,6 +49,28 @@ func (service *PrivateLinkService) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (service *PrivateLinkService) SetConditions(conditions conditions.Conditions) {
 	service.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &PrivateLinkService{}
+
+// ConvertFrom populates our PrivateLinkService from the provided hub PrivateLinkService
+func (service *PrivateLinkService) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.PrivateLinkService)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PrivateLinkService but received %T instead", hub)
+	}
+
+	return service.AssignProperties_From_PrivateLinkService(source)
+}
+
+// ConvertTo populates the provided hub PrivateLinkService from our PrivateLinkService
+func (service *PrivateLinkService) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.PrivateLinkService)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PrivateLinkService but received %T instead", hub)
+	}
+
+	return service.AssignProperties_To_PrivateLinkService(destination)
 }
 
 var _ configmaps.Exporter = &PrivateLinkService{}
@@ -131,7 +153,7 @@ func (service *PrivateLinkService) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (service *PrivateLinkService) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+	return &PrivateLinkService_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -147,13 +169,13 @@ func (service *PrivateLinkService) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (service *PrivateLinkService) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+	if st, ok := status.(*PrivateLinkService_STATUS); ok {
 		service.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
+	var st PrivateLinkService_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -163,8 +185,75 @@ func (service *PrivateLinkService) SetStatus(status genruntime.ConvertibleStatus
 	return nil
 }
 
-// Hub marks that this PrivateLinkService is the hub type for conversion
-func (service *PrivateLinkService) Hub() {}
+// AssignProperties_From_PrivateLinkService populates our PrivateLinkService from the provided source PrivateLinkService
+func (service *PrivateLinkService) AssignProperties_From_PrivateLinkService(source *storage.PrivateLinkService) error {
+
+	// ObjectMeta
+	service.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec PrivateLinkService_Spec
+	err := spec.AssignProperties_From_PrivateLinkService_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkService_Spec() to populate field Spec")
+	}
+	service.Spec = spec
+
+	// Status
+	var status PrivateLinkService_STATUS
+	err = status.AssignProperties_From_PrivateLinkService_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkService_STATUS() to populate field Status")
+	}
+	service.Status = status
+
+	// Invoke the augmentConversionForPrivateLinkService interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService); ok {
+		err := augmentedService.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkService populates the provided destination PrivateLinkService from our PrivateLinkService
+func (service *PrivateLinkService) AssignProperties_To_PrivateLinkService(destination *storage.PrivateLinkService) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *service.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.PrivateLinkService_Spec
+	err := service.Spec.AssignProperties_To_PrivateLinkService_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkService_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.PrivateLinkService_STATUS
+	err = service.Status.AssignProperties_To_PrivateLinkService_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkService_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForPrivateLinkService interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService); ok {
+		err := augmentedService.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (service *PrivateLinkService) OriginalGVK() *schema.GroupVersionKind {
@@ -178,12 +267,17 @@ func (service *PrivateLinkService) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.PrivateLinkService
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/privateLinkService.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/privateLinkService.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateLinkServices/{serviceName}
 type PrivateLinkServiceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []PrivateLinkService `json:"items"`
+}
+
+type augmentConversionForPrivateLinkService interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkService) error
+	AssignPropertiesTo(dst *storage.PrivateLinkService) error
 }
 
 // Storage version of v1api20240301.PrivateLinkService_Spec
@@ -217,25 +311,353 @@ var _ genruntime.ConvertibleSpec = &PrivateLinkService_Spec{}
 
 // ConvertSpecFrom populates our PrivateLinkService_Spec from the provided source
 func (service *PrivateLinkService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == service {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.PrivateLinkService_Spec)
+	if ok {
+		// Populate our instance from source
+		return service.AssignProperties_From_PrivateLinkService_Spec(src)
 	}
 
-	return source.ConvertSpecTo(service)
+	// Convert to an intermediate form
+	src = &storage.PrivateLinkService_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = service.AssignProperties_From_PrivateLinkService_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our PrivateLinkService_Spec
 func (service *PrivateLinkService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == service {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.PrivateLinkService_Spec)
+	if ok {
+		// Populate destination from our instance
+		return service.AssignProperties_To_PrivateLinkService_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(service)
+	// Convert to an intermediate form
+	dst = &storage.PrivateLinkService_Spec{}
+	err := service.AssignProperties_To_PrivateLinkService_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20240301.PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
+// AssignProperties_From_PrivateLinkService_Spec populates our PrivateLinkService_Spec from the provided source PrivateLinkService_Spec
+func (service *PrivateLinkService_Spec) AssignProperties_From_PrivateLinkService_Spec(source *storage.PrivateLinkService_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessMode
+	if source.AccessMode != nil {
+		propertyBag.Add("AccessMode", *source.AccessMode)
+	} else {
+		propertyBag.Remove("AccessMode")
+	}
+
+	// AutoApproval
+	if source.AutoApproval != nil {
+		var autoApproval ResourceSet
+		err := autoApproval.AssignProperties_From_ResourceSet(source.AutoApproval)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSet() to populate field AutoApproval")
+		}
+		service.AutoApproval = &autoApproval
+	} else {
+		service.AutoApproval = nil
+	}
+
+	// AzureName
+	service.AzureName = source.AzureName
+
+	// DestinationIPAddress
+	service.DestinationIPAddress = genruntime.ClonePointerToString(source.DestinationIPAddress)
+
+	// EnableProxyProtocol
+	if source.EnableProxyProtocol != nil {
+		enableProxyProtocol := *source.EnableProxyProtocol
+		service.EnableProxyProtocol = &enableProxyProtocol
+	} else {
+		service.EnableProxyProtocol = nil
+	}
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation
+		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		service.ExtendedLocation = &extendedLocation
+	} else {
+		service.ExtendedLocation = nil
+	}
+
+	// Fqdns
+	service.Fqdns = genruntime.CloneSliceOfString(source.Fqdns)
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]PrivateLinkServiceIpConfiguration, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration PrivateLinkServiceIpConfiguration
+			err := ipConfiguration.AssignProperties_From_PrivateLinkServiceIpConfiguration(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceIpConfiguration() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		service.IpConfigurations = ipConfigurationList
+	} else {
+		service.IpConfigurations = nil
+	}
+
+	// LoadBalancerFrontendIpConfigurations
+	if source.LoadBalancerFrontendIpConfigurations != nil {
+		loadBalancerFrontendIpConfigurationList := make([]FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, len(source.LoadBalancerFrontendIpConfigurations))
+		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range source.LoadBalancerFrontendIpConfigurations {
+			var loadBalancerFrontendIpConfiguration FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
+			err := loadBalancerFrontendIpConfiguration.AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
+			}
+			loadBalancerFrontendIpConfigurationList[loadBalancerFrontendIpConfigurationIndex] = loadBalancerFrontendIpConfiguration
+		}
+		service.LoadBalancerFrontendIpConfigurations = loadBalancerFrontendIpConfigurationList
+	} else {
+		service.LoadBalancerFrontendIpConfigurations = nil
+	}
+
+	// Location
+	service.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PrivateLinkServiceOperatorSpec
+		err := operatorSpec.AssignProperties_From_PrivateLinkServiceOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		service.OperatorSpec = &operatorSpec
+	} else {
+		service.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	service.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		service.Owner = &owner
+	} else {
+		service.Owner = nil
+	}
+
+	// Tags
+	service.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Visibility
+	if source.Visibility != nil {
+		var visibility ResourceSet
+		err := visibility.AssignProperties_From_ResourceSet(source.Visibility)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSet() to populate field Visibility")
+		}
+		service.Visibility = &visibility
+	} else {
+		service.Visibility = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		service.PropertyBag = propertyBag
+	} else {
+		service.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_Spec interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService_Spec); ok {
+		err := augmentedService.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkService_Spec populates the provided destination PrivateLinkService_Spec from our PrivateLinkService_Spec
+func (service *PrivateLinkService_Spec) AssignProperties_To_PrivateLinkService_Spec(destination *storage.PrivateLinkService_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(service.PropertyBag)
+
+	// AccessMode
+	if propertyBag.Contains("AccessMode") {
+		var accessMode string
+		err := propertyBag.Pull("AccessMode", &accessMode)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AccessMode' from propertyBag")
+		}
+
+		destination.AccessMode = &accessMode
+	} else {
+		destination.AccessMode = nil
+	}
+
+	// AutoApproval
+	if service.AutoApproval != nil {
+		var autoApproval storage.ResourceSet
+		err := service.AutoApproval.AssignProperties_To_ResourceSet(&autoApproval)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSet() to populate field AutoApproval")
+		}
+		destination.AutoApproval = &autoApproval
+	} else {
+		destination.AutoApproval = nil
+	}
+
+	// AzureName
+	destination.AzureName = service.AzureName
+
+	// DestinationIPAddress
+	destination.DestinationIPAddress = genruntime.ClonePointerToString(service.DestinationIPAddress)
+
+	// EnableProxyProtocol
+	if service.EnableProxyProtocol != nil {
+		enableProxyProtocol := *service.EnableProxyProtocol
+		destination.EnableProxyProtocol = &enableProxyProtocol
+	} else {
+		destination.EnableProxyProtocol = nil
+	}
+
+	// ExtendedLocation
+	if service.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation
+		err := service.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// Fqdns
+	destination.Fqdns = genruntime.CloneSliceOfString(service.Fqdns)
+
+	// IpConfigurations
+	if service.IpConfigurations != nil {
+		ipConfigurationList := make([]storage.PrivateLinkServiceIpConfiguration, len(service.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range service.IpConfigurations {
+			var ipConfiguration storage.PrivateLinkServiceIpConfiguration
+			err := ipConfigurationItem.AssignProperties_To_PrivateLinkServiceIpConfiguration(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceIpConfiguration() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// LoadBalancerFrontendIpConfigurations
+	if service.LoadBalancerFrontendIpConfigurations != nil {
+		loadBalancerFrontendIpConfigurationList := make([]storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded, len(service.LoadBalancerFrontendIpConfigurations))
+		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range service.LoadBalancerFrontendIpConfigurations {
+			var loadBalancerFrontendIpConfiguration storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
+			err := loadBalancerFrontendIpConfigurationItem.AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
+			}
+			loadBalancerFrontendIpConfigurationList[loadBalancerFrontendIpConfigurationIndex] = loadBalancerFrontendIpConfiguration
+		}
+		destination.LoadBalancerFrontendIpConfigurations = loadBalancerFrontendIpConfigurationList
+	} else {
+		destination.LoadBalancerFrontendIpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(service.Location)
+
+	// OperatorSpec
+	if service.OperatorSpec != nil {
+		var operatorSpec storage.PrivateLinkServiceOperatorSpec
+		err := service.OperatorSpec.AssignProperties_To_PrivateLinkServiceOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = service.OriginalVersion
+
+	// Owner
+	if service.Owner != nil {
+		owner := service.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(service.Tags)
+
+	// Visibility
+	if service.Visibility != nil {
+		var visibility storage.ResourceSet
+		err := service.Visibility.AssignProperties_To_ResourceSet(&visibility)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSet() to populate field Visibility")
+		}
+		destination.Visibility = &visibility
+	} else {
+		destination.Visibility = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_Spec interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService_Spec); ok {
+		err := augmentedService.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240301.PrivateLinkService_STATUS
 // Private link service resource.
-type PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded struct {
+type PrivateLinkService_STATUS struct {
 	Alias                                *string                                                                 `json:"alias,omitempty"`
 	AutoApproval                         *ResourceSet_STATUS                                                     `json:"autoApproval,omitempty"`
 	Conditions                           []conditions.Condition                                                  `json:"conditions,omitempty"`
@@ -258,24 +680,416 @@ type PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	Visibility                           *ResourceSet_STATUS                                                     `json:"visibility,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &PrivateLinkService_STATUS{}
 
-// ConvertStatusFrom populates our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our PrivateLinkService_STATUS from the provided source
+func (service *PrivateLinkService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.PrivateLinkService_STATUS)
+	if ok {
+		// Populate our instance from source
+		return service.AssignProperties_From_PrivateLinkService_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(embedded)
+	// Convert to an intermediate form
+	src = &storage.PrivateLinkService_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = service.AssignProperties_From_PrivateLinkService_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded
-func (embedded *PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our PrivateLinkService_STATUS
+func (service *PrivateLinkService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.PrivateLinkService_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return service.AssignProperties_To_PrivateLinkService_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	// Convert to an intermediate form
+	dst = &storage.PrivateLinkService_STATUS{}
+	err := service.AssignProperties_To_PrivateLinkService_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrivateLinkService_STATUS populates our PrivateLinkService_STATUS from the provided source PrivateLinkService_STATUS
+func (service *PrivateLinkService_STATUS) AssignProperties_From_PrivateLinkService_STATUS(source *storage.PrivateLinkService_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessMode
+	if source.AccessMode != nil {
+		propertyBag.Add("AccessMode", *source.AccessMode)
+	} else {
+		propertyBag.Remove("AccessMode")
+	}
+
+	// Alias
+	service.Alias = genruntime.ClonePointerToString(source.Alias)
+
+	// AutoApproval
+	if source.AutoApproval != nil {
+		var autoApproval ResourceSet_STATUS
+		err := autoApproval.AssignProperties_From_ResourceSet_STATUS(source.AutoApproval)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSet_STATUS() to populate field AutoApproval")
+		}
+		service.AutoApproval = &autoApproval
+	} else {
+		service.AutoApproval = nil
+	}
+
+	// Conditions
+	service.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DestinationIPAddress
+	service.DestinationIPAddress = genruntime.ClonePointerToString(source.DestinationIPAddress)
+
+	// EnableProxyProtocol
+	if source.EnableProxyProtocol != nil {
+		enableProxyProtocol := *source.EnableProxyProtocol
+		service.EnableProxyProtocol = &enableProxyProtocol
+	} else {
+		service.EnableProxyProtocol = nil
+	}
+
+	// Etag
+	service.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation_STATUS
+		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		service.ExtendedLocation = &extendedLocation
+	} else {
+		service.ExtendedLocation = nil
+	}
+
+	// Fqdns
+	service.Fqdns = genruntime.CloneSliceOfString(source.Fqdns)
+
+	// Id
+	service.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]PrivateLinkServiceIpConfiguration_STATUS, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration PrivateLinkServiceIpConfiguration_STATUS
+			err := ipConfiguration.AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		service.IpConfigurations = ipConfigurationList
+	} else {
+		service.IpConfigurations = nil
+	}
+
+	// LoadBalancerFrontendIpConfigurations
+	if source.LoadBalancerFrontendIpConfigurations != nil {
+		loadBalancerFrontendIpConfigurationList := make([]FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded, len(source.LoadBalancerFrontendIpConfigurations))
+		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range source.LoadBalancerFrontendIpConfigurations {
+			var loadBalancerFrontendIpConfiguration FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
+			err := loadBalancerFrontendIpConfiguration.AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
+			}
+			loadBalancerFrontendIpConfigurationList[loadBalancerFrontendIpConfigurationIndex] = loadBalancerFrontendIpConfiguration
+		}
+		service.LoadBalancerFrontendIpConfigurations = loadBalancerFrontendIpConfigurationList
+	} else {
+		service.LoadBalancerFrontendIpConfigurations = nil
+	}
+
+	// Location
+	service.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	service.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NetworkInterfaces
+	if source.NetworkInterfaces != nil {
+		networkInterfaceList := make([]NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded, len(source.NetworkInterfaces))
+		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
+			var networkInterface NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
+			err := networkInterface.AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(&networkInterfaceItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field NetworkInterfaces")
+			}
+			networkInterfaceList[networkInterfaceIndex] = networkInterface
+		}
+		service.NetworkInterfaces = networkInterfaceList
+	} else {
+		service.NetworkInterfaces = nil
+	}
+
+	// PrivateEndpointConnections
+	if source.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
+			var privateEndpointConnection PrivateEndpointConnection_STATUS
+			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		service.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		service.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	service.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Tags
+	service.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	service.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Visibility
+	if source.Visibility != nil {
+		var visibility ResourceSet_STATUS
+		err := visibility.AssignProperties_From_ResourceSet_STATUS(source.Visibility)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSet_STATUS() to populate field Visibility")
+		}
+		service.Visibility = &visibility
+	} else {
+		service.Visibility = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		service.PropertyBag = propertyBag
+	} else {
+		service.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_STATUS interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService_STATUS); ok {
+		err := augmentedService.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkService_STATUS populates the provided destination PrivateLinkService_STATUS from our PrivateLinkService_STATUS
+func (service *PrivateLinkService_STATUS) AssignProperties_To_PrivateLinkService_STATUS(destination *storage.PrivateLinkService_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(service.PropertyBag)
+
+	// AccessMode
+	if propertyBag.Contains("AccessMode") {
+		var accessMode string
+		err := propertyBag.Pull("AccessMode", &accessMode)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AccessMode' from propertyBag")
+		}
+
+		destination.AccessMode = &accessMode
+	} else {
+		destination.AccessMode = nil
+	}
+
+	// Alias
+	destination.Alias = genruntime.ClonePointerToString(service.Alias)
+
+	// AutoApproval
+	if service.AutoApproval != nil {
+		var autoApproval storage.ResourceSet_STATUS
+		err := service.AutoApproval.AssignProperties_To_ResourceSet_STATUS(&autoApproval)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSet_STATUS() to populate field AutoApproval")
+		}
+		destination.AutoApproval = &autoApproval
+	} else {
+		destination.AutoApproval = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(service.Conditions)
+
+	// DestinationIPAddress
+	destination.DestinationIPAddress = genruntime.ClonePointerToString(service.DestinationIPAddress)
+
+	// EnableProxyProtocol
+	if service.EnableProxyProtocol != nil {
+		enableProxyProtocol := *service.EnableProxyProtocol
+		destination.EnableProxyProtocol = &enableProxyProtocol
+	} else {
+		destination.EnableProxyProtocol = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(service.Etag)
+
+	// ExtendedLocation
+	if service.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation_STATUS
+		err := service.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// Fqdns
+	destination.Fqdns = genruntime.CloneSliceOfString(service.Fqdns)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(service.Id)
+
+	// IpConfigurations
+	if service.IpConfigurations != nil {
+		ipConfigurationList := make([]storage.PrivateLinkServiceIpConfiguration_STATUS, len(service.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range service.IpConfigurations {
+			var ipConfiguration storage.PrivateLinkServiceIpConfiguration_STATUS
+			err := ipConfigurationItem.AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// LoadBalancerFrontendIpConfigurations
+	if service.LoadBalancerFrontendIpConfigurations != nil {
+		loadBalancerFrontendIpConfigurationList := make([]storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded, len(service.LoadBalancerFrontendIpConfigurations))
+		for loadBalancerFrontendIpConfigurationIndex, loadBalancerFrontendIpConfigurationItem := range service.LoadBalancerFrontendIpConfigurations {
+			var loadBalancerFrontendIpConfiguration storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
+			err := loadBalancerFrontendIpConfigurationItem.AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(&loadBalancerFrontendIpConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field LoadBalancerFrontendIpConfigurations")
+			}
+			loadBalancerFrontendIpConfigurationList[loadBalancerFrontendIpConfigurationIndex] = loadBalancerFrontendIpConfiguration
+		}
+		destination.LoadBalancerFrontendIpConfigurations = loadBalancerFrontendIpConfigurationList
+	} else {
+		destination.LoadBalancerFrontendIpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(service.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(service.Name)
+
+	// NetworkInterfaces
+	if service.NetworkInterfaces != nil {
+		networkInterfaceList := make([]storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded, len(service.NetworkInterfaces))
+		for networkInterfaceIndex, networkInterfaceItem := range service.NetworkInterfaces {
+			var networkInterface storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
+			err := networkInterfaceItem.AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(&networkInterface)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field NetworkInterfaces")
+			}
+			networkInterfaceList[networkInterfaceIndex] = networkInterface
+		}
+		destination.NetworkInterfaces = networkInterfaceList
+	} else {
+		destination.NetworkInterfaces = nil
+	}
+
+	// PrivateEndpointConnections
+	if service.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(service.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range service.PrivateEndpointConnections {
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
+			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		destination.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		destination.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(service.ProvisioningState)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(service.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(service.Type)
+
+	// Visibility
+	if service.Visibility != nil {
+		var visibility storage.ResourceSet_STATUS
+		err := service.Visibility.AssignProperties_To_ResourceSet_STATUS(&visibility)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSet_STATUS() to populate field Visibility")
+		}
+		destination.Visibility = &visibility
+	} else {
+		destination.Visibility = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkService_STATUS interface (if implemented) to customize the conversion
+	var serviceAsAny any = service
+	if augmentedService, ok := serviceAsAny.(augmentConversionForPrivateLinkService_STATUS); ok {
+		err := augmentedService.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateLinkService_Spec interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkService_Spec) error
+	AssignPropertiesTo(dst *storage.PrivateLinkService_Spec) error
+}
+
+type augmentConversionForPrivateLinkService_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkService_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateLinkService_STATUS) error
 }
 
 // Storage version of v1api20240301.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
@@ -287,11 +1101,133 @@ type FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded populates our FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded from the provided source FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
+func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(source *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded populates the provided destination FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded from our FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded
+func (embedded *FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded(destination *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
 // Frontend IP address of the load balancer.
 type FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded populates our FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded from our FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
@@ -301,11 +1237,123 @@ type NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded populates our NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded from our NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateEndpointConnection_STATUS
 // PrivateEndpointConnection resource.
 type PrivateEndpointConnection_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PrivateLinkServiceIpConfiguration
@@ -318,6 +1366,120 @@ type PrivateLinkServiceIpConfiguration struct {
 	PrivateIPAllocationMethod *string                                        `json:"privateIPAllocationMethod,omitempty"`
 	PropertyBag               genruntime.PropertyBag                         `json:"$propertyBag,omitempty"`
 	Subnet                    *Subnet_PrivateLinkService_SubResourceEmbedded `json:"subnet,omitempty"`
+}
+
+// AssignProperties_From_PrivateLinkServiceIpConfiguration populates our PrivateLinkServiceIpConfiguration from the provided source PrivateLinkServiceIpConfiguration
+func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_From_PrivateLinkServiceIpConfiguration(source *storage.PrivateLinkServiceIpConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	configuration.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Primary
+	if source.Primary != nil {
+		primary := *source.Primary
+		configuration.Primary = &primary
+	} else {
+		configuration.Primary = nil
+	}
+
+	// PrivateIPAddress
+	configuration.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
+
+	// PrivateIPAddressVersion
+	configuration.PrivateIPAddressVersion = genruntime.ClonePointerToString(source.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	configuration.PrivateIPAllocationMethod = genruntime.ClonePointerToString(source.PrivateIPAllocationMethod)
+
+	// Subnet
+	if source.Subnet != nil {
+		var subnet Subnet_PrivateLinkService_SubResourceEmbedded
+		err := subnet.AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded(source.Subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
+		}
+		configuration.Subnet = &subnet
+	} else {
+		configuration.Subnet = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceIpConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrivateLinkServiceIpConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkServiceIpConfiguration populates the provided destination PrivateLinkServiceIpConfiguration from our PrivateLinkServiceIpConfiguration
+func (configuration *PrivateLinkServiceIpConfiguration) AssignProperties_To_PrivateLinkServiceIpConfiguration(destination *storage.PrivateLinkServiceIpConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(configuration.Name)
+
+	// Primary
+	if configuration.Primary != nil {
+		primary := *configuration.Primary
+		destination.Primary = &primary
+	} else {
+		destination.Primary = nil
+	}
+
+	// PrivateIPAddress
+	destination.PrivateIPAddress = genruntime.ClonePointerToString(configuration.PrivateIPAddress)
+
+	// PrivateIPAddressVersion
+	destination.PrivateIPAddressVersion = genruntime.ClonePointerToString(configuration.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	destination.PrivateIPAllocationMethod = genruntime.ClonePointerToString(configuration.PrivateIPAllocationMethod)
+
+	// Subnet
+	if configuration.Subnet != nil {
+		var subnet storage.Subnet_PrivateLinkService_SubResourceEmbedded
+		err := configuration.Subnet.AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded(&subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
+		}
+		destination.Subnet = &subnet
+	} else {
+		destination.Subnet = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceIpConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrivateLinkServiceIpConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PrivateLinkServiceIpConfiguration_STATUS
@@ -336,6 +1498,144 @@ type PrivateLinkServiceIpConfiguration_STATUS struct {
 	Type                      *string                                               `json:"type,omitempty"`
 }
 
+// AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS populates our PrivateLinkServiceIpConfiguration_STATUS from the provided source PrivateLinkServiceIpConfiguration_STATUS
+func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_From_PrivateLinkServiceIpConfiguration_STATUS(source *storage.PrivateLinkServiceIpConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Etag
+	configuration.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	configuration.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	configuration.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Primary
+	if source.Primary != nil {
+		primary := *source.Primary
+		configuration.Primary = &primary
+	} else {
+		configuration.Primary = nil
+	}
+
+	// PrivateIPAddress
+	configuration.PrivateIPAddress = genruntime.ClonePointerToString(source.PrivateIPAddress)
+
+	// PrivateIPAddressVersion
+	configuration.PrivateIPAddressVersion = genruntime.ClonePointerToString(source.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	configuration.PrivateIPAllocationMethod = genruntime.ClonePointerToString(source.PrivateIPAllocationMethod)
+
+	// ProvisioningState
+	configuration.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Subnet
+	if source.Subnet != nil {
+		var subnet Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
+		err := subnet.AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source.Subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
+		}
+		configuration.Subnet = &subnet
+	} else {
+		configuration.Subnet = nil
+	}
+
+	// Type
+	configuration.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceIpConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrivateLinkServiceIpConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS populates the provided destination PrivateLinkServiceIpConfiguration_STATUS from our PrivateLinkServiceIpConfiguration_STATUS
+func (configuration *PrivateLinkServiceIpConfiguration_STATUS) AssignProperties_To_PrivateLinkServiceIpConfiguration_STATUS(destination *storage.PrivateLinkServiceIpConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(configuration.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(configuration.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(configuration.Name)
+
+	// Primary
+	if configuration.Primary != nil {
+		primary := *configuration.Primary
+		destination.Primary = &primary
+	} else {
+		destination.Primary = nil
+	}
+
+	// PrivateIPAddress
+	destination.PrivateIPAddress = genruntime.ClonePointerToString(configuration.PrivateIPAddress)
+
+	// PrivateIPAddressVersion
+	destination.PrivateIPAddressVersion = genruntime.ClonePointerToString(configuration.PrivateIPAddressVersion)
+
+	// PrivateIPAllocationMethod
+	destination.PrivateIPAllocationMethod = genruntime.ClonePointerToString(configuration.PrivateIPAllocationMethod)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(configuration.ProvisioningState)
+
+	// Subnet
+	if configuration.Subnet != nil {
+		var subnet storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
+		err := configuration.Subnet.AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(&subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded() to populate field Subnet")
+		}
+		destination.Subnet = &subnet
+	} else {
+		destination.Subnet = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(configuration.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceIpConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrivateLinkServiceIpConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PrivateLinkServiceOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type PrivateLinkServiceOperatorSpec struct {
@@ -345,11 +1645,205 @@ type PrivateLinkServiceOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression         `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_PrivateLinkServiceOperatorSpec populates our PrivateLinkServiceOperatorSpec from the provided source PrivateLinkServiceOperatorSpec
+func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_From_PrivateLinkServiceOperatorSpec(source *storage.PrivateLinkServiceOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if source.ConfigMaps != nil {
+		var configMap PrivateLinkServiceOperatorConfigMaps
+		err := configMap.AssignProperties_From_PrivateLinkServiceOperatorConfigMaps(source.ConfigMaps)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateLinkServiceOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		operator.ConfigMaps = &configMap
+	} else {
+		operator.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateLinkServiceOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkServiceOperatorSpec populates the provided destination PrivateLinkServiceOperatorSpec from our PrivateLinkServiceOperatorSpec
+func (operator *PrivateLinkServiceOperatorSpec) AssignProperties_To_PrivateLinkServiceOperatorSpec(destination *storage.PrivateLinkServiceOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if operator.ConfigMaps != nil {
+		var configMap storage.PrivateLinkServiceOperatorConfigMaps
+		err := operator.ConfigMaps.AssignProperties_To_PrivateLinkServiceOperatorConfigMaps(&configMap)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		destination.ConfigMaps = &configMap
+	} else {
+		destination.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrivateLinkServiceOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.ResourceSet
 // The base resource set for visibility and auto-approval.
 type ResourceSet struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Subscriptions []string               `json:"subscriptions,omitempty"`
+}
+
+// AssignProperties_From_ResourceSet populates our ResourceSet from the provided source ResourceSet
+func (resourceSet *ResourceSet) AssignProperties_From_ResourceSet(source *storage.ResourceSet) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Subscriptions
+	resourceSet.Subscriptions = genruntime.CloneSliceOfString(source.Subscriptions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resourceSet.PropertyBag = propertyBag
+	} else {
+		resourceSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceSet interface (if implemented) to customize the conversion
+	var resourceSetAsAny any = resourceSet
+	if augmentedResourceSet, ok := resourceSetAsAny.(augmentConversionForResourceSet); ok {
+		err := augmentedResourceSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ResourceSet populates the provided destination ResourceSet from our ResourceSet
+func (resourceSet *ResourceSet) AssignProperties_To_ResourceSet(destination *storage.ResourceSet) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resourceSet.PropertyBag)
+
+	// Subscriptions
+	destination.Subscriptions = genruntime.CloneSliceOfString(resourceSet.Subscriptions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceSet interface (if implemented) to customize the conversion
+	var resourceSetAsAny any = resourceSet
+	if augmentedResourceSet, ok := resourceSetAsAny.(augmentConversionForResourceSet); ok {
+		err := augmentedResourceSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.ResourceSet_STATUS
@@ -359,10 +1853,177 @@ type ResourceSet_STATUS struct {
 	Subscriptions []string               `json:"subscriptions,omitempty"`
 }
 
+// AssignProperties_From_ResourceSet_STATUS populates our ResourceSet_STATUS from the provided source ResourceSet_STATUS
+func (resourceSet *ResourceSet_STATUS) AssignProperties_From_ResourceSet_STATUS(source *storage.ResourceSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Subscriptions
+	resourceSet.Subscriptions = genruntime.CloneSliceOfString(source.Subscriptions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resourceSet.PropertyBag = propertyBag
+	} else {
+		resourceSet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceSet_STATUS interface (if implemented) to customize the conversion
+	var resourceSetAsAny any = resourceSet
+	if augmentedResourceSet, ok := resourceSetAsAny.(augmentConversionForResourceSet_STATUS); ok {
+		err := augmentedResourceSet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ResourceSet_STATUS populates the provided destination ResourceSet_STATUS from our ResourceSet_STATUS
+func (resourceSet *ResourceSet_STATUS) AssignProperties_To_ResourceSet_STATUS(destination *storage.ResourceSet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resourceSet.PropertyBag)
+
+	// Subscriptions
+	destination.Subscriptions = genruntime.CloneSliceOfString(resourceSet.Subscriptions)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceSet_STATUS interface (if implemented) to customize the conversion
+	var resourceSetAsAny any = resourceSet
+	if augmentedResourceSet, ok := resourceSetAsAny.(augmentConversionForResourceSet_STATUS); ok {
+		err := augmentedResourceSet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded) error
+}
+
+type augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.FrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.NetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded) error
+}
+
+type augmentConversionForPrivateEndpointConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS) error
+}
+
+type augmentConversionForPrivateLinkServiceIpConfiguration interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkServiceIpConfiguration) error
+	AssignPropertiesTo(dst *storage.PrivateLinkServiceIpConfiguration) error
+}
+
+type augmentConversionForPrivateLinkServiceIpConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkServiceIpConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateLinkServiceIpConfiguration_STATUS) error
+}
+
+type augmentConversionForPrivateLinkServiceOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkServiceOperatorSpec) error
+	AssignPropertiesTo(dst *storage.PrivateLinkServiceOperatorSpec) error
+}
+
+type augmentConversionForResourceSet interface {
+	AssignPropertiesFrom(src *storage.ResourceSet) error
+	AssignPropertiesTo(dst *storage.ResourceSet) error
+}
+
+type augmentConversionForResourceSet_STATUS interface {
+	AssignPropertiesFrom(src *storage.ResourceSet_STATUS) error
+	AssignPropertiesTo(dst *storage.ResourceSet_STATUS) error
+}
+
 // Storage version of v1api20240301.PrivateLinkServiceOperatorConfigMaps
 type PrivateLinkServiceOperatorConfigMaps struct {
 	Alias       *genruntime.ConfigMapDestination `json:"alias,omitempty"`
 	PropertyBag genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrivateLinkServiceOperatorConfigMaps populates our PrivateLinkServiceOperatorConfigMaps from the provided source PrivateLinkServiceOperatorConfigMaps
+func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_From_PrivateLinkServiceOperatorConfigMaps(source *storage.PrivateLinkServiceOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Alias
+	if source.Alias != nil {
+		alias := source.Alias.Copy()
+		maps.Alias = &alias
+	} else {
+		maps.Alias = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		maps.PropertyBag = propertyBag
+	} else {
+		maps.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForPrivateLinkServiceOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateLinkServiceOperatorConfigMaps populates the provided destination PrivateLinkServiceOperatorConfigMaps from our PrivateLinkServiceOperatorConfigMaps
+func (maps *PrivateLinkServiceOperatorConfigMaps) AssignProperties_To_PrivateLinkServiceOperatorConfigMaps(destination *storage.PrivateLinkServiceOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(maps.PropertyBag)
+
+	// Alias
+	if maps.Alias != nil {
+		alias := maps.Alias.Copy()
+		destination.Alias = &alias
+	} else {
+		destination.Alias = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateLinkServiceOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForPrivateLinkServiceOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.Subnet_PrivateLinkService_SubResourceEmbedded
@@ -374,11 +2035,148 @@ type Subnet_PrivateLinkService_SubResourceEmbedded struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded populates our Subnet_PrivateLinkService_SubResourceEmbedded from the provided source Subnet_PrivateLinkService_SubResourceEmbedded
+func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_PrivateLinkService_SubResourceEmbedded(source *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded populates the provided destination Subnet_PrivateLinkService_SubResourceEmbedded from our Subnet_PrivateLinkService_SubResourceEmbedded
+func (embedded *Subnet_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_PrivateLinkService_SubResourceEmbedded(destination *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
 // Subnet in a virtual network resource.
 type Subnet_STATUS_PrivateLinkService_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded populates our Subnet_STATUS_PrivateLinkService_SubResourceEmbedded from the provided source Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_From_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(source *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded populates the provided destination Subnet_STATUS_PrivateLinkService_SubResourceEmbedded from our Subnet_STATUS_PrivateLinkService_SubResourceEmbedded
+func (embedded *Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) AssignProperties_To_Subnet_STATUS_PrivateLinkService_SubResourceEmbedded(destination *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateLinkServiceOperatorConfigMaps interface {
+	AssignPropertiesFrom(src *storage.PrivateLinkServiceOperatorConfigMaps) error
+	AssignPropertiesTo(dst *storage.PrivateLinkServiceOperatorConfigMaps) error
+}
+
+type augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.Subnet_PrivateLinkService_SubResourceEmbedded) error
+}
+
+type augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.Subnet_STATUS_PrivateLinkService_SubResourceEmbedded) error
 }
 
 func init() {

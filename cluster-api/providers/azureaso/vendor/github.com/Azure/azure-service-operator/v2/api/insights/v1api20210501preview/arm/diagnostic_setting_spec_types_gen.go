@@ -31,6 +31,7 @@ func (setting *DiagnosticSetting_Spec) GetType() string {
 
 // The diagnostic settings.
 type DiagnosticSettings struct {
+	// EventHubAuthorizationRuleId: The resource Id for the event hub authorization rule.
 	EventHubAuthorizationRuleId *string `json:"eventHubAuthorizationRuleId,omitempty"`
 
 	// EventHubName: The name of the event hub. If none is specified, the default event hub will be selected.
@@ -42,16 +43,25 @@ type DiagnosticSettings struct {
 	LogAnalyticsDestinationType *string `json:"logAnalyticsDestinationType,omitempty"`
 
 	// Logs: The list of logs settings.
-	Logs                 []LogSettings `json:"logs,omitempty"`
-	MarketplacePartnerId *string       `json:"marketplacePartnerId,omitempty"`
+	Logs []LogSettings `json:"logs,omitempty"`
+
+	// MarketplacePartnerId: The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic
+	// Logs.
+	MarketplacePartnerId *string `json:"marketplacePartnerId,omitempty"`
 
 	// Metrics: The list of metric settings.
 	Metrics []MetricSettings `json:"metrics,omitempty"`
 
 	// ServiceBusRuleId: The service bus rule Id of the diagnostic setting. This is here to maintain backwards compatibility.
 	ServiceBusRuleId *string `json:"serviceBusRuleId,omitempty"`
+
+	// StorageAccountId: The resource ID of the storage account to which you would like to send Diagnostic Logs.
 	StorageAccountId *string `json:"storageAccountId,omitempty"`
-	WorkspaceId      *string `json:"workspaceId,omitempty"`
+
+	// WorkspaceId: The full ARM resource ID of the Log Analytics workspace to which you would like to send Diagnostic Logs.
+	// Example:
+	// /subscriptions/4b9e8510-67ab-4e9a-95a9-e2f1e570ea9c/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/viruela2
+	WorkspaceId *string `json:"workspaceId,omitempty"`
 }
 
 // Part of MultiTenantDiagnosticSettings. Specifies the settings for a particular log.

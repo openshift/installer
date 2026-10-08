@@ -116,7 +116,13 @@ func (value *NamedValue) ValidateUpdate(ctx context.Context, oldResource runtime
 
 // createValidations validates the creation of the resource
 func (value *NamedValue) createValidations() []func(ctx context.Context, obj *v20220801.NamedValue) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220801.NamedValue) (admission.Warnings, error){value.validateResourceReferences, value.validateOwnerReference, value.validateSecretDestinations, value.validateConfigMapDestinations, value.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20220801.NamedValue) (admission.Warnings, error){
+		value.validateResourceReferences,
+		value.validateOwnerReference,
+		value.validateSecretDestinations,
+		value.validateConfigMapDestinations,
+		value.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

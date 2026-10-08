@@ -116,7 +116,12 @@ func (cluster *Cluster) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (cluster *Cluster) createValidations() []func(ctx context.Context, obj *v20230815.Cluster) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230815.Cluster) (admission.Warnings, error){cluster.validateResourceReferences, cluster.validateOwnerReference, cluster.validateSecretDestinations, cluster.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230815.Cluster) (admission.Warnings, error){
+		cluster.validateResourceReferences,
+		cluster.validateOwnerReference,
+		cluster.validateSecretDestinations,
+		cluster.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
