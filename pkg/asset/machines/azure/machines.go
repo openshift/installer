@@ -396,6 +396,10 @@ func getVMNetworkingType(value string) bool {
 }
 
 func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfile {
+	if !mpool.EncryptionAtHost && (mpool.Settings == nil || mpool.Settings.SecurityType == "") {
+		return nil
+	}
+
 	securityProfile := &machineapi.SecurityProfile{}
 
 	if mpool.EncryptionAtHost {
