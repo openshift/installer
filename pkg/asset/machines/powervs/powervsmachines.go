@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 
 	"github.com/openshift/installer/pkg/asset"
@@ -29,28 +29,27 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 		total = *pool.Replicas
 	}
 
+	// Resolve the catalog image name from osImageStream (defaults to RHEL-CoreOS-9).
+	image := OSImageNameFromStream(ic.OSImageStream)
+
 	var (
 		result         []*asset.RuntimeFile
-		image          string
-		service        capibm.IBMPowerVSResourceReference
+		service        capibm.ResourceIdentifier
 		name           string
 		powerVSMachine *capibm.IBMPowerVSMachine
 		dataSecret     string
 		machine        *capi.Machine
 	)
 
-	// Note: This will be created later
-	image = fmt.Sprintf("rhcos-%s", clusterID)
-
 	if ic.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
 
-		service = capibm.IBMPowerVSResourceReference{
-			Name: &serviceName,
+		service = capibm.ResourceIdentifier{
+			Name: serviceName,
 		}
 	} else {
-		service = capibm.IBMPowerVSResourceReference{
-			ID: &ic.PowerVS.ServiceInstanceGUID,
+		service = capibm.ResourceIdentifier{
+			ID: ic.PowerVS.ServiceInstanceGUID,
 		}
 	}
 
@@ -95,7 +94,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 }
 
 // GenerateMachine creates a capibm.IBMPowerVSMachine struct.
-func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceReference, mpool *powervs.MachinePool, name string, image string) *capibm.IBMPowerVSMachine {
+func GenerateMachine(ic *types.InstallConfig, service capibm.ResourceIdentifier, mpool *powervs.MachinePool, name string, image string) *capibm.IBMPowerVSMachine {
 	machine := &capibm.IBMPowerVSMachine{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: capibm.GroupVersion.String(),
@@ -109,11 +108,13 @@ func GenerateMachine(ic *types.InstallConfig, service capibm.IBMPowerVSResourceR
 			},
 		},
 		Spec: capibm.IBMPowerVSMachineSpec{
-			ServiceInstanceID: ic.PowerVS.ServiceInstanceGUID,
-			ServiceInstance:   &service,
-			SSHKey:            "",
-			ImageRef: &v1.LocalObjectReference{
-				Name: image,
+			Workspace: service,
+			SSHKey:    "",
+			Image: capibm.IBMPowerVSMachineImage{
+				Type: capibm.ImageSourceTypeStockImage,
+				StockImage: capibm.ResourceIdentifier{
+					Name: image,
+				},
 			},
 			SystemType:    mpool.SysType,
 			ProcessorType: capibm.PowerVSProcessorType(mpool.ProcType),
