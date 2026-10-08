@@ -84,7 +84,16 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.rosaEnabled)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.availableUpgrades != nil
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.availableChannels != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("available_channels")
+		WriteStringList(object.availableChannels, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6] && object.availableUpgrades != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -93,7 +102,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		WriteStringList(object.availableUpgrades, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -102,7 +111,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.channelGroup)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,7 +120,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.default_)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -120,7 +129,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.enabled)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -129,7 +138,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString((object.endOfLifeTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -138,7 +147,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.hostedControlPlaneDefault)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -147,7 +156,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.hostedControlPlaneEnabled)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12] && object.imageOverrides != nil
+	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13] && object.imageOverrides != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -156,7 +165,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		WriteImageOverrides(object.imageOverrides, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13]
+	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -165,7 +174,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.rawID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
+	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -174,7 +183,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.releaseImage)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15] && object.releaseImages != nil
+	present_ = len(object.fieldSet_) > 16 && object.fieldSet_[16] && object.releaseImages != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -183,7 +192,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 		WriteReleaseImages(object.releaseImages, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 16 && object.fieldSet_[16]
+	present_ = len(object.fieldSet_) > 17 && object.fieldSet_[17]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -209,7 +218,7 @@ func UnmarshalVersion(source interface{}) (object *Version, err error) {
 // ReadVersion reads a value of the 'version' type from the given iterator.
 func ReadVersion(iterator *jsoniter.Iterator) *Version {
 	object := &Version{
-		fieldSet_: make([]bool, 17),
+		fieldSet_: make([]bool, 18),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -236,22 +245,26 @@ func ReadVersion(iterator *jsoniter.Iterator) *Version {
 			value := iterator.ReadBool()
 			object.rosaEnabled = value
 			object.fieldSet_[4] = true
+		case "available_channels":
+			value := ReadStringList(iterator)
+			object.availableChannels = value
+			object.fieldSet_[5] = true
 		case "available_upgrades":
 			value := ReadStringList(iterator)
 			object.availableUpgrades = value
-			object.fieldSet_[5] = true
+			object.fieldSet_[6] = true
 		case "channel_group":
 			value := iterator.ReadString()
 			object.channelGroup = value
-			object.fieldSet_[6] = true
+			object.fieldSet_[7] = true
 		case "default":
 			value := iterator.ReadBool()
 			object.default_ = value
-			object.fieldSet_[7] = true
+			object.fieldSet_[8] = true
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[9] = true
 		case "end_of_life_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -259,35 +272,35 @@ func ReadVersion(iterator *jsoniter.Iterator) *Version {
 				iterator.ReportError("", err.Error())
 			}
 			object.endOfLifeTimestamp = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[10] = true
 		case "hosted_control_plane_default":
 			value := iterator.ReadBool()
 			object.hostedControlPlaneDefault = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[11] = true
 		case "hosted_control_plane_enabled":
 			value := iterator.ReadBool()
 			object.hostedControlPlaneEnabled = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[12] = true
 		case "image_overrides":
 			value := ReadImageOverrides(iterator)
 			object.imageOverrides = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[13] = true
 		case "raw_id":
 			value := iterator.ReadString()
 			object.rawID = value
-			object.fieldSet_[13] = true
+			object.fieldSet_[14] = true
 		case "release_image":
 			value := iterator.ReadString()
 			object.releaseImage = value
-			object.fieldSet_[14] = true
+			object.fieldSet_[15] = true
 		case "release_images":
 			value := ReadReleaseImages(iterator)
 			object.releaseImages = value
-			object.fieldSet_[15] = true
+			object.fieldSet_[16] = true
 		case "wif_enabled":
 			value := iterator.ReadBool()
 			object.wifEnabled = value
-			object.fieldSet_[16] = true
+			object.fieldSet_[17] = true
 		default:
 			iterator.ReadAny()
 		}

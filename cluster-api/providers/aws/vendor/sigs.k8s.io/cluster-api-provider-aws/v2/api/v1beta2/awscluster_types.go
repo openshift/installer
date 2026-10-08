@@ -183,6 +183,19 @@ var (
 	LoadBalancerTypeDisabled = LoadBalancerType("disabled")
 )
 
+// AWSLoadBalancerDNSResolutionCheck specifies the behavior for checking that the load balancer's
+// DNS name is resolvable.
+type AWSLoadBalancerDNSResolutionCheck string
+
+const (
+	// AWSLoadBalancerDNSResolutionCheckNone disables the DNS resolution verification step.
+	AWSLoadBalancerDNSResolutionCheckNone AWSLoadBalancerDNSResolutionCheck = "None"
+
+	// AWSLoadBalancerDNSResolutionCheckEnabled performs a DNS lookup against the load balancer's
+	// FQDN to ensure the record has propagated and is reachable.
+	AWSLoadBalancerDNSResolutionCheckEnabled AWSLoadBalancerDNSResolutionCheck = "Enabled"
+)
+
 // AWSLoadBalancerSpec defines the desired state of an AWS load balancer.
 type AWSLoadBalancerSpec struct {
 	// Name sets the name of the classic ELB load balancer. As per AWS, the name must be unique
@@ -262,6 +275,13 @@ type AWSLoadBalancerSpec struct {
 	// +kubebuilder:validation:Enum=ipv4;ipv6
 	// +optional
 	TargetGroupIPType *TargetGroupIPType `json:"targetGroupIPType,omitempty"`
+
+	// DNSResolutionCheck configures the behavior for checking the load balancer DNS resolution.
+	// Set to "None" to disable the check.
+	// If omitted, the DNS resolution check is enabled.
+	// +kubebuilder:validation:Enum=None;Enabled
+	// +optional
+	DNSResolutionCheck *AWSLoadBalancerDNSResolutionCheck `json:"dnsResolutionCheck,omitempty"`
 }
 
 // AdditionalListenerSpec defines the desired state of an

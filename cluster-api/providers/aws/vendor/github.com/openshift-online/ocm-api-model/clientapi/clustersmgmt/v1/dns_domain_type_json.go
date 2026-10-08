@@ -66,7 +66,16 @@ func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		count++
 	}
 	var present_ bool
-	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3] && object.cluster != nil
+	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("cloud_provider")
+		stream.WriteString(string(object.cloudProvider))
+		count++
+	}
+	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4] && object.cluster != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -75,7 +84,7 @@ func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		WriteClusterLink(object.cluster, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4]
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -84,7 +93,16 @@ func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		stream.WriteString(string(object.clusterArch))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.organization != nil
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6] && object.gcp != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("gcp")
+		WriteGcpDnsDomain(object.gcp, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7] && object.organization != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -93,7 +111,7 @@ func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		WriteOrganizationLink(object.organization, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -102,7 +120,7 @@ func WriteDNSDomain(object *DNSDomain, stream *jsoniter.Stream) {
 		stream.WriteString((object.reservedAtTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -128,7 +146,7 @@ func UnmarshalDNSDomain(source interface{}) (object *DNSDomain, err error) {
 // ReadDNSDomain reads a value of the 'DNS_domain' type from the given iterator.
 func ReadDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 	object := &DNSDomain{
-		fieldSet_: make([]bool, 8),
+		fieldSet_: make([]bool, 10),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -147,19 +165,28 @@ func ReadDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 		case "href":
 			object.href = iterator.ReadString()
 			object.fieldSet_[2] = true
+		case "cloud_provider":
+			text := iterator.ReadString()
+			value := DnsCloudProvider(text)
+			object.cloudProvider = value
+			object.fieldSet_[3] = true
 		case "cluster":
 			value := ReadClusterLink(iterator)
 			object.cluster = value
-			object.fieldSet_[3] = true
+			object.fieldSet_[4] = true
 		case "cluster_arch":
 			text := iterator.ReadString()
 			value := ClusterArchitecture(text)
 			object.clusterArch = value
-			object.fieldSet_[4] = true
+			object.fieldSet_[5] = true
+		case "gcp":
+			value := ReadGcpDnsDomain(iterator)
+			object.gcp = value
+			object.fieldSet_[6] = true
 		case "organization":
 			value := ReadOrganizationLink(iterator)
 			object.organization = value
-			object.fieldSet_[5] = true
+			object.fieldSet_[7] = true
 		case "reserved_at_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -167,11 +194,11 @@ func ReadDNSDomain(iterator *jsoniter.Iterator) *DNSDomain {
 				iterator.ReportError("", err.Error())
 			}
 			object.reservedAtTimestamp = value
-			object.fieldSet_[6] = true
+			object.fieldSet_[8] = true
 		case "user_defined":
 			value := iterator.ReadBool()
 			object.userDefined = value
-			object.fieldSet_[7] = true
+			object.fieldSet_[9] = true
 		default:
 			iterator.ReadAny()
 		}

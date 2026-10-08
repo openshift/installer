@@ -276,6 +276,9 @@ type AWSManagedControlPlaneStatus struct {
 	// associated identity provider
 	// +optional
 	IdentityProviderStatus IdentityProviderStatus `json:"identityProviderStatus,omitempty"`
+	// ObservedGeneration is the latest generation observed by the controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true

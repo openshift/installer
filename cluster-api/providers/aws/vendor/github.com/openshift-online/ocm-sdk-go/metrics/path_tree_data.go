@@ -162,6 +162,9 @@ var pathTreeData = `{
         "clusters": {
           "-": {
             "autoscaler": null,
+            "control_plane_upgrade_policies": {
+              "-": null
+            },
             "external_auth_config": {
               "external_auths": {
                 "-": null
@@ -172,13 +175,20 @@ var pathTreeData = `{
             },
             "node_pools": {
               "-": {
-                "status": null
+                "status": null,
+                "upgrade_policies": {
+                  "-": null
+                }
               }
             },
+            "provision_shard": null,
             "status": null
           }
         },
         "managed_identities_requirements": null,
+        "provision_shards": {
+          "-": null
+        },
         "versions": {
           "-": null
         }
@@ -363,6 +373,9 @@ var pathTreeData = `{
             },
             "vpc": null
           }
+        },
+        "deleted_clusters": {
+          "-": null
         },
         "dns_domains": {
           "-": null

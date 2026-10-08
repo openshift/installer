@@ -1,8 +1,12 @@
 package rosa
 
 import (
+	"fmt"
+	"strings"
+
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	ocmerrors "github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift/rosa/pkg/ocm"
 	errors "github.com/zgalor/weberr"
 )
 
@@ -22,6 +26,26 @@ func IsNodePoolReady(nodePool *cmv1.NodePool) bool {
 	}
 
 	return false
+}
+
+// CreateVersionID creates a version ID based on the version, channelGroup, and channel.
+// If channel is set, it takes priority over channelGroup (e.g., "fast-4.22" -> channelGroup "fast").
+// If channelGroup is set and channel is not, channelGroup is used.
+// If neither is set, the default channel group ("stable") behavior applies.
+func CreateVersionID(version string, channelGroup string, channel string) string {
+	if channel != "" {
+		if idx := strings.Index(channel, "-"); idx > 0 {
+			channelGroup = channel[:idx]
+		}
+	}
+	if channelGroup == "" {
+		channelGroup = ocm.DefaultChannelGroup
+	}
+	versionID := fmt.Sprintf("%s%s", ocm.VersionPrefix, version)
+	if channelGroup != ocm.DefaultChannelGroup {
+		versionID = fmt.Sprintf("%s-%s", versionID, channelGroup)
+	}
+	return versionID
 }
 
 func handleErr(res *ocmerrors.Error, err error) error {

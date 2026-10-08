@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/endpoints"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/cache"
 )
 
 const (
@@ -124,6 +125,15 @@ func GenerateAmiName(amiNameFormat, baseOS, kubernetesVersion string) (string, e
 
 // Determine architecture based on instance type.
 func (s *Service) pickArchitectureForInstanceType(instanceType ec2types.InstanceType) (string, error) {
+	logger := s.scope.GetLogger().WithValues("instance type", instanceType)
+
+	if s.InstanceTypeArchitectureCache != nil {
+		if entry, ok := s.InstanceTypeArchitectureCache.Has(string(instanceType)); ok {
+			logger.Info("Chosen architecture from cache", "architecture", entry.Architecture)
+			return entry.Architecture, nil
+		}
+	}
+
 	descInstanceTypeInput := &ec2.DescribeInstanceTypesInput{
 		InstanceTypes: []ec2types.InstanceType{instanceType},
 	}
@@ -144,7 +154,7 @@ func (s *Service) pickArchitectureForInstanceType(instanceType ec2types.Instance
 
 	supportedArchs := describeInstanceTypeResult.InstanceTypes[0].ProcessorInfo.SupportedArchitectures
 
-	logger := s.scope.GetLogger().WithValues("instance type", instanceType, "supported architectures", supportedArchs)
+	logger = logger.WithValues("supportedArchs", supportedArchs)
 	logger.Info("Obtained a list of supported architectures for instance type")
 
 	// Loop over every supported architecture for the instance type
@@ -163,6 +173,13 @@ archCheck:
 
 	if architecture == "" {
 		return "", fmt.Errorf("unable to find preferred architecture for instance type %q", instanceType)
+	}
+
+	if s.InstanceTypeArchitectureCache != nil {
+		s.InstanceTypeArchitectureCache.Add(cache.InstanceTypeArchitectureCacheEntry{
+			InstanceType: instanceType,
+			Architecture: architecture,
+		})
 	}
 
 	logger.Info("Chosen architecture", "architecture", architecture)

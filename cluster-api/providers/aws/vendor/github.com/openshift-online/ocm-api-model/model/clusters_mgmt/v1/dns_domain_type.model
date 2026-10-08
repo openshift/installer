@@ -30,4 +30,10 @@ class DNSDomain {
 
     // Signals which cluster architecture the domain is ready for.
     ClusterArch ClusterArchitecture
+
+    // Signals which cloud provider the domain is ready for.
+    CloudProvider DnsCloudProvider
+    
+    // Gcp contains Google Cloud Platform-specific DNS domain configuration.
+	  Gcp GcpDnsDomain
 }

@@ -31,8 +31,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
@@ -260,7 +262,7 @@ func buildProvidersForRef(
 			return providers, err
 		}
 		log.Trace("Principal retrieved")
-		canUse, err := isClusterPermittedToUsePrincipal(k8sClient, roleIdentity.Spec.AllowedNamespaces, clusterScoper.Namespace())
+		canUse, err := isClusterPermittedToUsePrincipal(k8sClient, roleIdentity.Spec.AllowedNamespaces, clusterScoper.Namespace(), clusterScoper.InfraCluster())
 		if err != nil {
 			return providers, err
 		}
@@ -337,7 +339,7 @@ func buildAWSClusterStaticIdentity(ctx context.Context, identityObjectKey client
 		return nil, errors.Wrapf(err, "failed to patch secret name:%s namespace:%s", secret.Name, secret.Namespace)
 	}
 
-	canUse, err := isClusterPermittedToUsePrincipal(k8sClient, staticPrincipal.Spec.AllowedNamespaces, clusterScoper.Namespace())
+	canUse, err := isClusterPermittedToUsePrincipal(k8sClient, staticPrincipal.Spec.AllowedNamespaces, clusterScoper.Namespace(), clusterScoper.InfraCluster())
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +366,7 @@ func buildAWSClusterControllerIdentity(ctx context.Context, identityObjectKey cl
 		return err
 	}
 
-	canUse, err := isClusterPermittedToUsePrincipal(k8sClient, controllerIdentity.Spec.AllowedNamespaces, clusterScoper.Namespace())
+	canUse, err := isClusterPermittedToUsePrincipal(k8sClient, controllerIdentity.Spec.AllowedNamespaces, clusterScoper.Namespace(), clusterScoper.InfraCluster())
 	if err != nil {
 		return err
 	}
@@ -386,7 +388,34 @@ func getProvidersForCluster(ctx context.Context, k8sClient client.Client, cluste
 	return providers, nil
 }
 
-func isClusterPermittedToUsePrincipal(k8sClient client.Client, allowedNs *infrav1.AllowedNamespaces, clusterNamespace string) (bool, error) {
+func isClusterScopedResource(k8sClient client.Client, obj client.Object) (bool, error) {
+	gvk, err := apiutil.GVKForObject(obj, k8sClient.Scheme())
+	if err != nil {
+		return false, fmt.Errorf("unable to determine resource type for %T: %w", obj, err)
+	}
+
+	restMapper := k8sClient.RESTMapper()
+	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return false, fmt.Errorf("resource type %s is not registered in the cluster, ensure the CRD is installed: %w", gvk.String(), err)
+	}
+	if mapping == nil || mapping.Scope == nil {
+		return false, fmt.Errorf("unable to determine scope for %s: mapping returned nil (this should not happen)", gvk.String())
+	}
+
+	return mapping.Scope.Name() == meta.RESTScopeNameRoot, nil
+}
+
+func isClusterPermittedToUsePrincipal(k8sClient client.Client, allowedNs *infrav1.AllowedNamespaces, clusterNamespace string, obj client.Object) (bool, error) {
+	// Cluster-scoped resources bypass allowedNamespaces checks.
+	isClusterScoped, err := isClusterScopedResource(k8sClient, obj)
+	if err != nil {
+		return false, fmt.Errorf("failed to determine resource scope: %w", err)
+	}
+	if isClusterScoped {
+		return true, nil
+	}
+
 	// nil value does not match with any namespaces
 	if allowedNs == nil {
 		return false, nil

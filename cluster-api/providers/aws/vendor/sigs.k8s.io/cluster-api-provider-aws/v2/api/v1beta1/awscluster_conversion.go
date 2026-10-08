@@ -199,6 +199,7 @@ func restoreControlPlaneLoadBalancer(restored, dst *infrav1.AWSLoadBalancerSpec)
 	dst.CrossZoneLoadBalancing = restored.CrossZoneLoadBalancing
 	dst.Subnets = restored.Subnets
 	dst.TargetGroupIPType = restored.TargetGroupIPType
+	dst.DNSResolutionCheck = restored.DNSResolutionCheck
 }
 
 // ConvertFrom converts the v1beta1 AWSCluster receiver to a v1beta1 AWSCluster.

@@ -131,7 +131,16 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		stream.WriteBool(object.default_)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.excludedNamespaces != nil
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.excludedNamespaceSelectors != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("excluded_namespace_selectors")
+		WriteNamespaceSelectorList(object.excludedNamespaceSelectors, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9] && object.excludedNamespaces != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -140,7 +149,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		WriteStringList(object.excludedNamespaces, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -149,7 +158,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		stream.WriteString(string(object.listening))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -158,7 +167,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		stream.WriteString(string(object.loadBalancerType))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -167,7 +176,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		stream.WriteString(string(object.routeNamespaceOwnershipPolicy))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12] && object.routeSelectors != nil
+	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13] && object.routeSelectors != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -196,7 +205,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 		}
 		count++
 	}
-	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13]
+	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -222,7 +231,7 @@ func UnmarshalIngress(source interface{}) (object *Ingress, err error) {
 // ReadIngress reads a value of the 'ingress' type from the given iterator.
 func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
 	object := &Ingress{
-		fieldSet_: make([]bool, 14),
+		fieldSet_: make([]bool, 15),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -269,25 +278,29 @@ func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
 			value := iterator.ReadBool()
 			object.default_ = value
 			object.fieldSet_[7] = true
+		case "excluded_namespace_selectors":
+			value := ReadNamespaceSelectorList(iterator)
+			object.excludedNamespaceSelectors = value
+			object.fieldSet_[8] = true
 		case "excluded_namespaces":
 			value := ReadStringList(iterator)
 			object.excludedNamespaces = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[9] = true
 		case "listening":
 			text := iterator.ReadString()
 			value := ListeningMethod(text)
 			object.listening = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[10] = true
 		case "load_balancer_type":
 			text := iterator.ReadString()
 			value := LoadBalancerFlavor(text)
 			object.loadBalancerType = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[11] = true
 		case "route_namespace_ownership_policy":
 			text := iterator.ReadString()
 			value := NamespaceOwnershipPolicy(text)
 			object.routeNamespaceOwnershipPolicy = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[12] = true
 		case "route_selectors":
 			value := map[string]string{}
 			for {
@@ -299,12 +312,12 @@ func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
 				value[key] = item
 			}
 			object.routeSelectors = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[13] = true
 		case "route_wildcard_policy":
 			text := iterator.ReadString()
 			value := WildcardPolicy(text)
 			object.routeWildcardPolicy = value
-			object.fieldSet_[13] = true
+			object.fieldSet_[14] = true
 		default:
 			iterator.ReadAny()
 		}

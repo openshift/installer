@@ -71,6 +71,17 @@ const (
 	Nightly ChannelGroupType = "nightly"
 )
 
+// FIPSState represents the FIPS mode for the ROSA Control Plane.
+type FIPSState string
+
+const (
+	// FIPSEnabled indicates FIPS is enabled
+	FIPSEnabled FIPSState = "Enabled"
+
+	// FIPSDisabled indicates FIPS is disabled
+	FIPSDisabled FIPSState = "Disabled"
+)
+
 // AutoNodeMode specifies the AutoNode mode for the ROSA Control Plane.
 type AutoNodeMode string
 
@@ -123,11 +134,38 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// OpenShift semantic version, for example "4.14.5".
 	Version string `json:"version"`
 
-	// OpenShift version channel group, default is stable.
+	// OpenShift version channel group.
+	// When not specified, OCM will determine the appropriate channel group based on the cluster version.
+	// This field will be deprecated in a future release in favor of the Channel field.
 	//
+	// +optional
 	// +kubebuilder:validation:Enum=stable;eus;fast;candidate;nightly
-	// +kubebuilder:default=stable
-	ChannelGroup ChannelGroupType `json:"channelGroup"`
+	ChannelGroup ChannelGroupType `json:"channelGroup,omitempty"`
+
+	// Channel is the Y-stream OpenShift channel to use for this cluster, for example "stable-4.16" or "eus-4.16".
+	// This determines which Y-stream versions are available for upgrades.
+	// When not specified, OCM will determine the appropriate channel based on the cluster version.
+	// If Channel is set, ChannelGroup will be ignored.
+	//
+	// +optional
+	// +kubebuilder:validation:Pattern:=`^(stable|eus|fast|candidate|nightly)-[0-9]+\.[0-9]+$`
+	Channel string `json:"channel,omitempty"`
+
+	// FIPS configures FIPS-validated / Modules in Process cryptographic libraries.
+	// FIPS (Federal Information Processing Standard) 140-2 is a U.S. government standard
+	// that validates cryptographic modules used to protect sensitive information.
+	//
+	// When set to "Enabled", the cluster will use FIPS 140-2 validated cryptographic modules.
+	// This setting is immutable and cannot be changed after cluster creation.
+	//
+	// IMPORTANT: When FIPS is enabled, etcdEncryptionKMSARN must be provided.
+	// The KMS key must be tagged with 'red-hat:true'.
+	//
+	// +optional
+	// +kubebuilder:default=Disabled
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="fips is immutable"
+	FIPS FIPSState `json:"fips,omitempty"`
 
 	// VersionGate requires acknowledgment when upgrading ROSA-HCP y-stream versions (e.g., from 4.15 to 4.16).
 	// Default is WaitForAcknowledge.
@@ -187,6 +225,23 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// Required if RosaRoleConfigRef is not specified.
 	// +optional
 	WorkerRoleARN string `json:"workerRoleARN,omitempty"`
+
+	// TrustPolicyExternalID is an optional STS external ID that OCM will use when assuming
+	// the installer and support account roles.
+	// When using RosaRoleConfigRef, this field is ignored, the value is always read from
+	// the ROSARoleConfig, which owns the trust policies.
+	// When providing role ARNs directly (no RosaRoleConfigRef), the user is responsible for
+	// including the sts:ExternalId condition in the roles' trust policies; this field only
+	// tells OCM which external ID to present when assuming the roles.
+	// Worker roles are not affected.
+	// Must be 2–1224 characters matching [a-zA-Z0-9=,.@:/-]+ per AWS STS requirements.
+	//
+	// +kubebuilder:validation:MinLength=2
+	// +kubebuilder:validation:MaxLength=1224
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9=,.@:\/-]+$`
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="trustPolicyExternalID is immutable"
+	// +optional
+	TrustPolicyExternalID string `json:"trustPolicyExternalID,omitempty"`
 
 	// BillingAccount is an optional AWS account to use for billing the subscription fees for ROSA HCP clusters.
 	// The cost of running each ROSA HCP cluster will be billed to the infrastructure account in which the cluster
@@ -867,6 +922,9 @@ type RosaControlPlaneStatus struct {
 
 	// Available upgrades for the ROSA hosted control plane.
 	AvailableUpgrades []string `json:"availableUpgrades,omitempty"`
+
+	// Available channels for the ROSA hosted control plane.
+	AvailableChannels []string `json:"availableChannels,omitempty"`
 }
 
 // +kubebuilder:object:root=true

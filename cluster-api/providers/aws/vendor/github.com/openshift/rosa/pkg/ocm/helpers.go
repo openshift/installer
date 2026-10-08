@@ -43,6 +43,7 @@ import (
 
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/helper"
+	urlHelper "github.com/openshift/rosa/pkg/helper/url"
 	"github.com/openshift/rosa/pkg/output"
 	"github.com/openshift/rosa/pkg/reporter"
 )
@@ -108,9 +109,9 @@ func ClusterNameValidator(name interface{}) error {
 	if str, ok := name.(string); ok {
 		str := strings.Trim(str, " \t")
 		if !IsValidClusterName(str) {
-			return fmt.Errorf("Cluster name must consist of no more than %d lowercase "+
+			return fmt.Errorf("cluster name must consist of no more than %d lowercase "+
 				"alphanumeric characters or '-', start with a letter, and end with an "+
-				"alphanumeric character.", MaxClusterNameLength)
+				"alphanumeric character", MaxClusterNameLength)
 		}
 		return nil
 	}
@@ -125,13 +126,48 @@ func ClusterDomainPrefixValidator(domainPrefix interface{}) error {
 	if str, ok := domainPrefix.(string); ok {
 		str := strings.Trim(str, " \t")
 		if str != "" && !IsValidClusterDomainPrefix(str) {
-			return fmt.Errorf("Cluster domain prefix must consist of no more than %d lowercase "+
+			return fmt.Errorf("cluster domain prefix must consist of no more than %d lowercase "+
 				"alphanumeric characters or '-', start with a letter, and end with an "+
-				"alphanumeric character.", MaxClusterDomainPrefixLength)
+				"alphanumeric character", MaxClusterDomainPrefixLength)
 		}
 		return nil
 	}
 	return fmt.Errorf("can only validate strings, got '%v'", domainPrefix)
+}
+
+// validateProxyURL validates common proxy URL requirements
+func validateProxyURL(proxyURL string, proxyType string, expectedScheme string) error {
+	if strings.Contains(proxyURL, " ") {
+		return fmt.Errorf("invalid %s value: URL cannot contain spaces", proxyType)
+	}
+
+	if !strings.Contains(proxyURL, "://") {
+		return fmt.Errorf("invalid %s value: URL is missing scheme (expected '://')", proxyType)
+	}
+
+	if err := urlHelper.ValidateURLCredentials(proxyURL); err != nil {
+		return fmt.Errorf("invalid %s value: %s", proxyType, err)
+	}
+
+	parsedURL, err := url.Parse(proxyURL)
+	if err != nil {
+		return fmt.Errorf("invalid %s value: %v", proxyType, err)
+	}
+
+	if parsedURL.Scheme != expectedScheme {
+		return fmt.Errorf("expected '%s' to have an '%s://' scheme", proxyType, expectedScheme)
+	}
+
+	if parsedURL.Host == "" {
+		return fmt.Errorf("invalid %s value: host is missing", proxyType)
+	}
+
+	// Proxy URLs shouldn't have a path
+	if parsedURL.Path != "" && parsedURL.Path != "/" {
+		return fmt.Errorf("invalid %s value: proxy URL should not contain a path '%s'", proxyType, parsedURL.Path)
+	}
+
+	return nil
 }
 
 func ValidateHTTPProxy(val interface{}) error {
@@ -139,14 +175,17 @@ func ValidateHTTPProxy(val interface{}) error {
 		if httpProxy == "" {
 			return nil
 		}
-		url, err := url.ParseRequestURI(httpProxy)
-		if err != nil {
-			return fmt.Errorf("Invalid http-proxy value '%s'", httpProxy)
+		return validateProxyURL(httpProxy, "http-proxy", "http")
+	}
+	return fmt.Errorf("can only validate strings, got '%v'", val)
+}
+
+func ValidateHTTPSProxy(val interface{}) error {
+	if httpsProxy, ok := val.(string); ok {
+		if httpsProxy == "" {
+			return nil
 		}
-		if url.Scheme != "http" {
-			return errors.Errorf("%s", "Expected http-proxy to have an http:// scheme")
-		}
-		return nil
+		return validateProxyURL(httpsProxy, "https-proxy", "https")
 	}
 	return fmt.Errorf("can only validate strings, got '%v'", val)
 }
@@ -174,9 +213,9 @@ func ValidateAllowedRegistriesForImport(input interface{}) error {
 		registries = strings.Split(input.(string), ",")
 		for _, registry := range registries {
 			if !idRE.MatchString(registry) {
-				return fmt.Errorf("invalid identifier '%s' for 'allowed registries for import.' "+
+				return fmt.Errorf("invalid identifier '%s' for 'allowed registries for import'. "+
 					"Should be in a <registry>:<boolean> format. "+
-					"The boolean indicates whether the registry is secure or not.", registry)
+					"The boolean indicates whether the registry is secure or not", registry)
 			}
 		}
 	case reflect.Slice:
@@ -745,7 +784,7 @@ func ValidateSubnetsCount(multiAZ bool, privateLink bool, subnetsInputCount int)
 		if multiAZ {
 			azPrefix = "multi-AZ"
 		}
-		return fmt.Errorf("The number of subnets for a '%s' '%s' should be '%d', "+
+		return fmt.Errorf("the number of subnets for a '%s' '%s' should be '%d', "+
 			"instead received: '%d'", azPrefix, clusterPrefix, expected, subnetsInputCount)
 	}
 	return nil
@@ -755,10 +794,10 @@ func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetID
 	privateIngress bool) (int, error) {
 
 	if isPrivate && len(subnetIDs) < 1 {
-		return 0, fmt.Errorf("The number of subnets for a private hosted cluster should be at least one")
+		return 0, fmt.Errorf("the number of subnets for a private hosted cluster should be at least one")
 	}
 	if !isPrivate && len(subnetIDs) < 2 {
-		return 0, fmt.Errorf("The number of subnets for a public hosted cluster should be at least two")
+		return 0, fmt.Errorf("the number of subnets for a public hosted cluster should be at least two")
 	}
 	vpcSubnets, vpcSubnetsErr := awsClient.GetVPCSubnets(subnetIDs[0])
 	if vpcSubnetsErr != nil {
@@ -785,11 +824,11 @@ func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetID
 
 	if isPrivate && privateIngress {
 		if publicSubnetsCount > 0 {
-			return 0, fmt.Errorf("The number of public subnets for a private hosted cluster should be zero")
+			return 0, fmt.Errorf("the number of public subnets for a private hosted cluster should be zero")
 		}
 	} else {
 		if publicSubnetsCount == 0 {
-			return 0, fmt.Errorf("Must have at least one public subnet when not using both " +
+			return 0, fmt.Errorf("must have at least one public subnet when not using both " +
 				"'private API' and 'private ingress'")
 		}
 	}
@@ -1106,8 +1145,8 @@ func ValidateClaimValidationRules(input interface{}) error {
 		inputRules = strings.Split(input.(string), ",")
 		for _, inputRule := range inputRules {
 			if !idRE.MatchString(inputRule) {
-				return fmt.Errorf("invalid identifier '%s' for 'claim validation rule. '"+
-					"Should be in a <claim>:<required_value> format.", inputRule)
+				return fmt.Errorf("invalid identifier '%s' for 'claim validation rule'. "+
+					"Should be in a <claim>:<required_value> format", inputRule)
 			}
 		}
 	case reflect.Slice:

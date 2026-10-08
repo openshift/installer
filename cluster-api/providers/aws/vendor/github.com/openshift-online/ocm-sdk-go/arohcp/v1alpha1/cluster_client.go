@@ -89,6 +89,16 @@ func (c *ClusterClient) Autoscaler() *AutoscalerClient {
 	)
 }
 
+// ControlPlaneUpgradePolicies returns the target 'control_plane_upgrade_policies' resource.
+//
+// Reference to the resource that manages the collection of upgrade policies for the control plane.
+func (c *ClusterClient) ControlPlaneUpgradePolicies() *ControlPlaneUpgradePoliciesClient {
+	return NewControlPlaneUpgradePoliciesClient(
+		c.transport,
+		path.Join(c.path, "control_plane_upgrade_policies"),
+	)
+}
+
 // ExternalAuthConfig returns the target 'external_auth_config' resource.
 //
 // Reference to the resource that manages the external authentication configuration.
@@ -116,6 +126,16 @@ func (c *ClusterClient) NodePools() *NodePoolsClient {
 	return NewNodePoolsClient(
 		c.transport,
 		path.Join(c.path, "node_pools"),
+	)
+}
+
+// ProvisionShard returns the target 'cluster_provision_shard_subresource' resource.
+//
+// Reference to the resource that manages the cluster's provision shard.
+func (c *ClusterClient) ProvisionShard() *ClusterProvisionShardSubresourceClient {
+	return NewClusterProvisionShardSubresourceClient(
+		c.transport,
+		path.Join(c.path, "provision_shard"),
 	)
 }
 

@@ -63,9 +63,9 @@ type ModifyInstanceMetadataDefaultsInput struct {
 	HttpTokens types.MetadataDefaultHttpTokensState
 
 	// Enables or disables access to an instance's tags from the instance metadata.
-	// For more information, see [Work with instance tags using the instance metadata]in the Amazon EC2 User Guide.
+	// For more information, see [View tags for your EC2 instances using instance metadata]in the Amazon EC2 User Guide.
 	//
-	// [Work with instance tags using the instance metadata]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html#work-with-tags-in-IMDS
+	// [View tags for your EC2 instances using instance metadata]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/work-with-tags-in-IMDS.html
 	InstanceMetadataTags types.DefaultInstanceMetadataTagsState
 
 	noSmithyDocumentSerde
@@ -168,16 +168,13 @@ func (c *Client) addOperationModifyInstanceMetadataDefaultsMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

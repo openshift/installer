@@ -131,6 +131,16 @@ func (c *Client) Clusters() *ClustersClient {
 	)
 }
 
+// DeletedClusters returns the target 'deleted_clusters' resource.
+//
+// Reference to the resource that manages the collection of deleted clusters.
+func (c *Client) DeletedClusters() *DeletedClustersClient {
+	return NewDeletedClustersClient(
+		c.transport,
+		path.Join(c.path, "deleted_clusters"),
+	)
+}
+
 // Environment returns the target 'environment' resource.
 //
 // Reference to the resource that manages the environment.

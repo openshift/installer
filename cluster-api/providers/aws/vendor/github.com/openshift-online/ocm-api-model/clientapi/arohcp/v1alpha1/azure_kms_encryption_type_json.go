@@ -49,6 +49,15 @@ func WriteAzureKmsEncryption(object *AzureKmsEncryption, stream *jsoniter.Stream
 		}
 		stream.WriteObjectField("active_key")
 		WriteAzureKmsKey(object.activeKey, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 1 && object.fieldSet_[1]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("visibility")
+		stream.WriteString(string(object.visibility))
 	}
 	stream.WriteObjectEnd()
 }
@@ -68,7 +77,7 @@ func UnmarshalAzureKmsEncryption(source interface{}) (object *AzureKmsEncryption
 // ReadAzureKmsEncryption reads a value of the 'azure_kms_encryption' type from the given iterator.
 func ReadAzureKmsEncryption(iterator *jsoniter.Iterator) *AzureKmsEncryption {
 	object := &AzureKmsEncryption{
-		fieldSet_: make([]bool, 1),
+		fieldSet_: make([]bool, 2),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -80,6 +89,11 @@ func ReadAzureKmsEncryption(iterator *jsoniter.Iterator) *AzureKmsEncryption {
 			value := ReadAzureKmsKey(iterator)
 			object.activeKey = value
 			object.fieldSet_[0] = true
+		case "visibility":
+			text := iterator.ReadString()
+			value := AzureKmsEncryptionVisibility(text)
+			object.visibility = value
+			object.fieldSet_[1] = true
 		default:
 			iterator.ReadAny()
 		}

@@ -66,43 +66,16 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 		count++
 	}
 	var present_ bool
-	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3] && object.awsAccountOperatorConfig != nil
+	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3] && object.azureShard != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("aws_account_operator_config")
-		WriteServerConfig(object.awsAccountOperatorConfig, stream)
+		stream.WriteObjectField("azure_shard")
+		WriteAzureShard(object.azureShard, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("aws_base_domain")
-		stream.WriteString(object.awsBaseDomain)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("gcp_base_domain")
-		stream.WriteString(object.gcpBaseDomain)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6] && object.gcpProjectOperator != nil
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("gcp_project_operator")
-		WriteServerConfig(object.gcpProjectOperator, stream)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7] && object.cloudProvider != nil
+	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4] && object.cloudProvider != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,7 +84,7 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -120,25 +93,7 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 		stream.WriteString((object.creationTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9] && object.hiveConfig != nil
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("hive_config")
-		WriteServerConfig(object.hiveConfig, stream)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.hypershiftConfig != nil
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("hypershift_config")
-		WriteServerConfig(object.hypershiftConfig, stream)
-		count++
-	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -147,16 +102,16 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 		stream.WriteString((object.lastUpdateTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7] && object.maestroConfig != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("management_cluster")
-		stream.WriteString(object.managementCluster)
+		stream.WriteObjectField("maestro_config")
+		WriteProvisionShardMaestroConfig(object.maestroConfig, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13] && object.region != nil
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.region != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -165,13 +120,22 @@ func WriteProvisionShard(object *ProvisionShard, stream *jsoniter.Stream) {
 		WriteCloudRegion(object.region, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
 		stream.WriteString(object.status)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("topology")
+		stream.WriteString(object.topology)
 	}
 	stream.WriteObjectEnd()
 }
@@ -191,7 +155,7 @@ func UnmarshalProvisionShard(source interface{}) (object *ProvisionShard, err er
 // ReadProvisionShard reads a value of the 'provision_shard' type from the given iterator.
 func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 	object := &ProvisionShard{
-		fieldSet_: make([]bool, 15),
+		fieldSet_: make([]bool, 11),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -210,26 +174,14 @@ func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 		case "href":
 			object.href = iterator.ReadString()
 			object.fieldSet_[2] = true
-		case "aws_account_operator_config":
-			value := ReadServerConfig(iterator)
-			object.awsAccountOperatorConfig = value
+		case "azure_shard":
+			value := ReadAzureShard(iterator)
+			object.azureShard = value
 			object.fieldSet_[3] = true
-		case "aws_base_domain":
-			value := iterator.ReadString()
-			object.awsBaseDomain = value
-			object.fieldSet_[4] = true
-		case "gcp_base_domain":
-			value := iterator.ReadString()
-			object.gcpBaseDomain = value
-			object.fieldSet_[5] = true
-		case "gcp_project_operator":
-			value := ReadServerConfig(iterator)
-			object.gcpProjectOperator = value
-			object.fieldSet_[6] = true
 		case "cloud_provider":
 			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
-			object.fieldSet_[7] = true
+			object.fieldSet_[4] = true
 		case "creation_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -237,15 +189,7 @@ func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 				iterator.ReportError("", err.Error())
 			}
 			object.creationTimestamp = value
-			object.fieldSet_[8] = true
-		case "hive_config":
-			value := ReadServerConfig(iterator)
-			object.hiveConfig = value
-			object.fieldSet_[9] = true
-		case "hypershift_config":
-			value := ReadServerConfig(iterator)
-			object.hypershiftConfig = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[5] = true
 		case "last_update_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -253,19 +197,23 @@ func ReadProvisionShard(iterator *jsoniter.Iterator) *ProvisionShard {
 				iterator.ReportError("", err.Error())
 			}
 			object.lastUpdateTimestamp = value
-			object.fieldSet_[11] = true
-		case "management_cluster":
-			value := iterator.ReadString()
-			object.managementCluster = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[6] = true
+		case "maestro_config":
+			value := ReadProvisionShardMaestroConfig(iterator)
+			object.maestroConfig = value
+			object.fieldSet_[7] = true
 		case "region":
 			value := ReadCloudRegion(iterator)
 			object.region = value
-			object.fieldSet_[13] = true
+			object.fieldSet_[8] = true
 		case "status":
 			value := iterator.ReadString()
 			object.status = value
-			object.fieldSet_[14] = true
+			object.fieldSet_[9] = true
+		case "topology":
+			value := iterator.ReadString()
+			object.topology = value
+			object.fieldSet_[10] = true
 		default:
 			iterator.ReadAny()
 		}

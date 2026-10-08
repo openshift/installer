@@ -17,6 +17,8 @@ limitations under the License.
 package network
 
 import (
+	"context"
+
 	"k8s.io/klog/v2"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -98,7 +100,7 @@ func (s *Service) ReconcileNetwork() (err error) {
 }
 
 // DeleteNetwork deletes the network of the given cluster.
-func (s *Service) DeleteNetwork() (err error) {
+func (s *Service) DeleteNetwork(ctx context.Context) (err error) {
 	s.scope.Debug("Deleting network")
 
 	vpc := &infrav1.VPCSpec{}
@@ -192,6 +194,12 @@ func (s *Service) DeleteNetwork() (err error) {
 		return err
 	}
 	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, clusterv1beta1.DeletedReason, clusterv1beta1.ConditionSeverityInfo, "")
+
+	// Orphaned ENIs — clean up detached network interfaces that reference
+	// cluster security groups before attempting subnet deletion.
+	if err := s.deleteOrphanedENIs(ctx); err != nil {
+		s.scope.Debug("Non-fatal: failed to delete orphaned ENIs", "error", err)
+	}
 
 	// Subnets.
 	v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, clusterv1beta1.DeletingReason, clusterv1beta1.ConditionSeverityInfo, "")

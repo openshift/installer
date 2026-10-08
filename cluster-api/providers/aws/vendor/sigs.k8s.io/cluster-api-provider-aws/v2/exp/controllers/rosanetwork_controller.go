@@ -53,9 +53,9 @@ type ROSANetworkReconciler struct {
 	client.Client
 	Log              logr.Logger
 	Scheme           *runtime.Scheme
-	awsClient        rosaAWSClient.Client
-	cfStack          *cloudformationtypes.Stack
 	WatchFilterValue string
+	// awsClientFactory overrides AWS client creation per reconciliation. Used in tests to inject mock clients.
+	awsClientFactory func(scope *scope.ROSANetworkScope) (rosaAWSClient.Client, error)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=rosanetworks,verbs=get;list;watch;create;update;patch;delete
@@ -86,26 +86,18 @@ func (r *ROSANetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, fmt.Errorf("failed to create rosanetwork scope: %w", err)
 	}
 
-	// Create a new AWS/CloudFormation Client using the session cache
-	if r.awsClient == nil {
-		session := rosaNetworkScope.Session()
-		logger := rosaNetworkScope.Logger.GetLogger()
-		awsClient, err := rosaAWSClient.NewClient().
-			CapaLogger(&logger).
-			ExternalConfig(&session).
-			Build()
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to create AWS Client: %w", err)
-		}
-		r.awsClient = awsClient
+	// Create a new AWS/CloudFormation Client per reconciliation so the correct identity is always used.
+	awsClient, err := r.newAWSClient(rosaNetworkScope)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to create AWS Client: %w", err)
 	}
 
 	// Try to fetch CF stack with a given name
-	r.cfStack, err = r.awsClient.GetCFStack(ctx, rosaNetworkScope.ROSANetwork.Spec.StackName)
+	cfStack, err := awsClient.GetCFStack(ctx, rosaNetworkScope.ROSANetwork.Spec.StackName)
 	if err != nil {
 		var apiErr smithy.APIError // in case the stack does not exist, AWS returns ValidationError
 		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "ValidationError" {
-			r.cfStack = nil
+			cfStack = nil
 		} else {
 			return ctrl.Result{}, fmt.Errorf("error fetching CF stack details: %w", err)
 		}
@@ -120,14 +112,14 @@ func (r *ROSANetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if !rosaNetwork.ObjectMeta.DeletionTimestamp.IsZero() {
 		// Handle deletion reconciliation loop.
-		return r.reconcileDelete(ctx, rosaNetworkScope)
+		return r.reconcileDelete(ctx, rosaNetworkScope, awsClient, cfStack)
 	}
 
 	// Handle normal reconciliation loop.
-	return r.reconcileNormal(ctx, rosaNetworkScope)
+	return r.reconcileNormal(ctx, rosaNetworkScope, awsClient, cfStack)
 }
 
-func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScope *scope.ROSANetworkScope) (res ctrl.Result, reterr error) {
+func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScope *scope.ROSANetworkScope, awsClient rosaAWSClient.Client, cfStack *cloudformationtypes.Stack) (res ctrl.Result, reterr error) {
 	rosaNetScope.Info("Reconciling ROSANetwork")
 
 	if controllerutil.AddFinalizer(rosaNetScope.ROSANetwork, expinfrav1.ROSANetworkFinalizer) {
@@ -136,7 +128,7 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 		}
 	}
 
-	if r.cfStack == nil { // The CF stack does not exist yet
+	if cfStack == nil { // The CF stack does not exist yet
 		templateBody := string(rosaCFNetwork.CloudFormationTemplateFile)
 
 		zoneCount := 1
@@ -155,7 +147,7 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 		}
 
 		// Call the AWS CF stack create API
-		_, err := r.awsClient.CreateStackWithParamsTags(ctx, templateBody, rosaNetScope.ROSANetwork.Spec.StackName, cfParams, rosaNetScope.ROSANetwork.Spec.StackTags)
+		_, err := awsClient.CreateStackWithParamsTags(ctx, templateBody, rosaNetScope.ROSANetwork.Spec.StackName, cfParams, rosaNetScope.ROSANetwork.Spec.StackTags)
 		if err != nil {
 			v1beta1conditions.MarkFalse(rosaNetScope.ROSANetwork,
 				expinfrav1.ROSANetworkReadyCondition,
@@ -173,12 +165,12 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 		return ctrl.Result{}, nil
 	}
 	// The cloudformation stack already exists
-	if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork); err != nil {
+	if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork, awsClient); err != nil {
 		rosaNetScope.Info("error fetching CF stack resources: %w", err)
 		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 	}
 
-	switch r.cfStack.StackStatus {
+	switch cfStack.StackStatus {
 	case cloudformationtypes.StackStatusCreateInProgress: // Create in progress
 		// Set the reason of false ROSANetworkReadyCondition to Creating
 		v1beta1conditions.MarkFalse(rosaNetScope.ROSANetwork,
@@ -188,7 +180,7 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 			"")
 		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 	case cloudformationtypes.StackStatusCreateComplete: // Create complete
-		if err := r.parseSubnets(rosaNetScope.ROSANetwork); err != nil {
+		if err := r.parseSubnets(rosaNetScope.ROSANetwork, awsClient); err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing stack subnets failed: %w", err)
 		}
 
@@ -209,22 +201,22 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 			expinfrav1.ROSANetworkFailedReason,
 			clusterv1beta1.ConditionSeverityError,
 			"")
-		return ctrl.Result{}, fmt.Errorf("cloudformation stack %s creation failed, see the stack resources for more information", *r.cfStack.StackName)
+		return ctrl.Result{}, fmt.Errorf("cloudformation stack %s creation failed, see the stack resources for more information", *cfStack.StackName)
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScope *scope.ROSANetworkScope) (res ctrl.Result, reterr error) {
+func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScope *scope.ROSANetworkScope, awsClient rosaAWSClient.Client, cfStack *cloudformationtypes.Stack) (res ctrl.Result, reterr error) {
 	rosaNetScope.Info("Reconciling ROSANetwork delete")
 
-	if r.cfStack != nil { // The CF stack still exists
-		if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork); err != nil {
+	if cfStack != nil { // The CF stack still exists
+		if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork, awsClient); err != nil {
 			rosaNetScope.Info("error fetching CF stack resources: %w", err)
 			return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 		}
 
-		switch r.cfStack.StackStatus {
+		switch cfStack.StackStatus {
 		case cloudformationtypes.StackStatusDeleteInProgress: // Deletion in progress
 			return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 		case cloudformationtypes.StackStatusDeleteFailed: // Deletion failed
@@ -235,7 +227,7 @@ func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScop
 				"")
 			return ctrl.Result{}, fmt.Errorf("CF stack deletion failed")
 		default: // All the other states
-			err := r.awsClient.DeleteCFStack(ctx, rosaNetScope.ROSANetwork.Spec.StackName)
+			err := awsClient.DeleteCFStack(ctx, rosaNetScope.ROSANetwork.Spec.StackName)
 			if err != nil {
 				v1beta1conditions.MarkFalse(rosaNetScope.ROSANetwork,
 					expinfrav1.ROSANetworkReadyCondition,
@@ -259,8 +251,8 @@ func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScop
 	return ctrl.Result{}, nil
 }
 
-func (r *ROSANetworkReconciler) updateROSANetworkResources(ctx context.Context, rosaNet *expinfrav1.ROSANetwork) error {
-	resources, err := r.awsClient.DescribeCFStackResources(ctx, rosaNet.Spec.StackName)
+func (r *ROSANetworkReconciler) updateROSANetworkResources(ctx context.Context, rosaNet *expinfrav1.ROSANetwork, awsClient rosaAWSClient.Client) error {
+	resources, err := awsClient.DescribeCFStackResources(ctx, rosaNet.Spec.StackName)
 	if err != nil {
 		return fmt.Errorf("error calling AWS DescribeStackResources(): %w", err)
 	}
@@ -279,7 +271,7 @@ func (r *ROSANetworkReconciler) updateROSANetworkResources(ctx context.Context, 
 	return nil
 }
 
-func (r *ROSANetworkReconciler) parseSubnets(rosaNet *expinfrav1.ROSANetwork) error {
+func (r *ROSANetworkReconciler) parseSubnets(rosaNet *expinfrav1.ROSANetwork, awsClient rosaAWSClient.Client) error {
 	subnets := make(map[string]expinfrav1.ROSANetworkSubnet)
 
 	for _, resource := range rosaNet.Status.Resources {
@@ -287,7 +279,7 @@ func (r *ROSANetworkReconciler) parseSubnets(rosaNet *expinfrav1.ROSANetwork) er
 			continue
 		}
 
-		az, err := r.awsClient.GetSubnetAvailabilityZone(resource.PhysicalID)
+		az, err := awsClient.GetSubnetAvailabilityZone(resource.PhysicalID)
 		if err != nil {
 			return fmt.Errorf("failed to get AZ for subnet %s: %w", resource.PhysicalID, err)
 		}
@@ -307,6 +299,20 @@ func (r *ROSANetworkReconciler) parseSubnets(rosaNet *expinfrav1.ROSANetwork) er
 	rosaNet.Status.Subnets = slices.Collect(maps.Values(subnets))
 
 	return nil
+}
+
+// newAWSClient creates a new ROSA AWS client per reconciliation using the scope's session,
+// ensuring the correct identity (identityRef) is always used. Tests inject via awsClientFactory.
+func (r *ROSANetworkReconciler) newAWSClient(rosaNetworkScope *scope.ROSANetworkScope) (rosaAWSClient.Client, error) {
+	if r.awsClientFactory != nil {
+		return r.awsClientFactory(rosaNetworkScope)
+	}
+	session := rosaNetworkScope.Session()
+	log := rosaNetworkScope.Logger.GetLogger()
+	return rosaAWSClient.NewClient().
+		CapaLogger(&log).
+		ExternalConfig(&session).
+		Build()
 }
 
 // SetupWithManager is used to setup the controller.

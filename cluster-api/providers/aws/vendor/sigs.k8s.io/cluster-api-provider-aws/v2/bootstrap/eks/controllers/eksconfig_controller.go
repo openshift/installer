@@ -27,7 +27,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -148,41 +147,6 @@ func (r *EKSConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, r.joinWorker(ctx, cluster, config, configOwner)
 }
 
-func (r *EKSConfigReconciler) resolveFiles(ctx context.Context, cfg *eksbootstrapv1.EKSConfig) ([]eksbootstrapv1.File, error) {
-	collected := make([]eksbootstrapv1.File, 0, len(cfg.Spec.Files))
-
-	for i := range cfg.Spec.Files {
-		in := cfg.Spec.Files[i]
-		if in.ContentFrom != nil {
-			data, err := r.resolveSecretFileContent(ctx, cfg.Namespace, in)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to resolve file source")
-			}
-			in.ContentFrom = nil
-			in.Content = string(data)
-		}
-		collected = append(collected, in)
-	}
-
-	return collected, nil
-}
-
-func (r *EKSConfigReconciler) resolveSecretFileContent(ctx context.Context, ns string, source eksbootstrapv1.File) ([]byte, error) {
-	secret := &corev1.Secret{}
-	key := types.NamespacedName{Namespace: ns, Name: source.ContentFrom.Secret.Name}
-	if err := r.Client.Get(ctx, key, secret); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, errors.Wrapf(err, "secret not found: %s", key)
-		}
-		return nil, errors.Wrapf(err, "failed to retrieve Secret %q", key)
-	}
-	data, ok := secret.Data[source.ContentFrom.Secret.Key]
-	if !ok {
-		return nil, errors.Errorf("secret references non-existent secret key: %q", source.ContentFrom.Secret.Key)
-	}
-	return data, nil
-}
-
 func (r *EKSConfigReconciler) joinWorker(ctx context.Context, cluster *clusterv1.Cluster, config *eksbootstrapv1.EKSConfig, configOwner *bsutil.ConfigOwner) error {
 	log := logger.FromContext(ctx)
 
@@ -229,7 +193,8 @@ func (r *EKSConfigReconciler) joinWorker(ctx context.Context, cluster *clusterv1
 	}
 
 	log.Info("Generating userdata")
-	files, err := r.resolveFiles(ctx, config)
+	fileResolver := FileResolver{Client: r.Client}
+	files, err := fileResolver.ResolveFiles(ctx, config.Namespace, config.Spec.Files)
 	if err != nil {
 		log.Info("Failed to resolve files for user data")
 		v1beta1conditions.MarkFalse(config, eksbootstrapv1.DataSecretAvailableCondition, eksbootstrapv1.DataSecretGenerationFailedReason, clusterv1beta1.ConditionSeverityWarning, "%s", err.Error())

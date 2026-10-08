@@ -38,9 +38,9 @@ import (
 
 const (
 	metricAWSSubsystem       = "aws"
-	metricRequestCountKey    = "api_requests_total_v2"
-	metricRequestDurationKey = "api_request_duration_seconds_v2"
-	metricAPICallRetries     = "api_call_retries_v2"
+	metricRequestCountKey    = "api_requests_total"
+	metricRequestDurationKey = "api_request_duration_seconds"
+	metricAPICallRetries     = "api_call_retries"
 	metricServiceLabel       = "service"
 	metricRegionLabel        = "region"
 	metricOperationLabel     = "operation"
@@ -191,7 +191,6 @@ func getRecordAWSPermissionsIssueMiddleware(target runtime.Object) middleware.Fi
 		if err != nil {
 			request := getContext(ctx)
 			if request != nil {
-				var errMessage string
 				smithyErr := awserrors.ParseSmithyError(err)
 				request.ErrorCode = smithyErr.ErrorCode()
 				switch request.ErrorCode {
@@ -200,7 +199,7 @@ func getRecordAWSPermissionsIssueMiddleware(target runtime.Object) middleware.Fi
 					record.Warnf(target, request.ErrorCode,
 						"Operation %s failed with a credentials or permission issue: %s",
 						request.OperationName,
-						errMessage,
+						smithyErr.ErrorMessage(),
 					)
 				}
 			}
@@ -230,7 +229,7 @@ func getContext(ctx context.Context) *RequestData {
 
 // CaptureRequestMetrics will monitor and capture request metrics.
 func (r *RequestData) CaptureRequestMetrics() {
-	if !r.IsIncomplete() {
+	if r.IsIncomplete() {
 		return
 	}
 

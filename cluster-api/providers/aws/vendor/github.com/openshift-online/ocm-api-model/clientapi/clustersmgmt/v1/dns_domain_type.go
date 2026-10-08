@@ -42,8 +42,10 @@ type DNSDomain struct {
 	fieldSet_           []bool
 	id                  string
 	href                string
+	cloudProvider       DnsCloudProvider
 	cluster             *ClusterLink
 	clusterArch         ClusterArchitecture
+	gcp                 *GcpDnsDomain
 	organization        *OrganizationLink
 	reservedAtTimestamp time.Time
 	userDefined         bool
@@ -116,12 +118,35 @@ func (o *DNSDomain) Empty() bool {
 	return true
 }
 
+// CloudProvider returns the value of the 'cloud_provider' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Signals which cloud provider the domain is ready for.
+func (o *DNSDomain) CloudProvider() DnsCloudProvider {
+	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
+		return o.cloudProvider
+	}
+	return DnsCloudProvider("")
+}
+
+// GetCloudProvider returns the value of the 'cloud_provider' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Signals which cloud provider the domain is ready for.
+func (o *DNSDomain) GetCloudProvider() (value DnsCloudProvider, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
+	if ok {
+		value = o.cloudProvider
+	}
+	return
+}
+
 // Cluster returns the value of the 'cluster' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the cluster that is registered with the DNS domain (optional).
 func (o *DNSDomain) Cluster() *ClusterLink {
-	if o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3] {
+	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
 		return o.cluster
 	}
 	return nil
@@ -132,7 +157,7 @@ func (o *DNSDomain) Cluster() *ClusterLink {
 //
 // Link to the cluster that is registered with the DNS domain (optional).
 func (o *DNSDomain) GetCluster() (value *ClusterLink, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 3 && o.fieldSet_[3]
+	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
 	if ok {
 		value = o.cluster
 	}
@@ -144,7 +169,7 @@ func (o *DNSDomain) GetCluster() (value *ClusterLink, ok bool) {
 //
 // Signals which cluster architecture the domain is ready for.
 func (o *DNSDomain) ClusterArch() ClusterArchitecture {
-	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.clusterArch
 	}
 	return ClusterArchitecture("")
@@ -155,9 +180,32 @@ func (o *DNSDomain) ClusterArch() ClusterArchitecture {
 //
 // Signals which cluster architecture the domain is ready for.
 func (o *DNSDomain) GetClusterArch() (value ClusterArchitecture, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.clusterArch
+	}
+	return
+}
+
+// Gcp returns the value of the 'gcp' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Gcp contains Google Cloud Platform-specific DNS domain configuration.
+func (o *DNSDomain) Gcp() *GcpDnsDomain {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+		return o.gcp
+	}
+	return nil
+}
+
+// GetGcp returns the value of the 'gcp' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Gcp contains Google Cloud Platform-specific DNS domain configuration.
+func (o *DNSDomain) GetGcp() (value *GcpDnsDomain, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	if ok {
+		value = o.gcp
 	}
 	return
 }
@@ -167,7 +215,7 @@ func (o *DNSDomain) GetClusterArch() (value ClusterArchitecture, ok bool) {
 //
 // Link to the organization that reserved the DNS domain.
 func (o *DNSDomain) Organization() *OrganizationLink {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.organization
 	}
 	return nil
@@ -178,7 +226,7 @@ func (o *DNSDomain) Organization() *OrganizationLink {
 //
 // Link to the organization that reserved the DNS domain.
 func (o *DNSDomain) GetOrganization() (value *OrganizationLink, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.organization
 	}
@@ -190,7 +238,7 @@ func (o *DNSDomain) GetOrganization() (value *OrganizationLink, ok bool) {
 //
 // Date and time when the DNS domain was reserved.
 func (o *DNSDomain) ReservedAtTimestamp() time.Time {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
 		return o.reservedAtTimestamp
 	}
 	return time.Time{}
@@ -201,7 +249,7 @@ func (o *DNSDomain) ReservedAtTimestamp() time.Time {
 //
 // Date and time when the DNS domain was reserved.
 func (o *DNSDomain) GetReservedAtTimestamp() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
 	if ok {
 		value = o.reservedAtTimestamp
 	}
@@ -213,7 +261,7 @@ func (o *DNSDomain) GetReservedAtTimestamp() (value time.Time, ok bool) {
 //
 // Indicates if this dns domain is user defined.
 func (o *DNSDomain) UserDefined() bool {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.userDefined
 	}
 	return false
@@ -224,7 +272,7 @@ func (o *DNSDomain) UserDefined() bool {
 //
 // Indicates if this dns domain is user defined.
 func (o *DNSDomain) GetUserDefined() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.userDefined
 	}

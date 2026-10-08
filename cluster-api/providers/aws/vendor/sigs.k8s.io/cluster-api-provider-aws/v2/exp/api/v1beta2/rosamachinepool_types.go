@@ -103,6 +103,7 @@ type RosaMachinePoolSpec struct {
 	// VolumeSize set the disk volume size for the machine pool, in Gib. The default is 300 GiB.
 	// +kubebuilder:validation:Minimum=75
 	// +kubebuilder:validation:Maximum=16384
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="volumeSize is immutable"
 	// +immutable
 	// +optional
 	VolumeSize int `json:"volumeSize,omitempty"`

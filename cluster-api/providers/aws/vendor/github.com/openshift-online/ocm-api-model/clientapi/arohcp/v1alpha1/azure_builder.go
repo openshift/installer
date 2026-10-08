@@ -21,23 +21,25 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 
 // Microsoft Azure settings of a cluster.
 type AzureBuilder struct {
-	fieldSet_                      []bool
-	etcdEncryption                 *AzureEtcdEncryptionBuilder
-	managedResourceGroupName       string
-	networkSecurityGroupResourceID string
-	nodesOutboundConnectivity      *AzureNodesOutboundConnectivityBuilder
-	operatorsAuthentication        *AzureOperatorsAuthenticationBuilder
-	resourceGroupName              string
-	resourceName                   string
-	subnetResourceID               string
-	subscriptionID                 string
-	tenantID                       string
+	fieldSet_                       []bool
+	etcdEncryption                  *AzureEtcdEncryptionBuilder
+	managedResourceGroupName        string
+	networkSecurityGroupResourceID  string
+	nodesOutboundConnectivity       *AzureNodesOutboundConnectivityBuilder
+	oidcIssuerUrl                   string
+	operatorsAuthentication         *AzureOperatorsAuthenticationBuilder
+	resourceGroupName               string
+	resourceName                    string
+	subnetResourceID                string
+	subscriptionID                  string
+	tenantID                        string
+	vnetIntegrationSubnetResourceID string
 }
 
 // NewAzure creates a new builder of 'azure' objects.
 func NewAzure() *AzureBuilder {
 	return &AzureBuilder{
-		fieldSet_: make([]bool, 10),
+		fieldSet_: make([]bool, 12),
 	}
 }
 
@@ -59,7 +61,7 @@ func (b *AzureBuilder) Empty() bool {
 // Contains the necessary attributes to support etcd encryption for Azure based clusters.
 func (b *AzureBuilder) EtcdEncryption(value *AzureEtcdEncryptionBuilder) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.etcdEncryption = value
 	if value != nil {
@@ -73,7 +75,7 @@ func (b *AzureBuilder) EtcdEncryption(value *AzureEtcdEncryptionBuilder) *AzureB
 // ManagedResourceGroupName sets the value of the 'managed_resource_group_name' attribute to the given value.
 func (b *AzureBuilder) ManagedResourceGroupName(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.managedResourceGroupName = value
 	b.fieldSet_[1] = true
@@ -83,7 +85,7 @@ func (b *AzureBuilder) ManagedResourceGroupName(value string) *AzureBuilder {
 // NetworkSecurityGroupResourceID sets the value of the 'network_security_group_resource_ID' attribute to the given value.
 func (b *AzureBuilder) NetworkSecurityGroupResourceID(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.networkSecurityGroupResourceID = value
 	b.fieldSet_[2] = true
@@ -95,7 +97,7 @@ func (b *AzureBuilder) NetworkSecurityGroupResourceID(value string) *AzureBuilde
 // The configuration of the node outbound connectivity
 func (b *AzureBuilder) NodesOutboundConnectivity(value *AzureNodesOutboundConnectivityBuilder) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.nodesOutboundConnectivity = value
 	if value != nil {
@@ -106,19 +108,29 @@ func (b *AzureBuilder) NodesOutboundConnectivity(value *AzureNodesOutboundConnec
 	return b
 }
 
+// OidcIssuerUrl sets the value of the 'oidc_issuer_url' attribute to the given value.
+func (b *AzureBuilder) OidcIssuerUrl(value string) *AzureBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 12)
+	}
+	b.oidcIssuerUrl = value
+	b.fieldSet_[4] = true
+	return b
+}
+
 // OperatorsAuthentication sets the value of the 'operators_authentication' attribute to the given value.
 //
 // The configuration that the operators of the
 // cluster have to authenticate to Azure.
 func (b *AzureBuilder) OperatorsAuthentication(value *AzureOperatorsAuthenticationBuilder) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.operatorsAuthentication = value
 	if value != nil {
-		b.fieldSet_[4] = true
+		b.fieldSet_[5] = true
 	} else {
-		b.fieldSet_[4] = false
+		b.fieldSet_[5] = false
 	}
 	return b
 }
@@ -126,50 +138,60 @@ func (b *AzureBuilder) OperatorsAuthentication(value *AzureOperatorsAuthenticati
 // ResourceGroupName sets the value of the 'resource_group_name' attribute to the given value.
 func (b *AzureBuilder) ResourceGroupName(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.resourceGroupName = value
-	b.fieldSet_[5] = true
+	b.fieldSet_[6] = true
 	return b
 }
 
 // ResourceName sets the value of the 'resource_name' attribute to the given value.
 func (b *AzureBuilder) ResourceName(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.resourceName = value
-	b.fieldSet_[6] = true
+	b.fieldSet_[7] = true
 	return b
 }
 
 // SubnetResourceID sets the value of the 'subnet_resource_ID' attribute to the given value.
 func (b *AzureBuilder) SubnetResourceID(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.subnetResourceID = value
-	b.fieldSet_[7] = true
+	b.fieldSet_[8] = true
 	return b
 }
 
 // SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 func (b *AzureBuilder) SubscriptionID(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.subscriptionID = value
-	b.fieldSet_[8] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
 // TenantID sets the value of the 'tenant_ID' attribute to the given value.
 func (b *AzureBuilder) TenantID(value string) *AzureBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 10)
+		b.fieldSet_ = make([]bool, 12)
 	}
 	b.tenantID = value
-	b.fieldSet_[9] = true
+	b.fieldSet_[10] = true
+	return b
+}
+
+// VnetIntegrationSubnetResourceID sets the value of the 'vnet_integration_subnet_resource_ID' attribute to the given value.
+func (b *AzureBuilder) VnetIntegrationSubnetResourceID(value string) *AzureBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 12)
+	}
+	b.vnetIntegrationSubnetResourceID = value
+	b.fieldSet_[11] = true
 	return b
 }
 
@@ -194,6 +216,7 @@ func (b *AzureBuilder) Copy(object *Azure) *AzureBuilder {
 	} else {
 		b.nodesOutboundConnectivity = nil
 	}
+	b.oidcIssuerUrl = object.oidcIssuerUrl
 	if object.operatorsAuthentication != nil {
 		b.operatorsAuthentication = NewAzureOperatorsAuthentication().Copy(object.operatorsAuthentication)
 	} else {
@@ -204,6 +227,7 @@ func (b *AzureBuilder) Copy(object *Azure) *AzureBuilder {
 	b.subnetResourceID = object.subnetResourceID
 	b.subscriptionID = object.subscriptionID
 	b.tenantID = object.tenantID
+	b.vnetIntegrationSubnetResourceID = object.vnetIntegrationSubnetResourceID
 	return b
 }
 
@@ -228,6 +252,7 @@ func (b *AzureBuilder) Build() (object *Azure, err error) {
 			return
 		}
 	}
+	object.oidcIssuerUrl = b.oidcIssuerUrl
 	if b.operatorsAuthentication != nil {
 		object.operatorsAuthentication, err = b.operatorsAuthentication.Build()
 		if err != nil {
@@ -239,5 +264,6 @@ func (b *AzureBuilder) Build() (object *Azure, err error) {
 	object.subnetResourceID = b.subnetResourceID
 	object.subscriptionID = b.subscriptionID
 	object.tenantID = b.tenantID
+	object.vnetIntegrationSubnetResourceID = b.vnetIntegrationSubnetResourceID
 	return
 }

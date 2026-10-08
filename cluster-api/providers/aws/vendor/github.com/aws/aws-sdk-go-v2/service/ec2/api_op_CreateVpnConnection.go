@@ -81,6 +81,9 @@ type CreateVpnConnectionInput struct {
 	// specify a virtual private gateway.
 	TransitGatewayId *string
 
+	// The ID of the VPN concentrator to associate with the VPN connection.
+	VpnConcentratorId *string
+
 	// The ID of the virtual private gateway. If you specify a virtual private
 	// gateway, you cannot specify a transit gateway.
 	VpnGatewayId *string
@@ -188,16 +191,13 @@ func (c *Client) addOperationCreateVpnConnectionMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

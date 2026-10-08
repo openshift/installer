@@ -401,6 +401,7 @@ func autoConvert_v1beta1_AWSManagedControlPlaneStatus_To_v1beta2_AWSManagedContr
 	if err := Convert_v1beta1_IdentityProviderStatus_To_v1beta2_IdentityProviderStatus(&in.IdentityProviderStatus, &out.IdentityProviderStatus, s); err != nil {
 		return err
 	}
+	out.ObservedGeneration = in.ObservedGeneration
 	return nil
 }
 
@@ -426,6 +427,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedContr
 		return err
 	}
 	// WARNING: in.Version requires manual conversion: does not exist in peer-type
+	out.ObservedGeneration = in.ObservedGeneration
 	return nil
 }
 

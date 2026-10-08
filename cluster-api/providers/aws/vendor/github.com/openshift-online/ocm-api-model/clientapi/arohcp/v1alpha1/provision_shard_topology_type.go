@@ -23,6 +23,9 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 type ProvisionShardTopology string
 
 const (
-	// Provision shard for hosted clusters is configured in a "dedicated" topology.
-	ProvisionShardTopologyDedicated ProvisionShardTopology = "dedicated"
+	// Represents a provision shard with shared topology. In this topology, all
+	// ARO-HCP Clusters share a common pool of K8s Nodes for control plane
+	// request serving workloads, rather than using a different set of
+	// dedicated K8s Nodes per ARO-HCP cluster.
+	ProvisionShardTopologyShared ProvisionShardTopology = "shared"
 )

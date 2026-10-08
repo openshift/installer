@@ -24,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
@@ -41,9 +40,7 @@ import (
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/exp/utils"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
-	stsservice "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
@@ -58,7 +55,6 @@ type ROSAClusterReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
 	WatchFilterValue string
-	NewStsClient     func(cloud.ScopeUsage, cloud.Session, logger.Wrapper, runtime.Object) stsservice.STSClient
 	NewOCMClient     func(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (rosa.OCMClient, error)
 }
 
@@ -137,7 +133,6 @@ func (r *ROSAClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		ControlPlane:   controlPlane,
 		ControllerName: "",
 		Logger:         log,
-		NewStsClient:   r.NewStsClient,
 	})
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create rosa controlplane scope: %w", err)
@@ -156,7 +151,6 @@ func (r *ROSAClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	log := logger.FromContext(ctx)
 	r.NewOCMClient = rosa.NewWrappedOCMClient
-	r.NewStsClient = scope.NewSTSClient
 
 	rosaCluster := &expinfrav1.ROSACluster{}
 

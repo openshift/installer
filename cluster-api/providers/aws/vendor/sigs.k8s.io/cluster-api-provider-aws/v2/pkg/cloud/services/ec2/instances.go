@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -820,6 +822,13 @@ func (s *Service) UpdateInstanceSecurityGroups(instanceID string, ids []string) 
 	s.scope.Debug("Found ENIs on instance", "number-of-enis", len(enis), "instance-id", instanceID)
 
 	for _, eni := range enis {
+		// Other components like cilium may add ENIs, and we don't want CAPA changing the security groups on those.
+		if !slices.ContainsFunc(eni.TagSet, func(t types.Tag) bool {
+			return aws.ToString(t.Key) == infrav1.ClusterTagKey(s.scope.Name())
+		}) {
+			s.scope.Debug("Skipping ENI without cluster tag", "eni-id", *eni.NetworkInterfaceId)
+			continue
+		}
 		if err := s.attachSecurityGroupsToNetworkInterface(ids, aws.ToString(eni.NetworkInterfaceId)); err != nil {
 			return errors.Wrapf(err, "failed to modify network interfaces on instance %q", instanceID)
 		}
@@ -1066,6 +1075,20 @@ func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1beta1
 					Address: addr,
 				}
 				addresses = append(addresses, publicIPAddress)
+			}
+		}
+
+		for _, ipv6 := range eni.Ipv6Addresses {
+			if addr := aws.ToString(ipv6.Ipv6Address); addr != "" {
+				ip := net.ParseIP(addr)
+				if ip == nil || ip.IsLinkLocalUnicast() {
+					continue
+				}
+				ipv6Address := clusterv1beta1.MachineAddress{
+					Type:    clusterv1beta1.MachineInternalIP,
+					Address: ip.String(),
+				}
+				addresses = append(addresses, ipv6Address)
 			}
 		}
 	}
@@ -1401,6 +1424,14 @@ func getInstanceCPUOptionsRequest(cpuOptions infrav1.CPUOptions) *types.CpuOptio
 		request.AmdSevSnp = types.AmdSevSnpSpecificationEnabled
 	case infrav1.AWSConfidentialComputePolicyDisabled:
 		request.AmdSevSnp = types.AmdSevSnpSpecificationDisabled
+	default:
+	}
+
+	switch cpuOptions.NestedVirtualization {
+	case infrav1.NestedVirtualizationPolicyEnabled:
+		request.NestedVirtualization = types.NestedVirtualizationSpecificationEnabled
+	case infrav1.NestedVirtualizationPolicyDisabled:
+		request.NestedVirtualization = types.NestedVirtualizationSpecificationDisabled
 	default:
 	}
 
