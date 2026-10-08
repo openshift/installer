@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -1080,6 +1081,111 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `platform\.vsphere\.vcenters\[0\]\.server: Invalid value: "44&236-21-251\.vmwarevmc\.com": must be the domain name or IP address of the vCenter`,
+		},
+		{
+			name: "cannot enable aws nested virtualization on control plane nodes",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Platform.AWS = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^controlPlane.platform.aws.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be enabled on Control Plane nodes$`,
+		},
+		{
+			name: "cannot enable aws nested virtualization on control plane nodes via defaultMachinePlatform inheritance",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform.AWS.DefaultMachinePlatform = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^platform.aws.defaultMachinePlatform.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be enabled on Control Plane nodes$`,
+		},
+		{
+			name: "cannot enable aws nested virtualization on control plane nodes via defaultMachinePlatform inheritance with defaults applied",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Compute[0].Management = types.ClusterAPI
+				c.Platform.AWS.DefaultMachinePlatform = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
+			restoreFnFactory: func(t *testing.T, ic *types.InstallConfig) func() {
+				t.Helper()
+				defaults.SetInstallConfigDefaults(ic)
+				return func() {}
+			},
+			expectedError: `^platform.aws.defaultMachinePlatform.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be enabled on Control Plane nodes$`,
+		},
+		{
+			name: "allow control plane to explicitly disable aws nested virtualization when defaultMachinePlatform enables it",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform.AWS.DefaultMachinePlatform = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				// Control plane explicitly overrides to Disabled
+				c.ControlPlane.Platform.AWS = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "cannot enable aws nested virtualization without clusterapi management",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Platform.AWS = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^compute\[0\].platform.aws.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization can only be enabled when management is set to ClusterAPI$`,
+		},
+		{
+			name: "cannot enable aws nested virtualization with machineapi management",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Management = types.MachineAPI
+				c.Compute[0].Platform.AWS = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^compute\[0\].platform.aws.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization can only be enabled when management is set to ClusterAPI$`,
+		},
+		{
+			name: "enable aws nested virtualization tech preview with clusterapi management",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Compute[0].Management = types.ClusterAPI
+				c.Compute[0].Platform.AWS = &aws.MachinePool{
+					CPUOptions: &aws.CPUOptions{
+						NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+					},
+				}
+				return c
+			}(),
 		},
 		{
 			name: "empty proxy settings",
@@ -2160,17 +2266,17 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `[controlPlane.architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64", compute\[0\].architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64"]`,
 		},
 		{
-			name: "cluster is not heteregenous",
+			name: "cluster is not heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzureStackPlatform()}
 				c.Compute[0].Architecture = types.ArchitectureARM64
 				return c
 			}(),
-			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heterogeneous multi-arch is not supported; compute pool architecture must match control plane$`,
 		},
 		{
-			name: "aws cluster is heteregeneous",
+			name: "aws cluster is heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Compute[0].Architecture = types.ArchitectureARM64
@@ -2178,7 +2284,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "gcp cluster is heteregeneous",
+			name: "gcp cluster is heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{GCP: validGCPPlatform()}

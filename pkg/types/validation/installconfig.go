@@ -896,8 +896,56 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
+
+	allErrs = append(allErrs, validateControlPlaneNestedVirtualization(platform, pool, fldPath)...)
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
 	allErrs = append(allErrs, validateFencingCredentialsAndPlatform(installConfig)...)
+	return allErrs
+}
+
+// validateControlPlaneNestedVirtualization NestedVirtualization cannot be enabled on Control Plane nodes.
+// Ensure that it is not being inherited by the Default Platform settings.
+func validateControlPlaneNestedVirtualization(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	var allErrs = field.ErrorList{}
+	var effectiveNestedVirt *aws.NestedVirtualizationPolicy
+	var nestedVirtFieldPath *field.Path
+
+	// Check defaultMachinePlatform for NestedVirtualization settings
+	defaultNestedVirt := platform.AWS != nil &&
+		platform.AWS.DefaultMachinePlatform != nil &&
+		platform.AWS.DefaultMachinePlatform.CPUOptions != nil &&
+		platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization != nil
+
+	// Check the ControlPlane pool for NestedVirtualization settings
+	controlPlaneNestedVirt := pool.Platform.AWS != nil &&
+		pool.Platform.AWS.CPUOptions != nil &&
+		pool.Platform.AWS.CPUOptions.NestedVirtualization != nil
+
+	switch {
+	case defaultNestedVirt && controlPlaneNestedVirt:
+		if *platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization == *pool.Platform.AWS.CPUOptions.NestedVirtualization {
+			// defaultMachinePlatform set, report that as the source
+			effectiveNestedVirt = platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization
+			nestedVirtFieldPath = field.NewPath("platform", "aws", "defaultMachinePlatform", "cpuOptions", "nestedVirtualization")
+		} else {
+			// ControlPlane explicitly overrode the default
+			effectiveNestedVirt = pool.Platform.AWS.CPUOptions.NestedVirtualization
+			nestedVirtFieldPath = fldPath.Child("platform", "aws", "cpuOptions", "nestedVirtualization")
+		}
+	case controlPlaneNestedVirt:
+		// Only control plane has it set
+		effectiveNestedVirt = pool.Platform.AWS.CPUOptions.NestedVirtualization
+		nestedVirtFieldPath = fldPath.Child("platform", "aws", "cpuOptions", "nestedVirtualization")
+	case defaultNestedVirt:
+		// Only defaultMachinePlatform has it set (control plane will inherit it)
+		effectiveNestedVirt = platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization
+		nestedVirtFieldPath = field.NewPath("platform", "aws", "defaultMachinePlatform", "cpuOptions", "nestedVirtualization")
+	}
+
+	if effectiveNestedVirt != nil && *effectiveNestedVirt == aws.NestedVirtualizationEnabled {
+		allErrs = append(allErrs, field.Invalid(nestedVirtFieldPath, effectiveNestedVirt, "NestedVirtualization cannot be enabled on Control Plane nodes"))
+	}
+
 	return allErrs
 }
 
@@ -949,7 +997,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		}
 		poolNames[p.Name] = true
 		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
-			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heterogeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 
 		// We only allow multi arch on baremetal when the control plane is x86 and compute is arm64.
@@ -965,10 +1013,38 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 			}
 		}
 
+		allErrs = append(allErrs, validateNestedVirtualizationPath(platform, p, poolFldPath)...)
+
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
 
 		if p.Fencing != nil {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("fencing"), p.Fencing, "fencing is only valid for control plane"))
+		}
+	}
+	return allErrs
+}
+
+// validateNestedVirtualizationPath checks how NestedVirtualization was set, and ensures that it was only enabled via
+// ClusterAPI Machine Management.
+func validateNestedVirtualizationPath(platform *types.Platform, p types.MachinePool, poolFldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if p.Management != types.ClusterAPI {
+		if p.Platform.AWS != nil && p.Platform.AWS.CPUOptions != nil {
+			if p.Platform.AWS.CPUOptions.NestedVirtualization != nil && *p.Platform.AWS.CPUOptions.NestedVirtualization == aws.NestedVirtualizationEnabled {
+				nestedVirtPath := poolFldPath.Child("platform", "aws", "cpuOptions", "nestedVirtualization")
+
+				if platform.AWS != nil &&
+					platform.AWS.DefaultMachinePlatform != nil &&
+					platform.AWS.DefaultMachinePlatform.CPUOptions != nil &&
+					platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization != nil &&
+					*platform.AWS.DefaultMachinePlatform.CPUOptions.NestedVirtualization == *p.Platform.AWS.CPUOptions.NestedVirtualization {
+					// Value set by defaultMachinePlatform
+					nestedVirtPath = field.NewPath("platform", "aws", "defaultMachinePlatform", "cpuOptions", "nestedVirtualization")
+				}
+
+				allErrs = append(allErrs, field.Invalid(nestedVirtPath, p.Platform.AWS.CPUOptions.NestedVirtualization, "NestedVirtualization can only be enabled when management is set to ClusterAPI"))
+			}
 		}
 	}
 	return allErrs
