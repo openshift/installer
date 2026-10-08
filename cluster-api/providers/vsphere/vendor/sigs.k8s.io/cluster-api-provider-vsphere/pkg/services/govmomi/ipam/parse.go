@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"net/netip"
 
-	ipamv1beta1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1"
+	"k8s.io/utils/ptr"
+	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 )
 
 // prefixesAsStrings converts []netip.Prefix to []string.
@@ -33,8 +34,8 @@ func prefixesAsStrings(prefixes []netip.Prefix) []string {
 }
 
 // parseAddressWithPrefix converts a *ipamv1.IPAddress to a string, e.g. '10.0.0.1/24'.
-func parseAddressWithPrefix(ipamAddress *ipamv1beta1.IPAddress) (netip.Prefix, error) {
-	addressWithPrefix := fmt.Sprintf("%s/%d", ipamAddress.Spec.Address, ipamAddress.Spec.Prefix)
+func parseAddressWithPrefix(ipamAddress *ipamv1.IPAddress) (netip.Prefix, error) {
+	addressWithPrefix := fmt.Sprintf("%s/%d", ipamAddress.Spec.Address, ptr.Deref(ipamAddress.Spec.Prefix, 0))
 	parsedPrefix, err := netip.ParsePrefix(addressWithPrefix)
 	if err != nil {
 		return netip.Prefix{}, fmt.Errorf("IPAddress %s/%s has invalid ip address: %q",
@@ -53,7 +54,7 @@ func parseAddressWithPrefix(ipamAddress *ipamv1beta1.IPAddress) (netip.Prefix, e
 // family as the address on the ipamv1.IPAddress. Gateway addresses of one
 // family must match the other addresses of the same family. A gateway address
 // is optional. If it is not set this function returns `nil, nil`.
-func parseGateway(ipamAddress *ipamv1beta1.IPAddress, addressWithPrefix netip.Prefix, ipamDeviceConfig ipamDeviceConfig) (*netip.Addr, error) {
+func parseGateway(ipamAddress *ipamv1.IPAddress, addressWithPrefix netip.Prefix, ipamDeviceConfig ipamDeviceConfig) (*netip.Addr, error) {
 	if ipamAddress.Spec.Gateway == "" {
 		return nil, nil
 	}

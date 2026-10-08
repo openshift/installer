@@ -18,41 +18,33 @@ package webhooks
 
 import (
 	"context"
-	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/conversion"
 )
 
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspheredeploymentzone,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheredeploymentzones,versions=v1beta1,name=default.vspheredeploymentzone.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-vspheredeploymentzone,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheredeploymentzones,versions=v1beta2,name=default.vspheredeploymentzone.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // VSphereDeploymentZone implements a defaulting webhook for VSphereDeploymentZone.
 type VSphereDeploymentZone struct{}
 
-var _ webhook.CustomDefaulter = &VSphereDeploymentZone{}
+var _ admission.Defaulter[*infrav1.VSphereDeploymentZone] = &VSphereDeploymentZone{}
 
 func (webhook *VSphereDeploymentZone) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.VSphereDeploymentZone{}).
-		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.VSphereDeploymentZone{}).
+		WithDefaulter(webhook).
+		WithConverter(conversion.VSphereDeploymentZone).
 		Complete()
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereDeploymentZone) Default(_ context.Context, obj runtime.Object) error {
-	typedObj, ok := obj.(*infrav1.VSphereDeploymentZone)
-	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDeploymentZone but got a %T", obj))
-	}
+func (webhook *VSphereDeploymentZone) Default(_ context.Context, typedObj *infrav1.VSphereDeploymentZone) error {
 	if typedObj.Spec.ControlPlane == nil {
 		typedObj.Spec.ControlPlane = ptr.To(true)
 	}
-
 	return nil
 }

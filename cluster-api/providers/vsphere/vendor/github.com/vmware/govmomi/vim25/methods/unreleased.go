@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package methods
@@ -21,6 +21,46 @@ func (b *PlaceVmsXClusterBody) Fault() *soap.Fault { return b.Fault_ }
 
 func PlaceVmsXCluster(ctx context.Context, r soap.RoundTripper, req *types.PlaceVmsXCluster) (*types.PlaceVmsXClusterResponse, error) {
 	var reqBody, resBody PlaceVmsXClusterBody
+
+	reqBody.Req = req
+
+	if err := r.RoundTrip(ctx, &reqBody, &resBody); err != nil {
+		return nil, err
+	}
+
+	return resBody.Res, nil
+}
+
+type UpdatePodVMPropertyBody struct {
+	Req    *types.UpdatePodVMProperty         `xml:"urn:vim25 UpdatePodVMProperty"`
+	Res    *types.UpdatePodVMPropertyResponse `xml:"UpdatePodVMPropertyResponse,omitempty"`
+	Fault_ *soap.Fault                        `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
+}
+
+func (b *UpdatePodVMPropertyBody) Fault() *soap.Fault { return b.Fault_ }
+
+func UpdatePodVMProperty(ctx context.Context, r soap.RoundTripper, req *types.UpdatePodVMProperty) (*types.UpdatePodVMPropertyResponse, error) {
+	var reqBody, resBody UpdatePodVMPropertyBody
+
+	reqBody.Req = req
+
+	if err := r.RoundTrip(ctx, &reqBody, &resBody); err != nil {
+		return nil, err
+	}
+
+	return reqBody.Res, nil
+}
+
+type FetchVmGroupForMultiwriterDisksBody struct {
+	Req    *types.FetchVmGroupForMultiwriterDisks         `xml:"urn:vim25 FetchVmGroupForMultiwriterDisks,omitempty"`
+	Res    *types.FetchVmGroupForMultiwriterDisksResponse `xml:"FetchVmGroupForMultiwriterDisksResponse,omitempty"`
+	Fault_ *soap.Fault                                    `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
+}
+
+func (b *FetchVmGroupForMultiwriterDisksBody) Fault() *soap.Fault { return b.Fault_ }
+
+func FetchVmGroupForMultiwriterDisks(ctx context.Context, r soap.RoundTripper, req *types.FetchVmGroupForMultiwriterDisks) (*types.FetchVmGroupForMultiwriterDisksResponse, error) {
+	var reqBody, resBody FetchVmGroupForMultiwriterDisksBody
 
 	reqBody.Req = req
 

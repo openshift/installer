@@ -24,7 +24,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 )
 
 // CalculateDevicesToBeAdded calculates the PCI devices which should be added to the VM.
@@ -60,7 +60,7 @@ func CalculateDevicesToBeAdded(ctx context.Context, vm *object.VirtualMachine, d
 
 // ConstructDeviceSpecs transforms a list of PCIDeviceSpec into a list of BaseVirutalDevices used by govmomi.
 func ConstructDeviceSpecs(pciDeviceSpecs []infrav1.PCIDeviceSpec) []types.BaseVirtualDevice {
-	pciDevices := []types.BaseVirtualDevice{}
+	pciDevices := make([]types.BaseVirtualDevice, 0, len(pciDeviceSpecs))
 	deviceKey := int32(-200)
 
 	for _, pciDevice := range pciDeviceSpecs {

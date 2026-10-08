@@ -20,8 +20,9 @@ import (
 	"sort"
 
 	"github.com/blang/semver"
+	"k8s.io/utils/ptr"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
@@ -39,7 +40,7 @@ func Compare(oldMods, newMods []infrav1.ClusterModule) bool {
 	})
 
 	for i := range oldMods {
-		if oldMods[i].ControlPlane == newMods[i].ControlPlane &&
+		if ptr.Deref(oldMods[i].ControlPlane, false) == ptr.Deref(newMods[i].ControlPlane, false) &&
 			oldMods[i].TargetObjectName == newMods[i].TargetObjectName &&
 			oldMods[i].ModuleUUID == newMods[i].ModuleUUID {
 			continue

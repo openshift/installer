@@ -1,4 +1,5 @@
-// Copyright (c) 2023 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
@@ -54,7 +55,6 @@ type VirtualMachineWebConsoleRequestStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
 // VirtualMachineWebConsoleRequest allows the creation of a one-time, web
@@ -78,7 +78,7 @@ type VirtualMachineWebConsoleRequestList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(
+	objectTypes = append(objectTypes,
 		&VirtualMachineWebConsoleRequest{},
 		&VirtualMachineWebConsoleRequestList{},
 	)

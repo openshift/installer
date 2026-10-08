@@ -18,8 +18,6 @@ limitations under the License.
 package vmoperator
 
 const (
-	kubeTopologyZoneLabelKey = "topology.kubernetes.io/zone"
-
 	// ControlPlaneVMClusterModuleGroupName is the name used for the control plane Cluster Module.
 	ControlPlaneVMClusterModuleGroupName = "control-plane-group"
 	// ClusterModuleNameAnnotationKey is key for the Cluster Module annotation.

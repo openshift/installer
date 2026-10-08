@@ -23,8 +23,8 @@ SHELL:=/usr/bin/env bash
 #
 # Go.
 #
-GO_VERSION ?= 1.24.6
-GO_DIRECTIVE_VERSION ?= 1.24.0
+GO_VERSION ?= 1.26.6
+GO_DIRECTIVE_VERSION ?= 1.26.0
 GO_CONTAINER_IMAGE ?= docker.io/library/golang:$(GO_VERSION)
 
 # Ensure correct toolchain is used
@@ -44,7 +44,7 @@ export GO111MODULE=on
 #
 # Kubebuilder.
 #
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.34.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.37.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -73,6 +73,15 @@ GO_INSTALL := ./hack/go-install.sh
 GO_TOOLS_BUILD := ./hack/go-tools-build.sh
 
 export PATH := $(abspath $(TOOLS_BIN_DIR)):$(PATH)
+
+# DBG=1 for building binaries which includes DWARF and symbol table for delve
+# debugging. When DBG is unspecified it defaults to "-s -w" which strips debug
+# information.
+export DBG ?= 0
+
+# Set build time variables including version details
+LDFLAGS := $(shell hack/version.sh)
+GCFLAGS := $(shell hack/gogcflags.sh)
 
 #
 # Ginkgo configuration.
@@ -113,22 +122,22 @@ KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
 KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
 
-SETUP_ENVTEST_VER := release-0.21
+SETUP_ENVTEST_VER := v0.24.1
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-CONTROLLER_GEN_VER := v0.18.0
+CONTROLLER_GEN_VER := v0.21.0
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER))
 CONTROLLER_GEN_PKG := sigs.k8s.io/controller-tools/cmd/controller-gen
 
-GOTESTSUM_VER := v1.11.0
+GOTESTSUM_VER := v1.12.3
 GOTESTSUM_BIN := gotestsum
 GOTESTSUM := $(abspath $(TOOLS_BIN_DIR)/$(GOTESTSUM_BIN)-$(GOTESTSUM_VER))
 GOTESTSUM_PKG := gotest.tools/gotestsum
 
-CONVERSION_GEN_VER := v0.33.0
+CONVERSION_GEN_VER := v0.36.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
@@ -140,14 +149,14 @@ ENVSUBST_VER := $(call get_go_version,github.com/drone/envsubst/v2)
 ENVSUBST := $(abspath $(TOOLS_BIN_DIR)/$(ENVSUBST_BIN)-$(ENVSUBST_VER))
 ENVSUBST_PKG := github.com/drone/envsubst/v2/cmd/envsubst
 
-GO_APIDIFF_VER := v0.8.2
+GO_APIDIFF_VER := v0.8.3
 GO_APIDIFF_BIN := go-apidiff
 GO_APIDIFF := $(abspath $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)-$(GO_APIDIFF_VER))
 GO_APIDIFF_PKG := github.com/joelanford/go-apidiff
 
 SHELLCHECK_VER := v0.9.0
 
-TRIVY_VER := 0.49.1
+TRIVY_VER := 0.69.2
 
 KPROMO_VER := 5ab0dbc74b0228c22a93d240596dff77464aee8f
 KPROMO_BIN := kpromo
@@ -175,9 +184,10 @@ GOLANGCI_LINT_KAL_VER := $(shell cat ./hack/tools/.custom-gcl.yaml | grep versio
 GOLANGCI_LINT_KAL := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_KAL_BIN))
 
 GOVULNCHECK_BIN := govulncheck
-GOVULNCHECK_VER := v1.1.4
-GOVULNCHECK := $(abspath $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN)-$(GOVULNCHECK_VER))
-GOVULNCHECK_PKG := golang.org/x/vuln/cmd/govulncheck
+GOVULNCHECK_VER := v1.3.0
+GOVULNCHECK := $(abspath $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN))
+GOVULNCHECK_DIR := hack/tools/govulncheck
+GOVULNCHECK_TMP_DIR ?= $(GOVULNCHECK_DIR)/govulncheck.tmp
 
 GOVC_VER := $(shell cat go.mod | grep "github.com/vmware/govmomi" | awk '{print $$NF}')
 GOVC_BIN := govc
@@ -189,20 +199,10 @@ KIND_BIN := kind
 KIND := $(abspath $(TOOLS_BIN_DIR)/$(KIND_BIN)-$(KIND_VER))
 KIND_PKG := sigs.k8s.io/kind
 
-IMPORT_BOSS_BIN := import-boss
-IMPORT_BOSS_VER := v0.28.1
-IMPORT_BOSS := $(abspath $(TOOLS_BIN_DIR)/$(IMPORT_BOSS_BIN))
-IMPORT_BOSS_PKG := k8s.io/code-generator/cmd/import-boss
-
-CAPI_HACK_TOOLS_VER := dc0fb87601071371044f60c59096ecad1b84397f # Note: this the commit ID of CAPI v1.11.1.
+CAPI_HACK_TOOLS_VER := 72ec15079db2b5ef4c624437ec241a6eb942f1e0 # Note: this the commit ID of CAPI v1.14.1.
 
 BOSKOSCTL_BIN := boskosctl
 BOSKOSCTL := $(abspath $(TOOLS_BIN_DIR)/$(BOSKOSCTL_BIN))
-
-CONVERSION_VERIFIER_VER := $(CAPI_HACK_TOOLS_VER)
-CONVERSION_VERIFIER_BIN := conversion-verifier
-CONVERSION_VERIFIER := $(abspath $(TOOLS_BIN_DIR)/$(CONVERSION_VERIFIER_BIN)-$(CONVERSION_VERIFIER_VER))
-CONVERSION_VERIFIER_PKG := sigs.k8s.io/cluster-api/hack/tools/conversion-verifier
 
 PROWJOB_GEN_VER := $(CAPI_HACK_TOOLS_VER)
 PROWJOB_GEN_BIN := prowjob-gen
@@ -230,14 +230,21 @@ VCSIM_IMAGE_NAME ?= cluster-api-vcsim-controller
 VCSIM_CONTROLLER_IMG ?= $(REGISTRY)/$(VCSIM_IMAGE_NAME)
 
 # vmoperator controller
-VM_OPERATOR_IMAGE_NAME ?= extra/vm-operator
-VM_OPERATOR_CONTROLLER_IMG ?= $(STAGING_REGISTRY)/$(VM_OPERATOR_IMAGE_NAME)
 VM_OPERATOR_DIR := test/infrastructure/vm-operator
 VM_OPERATOR_TMP_DIR ?= $(VM_OPERATOR_DIR)/vm-operator.tmp
-# note: this is the commit from 1.8.6 tag
-VM_OPERATOR_COMMIT ?= de75746a9505ef3161172d99b735d6593c54f0c5
-VM_OPERATOR_VERSION ?= v1.8.6-0-gde75746a
+# VM_OPERATOR_VERSION ?= 8.0
+# VM_OPERATOR_COMMIT ?= de75746a9505ef3161172d99b735d6593c54f0c5
+# VM_OPERATOR_COMMIT_DESCRIBE ?= v1.8.6-0-gde75746a
+# VM_OPERATOR_VERSION ?= 9.1
+# VM_OPERATOR_COMMIT ?= v1.10.0
+# VM_OPERATOR_COMMIT_DESCRIBE ?= release-vc-9.1.0-0-g77005588
+VM_OPERATOR_VERSION ?= 9.2
+VM_OPERATOR_COMMIT ?= 46d6f2c0092ebb12e5a6bb7883b2e2e241058402
+VM_OPERATOR_COMMIT_DESCRIBE ?= v1.9.0-1045-g46d6f2c0
 VM_OPERATOR_ALL_ARCH = amd64 arm64
+VM_OPERATOR_IMAGE_NAME ?= extra/vm-operator
+VM_OPERATOR_CONTROLLER_IMG ?= $(STAGING_REGISTRY)/$(VM_OPERATOR_IMAGE_NAME)
+VM_OPERATOR_IMAGE_TAG ?= $(VM_OPERATOR_VERSION)
 
 # net operator
 NET_OPERATOR_IMAGE_NAME ?= cluster-api-net-operator
@@ -250,6 +257,10 @@ TEST_EXTENSION_IMG ?= $(STAGING_REGISTRY)/$(TEST_EXTENSION_IMAGE_NAME)
 # boskosctl
 BOSKOSCTL_IMG ?= gcr.io/k8s-staging-capi-vsphere/extra/boskosctl
 BOSKOSCTL_IMG_TAG ?= $(shell git describe --always --dirty)
+
+# ctr
+CTR_IMG ?= gcr.io/k8s-staging-capi-vsphere/extra/ctr
+CTR_IMG_TAG ?= $(shell git describe --always --dirty)
 
 # openvpn
 OPENVPN_IMG ?= gcr.io/k8s-staging-capi-vsphere/extra/openvpn
@@ -271,15 +282,13 @@ ifeq ($(SELINUX_ENABLED),1)
   DOCKER_VOL_OPTS?=:z
 endif
 
-# Set build time variables including version details
-LDFLAGS := $(shell hack/version.sh)
-
 # Additional CAPV vars (everything else is ~ kept in sync with core CAPI)
 # Allow overriding manifest generation destination directory
 MANIFEST_ROOT ?= ./config
 CRD_ROOT ?= $(MANIFEST_ROOT)/default/crd/bases
 SUPERVISOR_CRD_ROOT ?= $(MANIFEST_ROOT)/supervisor/crd/bases
 VCSIM_CRD_ROOT ?= $(VCSIM_DIR)/config/crd/bases
+VCSIM_VM_OPERATOR_CRD_ROOT ?= $(VCSIM_DIR)/config/crd/vm-operator
 WEBHOOK_ROOT ?= $(MANIFEST_ROOT)/govmomi/webhook
 SUPERVISOR_WEBHOOK_ROOT ?= $(MANIFEST_ROOT)/supervisor/webhook
 RBAC_ROOT ?= $(MANIFEST_ROOT)/rbac
@@ -307,9 +316,8 @@ generate: ## Run all generate targets
 generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 	$(MAKE) clean-generated-yaml SRC_DIRS="$(CRD_ROOT),$(SUPERVISOR_CRD_ROOT),./config/govmomi/webhook/manifests.yaml,./config/supervisor/webhook/manifests.yaml"
 	$(CONTROLLER_GEN) \
-		paths=./apis/v1alpha3 \
-		paths=./apis/v1alpha4 \
-		paths=./apis/v1beta1 \
+		paths=./api/govmomi/v1beta1 \
+		paths=./api/govmomi/v1beta2 \
 		paths=./internal/webhooks \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(CRD_ROOT) \
@@ -326,11 +334,13 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		output:rbac:dir=$(RBAC_ROOT) \
 		rbac:roleName=manager-role
 	$(CONTROLLER_GEN) \
-		paths=./apis/vmware/v1beta1 \
+		paths=./api/supervisor/v1beta1 \
+		paths=./api/supervisor/v1beta2 \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(SUPERVISOR_CRD_ROOT)
 	# net-operator is used for tests
 	$(CONTROLLER_GEN) \
+		paths=./$(NETOP_DIR)/... \
 		paths=./$(NETOP_DIR)/controllers/... \
         output:rbac:dir=$(NETOP_RBAC_ROOT) \
         rbac:roleName=manager-role
@@ -352,26 +362,28 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 
 .PHONY: generate-go-deepcopy
 generate-go-deepcopy: $(CONTROLLER_GEN) ## Generate deepcopy go code for core
-	$(MAKE) clean-generated-deepcopy SRC_DIRS="./apis"
+	$(MAKE) clean-generated-deepcopy SRC_DIRS="./api"
 	$(CONTROLLER_GEN) \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt \
-		paths=./apis/...
+		paths=./api/... \
+		paths=./pkg/conversion/api/...
 	$(CONTROLLER_GEN) \
     	object:headerFile=./hack/boilerplate/boilerplate.generatego.txt \
     	paths=./$(VCSIM_DIR)/api/...
 
 .PHONY: generate-go-conversions
 generate-go-conversions: $(CONTROLLER_GEN) $(CONVERSION_GEN) ## Runs Go related generate targets
-	$(MAKE) clean-generated-conversions SRC_DIRS="./apis/v1alpha3,./apis/v1alpha4"
-	$(CONVERSION_GEN) \
+	$(MAKE) clean-generated-conversions SRC_DIRS="./api/govmomi/v1beta1,./api/supervisor/v1beta1"
+	cd api; $(CONVERSION_GEN) \
 		--output-file=zz_generated.conversion.go \
-		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt \
-		./apis/v1alpha3 \
-		./apis/v1alpha4
+		--go-header-file=./../hack/boilerplate/boilerplate.generatego.txt \
+		./govmomi/v1beta1 \
+		./supervisor/v1beta1
 
 .PHONY: generate-modules
 generate-modules: ## Run go mod tidy to ensure modules are up to date
 	go mod tidy
+	cd api; go mod tidy
 	cd $(TEST_DIR); go mod tidy
 	cd $(PACKAGING_DIR); go mod tidy
 
@@ -380,7 +392,7 @@ generate-doctoc:
 	TRACE=$(TRACE) ./hack/generate-doctoc.sh
 
 .PHONY: generate-e2e-templates
-generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.11 v1.12 v1.13 main) ## Generate test templates for all branches
+generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.14 v1.15 v1.16 main) ## Generate test templates for all branches
 
 .PHONY: generate-e2e-templates-main
 generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the main branch
@@ -401,9 +413,13 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	cp "$(RELEASE_DIR)/main/clusterclass-template.yaml" "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass/clusterclass-quick-start.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass-quick-start.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass-runtimesdk" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass-quick-start-runtimesdk.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass-runtimesdk-v1beta1" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/clusterclass-quick-start-runtimesdk-v1beta1.yaml"
 	cp "$(RELEASE_DIR)/main/cluster-template-topology.yaml" "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology/cluster-template-topology.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-topology.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology-runtimesdk" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology-runtimesdk-in-place" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-in-place.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology-runtimesdk-v1beta1" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-v1beta1.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/topology-taints" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-topology-taints.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/fast-rollout" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-fast-rollout.yaml"
 	# for PCI passthrough template
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/pci" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-pci.yaml"
@@ -418,37 +434,44 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	cp "$(RELEASE_DIR)/main/clusterclass-template-supervisor.yaml" "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass/clusterclass-quick-start-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-quick-start-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-runtimesdk" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-quick-start-supervisor-runtimesdk.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-runtimesdk-v1beta1" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-quick-start-supervisor-runtimesdk-v1beta1.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-scale" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/clusterclass-quick-start-supervisor-scale.yaml"
 	cp "$(RELEASE_DIR)/main/cluster-template-topology-supervisor.yaml" "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology/cluster-template-topology-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-autoscaler" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-autoscaler-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-runtimesdk" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-runtimesdk-in-place" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-in-place-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-runtimesdk-self-hosted" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-self-hosted-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-runtimesdk-v1beta1" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-runtimesdk-v1beta1-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-scale" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-scale-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/topology-taints" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-topology-taints-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/conformance" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-conformance-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/fast-rollout" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-fast-rollout-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/ownerrefs-finalizers" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-ownerrefs-finalizers-supervisor.yaml"
 
-.PHONY: generate-e2e-templates-v1.13
-generate-e2e-templates-v1.13: $(KUSTOMIZE)
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/clusterclass-quick-start.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.13/cluster-template-workload.yaml"
+.PHONY: generate-e2e-templates-v1.16
+generate-e2e-templates-v1.16: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.16/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.16/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.16/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.16/cluster-template-workload.yaml"
 
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/clusterclass-quick-start-supervisor.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.13/cluster-template-workload-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.16/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.16/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.16/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.16/cluster-template-workload-supervisor.yaml"
 
-.PHONY: generate-e2e-templates-v1.12
-generate-e2e-templates-v1.12: $(KUSTOMIZE)
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/clusterclass-quick-start.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.12/cluster-template-workload.yaml"
+.PHONY: generate-e2e-templates-v1.15
+generate-e2e-templates-v1.15: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.15/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.15/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.15/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.15/cluster-template-workload.yaml"
 
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.12/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.12/clusterclass-quick-start-supervisor.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.12/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.12/cluster-template-workload-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.15/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.15/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.15/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.15/cluster-template-workload-supervisor.yaml"
 
-.PHONY: generate-e2e-templates-v1.11
-generate-e2e-templates-v1.11: $(KUSTOMIZE)
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass-quick-start.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/cluster-template-workload.yaml"
+.PHONY: generate-e2e-templates-v1.14
+generate-e2e-templates-v1.14: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.14/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.14/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.14/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.14/cluster-template-workload.yaml"
 
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass-quick-start-supervisor.yaml"
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/cluster-template-workload-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.14/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.14/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.14/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.14/cluster-template-workload-supervisor.yaml"
 
 .PHONY: generate-test-infra-prowjobs
 generate-test-infra-prowjobs: $(PROWJOB_GEN) ## Generates the prowjob configurations in test-infra
@@ -470,10 +493,12 @@ generate-test-infra-prowjobs: $(PROWJOB_GEN) ## Generates the prowjob configurat
 ##@ lint and verify:
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) ## Lint the codebase
+lint: $(GOLANGCI_LINT) $(GOLANGCI_LINT_KAL) ## Lint the codebase
 	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
-	cd $(TEST_DIR); $(GOLANGCI_LINT) run --path-prefix $(TEST_DIR) --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
-	cd $(PACKAGING_DIR); $(GOLANGCI_LINT) run --path-prefix $(PACKAGING_DIR) --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd api; $(GOLANGCI_LINT) run --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd $(TEST_DIR); $(GOLANGCI_LINT) run --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd $(PACKAGING_DIR); $(GOLANGCI_LINT) run --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd api; $(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR)/.golangci-kal.yml $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
@@ -481,7 +506,7 @@ lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported
 
 .PHONY: lint-api
 lint-api: $(GOLANGCI_LINT_KAL)
-	$(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR)/.golangci-kal.yml $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd api; $(GOLANGCI_LINT_KAL) run -v --config $(ROOT_DIR)/.golangci-kal.yml $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-api-fix
 lint-api-fix: $(GOLANGCI_LINT_KAL)
@@ -493,7 +518,7 @@ APIDIFF_OLD_COMMIT ?= $(shell git rev-parse origin/main)
 apidiff: $(GO_APIDIFF) ## Check for API differences
 	$(GO_APIDIFF) $(APIDIFF_OLD_COMMIT) --print-compatible
 
-ALL_VERIFY_CHECKS = licenses boilerplate shellcheck modules gen conversions doctoc flavors import-restrictions go-directive
+ALL_VERIFY_CHECKS = licenses boilerplate shellcheck modules gen doctoc flavors go-directive
 
 .PHONY: verify
 verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
@@ -504,7 +529,7 @@ verify-go-directive:
 
 .PHONY: verify-modules
 verify-modules: generate-modules  ## Verify go modules are up to date
-	@if !(git diff --quiet HEAD -- go.sum go.mod $(TEST_DIR)/go.mod $(TEST_DIR)/go.sum $(PACKAGING_DIR)/go.mod $(PACKAGING_DIR)/go.sum); then \
+	@if !(git diff --quiet HEAD -- go.sum go.mod api/go.mod api/go.sum $(TEST_DIR)/go.mod $(TEST_DIR)/go.sum $(PACKAGING_DIR)/go.mod $(PACKAGING_DIR)/go.sum); then \
 		git diff; \
 		echo "go module files are out of date"; exit 1; \
 	fi
@@ -519,11 +544,6 @@ verify-gen: generate  ## Verify go generated files are up to date
 		git diff; \
 		echo "generated files are out of date, run make generate"; exit 1; \
 	fi
-
-.PHONY: verify-conversions
-verify-conversions: $(CONVERSION_VERIFIER)  ## Verifies expected API conversion are in place
-	$(CONVERSION_VERIFIER) \
-		./apis/...
 
 .PHONY: verify-doctoc
 verify-doctoc: generate-doctoc
@@ -551,9 +571,10 @@ verify-licenses: ## Verify licenses
 .PHONY: verify-govulncheck
 verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
 	$(GOVULNCHECK) ./... && R1=$$? || R1=$$?; \
-	$(GOVULNCHECK) -C "$(TEST_DIR)" ./... && R2=$$? || R2=$$?; \
-	$(GOVULNCHECK) -C "$(PACKAGING_DIR)" ./... && R3=$$? || R3=$$?; \
-	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ] || [ "$$R3" -ne "0" ]; then \
+	$(GOVULNCHECK) -C "api" ./... && R2=$$? || R2=$$?; \
+	$(GOVULNCHECK) -C "$(TEST_DIR)" ./... && R3=$$? || R3=$$?; \
+	$(GOVULNCHECK) -C "$(PACKAGING_DIR)" ./... && R4=$$? || R4=$$?; \
+	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ] || [ "$$R3" -ne "0" ] || [ "$$R4" -ne "0" ]; then \
 		exit 1; \
 	fi
 
@@ -573,10 +594,6 @@ verify-flavors: $(FLAVOR_DIR) generate-flavors ## Verify generated flavors
 		echo "flavor files in templates directory are out of date"; exit 1; \
 	fi
 
-.PHONY: verify-import-restrictions
-verify-import-restrictions: $(IMPORT_BOSS) ## Verify import restrictions with import-boss
-	./hack/verify-import-restrictions.sh
-
 ## --------------------------------------
 ## Build
 ## --------------------------------------
@@ -585,7 +602,7 @@ verify-import-restrictions: $(IMPORT_BOSS) ## Verify import restrictions with im
 
 .PHONY: manager
 manager: ## Build the vsphere manager binary into the ./bin folder
-	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/manager sigs.k8s.io/cluster-api-provider-vsphere
+	CGO_ENABLED=0 go build -trimpath -gcflags "$(GCFLAGS)" -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/manager sigs.k8s.io/cluster-api-provider-vsphere
 
 .PHONY: docker-pull-prerequisites
 docker-pull-prerequisites:
@@ -604,7 +621,7 @@ DOCKER_BUILD_MODIFY_MANIFESTS ?= true
 .PHONY: docker-build
 docker-build: docker-pull-prerequisites ## Build the docker image for vsphere controller manager
 ## reads Dockerfile from stdin to avoid an incorrectly cached Dockerfile (https://github.com/moby/buildkit/issues/1368)
-	cat ./Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG)-$(ARCH):$(TAG) --file -
+	cat ./Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg gcflags="$(GCFLAGS)" --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG)-$(ARCH):$(TAG) --file -
 	@if [ "${DOCKER_BUILD_MODIFY_MANIFESTS}" = "true" ]; then \
   		$(MAKE) set-manifest-image MANIFEST_IMG=$(CONTROLLER_IMG)-$(ARCH) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./config/base/manager_image_patch.yaml"; \
 		$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./config/base/manager_pull_policy.yaml"; \
@@ -613,7 +630,7 @@ docker-build: docker-pull-prerequisites ## Build the docker image for vsphere co
 .PHONY: docker-build-vcsim
 docker-build-vcsim: docker-pull-prerequisites ## Build the docker image for vcsim controller manager
 ## reads Dockerfile from stdin to avoid an incorrectly cached Dockerfile (https://github.com/moby/buildkit/issues/1368)
-	cat $(VCSIM_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(VCSIM_CONTROLLER_IMG)-$(ARCH):$(TAG) --file -
+	cat $(VCSIM_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg gcflags="$(GCFLAGS)" --build-arg ldflags="$(LDFLAGS)" . -t $(VCSIM_CONTROLLER_IMG)-$(ARCH):$(TAG) --file -
 	@if [ "${DOCKER_BUILD_MODIFY_MANIFESTS}" = "true" ]; then \
   		$(MAKE) set-manifest-image MANIFEST_IMG=$(VCSIM_CONTROLLER_IMG)-$(ARCH) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./$(VCSIM_DIR)/config/default/manager_image_patch.yaml"; \
 		$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./$(VCSIM_DIR)/config/default/manager_pull_policy.yaml"; \
@@ -622,7 +639,7 @@ docker-build-vcsim: docker-pull-prerequisites ## Build the docker image for vcsi
 .PHONY: docker-build-net-operator
 docker-build-net-operator: docker-pull-prerequisites ## Build the docker image for net-operator controller manager
 ## reads Dockerfile from stdin to avoid an incorrectly cached Dockerfile (https://github.com/moby/buildkit/issues/1368)
-	cat $(NETOP_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(NET_OPERATOR_IMG)-$(ARCH):$(TAG) --file -
+	cat $(NETOP_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg gcflags="$(GCFLAGS)" --build-arg ldflags="$(LDFLAGS)" . -t $(NET_OPERATOR_IMG)-$(ARCH):$(TAG) --file -
 	@if [ "${DOCKER_BUILD_MODIFY_MANIFESTS}" = "true" ]; then \
 		$(MAKE) set-manifest-image MANIFEST_IMG=$(NET_OPERATOR_IMG)-$(ARCH) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./$(NETOP_DIR)/config/default/manager_image_patch.yaml"; \
 		$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./$(NETOP_DIR)/config/default/manager_pull_policy.yaml"; \
@@ -631,7 +648,7 @@ docker-build-net-operator: docker-pull-prerequisites ## Build the docker image f
 .PHONY: docker-build-test-extension
 docker-build-test-extension: docker-pull-prerequisites ## Build the docker image for test-extension controller manager
 ## reads Dockerfile from stdin to avoid an incorrectly cached Dockerfile (https://github.com/moby/buildkit/issues/1368)
-	cat $(TEST_EXTENSION_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(TEST_EXTENSION_IMG)-$(ARCH):$(TAG) --file -
+	cat $(TEST_EXTENSION_DIR)/Dockerfile | DOCKER_BUILDKIT=1 docker build --build-arg builder_image=$(GO_CONTAINER_IMAGE) --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg gcflags="$(GCFLAGS)" --build-arg ldflags="$(LDFLAGS)" . -t $(TEST_EXTENSION_IMG)-$(ARCH):$(TAG) --file -
 	@if [ "${DOCKER_BUILD_MODIFY_MANIFESTS}" = "true" ]; then \
 		$(MAKE) set-manifest-image MANIFEST_IMG=$(TEST_EXTENSION_IMG)-$(ARCH) MANIFEST_TAG=$(TAG) TARGET_RESOURCE="./$(TEST_EXTENSION_DIR)/config/default/manager_image_patch.yaml"; \
 		$(MAKE) set-manifest-pull-policy TARGET_RESOURCE="./$(TEST_EXTENSION_DIR)/config/default/manager_pull_policy.yaml"; \
@@ -647,6 +664,17 @@ docker-build-boskosctl:
 docker-push-boskosctl:
 	docker push $(BOSKOSCTL_IMG):$(BOSKOSCTL_IMG_TAG)
 	docker push $(BOSKOSCTL_IMG):latest
+
+.PHONY: docker-build-ctr
+docker-build-ctr:
+	cat hack/tools/ctr/Dockerfile | DOCKER_BUILDKIT=1 docker build --platform linux/amd64 $(ROOT_DIR)/hack/tools/ctr/. -t $(CTR_IMG):$(CTR_IMG_TAG) --file -
+	docker tag $(CTR_IMG):$(CTR_IMG_TAG) $(CTR_IMG):latest
+.PHONY: build
+
+.PHONY: docker-push-ctr
+docker-push-ctr:
+	docker push $(CTR_IMG):$(CTR_IMG_TAG)
+	docker push $(CTR_IMG):latest
 
 .PHONY: docker-build-openvpn
 docker-build-openvpn:
@@ -675,7 +703,8 @@ setup-envtest: $(SETUP_ENVTEST) ## Set up envtest (download kubebuilder assets)
 
 .PHONY: test
 test: $(SETUP_ENVTEST) $(GOVC) ## Run unit tests
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -v ./apis/... ./controllers/... ./pkg/... ./internal/... ./hack/tools/... $(TEST_ARGS)
+	cd api; KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -v ./... $(TEST_ARGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -v ./controllers/... ./pkg/... ./internal/... ./hack/tools/... $(TEST_ARGS)
 
 .PHONY: test-verbose
 test-verbose: ## Run unit tests with verbose flag
@@ -686,9 +715,12 @@ test-junit: $(SETUP_ENVTEST) $(GOTESTSUM) $(GOVC) ## Run unit tests
 	# Note: running ensure.go to make sure tests run with the correct kube-kins image in CI
 	hack/ensure-go.sh
 	# Note: ARTIFACTS must be set so the ginkgo suites write junit reports to the ARTIFACTS folder
-	set +o errexit; (ARTIFACTS=$(ARTIFACTS) KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -json ./apis/... ./controllers/... ./pkg/... ./internal/... ./hack/tools/... $(TEST_ARGS); echo $$? > $(ARTIFACTS)/junit.exitcode) | tee $(ARTIFACTS)/junit.stdout
+	set +o errexit; (ARTIFACTS=$(ARTIFACTS) KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -json ./controllers/... ./pkg/... ./internal/... ./hack/tools/... $(TEST_ARGS); echo $$? > $(ARTIFACTS)/junit.exitcode) | tee $(ARTIFACTS)/junit.stdout
 	$(GOTESTSUM) --junitfile $(ARTIFACTS)/junit.xml --raw-command cat $(ARTIFACTS)/junit.stdout
 	exit $$(cat $(ARTIFACTS)/junit.exitcode)
+	cd api; set +o errexit; (ARTIFACTS=$(ARTIFACTS) KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -json ./... $(TEST_ARGS); echo $$? > $(ARTIFACTS)/junit-api.exitcode) | tee $(ARTIFACTS)/junit-api.stdout
+	$(GOTESTSUM) --junitfile $(ARTIFACTS)/junit-api.xml --raw-command cat $(ARTIFACTS)/junit-api.stdout
+	exit $$(cat $(ARTIFACTS)/junit-api.exitcode)
 
 .PHONY: test-cover
 test-cover: ## Run unit tests and generate a coverage report
@@ -696,6 +728,8 @@ test-cover: ## Run unit tests and generate a coverage report
 	./hack/codecov-ignore.sh
 	go tool cover -func=coverage.out -o coverage.txt
 	go tool cover -html=coverage.out -o coverage.html
+	go tool cover -func=api/coverage.out -o coverage-api.txt
+	go tool cover -html=api/coverage.out -o coverage-api.html
 
 .PHONY: e2e-images
 e2e-images: ## Build the e2e manager image
@@ -743,8 +777,15 @@ ifneq (,$(findstring -,$(RELEASE_TAG)))
 	_RELEASE_TAG_MINOR ?= $(word 2,$(subst ., ,$(RELEASE_TAG:v%=%)))
 	# Find the previous release of the same major + minor version (including pre-releases) or the previous .0 minor release.
 	_PREVIOUS_RELEASE_TAG ?= $(shell git tag -l | grep -E -e '^v[0-9]+\.[0-9]+\.0+$$|^v$(_RELEASE_TAG_MAJOR)\.$(_RELEASE_TAG_MINOR)\.' | sort -V | grep -B1 $(RELEASE_TAG) | head -n 1 2>/dev/null)
-	# Set the argument for release-notes generator to provide the for pre-releases mandatory `--previous-release-version` flag.
-	RELEASE_NOTES_PRE_RELEASE_ARG ?= "--previous-release-version=tags/$(_PREVIOUS_RELEASE_TAG)"
+	# Set the argument for release-notes generator to provide the for pre-releases mandatory
+	# `--previous-release-version` flag, but only if the previous release is also a pre-release.
+	# For the first pre-release (e.g. v1.15.0-beta.0 after v1.14.0), the generator must NOT
+	# receive `--previous-release-version`.
+	ifneq (,$(findstring alpha.,$(_PREVIOUS_RELEASE_TAG))$(findstring beta.,$(_PREVIOUS_RELEASE_TAG))$(findstring rc.,$(_PREVIOUS_RELEASE_TAG)))
+		RELEASE_NOTES_PRE_RELEASE_ARG ?= "--previous-release-version=tags/$(_PREVIOUS_RELEASE_TAG)"
+	else
+		RELEASE_NOTES_PRE_RELEASE_ARG ?=
+	endif
 endif
 ## set by Prow, ref name of the base branch, e.g., main
 RELEASE_ALIAS_TAG := $(PULL_BASE_REF)
@@ -907,6 +948,8 @@ release-vm-operator-local: docker-build-all-vm-operator generate-manifests-vm-op
 .PHONY: checkout-vm-operator
 checkout-vm-operator:
 	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
+	@if [ -z "${VM_OPERATOR_COMMIT_DESCRIBE}" ]; then echo "VM_OPERATOR_COMMIT_DESCRIBE is not set"; exit 1; fi
+	@if [ -z "${VM_OPERATOR_COMMIT}" ]; then echo "VM_OPERATOR_COMMIT is not set"; exit 1; fi
 	@if [ -d "$(VM_OPERATOR_TMP_DIR)" ]; then \
 		echo "$(VM_OPERATOR_TMP_DIR) exists, skipping clone"; \
 	else \
@@ -915,28 +958,65 @@ checkout-vm-operator:
 		git checkout "$(VM_OPERATOR_COMMIT)"; \
 	fi
 	@cd "$(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)"; \
-	if [ "$$(git describe --dirty 2> /dev/null)" != "$(VM_OPERATOR_VERSION)" ]; then \
-		echo "ERROR: checked out version $$(git describe --dirty 2> /dev/null) does not match expected version $(VM_OPERATOR_VERSION)"; \
-		exit 1; \
-	fi
+	if [ "$$(git describe --no-dirty 2> /dev/null)" != "$(VM_OPERATOR_COMMIT_DESCRIBE)" ]; then \
+		if [ "$$(git describe --no-dirty 2> /dev/null)" != "api/$(VM_OPERATOR_COMMIT_DESCRIBE)" ]; then \
+			echo "ERROR: checked out version $$(git describe --no-dirty 2> /dev/null) does not match expected version $(VM_OPERATOR_COMMIT_DESCRIBE) or api/$(VM_OPERATOR_COMMIT_DESCRIBE)"; \
+			exit 1; \
+		fi \
+	fi; \
+	echo "Using vm-operator version $(VM_OPERATOR_VERSION), commit $(VM_OPERATOR_COMMIT), build $(VM_OPERATOR_COMMIT_DESCRIBE)";
 
 .PHONY: generate-manifests-vm-operator
 generate-manifests-vm-operator: $(RELEASE_DIR) $(KUSTOMIZE) checkout-vm-operator ## Build the vm-operator manifest yaml file
-	kustomize build --load-restrictor LoadRestrictionsNone "$(VM_OPERATOR_TMP_DIR)/config/wcp" > "$(VM_OPERATOR_DIR)/config/vm-operator.yaml"
-	sed -i'' -e 's@image: vmoperator.*@image: '"$(VM_OPERATOR_CONTROLLER_IMG):$(VM_OPERATOR_VERSION)"'@' "$(VM_OPERATOR_DIR)/config/vm-operator.yaml"
-	kustomize build "$(VM_OPERATOR_DIR)/config" > "$(VM_OPERATOR_DIR)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
+	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
+	$(MAKE) generate-manifests-vm-operator-$(VM_OPERATOR_VERSION)
+
+generate-manifests-vm-operator-8.0:
+	$(KUSTOMIZE) build --load-restrictor LoadRestrictionsNone "$(VM_OPERATOR_TMP_DIR)/config/wcp" > "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)/vm-operator.yaml"
+	$(KUSTOMIZE) build "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)" > "$(VM_OPERATOR_DIR)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
+
+generate-manifests-vm-operator-9.1:
+	@cd "$(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)"; \
+	make kustomize-wcp
+	@cd "$(ROOT_DIR)"
+	cp "$(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/local-deployment.yaml" "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)/vm-operator.yaml"
+	$(KUSTOMIZE) build "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)" > "$(VM_OPERATOR_DIR)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
+	$(KUSTOMIZE) build --load-restrictor LoadRestrictionsNone "$(VCSIM_VM_OPERATOR_CRD_ROOT)/$(VM_OPERATOR_VERSION)" > "$(VCSIM_VM_OPERATOR_CRD_ROOT)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
+
+generate-manifests-vm-operator-9.2:
+	@cd "$(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)"; \
+	GOTOOLCHAIN=auto make kustomize-wcp
+	@cd "$(ROOT_DIR)"
+	cp "$(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/local-deployment.yaml" "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)/vm-operator.yaml"
+	$(KUSTOMIZE) build "$(VM_OPERATOR_DIR)/config/$(VM_OPERATOR_VERSION)" > "$(VM_OPERATOR_DIR)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
+	$(KUSTOMIZE) build --load-restrictor LoadRestrictionsNone "$(VCSIM_VM_OPERATOR_CRD_ROOT)/$(VM_OPERATOR_VERSION)" > "$(VCSIM_VM_OPERATOR_CRD_ROOT)/vm-operator-$(VM_OPERATOR_VERSION).yaml"
 
 .PHONY: docker-build-all-vm-operator
-docker-build-all-vm-operator: $(addprefix docker-vm-operator-build-,$(VM_OPERATOR_ALL_ARCH)) ## Build docker images for all architectures
+docker-build-all-vm-operator: checkout-vm-operator
+	$(MAKE) docker-build-vm-operator-vm-operator-$(VM_OPERATOR_VERSION)
 
-docker-vm-operator-build-%:
-	$(MAKE) ARCH=$* docker-build-vm-operator
+# IMPORTANT: before running this command please add --provenance=false to the docker build command in test/infrastructure/vm-operator/vm-operator.tmp/hack/build-container.sh
+docker-build-vm-operator-vm-operator-8.0:
+	@if [ -z "${VM_OPERATOR_IMAGE_TAG}" ]; then echo "VM_OPERATOR_IMAGE_TAG is not set"; exit 1; fi
+	cd $(VM_OPERATOR_TMP_DIR); \
+	$(MAKE) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-amd64 IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) GOARCH=amd64 docker-build ; \
+	$(MAKE) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-arm64 IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) GOARCH=arm64 docker-build
 
-.PHONY: docker-build-vm-operator
-docker-build-vm-operator: checkout-vm-operator
-	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
-	cd $(VM_OPERATOR_TMP_DIR) && \
-	$(MAKE) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-$(ARCH) IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) GOARCH=$(ARCH) docker-build
+docker-build-vm-operator-vm-operator-9.1:
+	@if [ -z "${VM_OPERATOR_IMAGE_TAG}" ]; then echo "VM_OPERATOR_IMAGE_TAG is not set"; exit 1; fi
+	cd $(VM_OPERATOR_TMP_DIR); \
+	IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-amd64 IMAGE_FILE=artifacts/vm-operator-amd64.tar ADDITIONAL_CRI_BUILD_FLAGS="--provenance=false" make image-build-amd64; \
+	docker load -i $(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/vm-operator-amd64.tar; \
+	IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-arm64 IMAGE_FILE=artifacts/vm-operator-arm64.tar ADDITIONAL_CRI_BUILD_FLAGS="--provenance=false" make image-build-arm64; \
+	docker load -i $(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/vm-operator-arm64.tar
+
+docker-build-vm-operator-vm-operator-9.2:
+	@if [ -z "${VM_OPERATOR_IMAGE_TAG}" ]; then echo "VM_OPERATOR_IMAGE_TAG is not set"; exit 1; fi
+	cd $(VM_OPERATOR_TMP_DIR); \
+	GOTOOLCHAIN=auto IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-amd64 IMAGE_FILE=artifacts/vm-operator-amd64.tar ADDITIONAL_CRI_BUILD_FLAGS="--provenance=false" make image-build-amd64; \
+	docker load -i $(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/vm-operator-amd64.tar; \
+	GOTOOLCHAIN=auto IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG) IMAGE=$(VM_OPERATOR_CONTROLLER_IMG)-arm64 IMAGE_FILE=artifacts/vm-operator-arm64.tar ADDITIONAL_CRI_BUILD_FLAGS="--provenance=false" make image-build-arm64; \
+	docker load -i $(ROOT_DIR)/$(VM_OPERATOR_TMP_DIR)/artifacts/vm-operator-arm64.tar
 
 .PHONY: docker-push-all-vm-operator
 docker-push-all-vm-operator: $(addprefix docker-vm-operator-push-,$(VM_OPERATOR_ALL_ARCH))  ## Push the docker images to be included in the release for all architectures + related multiarch manifests
@@ -947,15 +1027,16 @@ docker-vm-operator-push-%:
 
 .PHONY: docker-push-vm-operator
 docker-push-vm-operator:
-	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
+	@if [ -z "${VM_OPERATOR_IMAGE_TAG}" ]; then echo "VM_OPERATOR_IMAGE_TAG is not set"; exit 1; fi
 	docker push $(VM_OPERATOR_CONTROLLER_IMG)-$(ARCH):$(VM_OPERATOR_VERSION)
 
 .PHONY: docker-push-manifest-vm-operator
 docker-push-manifest-vm-operator:
-	@if [ -z "${VM_OPERATOR_VERSION}" ]; then echo "VM_OPERATOR_VERSION is not set"; exit 1; fi
-	docker manifest create --amend $(VM_OPERATOR_CONTROLLER_IMG):$(VM_OPERATOR_VERSION) $(shell echo $(VM_OPERATOR_ALL_ARCH) | sed -e "s~[^ ]*~$(VM_OPERATOR_CONTROLLER_IMG)\-&:$(VM_OPERATOR_VERSION)~g")
-	@for arch in $(VM_OPERATOR_ALL_ARCH); do docker manifest annotate --arch $${arch} ${VM_OPERATOR_CONTROLLER_IMG}:${VM_OPERATOR_VERSION} ${VM_OPERATOR_CONTROLLER_IMG}-$${arch}:${VM_OPERATOR_VERSION}; done
-	docker manifest push --purge $(VM_OPERATOR_CONTROLLER_IMG):$(VM_OPERATOR_VERSION)
+	@if [ -z "${VM_OPERATOR_IMAGE_TAG}" ]; then echo "VM_OPERATOR_IMAGE_TAG is not set"; exit 1; fi
+	export  VM_OPERATOR_IMAGE_TAG=$(VM_OPERATOR_IMAGE_TAG)
+	docker manifest create --amend $(VM_OPERATOR_CONTROLLER_IMG):$(VM_OPERATOR_IMAGE_TAG) $(shell echo $(VM_OPERATOR_ALL_ARCH) | sed -e "s~[^ ]*~$(VM_OPERATOR_CONTROLLER_IMG)\-&:$(VM_OPERATOR_IMAGE_TAG)~g")
+	@for arch in $(VM_OPERATOR_ALL_ARCH); do docker manifest annotate --arch $${arch} ${VM_OPERATOR_CONTROLLER_IMG}:${VM_OPERATOR_IMAGE_TAG} ${VM_OPERATOR_CONTROLLER_IMG}-$${arch}:${VM_OPERATOR_IMAGE_TAG}; done
+	docker manifest push --purge $(VM_OPERATOR_CONTROLLER_IMG):$(VM_OPERATOR_IMAGE_TAG)
 
 .PHONY: clean-vm-operator
 clean-vm-operator:
@@ -1041,9 +1122,6 @@ $(PROWJOB_GEN_BIN): $(PROWJOB_GEN) ## Build a local copy of prowjob-gen.
 .PHONY: $(BOSKOSCTL_BIN)
 $(BOSKOSCTL_BIN): $(BOSKOSCTL) ## Build a local copy of boskosctl.
 
-.PHONY: $(CONVERSION_VERIFIER_BIN)
-$(CONVERSION_VERIFIER_BIN): $(CONVERSION_VERIFIER) ## Build a local copy of conversion-verifier.
-
 .PHONY: $(GOTESTSUM_BIN)
 $(GOTESTSUM_BIN): $(GOTESTSUM) ## Build a local copy of gotestsum.
 
@@ -1083,9 +1161,6 @@ $(GOVC_BIN): $(GOVC) ## Build a local copy of govc.
 .PHONY: $(KIND_BIN)
 $(KIND_BIN): $(KIND) ## Build a local copy of kind.
 
-.PHONY: $(IMPORT_BOSS_BIN)
-$(IMPORT_BOSS_BIN): $(IMPORT_BOSS)
-
 .PHONY: $(RELEASE_NOTES_BIN)
 $(RELEASE_NOTES_BIN): $(RELEASE_NOTES) ## Build a local copy of release-notes.
 
@@ -1100,9 +1175,6 @@ $(CONVERSION_GEN): # Build conversion-gen.
 
 $(BOSKOSCTL): # Build boskosctl from tools folder.
 	go build -o $(TOOLS_BIN_DIR)/$(BOSKOSCTL_BIN) ./hack/tools/boskosctl
-
-$(CONVERSION_VERIFIER): # Build conversion-verifier.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_TOOLS_BUILD) $(CONVERSION_VERIFIER_PKG) $(CONVERSION_VERIFIER_BIN) $(CONVERSION_VERIFIER_VER)
 
 $(PROWJOB_GEN): # Build prowjob-gen.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_TOOLS_BUILD) $(PROWJOB_GEN_PKG) $(PROWJOB_GEN_BIN) $(PROWJOB_GEN_VER)
@@ -1134,20 +1206,40 @@ $(GINKGO): # Build ginkgo.
 $(GOLANGCI_LINT): # Build golangci-lint.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(GOLANGCI_LINT_PKG) $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
 
-$(GOVULNCHECK): # Build govulncheck.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(GOVULNCHECK_PKG) $(GOVULNCHECK_BIN) $(GOVULNCHECK_VER)
-
 $(GOVC): # Build GOVC.
 	GOBIN=$(TOOLS_BIN_DIR) $(GOVC_INSTALL) $(GOVC_BIN) $(GOVC_VER)
 
 $(KIND): # Build kind.
 	cd $(TEST_DIR); GOBIN=$(TOOLS_BIN_DIR) ../$(GO_INSTALL) $(KIND_PKG) $(KIND_BIN) $(KIND_VER)
 
-$(IMPORT_BOSS): # Build import-boss
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(IMPORT_BOSS_PKG) $(IMPORT_BOSS_BIN) $(IMPORT_BOSS_VER)
-
 $(RELEASE_NOTES): # Build release-notes.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_TOOLS_BUILD) $(RELEASE_NOTES_PKG) $(RELEASE_NOTES_BIN) $(RELEASE_NOTES_VER)
+
+
+## --------------------------------------
+## govulncheck
+## --------------------------------------
+
+$(GOVULNCHECK): # Build govulncheck.
+	@if [ -z "${GOVULNCHECK_VER}" ]; then echo "GOVULNCHECK_VER is not set"; exit 1; fi
+	@if [ -d "$(GOVULNCHECK_TMP_DIR)" ]; then \
+		echo "$(GOVULNCHECK_TMP_DIR) exists, skipping clone"; \
+	else \
+		git clone "https://github.com/golang/vuln.git" "$(GOVULNCHECK_TMP_DIR)"; \
+		cd "$(GOVULNCHECK_TMP_DIR)"; \
+		git checkout "$(GOVULNCHECK_VER)"; \
+		git apply "$(ROOT_DIR)/$(GOVULNCHECK_DIR)/govulncheck.patch"; \
+	fi
+	@cd "$(ROOT_DIR)/$(GOVULNCHECK_TMP_DIR)"; \
+	if [ "$$(git describe --tag 2> /dev/null)" != "$(GOVULNCHECK_VER)" ]; then \
+		echo "ERROR: checked out version $$(git describe --tag 2> /dev/null) does not match expected version $(GOVULNCHECK_VER)"; \
+		exit 1; \
+	fi
+	go build -C $(GOVULNCHECK_TMP_DIR) -o $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN) ./cmd/govulncheck
+
+.PHONY: clean-govulncheck
+clean-govulncheck:
+	rm -fr "$(GOVULNCHECK_TMP_DIR)"
 
 ## --------------------------------------
 ## Helpers

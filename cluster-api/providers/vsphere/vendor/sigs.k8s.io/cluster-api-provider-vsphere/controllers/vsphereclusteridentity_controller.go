@@ -20,20 +20,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/paused"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
+	capicontrollerutil "sigs.k8s.io/cluster-api/util/controller"
 	"sigs.k8s.io/cluster-api/util/finalizers"
+	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +44,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	pkgidentity "sigs.k8s.io/cluster-api-provider-vsphere/pkg/identity"
 )
@@ -60,11 +62,11 @@ func AddVsphereClusterIdentityControllerToManager(ctx context.Context, controlle
 	}
 	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vsphereclusteridentity")
 
-	return ctrl.NewControllerManagedBy(mgr).
+	return capicontrollerutil.NewControllerManagedBy(mgr, predicateLog).
 		For(&infrav1.VSphereClusterIdentity{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
-		Complete(reconciler)
+		Complete(ctx, reconciler)
 }
 
 type clusterIdentityReconciler struct {
@@ -99,12 +101,17 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 
 	defer func() {
-		v1beta1conditions.SetSummary(identity, v1beta1conditions.WithConditions(infrav1.CredentialsAvailableCondidtion))
+		deprecatedv1beta1conditions.SetSummary(identity, deprecatedv1beta1conditions.WithConditions(infrav1.CredentialsAvailableV1Beta1Condition))
 
-		if err := patchHelper.Patch(ctx, identity, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-			clusterv1beta1.PausedV1Beta2Condition,
-			infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
-		}}); err != nil {
+		if err := patchHelper.Patch(ctx, identity,
+			patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.ReadyV1Beta1Condition,
+				infrav1.CredentialsAvailableV1Beta1Condition,
+			}},
+			patch.WithOwnedConditions{Conditions: []string{
+				clusterv1.PausedCondition,
+				infrav1.VSphereClusterIdentityAvailableCondition,
+			}}); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
@@ -120,27 +127,27 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 		Name:      identity.Spec.SecretName,
 	}
 	if err := r.Client.Get(ctx, secretKey, secret); err != nil {
-		v1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretNotAvailableReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
-		v1beta2conditions.Set(identity, metav1.Condition{
-			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableV1Beta1Condition, infrav1.SecretNotAvailableV1Beta1Reason, clusterv1.ConditionSeverityWarning, "%v", err)
+		conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereClusterIdentitySecretNotAvailableV1Beta2Reason,
+			Reason:  infrav1.VSphereClusterIdentitySecretNotAvailableReason,
 			Message: err.Error(),
 		})
-		return reconcile.Result{}, errors.Wrapf(err, "failed to get Secret %s", klog.KRef(secretKey.Namespace, secretKey.Name))
+		return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to get Secret %s", klog.KRef(secretKey.Namespace, secretKey.Name))
 	}
 
 	// If this secret is owned by a different VSphereClusterIdentity or a VSphereCluster, mark the identity as not ready and return an error.
-	if !clusterutilv1.IsOwnedByObject(secret, identity) && pkgidentity.IsOwnedByIdentityOrCluster(secret.GetOwnerReferences()) {
-		v1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretAlreadyInUseReason, clusterv1beta1.ConditionSeverityError, "secret being used by another Cluster/VSphereIdentity")
-		v1beta2conditions.Set(identity, metav1.Condition{
-			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+	if !clusterutilv1.IsOwnedByObject(secret, identity, infrav1.GroupVersion.WithKind("VSphereClusterIdentity").GroupKind()) && pkgidentity.IsOwnedByIdentityOrCluster(secret.GetOwnerReferences()) {
+		deprecatedv1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableV1Beta1Condition, infrav1.SecretAlreadyInUseV1Beta1Reason, clusterv1.ConditionSeverityError, "secret being used by another Cluster/VSphereIdentity")
+		conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereClusterIdentitySecretAlreadyInUseV1Beta2Reason,
+			Reason:  infrav1.VSphereClusterIdentitySecretAlreadyInUseReason,
 			Message: "secret being used by another Cluster/VSphereIdentity",
 		})
-		identity.Status.Ready = false
-		return reconcile.Result{}, errors.New("secret being used by another Cluster/VSphereIdentity")
+		identity.Status.Ready = ptr.To(false)
+		return reconcile.Result{}, pkgerrors.New("secret being used by another Cluster/VSphereIdentity")
 	}
 
 	// Ensure the VSphereClusterIdentity is set as the owner of the secret, and that the reference has an up to date APIVersion.
@@ -158,24 +165,24 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 	err = r.Client.Update(ctx, secret)
 	if err != nil {
-		v1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableCondidtion, infrav1.SecretOwnerReferenceFailedReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
-		v1beta2conditions.Set(identity, metav1.Condition{
-			Type:    infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkFalse(identity, infrav1.CredentialsAvailableV1Beta1Condition, infrav1.SecretOwnerReferenceFailedV1Beta1Reason, clusterv1.ConditionSeverityWarning, "%v", err)
+		conditions.Set(identity, metav1.Condition{
+			Type:    infrav1.VSphereClusterIdentityAvailableCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereClusterIdentitySettingSecretOwnerReferenceFailedV1Beta2Reason,
+			Reason:  infrav1.VSphereClusterIdentitySettingSecretOwnerReferenceFailedReason,
 			Message: err.Error(),
 		})
 		return reconcile.Result{}, err
 	}
 
-	v1beta1conditions.MarkTrue(identity, infrav1.CredentialsAvailableCondidtion)
-	v1beta2conditions.Set(identity, metav1.Condition{
-		Type:   infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+	deprecatedv1beta1conditions.MarkTrue(identity, infrav1.CredentialsAvailableV1Beta1Condition)
+	conditions.Set(identity, metav1.Condition{
+		Type:   infrav1.VSphereClusterIdentityAvailableCondition,
 		Status: metav1.ConditionTrue,
-		Reason: infrav1.VSphereClusterIdentityAvailableV1Beta2Reason,
+		Reason: infrav1.VSphereClusterIdentityAvailableReason,
 	})
 
-	identity.Status.Ready = true
+	identity.Status.Ready = ptr.To(true)
 	return reconcile.Result{}, nil
 }
 
@@ -187,10 +194,10 @@ func (r clusterIdentityReconciler) reconcileDelete(ctx context.Context, identity
 		Name:      identity.Spec.SecretName,
 	}
 
-	v1beta2conditions.Set(identity, metav1.Condition{
-		Type:   infrav1.VSphereClusterIdentityAvailableV1Beta2Condition,
+	conditions.Set(identity, metav1.Condition{
+		Type:   infrav1.VSphereClusterIdentityAvailableCondition,
 		Status: metav1.ConditionFalse,
-		Reason: infrav1.VSphereClusterIdentityDeletingV1Beta2Reason,
+		Reason: infrav1.VSphereClusterIdentityDeletingReason,
 	})
 
 	err := r.Client.Get(ctx, secretKey, secret)
@@ -206,14 +213,14 @@ func (r clusterIdentityReconciler) reconcileDelete(ctx context.Context, identity
 	if ctrlutil.RemoveFinalizer(secret, infrav1.SecretIdentitySetFinalizer) {
 		log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.SecretIdentitySetFinalizer), "Secret", klog.KObj(secret))
 		if err := r.Client.Update(ctx, secret); err != nil {
-			return errors.Wrapf(err, "failed to update Secret %s", klog.KObj(secret))
+			return pkgerrors.Wrapf(err, "failed to update Secret %s", klog.KObj(secret))
 		}
 	}
 
 	if secret.DeletionTimestamp.IsZero() {
 		log.Info("Deleting Secret", "Secret", klog.KObj(secret))
 		if err := r.Client.Delete(ctx, secret); err != nil {
-			return errors.Wrapf(err, "failed to delete Secret %s", klog.KObj(secret))
+			return pkgerrors.Wrapf(err, "failed to delete Secret %s", klog.KObj(secret))
 		}
 	}
 

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -10,38 +10,38 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-type ManagedObjectTypes string
+type ManagedObjectType string
 
 const (
-	ManagedObjectTypesPbmServiceInstance           = ManagedObjectTypes("PbmServiceInstance")
-	ManagedObjectTypesPbmSessionManager            = ManagedObjectTypes("PbmSessionManager")
-	ManagedObjectTypesPbmCapabilityMetadataManager = ManagedObjectTypes("PbmCapabilityMetadataManager")
-	ManagedObjectTypesPbmComplianceManager         = ManagedObjectTypes("PbmComplianceManager")
-	ManagedObjectTypesPbmPlacementSolver           = ManagedObjectTypes("PbmPlacementSolver")
-	ManagedObjectTypesPbmProfileProfileManager     = ManagedObjectTypes("PbmProfileProfileManager")
-	ManagedObjectTypesPbmProvider                  = ManagedObjectTypes("PbmProvider")
-	ManagedObjectTypesPbmReplicationManager        = ManagedObjectTypes("PbmReplicationManager")
+	ManagedObjectTypePbmServiceInstance           = ManagedObjectType("PbmServiceInstance")
+	ManagedObjectTypePbmSessionManager            = ManagedObjectType("PbmSessionManager")
+	ManagedObjectTypePbmCapabilityMetadataManager = ManagedObjectType("PbmCapabilityMetadataManager")
+	ManagedObjectTypePbmComplianceManager         = ManagedObjectType("PbmComplianceManager")
+	ManagedObjectTypePbmPlacementSolver           = ManagedObjectType("PbmPlacementSolver")
+	ManagedObjectTypePbmProfileProfileManager     = ManagedObjectType("PbmProfileProfileManager")
+	ManagedObjectTypePbmProvider                  = ManagedObjectType("PbmProvider")
+	ManagedObjectTypePbmReplicationManager        = ManagedObjectType("PbmReplicationManager")
 )
 
-func (e ManagedObjectTypes) Values() []ManagedObjectTypes {
-	return []ManagedObjectTypes{
-		ManagedObjectTypesPbmServiceInstance,
-		ManagedObjectTypesPbmSessionManager,
-		ManagedObjectTypesPbmCapabilityMetadataManager,
-		ManagedObjectTypesPbmComplianceManager,
-		ManagedObjectTypesPbmPlacementSolver,
-		ManagedObjectTypesPbmProfileProfileManager,
-		ManagedObjectTypesPbmProvider,
-		ManagedObjectTypesPbmReplicationManager,
+func (e ManagedObjectType) Values() []ManagedObjectType {
+	return []ManagedObjectType{
+		ManagedObjectTypePbmServiceInstance,
+		ManagedObjectTypePbmSessionManager,
+		ManagedObjectTypePbmCapabilityMetadataManager,
+		ManagedObjectTypePbmComplianceManager,
+		ManagedObjectTypePbmPlacementSolver,
+		ManagedObjectTypePbmProfileProfileManager,
+		ManagedObjectTypePbmProvider,
+		ManagedObjectTypePbmReplicationManager,
 	}
 }
 
-func (e ManagedObjectTypes) Strings() []string {
+func (e ManagedObjectType) Strings() []string {
 	return types.EnumValuesAsStrings(e.Values())
 }
 
 func init() {
-	types.Add("pbm:ManagedObjectTypes", reflect.TypeOf((*ManagedObjectTypes)(nil)).Elem())
+	types.Add("pbm:ManagedObjectType", reflect.TypeOf((*ManagedObjectType)(nil)).Elem())
 }
 
 type PbmAssociateAndApplyPolicyStatusPolicyStatus string
@@ -610,6 +610,8 @@ const (
 	PbmObjectTypeVsanObjectId = PbmObjectType("vsanObjectId")
 	// Indicates a file service
 	PbmObjectTypeFileShareId = PbmObjectType("fileShareId")
+	// Indicates a cluster.
+	PbmObjectTypeCluster = PbmObjectType("cluster")
 	// Unknown object type.
 	PbmObjectTypeUnknown = PbmObjectType("unknown")
 )
@@ -623,6 +625,7 @@ func (e PbmObjectType) Values() []PbmObjectType {
 		PbmObjectTypeDatastore,
 		PbmObjectTypeVsanObjectId,
 		PbmObjectTypeFileShareId,
+		PbmObjectTypeCluster,
 		PbmObjectTypeUnknown,
 	}
 }
@@ -782,6 +785,8 @@ const (
 	// Indicates the system pre-created non-editable default profile
 	// for VVOL datastores.
 	PbmSystemCreatedProfileTypeVVolDefaultProfile = PbmSystemCreatedProfileType("VVolDefaultProfile")
+	// Deprecated as of vSphere 9.0 APIs with no replacement.
+	//
 	// Indicates the system pre-created non-editable default profile
 	// for PMem datastores
 	PbmSystemCreatedProfileTypePmemDefaultProfile = PbmSystemCreatedProfileType("PmemDefaultProfile")

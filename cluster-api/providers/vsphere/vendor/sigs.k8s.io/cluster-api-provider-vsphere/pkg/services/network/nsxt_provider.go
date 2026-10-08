@@ -19,23 +19,24 @@ package network
 import (
 	"context"
 	"fmt"
+	"reflect"
 
-	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
-	vmoprv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
+	pkgerrors "github.com/pkg/errors"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
+	vmoprvhub "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
@@ -52,6 +53,10 @@ func NsxtNetworkProvider(client client.Client, disableFW string) services.Networ
 		client:    client,
 		disableFW: disableFW,
 	}
+}
+
+func (np *nsxtNetworkProvider) SupportsIPv6DualStack() bool {
+	return false
 }
 
 func (np *nsxtNetworkProvider) HasLoadBalancer() bool {
@@ -78,34 +83,34 @@ func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(vspherecluster *vm
 		}
 		hasReadyCondition = true
 		if condition.Status != "True" {
-			v1beta1conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1beta1.ConditionSeverityWarning, "%s", condition.Message)
-			v1beta2conditions.Set(vspherecluster, metav1.Condition{
-				Type:    vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+			deprecatedv1beta1conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyV1Beta1Condition, vmwarev1.ClusterNetworkProvisionFailedV1Beta1Reason, clusterv1.ConditionSeverityWarning, "%s", condition.Message)
+			conditions.Set(vspherecluster, metav1.Condition{
+				Type:    vmwarev1.VSphereClusterNetworkReadyCondition,
 				Status:  metav1.ConditionFalse,
-				Reason:  vmwarev1.VSphereClusterNetworkNotReadyV1Beta2Reason,
+				Reason:  vmwarev1.VSphereClusterNetworkNotReadyReason,
 				Message: condition.Message,
 			})
-			return errors.Errorf("virtual network ready status is: '%s' in cluster %s. reason: %s, message: %s",
+			return pkgerrors.Errorf("virtual network ready status is: '%s' in cluster %s. reason: %s, message: %s",
 				condition.Status, types.NamespacedName{Namespace: namespace, Name: clusterName}, condition.Reason, condition.Message)
 		}
 	}
 
 	if !hasReadyCondition {
-		v1beta1conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1beta1.ConditionSeverityWarning, "No Ready status for virtual network")
-		v1beta2conditions.Set(vspherecluster, metav1.Condition{
-			Type:    vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyV1Beta1Condition, vmwarev1.ClusterNetworkProvisionFailedV1Beta1Reason, clusterv1.ConditionSeverityWarning, "No Ready status for virtual network")
+		conditions.Set(vspherecluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterNetworkReadyCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  vmwarev1.VSphereClusterNetworkNotReadyV1Beta2Reason,
+			Reason:  vmwarev1.VSphereClusterNetworkNotReadyReason,
 			Message: "No Ready status for virtual network",
 		})
-		return errors.Errorf("virtual network ready status in cluster %s has not been set", types.NamespacedName{Namespace: namespace, Name: clusterName})
+		return pkgerrors.Errorf("virtual network ready status in cluster %s has not been set", types.NamespacedName{Namespace: namespace, Name: clusterName})
 	}
 
-	v1beta1conditions.MarkTrue(vspherecluster, vmwarev1.ClusterNetworkReadyCondition)
-	v1beta2conditions.Set(vspherecluster, metav1.Condition{
-		Type:   vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+	deprecatedv1beta1conditions.MarkTrue(vspherecluster, vmwarev1.ClusterNetworkReadyV1Beta1Condition)
+	conditions.Set(vspherecluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterNetworkReadyCondition,
 		Status: metav1.ConditionTrue,
-		Reason: vmwarev1.VSphereClusterNetworkReadyV1Beta2Reason,
+		Reason: vmwarev1.VSphereClusterNetworkReadyReason,
 	})
 	return nil
 }
@@ -134,53 +139,66 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clus
 		},
 	}
 
-	_, err := ctrlutil.CreateOrPatch(ctx, np.client, vnet, func() error {
-		// add or update vnet spec only if FW is enabled and if WhitelistSourceRanges is empty
-		if np.disableFW != "true" && vnet.Spec.WhitelistSourceRanges == "" {
-			supportFW, err := util.NCPSupportFW(ctx, np.client)
+	vnetExists := true
+	if err := np.client.Get(ctx, client.ObjectKeyFromObject(vnet), vnet); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		vnetExists = false
+	}
+	originalVNET := vnet.DeepCopy()
+
+	// add or update vnet spec only if FW is enabled and if WhitelistSourceRanges is empty
+	if np.disableFW != "true" && vnet.Spec.WhitelistSourceRanges == "" {
+		supportFW, err := util.NCPSupportFW(ctx, np.client)
+		if err != nil {
+			return pkgerrors.Wrap(err, "failed to check if NCP supports firewall rules enforcement on GC T1 router")
+		}
+		// specify whitelist_source_ranges if needed and if NCP supports it
+		if supportFW {
+			// Find system namespace snat ip
+			systemNSSnatIP, err := util.GetNamespaceNetSnatIP(ctx, np.client, SystemNamespace)
 			if err != nil {
-				return errors.Wrap(err, "failed to check if NCP supports firewall rules enforcement on GC T1 router")
+				return pkgerrors.Wrap(err, "failed to get Snat IP for kube-system")
 			}
-			// specify whitelist_source_ranges if needed and if NCP supports it
-			if supportFW {
-				// Find system namespace snat ip
-				systemNSSnatIP, err := util.GetNamespaceNetSnatIP(ctx, np.client, SystemNamespace)
-				if err != nil {
-					return errors.Wrap(err, "failed to get Snat IP for kube-system")
-				}
-				log.V(4).Info("Got system namespace snat ip", "ip", systemNSSnatIP)
+			log.V(4).Info("Got system namespace snat ip", "ip", systemNSSnatIP)
 
-				// WhitelistSourceRanges accept cidrs only
-				vnet.Spec.WhitelistSourceRanges = systemNSSnatIP + "/32"
-			}
+			// WhitelistSourceRanges accept cidrs only
+			vnet.Spec.WhitelistSourceRanges = systemNSSnatIP + "/32"
 		}
+	}
 
-		if err := ctrlutil.SetOwnerReference(
-			clusterCtx.VSphereCluster,
-			vnet,
-			np.client.Scheme(),
-		); err != nil {
-			return errors.Wrapf(
-				err,
-				"error setting %s/%s as owner of %s/%s",
-				clusterCtx.VSphereCluster.Namespace,
-				clusterCtx.VSphereCluster.Name,
-				vnet.Namespace,
-				vnet.Name,
-			)
-		}
+	if err := ctrlutil.SetOwnerReference(
+		clusterCtx.VSphereCluster,
+		vnet,
+		np.client.Scheme(),
+	); err != nil {
+		return pkgerrors.Wrapf(
+			err,
+			"error setting %s/%s as owner of %s/%s",
+			clusterCtx.VSphereCluster.Namespace,
+			clusterCtx.VSphereCluster.Name,
+			vnet.Namespace,
+			vnet.Name,
+		)
+	}
 
-		return nil
-	})
+	var err error
+	if !vnetExists {
+		err = np.client.Create(ctx, vnet)
+	} else if !reflect.DeepEqual(originalVNET, vnet) {
+		patch := client.MergeFrom(originalVNET)
+		err = np.client.Patch(ctx, vnet, patch)
+	}
 	if err != nil {
-		v1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1beta1.ConditionSeverityWarning, "%v", err)
-		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-			Type:    vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyV1Beta1Condition, vmwarev1.ClusterNetworkProvisionFailedV1Beta1Reason, clusterv1.ConditionSeverityWarning, "%v", err)
+		conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    vmwarev1.VSphereClusterNetworkReadyCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  vmwarev1.VSphereClusterNetworkNotReadyV1Beta2Reason,
+			Reason:  vmwarev1.VSphereClusterNetworkNotReadyReason,
 			Message: err.Error(),
 		})
-		return errors.Wrap(err, "Failed to provision network")
+		return pkgerrors.Wrap(err, "Failed to provision network")
 	}
 
 	return np.verifyNSXTVirtualNetworkStatus(clusterCtx.VSphereCluster, vnet)
@@ -210,10 +228,10 @@ func (np *nsxtNetworkProvider) GetVMServiceAnnotations(ctx context.Context, clus
 }
 
 // ConfigureVirtualMachine configures a VirtualMachine object based on the networking configuration.
-func (np *nsxtNetworkProvider) ConfigureVirtualMachine(_ context.Context, clusterCtx *vmware.ClusterContext, _ *vmwarev1.VSphereMachine, vm *vmoprv1.VirtualMachine) error {
+func (np *nsxtNetworkProvider) ConfigureVirtualMachine(_ context.Context, clusterCtx *vmware.ClusterContext, _ *vmwarev1.VSphereMachine, vm *vmoprvhub.VirtualMachine) error {
 	nsxtClusterNetworkName := GetNSXTVirtualNetworkName(clusterCtx.VSphereCluster.Name)
 	if vm.Spec.Network == nil {
-		vm.Spec.Network = &vmoprv1.VirtualMachineNetworkSpec{}
+		vm.Spec.Network = &vmoprvhub.VirtualMachineNetworkSpec{}
 	}
 	for _, vnif := range vm.Spec.Network.Interfaces {
 		if vnif.Network.TypeMeta.GroupVersionKind() == NetworkGVKNSXT && vnif.Network.Name == nsxtClusterNetworkName {
@@ -221,9 +239,9 @@ func (np *nsxtNetworkProvider) ConfigureVirtualMachine(_ context.Context, cluste
 			return nil
 		}
 	}
-	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprv1.VirtualMachineNetworkInterfaceSpec{
+	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprvhub.VirtualMachineNetworkInterfaceSpec{
 		Name: fmt.Sprintf("eth%d", len(vm.Spec.Network.Interfaces)),
-		Network: vmoprv1common.PartialObjectRef{
+		Network: &vmoprvhub.PartialObjectRef{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       NetworkGVKNSXT.Kind,
 				APIVersion: NetworkGVKNSXT.GroupVersion().String(),

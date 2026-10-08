@@ -1,5 +1,6 @@
-// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2020-2025 Broadcom. All Rights Reserved.
+// Broadcom Confidential. The term "Broadcom" refers to Broadcom Inc.
+// and/or its subsidiaries.
 
 package v1alpha1
 
@@ -103,6 +104,15 @@ type NetworkInterfaceStatus struct {
 	// network interface on the backing network. It is only valid on requested node and is set
 	// only if port allocation was requested.
 	ConnectionID string `json:"connectionID,omitempty"`
+	// IPAssignmentMode indicates how IP addresses are assigned to this interface.
+	// When unset:
+	// - If IP is assigned, it is assumed to be NetworkInterfaceIPAssignmentModeStaticPool.
+	// - If IP is unassigned, it is assumed to be NetworkInterfaceIPAssignmentModeDHCP.
+	// When set to NetworkInterfaceIPAssignmentModeStaticPool, indicates IP is assigned from a static pool.
+	// When set to NetworkInterfaceIPAssignmentModeDHCP, indicates IP should be obtained via DHCP.
+	// When set to NetworkInterfaceIPAssignmentModeNone, indicates no IP assignment should be performed.
+	// +optional
+	IPAssignmentMode NetworkInterfaceIPAssignmentMode `json:"ipAssignmentMode,omitempty"`
 }
 
 type NetworkInterfaceType string
@@ -110,6 +120,20 @@ type NetworkInterfaceType string
 const (
 	// NetworkInterfaceTypeVMXNet3 is for a VMXNET3 device.
 	NetworkInterfaceTypeVMXNet3 = NetworkInterfaceType("vmxnet3")
+)
+
+// NetworkInterfaceIPAssignmentMode defines how IP addresses are assigned to a network interface
+type NetworkInterfaceIPAssignmentMode string
+
+const (
+	// NetworkInterfaceIPAssignmentModeStaticPool indicates IP address is assigned from a static pool.
+	NetworkInterfaceIPAssignmentModeStaticPool NetworkInterfaceIPAssignmentMode = "staticpool"
+
+	// NetworkInterfaceIPAssignmentModeDHCP indicates IP address should be obtained via DHCP.
+	NetworkInterfaceIPAssignmentModeDHCP NetworkInterfaceIPAssignmentMode = "dhcp"
+
+	// NetworkInterfaceIPAssignmentModeNone indicates no IP assignment should be performed.
+	NetworkInterfaceIPAssignmentModeNone NetworkInterfaceIPAssignmentMode = "none"
 )
 
 // NetworkInterfacePortAllocation describes the settings for network interface port allocation request.
@@ -134,6 +158,11 @@ type NetworkInterfaceSpec struct {
 	// of attaching a network interface to a network and should be left unset. This is used primarily when
 	// attachment of network interface to the network is done without vCenter Server's knowledge.
 	PortAllocation *NetworkInterfacePortAllocation `json:"portAllocation,omitempty"`
+	// ExternalID describes a value that will be surfaced as status.externalID.
+	// If this field is omitted, then it is up to the underlying network
+	// provider to surface any information in status.externalID.
+	// +optional
+	ExternalID string `json:"externalID,omitempty"`
 }
 
 // NetworkInterfaceReference is an object that points to a NetworkInterface.

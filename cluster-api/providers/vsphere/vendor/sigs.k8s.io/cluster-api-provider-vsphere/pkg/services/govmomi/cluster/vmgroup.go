@@ -19,7 +19,7 @@ package cluster
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -42,7 +42,7 @@ func FindVMGroup(ctx context.Context, computeClusterCtx computeClusterContext, c
 			}
 		}
 	}
-	return nil, errors.Errorf("cannot find VM group %s", vmGroupName)
+	return nil, pkgerrors.Errorf("cannot find VM group %s", vmGroupName)
 }
 
 // VMGroup represents a VSphere VM Group object.

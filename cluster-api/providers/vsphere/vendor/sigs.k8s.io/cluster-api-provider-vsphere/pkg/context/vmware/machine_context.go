@@ -22,11 +22,12 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/patch"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
@@ -49,11 +50,16 @@ func (c *SupervisorMachineContext) String() string {
 
 // Patch updates the object and its status on the API server.
 func (c *SupervisorMachineContext) Patch(ctx context.Context) error {
-	return c.PatchHelper.Patch(ctx, c.VSphereMachine, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-		infrav1.VSphereMachineReadyV1Beta2Condition,
-		infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
-		clusterv1beta1.PausedV1Beta2Condition,
-	}})
+	return c.PatchHelper.Patch(ctx, c.VSphereMachine,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			clusterv1.ReadyV1Beta1Condition,
+			infrav1.VMProvisionedV1Beta1Condition,
+		}},
+		patch.WithOwnedConditions{Conditions: []string{
+			infrav1.VSphereMachineReadyCondition,
+			infrav1.VSphereMachineVirtualMachineProvisionedCondition,
+			clusterv1.PausedCondition,
+		}})
 }
 
 // GetVSphereMachine returns the VSphereMachine from the SupervisorMachineContext.
@@ -63,7 +69,7 @@ func (c *SupervisorMachineContext) GetVSphereMachine() capvcontext.VSphereMachin
 
 // GetReady return when the VSphereMachine is ready.
 func (c *SupervisorMachineContext) GetReady() bool {
-	return c.VSphereMachine.Status.Ready
+	return ptr.Deref(c.VSphereMachine.Status.Initialization.Provisioned, false)
 }
 
 // GetObjectMeta returns the metadata for the VSphereMachine from the SupervisorMachineContext.

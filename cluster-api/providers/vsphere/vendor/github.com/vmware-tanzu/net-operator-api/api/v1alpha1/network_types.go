@@ -1,5 +1,6 @@
-// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2020-2024 Broadcom. All Rights Reserved.
+// Broadcom Confidential. The term "Broadcom" refers to Broadcom Inc.
+// and/or its subsidiaries.
 
 package v1alpha1
 
@@ -30,6 +31,9 @@ const (
 
 	// NetworkTypeVDS is the network type describing VSphere Distributed Switch.
 	NetworkTypeVDS = NetworkType("vsphere-distributed")
+
+	// NetworkTypeNSXTVPC is the network type describing NSX-T VPC.
+	NetworkTypeNSXTVPC = NetworkType("nsx-t_vpc")
 )
 
 // NetworkSpec defines the state of Network.

@@ -19,7 +19,7 @@ package util
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
@@ -81,5 +81,5 @@ func findOwnerRefWithKind(ownerRefs []metav1.OwnerReference, gvk schema.GroupVer
 			return &ref, nil
 		}
 	}
-	return nil, errors.Errorf("unable to find owner reference with APIVersion %s and Kind %s", gvk, kind)
+	return nil, pkgerrors.Errorf("unable to find owner reference with APIVersion %s and Kind %s", gvk, kind)
 }
