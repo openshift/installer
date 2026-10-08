@@ -305,6 +305,14 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 			cpuOptions.ConfidentialCompute = ptr.To(machineapi.AWSConfidentialComputePolicy(*in.cpuOptions.ConfidentialCompute))
 		}
 
+		if in.cpuOptions.NestedVirtualization != nil {
+			// ToDo [cbent]: Requires update to OpenShift API to support Nested Virtualization
+			// cpuOptions.NestedVirtualization = ptr.To(machineapi.NestedVirtualizationPolicy(*in.cpuOptions.NestedVirtualization))
+			if *in.cpuOptions.NestedVirtualization == awstypes.NestedVirtualizationEnabled {
+				return nil, fmt.Errorf("nested virtualization is not supported on the legacy machine API path")
+			}
+		}
+
 		config.CPUOptions = &cpuOptions
 	}
 

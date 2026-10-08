@@ -181,6 +181,10 @@ type EC2Metadata struct {
 // +kubebuilder:validation:Enum=Disabled;AMDEncryptedVirtualizationNestedPaging
 type ConfidentialComputePolicy string
 
+// NestedVirtualizationPolicy represents the nested virtualization configuration for the instance.
+// +kubebuilder:validation:Enum=disabled;enabled
+type NestedVirtualizationPolicy string
+
 const (
 	// ConfidentialComputePolicyDisabled disables confidential computing for the instance.
 	ConfidentialComputePolicyDisabled ConfidentialComputePolicy = "Disabled"
@@ -188,9 +192,18 @@ const (
 	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
 )
 
+const (
+	// NestedVirtualizationDisabled explicitly disables nested virtualization.
+	NestedVirtualizationDisabled NestedVirtualizationPolicy = "disabled"
+	// NestedVirtualizationEnabled enables hardware-assisted nested virtualization on the instance.
+	// Requires C8i, M8i, or R8i instance types.
+	NestedVirtualizationEnabled NestedVirtualizationPolicy = "enabled"
+)
+
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
 // If provided, it must not be empty — at least one field must be set.
 // +kubebuilder:validation:MinProperties=1
+// +kubebuilder:validation:XValidation:rule="!(has(self.confidentialCompute) && self.confidentialCompute == 'AMDEncryptedVirtualizationNestedPaging' && has(self.nestedVirtualization) && self.nestedVirtualization == 'enabled')",message="confidentialCompute and nestedVirtualization cannot both be enabled"
 type CPUOptions struct {
 	// ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
 	// and, if so, which confidential computing technology to use.
@@ -206,6 +219,17 @@ type CPUOptions struct {
 	// which is subject to change without notice. The current default is Disabled.
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// NestedVirtualization allows you to run hypervisors such as Hyper-V and KVM inside virtual Amazon EC2 instances.
+	// Virtual EC2 instances are non-bare metal instances. This capability extends virtualization flexibility by adding
+	// processor-level virtualization support to virtual EC2 instances, enabling a hypervisor running in your instance
+	// to create and manage virtual machines.
+	// Nested virtualization is supported on C8i, M8i, and R8i instance types.
+	// Valid values are: disabled, enabled, and omitted.
+	// More details can be checked out at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+	// When omitted, nested virtualization is disabled (AWS default).
+	// +optional
+	NestedVirtualization *NestedVirtualizationPolicy `json:"nestedVirtualization,omitempty"`
 }
 
 // HostPlacement is the type that will be used to configure the placement of AWS instances.
