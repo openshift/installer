@@ -172,6 +172,13 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 }
 
 // validateIPFamily checks that the IPFamily field has a valid value.
+//
+// DualStackIPv6Primary is intentionally not supported on Azure: Azure nodes
+// always have IPv4 as the primary address on the primary NIC, so the
+// serviceNetwork (which must match the node's primary address family) can
+// never have IPv6 listed first. Allowing DualStackIPv6Primary would leave
+// the cluster's ipFamily out of sync with the actual IPv4-primary addressing
+// used by the nodes and services.
 func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if ipFamily == "" {
@@ -180,11 +187,12 @@ func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.Erro
 	validValues := []string{
 		string(network.IPv4),
 		string(network.DualStackIPv4Primary),
-		string(network.DualStackIPv6Primary),
 	}
 	switch ipFamily {
-	case network.IPv4, network.DualStackIPv4Primary, network.DualStackIPv6Primary:
+	case network.IPv4, network.DualStackIPv4Primary:
 		// valid
+	case network.DualStackIPv6Primary:
+		allErrs = append(allErrs, field.Invalid(fldPath, ipFamily, fmt.Sprintf("%s is not supported on Azure because node primary addresses and the serviceNetwork must be IPv4; use %s for dual-stack installs", network.DualStackIPv6Primary, network.DualStackIPv4Primary)))
 	default:
 		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validValues))
 	}

@@ -2044,20 +2044,19 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
 		},
 		{
-			name: "azure: valid dual-stack with DualStackIPv6Primary and IPv4-first serviceNetwork",
+			name: "azure: invalid ipFamily DualStackIPv6Primary is not supported",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzurePlatform()}
 				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
 				c.FeatureSet = configv1.CustomNoUpgrade
 				c.FeatureGates = []string{"AzureDualStackInstall=true"}
-				c.Networking = validPrimaryV6DualStackNetworkingConfig()
-				c.Networking.ServiceNetwork = []ipnet.IPNet{
-					*ipnet.MustParseCIDR("172.30.0.0/16"),
-					*ipnet.MustParseCIDR("ffd1::/112"),
-				}
+				// Networks are otherwise correctly IPv4-first; only the
+				// ipFamily value itself is invalid for Azure.
+				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
+			expectedError: `^\Q[networking: Invalid value: "DualStack": dual-stack IPv4/IPv6 can only be specified when platform.azure.ipFamily is DualStackIPv4Primary, platform.azure.ipFamily: Invalid value: "DualStackIPv6Primary": DualStackIPv6Primary is not supported on Azure because node primary addresses and the serviceNetwork must be IPv4; use DualStackIPv4Primary for dual-stack installs]\E$`,
 			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
 				t.Helper()
 				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
@@ -2082,17 +2081,27 @@ func TestValidateInstallConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "azure: invalid dual-stack with IPv6-first serviceNetwork",
+			name: "azure: invalid dual-stack with DualStackIPv4Primary but clusterNetwork/machineNetwork IPv6-first (serviceNetwork correct)",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzurePlatform()}
-				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
 				c.FeatureSet = configv1.CustomNoUpgrade
 				c.FeatureGates = []string{"AzureDualStackInstall=true"}
-				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				// Reverse the order of machineNetwork and clusterNetwork only;
+				// serviceNetwork remains correctly IPv4-first.
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					c.Networking.MachineNetwork[1],
+					c.Networking.MachineNetwork[0],
+				}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					c.Networking.ClusterNetwork[1],
+					c.Networking.ClusterNetwork[0],
+				}
 				return c
 			}(),
-			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4`,
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "ffd2::/48, 192.168.1.0/24": Azure requires an IPv4 clusterNetwork first in this list because node primary addresses are always IPv4, networking.machineNetwork: Invalid value: "ffd0::/48, 10.0.0.0/16": Azure requires an IPv4 machineNetwork first in this list because node primary addresses are always IPv4]\E$`,
 			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
 				t.Helper()
 				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
@@ -2110,7 +2119,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4\E$`,
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "ffd2::/48, 192.168.1.0/24": Azure requires an IPv4 clusterNetwork first in this list because node primary addresses are always IPv4, networking.machineNetwork: Invalid value: "ffd0::/48, 10.0.0.0/16": Azure requires an IPv4 machineNetwork first in this list because node primary addresses are always IPv4, networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": Azure requires an IPv4 serviceNetwork first in this list because node primary addresses are always IPv4]\E$`,
 			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
 				t.Helper()
 				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")

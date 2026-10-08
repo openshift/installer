@@ -389,14 +389,13 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		switch {
 		case p.Azure != nil:
 			logrus.Info("Dual Stack support on Azure is still in Dev Preview")
-			// Dualstack is only allowed if platform.azure.ipFamily is set to dual-stack variants
-			if ipFamily := p.Azure.IPFamily; ipFamily.DualStackEnabled() {
-				if ipFamily == network.DualStackIPv6Primary {
-					allowV6Primary = true
-				}
-				break
+			// Azure node primary NIC addresses are always IPv4, so IPv6-primary
+			// dual-stack is not supported on Azure; only platform.azure.ipFamily
+			// set to DualStackIPv4Primary is allowed. allowV6Primary is
+			// intentionally left false for Azure.
+			if ipFamily := p.Azure.IPFamily; ipFamily != network.DualStackIPv4Primary {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.azure.ipFamily is %s", network.DualStackIPv4Primary)))
 			}
-			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.azure.ipFamily is %s or %s", network.DualStackIPv4Primary, network.DualStackIPv6Primary)))
 		case p.BareMetal != nil:
 			// We now support ipv6-primary dual stack on baremetal
 			allowV6Primary = true
@@ -512,11 +511,13 @@ func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, n
 			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv6Primary requires an IPv6 network first in this list"))
 		}
 	case p.Azure != nil:
-		// Azure nodes always have IPv4 as the primary NIC address, so serviceNetwork
-		// must have IPv4 first regardless of ipFamily. The kube-apiserver requires the
-		// primary service IP family to match the node's address family.
-		if networkType == networkTypeService && ipAddressType.Primary != corev1.IPv4Protocol {
-			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "Azure requires an IPv4 service network first in this list because node primary addresses are always IPv4"))
+		// Azure nodes always have IPv4 as the primary NIC address, and only
+		// DualStackIPv4Primary is supported for platform.azure.ipFamily, so every
+		// dual-stack network list (clusterNetwork, machineNetwork, and
+		// serviceNetwork) must have IPv4 first. The kube-apiserver additionally
+		// requires the primary service IP family to match the node's address family.
+		if ipAddressType.Primary != corev1.IPv4Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), fmt.Sprintf("Azure requires an IPv4 %s first in this list because node primary addresses are always IPv4", networkType)))
 		}
 
 	default:
