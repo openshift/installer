@@ -32,6 +32,11 @@ var (
 		aws.ConfidentialComputePolicyDisabled,
 		aws.ConfidentialComputePolicySEVSNP,
 	}
+
+	validNestedVirtualizationPolicies = sets.NewString(
+		string(aws.NestedVirtualizationDisabled),
+		string(aws.NestedVirtualizationEnabled),
+	)
 )
 
 // AWS has a limit of 16 security groups. See:
@@ -281,6 +286,18 @@ func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 				),
 			)
 		}
+	}
+
+	if p.CPUOptions.NestedVirtualization != nil &&
+		!validNestedVirtualizationPolicies.Has(string(*p.CPUOptions.NestedVirtualization)) {
+		allErrs = append(
+			allErrs,
+			field.NotSupported(
+				fldPath.Child("cpuOptions", "nestedVirtualization"),
+				p.CPUOptions.NestedVirtualization,
+				validNestedVirtualizationPolicies.List(),
+			),
+		)
 	}
 
 	return allErrs

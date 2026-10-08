@@ -545,12 +545,59 @@ func Test_validateCPUOptions(t *testing.T) {
 		},
 		err: `^test-path.confidentialCompute: Unsupported value: "invalid": supported values: "Disabled", "AMDEncryptedVirtualizationNestedPaging"$`,
 	}, {
+		name: "nested virtualization policy set to Disabled",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+			},
+		},
+	}, {
+		name: "nested virtualization policy set to Enabled",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+	}, {
+		name: "nested virtualization policy set to EnAblEd",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("EnAblEd")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "EnAblEd": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "nested virtualization policy set to disabled",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("disabled")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "disabled": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "empty nested virtualization policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "invalid nested virtualization policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("invalid")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "invalid": supported values: "Disabled", "Enabled"$`,
+	}, {
 		name: "empty cpu options",
 		pool: &aws.MachinePool{
 			CPUOptions: &aws.CPUOptions{},
 		},
 		err: `^test-path.cpuOptions: Invalid value: "{}": At least one field must be set if cpuOptions is provided$`,
 	}}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidateCPUOptions(tc.pool, field.NewPath("test-path")).ToAggregate()
