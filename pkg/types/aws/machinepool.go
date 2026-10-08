@@ -181,8 +181,8 @@ type EC2Metadata struct {
 // +kubebuilder:validation:Enum=Disabled;AMDEncryptedVirtualizationNestedPaging
 type ConfidentialComputePolicy string
 
-// NestedVirtualizationPolicy defines the policy for nested virtualization.
-// +kubebuilder:validation:Enum=Enabled;Disabled
+// NestedVirtualizationPolicy represents the nested virtualization configuration for the instance.
+// +kubebuilder:validation:Enum=Disabled;Enabled
 type NestedVirtualizationPolicy string
 
 const (
@@ -193,11 +193,11 @@ const (
 )
 
 const (
+	// NestedVirtualizationDisabled explicitly disables nested virtualization.
+	NestedVirtualizationDisabled NestedVirtualizationPolicy = "Disabled"
 	// NestedVirtualizationEnabled enables hardware-assisted nested virtualization on the instance.
 	// Requires C8i, M8i, or R8i instance types.
 	NestedVirtualizationEnabled NestedVirtualizationPolicy = "Enabled"
-	// NestedVirtualizationDisabled explicitly disables nested virtualization.
-	NestedVirtualizationDisabled NestedVirtualizationPolicy = "Disabled"
 )
 
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
@@ -219,8 +219,13 @@ type CPUOptions struct {
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
 
-	// NestedVirtualization enables or disables hardware-assisted nested virtualization on C8i, M8i, and R8i instance families.
-	// When omitted, nested virtualization is not enabled (AWS default).
+	// NestedVirtualization allows you to run hypervisors such as Hyper-V and KVM inside virtual Amazon EC2 instances.
+	// Virtual EC2 instances are non-bare metal instances. This capability extends virtualization flexibility by adding
+	// processor-level virtualization support to virtual EC2 instances, enabling a hypervisor running in your instance
+	// to create and manage virtual machines.
+	// Valid values are: Disabled, Enabled, and omitted.
+	// More details can be checked out at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+	// When omitted, nested virtualization is Disabled (AWS default).
 	// +optional
 	NestedVirtualization *NestedVirtualizationPolicy `json:"nestedVirtualization,omitempty"`
 }
