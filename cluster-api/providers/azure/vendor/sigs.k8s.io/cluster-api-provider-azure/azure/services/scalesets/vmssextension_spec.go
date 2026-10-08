@@ -48,7 +48,7 @@ func (s *VMSSExtensionSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the VMSS extension.
-func (s *VMSSExtensionSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
+func (s *VMSSExtensionSpec) Parameters(_ context.Context, existing any) (any, error) {
 	if existing != nil {
 		_, ok := existing.(armcompute.VirtualMachineScaleSetExtension)
 		if !ok {

@@ -23,8 +23,8 @@ import (
 // AnnotationJSON returns a map[string]interface from a JSON annotation.
 // This method gets the given `annotation` from an `annotationReaderWriter` and unmarshalls it
 // from a JSON string into a `map[string]interface{}`.
-func (ampr *AzureMachinePoolReconciler) AnnotationJSON(rw annotationReaderWriter, annotation string) (map[string]interface{}, error) {
-	out := map[string]interface{}{}
+func (ampr *AzureMachinePoolReconciler) AnnotationJSON(rw annotationReaderWriter, annotation string) (map[string]any, error) {
+	out := map[string]any{}
 
 	jsonAnnotation := ampr.Annotation(rw, annotation)
 	if jsonAnnotation == "" {

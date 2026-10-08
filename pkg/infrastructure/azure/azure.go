@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
+	//"path"
 	"strings"
 	"time"
 
@@ -260,6 +262,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
+	logrus.Debugf("XXX: infraReady: storageURL=%s", storageURL)
+	logrus.Debugf("XXX: infraReady: blobURL=%s", blobURL)
+
 	var storageAccount *armstorage.Account
 	var storageClientFactory *armstorage.ClientFactory
 	var storageAccountKeys []armstorage.AccountKey
@@ -293,11 +298,19 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		storageAccountKeys = createStorageAccountOutput.StorageAccountKeys
 
 		logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
+
+		storageURL = strings.TrimSuffix(*storageAccount.Properties.PrimaryEndpoints.Blob, "/")
+		blobURL, err = url.JoinPath(storageURL, containerName, blobName)
+		if err != nil {
+			return err
+		}
+
+		logrus.Debugf("blobURL=%s", blobURL)
 	}
 
 	// Create a managed image, which is used for OKD or confidential VMs on OCP.
 	hasConfidentialVM := getMachinePoolSecurityType(installConfig) != ""
-	if (hasConfidentialVM || installConfig.IsOKD()) && platform.CloudName != aztypes.StackCloud {
+	if (hasConfidentialVM || installConfig.IsOKD()) && platform.CloudName != aztypes.StackCloud && platform.CloudName != aztypes.USSecCloud {
 		// Create vhd blob storage container
 		publicAccess := armstorage.PublicAccessNone
 		createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
@@ -428,13 +441,20 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	if installConfig.Azure.CloudName == aztypes.StackCloud {
+	if installConfig.Azure.CloudName == aztypes.StackCloud || installConfig.Azure.CloudName == aztypes.USSecCloud {
 		client, err := armcompute.NewImagesClient(subscriptionID, p.TokenCredential, p.computeClientOptions)
 		if err != nil {
 			return fmt.Errorf("error creating stack managed images client: %w", err)
 		}
+
+		hyperVGeneration := armcompute.HyperVGenerationTypesV1
+		if installConfig.Azure.CloudName == aztypes.USSecCloud {
+			hyperVGeneration = armcompute.HyperVGenerationTypesV2
+		}
+
 		createManagedImageInput := CreateManagedImageInput{
 			VHDBlobURL:        platform.ClusterOSImage,
+			HyperVGeneration:  hyperVGeneration,
 			ResourceGroupName: resourceGroupName,
 			Region:            platform.Region,
 			InfraID:           in.InfraID,
@@ -981,7 +1001,8 @@ func isNotFoundError(err error) bool {
 
 // Ignition provisions the Azure container that holds the bootstrap ignition
 // file.
-func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+func (p *Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	logrus.Debugf("XXX: Ignition()")
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -991,7 +1012,13 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	ignitionContainerName := "ignition"
 	blobName := "bootstrap.ign"
-	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
+	blobURL, err := url.JoinPath(p.StorageURL, ignitionContainerName, blobName)
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Debugf("XXX: Igniton: blobURL=%s", blobURL)
+
 	publicAccess := armstorage.PublicAccessNone
 	// Create ignition blob storage container
 	var blobIgnitionContainer *armstorage.BlobContainer
@@ -1026,7 +1053,11 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		Expiry: to.Ptr(expiry.UTC().Format(sas.TimeFormat)),
 	}
 
-	serviceClient, err := service.NewClient(fmt.Sprintf("https://%s.blob.%s/", p.StorageAccountName, session.Environment.StorageEndpointSuffix),
+	logrus.Debugf("XXX: session.Environment.StorageEndpointSuffix=%s", session.Environment.StorageEndpointSuffix)
+	logrus.Debugf("XXX: p.StorageURL=%s", p.StorageURL)
+
+	serviceClient, err := service.NewClient(
+		p.StorageURL,
 		session.TokenCreds,
 		&service.ClientOptions{
 			ClientOptions: azcore.ClientOptions{
@@ -1108,7 +1139,12 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		if err != nil {
 			return nil, fmt.Errorf("failed to sign blob %s: %w", blobURL, err)
 		}
+		// XXX this is the culprit right here!
 		sasURL = fmt.Sprintf("https://%s.blob.%s/ignition/%s?%s", p.StorageAccountName, session.Environment.StorageEndpointSuffix, blobName, sasQueryParams.Encode())
+		logrus.Debugf("sasURL=%s", sasURL)
+		//sasURL = fmt.Sprintf("%s/%s?%s", path.Dir(blobURL), blobName, sasQueryParams.Encode())
+		//logrus.Debugf("XXX: 2 sasURL=%s", sasURL)
+
 	}
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {

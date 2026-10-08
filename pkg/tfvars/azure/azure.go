@@ -226,6 +226,8 @@ func environment(cloudName azure.CloudEnvironment) (string, error) {
 		return "china", nil
 	case azure.GermanCloud:
 		return "german", nil
+	case azure.USSecCloud:
+		return "", nil
 	case azure.StackCloud:
 		// unused since stack uses its own provider
 		return "", nil

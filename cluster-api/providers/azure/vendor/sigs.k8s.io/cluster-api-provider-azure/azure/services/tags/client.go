@@ -45,6 +45,9 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tags client options")
 	}
+	if auth.CloudEnvironment() == azure.USSecCloudName {
+		opts.Cloud = auth.CloudConfiguration()
+	}
 	factory, err := armresources.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armresources client factory")

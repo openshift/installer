@@ -271,9 +271,11 @@ ManagedCluster: Resource
 │   │   └── UserAssignedIdentities: Object (2 properties)[]
 │   │       ├── PropertyBag: genruntime.PropertyBag
 │   │       └── Reference: genruntime.ResourceReference
-│   ├── IdentityProfile: map[string]Object (4 properties)
+│   ├── IdentityProfile: map[string]Object (6 properties)
 │   │   ├── ClientId: *string
+│   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   ├── ObjectId: *string
+│   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── ResourceReference: *genruntime.ResourceReference
 │   ├── IngressProfile: *Object (2 properties)
@@ -394,9 +396,11 @@ ManagedCluster: Resource
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── UserAssignedIdentities: Object (5 properties)[]
 │   │   │   ├── BindingSelector: *string
-│   │   │   ├── Identity: *Object (4 properties)
+│   │   │   ├── Identity: *Object (6 properties)
 │   │   │   │   ├── ClientId: *string
+│   │   │   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   ├── ObjectId: *string
+│   │   │   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   │   └── ResourceReference: *genruntime.ResourceReference
 │   │   │   ├── Name: *string
@@ -1435,13 +1439,13 @@ augmentConversionForAdvancedNetworkingObservability_STATUS: Interface
 
 augmentConversionForAdvancedNetworking_STATUS: Interface
 
-augmentConversionForAgentPoolArtifactStreamingProfile: Interface
-
-augmentConversionForAgentPoolArtifactStreamingProfile_STATUS: Interface
-
 augmentConversionForAgentPoolGPUProfile: Interface
 
 augmentConversionForAgentPoolGPUProfile_STATUS: Interface
+
+augmentConversionForAgentPoolGatewayProfile: Interface
+
+augmentConversionForAgentPoolGatewayProfile_STATUS: Interface
 
 augmentConversionForAgentPoolNetworkProfile: Interface
 
@@ -1459,6 +1463,10 @@ augmentConversionForAgentPoolWindowsProfile: Interface
 
 augmentConversionForAgentPoolWindowsProfile_STATUS: Interface
 
+augmentConversionForAutoScaleProfile: Interface
+
+augmentConversionForAutoScaleProfile_STATUS: Interface
+
 augmentConversionForAzureKeyVaultKms: Interface
 
 augmentConversionForAzureKeyVaultKms_STATUS: Interface
@@ -1472,14 +1480,6 @@ augmentConversionForContainerServiceLinuxProfile: Interface
 augmentConversionForContainerServiceLinuxProfile_STATUS: Interface
 
 augmentConversionForContainerServiceNetworkProfile: Interface
-
-augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig: Interface
-
-augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig: Interface
-
-augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_IpvsConfig_STATUS: Interface
-
-augmentConversionForContainerServiceNetworkProfile_KubeProxyConfig_STATUS: Interface
 
 augmentConversionForContainerServiceNetworkProfile_STATUS: Interface
 
@@ -1567,18 +1567,6 @@ augmentConversionForManagedClusterAutoUpgradeProfile_STATUS: Interface
 
 augmentConversionForManagedClusterAzureMonitorProfile: Interface
 
-augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring: Interface
-
-augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics: Interface
-
-augmentConversionForManagedClusterAzureMonitorProfileAppMonitoringOpenTelemetryMetrics_STATUS: Interface
-
-augmentConversionForManagedClusterAzureMonitorProfileAppMonitoring_STATUS: Interface
-
-augmentConversionForManagedClusterAzureMonitorProfileContainerInsights: Interface
-
-augmentConversionForManagedClusterAzureMonitorProfileContainerInsights_STATUS: Interface
-
 augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics: Interface
 
 augmentConversionForManagedClusterAzureMonitorProfileKubeStateMetrics_STATUS: Interface
@@ -1588,6 +1576,10 @@ augmentConversionForManagedClusterAzureMonitorProfileMetrics: Interface
 augmentConversionForManagedClusterAzureMonitorProfileMetrics_STATUS: Interface
 
 augmentConversionForManagedClusterAzureMonitorProfile_STATUS: Interface
+
+augmentConversionForManagedClusterBootstrapProfile: Interface
+
+augmentConversionForManagedClusterBootstrapProfile_STATUS: Interface
 
 augmentConversionForManagedClusterCostAnalysis: Interface
 
@@ -1699,14 +1691,6 @@ augmentConversionForManagedClusterSecurityProfileImageCleaner: Interface
 
 augmentConversionForManagedClusterSecurityProfileImageCleaner_STATUS: Interface
 
-augmentConversionForManagedClusterSecurityProfileImageIntegrity: Interface
-
-augmentConversionForManagedClusterSecurityProfileImageIntegrity_STATUS: Interface
-
-augmentConversionForManagedClusterSecurityProfileNodeRestriction: Interface
-
-augmentConversionForManagedClusterSecurityProfileNodeRestriction_STATUS: Interface
-
 augmentConversionForManagedClusterSecurityProfileWorkloadIdentity: Interface
 
 augmentConversionForManagedClusterSecurityProfileWorkloadIdentity_STATUS: Interface
@@ -1716,6 +1700,10 @@ augmentConversionForManagedClusterSecurityProfile_STATUS: Interface
 augmentConversionForManagedClusterServicePrincipalProfile: Interface
 
 augmentConversionForManagedClusterServicePrincipalProfile_STATUS: Interface
+
+augmentConversionForManagedClusterStaticEgressGatewayProfile: Interface
+
+augmentConversionForManagedClusterStaticEgressGatewayProfile_STATUS: Interface
 
 augmentConversionForManagedClusterStorageProfile: Interface
 
@@ -1784,10 +1772,6 @@ augmentConversionForPrivateLinkResource_STATUS: Interface
 augmentConversionForResourceReference: Interface
 
 augmentConversionForResourceReference_STATUS: Interface
-
-augmentConversionForSafeguardsProfile: Interface
-
-augmentConversionForSafeguardsProfile_STATUS: Interface
 
 augmentConversionForScaleProfile: Interface
 

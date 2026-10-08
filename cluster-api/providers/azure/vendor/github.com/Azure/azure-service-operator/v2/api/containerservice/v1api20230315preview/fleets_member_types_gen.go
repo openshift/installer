@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FleetsMember{}
 
 // ConvertFrom populates our FleetsMember from the provided hub FleetsMember
 func (member *FleetsMember) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FleetsMember)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsMember but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FleetsMember
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return member.AssignProperties_From_FleetsMember(source)
+	err = member.AssignProperties_From_FleetsMember(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to member")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FleetsMember from our FleetsMember
 func (member *FleetsMember) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FleetsMember)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsMember but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FleetsMember
+	err := member.AssignProperties_To_FleetsMember(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from member")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return member.AssignProperties_To_FleetsMember(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FleetsMember{}
@@ -86,17 +101,6 @@ func (member *FleetsMember) SecretDestinationExpressions() []*core.DestinationEx
 		return nil
 	}
 	return member.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FleetsMember{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (member *FleetsMember) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FleetsMember_STATUS); ok {
-		return member.Spec.Initialize_From_FleetsMember_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FleetsMember_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FleetsMember{}
@@ -489,24 +493,6 @@ func (member *FleetsMember_Spec) AssignProperties_To_FleetsMember_Spec(destinati
 	return nil
 }
 
-// Initialize_From_FleetsMember_STATUS populates our FleetsMember_Spec from the provided source FleetsMember_STATUS
-func (member *FleetsMember_Spec) Initialize_From_FleetsMember_STATUS(source *FleetsMember_STATUS) error {
-
-	// ClusterResourceReference
-	if source.ClusterResourceId != nil {
-		clusterResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ClusterResourceId)
-		member.ClusterResourceReference = &clusterResourceReference
-	} else {
-		member.ClusterResourceReference = nil
-	}
-
-	// Group
-	member.Group = genruntime.ClonePointerToString(source.Group)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (member *FleetsMember_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -827,8 +813,6 @@ func (operator *FleetsMemberOperatorSpec) AssignProperties_From_FleetsMemberOper
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -845,8 +829,6 @@ func (operator *FleetsMemberOperatorSpec) AssignProperties_From_FleetsMemberOper
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -872,8 +854,6 @@ func (operator *FleetsMemberOperatorSpec) AssignProperties_To_FleetsMemberOperat
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -890,8 +870,6 @@ func (operator *FleetsMemberOperatorSpec) AssignProperties_To_FleetsMemberOperat
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -4,7 +4,6 @@
 package storage
 
 import (
-	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -19,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={bastionhosts/status,bastionhosts/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -165,12 +165,6 @@ type BastionHostList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []BastionHost `json:"items"`
 }
-
-// Storage version of v1api20240301.APIVersion
-// +kubebuilder:validation:Enum={"2024-03-01"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2024-03-01")
 
 // Storage version of v1api20240301.BastionHost_Spec
 type BastionHost_Spec struct {
@@ -321,154 +315,6 @@ type Sku struct {
 type Sku_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
-// Storage version of v1api20240301.SubResource
-// Reference to another subresource.
-type SubResource struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
-}
-
-// AssignProperties_From_SubResource populates our SubResource from the provided source SubResource
-func (resource *SubResource) AssignProperties_From_SubResource(source *storage.SubResource) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// Reference
-	if source.Reference != nil {
-		reference := source.Reference.Copy()
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		resource.PropertyBag = propertyBag
-	} else {
-		resource.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
-		err := augmentedResource.AssignPropertiesFrom(source)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
-		}
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_SubResource populates the provided destination SubResource from our SubResource
-func (resource *SubResource) AssignProperties_To_SubResource(destination *storage.SubResource) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
-
-	// Reference
-	if resource.Reference != nil {
-		reference := resource.Reference.Copy()
-		destination.Reference = &reference
-	} else {
-		destination.Reference = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
-		err := augmentedResource.AssignPropertiesTo(destination)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
-		}
-	}
-
-	// No error
-	return nil
-}
-
-// Storage version of v1api20240301.SubResource_STATUS
-// Reference to another subresource.
-type SubResource_STATUS struct {
-	Id          *string                `json:"id,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
-// AssignProperties_From_SubResource_STATUS populates our SubResource_STATUS from the provided source SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *storage.SubResource_STATUS) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// Id
-	resource.Id = genruntime.ClonePointerToString(source.Id)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		resource.PropertyBag = propertyBag
-	} else {
-		resource.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
-		err := augmentedResource.AssignPropertiesFrom(source)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
-		}
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_SubResource_STATUS populates the provided destination SubResource_STATUS from our SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *storage.SubResource_STATUS) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
-
-	// Id
-	destination.Id = genruntime.ClonePointerToString(resource.Id)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
-		err := augmentedResource.AssignPropertiesTo(destination)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
-		}
-	}
-
-	// No error
-	return nil
-}
-
-type augmentConversionForSubResource interface {
-	AssignPropertiesFrom(src *storage.SubResource) error
-	AssignPropertiesTo(dst *storage.SubResource) error
-}
-
-type augmentConversionForSubResource_STATUS interface {
-	AssignPropertiesFrom(src *storage.SubResource_STATUS) error
-	AssignPropertiesTo(dst *storage.SubResource_STATUS) error
 }
 
 // Storage version of v1api20240301.IPRule
