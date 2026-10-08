@@ -38,6 +38,7 @@ func Metadata(infraID string, config *types.InstallConfig) *ibmcloud.Metadata {
 		AccountID:         accountID,
 		BaseDomain:        config.BaseDomain,
 		CISInstanceCRN:    cisCrn,
+		COSInstanceCRN:    config.Platform.IBMCloud.COSInstanceCRN,
 		DNSInstanceID:     dnsInstanceID,
 		Region:            config.Platform.IBMCloud.Region,
 		ResourceGroupName: config.Platform.IBMCloud.ClusterResourceGroupName(infraID),
