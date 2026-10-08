@@ -181,11 +181,23 @@ type EC2Metadata struct {
 // +kubebuilder:validation:Enum=Disabled;AMDEncryptedVirtualizationNestedPaging
 type ConfidentialComputePolicy string
 
+// NestedVirtualizationPolicy defines the policy for nested virtualization.
+// +kubebuilder:validation:Enum=Enabled;Disabled
+type NestedVirtualizationPolicy string
+
 const (
 	// ConfidentialComputePolicyDisabled disables confidential computing for the instance.
 	ConfidentialComputePolicyDisabled ConfidentialComputePolicy = "Disabled"
 	// ConfidentialComputePolicySEVSNP enables AMD SEV-SNP as the confidential computing technology for the instance.
 	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
+)
+
+const (
+	// NestedVirtualizationEnabled enables hardware-assisted nested virtualization on the instance.
+	// Requires C8i, M8i, or R8i instance types.
+	NestedVirtualizationEnabled NestedVirtualizationPolicy = "Enabled"
+	// NestedVirtualizationDisabled explicitly disables nested virtualization.
+	NestedVirtualizationDisabled NestedVirtualizationPolicy = "Disabled"
 )
 
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
@@ -206,6 +218,11 @@ type CPUOptions struct {
 	// which is subject to change without notice. The current default is Disabled.
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// NestedVirtualization enables or disables hardware-assisted nested virtualization on C8i, M8i, and R8i instance families.
+	// When omitted, nested virtualization is not enabled (AWS default).
+	// +optional
+	NestedVirtualization *NestedVirtualizationPolicy `json:"nestedVirtualization,omitempty"`
 }
 
 // HostPlacement is the type that will be used to configure the placement of AWS instances.
