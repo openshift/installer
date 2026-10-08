@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver/v4"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,12 +67,12 @@ func GetNamespaceNetSnatIP(ctx context.Context, controllerClient client.Client, 
 
 	annotations := namespaceObj.GetAnnotations()
 	if annotations == nil {
-		return "", errors.New(EmptyAnnotationErrorMsg)
+		return "", pkgerrors.New(EmptyAnnotationErrorMsg)
 	}
 
 	snatIP := annotations[NCPSNATKey]
 	if snatIP == "" {
-		return "", errors.New(EmptyNCPSNATKeyMsg)
+		return "", pkgerrors.New(EmptyNCPSNATKeyMsg)
 	}
 
 	return snatIP, nil

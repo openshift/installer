@@ -25,35 +25,6 @@ on Google Cloud Platform using Cluster API.
 
 ----
 
-## Support Policy
-
-This provider's versions are compatible with the following versions of Cluster API:
-
-|  | Cluster API `v1alpha3` (`v0.3.x`) | Cluster API `v1alpha4` (`v0.4.x`) | Cluster API `v1beta1` (`v1.0.x`) |
-|---|---|---|---|
-|Google Cloud Provider `v0.3.x` | ✓ |  |  |
-|Google Cloud Provider `v0.4.x` |  | ✓ |  |
-|Google Cloud Provider `v1.0.x` |  |  | ✓ |
-
-This provider's versions are able to install and manage the following versions of Kubernetes:
-
-|  | Google Cloud Provider `v0.3.x` | Google Cloud Provider `v0.4.x` | Google Cloud Provider `v1.0.x` |
-|---|:---:|:---:|:---:|
-| Kubernetes 1.15 |  |  |  |
-| Kubernetes 1.16 | ✓ |  |  |
-| Kubernetes 1.17 | ✓ | ✓ |  |
-| Kubernetes 1.18 | ✓ | ✓ | ✓ |
-| Kubernetes 1.19 | ✓ | ✓ | ✓ |
-| Kubernetes 1.20 | ✓ | ✓ | ✓ |
-| Kubernetes 1.21 |  | ✓ | ✓ |
-| Kubernetes 1.22 |  |  | ✓ |
- 
-Each version of Cluster API for Google Cloud will attempt to support at least two versions of Kubernetes e.g., Cluster API for GCP `v0.1` may support Kubernetes 1.13 and Kubernetes 1.14.
-
-**NOTE:** As the versioning for this project is tied to the versioning of Cluster API, future modifications to this policy may be made to more closely align with other providers in the Cluster API ecosystem. 
-
-----
-
 ## Getting Involved and Contributing
 
 Are you interested in contributing to cluster-api-provider-gcp? We, the maintainers 

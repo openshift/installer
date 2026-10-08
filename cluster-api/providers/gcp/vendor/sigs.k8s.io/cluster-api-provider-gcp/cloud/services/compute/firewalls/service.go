@@ -36,7 +36,7 @@ type firewallsInterface interface {
 // Scope is an interfaces that hold used methods.
 type Scope interface {
 	cloud.ClusterGetter
-	FirewallRulesSpec() []*compute.Firewall
+	FirewallRulesSpec() ([]*compute.Firewall, error)
 }
 
 // Service implements firewalls reconciler.

@@ -319,16 +319,14 @@ func (s AdminQuotaPolicy) MarshalJSON() ([]byte, error) {
 
 // Analysis: A message to group the analysis information.
 type Analysis struct {
-	// Analysis: Output only. Analysis result of updating a policy.
-	Analysis *AnalysisResult `json:"analysis,omitempty"`
+	// AnalysisResult: Output only. Analysis result of updating a policy.
+	AnalysisResult *AnalysisResult `json:"analysisResult,omitempty"`
 	// AnalysisType: Output only. The type of analysis.
 	//
 	// Possible values:
 	//   "ANALYSIS_TYPE_UNSPECIFIED" - Unspecified analysis type. Do not use.
 	//   "ANALYSIS_TYPE_DEPENDENCY" - The analysis of service dependencies.
 	//   "ANALYSIS_TYPE_RESOURCE_USAGE" - The analysis of service resource usage.
-	//   "ANALYSIS_TYPE_RESOURCE_EXISTENCE" - The analysis of service resource
-	// existence.
 	AnalysisType string `json:"analysisType,omitempty"`
 	// DisplayName: Output only. The user friendly display name of the analysis
 	// type. E.g. service dependency analysis, service resource usage analysis,
@@ -337,15 +335,15 @@ type Analysis struct {
 	// Service: The names of the service that has analysis result of warnings or
 	// blockers. Example: `services/storage.googleapis.com`.
 	Service string `json:"service,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "Analysis") to
+	// ForceSendFields is a list of field names (e.g. "AnalysisResult") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Analysis") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
+	// NullFields is a list of field names (e.g. "AnalysisResult") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -1245,30 +1243,30 @@ func (s CommonLanguageSettings) MarshalJSON() ([]byte, error) {
 // ConsumerPolicy: Consumer Policy is a set of rules that define what services
 // or service groups can be used for a cloud resource hierarchy.
 type ConsumerPolicy struct {
-	// Annotations: Optional. Annotations is an unstructured key-value map stored
-	// with a policy that may be set by external tools to store and retrieve
-	// arbitrary metadata. They are not queryable and should be preserved when
-	// modifying objects. AIP-128 (https://google.aip.dev/128#annotations)
-	Annotations map[string]string `json:"annotations,omitempty"`
-	// EnableRules: Enable rules define usable services and service groups.
+	// CreateTime: Output only. The time the policy was created. For singleton
+	// policies, this is the first touch of the policy.
+	CreateTime string `json:"createTime,omitempty"`
+	// EnableRules: Enable rules define usable services and groups. There can
+	// currently be at most one `EnableRule`. This restriction will be lifted in
+	// later releases.
 	EnableRules []*EnableRule `json:"enableRules,omitempty"`
 	// Etag: An opaque tag indicating the current version of the policy, used for
 	// concurrency control.
 	Etag string `json:"etag,omitempty"`
-	// Name: Output only. The resource name of the policy. We only allow consumer
-	// policy name as `default` for now: `projects/12345/consumerPolicies/default`,
+	// Name: Output only. The resource name of the policy. Only the `default`
+	// policy is supported: `projects/12345/consumerPolicies/default`,
 	// `folders/12345/consumerPolicies/default`,
 	// `organizations/12345/consumerPolicies/default`.
 	Name string `json:"name,omitempty"`
-	// UpdateTime: The last-modified time.
+	// UpdateTime: Output only. The time the policy was last updated.
 	UpdateTime string `json:"updateTime,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "Annotations") to
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Annotations") to include in API
+	// NullFields is a list of field names (e.g. "CreateTime") to include in API
 	// requests with the JSON null value. By default, fields with empty values are
 	// omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
@@ -1302,6 +1300,18 @@ type ConsumerQuotaLimit struct {
 	// SupportedLocations: List of all supported locations. This field is present
 	// only if the limit has a {region} or {zone} dimension.
 	SupportedLocations []string `json:"supportedLocations,omitempty"`
+	// TrafficSource: Indicates the traffic type attribution for this quota limit
+	// (e.g. agentic). This is an informational field used to categorize and filter
+	// the quota limits.
+	//
+	// Possible values:
+	//   "TRAFFIC_SOURCE_UNSPECIFIED" - This quota limit applies to all traffic.
+	// This is the default value.
+	//   "TRAFFIC_SOURCE_NONAGENTIC" - This quota limit applies to traffic not
+	// recognized as agentic.
+	//   "TRAFFIC_SOURCE_AGENTIC" - This quota limit applies to only agentic
+	// traffic.
+	TrafficSource string `json:"trafficSource,omitempty"`
 	// Unit: The limit unit. An example unit would be `1/{project}/{region}` Note
 	// that `{project}` and `{region}` are not placeholders in this example; the
 	// literal characters `{` and `}` occur in the string.
@@ -1889,10 +1899,10 @@ func (s EnableFailure) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
-// EnableRule: The consumer policy rule that defines usable services and
-// service groups.
+// EnableRule: The consumer policy rule that defines enabled services and
+// groups.
 type EnableRule struct {
-	// EnableType: Client and resource project enable type.
+	// EnableType: Deprecated: EnableType is not supported.
 	//
 	// Possible values:
 	//   "ENABLE_TYPE_UNSPECIFIED" - Unspecified enable type, which means enabled
@@ -1906,16 +1916,12 @@ type EnableRule struct {
 	// how consumers differentiate between policy changes made by v1 and v2 clients
 	// and understand what is actually possible based on those different policies.
 	EnableType string `json:"enableType,omitempty"`
-	// Groups: DEPRECATED: Please use field `values`. Service group should have
-	// prefix `groups/`. The names of the service groups that are enabled (Not
-	// Implemented). Example: `groups/googleServices`.
-	Groups []string `json:"groups,omitempty"`
-	// Services: DEPRECATED: Please use field `values`. Service should have prefix
-	// `services/`. The names of the services that are enabled. Example:
-	// `storage.googleapis.com`.
+	// Services: The names of the services that are enabled. Example:
+	// `services/storage.googleapis.com`.
 	Services []string `json:"services,omitempty"`
-	// Values: The names of the services or service groups that are enabled.
-	// Example: `services/storage.googleapis.com`, `groups/googleServices`,
+	// Values: Deprecated: Use the `services` field instead. The names of the
+	// services or service groups that are enabled. Example:
+	// `services/storage.googleapis.com`, `groups/googleServices`,
 	// `groups/allServices`.
 	Values []string `json:"values,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "EnableType") to
@@ -2602,6 +2608,103 @@ func (s GoogleApiServiceusageV1beta1ServiceIdentity) MarshalJSON() ([]byte, erro
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
+// GoogleApiServiceusageV2alphaAnalysis: A message to group the analysis
+// information.
+type GoogleApiServiceusageV2alphaAnalysis struct {
+	// AnalysisResult: Output only. Analysis result of updating a policy.
+	AnalysisResult *GoogleApiServiceusageV2alphaAnalysisResult `json:"analysisResult,omitempty"`
+	// AnalysisType: Output only. The type of analysis.
+	//
+	// Possible values:
+	//   "ANALYSIS_TYPE_UNSPECIFIED" - Unspecified analysis type. Do not use.
+	//   "ANALYSIS_TYPE_DEPENDENCY" - The analysis of service dependencies.
+	//   "ANALYSIS_TYPE_RESOURCE_USAGE" - The analysis of service resource usage.
+	//   "ANALYSIS_TYPE_RESOURCE_EXISTENCE" - The analysis of service resource
+	// existence.
+	AnalysisType string `json:"analysisType,omitempty"`
+	// DisplayName: Output only. The user friendly display name of the analysis
+	// type. E.g. service dependency analysis, service resource usage analysis,
+	// etc.
+	DisplayName string `json:"displayName,omitempty"`
+	// Service: The names of the service that has analysis result of warnings or
+	// blockers. Example: `services/storage.googleapis.com`.
+	Service string `json:"service,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "AnalysisResult") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "AnalysisResult") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2alphaAnalysis) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaAnalysis
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2alphaAnalysisResult: An analysis result including
+// blockers and warnings.
+type GoogleApiServiceusageV2alphaAnalysisResult struct {
+	// Blockers: Blocking information that would prevent the policy changes at
+	// runtime.
+	Blockers []*GoogleApiServiceusageV2alphaImpact `json:"blockers,omitempty"`
+	// Warnings: Warning information indicating that the policy changes might be
+	// unsafe, but will not block the changes at runtime.
+	Warnings []*GoogleApiServiceusageV2alphaImpact `json:"warnings,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Blockers") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Blockers") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2alphaAnalysisResult) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaAnalysisResult
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyMetadata: Metadata for the
+// `AnalyzeConsumerPolicy` method.
+type GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyMetadata struct {
+}
+
+// GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyResponse: The response of
+// analyzing a consumer policy update.
+type GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyResponse struct {
+	// Analysis: The list of analyses returned from performing the intended policy
+	// update analysis. The analysis is grouped by service name and different
+	// analysis types. The empty analysis list means that the consumer policy can
+	// be updated without any warnings or blockers.
+	Analysis []*GoogleApiServiceusageV2alphaAnalysis `json:"analysis,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Analysis") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Analysis") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaAnalyzeConsumerPolicyResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
 // GoogleApiServiceusageV2alphaConsumerPolicy: Consumer Policy is a set of
 // rules that define what services or service groups can be used for a cloud
 // resource hierarchy.
@@ -2667,6 +2770,53 @@ type GoogleApiServiceusageV2alphaEnableRule struct {
 
 func (s GoogleApiServiceusageV2alphaEnableRule) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleApiServiceusageV2alphaEnableRule
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2alphaImpact: A message to group impacts of updating a
+// policy.
+type GoogleApiServiceusageV2alphaImpact struct {
+	// Detail: Output only. User friendly impact detail in a free form message.
+	Detail string `json:"detail,omitempty"`
+	// ImpactType: Output only. The type of impact.
+	//
+	// Possible values:
+	//   "IMPACT_TYPE_UNSPECIFIED" - Reserved Blocks (Block n contains codes from
+	// 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of
+	// ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of
+	// ANALYSIS_TYPE_RESOURCE_USAGE Block 3 - Impact Type of
+	// ANALYSIS_TYPE_RESOURCE_EXISTENCE ...
+	//   "DEPENDENCY_MISSING_DEPENDENCIES" - Block 1 - Impact Type of
+	// ANALYSIS_TYPE_DEPENDENCY
+	//   "RESOURCE_EXISTENCE_PROJECT" - Block 3 - Impact Type of
+	// ANALYSIS_TYPE_RESOURCE_EXISTENCE
+	ImpactType string `json:"impactType,omitempty"`
+	// Parent: The parent resource that the analysis is based on and the service
+	// name that the analysis is for. Example:
+	// `projects/100/services/compute.googleapis.com`,
+	// folders/101/services/compute.googleapis.com` and
+	// `organizations/102/services/compute.googleapis.com`. Usually, the parent
+	// resource here is same as the parent resource of the analyzed policy.
+	// However, for some analysis types, the parent can be different. For example,
+	// for resource existence analysis, if the parent resource of the analyzed
+	// policy is a folder or an organization, the parent resource here can still be
+	// the project that contains the resources.
+	Parent string `json:"parent,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Detail") to unconditionally
+	// include in API requests. By default, fields with empty or default values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Detail") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s GoogleApiServiceusageV2alphaImpact) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaImpact
 	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
@@ -3197,24 +3347,15 @@ type Impact struct {
 	//   "IMPACT_TYPE_UNSPECIFIED" - Reserved Blocks (Block n contains codes from
 	// 100n to 100(n+1) -1 Block 0 - Special/Admin codes Block 1 - Impact Type of
 	// ANALYSIS_TYPE_DEPENDENCY Block 2 - Impact Type of
-	// ANALYSIS_TYPE_RESOURCE_USAGE Block 3 - Impact Type of
-	// ANALYSIS_TYPE_RESOURCE_EXISTENCE ...
+	// ANALYSIS_TYPE_RESOURCE_USAGE ...
 	//   "DEPENDENCY_MISSING_DEPENDENCIES" - Block 1 - Impact Type of
 	// ANALYSIS_TYPE_DEPENDENCY
-	//   "RESOURCE_EXISTENCE_PROJECT" - Block 3 - Impact Type of
-	// ANALYSIS_TYPE_RESOURCE_EXISTENCE
 	ImpactType string `json:"impactType,omitempty"`
-	// Parent: The parent resource that the analysis is based on and the service
-	// name that the analysis is for. Example:
-	// `projects/100/services/compute.googleapis.com`,
-	// folders/101/services/compute.googleapis.com` and
-	// `organizations/102/services/compute.googleapis.com`. Usually, the parent
-	// resource here is same as the parent resource of the analyzed policy.
-	// However, for some analysis types, the parent can be different. For example,
-	// for resource existence analysis, if the parent resource of the analyzed
-	// policy is a folder or an organization, the parent resource here can still be
-	// the project that contains the resources.
-	Parent string `json:"parent,omitempty"`
+	// MissingDependency: Output only. This field will be populated only for the
+	// `DEPENDENCY_MISSING_DEPENDENCIES` impact type. Example:
+	// `services/compute.googleapis.com`. Impact.detail will be in format :
+	// `missing service dependency: {missing_dependency}.`
+	MissingDependency string `json:"missingDependency,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Detail") to unconditionally
 	// include in API requests. By default, fields with empty or default values are
 	// omitted from API requests. See
@@ -4177,23 +4318,35 @@ func (s MetricDescriptorMetadata) MarshalJSON() ([]byte, error) {
 // MetricRule: Bind API methods to metrics. Binding a method to a metric causes
 // that metric's configured quota behaviors to apply to the method call.
 type MetricRule struct {
+	// AgenticMetricCosts: Optional. Metrics to update when the selected methods
+	// are called, and the associated cost applied to each metric, iff the source
+	// of the call is an agent. The key of the map is the metric name, and the
+	// values are the amount increased for the metric against which the quota
+	// limits are defined. The value must not be negative.
+	AgenticMetricCosts map[string]string `json:"agenticMetricCosts,omitempty"`
 	// MetricCosts: Metrics to update when the selected methods are called, and the
 	// associated cost applied to each metric. The key of the map is the metric
 	// name, and the values are the amount increased for the metric against which
 	// the quota limits are defined. The value must not be negative.
 	MetricCosts map[string]string `json:"metricCosts,omitempty"`
+	// NonagenticMetricCosts: Optional. Metrics to update when the selected methods
+	// are called, and the associated cost applied to each metric, iff the source
+	// of the call is not an agent. The key of the map is the metric name, and the
+	// values are the amount increased for the metric against which the quota
+	// limits are defined. The value must not be negative.
+	NonagenticMetricCosts map[string]string `json:"nonagenticMetricCosts,omitempty"`
 	// Selector: Selects the methods to which this rule applies. Refer to selector
 	// for syntax details.
 	Selector string `json:"selector,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "MetricCosts") to
+	// ForceSendFields is a list of field names (e.g. "AgenticMetricCosts") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "MetricCosts") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
+	// NullFields is a list of field names (e.g. "AgenticMetricCosts") to include
+	// in API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
@@ -4977,6 +5130,18 @@ type QuotaLimit struct {
 	// unique within the service. The name can only include alphanumeric characters
 	// as well as '-'. The maximum length of the limit name is 64 characters.
 	Name string `json:"name,omitempty"`
+	// TrafficSource: Optional. This is only informational, the logic to allocate
+	// the quota to the correct metric (such as in `metric_rules`) should identify
+	// which quota metrics to allocate to.
+	//
+	// Possible values:
+	//   "TRAFFIC_SOURCE_UNSPECIFIED" - This quota limit applies to all traffic.
+	// This is the default value.
+	//   "TRAFFIC_SOURCE_NONAGENTIC" - This quota limit applies to traffic not
+	// recognized as agentic.
+	//   "TRAFFIC_SOURCE_AGENTIC" - This quota limit applies to only agentic
+	// traffic.
+	TrafficSource string `json:"trafficSource,omitempty"`
 	// Unit: Specify the unit of the quota limit. It uses the same syntax as
 	// MetricDescriptor.unit. The supported unit kinds are determined by the quota
 	// backend system. Here are some examples: * "1/min/{project}" for quota per
@@ -5076,7 +5241,8 @@ type RemoveEnableRulesResponse struct {
 	// `folders/12345/consumerPolicies/default`, or
 	// `organizations/12345/consumerPolicies/default`.
 	Parent string `json:"parent,omitempty"`
-	// RemovedValues: The values removed from the parent consumer policy.
+	// RemovedValues: Deprecated: This field is no longer populated. Use
+	// GetConsumerPolicy to verify the remaining enabled values.
 	RemovedValues []string `json:"removedValues,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Parent") to unconditionally
 	// include in API requests. By default, fields with empty or default values are

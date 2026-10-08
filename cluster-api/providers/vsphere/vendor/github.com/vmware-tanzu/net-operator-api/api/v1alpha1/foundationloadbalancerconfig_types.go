@@ -1,5 +1,6 @@
-// Copyright (c) 2024 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2024 Broadcom. All Rights Reserved.
+// Broadcom Confidential. The term "Broadcom" refers to Broadcom Inc.
+// and/or its subsidiaries.
 
 package v1alpha1
 
@@ -8,11 +9,12 @@ import (
 )
 
 const (
-	// FoundationLoadBalancerConditionReady is added when all load balancer settings have been updated
-	// and the load balancer is ready to be used.
-	FoundationLoadBalancerConditionReady FoundationLoadBalancerConditionType = "Ready"
-	// FoundationLoadBalancerConditionFailure is added when load balancer provider returns an error.
-	FoundationLoadBalancerConditionFailure FoundationLoadBalancerConditionType = "Failure"
+	// FoundationLoadBalancerConditionHealthy reflects the health status of the load balancer data-plane's runtime.
+	FoundationLoadBalancerConditionHealthy FoundationLoadBalancerConditionType = "Healthy"
+	// FoundationLoadBalancerConditionDeploymentStatusReady reflects the deployment status of the load balancer node(s).
+	FoundationLoadBalancerConditionDeploymentStatusReady FoundationLoadBalancerConditionType = "DeploymentStatusReady"
+	// FoundationLoadBalancerConditionOperationStatusReady reflects the operation status of the load balancer instance.
+	FoundationLoadBalancerConditionOperationStatusReady FoundationLoadBalancerConditionType = "OperationStatusReady"
 
 	FoundationLoadBalancerSizeSmall  FoundationLoadBalancerSize = "small"
 	FoundationLoadBalancerSizeMedium FoundationLoadBalancerSize = "medium"
@@ -32,11 +34,10 @@ type FoundationLoadBalancerAvailabilityMode string
 
 // FoundationLoadBalancerDeploymentSpec describes how to deploy the load balancer.
 type FoundationLoadBalancerDeploymentSpec struct {
-
 	// Size describes the node form factor.
 	//
 	// +kubebuilder:validation:Enum=small;medium;large;xlarge
-	// +kubebuilder:default=small
+	// +kubebuilder:default:=small
 	Size FoundationLoadBalancerSize `json:"size"`
 
 	// StoragePolicy is a vSphere Storage Policy ID which defines node storage placement.
@@ -51,15 +52,11 @@ type FoundationLoadBalancerDeploymentSpec struct {
 
 	// Zones contains the names of zones eligible for placing nodes. Zones must be one of the
 	// AvailabilityZones defined and eligible for placement on the cluster.
-	//
-	// If no zones are provided, you must provide a PlacementSpec.
-	//
-	// +optional
-	Zones []string `json:"zones,omitempty"`
+	Zones []string `json:"zones"`
 
 	// AvailabilityMode defines how the availability of the solution is deployed and configured.
 	// +kubebuilder:validation:Enum=active-passive;single-node
-	// +kubebuilder:default=active-passive
+	// +kubebuilder:default:=active-passive
 	AvailabilityMode FoundationLoadBalancerAvailabilityMode `json:"availabilityMode"`
 
 	// ActivePassiveAvailabilityMode configures the load balancer in active-passive configuration.
@@ -76,15 +73,7 @@ type FoundationLoadBalancerDeploymentSpec struct {
 	// the health of the underlying infrastructure. You must select
 	//
 	// +optional
-	SingleNodeAvailabilityMode *SingleModeAvailabilityMode `json:"singleNodeSpec,omitempty"`
-
-	// PlacementSpec is optional configuration defining custom placement of load balancer nodes.
-	//
-	// If Zones are specified, this field is ignored.
-	// If Zones are not specified, this field must be set.
-	//
-	// +optional
-	PlacementSpec []CustomPlacementSpec `json:"placementSpec,omitempty"`
+	SingleNodeAvailabilityMode *SingleNodeAvailabilityMode `json:"singleNodeSpec,omitempty"`
 }
 
 // ActivePassiveAvailabilityMode deploys two nodes in Active-Passive mode where one node is set into
@@ -95,35 +84,19 @@ type ActivePassiveAvailabilityMode struct {
 	// Replicas describes the total number of deployed nodes. Defaults to 2.
 	//
 	// +kubebuilder:validation:Maximum=2
-	// +kubebuilder:default=2
+	// +kubebuilder:default:=2
 	Replicas uint32 `json:"replicas"`
 }
 
-// SingleModeAvailabilityMode defines single node configuration. Single node configuration involves
+// SingleNodeAvailabilityMode defines single node configuration. Single node configuration involves
 // trading availability in return for reduced resource consumption. Upon node failure, redeployment will
 // be attempted on a best-effort basis.
-type SingleModeAvailabilityMode struct {
+type SingleNodeAvailabilityMode struct {
 	// Replicas describes the total number of deployed nodes. Defaults to 1.
 	//
 	// +kubebuilder:validation:Maximum=1
-	// +kubebuilder:default=1
+	// +kubebuilder:default:=1
 	Replicas uint32 `json:"replicas"`
-}
-
-// CustomPlacementSpec defines specific configurations for placing load balancer nodes.
-type CustomPlacementSpec struct {
-
-	// Cluster is the Managed Object ID of a vSphere ClusterComputeResource for placement outside a Supervisor.
-	Cluster string `json:"cluster"`
-
-	// ResourcePool is the Managed Object ID of a vSphere ResourcePool for placement outside a Supervisor.
-	ResourcePool string `json:"resourcePool"`
-
-	// Folder is the Managed Object ID of a vSphere Folder for placement outside a Supervisor.
-	// Defaults to the Namespaces folder created on the cluster.
-	//
-	// +optional
-	Folder string `json:"folder,omitempty"`
 }
 
 // Status objects. Specs are realized into Statuses.
@@ -132,36 +105,70 @@ type CustomPlacementSpec struct {
 type FoundationLoadBalancerNodeStatus struct {
 	// NodeID is a node's unique identifier.
 	NodeID string `json:"nodeID"`
+
 	// ManagementNetworkInterface defines the management NetworkInterface if it exists.
 	//
 	// +optional
 	ManagementNetworkInterface NetworkInterfaceReference `json:"managementNetworkInterface,omitempty"`
+
 	// WorkloadNetworkInterface defines the workload NetworkInterfaces if they exist.
 	//
 	// +optional
 	WorkloadNetworkInterfaces []NetworkInterfaceReference `json:"workloadNetworkInterfaces,omitempty"`
+
 	// VIPNetworkInterface is the interface bound to the Virtual IP Network.
 	VIPNetworkInterface NetworkInterfaceReference `json:"vipNetworkInterface"`
 }
 
 // FoundationLoadBalancerConfigStatus describes the observed state of the Foundation Load Balancer.
 type FoundationLoadBalancerConfigStatus struct {
+	// Version describes the current version of the Foundation Load Balancer.
+	//
+	// +optional
+	Version string `json:"version,omitempty"`
+
 	// Nodes list specific information about each deployed node.
 	//
 	// +optional
 	Nodes []FoundationLoadBalancerNodeStatus `json:"nodes,omitempty"`
+
+	// VirtualServerIPPoolsUtilization describes the current states of virtual server IP addresses utilization.
+	//
+	// +optional
+	VirtualServerIPPoolsUtilization VirtualIPPoolsUtilization `json:"virtualServerIPPoolsUtilization,omitempty"`
+
 	// Conditions describes states of the load balancer at specific points in time.
 	//
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
+// VirtualIPPoolsUtilization defines the IP addresses utilization for virtual IPPools resource.
+type VirtualIPPoolsUtilization struct {
+	// IPsAllocated represents the total number of virtual IP addresses currently allocated to services.
+	//
+	// +optional
+	IPsAllocated int64 `json:"ipsAllocated,omitempty"`
+
+	// IPsAvailable represents the total number of virtual IP addresses eligible to be used for services.
+	//
+	// +optional
+	IPsAvailable int64 `json:"ipsAvailable,omitempty"`
+}
+
 // FoundationLoadBalancerConfigSpec defines the configuration for a vSphere Foundation Load Balancer.
 // This specification is used to configure the resources for the load balancer on vCenter Server.
 type FoundationLoadBalancerConfigSpec struct {
+	// DeploymentSpec describes sizing and placement constraints of the load balancer.
 	DeploymentSpec FoundationLoadBalancerDeploymentSpec `json:"deploymentSpec"`
+
 	// ManagementNetwork points to the Network used to program node management network interfaces.
-	ManagementNetwork NetworkReference `json:"managementNetwork"`
+	//
+	// If unset, the VirtualIPNetwork will be used for management traffic.
+	//
+	// +optional
+	ManagementNetwork *NetworkReference `json:"managementNetwork,omitempty"`
+
 	// WorkloadNetwork points to the Network used to program node workload network interfaces.
 	//
 	// If unset, workload data traffic will be routed out of the same NIF bound to VirtualIPNetwork.
@@ -169,6 +176,7 @@ type FoundationLoadBalancerConfigSpec struct {
 	// +kubebuilder:validation:MaxItems:=1
 	// +optional
 	WorkloadNetworks []NetworkReference `json:"workloadNetworks,omitempty"`
+
 	// VirtualIPNetwork points to the Network used to program node VIP network interfaces.
 	VirtualIPNetwork NetworkReference `json:"virtualIPNetwork"`
 
@@ -181,17 +189,58 @@ type FoundationLoadBalancerConfigSpec struct {
 
 // FoundationLoadBalancerNetworkConfigSpec contains values for configuring networks on the load balancer.
 type FoundationLoadBalancerNetworkConfigSpec struct {
-	// StrictVIPPools indicates NetworkInterfaces provisioned by this load balancer should
-	// only use vip-labeled IPPools for provisioning load balancer IP addresses.
+	// VirtualServerIPPools are the list of IPPools that are
+	// used for load balancer IP addresses.
+	VirtualServerIPPools []IPPoolReference `json:"virtualServerIPPools"`
+
+	// VirtualServerSubnets are the list of subnets specified in CIDR notation
+	// that are directly connected to the VirtualIPNetwork.
 	//
-	// If this option is toggled while IP addresses are already provisioned, then
-	// the IP addresses of the Services may be changed if VIPs are re-provisioned.
+	// The VirtualServerIPPools must fall within the subnet of the VirtualIPNetwork
+	// or one of these subnets.
 	//
-	// By default, load balancer IP addresses may be consumed from general IP pools with
-	// preference given to vip-labeled pools if they are defined.
+	// +kubebuilder:default:={}
+	// +optional
+	VirtualServerSubnets []string `json:"virtualServerSubnets"`
+
+	// DNSServers is the list of servers used for DNS traffic.
+	// These servers must be reachable from the network configured
+	// for management traffic.
+	//
+	// +kubebuilder:default:={}
+	// +optional
+	DNSServers []string `json:"dnsServers"`
+
+	// DNSSearchDomains are the domains resolvable on the specified DNSServers.
+	//
+	// +kubebuilder:default:={}
+	// +optional
+	DNSSearchDomains []string `json:"dnsSearchDomains"`
+
+	// NTPServers are the servers used to sync time across nodes.
+	// These servers must be reachable from the network configured
+	// for management traffic.
+	//
+	// +kubebuilder:default:={}
+	// +optional
+	NTPServers []string `json:"ntpServers"`
+
+	// SyslogEndpoint configures the syslog server. It accepts a protocol, host and port.
+	// If using TLS, you must configure a TLS CA that is capable of verifying the endpoint certificate.
+	// E.g. [protocol://]host[:port]
+	// This server must be reachable from the network configured for management traffic.
+	//
+	// If empty, data will be logged locally to load balancer nodes.
+	// Defaults to port 514 if using UDP and 6514 if using TLS.
 	//
 	// +optional
-	StrictVIPPools bool `json:"strictVIPPools,omitempty"`
+	SyslogEndpoint string `json:"syslogEndpoint,omitempty"`
+
+	// SyslogCertificateSecretName is the certificate required to verify
+	// the TLS syslog endpoint in PEM format.
+	//
+	// +optional
+	SyslogCertificate string `json:"syslogCertificate,omitempty"`
 }
 
 // +genclient
@@ -206,6 +255,14 @@ type FoundationLoadBalancerConfig struct {
 
 	Spec   FoundationLoadBalancerConfigSpec   `json:"spec,omitempty"`
 	Status FoundationLoadBalancerConfigStatus `json:"status,omitempty"`
+}
+
+func (flb *FoundationLoadBalancerConfig) GetConditions() []metav1.Condition {
+	return flb.Status.Conditions
+}
+
+func (flb *FoundationLoadBalancerConfig) SetConditions(conditions []metav1.Condition) {
+	flb.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

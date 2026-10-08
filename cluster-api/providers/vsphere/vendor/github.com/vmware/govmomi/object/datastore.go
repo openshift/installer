@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package object
@@ -452,7 +452,7 @@ func (d Datastore) Stat(ctx context.Context, file string) (types.BaseFileInfo, e
 			FileType:     true,
 			FileSize:     true,
 			Modification: true,
-			FileOwner:    types.NewBool(true),
+			FileOwner:    true,
 		},
 		MatchPattern: []string{path.Base(file)},
 	}

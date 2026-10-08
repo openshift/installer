@@ -26,7 +26,7 @@ import (
 	"sync"
 
 	"github.com/blang/semver"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
@@ -37,7 +37,7 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 )
 
 var (
@@ -175,16 +175,16 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 
 	soapURL, err := soap.ParseURL(urlSafeServer)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create vCenter session: error parsing vSphere URL %q", params.server)
+		return nil, pkgerrors.Wrapf(err, "failed to create vCenter session: error parsing vSphere URL %q", params.server)
 	}
 	if soapURL == nil {
-		return nil, errors.Errorf("failed to create vCenter session: error parsing vSphere URL %q: URL is nil", params.server)
+		return nil, pkgerrors.Errorf("failed to create vCenter session: error parsing vSphere URL %q: URL is nil", params.server)
 	}
 
 	soapURL.User = params.userinfo
 	client, err := newClient(ctx, soapURL, params.thumbprint, params.feature)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create vCenter session")
+		return nil, pkgerrors.Wrapf(err, "failed to create vCenter session")
 	}
 
 	session := Session{Client: client}
@@ -200,7 +200,7 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 		if errLogout := client.Logout(ctx); errLogout != nil {
 			log.Error(errLogout, "Failed to logout of leading client session")
 		}
-		return nil, errors.Wrap(err, "failed to create vCenter session: failed to create tags manager")
+		return nil, pkgerrors.Wrap(err, "failed to create vCenter session: failed to create tags manager")
 	}
 	session.TagManager = manager
 
@@ -216,7 +216,7 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 			if errLogout := client.Logout(ctx); errLogout != nil {
 				log.Error(errLogout, "Failed to logout of leading client session")
 			}
-			return nil, errors.Wrapf(err, "failed to create vCenter session: failed to find datacenter %q", params.datacenter)
+			return nil, pkgerrors.Wrapf(err, "failed to create vCenter session: failed to find datacenter %q", params.datacenter)
 		}
 		session.datacenter = dc
 		session.Finder.SetDatacenter(dc)
@@ -238,7 +238,7 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 
 	vimClient, err := vim25.NewClient(ctx, soapClient)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create client")
+		return nil, pkgerrors.Wrapf(err, "failed to create client")
 	}
 	vimClient.UserAgent = "k8s-capv-useragent"
 
@@ -248,7 +248,7 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 	}
 
 	if err := c.Login(ctx, url.User); err != nil {
-		return nil, errors.Wrapf(err, "failed to create client: failed to login")
+		return nil, pkgerrors.Wrapf(err, "failed to create client: failed to login")
 	}
 
 	return c, nil
@@ -258,7 +258,7 @@ func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) 
 func newManager(ctx context.Context, client *vim25.Client, user *url.Userinfo, _ Feature) (*tags.Manager, error) {
 	rc := rest.NewClient(client)
 	if err := rc.Login(ctx, user); err != nil {
-		return nil, errors.Wrapf(err, "failed to create tags manager: failed to login REST client")
+		return nil, pkgerrors.Wrapf(err, "failed to create tags manager: failed to login REST client")
 	}
 	return tags.NewManager(rc), nil
 }
@@ -268,13 +268,13 @@ func (s *Session) GetVersion() (infrav1.VCenterVersion, error) {
 	svcVersion := s.ServiceContent.About.Version
 	version, err := semver.New(svcVersion)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to parse version %q", svcVersion)
+		return "", pkgerrors.Wrapf(err, "failed to parse version %q", svcVersion)
 	}
 
 	if version.Major >= 6 {
 		return infrav1.NewVCenterVersion(svcVersion), nil
 	}
-	return "", errors.Errorf("version %q lower than 6", svcVersion)
+	return "", pkgerrors.Errorf("version %q lower than 6", svcVersion)
 }
 
 // Clear is meant to destroy all the cached sessions.
@@ -302,12 +302,12 @@ func (s *Session) FindByInstanceUUID(ctx context.Context, uuid string) (object.R
 
 func (s *Session) findByUUID(ctx context.Context, uuid string, findByInstanceUUID bool) (object.Reference, error) {
 	if s.Client == nil {
-		return nil, errors.New("vSphere client is not initialized")
+		return nil, pkgerrors.New("vSphere client is not initialized")
 	}
 	si := object.NewSearchIndex(s.Client.Client)
 	ref, err := si.FindByUuid(ctx, s.datacenter, uuid, true, &findByInstanceUUID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error finding object by uuid %q", uuid)
+		return nil, pkgerrors.Wrapf(err, "error finding object by uuid %q", uuid)
 	}
 	return ref, nil
 }

@@ -21,8 +21,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,6 +41,6 @@ type MachineContext interface {
 // VSphereMachine is a common interface used for VSphereMachines across VMOperator and non-VMOperator modes.
 type VSphereMachine interface {
 	client.Object
-	v1beta1conditions.Setter
-	v1beta2conditions.Setter
+	deprecatedv1beta1conditions.Setter
+	conditions.Setter
 }

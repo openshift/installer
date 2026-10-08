@@ -24,16 +24,16 @@ import (
 	"regexp"
 	"text/template"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apitypes "k8s.io/apimachinery/pkg/types"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 )
 
 // GetVSphereMachine gets a vmware.infrastructure.cluster.x-k8s.io.VSphereMachine resource for the given CAPI Machine.
@@ -53,29 +53,16 @@ func GetVSphereMachine(
 }
 
 // ErrNoMachineIPAddr indicates that no valid IP addresses were found in a machine context.
-var ErrNoMachineIPAddr = errors.New("no IP addresses found for machine")
+var ErrNoMachineIPAddr = pkgerrors.New("no IP addresses found for machine")
 
 // GetMachinePreferredIPAddress returns the preferred IP address for a
 // VSphereMachine resource.
 func GetMachinePreferredIPAddress(machine *infrav1.VSphereMachine) (string, error) {
-	var cidr *net.IPNet
-	if cidrString := machine.Spec.Network.PreferredAPIServerCIDR; cidrString != "" {
-		var err error
-		if _, cidr, err = net.ParseCIDR(cidrString); err != nil {
-			return "", errors.New("error parsing preferred API server CIDR")
-		}
-	}
-
 	for _, machineAddr := range machine.Status.Addresses {
-		if machineAddr.Type != clusterv1beta1.MachineExternalIP {
+		if machineAddr.Type != clusterv1.MachineExternalIP {
 			continue
 		}
-		if cidr == nil {
-			return machineAddr.Address, nil
-		}
-		if cidr.Contains(net.ParseIP(machineAddr.Address)) {
-			return machineAddr.Address, nil
-		}
+		return machineAddr.Address, nil
 	}
 
 	return "", ErrNoMachineIPAddr
@@ -98,6 +85,16 @@ func GetMachineMetadata(hostname string, vsphereVM infrav1.VSphereVM, ipamState 
 	var waitForIPv4, waitForIPv6 bool
 	for i := range vsphereVM.Spec.Network.Devices {
 		vsphereVM.Spec.Network.Devices[i].DeepCopyInto(&devices[i])
+
+		// netplan (used by cloud-init) only supports static routes per-device,
+		// not as a top-level network property, so apply the VM-wide routes to
+		// every device instead of rendering them as an invalid top-level key.
+		devices[i].Routes = append(devices[i].Routes, vsphereVM.Spec.Network.Routes...)
+		if i == len(vsphereVM.Spec.Network.Devices)-1 {
+			for j := len(vsphereVM.Spec.Network.Devices); j < len(devices); j++ {
+				devices[j].Routes = append(devices[j].Routes, vsphereVM.Spec.Network.Routes...)
+			}
+		}
 
 		// Add the MAC Address to the network device
 		if len(networkStatuses) > i {
@@ -128,10 +125,10 @@ func GetMachineMetadata(hostname string, vsphereVM infrav1.VSphereVM, ipamState 
 			}
 		}
 		// check if DHCP is enabled
-		if vsphereVM.Spec.Network.Devices[i].DHCP4 {
+		if ptr.Deref(vsphereVM.Spec.Network.Devices[i].DHCP4, false) {
 			waitForIPv4 = true
 		}
-		if vsphereVM.Spec.Network.Devices[i].DHCP6 {
+		if ptr.Deref(vsphereVM.Spec.Network.Devices[i].DHCP6, false) {
 			waitForIPv6 = true
 		}
 	}
@@ -153,17 +150,15 @@ func GetMachineMetadata(hostname string, vsphereVM infrav1.VSphereVM, ipamState 
 	if err := tpl.Execute(buf, struct {
 		Hostname    string
 		Devices     []infrav1.NetworkDeviceSpec
-		Routes      []infrav1.NetworkRouteSpec
 		WaitForIPv4 bool
 		WaitForIPv6 bool
 	}{
 		Hostname:    hostname, // note that hostname determines the Kubernetes node name
 		Devices:     devices,
-		Routes:      vsphereVM.Spec.Network.Routes,
 		WaitForIPv4: waitForIPv4,
 		WaitForIPv6: waitForIPv6,
 	}); err != nil {
-		return nil, errors.Wrapf(
+		return nil, pkgerrors.Wrapf(
 			err,
 			"error getting cloud init metadata for vsphereVM %s/%s",
 			vsphereVM.Namespace, vsphereVM.Name)

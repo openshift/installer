@@ -21,7 +21,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -49,7 +49,7 @@ func findTemplateByInstanceUUID(ctx context.Context, session *session.Session, t
 	log.V(5).Info("Find template by instanceUUID", "instanceUUID", templateID)
 	ref, err := session.FindByInstanceUUID(ctx, templateID)
 	if err != nil {
-		return nil, errors.Wrap(err, "error querying template by instance UUID")
+		return nil, pkgerrors.Wrap(err, "error querying template by instance UUID")
 	}
 	if ref != nil {
 		return object.NewVirtualMachine(session.Client.Client, ref.Reference()), nil
@@ -62,7 +62,7 @@ func findTemplateByName(ctx context.Context, session *session.Session, templateI
 	log.V(5).Info("Find template by name", "name", templateID)
 	tpl, err := session.Finder.VirtualMachine(ctx, templateID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to find template by name %q", templateID)
+		return nil, pkgerrors.Wrapf(err, "unable to find template by name %q", templateID)
 	}
 	return tpl, nil
 }

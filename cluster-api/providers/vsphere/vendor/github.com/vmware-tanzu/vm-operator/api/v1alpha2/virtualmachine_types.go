@@ -1,4 +1,5 @@
-// Copyright (c) 2023-2024 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
@@ -7,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
+	vmopv1a2common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 )
 
 const (
@@ -41,6 +42,10 @@ const (
 
 	// VirtualMachineConditionCreated indicates that the VM has been created.
 	VirtualMachineConditionCreated = "VirtualMachineCreated"
+
+	// VirtualMachineClassConfigurationSynced indicates that the VM's current configuration is synced to the
+	// current version of its VirtualMachineClass.
+	VirtualMachineClassConfigurationSynced = "VirtualMachineClassConfigurationSynced"
 )
 
 const (
@@ -90,6 +95,19 @@ const (
 )
 
 const (
+	// VirtualMachineReconcileReady exposes the status of VirtualMachine reconciliation.
+	VirtualMachineReconcileReady = "VirtualMachineReconcileReady"
+
+	// VirtualMachineReconcileRunningReason indicates that VirtualMachine
+	// reconciliation is running.
+	VirtualMachineReconcileRunningReason = "VirtualMachineReconcileRunning"
+
+	// VirtualMachineReconcilePausedReason indicates that VirtualMachine
+	// reconciliation is being paused.
+	VirtualMachineReconcilePausedReason = "VirtualMachineReconcilePaused"
+)
+
+const (
 	// PauseAnnotation is an annotation that prevents a VM from being
 	// reconciled.
 	//
@@ -123,17 +141,19 @@ const (
 	ManagedByExtensionType = "VirtualMachine"
 )
 
-// VirtualMachine backup/restore related constants.
 const (
-	// VMResourceYAMLExtraConfigKey is the ExtraConfig key to persist VM
-	// Kubernetes resource YAML, compressed using gzip and base64-encoded.
-	VMResourceYAMLExtraConfigKey = "vmservice.virtualmachine.resource.yaml"
-	// AdditionalResourcesYAMLExtraConfigKey is the ExtraConfig key to persist
-	// VM-relevant Kubernetes resource YAML, compressed using gzip and base64-encoded.
-	AdditionalResourcesYAMLExtraConfigKey = "vmservice.virtualmachine.additional.resources.yaml"
-	// PVCDiskDataExtraConfigKey is the ExtraConfig key to persist the VM's
-	// PVC disk data in JSON, compressed using gzip and base64-encoded.
-	PVCDiskDataExtraConfigKey = "vmservice.virtualmachine.pvc.disk.data"
+	// PauseVMExtraConfigKey is the ExtraConfig key to allow override
+	// operations for admins to pause reconciliation of VM Service VM.
+	//
+	// Please note, the value that takes effect is the string "True"(case-insensitive).
+	PauseVMExtraConfigKey = "vmservice.virtualmachine.pause"
+
+	// PausedVMLabelKey is the label key to identify VMs that reconciliation
+	// are paused. Value will specify whose operation is responsible for
+	// the pause. It can be admins or devops or both.
+	//
+	// Only privileged user can edit this label.
+	PausedVMLabelKey = GroupName + "/paused"
 )
 
 // VirtualMachinePowerState defines a VM's desired and observed power states.
@@ -182,6 +202,70 @@ const (
 	VirtualMachinePowerOpModeTrySoft VirtualMachinePowerOpMode = "TrySoft"
 )
 
+// VirtualMachineCryptoSpec defines the desired state of a VirtualMachine's
+// encryption state.
+type VirtualMachineCryptoSpec struct {
+	// +optional
+
+	// EncryptionClassName describes the name of the EncryptionClass resource
+	// used to encrypt this VM.
+	//
+	// Please note, this field is not required to encrypt the VM. If the
+	// underlying platform has a default key provider, the VM may still be fully
+	// or partially encrypted depending on the specified storage and VM classes.
+	//
+	// If there is a default key provider and an encryption storage class is
+	// selected, the files in the VM's home directory and non-PVC virtual disks
+	// will be encrypted
+	//
+	// If there is a default key provider and a VM Class with a virtual, trusted
+	// platform module (vTPM) is selected, the files in the VM's home directory,
+	// minus any virtual disks, will be encrypted.
+	//
+	// If the underlying vSphere platform does not have a default key provider,
+	// then this field is required when specifying an encryption storage class
+	// and/or a VM Class with a vTPM.
+	//
+	// If this field is set, spec.storageClass must use an encryption-enabled
+	// storage class.
+	EncryptionClassName string `json:"encryptionClassName,omitempty"`
+
+	// +optional
+	// +kubebuilder:default=true
+
+	// UseDefaultKeyProvider describes the desired behavior for when an explicit
+	// EncryptionClass is not provided.
+	//
+	// When an explicit EncryptionClass is not provided and this value is true:
+	//
+	// - Deploying a VirtualMachine with an encryption storage policy or vTPM
+	//   will be encrypted using the default key provider.
+	//
+	// - If a VirtualMachine is not encrypted, uses an encryption storage
+	//   policy or has a virtual, trusted platform module (vTPM), there is a
+	//   default key provider, the VM will be encrypted using the default key
+	//   provider.
+	//
+	// - If a VirtualMachine is encrypted with a provider other than the default
+	//   key provider, the VM will be rekeyed using the default key provider.
+	//
+	// When an explicit EncryptionClass is not provided and this value is false:
+	//
+	// - Deploying a VirtualMachine with an encryption storage policy or vTPM
+	//   will fail.
+	//
+	// - If a VirtualMachine is encrypted with a provider other than the default
+	//   key provider, the VM will be not be rekeyed.
+	//
+	//   Please note, this could result in a VirtualMachine that cannot be
+	//   powered on since it is encrypted using a provider or key that may have
+	//   been removed. Without the key, the VM cannot be decrypted and thus
+	//   cannot be powered on.
+	//
+	// Defaults to true if omitted.
+	UseDefaultKeyProvider *bool `json:"useDefaultKeyProvider,omitempty"`
+}
+
 // VirtualMachineSpec defines the desired state of a VirtualMachine.
 type VirtualMachineSpec struct {
 	// ImageName describes the name of the image resource used to deploy this
@@ -189,10 +273,10 @@ type VirtualMachineSpec struct {
 	//
 	// This field may be used to specify the name of a VirtualMachineImage
 	// or ClusterVirtualMachineImage resource. The resolver first checks to see
-	// if there is a VirtualMachineImage with the specified name. If no
-	// such resource exists, the resolver then checks to see if there is a
-	// ClusterVirtualMachineImage resource with the specified name in the same
-	// Namespace as the VM being deployed.
+	// if there is a VirtualMachineImage with the specified name in the
+	// same namespace as the VM being deployed. If no such resource exists, the
+	// resolver then checks to see if there is a ClusterVirtualMachineImage
+	// resource with the specified name.
 	//
 	// This field may also be used to specify the display name (vSphere name) of
 	// a VirtualMachineImage or ClusterVirtualMachineImage resource. If the
@@ -211,6 +295,16 @@ type VirtualMachineSpec struct {
 	//
 	// +optional
 	ClassName string `json:"className,omitempty"`
+
+	// +optional
+
+	// Affinity describes the VM's scheduling constraints.
+	Affinity *AffinitySpec `json:"affinity,omitempty"`
+
+	// +optional
+
+	// Crypto describes the desired encryption state of the VirtualMachine.
+	Crypto *VirtualMachineCryptoSpec `json:"crypto,omitempty"`
 
 	// StorageClass describes the name of a Kubernetes StorageClass resource
 	// used to configure this VM's storage-related attributes.
@@ -380,6 +474,21 @@ type VirtualMachineSpec struct {
 	// behavior. In other words, please be careful when choosing to upgrade a
 	// VM to a newer hardware version.
 	MinHardwareVersion int32 `json:"minHardwareVersion,omitempty"`
+
+	// +optional
+
+	// GroupName indicates the name of the VirtualMachineGroup to which this
+	// VM belongs.
+	//
+	// VMs that belong to a group do not drive their own placement, rather that
+	// is handled by the group.
+	//
+	// When this field is set to a valid group that contains this VM as a
+	// member, an owner reference to that group is added to this VM.
+	//
+	// When this field is deleted or changed, any existing owner reference to
+	// the previous group will be removed from this VM.
+	GroupName string `json:"groupName,omitempty"`
 }
 
 // VirtualMachineReservedSpec describes a set of VM configuration options
@@ -420,7 +529,7 @@ type VirtualMachineAdvancedSpec struct {
 	// VMware Data Recovery.
 	//
 	// +optional
-	ChangeBlockTracking bool `json:"changeBlockTracking,omitempty"`
+	ChangeBlockTracking *bool `json:"changeBlockTracking,omitempty"`
 }
 
 // VirtualMachineStatus defines the observed state of a VirtualMachine instance.
@@ -429,13 +538,13 @@ type VirtualMachineStatus struct {
 	// this VM.
 	//
 	// +optional
-	Image *common.LocalObjectRef `json:"image,omitempty"`
+	Image *vmopv1a2common.LocalObjectRef `json:"image,omitempty"`
 
 	// Class is a reference to the VirtualMachineClass resource used to deploy
 	// this VM.
 	//
 	// +optional
-	Class *common.LocalObjectRef `json:"class,omitempty"`
+	Class *vmopv1a2common.LocalObjectRef `json:"class,omitempty"`
 
 	// Host describes the hostname or IP address of the infrastructure host
 	// where the VM is executed.
@@ -513,7 +622,6 @@ type VirtualMachineStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,shortName=vm
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Power-State",type="string",JSONPath=".status.powerState"
 // +kubebuilder:printcolumn:name="Class",type="string",priority=1,JSONPath=".spec.className"
@@ -531,16 +639,36 @@ type VirtualMachine struct {
 	Status VirtualMachineStatus `json:"status,omitempty"`
 }
 
-func (vm *VirtualMachine) NamespacedName() string {
+func (vm VirtualMachine) NamespacedName() string {
 	return vm.Namespace + "/" + vm.Name
 }
 
-func (vm *VirtualMachine) GetConditions() []metav1.Condition {
+func (vm VirtualMachine) GetConditions() []metav1.Condition {
 	return vm.Status.Conditions
 }
 
 func (vm *VirtualMachine) SetConditions(conditions []metav1.Condition) {
 	vm.Status.Conditions = conditions
+}
+
+func (vm VirtualMachine) GetMemberKind() string {
+	return "VirtualMachine"
+}
+
+func (vm VirtualMachine) GetGroupName() string {
+	return vm.Spec.GroupName
+}
+
+func (vm *VirtualMachine) SetGroupName(value string) {
+	vm.Spec.GroupName = value
+}
+
+func (vm VirtualMachine) GetPowerState() VirtualMachinePowerState {
+	return vm.Status.PowerState
+}
+
+func (vm *VirtualMachine) SetPowerState(value VirtualMachinePowerState) {
+	vm.Spec.PowerState = value
 }
 
 // +kubebuilder:object:root=true
@@ -553,5 +681,5 @@ type VirtualMachineList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VirtualMachine{}, &VirtualMachineList{})
+	objectTypes = append(objectTypes, &VirtualMachine{}, &VirtualMachineList{})
 }

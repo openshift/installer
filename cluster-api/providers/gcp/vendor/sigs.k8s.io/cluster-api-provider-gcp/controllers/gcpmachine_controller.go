@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/tools/record"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/instances"
@@ -31,7 +33,6 @@ import (
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
-	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -44,6 +45,7 @@ import (
 // GCPMachineReconciler reconciles a GCPMachine object.
 type GCPMachineReconciler struct {
 	client.Client
+	Recorder         record.EventRecorder
 	ReconcileTimeout time.Duration
 	WatchFilterValue string
 }
@@ -87,6 +89,7 @@ func (r *GCPMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
 
+	r.Recorder = mgr.GetEventRecorderFor("gcpmachine-controller")
 	return nil
 }
 
@@ -226,7 +229,7 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 
 	if err := instances.New(machineScope).Reconcile(ctx); err != nil {
 		log.Error(err, "Error reconciling instance resources")
-		record.Warnf(machineScope.GCPMachine, "GCPMachineReconcile", "Reconcile error - %v", err)
+		r.Recorder.Eventf(machineScope.GCPMachine, corev1.EventTypeWarning, "GCPMachineReconcile", "Reconcile error - %v", err)
 		return ctrl.Result{}, err
 	}
 
@@ -234,12 +237,12 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 	switch instanceState {
 	case infrav1.InstanceStatusProvisioning, infrav1.InstanceStatusStaging:
 		log.Info("GCPMachine instance is pending", "instance-id", *machineScope.GetInstanceID())
-		record.Eventf(machineScope.GCPMachine, "GCPMachineReconcile", "GCPMachine instance is pending - instance-id: %s", *machineScope.GetInstanceID())
+		r.Recorder.Eventf(machineScope.GCPMachine, corev1.EventTypeNormal, "GCPMachineReconcile", "GCPMachine instance is pending - instance-id: %s", *machineScope.GetInstanceID())
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	case infrav1.InstanceStatusRunning:
 		log.Info("GCPMachine instance is running", "instance-id", *machineScope.GetInstanceID())
-		record.Eventf(machineScope.GCPMachine, "GCPMachineReconcile", "GCPMachine instance is running - instance-id: %s", *machineScope.GetInstanceID())
-		record.Event(machineScope.GCPMachine, "GCPMachineReconcile", "Reconciled")
+		r.Recorder.Eventf(machineScope.GCPMachine, corev1.EventTypeNormal, "GCPMachineReconcile", "GCPMachine instance is running - instance-id: %s", *machineScope.GetInstanceID())
+		r.Recorder.Event(machineScope.GCPMachine, corev1.EventTypeNormal, "GCPMachineReconcile", "Reconciled")
 		machineScope.SetReady()
 		return ctrl.Result{}, nil
 	default:
@@ -259,6 +262,6 @@ func (r *GCPMachineReconciler) reconcileDelete(ctx context.Context, machineScope
 	}
 
 	controllerutil.RemoveFinalizer(machineScope.GCPMachine, infrav1.MachineFinalizer)
-	record.Event(machineScope.GCPMachine, "GCPMachineReconcile", "Reconciled")
+	r.Recorder.Event(machineScope.GCPMachine, corev1.EventTypeNormal, "GCPMachineReconcile", "Reconciled")
 	return nil
 }

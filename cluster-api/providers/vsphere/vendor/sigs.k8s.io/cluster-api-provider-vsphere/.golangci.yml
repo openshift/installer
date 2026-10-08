@@ -1,7 +1,7 @@
 version: "2"
 run:
   timeout: 10m
-  go: "1.24"
+  go: "1.26"
   allow-parallel-runners: true
 linters:
   default: none
@@ -11,15 +11,17 @@ linters:
     - bidichk # dangerous unicode sequences
     - bodyclose # unclosed http bodies
     - containedctx # context.Context nested in a struct
+    - depguard # blocks dependencies
     - dogsled # too many blank identifiers in assignments
     - dupword # duplicate words
     - durationcheck # multiplying two durations
     - errcheck # unchecked errors
     - errchkjson # invalid types passed to json encoder
+    - forbidigo # allows to block usage of funcs
     - ginkgolinter # ginkgo and gomega
-    - goconst
     - gocritic # bugs, performance, style (we could add custom ones to this one)
     - godot # checks that comments end in a period
+    - godox # block FIXMEs
     - goprintffuncname # printft-like functions should be named with f at the end
     - gosec # potential security problems
     - govet # basically 'go vet'
@@ -47,6 +49,31 @@ linters:
     # TODO: It will be dropped when the Go version migration is done.
     - usetesting
   settings:
+    depguard:
+      rules:
+        api:
+          list-mode: strict
+          files:
+            - "**/cluster-api-provider-vsphere/api/**/*.go"
+          allow:
+            - $gostd
+            - k8s.io/api/core/v1$
+            - k8s.io/api/rbac/v1$ # drop after ProviderServiceAccountSpec has been removed
+            - k8s.io/apimachinery/pkg/api/resource$
+            - k8s.io/apimachinery/pkg/apis/meta/v1$
+            - k8s.io/apimachinery/pkg/conversion$
+            - k8s.io/apimachinery/pkg/runtime$
+            - k8s.io/apimachinery/pkg/runtime/schema$
+            - sigs.k8s.io/cluster-api-provider-vsphere/api
+            - sigs.k8s.io/cluster-api/api
+        vm-operator:
+          deny:
+            - pkg: "github.com/vmware-tanzu/vm-operator/api"
+              desc: Use vmoprvhub in prod code instead
+    forbidigo:
+      forbid:
+        - pattern: ctrl.NewControllerManagedBy
+          msg: Use capicontrollerutil.NewControllerManagedBy instead
     ginkgolinter:
       forbid-focus-container: true
     gocritic:
@@ -78,6 +105,9 @@ linters:
       exclude:
         - ^ \+.*
         - ^ ANCHOR.*
+    godox:
+      keywords:
+        - FIXME # FIXME's should be removed before merging PRs
     gosec:
       excludes:
       # integer overflow conversion int -> int32
@@ -101,18 +131,48 @@ linters:
         # Controller Runtime
         - pkg: sigs.k8s.io/controller-runtime
           alias: ctrl
+        # Misc
+        - pkg: github.com/pkg/errors
+          alias: pkgerrors
+        - pkg: errors
+          alias: ""
         # CAPV
-        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta1
+          alias: infrav1beta1
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2
           alias: infrav1
-        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3
-          alias: infrav1alpha3
-        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4
-          alias: infrav1alpha4
-        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta1
+          alias: vmwarev1beta1
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2
           alias: vmwarev1
-        # VMware Operator
+        # Conversions
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/client
+          alias: conversionclient
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api
+          alias: conversionapi
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/meta
+          alias: conversionmeta
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub
+          alias: vmoprvhub
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/v1alpha2
+          alias: vmoprv1alpha2conversion
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/v1alpha5
+          alias: vmoprv1alpha5conversion
+        - pkg: sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/v1alpha6
+          alias: vmoprv1alpha6conversion
+        # VM Operator
         - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha2
-          alias: vmoprv1
+          alias: vmoprv1alpha2
+        - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha2/common
+          alias: vmoprv1alpha2common
+        - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha5
+          alias: vmoprv1alpha5
+        - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha5/common
+          alias: vmoprv1alpha5common
+        - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha6
+          alias: vmoprv1alpha6
+        - pkg: github.com/vmware-tanzu/vm-operator/api/v1alpha6/common
+          alias: vmoprv1alpha6common
         # NSX Operator
         - pkg: github.com/vmware-tanzu/nsx-operator/pkg/apis/vpc/v1alpha1
           alias: nsxvpcv1
@@ -133,10 +193,18 @@ linters:
           alias: v1beta1conditions
         - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2
           alias: v1beta2conditions
+        - pkg: sigs.k8s.io/cluster-api/util/conditions
+          alias: ""
+        - pkg: sigs.k8s.io/cluster-api/util/patch
+          alias: ""
+        - pkg: sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1
+          alias: deprecatedv1beta1conditions
+        - pkg: sigs.k8s.io/cluster-api/util/controller
+          alias: "capicontrollerutil"
         # CAPI addons
         - pkg: sigs.k8s.io/cluster-api/api/addons/v1beta2
           alias: addonsv1
-        # CAPI IPAM 
+        # CAPI IPAM
         - pkg: sigs.k8s.io/cluster-api/api/ipam/v1beta2
           alias: ipamv1
         - pkg: sigs.k8s.io/cluster-api/api/ipam/v1beta1
@@ -182,33 +250,52 @@ linters:
       - zz_generated.*\.go$
       - _conversion\.go$
       - vendored_cluster_api\.go$
-      - ^internal/apis/topology/v1alpha1
     # Specific exclude rules for deprecated fields that are still part of the codebase. These
     # should be removed as the referenced deprecated item is removed from the project.
     rules:
-        # Deprecations for AutoConfigure
+      # Specific exclude rules for deprecated types that are still part of the codebase. These
+      # should be removed as the referenced deprecated types are removed from the project.
+      # ProviderServiceAccount
       - linters:
           - staticcheck
-        text: 'SA1019: .*AutoConfigure is deprecated'
-        # Deprecations for PreferredAPIServerCIDR
+        text: 'SA1019: .* ProviderServiceAccount is deprecated and is going to be removed in one of the upcoming CAPV releases'
+      # v1Beta1 deprecated fields
       - linters:
           - staticcheck
-        text: 'SA1019: .*PreferredAPIServerCIDR is deprecated'
-        # Deprecations for FailureReason
+        text: 'SA1019: .*\.Deprecated\.V1Beta1.* is deprecated'
       - linters:
           - staticcheck
-        text: 'SA1019: "sigs.k8s.io/cluster-api/errors" is deprecated:'
+        text: 'SA1019: clusterv1\.(Condition|Conditions|ConditionSeverity|ConditionType) is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: .* is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+        # Excludes for controller-runtime deprecations that we should migrate away from sooner or later
+      - linters:
+          - staticcheck
+        text: 'SA1019: mgr.GetEventRecorderFor is deprecated'
         # Deprecations for old api groups
       - linters:
           - staticcheck
-        text: 'SA1019: "sigs.k8s.io/cluster-api-provider-vsphere/apis/(v1alpha3|v1alpha4)" is deprecated: This package will be removed in one of the next releases.'
-      - linters:
-          - staticcheck
         text: 'SA1019: "sigs.k8s.io/cluster-api/api/core/v1beta1" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
-        # CAPV Govmomi aggregates from IPAddressClaims to v1beta1 conditions
+        # Deprecations for old fields for conversion tests
       - linters:
           - staticcheck
-        text: 'SA1019: "sigs.k8s.io/cluster-api/api/ipam/v1beta1" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+        path: '.*/conversion_test.go'
+        text: 'SA1019: .*'
+        # Exclude for hub types
+      - linters:
+          - revive
+        path: pkg/conversion/api/vmoperator/hub/(.+)_types.go
+        text: 'exported (type|const) (.+) should have comment or be unexported'
+      - linters:
+          - revive
+        path: pkg/conversion/api/vmoperator/hub/(.+)_types.go
+        text: 'exported (type|const) (.+) should have comment \(or a comment on this block\) or be unexported'
+        # Allow direct usage of vm-operator APIs in a few places like e.g. tests and main.go
+      - linters:
+          - depguard
+        path: main.go|feature/feature.go|feature/gates.go|pkg/manager/manager.go|.*_test.go|internal/test/helpers/.*|pkg/context/fake/fake_controller_manager_context.go|pkg/conversion/.*|pkg/util/testutil.go
+        text: 'Use vmoprvhub in prod code instead'
       - linters:
           - staticcheck
         text: 'SA1019: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/.*" is deprecated'
@@ -271,70 +358,61 @@ linters:
         # Disable linters for conversion
       - linters:
           - staticcheck
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         text: 'SA1019: in.(.+) is deprecated'
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         # Checking if an error is nil to just after return the error or nil is redundant
         text: 'if-return: redundant if ...; err != nil check, just return error instead'
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         # Exported function and methods should have comments. This warns on undocumented exported functions and methods.
         text: exported (method|function|type|const) (.+) should have comment or be unexported
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         # This rule warns when initialism, variable or package naming conventions are not followed.
         text: 'var-naming: don''t use underscores in Go names;'
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         # By convention, receiver names in a method should reflect their identity.
         text: 'receiver-naming: receiver name'
       - linters:
           - staticcheck
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         text: 'ST1003: should not use underscores in Go names;'
       - linters:
           - staticcheck
-        path: ^apis\/.*\/.*conversion.*\.go$
+        path: ^api\/.*\/.*conversion.*\.go$
         text: 'ST1016: methods on the same type should have the same receiver name'
-        # missing comments on v1alpha3 and v1alpha4 packages. These rules should be removed when those packages are removed.
-      - linters:
-          - revive
-        path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
-        text: package-comments
-      - linters:
-          - staticcheck
-        path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
-        text: ST1000
-      - linters:
-          - revive
-        path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
-        text: exported (.*) should have comment (.*)or be unexported
-        # wrong comment
-      - linters:
-          - revive
-        path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
-        text: comment on exported (.*) should be of the form (.*)
-      - linters:
-          - staticcheck
-        path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
-        text: ST1021|ST1020
       - linters:
           - goconst
         path: (.+)_test\.go
-        # It's clearer to see that a field gets accessed or func gets called on the embedded objects 
+        # It's clearer to see that a field gets accessed or func gets called on the embedded objects
       - linters:
           - staticcheck
         path: (.+)\.go$
         text: 'QF1008: could remove embedded field'
+      - linters:
+          - revive
+        path: pkg/util/.*\.go$
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: (pkg/context|pkg/services/govmomi/net)/.*\.go$
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
+      # packaging go module
+      - linters:
+          - revive
+        path: packaging/flavorgen/flavors/(crs/types|util)/.*\.go$
+        text: 'var-naming: avoid meaningless package names'
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
@@ -356,5 +434,3 @@ formatters:
       - zz_generated.*\.go$
       - _conversion\.go$
       - vendored_cluster_api\.go$
-      # We don't want to invest time to fix new linter findings in old API types.
-      - ^internal/apis/topology/v1alpha1

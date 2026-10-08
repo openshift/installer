@@ -21,17 +21,16 @@ import (
 	"fmt"
 
 	netopv1 "github.com/vmware-tanzu/net-operator-api/api/v1alpha1"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
-	vmoprv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
+	vmoprvhub "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 )
 
@@ -46,6 +45,10 @@ func NetOpNetworkProvider(client client.Client) services.NetworkProvider {
 	}
 }
 
+func (np *netopNetworkProvider) SupportsIPv6DualStack() bool {
+	return false
+}
+
 // HasLoadBalancer is always true for the NetOp Network Provider.
 func (np *netopNetworkProvider) HasLoadBalancer() bool {
 	return true
@@ -55,13 +58,13 @@ func (np *netopNetworkProvider) SupportsVMReadinessProbe() bool {
 	return true
 }
 
-// ProvisionClusterNetwork marks the ClusterNetworkReadyCondition true.
+// ProvisionClusterNetwork marks the VSphereClusterNetworkReadyCondition true.
 func (np *netopNetworkProvider) ProvisionClusterNetwork(_ context.Context, clusterCtx *vmware.ClusterContext) error {
-	v1beta1conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
-	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-		Type:   vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+	deprecatedv1beta1conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyV1Beta1Condition)
+	conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterNetworkReadyCondition,
 		Status: metav1.ConditionTrue,
-		Reason: vmwarev1.VSphereClusterNetworkReadyV1Beta2Reason,
+		Reason: vmwarev1.VSphereClusterNetworkReadyReason,
 	})
 
 	return nil
@@ -125,18 +128,18 @@ func (np *netopNetworkProvider) GetVMServiceAnnotations(ctx context.Context, clu
 }
 
 // ConfigureVirtualMachine configures the NetworkInterfaces on a VM Operator virtual machine.
-func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, machine *vmwarev1.VSphereMachine, vm *vmoprv1.VirtualMachine) error {
+func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, machine *vmwarev1.VSphereMachine, vm *vmoprvhub.VirtualMachine) error {
 	network, err := np.getClusterNetwork(ctx, clusterCtx)
 	if err != nil {
 		return err
 	}
 
-	vm.Spec.Network = &vmoprv1.VirtualMachineNetworkSpec{}
+	vm.Spec.Network = &vmoprvhub.VirtualMachineNetworkSpec{}
 
 	// Set the VM primary interface
-	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprv1.VirtualMachineNetworkInterfaceSpec{
+	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprvhub.VirtualMachineNetworkInterfaceSpec{
 		Name: PrimaryInterfaceName,
-		Network: vmoprv1common.PartialObjectRef{
+		Network: &vmoprvhub.PartialObjectRef{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       NetworkGVKNetOperator.Kind,
 				APIVersion: NetworkGVKNetOperator.GroupVersion().String(),
@@ -146,7 +149,7 @@ func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clu
 	})
 
 	// Set the VM secondary interfaces
-	setVMSecondaryInterfaces(machine, vm)
+	setVMSecondaryInterfaces(machine, vm, nil)
 
 	return nil
 }

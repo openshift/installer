@@ -142,20 +142,36 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		return ctrl.Result{}, nil
 	}
 
-	needUpdateConfig, nodePoolUpdateConfigRequest := s.checkDiffAndPrepareUpdateConfig(nodePool)
-	if needUpdateConfig {
-		log.Info("Node pool config update required", "request", nodePoolUpdateConfigRequest)
-		err = s.updateNodePoolConfig(ctx, nodePoolUpdateConfigRequest)
+	// Fetch instance template labels for AdditionalLabels sync. GKE does not echo
+	// NodeConfig.ResourceLabels in GetNodePool responses; the instance template's
+	// properties.labels is the authoritative source of what labels GKE stamps onto
+	// every node in the pool. On error we proceed without label sync for this cycle.
+	templateLabels, err := s.fetchInstanceTemplateLabels(ctx, nodePool)
+	if err != nil {
+		log.Error(err, "Failed to read instance template labels, skipping AdditionalLabels sync this cycle")
+		templateLabels = nil
+	}
+
+	// Run all checks before applying any update so that a persistent diff in one
+	// category cannot permanently starve updates in another. GKE only allows one
+	// concurrent operation per node pool, so we apply one per cycle (with requeue)
+	// in priority order: size first (user-initiated scaling is most time-sensitive),
+	// then autoscaling config, then general config.
+	needUpdateSize, setNodePoolSizeRequest := s.checkDiffAndPrepareUpdateSize(nodePool)
+	needUpdateAutoscaling, setNodePoolAutoscalingRequest := s.checkDiffAndPrepareUpdateAutoscaling(nodePool)
+	needUpdateConfig, nodePoolUpdateConfigRequest := s.checkDiffAndPrepareUpdateConfig(nodePool, templateLabels)
+
+	if needUpdateSize {
+		log.Info("Size update required")
+		err = s.updateNodePoolSize(ctx, setNodePoolSizeRequest)
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %w", err)
+			return ctrl.Result{}, err
 		}
-		log.Info("Node pool config updating in progress")
-		s.scope.GCPManagedMachinePool.Status.Ready = true
+		log.Info("Node pool size updating in progress")
 		v1beta1conditions.MarkTrue(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolUpdatingCondition)
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 	}
 
-	needUpdateAutoscaling, setNodePoolAutoscalingRequest := s.checkDiffAndPrepareUpdateAutoscaling(nodePool)
 	if needUpdateAutoscaling {
 		log.Info("Auto scaling update required")
 		err = s.updateNodePoolAutoscaling(ctx, setNodePoolAutoscalingRequest)
@@ -167,14 +183,14 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 	}
 
-	needUpdateSize, setNodePoolSizeRequest := s.checkDiffAndPrepareUpdateSize(nodePool)
-	if needUpdateSize {
-		log.Info("Size update required")
-		err = s.updateNodePoolSize(ctx, setNodePoolSizeRequest)
+	if needUpdateConfig {
+		log.Info("Node pool config update required", "request", nodePoolUpdateConfigRequest)
+		err = s.updateNodePoolConfig(ctx, nodePoolUpdateConfigRequest)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %w", err)
 		}
-		log.Info("Node pool size updating in progress")
+		log.Info("Node pool config updating in progress")
+		s.scope.GCPManagedMachinePool.Status.Ready = true
 		v1beta1conditions.MarkTrue(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolUpdatingCondition)
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 	}
@@ -281,6 +297,47 @@ func (s *Service) getInstances(ctx context.Context, nodePool *containerpb.NodePo
 	return instances, nil
 }
 
+// fetchInstanceTemplateLabels returns the properties.labels from the instance template
+// used by the first instance group in the node pool. These are the labels GKE stamps
+// onto every node in the pool and are the authoritative source for AdditionalLabels sync.
+// Returns nil if the node pool has no instance groups yet.
+func (s *Service) fetchInstanceTemplateLabels(ctx context.Context, nodePool *containerpb.NodePool) (map[string]string, error) {
+	urls := nodePool.GetInstanceGroupUrls()
+	if len(urls) == 0 {
+		return nil, nil
+	}
+	igURL, err := resourceurl.Parse(urls[0])
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing instance group url")
+	}
+	mig, err := s.scope.InstanceGroupManagersClient().Get(ctx, &computepb.GetInstanceGroupManagerRequest{
+		InstanceGroupManager: igURL.Name,
+		Project:              igURL.Project,
+		Zone:                 igURL.Location,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "getting instance group manager")
+	}
+	// Instance template URL format:
+	// https://www.googleapis.com/compute/v1/projects/{project}/global/instanceTemplates/{name}
+	templateURL := mig.GetInstanceTemplate()
+	if templateURL == "" {
+		return nil, nil
+	}
+	parts := strings.SplitN(strings.TrimPrefix(templateURL, "https://www.googleapis.com/compute/v1/projects/"), "/", 4)
+	if len(parts) != 4 {
+		return nil, errors.Errorf("unexpected instance template url format: %s", templateURL)
+	}
+	tmpl, err := s.scope.InstanceTemplatesClient().Get(ctx, &computepb.GetInstanceTemplateRequest{
+		Project:          parts[0],
+		InstanceTemplate: parts[3],
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "getting instance template")
+	}
+	return tmpl.GetProperties().GetLabels(), nil
+}
+
 func (s *Service) createNodePool(ctx context.Context, log *logr.Logger) error {
 	log.V(2).Info("Running pre-flight checks on machine pool before creation")
 	if err := shared.ManagedMachinePoolPreflightCheck(s.scope.GCPManagedMachinePool, s.scope.MachinePool, s.scope.Region()); err != nil {
@@ -343,7 +400,7 @@ func (s *Service) deleteNodePool(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.NodePool) (bool, *containerpb.UpdateNodePoolRequest) {
+func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.NodePool, existingTemplateLabels map[string]string) (bool, *containerpb.UpdateNodePoolRequest) {
 	needUpdate := false
 	updateNodePoolRequest := containerpb.UpdateNodePoolRequest{
 		Name: s.scope.NodePoolFullName(),
@@ -380,11 +437,20 @@ func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.
 		needUpdate = true
 		updateNodePoolRequest.ImageType = desiredNodePool.GetConfig().GetImageType()
 	}
-	// Additional resource labels
-	if !cmp.Equal(desiredNodePool.GetConfig().GetResourceLabels(), existingNodePool.GetConfig().GetResourceLabels()) {
-		needUpdate = true
-		updateNodePoolRequest.ResourceLabels = &containerpb.ResourceLabels{
-			Labels: desiredNodePool.GetConfig().GetResourceLabels(),
+	// Resource labels (AdditionalLabels) — GKE does not echo NodeConfig.ResourceLabels in
+	// GetNodePool responses, so we compare against the instance template's properties.labels
+	// instead (see fetchInstanceTemplateLabels). We use a subset check: all desired labels
+	// must be present with the correct value; GKE-internal labels on the template are ignored.
+	if existingTemplateLabels != nil {
+		desiredResourceLabels := scope.NodePoolResourceLabels(s.scope.GCPManagedMachinePool.Spec.AdditionalLabels, s.scope.GCPManagedControlPlane.Spec.ClusterName)
+		for k, v := range desiredResourceLabels {
+			if existingTemplateLabels[k] != v {
+				needUpdate = true
+				updateNodePoolRequest.ResourceLabels = &containerpb.ResourceLabels{
+					Labels: desiredResourceLabels,
+				}
+				break
+			}
 		}
 	}
 	// Locations
@@ -401,11 +467,15 @@ func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.
 			Tags: desiredNetworkTags,
 		}
 	}
-	// LinuxNodeConfig
-	desiredLinuxNodeConfig := infrav1exp.ConvertToSdkLinuxNodeConfig(s.scope.GCPManagedMachinePool.Spec.LinuxNodeConfig)
-	if !cmp.Equal(desiredLinuxNodeConfig, existingNodePool.GetConfig().GetLinuxNodeConfig(), cmpopts.IgnoreUnexported(containerpb.LinuxNodeConfig{})) {
-		needUpdate = true
-		updateNodePoolRequest.LinuxNodeConfig = desiredLinuxNodeConfig
+	// LinuxNodeConfig — only compare when the user has set it. ConvertToSdkLinuxNodeConfig
+	// returns a non-nil pointer even for nil input, which always differs from the nil
+	// GKE returns for pools with no linux node config, producing a spurious update loop.
+	if s.scope.GCPManagedMachinePool.Spec.LinuxNodeConfig != nil {
+		desiredLinuxNodeConfig := infrav1exp.ConvertToSdkLinuxNodeConfig(s.scope.GCPManagedMachinePool.Spec.LinuxNodeConfig)
+		if !cmp.Equal(desiredLinuxNodeConfig, existingNodePool.GetConfig().GetLinuxNodeConfig(), cmpopts.IgnoreUnexported(containerpb.LinuxNodeConfig{})) {
+			needUpdate = true
+			updateNodePoolRequest.LinuxNodeConfig = desiredLinuxNodeConfig
+		}
 	}
 
 	return needUpdate, &updateNodePoolRequest
@@ -428,11 +498,16 @@ func (s *Service) checkDiffAndPrepareUpdateAutoscaling(existingNodePool *contain
 
 func (s *Service) checkDiffAndPrepareUpdateSize(existingNodePool *containerpb.NodePool) (bool, *containerpb.SetNodePoolSizeRequest) {
 	needUpdate := false
-	desiredAutoscaling := infrav1exp.ConvertToSdkAutoscaling(s.scope.GCPManagedMachinePool.Spec.Scaling)
 
-	if desiredAutoscaling.GetEnabled() {
-		// Do not update node pool size if autoscaling is enabled.
-		return false, nil
+	// Only skip size update if autoscaling is explicitly configured and enabled.
+	// ConvertToSdkAutoscaling returns {Enabled: true} when passed nil, so without this
+	// guard any node pool with no Spec.Scaling set would have manual size updates silently
+	// suppressed.
+	if s.scope.GCPManagedMachinePool.Spec.Scaling != nil {
+		desiredAutoscaling := infrav1exp.ConvertToSdkAutoscaling(s.scope.GCPManagedMachinePool.Spec.Scaling)
+		if desiredAutoscaling.GetEnabled() {
+			return false, nil
+		}
 	}
 
 	setNodePoolSizeRequest := containerpb.SetNodePoolSizeRequest{

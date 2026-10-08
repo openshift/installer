@@ -1,4 +1,4 @@
-/* Copyright © 2022-2023 VMware, Inc. All Rights Reserved.
+/* Copyright © 2022-2025 VMware, Inc. All Rights Reserved.
    SPDX-License-Identifier: Apache-2.0 */
 
 // +kubebuilder:object:generate=true
@@ -15,26 +15,51 @@ import (
 // in the default VPCNetworkConfiguration.
 type VPCNetworkConfigurationSpec struct {
 	// NSX path of the VPC the Namespace is associated with.
-	// If VPC is set, only defaultIPv4SubnetSize and defaultSubnetAccessMode
-	// take effect, other fields are ignored.
+	// If vpc is set, only defaultSubnetSize and defaultIPv6PrefixLength take effect, other fields are ignored.
 	// +optional
 	VPC string `json:"vpc,omitempty"`
+
+	// Shared Subnets the Namespace is associated with.
+	// +optional
+	Subnets []SharedSubnet `json:"subnets,omitempty"`
 
 	// NSX Project the Namespace is associated with.
 	NSXProject string `json:"nsxProject,omitempty"`
 
-	// VPCConnectivityProfile ID. This profile has configuration related to creating VPC transit gateway attachment.
+	// VPCConnectivityProfile Path. This profile has configuration related to creating VPC transit gateway attachment.
 	VPCConnectivityProfile string `json:"vpcConnectivityProfile,omitempty"`
 
 	// Private IPs.
 	PrivateIPs []string `json:"privateIPs,omitempty"`
 
-	// Default size of Subnets.
+	// Default size of IPv4 Subnets.
 	// Defaults to 32.
 	// +kubebuilder:default=32
 	// +kubebuilder:validation:Maximum:=65536
-	// +kubebuilder:validation:Minimum:=16
 	DefaultSubnetSize int `json:"defaultSubnetSize,omitempty"`
+
+	// DNSZones specifies the list of permitted DNS zones, identified by their NSX paths.
+	DNSZones []string `json:"dnsZones,omitempty"`
+
+	// Default prefix length of IPv6 Subnets.
+	// Defaults to 64.
+	// +kubebuilder:default=64
+	// +kubebuilder:validation:Minimum:=2
+	// +kubebuilder:validation:Maximum:=127
+	DefaultIPv6PrefixLength int `json:"defaultIPv6PrefixLength,omitempty"`
+}
+
+// SharedSubnet defines the information for a Subnet shared with vSphere Namespace.
+type SharedSubnet struct {
+	// NSX path of Subnets created outside of the Supervisor to be associated with this vSphere Namespace
+	Path string `json:"path"`
+	// Indicates if this Subnet is used for the Pod default network.
+	PodDefault bool `json:"podDefault,omitempty"`
+	// Indicates if this Subnet is used for the VM default network.
+	VMDefault bool `json:"vmDefault,omitempty"`
+	// Name of the Subnet. If the name is empty, it will be derived from the shared Subnet path.
+	// This field is immutable.
+	Name string `json:"name,omitempty"`
 }
 
 // VPCNetworkConfigurationStatus defines the observed state of VPCNetworkConfiguration

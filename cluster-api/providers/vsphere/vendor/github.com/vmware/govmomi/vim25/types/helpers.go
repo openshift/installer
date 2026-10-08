@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -294,6 +294,10 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 
 		for i := range civa.Property {
 			p := civa.Property[i]
+
+			if p.UserConfigurable == nil {
+				p.UserConfigurable = NewBool(false)
+			}
 			csva.Property = append(
 				csva.Property,
 				VAppPropertySpec{
