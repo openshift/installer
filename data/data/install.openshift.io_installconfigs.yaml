@@ -5584,11 +5584,11 @@ spec:
                     - AzureChinaCloud
                     - AzureGermanCloud
                     - AzureStackCloud
+                    - AzureUSSecCloud
                     type: string
                   clusterOSImage:
                     description: ClusterOSImage is the url of a storage blob in the
-                      Azure Stack environment containing an RHCOS VHD. This field
-                      is required for Azure Stack and not applicable to Azure.
+                      Azure environment containing an RHCOS VHD.
                     type: string
                   computeSubnet:
                     description: |-
