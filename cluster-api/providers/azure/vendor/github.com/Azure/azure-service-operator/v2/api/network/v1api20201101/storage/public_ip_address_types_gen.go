@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -408,8 +409,6 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 	if source.IpTags != nil {
 		ipTagList := make([]IpTag, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagStash v20220701s.IpTag
 			err := ipTagStash.AssignProperties_From_IpTag(&ipTagItem)
 			if err != nil {
@@ -622,8 +621,6 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 	if address.IpTags != nil {
 		ipTagList := make([]v20240301s.IpTag, len(address.IpTags))
 		for ipTagIndex, ipTagItem := range address.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagStash v20220701s.IpTag
 			err := ipTagItem.AssignProperties_To_IpTag(&ipTagStash)
 			if err != nil {
@@ -927,8 +924,6 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 	if source.IpTags != nil {
 		ipTagList := make([]IpTag_STATUS, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagSTATUSStash.AssignProperties_From_IpTag_STATUS(&ipTagItem)
 			if err != nil {
@@ -1132,8 +1127,6 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 	if address.IpTags != nil {
 		ipTagList := make([]v20240301s.IpTag_STATUS, len(address.IpTags))
 		for ipTagIndex, ipTagItem := range address.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagItem.AssignProperties_To_IpTag_STATUS(&ipTagSTATUSStash)
 			if err != nil {
@@ -2127,8 +2120,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddre
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2145,8 +2136,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddre
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2188,8 +2177,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddress
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2206,8 +2193,6 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddress
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

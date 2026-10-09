@@ -46,10 +46,4 @@ const (
 	// See https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 	// for annotation formatting rules.
 	SecurityRuleLastAppliedAnnotation = "sigs.k8s.io/cluster-api-provider-azure-last-applied-security-rules"
-
-	// CustomDataHashAnnotation is the key for the machine object annotation
-	// which tracks the hash of the custom data.
-	// See https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-	// for annotation formatting rules.
-	CustomDataHashAnnotation = "sigs.k8s.io/cluster-api-provider-azure-vmss-custom-data-hash"
 )

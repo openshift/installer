@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -473,7 +474,7 @@ func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.Count = &count
 	}
 	if pool.CreationData != nil {
-		creationData_ARM, err := (*pool.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := pool.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -515,7 +516,7 @@ func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.HostGroupID = &hostGroupID
 	}
 	if pool.KubeletConfig != nil {
-		kubeletConfig_ARM, err := (*pool.KubeletConfig).ConvertToARM(resolved)
+		kubeletConfig_ARM, err := pool.KubeletConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -529,7 +530,7 @@ func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.KubeletDiskType = &kubeletDiskType
 	}
 	if pool.LinuxOSConfig != nil {
-		linuxOSConfig_ARM, err := (*pool.LinuxOSConfig).ConvertToARM(resolved)
+		linuxOSConfig_ARM, err := pool.LinuxOSConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -613,7 +614,7 @@ func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.PodSubnetID = &podSubnetID
 	}
 	if pool.PowerState != nil {
-		powerState_ARM, err := (*pool.PowerState).ConvertToARM(resolved)
+		powerState_ARM, err := pool.PowerState.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -666,7 +667,7 @@ func (pool *ManagedClustersAgentPool_Spec) ConvertToARM(resolved genruntime.Conv
 		result.Properties.Type = &typeVar
 	}
 	if pool.UpgradeSettings != nil {
-		upgradeSettings_ARM, err := (*pool.UpgradeSettings).ConvertToARM(resolved)
+		upgradeSettings_ARM, err := pool.UpgradeSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3913,7 +3914,7 @@ func (config *LinuxOSConfig) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 	// Set property "Sysctls":
 	if config.Sysctls != nil {
-		sysctls_ARM, err := (*config.Sysctls).ConvertToARM(resolved)
+		sysctls_ARM, err := config.Sysctls.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4180,8 +4181,6 @@ func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_From_Mana
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -4198,8 +4197,6 @@ func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_From_Mana
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -4225,8 +4222,6 @@ func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_To_Manage
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -4243,8 +4238,6 @@ func (operator *ManagedClustersAgentPoolOperatorSpec) AssignProperties_To_Manage
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -18,7 +18,6 @@ package clustercache
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"sync"
 	"time"
@@ -29,11 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"sigs.k8s.io/cluster-api/util/certs"
 )
 
 // clusterAccessor is the object used to create and manage connections to a specific workload cluster.
@@ -51,7 +49,7 @@ type clusterAccessor struct {
 	lockedStateLock sync.RWMutex
 
 	// lockedState is the state of the clusterAccessor. This includes the connection (e.g. client, cache)
-	// and health checking information (e.g. lastProbeSuccessTimestamp, consecutiveFailures).
+	// and health checking information (e.g. lastProbeSuccessTime, consecutiveFailures).
 	// lockedStateLock must be *always* held (via lock or rLock) before accessing this field.
 	lockedState clusterAccessorLockedState
 
@@ -99,6 +97,9 @@ type clusterAccessorCacheConfig struct {
 
 	// SyncPeriod is the sync period of the cache.
 	SyncPeriod *time.Duration
+
+	// DefaultTransform is applied to all objects before they are stored in the cache.
+	DefaultTransform toolscache.TransformFunc
 
 	// ByObject restricts the cache's ListWatch to the desired fields per GVK at the specified object.
 	ByObject map[client.Object]cache.ByObject
@@ -151,23 +152,16 @@ type clusterAccessorHealthProbeConfig struct {
 }
 
 // clusterAccessorLockedState is the state of the clusterAccessor. This includes the connection (e.g. client, cache)
-// and health checking information (e.g. lastProbeSuccessTimestamp, consecutiveFailures).
+// and health checking information (e.g. lastProbeSuccessTime, consecutiveFailures).
 // lockedStateLock must be *always* held (via lock or rLock) before accessing this field.
 type clusterAccessorLockedState struct {
-	// lastConnectionCreationErrorTimestamp is the timestamp when connection creation failed the last time.
-	lastConnectionCreationErrorTimestamp time.Time
+	// lastConnectionCreationErrorTime is the time when connection creation failed the last time.
+	lastConnectionCreationErrorTime time.Time
 
 	// connection holds the connection state (e.g. client, cache) of the clusterAccessor.
 	connection *clusterAccessorLockedConnectionState
 
-	// clientCertificatePrivateKey is a private key that is generated once for a clusterAccessor
-	// and can then be used to generate client certificates. This is e.g. used in KCP to generate a client
-	// cert to communicate with etcd.
-	// This private key is stored and cached in the ClusterCache because it's expensive to generate a new
-	// private key in every single Reconcile.
-	clientCertificatePrivateKey *rsa.PrivateKey
-
-	// healthChecking holds the health checking state (e.g. lastProbeSuccessTimestamp, consecutiveFailures)
+	// healthChecking holds the health checking state (e.g. lastProbeSuccessTime, consecutiveFailures)
 	// of the clusterAccessor.
 	healthChecking clusterAccessorLockedHealthCheckingState
 }
@@ -191,6 +185,10 @@ type clusterAccessorLockedConnectionState struct {
 	// all typed objects except the ones for which caching has been disabled via DisableFor.
 	cachedClient client.Client
 
+	// uncachedClient to communicate with the workload cluster.
+	// It performs live GET/LIST calls directly against the API server with no caching.
+	uncachedClient client.Client
+
 	// cache is the cache used by the client.
 	// It manages informers that have been created e.g. by adding indexes to the cache,
 	// Get & List calls from the client or via the Watch method of the clusterAccessor.
@@ -201,14 +199,14 @@ type clusterAccessorLockedConnectionState struct {
 	watches sets.Set[string]
 }
 
-// clusterAccessorLockedHealthCheckingState holds the health checking state (e.g. lastProbeSuccessTimestamp,
+// clusterAccessorLockedHealthCheckingState holds the health checking state (e.g. lastProbeSuccessTime,
 // consecutiveFailures) of the clusterAccessor.
 type clusterAccessorLockedHealthCheckingState struct {
-	// lastProbeTimestamp is the time when the health probe was executed last.
-	lastProbeTimestamp time.Time
+	// lastProbeTime is the time when the health probe was executed last.
+	lastProbeTime time.Time
 
-	// lastProbeSuccessTimestamp is the time when the health probe was successfully executed last.
-	lastProbeSuccessTimestamp time.Time
+	// lastProbeSuccessTime is the time when the health probe was successfully executed last.
+	lastProbeSuccessTime time.Time
 
 	// consecutiveFailures is the number of consecutive health probe failures.
 	consecutiveFailures int
@@ -249,19 +247,26 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 		return nil
 	}
 
-	log.Info("Connecting")
+	start := time.Now()
+	log.V(4).Info("Connecting")
 
 	// Creating clients, cache etc. is intentionally done without a lock to avoid blocking other reconcilers.
 	connection, err := ca.createConnection(ctx)
+
+	duration := time.Since(start)
 
 	ca.lock(ctx)
 	defer ca.unlock(ctx)
 
 	defer func() {
 		if retErr != nil {
-			log.Error(retErr, "Connect failed")
+			log.Error(retErr, "Connect failed", "duration", duration)
 			connectionUp.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(0)
-			ca.lockedState.lastConnectionCreationErrorTimestamp = time.Now()
+			ca.lockedState.lastConnectionCreationErrorTime = time.Now()
+			// A client creation just failed, so let's count this as a failed probe.
+			ca.lockedState.healthChecking.lastProbeTime = time.Now()
+			// Note: Intentionally not modifying lastProbeSuccessTime.
+			ca.lockedState.healthChecking.consecutiveFailures++
 		} else {
 			connectionUp.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(1)
 		}
@@ -271,33 +276,22 @@ func (ca *clusterAccessor) Connect(ctx context.Context) (retErr error) {
 		return err
 	}
 
-	log.Info("Connected")
-
-	// Only generate the clientCertificatePrivateKey once as there is no need to regenerate it after disconnect/connect.
-	// Note: This has to be done before setting connection, because otherwise this code wouldn't be re-entrant if the
-	// private key generation fails because we check Connected above.
-	if ca.lockedState.clientCertificatePrivateKey == nil {
-		log.V(6).Info("Generating client certificate private key")
-		clientCertificatePrivateKey, err := certs.NewPrivateKey()
-		if err != nil {
-			return errors.Wrapf(err, "error creating client certificate private key")
-		}
-		ca.lockedState.clientCertificatePrivateKey = clientCertificatePrivateKey
-	}
+	log.Info("Connected", "duration", duration)
 
 	now := time.Now()
 	ca.lockedState.healthChecking = clusterAccessorLockedHealthCheckingState{
 		// A client was just created successfully, so let's set the last probe times.
-		lastProbeTimestamp:        now,
-		lastProbeSuccessTimestamp: now,
-		consecutiveFailures:       0,
+		lastProbeTime:        now,
+		lastProbeSuccessTime: now,
+		consecutiveFailures:  0,
 	}
 	ca.lockedState.connection = &clusterAccessorLockedConnectionState{
-		restConfig:   connection.RESTConfig,
-		restClient:   connection.RESTClient,
-		cachedClient: connection.CachedClient,
-		cache:        connection.Cache,
-		watches:      sets.Set[string]{},
+		restConfig:     connection.RESTConfig,
+		restClient:     connection.RESTClient,
+		cachedClient:   connection.CachedClient,
+		uncachedClient: connection.UncachedClient,
+		cache:          connection.Cache,
+		watches:        sets.Set[string]{},
 	}
 
 	return nil
@@ -317,7 +311,7 @@ func (ca *clusterAccessor) Disconnect(ctx context.Context) {
 		ca.unlock(ctx)
 		connectionUp.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(0)
 	}()
-	log.Info("Disconnecting")
+	log.V(4).Info("Disconnecting")
 
 	// Stopping the cache is non-blocking, so it's okay to do it while holding the lock.
 	// Note: Stopping the cache will also trigger shutdown of all informers that have been added to the cache.
@@ -350,7 +344,7 @@ func (ca *clusterAccessor) HealthCheck(ctx context.Context) (bool, bool) {
 	ca.lock(ctx)
 	defer ca.unlock(ctx)
 
-	ca.lockedState.healthChecking.lastProbeTimestamp = time.Now()
+	ca.lockedState.healthChecking.lastProbeTime = time.Now()
 
 	unauthorizedErrorOccurred := false
 	switch {
@@ -371,7 +365,7 @@ func (ca *clusterAccessor) HealthCheck(ctx context.Context) (bool, bool) {
 		healthChecksTotal.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace, "error").Inc()
 	default:
 		ca.lockedState.healthChecking.consecutiveFailures = 0
-		ca.lockedState.healthChecking.lastProbeSuccessTimestamp = ca.lockedState.healthChecking.lastProbeTimestamp
+		ca.lockedState.healthChecking.lastProbeSuccessTime = ca.lockedState.healthChecking.lastProbeTime
 		log.V(6).Info("Health probe succeeded")
 		healthCheck.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace).Set(1)
 		healthChecksTotal.WithLabelValues(ca.cluster.Name, ca.cluster.Namespace, "success").Inc()
@@ -386,7 +380,7 @@ func (ca *clusterAccessor) GetClient(ctx context.Context) (client.Client, error)
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting client")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting client")
 	}
 
 	return ca.lockedState.connection.cachedClient, nil
@@ -397,10 +391,22 @@ func (ca *clusterAccessor) GetReader(ctx context.Context) (client.Reader, error)
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting client reader")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting client reader")
 	}
 
 	return ca.lockedState.connection.cachedClient, nil
+}
+
+// GetUncachedClient returns a live (uncached) client for the given cluster.
+func (ca *clusterAccessor) GetUncachedClient(ctx context.Context) (client.Client, error) {
+	ca.rLock(ctx)
+	defer ca.rUnlock(ctx)
+
+	if ca.lockedState.connection == nil {
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting uncached client")
+	}
+
+	return ca.lockedState.connection.uncachedClient, nil
 }
 
 func (ca *clusterAccessor) GetRESTConfig(ctx context.Context) (*rest.Config, error) {
@@ -408,17 +414,10 @@ func (ca *clusterAccessor) GetRESTConfig(ctx context.Context) (*rest.Config, err
 	defer ca.rUnlock(ctx)
 
 	if ca.lockedState.connection == nil {
-		return nil, errors.Wrapf(ErrClusterNotConnected, "error getting REST config")
+		return nil, errors.WithMessage(ErrClusterNotConnected, "error getting REST config")
 	}
 
 	return ca.lockedState.connection.restConfig, nil
-}
-
-func (ca *clusterAccessor) GetClientCertificatePrivateKey(ctx context.Context) *rsa.PrivateKey {
-	ca.rLock(ctx)
-	defer ca.rUnlock(ctx)
-
-	return ca.lockedState.clientCertificatePrivateKey
 }
 
 // Watch watches a workload cluster for events.
@@ -431,7 +430,7 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 	}
 
 	if !ca.Connected(ctx) {
-		return errors.Wrapf(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	log := ctrl.LoggerFrom(ctx)
@@ -444,7 +443,7 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 
 	// Checking connection again while holding the lock, because maybe Disconnect was called since checking above.
 	if ca.lockedState.connection == nil {
-		return errors.Wrapf(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(ErrClusterNotConnected, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	// Return early if the watch was already added.
@@ -455,32 +454,29 @@ func (ca *clusterAccessor) Watch(ctx context.Context, watcher Watcher) error {
 
 	log.Info(fmt.Sprintf("Creating watch %s for %T", watcher.Name(), watcher.Object()))
 	if err := watcher.Watch(ca.lockedState.connection.cache); err != nil {
-		return errors.Wrapf(err, "error creating watch %s for %T", watcher.Name(), watcher.Object())
+		return errors.WithMessagef(err, "error creating watch %s for %T", watcher.Name(), watcher.Object())
 	}
 
 	ca.lockedState.connection.watches.Insert(watcher.Name())
 	return nil
 }
 
-func (ca *clusterAccessor) GetLastProbeSuccessTimestamp(ctx context.Context) time.Time {
+func (ca *clusterAccessor) GetHealthCheckingState(ctx context.Context) HealthCheckingState {
 	ca.rLock(ctx)
 	defer ca.rUnlock(ctx)
 
-	return ca.lockedState.healthChecking.lastProbeSuccessTimestamp
+	return HealthCheckingState{
+		LastProbeTime:        ca.lockedState.healthChecking.lastProbeTime,
+		LastProbeSuccessTime: ca.lockedState.healthChecking.lastProbeSuccessTime,
+		ConsecutiveFailures:  ca.lockedState.healthChecking.consecutiveFailures,
+	}
 }
 
-func (ca *clusterAccessor) GetLastProbeTimestamp(ctx context.Context) time.Time {
+func (ca *clusterAccessor) GetLastConnectionCreationErrorTime(ctx context.Context) time.Time {
 	ca.rLock(ctx)
 	defer ca.rUnlock(ctx)
 
-	return ca.lockedState.healthChecking.lastProbeTimestamp
-}
-
-func (ca *clusterAccessor) GetLastConnectionCreationErrorTimestamp(ctx context.Context) time.Time {
-	ca.rLock(ctx)
-	defer ca.rUnlock(ctx)
-
-	return ca.lockedState.lastConnectionCreationErrorTimestamp
+	return ca.lockedState.lastConnectionCreationErrorTime
 }
 
 func (ca *clusterAccessor) rLock(ctx context.Context) {

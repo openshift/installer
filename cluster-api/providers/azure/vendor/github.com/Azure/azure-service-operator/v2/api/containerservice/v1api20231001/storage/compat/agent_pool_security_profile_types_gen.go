@@ -9,7 +9,8 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-// Storage version of v1api20231102preview.AgentPoolSecurityProfile
+// Storage version of v1api20240402preview.AgentPoolSecurityProfile
+// The security settings of an agent pool.
 type AgentPoolSecurityProfile struct {
 	EnableSecureBoot *bool                  `json:"enableSecureBoot,omitempty"`
 	EnableVTPM       *bool                  `json:"enableVTPM,omitempty"`

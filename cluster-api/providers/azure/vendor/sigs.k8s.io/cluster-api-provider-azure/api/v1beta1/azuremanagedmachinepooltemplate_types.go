@@ -48,7 +48,7 @@ type AzureManagedMachinePoolTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedMachinePoolTemplate{}, &AzureManagedMachinePoolTemplateList{})
+	objectTypes = append(objectTypes, &AzureManagedMachinePoolTemplate{}, &AzureManagedMachinePoolTemplateList{})
 }
 
 // AzureManagedMachinePoolTemplateResource describes the data needed to create an AzureManagedCluster from a template.

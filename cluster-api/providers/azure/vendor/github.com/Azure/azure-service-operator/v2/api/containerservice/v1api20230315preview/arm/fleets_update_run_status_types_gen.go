@@ -202,6 +202,7 @@ const (
 	UpdateState_STATUS_Completed  = UpdateState_STATUS("Completed")
 	UpdateState_STATUS_Failed     = UpdateState_STATUS("Failed")
 	UpdateState_STATUS_NotStarted = UpdateState_STATUS("NotStarted")
+	UpdateState_STATUS_Pending    = UpdateState_STATUS("Pending")
 	UpdateState_STATUS_Running    = UpdateState_STATUS("Running")
 	UpdateState_STATUS_Stopped    = UpdateState_STATUS("Stopped")
 	UpdateState_STATUS_Stopping   = UpdateState_STATUS("Stopping")
@@ -212,6 +213,7 @@ var updateState_STATUS_Values = map[string]UpdateState_STATUS{
 	"completed":  UpdateState_STATUS_Completed,
 	"failed":     UpdateState_STATUS_Failed,
 	"notstarted": UpdateState_STATUS_NotStarted,
+	"pending":    UpdateState_STATUS_Pending,
 	"running":    UpdateState_STATUS_Running,
 	"stopped":    UpdateState_STATUS_Stopped,
 	"stopping":   UpdateState_STATUS_Stopping,

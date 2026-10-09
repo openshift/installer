@@ -40,6 +40,6 @@ func (s *DiskSpec) OwnerResourceName() string {
 }
 
 // Parameters is a no-op for disks.
-func (s *DiskSpec) Parameters(_ context.Context, _ interface{}) (params interface{}, err error) {
+func (s *DiskSpec) Parameters(_ context.Context, _ any) (params any, err error) {
 	return nil, nil
 }

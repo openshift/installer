@@ -142,6 +142,7 @@ var iPVersion_Values = map[string]IPVersion{
 
 // Nat Gateway resource.
 type NatGatewaySpec_PublicIPAddress_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -192,6 +193,7 @@ var publicIPAddressSku_Tier_Values = map[string]PublicIPAddressSku_Tier{
 
 // Public IP address resource.
 type PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

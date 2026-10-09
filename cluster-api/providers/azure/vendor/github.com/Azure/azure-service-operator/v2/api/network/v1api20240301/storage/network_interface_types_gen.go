@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={networkinterfaces/status,networkinterfaces/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -31,8 +32,8 @@ import (
 type NetworkInterface struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              NetworkInterface_Spec                                        `json:"spec,omitempty"`
-	Status            NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              NetworkInterface_Spec   `json:"spec,omitempty"`
+	Status            NetworkInterface_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NetworkInterface{}
@@ -110,7 +111,7 @@ func (networkInterface *NetworkInterface) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (networkInterface *NetworkInterface) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded{}
+	return &NetworkInterface_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -126,13 +127,13 @@ func (networkInterface *NetworkInterface) Owner() *genruntime.ResourceReference 
 // SetStatus sets the status of this resource
 func (networkInterface *NetworkInterface) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded); ok {
+	if st, ok := status.(*NetworkInterface_STATUS); ok {
 		networkInterface.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
+	var st NetworkInterface_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -216,9 +217,9 @@ func (networkInterface *NetworkInterface_Spec) ConvertSpecTo(destination genrunt
 	return destination.ConvertSpecFrom(networkInterface)
 }
 
-// Storage version of v1api20240301.NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
+// Storage version of v1api20240301.NetworkInterface_STATUS
 // A network interface in a resource group.
-type NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded struct {
+type NetworkInterface_STATUS struct {
 	AuxiliaryMode               *string                                                                        `json:"auxiliaryMode,omitempty"`
 	AuxiliarySku                *string                                                                        `json:"auxiliarySku,omitempty"`
 	Conditions                  []conditions.Condition                                                         `json:"conditions,omitempty"`
@@ -252,24 +253,24 @@ type NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded struct {
 	WorkloadType                *string                                                                        `json:"workloadType,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &NetworkInterface_STATUS{}
 
-// ConvertStatusFrom populates our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded from the provided source
-func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
+// ConvertStatusFrom populates our NetworkInterface_STATUS from the provided source
+func (networkInterface *NetworkInterface_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == networkInterface {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(embedded)
+	return source.ConvertStatusTo(networkInterface)
 }
 
-// ConvertStatusTo populates the provided destination from our NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded
-func (embedded *NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
+// ConvertStatusTo populates the provided destination from our NetworkInterface_STATUS
+func (networkInterface *NetworkInterface_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == networkInterface {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	return destination.ConvertStatusFrom(networkInterface)
 }
 
 // Storage version of v1api20240301.NetworkInterfaceDnsSettings
