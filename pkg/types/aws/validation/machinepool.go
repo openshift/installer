@@ -32,6 +32,11 @@ var (
 		aws.ConfidentialComputePolicyDisabled,
 		aws.ConfidentialComputePolicySEVSNP,
 	}
+
+	validNestedVirtualizationPolicy = []aws.NestedVirtualizationPolicy{
+		aws.NestedVirtualizationDisabled,
+		aws.NestedVirtualizationEnabled,
+	}
 )
 
 // AWS has a limit of 16 security groups. See:
@@ -278,6 +283,34 @@ func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 					fldPath.Child("confidentialCompute"),
 					p.CPUOptions.ConfidentialCompute,
 					validConfidentialComputePolicy,
+				),
+			)
+		}
+	}
+
+	if p.CPUOptions.NestedVirtualization != nil {
+		switch *p.CPUOptions.NestedVirtualization {
+		case aws.NestedVirtualizationDisabled:
+			// Valid value
+		case aws.NestedVirtualizationEnabled:
+			// Cannot be enabled alongside ConfidentialCompute
+			if p.CPUOptions.ConfidentialCompute != nil && *p.CPUOptions.ConfidentialCompute == aws.ConfidentialComputePolicySEVSNP {
+				allErrs = append(
+					allErrs,
+					field.Invalid(
+						fldPath.Child("nestedVirtualization"),
+						p.CPUOptions.NestedVirtualization,
+						fmt.Sprintf("NestedVirtualization cannot be enabled alongside ConfidentialCompute. Please disable either NestedVirtualization or ConfidentialCompute"),
+					),
+				)
+			}
+		default:
+			allErrs = append(
+				allErrs,
+				field.NotSupported(
+					fldPath.Child("nestedVirtualization"),
+					p.CPUOptions.NestedVirtualization,
+					validNestedVirtualizationPolicy,
 				),
 			)
 		}

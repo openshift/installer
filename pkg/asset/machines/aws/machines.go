@@ -305,6 +305,10 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 			cpuOptions.ConfidentialCompute = ptr.To(machineapi.AWSConfidentialComputePolicy(*in.cpuOptions.ConfidentialCompute))
 		}
 
+		if in.cpuOptions.NestedVirtualization != nil {
+			cpuOptions.NestedVirtualization = ptr.To(machineapi.NestedVirtualizationPolicy(*in.cpuOptions.NestedVirtualization))
+		}
+
 		config.CPUOptions = &cpuOptions
 	}
 
