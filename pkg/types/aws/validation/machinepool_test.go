@@ -575,6 +575,15 @@ func Test_validateCPUOptions(t *testing.T) {
 		},
 		err: `^test-path.nestedVirtualization: Unsupported value: "invalid": supported values: "Disabled", "Enabled"$`,
 	}, {
+		name: "nested virtualization and confidential compute cannot be enabled at the same time",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				ConfidentialCompute:  ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				NestedVirtualization: ptr.To(aws.NestedVirtualizationEnabled),
+			},
+		},
+		err: `^test-path.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be enabled alongside ConfidentialCompute. Please disable either NestedVirtualization or ConfidentialCompute$`,
+	}, {
 		name: "empty cpu options",
 		pool: &aws.MachinePool{
 			CPUOptions: &aws.CPUOptions{},
