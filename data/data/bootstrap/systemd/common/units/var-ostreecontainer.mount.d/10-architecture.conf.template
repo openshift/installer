@@ -1,0 +1,7 @@
+# On ppc64le the kernel is uncompressed, so the ostree repo import in node-image-pull.sh exceeds 5G.
+[Mount]
+{{- if eq .ControlPlaneArchitecture "ppc64le" }}
+Options=size=6G
+{{- else }}
+Options=size=5G
+{{- end }}
