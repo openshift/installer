@@ -203,6 +203,7 @@ const (
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
 // If provided, it must not be empty — at least one field must be set.
 // +kubebuilder:validation:MinProperties=1
+// +kubebuilder:validation:XValidation:rule="!(has(self.confidentialCompute) && self.confidentialCompute == 'AMDEncryptedVirtualizationNestedPaging' && has(self.nestedVirtualization) && self.nestedVirtualization == 'Enabled')",message="confidentialCompute and nestedVirtualization cannot both be enabled"
 type CPUOptions struct {
 	// ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
 	// and, if so, which confidential computing technology to use.
@@ -223,6 +224,11 @@ type CPUOptions struct {
 	// Virtual EC2 instances are non-bare metal instances. This capability extends virtualization flexibility by adding
 	// processor-level virtualization support to virtual EC2 instances, enabling a hypervisor running in your instance
 	// to create and manage virtual machines.
+	// Requires one of the following instance types:
+	//   - General Purpose: M7i | M7i-flex | M8i | M8id | M8i-flex
+	//   - Compute Optimized: C7i | C7i-flex | C8i | C8id | C8i-flex
+	//   - Memory Optimized: R7i | R7iz | R8i | R8id | R8i-flex | X8i
+	//   - Storage Optimized: I7i | I7ie
 	// Valid values are: Disabled, Enabled, and omitted.
 	// More details can be checked out at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
 	// When omitted, nested virtualization is Disabled (AWS default).

@@ -290,8 +290,20 @@ func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 
 	if p.CPUOptions.NestedVirtualization != nil {
 		switch *p.CPUOptions.NestedVirtualization {
-		case aws.NestedVirtualizationDisabled, aws.NestedVirtualizationEnabled:
-			// Valid values
+		case aws.NestedVirtualizationDisabled:
+			// Valid value
+		case aws.NestedVirtualizationEnabled:
+			// Cannot be enabled alongside ConfidentialCompute
+			if *p.CPUOptions.ConfidentialCompute == aws.ConfidentialComputePolicySEVSNP {
+				allErrs = append(
+					allErrs,
+					field.Invalid(
+						fldPath.Child("nestedVirtualization"),
+						p.CPUOptions.NestedVirtualization,
+						fmt.Sprintf("NestedVirtualization cannot be enabled alongside ConfidentialCompute. Please disable either NestedVirtualization or ConfidentialCompute"),
+					),
+				)
+			}
 		default:
 			allErrs = append(
 				allErrs,
