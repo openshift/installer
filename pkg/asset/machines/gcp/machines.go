@@ -65,9 +65,18 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-		*machineSetProvider = *provider
+		machineSetProvider = provider.DeepCopy()
 		utils.SetMachineOSStreamLabels(&machine, config)
 		machines = append(machines, machine)
+	}
+	// Long-lived Machine API templates defer default image selection to the provider,
+	// while initial master Machines need a concrete image for direct provisioning.
+	if mpool.OSImage == nil {
+		for _, disk := range machineSetProvider.Disks {
+			if disk.Boot {
+				disk.Image = ""
+			}
+		}
 	}
 	replicas := int32(total)
 	failureDomains := []machinev1.GCPFailureDomain{}
