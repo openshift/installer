@@ -384,6 +384,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	switch session.AuthType {
+	case azic.AzureCLIAuth:
+		return nil, fmt.Errorf("azure CLI authentication (az login) is only for installer API calls and cannot create a cluster; provide a service principal (~/.azure/osServicePrincipal.json) or managed identity")
 	case azic.ManagedIdentityAuth:
 		id.Spec.Type = capz.UserAssignedMSI
 	case azic.ClientSecretAuth:

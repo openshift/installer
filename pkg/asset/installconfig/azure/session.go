@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,6 +39,8 @@ const (
 	ClientSecretAuth AuthenticationType = iota
 	ClientCertificateAuth
 	ManagedIdentityAuth
+	// AzureCLIAuth is authentication via az login (azidentity.NewAzureCLICredential).
+	AzureCLIAuth
 )
 
 // Session is an object representing session for subscription
@@ -61,15 +64,16 @@ type Credentials struct {
 	ClientCertificatePassword string `json:"clientCertificatePassword,omitempty"`
 }
 
-// GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
-// and, if no creds are found, asks for them and stores them on disk in a config file
+// GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json.
+// If no credentials file is found, it tries the Azure CLI profile (az login). If that is also
+// unavailable, it asks for credentials and stores them on disk in a config file.
 func GetSession(cloudName azure.CloudEnvironment, armEndpoint string) (*Session, error) {
 	return GetSessionWithCredentials(cloudName, armEndpoint, nil)
 }
 
 // GetSessionWithCredentials returns an Azure session by using prepopulated credentials.
-// If there are no prepopulated credentials it falls back to reading credentials from file system
-// or from user input.
+// If there are no prepopulated credentials it falls back to reading credentials from the
+// credentials file, the Azure CLI profile (az login), or asking the user and storing them on disk.
 func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint string, credentials *Credentials) (*Session, error) {
 	var cloudEnv azureenv.Environment
 	var err error
@@ -88,25 +92,27 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		return nil, fmt.Errorf("failed to get cloud configuration for the %q cloud: %w", cloudName, err)
 	}
 
+	var cred azcore.TokenCredential
+	var authType AuthenticationType
 	if credentials == nil {
-		credentials, err = credentialsFromFileOrUser()
+		credentials, authType, err = credentialsFromFileOrUser()
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		authType = authTypeFromCredentials(credentials)
 	}
-	var cred azcore.TokenCredential
-	var authType AuthenticationType
-	switch {
-	case credentials.ClientCertificatePath != "":
+	switch authType {
+	case ClientCertificateAuth:
 		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
 		cred, err = newTokenCredentialFromCertificates(credentials, *cloudConfig)
-		authType = ClientCertificateAuth
-	case credentials.ClientSecret != "":
+	case ClientSecretAuth:
 		cred, err = newTokenCredentialFromCredentials(credentials, *cloudConfig)
-		authType = ClientSecretAuth
+	case AzureCLIAuth:
+		logrus.Infof("Using Azure CLI credentials from az login")
+		cred, err = newTokenCredentialFromAzureCLI(credentials)
 	default:
 		cred, err = newTokenCredentialFromMSI(credentials, *cloudConfig)
-		authType = ManagedIdentityAuth
 	}
 	if err != nil {
 		return nil, err
@@ -157,10 +163,24 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 	return &cloudConfig, nil
 }
 
-// credentialsFromFileOrUser returns credentials found
-// in ~/.azure/osServicePrincipal.json and, if no creds are found,
-// asks for them and stores them on disk in a config file
-func credentialsFromFileOrUser() (*Credentials, error) {
+// authTypeFromCredentials returns the authentication method for a credentials
+// file or prepopulated Credentials. Certificate and secret take priority;
+// otherwise managed identity is used, including system-assigned MSI when ClientID is empty.
+func authTypeFromCredentials(credentials *Credentials) AuthenticationType {
+	switch {
+	case credentials.ClientCertificatePath != "":
+		return ClientCertificateAuth
+	case credentials.ClientSecret != "":
+		return ClientSecretAuth
+	default:
+		return ManagedIdentityAuth
+	}
+}
+
+// credentialsFromFileOrUser returns credentials from ~/.azure/osServicePrincipal.json
+// or AZURE_AUTH_LOCATION. If no credentials file is found, it tries the Azure CLI
+// profile and otherwise prompts the user and stores a service principal on disk.
+func credentialsFromFileOrUser() (*Credentials, AuthenticationType, error) {
 	authFilePath := defaultAuthFilePath
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFilePath = f
@@ -170,31 +190,44 @@ func credentialsFromFileOrUser() (*Credentials, error) {
 
 	contents, err := os.ReadFile(authFilePath)
 	if err != nil {
-		// If the file with creds was not found, ask user for auth info
 		if errors.Is(err, fs.ErrNotExist) {
+			cliCreds, cliErr := credentialsFromAzureCLIProfile()
+			switch {
+			case cliErr == nil:
+				if cerr := checkCredentials(*cliCreds); cerr != nil {
+					logrus.Warnf("Azure CLI profile found but incomplete: %v", cerr)
+				} else {
+					return cliCreds, AzureCLIAuth, nil
+				}
+			case errors.Is(cliErr, fs.ErrNotExist):
+				logrus.Debugf("Azure CLI profile not found: %v", cliErr)
+			default:
+				logrus.Warnf("Azure CLI profile unusable: %v", cliErr)
+			}
+			// Fall back to asking the user interactively
 			logrus.Infof("Asking user to provide authentication info")
 			credentials, cerr := askForCredentials()
 			if cerr != nil {
-				return nil, fmt.Errorf("failed to retrieve credentials from user: %w", cerr)
+				return nil, 0, fmt.Errorf("failed to retrieve credentials from user: %w", cerr)
 			}
 			logrus.Infof("Saving user credentials to %q", authFilePath)
 			if cerr = saveCredentials(*credentials, authFilePath); cerr != nil {
-				return nil, fmt.Errorf("failed to save credentials: %w", cerr)
+				return nil, 0, fmt.Errorf("failed to save credentials: %w", cerr)
 			}
 			authFile = *credentials
 		} else {
 			// File was found but we failed to read it, just error out and let the user handle it
-			return nil, err
+			return nil, 0, err
 		}
 	} else {
 		err = json.Unmarshal(contents, &authFile)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 
 	if err := checkCredentials(authFile); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	if _, has := onceLoggers[authFilePath]; !has {
@@ -204,7 +237,7 @@ func credentialsFromFileOrUser() (*Credentials, error) {
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	return &authFile, nil
+	return &authFile, authTypeFromCredentials(&authFile), nil
 }
 
 func checkCredentials(creds Credentials) error {
@@ -217,7 +250,6 @@ func checkCredentials(creds Credentials) error {
 	if (creds.ClientSecret != "" || creds.ClientCertificatePath != "") && creds.ClientID == "" {
 		return errors.New("could not retrieve clientId from auth file")
 	}
-	// If neither client secret nor client certificate are present, we default to Managed Identity
 	return nil
 }
 
@@ -354,6 +386,63 @@ func newTokenCredentialFromMSI(credentials *Credentials, cloudConfig cloud.Confi
 		return nil, fmt.Errorf("failed to get client credentials from MSI: %w", err)
 	}
 	return cred, nil
+}
+
+// newTokenCredentialFromAzureCLI returns a TokenCredential for Azure CLI (az login).
+func newTokenCredentialFromAzureCLI(credentials *Credentials) (azcore.TokenCredential, error) {
+	cred, err := azidentity.NewAzureCLICredential(azureCLICredentialOptions(credentials))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Azure CLI credentials (have you run 'az login'?): %w", err)
+	}
+	return cred, nil
+}
+
+// azureCLICredentialOptions returns options for NewAzureCLICredential.
+// Subscription is preferred when set; otherwise TenantID is used; otherwise
+// nil selects the Azure CLI current account. Both cannot be set because
+// Azure CLI rejects get-access-token when --subscription and --tenant are
+// passed together.
+func azureCLICredentialOptions(credentials *Credentials) *azidentity.AzureCLICredentialOptions {
+	switch {
+	case credentials.SubscriptionID != "":
+		return &azidentity.AzureCLICredentialOptions{Subscription: credentials.SubscriptionID}
+	case credentials.TenantID != "":
+		return &azidentity.AzureCLICredentialOptions{TenantID: credentials.TenantID}
+	}
+	return nil
+}
+
+// credentialsFromAzureCLIProfile reads the default subscription and tenant IDs from
+// ~/.azure/azureProfile.json so the installer can authenticate with AzureCLICredential
+// without a service principal.
+func credentialsFromAzureCLIProfile() (*Credentials, error) {
+	// HOME/.azure is the same trusted CLI config dir as osServicePrincipal.json.
+	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".azure", "azureProfile.json")) // #nosec G703
+	if err != nil {
+		return nil, err
+	}
+	// Strip UTF-8 BOM if present (Azure CLI writes one on Windows)
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
+
+	var profile struct {
+		Subscriptions []struct {
+			ID        string `json:"id"`
+			TenantID  string `json:"tenantId"`
+			IsDefault bool   `json:"isDefault"`
+		} `json:"subscriptions"`
+	}
+	if err := json.Unmarshal(data, &profile); err != nil {
+		return nil, err
+	}
+	for _, sub := range profile.Subscriptions {
+		if sub.IsDefault {
+			return &Credentials{
+				SubscriptionID: sub.ID,
+				TenantID:       sub.TenantID,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("no default subscription found in Azure CLI profile")
 }
 
 func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cred azcore.TokenCredential) (*Session, error) {
