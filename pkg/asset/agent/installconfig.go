@@ -339,10 +339,8 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 // VCenterCredentialsAreProvided returns true if server, username, password, or at least one datacenter
 // have been provided.
 func VCenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
-	if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
-		return true
-	}
-	return false
+	return vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" ||
+		vcenter.ComponentCredentials != nil || len(vcenter.Datacenters) > 0
 }
 
 func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.InstallConfig) field.ErrorList {
@@ -363,6 +361,12 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 			if vcenter.Server == "" {
 				fieldPath := vcenterPath.Child("server")
 				allErrs = append(allErrs, field.Required(fieldPath, message))
+			}
+			if vspherePlatform.CredentialType == vsphere.CredentialTypeComponentScoped {
+				if len(vcenter.Datacenters) == 0 {
+					allErrs = append(allErrs, field.Required(vcenterPath.Child("datacenters"), message))
+				}
+				continue
 			}
 			if vcenter.Username == "" {
 				fieldPath := vcenterPath.Child("user")

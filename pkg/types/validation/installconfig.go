@@ -1475,6 +1475,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		powervc.Name:   {types.PassthroughCredentialsMode},
 		powervs.Name:   {types.ManualCredentialsMode},
 		nutanix.Name:   {types.ManualCredentialsMode},
+		vsphere.Name:   {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()

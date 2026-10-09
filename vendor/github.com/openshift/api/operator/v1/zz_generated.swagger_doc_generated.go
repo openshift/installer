@@ -1625,8 +1625,8 @@ func (MachineConfigurationStatus) SwaggerDoc() map[string]string {
 
 var map_MachineManager = map[string]string{
 	"":          "MachineManager describes a target machine resource that is registered for boot image updates. It stores identifying information such as the resource type and the API Group of the resource. It also provides granular control via the selection field.",
-	"resource":  "resource is the machine management resource's type. Valid values are machinesets and controlplanemachinesets. machinesets means that the machine manager will only register resources of the kind MachineSet. controlplanemachinesets means that the machine manager will only register resources of the kind ControlPlaneMachineSet.",
-	"apiGroup":  "apiGroup is name of the APIGroup that the machine management resource belongs to. The only current valid value is machine.openshift.io. machine.openshift.io means that the machine manager will only register resources that belong to OpenShift machine API group.",
+	"resource":  "resource is the machine management resource's type. Valid values are machinesets, controlplanemachinesets and machinedeployments. machinesets means that the machine manager will only register resources of the kind MachineSet. controlplanemachinesets means that the machine manager will only register resources of the kind ControlPlaneMachineSet. machinedeployments means that the machine manager will only register resources of the kind MachineDeployment.",
+	"apiGroup":  "apiGroup is name of the APIGroup that the machine management resource belongs to. Valid values are machine.openshift.io and cluster.x-k8s.io. machine.openshift.io means that the machine manager will only register resources that belong to OpenShift machine API group. cluster.x-k8s.io means that the machine manager will only register resources that belong to the Cluster API group.",
 	"selection": "selection allows granular control of the machine management resources that will be registered for boot image updates.",
 }
 
@@ -1686,7 +1686,7 @@ func (NodeDisruptionPolicySpecAction) SwaggerDoc() map[string]string {
 var map_NodeDisruptionPolicySpecFile = map[string]string{
 	"":        "NodeDisruptionPolicySpecFile is a file entry and corresponding actions to take and is used in the NodeDisruptionPolicyConfig object",
 	"path":    "path is the location of a file being managed through a MachineConfig. The Actions in the policy will apply to changes to the file at this path.",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicySpecFile) SwaggerDoc() map[string]string {
@@ -1695,7 +1695,7 @@ func (NodeDisruptionPolicySpecFile) SwaggerDoc() map[string]string {
 
 var map_NodeDisruptionPolicySpecSSHKey = map[string]string{
 	"":        "NodeDisruptionPolicySpecSSHKey is actions to take for any SSHKey change and is used in the NodeDisruptionPolicyConfig object",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicySpecSSHKey) SwaggerDoc() map[string]string {
@@ -1705,7 +1705,7 @@ func (NodeDisruptionPolicySpecSSHKey) SwaggerDoc() map[string]string {
 var map_NodeDisruptionPolicySpecUnit = map[string]string{
 	"":        "NodeDisruptionPolicySpecUnit is a systemd unit name and corresponding actions to take and is used in the NodeDisruptionPolicyConfig object",
 	"name":    "name represents the service name of a systemd service managed through a MachineConfig Actions specified will be applied for changes to the named service. Service names should be of the format ${NAME}${SERVICETYPE} and can up to 255 characters long. ${NAME} must be atleast 1 character long and can only consist of alphabets, digits, \":\", \"-\", \"_\", \".\", and \"\". ${SERVICETYPE} must be one of \".service\", \".socket\", \".device\", \".mount\", \".automount\", \".swap\", \".target\", \".path\", \".timer\", \".snapshot\", \".slice\" or \".scope\".",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicySpecUnit) SwaggerDoc() map[string]string {
@@ -1733,7 +1733,7 @@ func (NodeDisruptionPolicyStatusAction) SwaggerDoc() map[string]string {
 var map_NodeDisruptionPolicyStatusFile = map[string]string{
 	"":        "NodeDisruptionPolicyStatusFile is a file entry and corresponding actions to take and is used in the NodeDisruptionPolicyClusterStatus object",
 	"path":    "path is the location of a file being managed through a MachineConfig. The Actions in the policy will apply to changes to the file at this path.",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicyStatusFile) SwaggerDoc() map[string]string {
@@ -1742,7 +1742,7 @@ func (NodeDisruptionPolicyStatusFile) SwaggerDoc() map[string]string {
 
 var map_NodeDisruptionPolicyStatusSSHKey = map[string]string{
 	"":        "NodeDisruptionPolicyStatusSSHKey is actions to take for any SSHKey change and is used in the NodeDisruptionPolicyClusterStatus object",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicyStatusSSHKey) SwaggerDoc() map[string]string {
@@ -1752,7 +1752,7 @@ func (NodeDisruptionPolicyStatusSSHKey) SwaggerDoc() map[string]string {
 var map_NodeDisruptionPolicyStatusUnit = map[string]string{
 	"":        "NodeDisruptionPolicyStatusUnit is a systemd unit name and corresponding actions to take and is used in the NodeDisruptionPolicyClusterStatus object",
 	"name":    "name represents the service name of a systemd service managed through a MachineConfig Actions specified will be applied for changes to the named service. Service names should be of the format ${NAME}${SERVICETYPE} and can up to 255 characters long. ${NAME} must be atleast 1 character long and can only consist of alphabets, digits, \":\", \"-\", \"_\", \".\", and \"\". ${SERVICETYPE} must be one of \".service\", \".socket\", \".device\", \".mount\", \".automount\", \".swap\", \".target\", \".path\", \".timer\", \".snapshot\", \".slice\" or \".scope\".",
-	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supercede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
+	"actions": "actions represents the series of commands to be executed on changes to the file at the corresponding file path. Actions will be applied in the order that they are set in this list. If there are other incoming changes to other MachineConfig entries in the same update that require a reboot, the reboot will supersede these actions. Valid actions are Reboot, Drain, Reload, DaemonReload and None. The Reboot action and the None action cannot be used in conjunction with any of the other actions. This list supports a maximum of 10 entries.",
 }
 
 func (NodeDisruptionPolicyStatusUnit) SwaggerDoc() map[string]string {
