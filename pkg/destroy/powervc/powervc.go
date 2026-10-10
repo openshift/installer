@@ -10,6 +10,8 @@ import (
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
+	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/containers"
+	"github.com/gophercloud/gophercloud/v2/openstack/objectstorage/v1/objects"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -63,6 +65,16 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return quota, err
 	}
 
+	// On PowerVC the bootstrap Ignition is stored in the Swift container
+	// "<infraID>-ignition", which has no openshiftClusterID metadata, so the
+	// OpenStack destroyer's container cleanup does not find it. Remove it by
+	// name, deleting its objects one at a time: PowerVC's Swift has no bulk
+	// delete, which the OpenStack destroyer relies on. It does not depend on
+	// the servers, so do it before waiting for them.
+	if err := deleteIgnitionContainer(context.TODO(), openstackMetadata.Cloud, o.Metadata.InfraID, o.Logger); err != nil {
+		return quota, err
+	}
+
 	// The OpenStack destroyer treats a server as deleted once Nova accepts
 	// the DELETE request. On PowerVC the delete can then fail inside the
 	// compute service and leave the server in ERROR (for example, PowerVC
@@ -83,6 +95,59 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	}
 
 	return quota, nil
+}
+
+// ignitionContainerName returns the name of the Swift container holding the
+// bootstrap Ignition, or "" when infraID is empty.
+func ignitionContainerName(infraID string) string {
+	if infraID == "" {
+		return ""
+	}
+	return infraID + "-ignition"
+}
+
+// deleteIgnitionContainer deletes the bootstrap Ignition container and its
+// objects. A missing container or Swift endpoint is not an error.
+func deleteIgnitionContainer(ctx context.Context, cloud, infraID string, logger logrus.FieldLogger) error {
+	name := ignitionContainerName(infraID)
+	if name == "" {
+		return nil
+	}
+	logger.Debugf("Deleting PowerVC bootstrap Ignition container %q", name)
+	defer logger.Debug("Exiting deleting PowerVC bootstrap Ignition container")
+
+	conn, err := openstackdefaults.NewServiceClient(ctx, "object-store", openstackdefaults.DefaultClientOpts(cloud))
+	if err != nil {
+		var endpointErr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &endpointErr) {
+			logger.Debug("Skip Ignition container deletion because Swift endpoint is not found")
+			return nil
+		}
+		return fmt.Errorf("failed to create object-store client: %w", err)
+	}
+
+	allPages, err := objects.List(conn, name, nil).AllPages(ctx)
+	if err != nil {
+		if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+			logger.Debugf("Container %q not found, nothing to delete", name)
+			return nil
+		}
+		return fmt.Errorf("failed to list objects in container %q: %w", name, err)
+	}
+	objectNames, err := objects.ExtractNames(allPages)
+	if err != nil {
+		return fmt.Errorf("failed to extract objects in container %q: %w", name, err)
+	}
+	for _, object := range objectNames {
+		if _, err := objects.Delete(ctx, conn, name, object, nil).Extract(); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+			return fmt.Errorf("failed to delete object %q in container %q: %w", object, name, err)
+		}
+	}
+	if _, err := containers.Delete(ctx, conn, name).Extract(); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+		return fmt.Errorf("failed to delete container %q: %w", name, err)
+	}
+	logger.Infof("Deleted container %q", name)
+	return nil
 }
 
 // waitForServersDeleted waits until no server matching the cluster filter is

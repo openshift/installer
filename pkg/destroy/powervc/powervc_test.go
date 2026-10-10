@@ -63,6 +63,11 @@ func TestDescribeServers(t *testing.T) {
 	assert.Equal(t, `"infra-abcde-master-0" (1), "infra-abcde-master-1" (2)`, describeServers(list, false))
 }
 
+func TestIgnitionContainerName(t *testing.T) {
+	assert.Equal(t, "infra-abcde-ignition", ignitionContainerName("infra-abcde"))
+	assert.Equal(t, "", ignitionContainerName(""))
+}
+
 func serverIDs(list []servers.Server) []string {
 	var ids []string
 	for _, server := range list {
