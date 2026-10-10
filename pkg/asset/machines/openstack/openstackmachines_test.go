@@ -123,3 +123,52 @@ func TestGenerateMachineSpecTags(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateMachineSpecServerGroup(t *testing.T) {
+	const clusterID = "test-infra-id"
+	tests := []struct {
+		name     string
+		powervc  bool
+		role     string
+		expected string
+	}{
+		{
+			name:     "openstack master references the master server group",
+			role:     masterRole,
+			expected: clusterID + "-" + masterRole,
+		},
+		{
+			name: "openstack bootstrap has no server group",
+			role: bootstrapRole,
+		},
+		{
+			name:    "powervc master has no server group",
+			powervc: true,
+			role:    masterRole,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &types.InstallConfig{
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{},
+				},
+			}
+			if tt.powervc {
+				config.Platform.PowerVC = &powervc.Platform{}
+			}
+			spec, err := generateMachineSpec(clusterID, config, &openstack.MachinePool{}, "image", tt.role, machinev1.OpenStackFailureDomain{}, ptr.To(false))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.expected == "" {
+				assert.Nil(t, spec.ServerGroup)
+				return
+			}
+			if assert.NotNil(t, spec.ServerGroup) && assert.NotNil(t, spec.ServerGroup.Filter) && assert.NotNil(t, spec.ServerGroup.Filter.Name) {
+				assert.Equal(t, tt.expected, *spec.ServerGroup.Filter.Name)
+			}
+		})
+	}
+}

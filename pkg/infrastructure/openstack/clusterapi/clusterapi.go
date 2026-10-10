@@ -109,8 +109,13 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 				workerSpecs = append(workerSpecs, *machineSet.Spec.Template.Spec.ProviderSpec.Value.Object.(*mapov1alpha1.OpenstackProviderSpec))
 			}
 		}
-		if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, workerSpecs); err != nil {
-			return fmt.Errorf("failed to create server groups: %w", err)
+
+		// PowerVC's non-admin policy forbids creating server groups for
+		// the installer user.
+		if installConfig.Config.Platform.Name() != powervc.Name {
+			if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, workerSpecs); err != nil {
+				return fmt.Errorf("failed to create server groups: %w", err)
+			}
 		}
 	}
 

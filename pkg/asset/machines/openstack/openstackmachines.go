@@ -226,7 +226,9 @@ func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *o
 		}
 	}
 
-	if role != bootstrapRole {
+	// No server group on PowerVC: its non-admin policy forbids creating
+	// server groups, so PreProvision skips them and a filter would never match.
+	if role != bootstrapRole && config.Platform.Name() != powervc.Name {
 		spec.ServerGroup = &capo.ServerGroupParam{Filter: &capo.ServerGroupFilter{Name: ptr.To(clusterID + "-" + role)}}
 	}
 
