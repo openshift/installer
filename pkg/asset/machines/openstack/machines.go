@@ -264,16 +264,26 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 		PrimarySubnet:    primarySubnet,
 		AvailabilityZone: failureDomain.AvailabilityZone,
 		SecurityGroups:   securityGroups,
-		ServerGroupName:  serverGroupName,
-		Trunk:            false,
-		Tags: []string{
-			fmt.Sprintf("openshiftClusterID=%s", clusterID),
-		},
+		// No server group on PowerVC: its non-admin policy forbids creating
+		// server groups, so PreProvision skips them.
+		ServerGroupName: func() string {
+			if config.Platform.Name() == powervc.Name {
+				return ""
+			}
+			return serverGroupName
+		}(),
+		Trunk: false,
 		ServerMetadata: map[string]string{
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
 		ConfigDrive: configDrive,
+	}
+	// PowerVC's Neutron policy forbids update_ports_tags.
+	if config.Platform.Name() != powervc.Name {
+		spec.Tags = []string{
+			fmt.Sprintf("openshiftClusterID=%s", clusterID),
+		}
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &machinev1alpha1.RootVolume{
