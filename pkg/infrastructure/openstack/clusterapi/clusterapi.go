@@ -54,11 +54,13 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		workersAsset     = in.WorkersAsset
 	)
 
-	if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
-		return fmt.Errorf("failed to tag VIP ports: %w", err)
-	}
-
 	if installConfig.Config.Platform.Name() != powervc.Name {
+		// TagVIPPorts adds Neutron port tags, which PowerVC's Neutron policy
+		// forbids (rule:update_ports_tags returns 403).
+		if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
+			return fmt.Errorf("failed to tag VIP ports: %w", err)
+		}
+
 		// upload the corresponding image to Glance if rhcosImage contains a
 		// URL. If rhcosImage contains a name, then that points to an existing
 		// Glance image.

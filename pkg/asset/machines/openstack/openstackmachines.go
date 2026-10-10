@@ -214,11 +214,16 @@ func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *o
 				Value: clusterID,
 			},
 		},
-		Trunk: false,
-		Tags: []string{
-			fmt.Sprintf("openshiftClusterID=%s", clusterID),
-		},
+		Trunk:       false,
 		ConfigDrive: configDrive,
+	}
+
+	// PowerVC's Neutron policy forbids update_ports_tags, and CAPO tags
+	// ports whenever the machine (or cluster) has tags.
+	if config.Platform.Name() != powervc.Name {
+		spec.Tags = []string{
+			fmt.Sprintf("openshiftClusterID=%s", clusterID),
+		}
 	}
 
 	if role != bootstrapRole {
