@@ -266,14 +266,17 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
 		Trunk:            false,
-		Tags: []string{
-			fmt.Sprintf("openshiftClusterID=%s", clusterID),
-		},
 		ServerMetadata: map[string]string{
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
 		ConfigDrive: configDrive,
+	}
+	// PowerVC's Neutron policy forbids update_ports_tags.
+	if config.Platform.Name() != powervc.Name {
+		spec.Tags = []string{
+			fmt.Sprintf("openshiftClusterID=%s", clusterID),
+		}
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &machinev1alpha1.RootVolume{
