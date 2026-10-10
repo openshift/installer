@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types/powervc"
 )
 
 const (
@@ -62,10 +63,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			APIServerFixedIP:       &openstackInstallConfig.APIVIPs[0],
 			ExternalNetwork:        externalNetwork,
 			DisableExternalNetwork: disableExternalNetwork,
-			Tags: []string{
-				fmt.Sprintf("openshiftClusterID=%s", clusterID.InfraID),
-			},
 		},
+	}
+	// PowerVC's Neutron policy forbids update_ports_tags, and CAPO tags
+	// ports with the cluster tags.
+	if installConfig.Config.Platform.Name() != powervc.Name {
+		openStackCluster.Spec.Tags = []string{
+			fmt.Sprintf("openshiftClusterID=%s", clusterID.InfraID),
+		}
 	}
 	if cpPort := openstackInstallConfig.ControlPlanePort; cpPort != nil {
 		if networkID := cpPort.Network.ID; networkID != "" {
