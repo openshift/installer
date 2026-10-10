@@ -3,6 +3,7 @@ package powervc
 import (
 	"testing"
 
+	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	"github.com/stretchr/testify/assert"
@@ -61,6 +62,85 @@ func TestDescribeServers(t *testing.T) {
 	}
 	assert.Equal(t, `"infra-abcde-master-0" (1): Not authorized., "infra-abcde-master-1" (2)`, describeServers(list, true))
 	assert.Equal(t, `"infra-abcde-master-0" (1), "infra-abcde-master-1" (2)`, describeServers(list, false))
+}
+
+func TestContainerMatchesFilter(t *testing.T) {
+	filter := map[string]string{"openshiftClusterID": "infra-abcde"}
+	tests := []struct {
+		name     string
+		metadata map[string]string
+		filter   map[string]string
+		expected bool
+	}{
+		{
+			name:     "key case changed by Swift",
+			metadata: map[string]string{"Openshiftclusterid": "infra-abcde"},
+			filter:   filter,
+			expected: true,
+		},
+		{
+			name:     "exact key",
+			metadata: map[string]string{"openshiftClusterID": "infra-abcde", "Other": "x"},
+			filter:   filter,
+			expected: true,
+		},
+		{
+			name:     "other cluster",
+			metadata: map[string]string{"Openshiftclusterid": "infra-zzzzz"},
+			filter:   filter,
+		},
+		{
+			name:   "no metadata",
+			filter: filter,
+		},
+		{
+			name:     "empty filter matches nothing",
+			metadata: map[string]string{"Openshiftclusterid": "infra-abcde"},
+			filter:   map[string]string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, containerMatchesFilter(tt.metadata, tt.filter))
+		})
+	}
+}
+
+func TestObjectURL(t *testing.T) {
+	conn := &gophercloud.ServiceClient{
+		ProviderClient: &gophercloud.ProviderClient{},
+		Endpoint:       "https://swift.example.com/v1/AUTH_project/",
+	}
+	tests := []struct {
+		name      string
+		container string
+		object    string
+		expected  string
+	}{
+		{
+			name:      "slashes stay path separators",
+			container: "infra-abcde-image-registry-x",
+			object:    "docker/registry/v2/blobs/data",
+			expected:  "https://swift.example.com/v1/AUTH_project/infra-abcde-image-registry-x/docker/registry/v2/blobs/data",
+		},
+		{
+			name:      "segments are escaped",
+			container: "c",
+			object:    "a b/c?d",
+			expected:  "https://swift.example.com/v1/AUTH_project/c/a%20b/c%3Fd",
+		},
+		{
+			name:      "no slash",
+			container: "infra-abcde-ignition",
+			object:    "infra-abcde-ignition",
+			expected:  "https://swift.example.com/v1/AUTH_project/infra-abcde-ignition/infra-abcde-ignition",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, objectURL(conn, tt.container, tt.object))
+		})
+	}
 }
 
 func TestIgnitionContainerName(t *testing.T) {
