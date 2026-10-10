@@ -106,6 +106,11 @@ func TestServerTimeoutError(t *testing.T) {
 		})
 	}
 }
+
+func TestIgnitionContainerName(t *testing.T) {
+	assert.Equal(t, "infra-abcde-ignition", ignitionContainerName("infra-abcde"))
+	assert.Equal(t, "", ignitionContainerName(""))
+}
 func serverIDs(list []servers.Server) []string {
 	var ids []string
 	for _, server := range list {
