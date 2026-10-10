@@ -264,7 +264,6 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 		PrimarySubnet:    primarySubnet,
 		AvailabilityZone: failureDomain.AvailabilityZone,
 		SecurityGroups:   securityGroups,
-		ServerGroupName:  serverGroupName,
 		Trunk:            false,
 		ServerMetadata: map[string]string{
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
@@ -272,8 +271,11 @@ func generateProviderSpec(ctx context.Context, clusterID string, config *types.I
 		},
 		ConfigDrive: configDrive,
 	}
-	// PowerVC's Neutron policy forbids update_ports_tags.
 	if config.Platform.Name() != powervc.Name {
+		// No server group on PowerVC: its non-admin policy forbids creating
+		// server groups, so PreProvision skips them.
+		spec.ServerGroupName = serverGroupName
+		// PowerVC's Neutron policy forbids update_ports_tags.
 		spec.Tags = []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		}
