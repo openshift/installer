@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -31,6 +32,11 @@ const (
 
 	// serverStatusError is the Nova status of a server whose delete failed.
 	serverStatusError = "ERROR"
+
+	// containerDeletePollInterval and containerDeleteTimeout bound how long
+	// destroy retries deleting a container that is not empty yet.
+	containerDeletePollInterval = 5 * time.Second
+	containerDeleteTimeout      = 2 * time.Minute
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -58,6 +64,15 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	openstackDestroyer, err := od.New(o.Logger, o.Metadata)
 	if err != nil {
 		return nil, errors.New("destroy PowerVC cannot call New OpenStack")
+	}
+
+	// The OpenStack destroyer deletes the objects of the cluster's Swift
+	// containers (for example the image registry's) with Swift bulk delete.
+	// PowerVC's Swift has no bulk delete, so that fails and the OpenStack
+	// destroyer exits fatally. Delete those containers first, one object at a
+	// time, so the OpenStack destroyer finds no containers left to delete.
+	if err := deleteClusterContainers(context.TODO(), openstackMetadata.Cloud, openstackMetadata.Identifier, o.Logger); err != nil {
+		return nil, err
 	}
 
 	quota, err := openstackDestroyer.Run()
@@ -116,38 +131,162 @@ func deleteIgnitionContainer(ctx context.Context, cloud, infraID string, logger 
 	logger.Debugf("Deleting PowerVC bootstrap Ignition container %q", name)
 	defer logger.Debug("Exiting deleting PowerVC bootstrap Ignition container")
 
+	conn, err := newObjectStoreClient(ctx, cloud)
+	if err != nil || conn == nil {
+		return err
+	}
+	return deleteContainer(ctx, conn, name, logger)
+}
+
+// deleteClusterContainers deletes the Swift containers whose metadata matches
+// the cluster filter, and their objects. A missing Swift endpoint, or a user
+// who may not list containers, is not an error.
+func deleteClusterContainers(ctx context.Context, cloud string, filter map[string]string, logger logrus.FieldLogger) error {
+	if len(filter) == 0 {
+		return nil
+	}
+	logger.Debug("Deleting PowerVC cluster containers")
+	defer logger.Debug("Exiting deleting PowerVC cluster containers")
+
+	conn, err := newObjectStoreClient(ctx, cloud)
+	if err != nil || conn == nil {
+		return err
+	}
+
+	allPages, err := containers.List(conn, nil).AllPages(ctx)
+	if err != nil {
+		// Same as the OpenStack destroyer: without a Swift operator role,
+		// Swift returns 403 (Keystone) or 401 (Swauth).
+		if gophercloud.ResponseCodeIs(err, http.StatusForbidden) || gophercloud.ResponseCodeIs(err, http.StatusUnauthorized) {
+			logger.Debug("Skip container deletion because the user may not list containers")
+			return nil
+		}
+		return fmt.Errorf("failed to list containers: %w", err)
+	}
+	names, err := containers.ExtractNames(allPages)
+	if err != nil {
+		return fmt.Errorf("failed to extract containers: %w", err)
+	}
+	for _, name := range names {
+		metadata, err := containers.Get(ctx, conn, name, nil).ExtractMetadata()
+		if err != nil {
+			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+				continue
+			}
+			return fmt.Errorf("failed to get metadata of container %q: %w", name, err)
+		}
+		if !containerMatchesFilter(metadata, filter) {
+			continue
+		}
+		if err := deleteContainer(ctx, conn, name, logger); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// containerMatchesFilter reports whether the container metadata contains
+// every key/value pair of the filter. Swift changes the case of metadata keys
+// (openshiftClusterID is returned as Openshiftclusterid), so keys are compared
+// case-insensitively. An empty filter matches nothing.
+func containerMatchesFilter(metadata, filter map[string]string) bool {
+	if len(filter) == 0 {
+		return false
+	}
+	for key, val := range filter {
+		found := false
+		for k, v := range metadata {
+			if strings.EqualFold(k, key) && v == val {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// newObjectStoreClient returns an object-store client, or nil and no error when
+// the cloud has no Swift endpoint.
+func newObjectStoreClient(ctx context.Context, cloud string) (*gophercloud.ServiceClient, error) {
 	conn, err := openstackdefaults.NewServiceClient(ctx, "object-store", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		var endpointErr *gophercloud.ErrEndpointNotFound
 		if errors.As(err, &endpointErr) {
-			logger.Debug("Skip Ignition container deletion because Swift endpoint is not found")
-			return nil
+			return nil, nil
 		}
-		return fmt.Errorf("failed to create object-store client: %w", err)
+		return nil, fmt.Errorf("failed to create object-store client: %w", err)
 	}
+	return conn, nil
+}
 
-	allPages, err := objects.List(conn, name, nil).AllPages(ctx)
-	if err != nil {
-		if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
-			logger.Debugf("Container %q not found, nothing to delete", name)
-			return nil
-		}
-		return fmt.Errorf("failed to list objects in container %q: %w", name, err)
+// objectURL returns the URL of an object. Each "/"-separated segment of the
+// object name is escaped on its own, so "/" stays a path separator.
+// gophercloud's objects package escapes "/" as "%2F", which PowerVC's Swift
+// does not decode: it answers 404 for objects whose names contain "/", such
+// as the image registry's.
+func objectURL(conn *gophercloud.ServiceClient, container, object string) string {
+	segments := strings.Split(object, "/")
+	for i := range segments {
+		segments[i] = url.PathEscape(segments[i])
 	}
-	objectNames, err := objects.ExtractNames(allPages)
-	if err != nil {
-		return fmt.Errorf("failed to extract objects in container %q: %w", name, err)
+	return conn.ServiceURL(url.PathEscape(container), strings.Join(segments, "/"))
+}
+
+// deleteObject deletes one object. A missing object is not an error.
+func deleteObject(ctx context.Context, conn *gophercloud.ServiceClient, container, object string) error {
+	if _, err := conn.Delete(ctx, objectURL(conn, container, object), nil); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+		return err
 	}
-	for _, object := range objectNames {
-		if _, err := objects.Delete(ctx, conn, name, object, nil).Extract(); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
-			return fmt.Errorf("failed to delete object %q in container %q: %w", object, name, err)
-		}
-	}
-	if _, err := containers.Delete(ctx, conn, name).Extract(); err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
-		return fmt.Errorf("failed to delete container %q: %w", name, err)
-	}
-	logger.Infof("Deleted container %q", name)
 	return nil
+}
+
+// deleteContainer deletes a container's objects one at a time, then the
+// container. Swift bulk delete is not used because PowerVC's Swift does not
+// support it. If objects are added while it runs (Swift returns 409 Conflict
+// for the container delete), it retries until containerDeleteTimeout. A missing
+// container is not an error.
+func deleteContainer(ctx context.Context, conn *gophercloud.ServiceClient, name string, logger logrus.FieldLogger) error {
+	var lastErr error
+	err := wait.PollUntilContextTimeout(ctx, containerDeletePollInterval, containerDeleteTimeout, true, func(ctx context.Context) (bool, error) {
+		allPages, err := objects.List(conn, name, nil).AllPages(ctx)
+		if err != nil {
+			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+				logger.Debugf("Container %q not found, nothing to delete", name)
+				return true, nil
+			}
+			return false, fmt.Errorf("failed to list objects in container %q: %w", name, err)
+		}
+		objectNames, err := objects.ExtractNames(allPages)
+		if err != nil {
+			return false, fmt.Errorf("failed to extract objects in container %q: %w", name, err)
+		}
+		logger.Debugf("Deleting %d object(s) in container %q", len(objectNames), name)
+		for _, object := range objectNames {
+			if err := deleteObject(ctx, conn, name, object); err != nil {
+				return false, fmt.Errorf("failed to delete object %q in container %q: %w", object, name, err)
+			}
+		}
+		if _, err := containers.Delete(ctx, conn, name).Extract(); err != nil {
+			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+				return true, nil
+			}
+			if gophercloud.ResponseCodeIs(err, http.StatusConflict) {
+				lastErr = err
+				logger.Debugf("Container %q is not empty yet, retrying", name)
+				return false, nil
+			}
+			return false, fmt.Errorf("failed to delete container %q: %w", name, err)
+		}
+		logger.Infof("Deleted container %q", name)
+		return true, nil
+	})
+	if err != nil && lastErr != nil && wait.Interrupted(err) {
+		return fmt.Errorf("failed to delete container %q: %w", name, lastErr)
+	}
+	return err
 }
 
 // waitForServersDeleted waits until no server matching the cluster filter is
