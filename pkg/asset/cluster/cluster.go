@@ -80,6 +80,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&manifests.Manifests{},
 		&tls.RootCA{},
+		&tls.BoundSASigningKey{},
 	}
 }
 
