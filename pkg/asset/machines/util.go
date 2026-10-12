@@ -19,6 +19,9 @@ import (
 const (
 	// VsphereScsiByPath defines the path format for vsphere disks being added.
 	VsphereScsiByPath = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:%d:0"
+
+	// AzureDataDiskByLun defines the path format for azure data disks being added.
+	AzureDataDiskByLun = "/dev/disk/azure/data/by-lun/%d"
 )
 
 // DiskName returns the platform disk ID for the given disk setup entry.
@@ -57,7 +60,10 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 	case azuretypes.Name:
 		if installConfig.Config.Enabled(features.FeatureGateAzureMultiDisk) {
 			if azureDataDisk, ok := dataDisk.(v1beta1.DataDisk); ok {
-				device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azureDataDisk.Lun)
+				// The azure-vm-utils udev rules link data disks by LUN for both the SCSI and the
+				// NVMe disk controller. The older scsi1/lun<N> link exists on SCSI only, so it is
+				// never created on NVMe-only instance types and Ignition times out waiting for it.
+				device := fmt.Sprintf(AzureDataDiskByLun, *azureDataDisk.Lun)
 				diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
 				if err != nil {
 					return nil, errors.Wrap(err, "failed to create ignition to setup disks for master machines")
