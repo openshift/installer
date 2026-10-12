@@ -639,7 +639,13 @@ type dnsZone struct {
 }
 
 func groupFromID(id string) string {
-	return strings.Split(id, "/")[4]
+	parts := strings.Split(id, "/")
+	// Azure resource IDs are /subscriptions/<sub>/resourceGroups/<group>/...
+	// A short or empty ID used to panic on parts[4].
+	if len(parts) < 5 {
+		return ""
+	}
+	return parts[4]
 }
 
 func toRecordType(t string) dns.RecordType {
@@ -794,9 +800,10 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 			continue
 		}
 		apps := resp.GetValue()
-		if len(apps) != 1 {
+		if len(apps) != 1 || apps[0] == nil || apps[0].GetId() == nil {
 			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
 			errorList = append(errorList, err)
+			continue
 		}
 
 		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)

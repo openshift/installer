@@ -102,6 +102,12 @@ type TFVarsSources struct {
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
+	if len(sources.MasterConfigs) == 0 || sources.MasterConfigs[0] == nil {
+		return nil, errors.New("missing control plane machine configuration")
+	}
+	if len(sources.WorkerConfigs) == 0 || sources.WorkerConfigs[0] == nil {
+		return nil, errors.New("missing compute machine configuration")
+	}
 	masterConfig := sources.MasterConfigs[0]
 	workerConfig := sources.WorkerConfigs[0]
 
@@ -109,6 +115,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
+		if c == nil {
+			return nil, errors.Errorf("missing control plane machine configuration at index %d", i)
+		}
 		masterAvailabilityZones[i] = c.Zone
 	}
 
@@ -131,11 +140,15 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if masterConfig.SecurityProfile != nil && masterConfig.SecurityProfile.Settings.SecurityType != "" {
 		switch masterConfig.SecurityProfile.Settings.SecurityType {
 		case machineapi.SecurityTypesConfidentialVM:
-			secureBoot = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.SecureBoot)
-			virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule)
+			if masterConfig.SecurityProfile.Settings.ConfidentialVM != nil {
+				secureBoot = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.SecureBoot)
+				virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule)
+			}
 		case machineapi.SecurityTypesTrustedLaunch:
-			secureBoot = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.SecureBoot)
-			virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule)
+			if masterConfig.SecurityProfile.Settings.TrustedLaunch != nil {
+				secureBoot = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.SecureBoot)
+				virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule)
+			}
 		}
 	}
 

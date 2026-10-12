@@ -650,8 +650,11 @@ func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string
 	if err != nil {
 		return "", fmt.Errorf("error listing stack storage account keys: %w", err)
 	}
+	if res.Keys == nil {
+		return "", fmt.Errorf("no storage account key found")
+	}
 	keys := *res.Keys
-	if len(keys) > 0 {
+	if len(keys) > 0 && keys[0].Value != nil {
 		return *keys[0].Value, nil
 	}
 	return "", fmt.Errorf("no storage account key found")

@@ -1,0 +1,8 @@
+go test fuzz v1
+string("AzurePublicCloud")
+bool(false)
+bool(true)
+string("")
+bool(false)
+bool(false)
+bool(false)

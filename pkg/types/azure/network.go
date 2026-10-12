@@ -112,23 +112,25 @@ func (a AddressFamilySubnets) GetControlPlaneSubnet() AddressFamilySubnet {
 
 // SplitIPv4ComputeSubnets splits the IPv4 compute subnet into the number of subnets specified.
 func (a AddressFamilySubnets) SplitIPv4ComputeSubnets(numSubnets int) ([]*net.IPNet, error) {
-	if a.ipv4Count > 1 && numSubnets > 0 {
-		return cidr.SplitIntoSubnetsIPv4(a.GetIPv4Subnets()[1].String(), numSubnets)
+	ipv4 := a.GetIPv4Subnets()
+	if a.ipv4Count > 1 && numSubnets > 0 && len(ipv4) > 1 && ipv4[1] != nil {
+		return cidr.SplitIntoSubnetsIPv4(ipv4[1].String(), numSubnets)
 	}
 	return []*net.IPNet{}, nil
 }
 
 // SplitIPv6ComputeSubnets splits the IPv6 compute subnet into the number of subnets specified.
 func (a AddressFamilySubnets) SplitIPv6ComputeSubnets(numSubnets int) ([]*net.IPNet, error) {
-	if a.ipv6Count > 1 && numSubnets > 0 {
-		return cidr.SplitIntoSubnetsIPv6(a.GetIPv6Subnets()[1].String(), numSubnets)
+	ipv6 := a.GetIPv6Subnets()
+	if a.ipv6Count > 1 && numSubnets > 0 && len(ipv6) > 1 && ipv6[1] != nil {
+		return cidr.SplitIntoSubnetsIPv6(ipv6[1].String(), numSubnets)
 	}
 	return []*net.IPNet{}, nil
 }
 
 // SplitComputeSubnet splits the compute subnet into the number of subnets specified.
 func (a *AddressFamilySubnets) SplitComputeSubnet(numSubnets int) error {
-	if numSubnets <= 0 {
+	if a == nil || numSubnets <= 0 || len(a.addressFamilySubnets) == 0 {
 		return nil
 	}
 

@@ -61,10 +61,11 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		return fmt.Errorf("failed to get Azure cluster: %w", err)
 	}
 
-	if len(azureCluster.Spec.NetworkSpec.APIServerLB.FrontendIPs) == 0 {
+	apiLB := azureCluster.Spec.NetworkSpec.APIServerLB
+	if apiLB == nil || len(apiLB.FrontendIPs) == 0 {
 		return fmt.Errorf("failed to get Azure cluster LB frontend IPs")
 	}
-	ipIlb := azureCluster.Spec.NetworkSpec.APIServerLB.FrontendIPs[0].PrivateIPAddress
+	ipIlb := apiLB.FrontendIPs[0].PrivateIPAddress
 
 	privateRecords := []recordPrivateList{}
 	ttl := int64(300)

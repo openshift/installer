@@ -410,11 +410,11 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 		},
 	}
 
-	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
-	if len(existingFrontEndIPConfig) == 0 {
-		return nil, fmt.Errorf("could not get frontEndIPConfig for internal LB %s", *intLB.Name)
+	if intLB.Properties == nil || len(intLB.Properties.FrontendIPConfigurations) == 0 || intLB.Properties.FrontendIPConfigurations[0] == nil || intLB.Properties.FrontendIPConfigurations[0].Name == nil {
+		return nil, fmt.Errorf("could not get frontEndIPConfig for internal LB %s", stringValue(intLB.Name))
 	}
-	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
+	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
+	existingFrontEndIPConfigName := *existingFrontEndIPConfig[0].Name
 
 	mcsRule := &armnetwork.LoadBalancingRule{
 		Name: to.Ptr("sint-v4"),
@@ -475,17 +475,17 @@ func addIPv6InternalLBFrontend(ctx context.Context, in *lbInput) error {
 	}
 	intLB := lbResp.LoadBalancer
 
-	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
-	if len(existingFrontEndIPConfig) == 0 {
-		return fmt.Errorf("could not get frontEndIPConfig for internal LB %s", *intLB.Name)
+	if intLB.Properties == nil || len(intLB.Properties.FrontendIPConfigurations) == 0 || intLB.Properties.FrontendIPConfigurations[0] == nil || intLB.Properties.FrontendIPConfigurations[0].Name == nil {
+		return fmt.Errorf("could not get frontEndIPConfig for internal LB %s", stringValue(intLB.Name))
 	}
+	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
 
 	var subnetID string
-	if existingFrontEndIPConfig[0].Properties != nil && existingFrontEndIPConfig[0].Properties.Subnet != nil {
+	if existingFrontEndIPConfig[0].Properties != nil && existingFrontEndIPConfig[0].Properties.Subnet != nil && existingFrontEndIPConfig[0].Properties.Subnet.ID != nil {
 		subnetID = *existingFrontEndIPConfig[0].Properties.Subnet.ID
 	}
 
-	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
+	existingFrontEndIPConfigName := *existingFrontEndIPConfig[0].Name
 	frontendIPv6Name := fmt.Sprintf("%s-v6", existingFrontEndIPConfigName)
 	frontendIPv6 := &armnetwork.FrontendIPConfiguration{
 		Name: to.Ptr(frontendIPv6Name),
@@ -525,7 +525,10 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			return fmt.Errorf("failed to get vm %s: %w", vmName, err)
 		}
 
-		if nics := vm.Properties.NetworkProfile.NetworkInterfaces; len(nics) == 1 {
+		if vm.Properties == nil || vm.Properties.NetworkProfile == nil {
+			return fmt.Errorf("vm %s has no network profile", vmName)
+		}
+		if nics := vm.Properties.NetworkProfile.NetworkInterfaces; len(nics) == 1 && nics[0] != nil && nics[0].ID != nil {
 			nicRef := nics[0]
 
 			nicName := path.Base(*nicRef.ID)
@@ -533,7 +536,13 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			if err != nil {
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
+			if nic.Properties == nil {
+				return fmt.Errorf("nic %s has no properties", nicName)
+			}
 			for _, ipconfig := range nic.Properties.IPConfigurations {
+				if ipconfig == nil || ipconfig.Properties == nil {
+					continue
+				}
 				ipversion := armnetwork.IPVersionIPv4
 				if ipconfig.Properties.PrivateIPAddressVersion != nil {
 					ipversion = *ipconfig.Properties.PrivateIPAddressVersion
@@ -769,4 +778,11 @@ func associateNatGatewayToSubnet(ctx context.Context, in natGatewayInput) error 
 		}
 	}
 	return nil
+}
+
+func stringValue(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }

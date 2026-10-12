@@ -201,6 +201,10 @@ func (e CloudEnvironment) Name() string {
 // SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform
 func (p *Platform) SetBaseDomain(baseDomainID string) error {
 	parts := strings.Split(baseDomainID, "/")
+	// A DNS zone ID is /subscriptions/<sub>/resourceGroups/<rg>/providers/...
+	if len(parts) < 5 {
+		return fmt.Errorf("invalid Azure DNS zone ID %q", baseDomainID)
+	}
 	p.BaseDomainResourceGroupName = parts[4]
 	return nil
 }

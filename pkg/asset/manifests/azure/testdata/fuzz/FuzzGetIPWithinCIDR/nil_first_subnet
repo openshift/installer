@@ -1,0 +1,5 @@
+go test fuzz v1
+string("10.0.0.0/16")
+string("10.0.1.0/24")
+string("192.168.1.1")
+bool(true)
