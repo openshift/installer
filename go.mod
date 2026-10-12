@@ -108,7 +108,7 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.43.0
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.33.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.11.0
 	golang.org/x/sys v0.30.0
@@ -343,3 +343,5 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 
 replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.4
+
+replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
