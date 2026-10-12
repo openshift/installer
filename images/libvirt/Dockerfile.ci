@@ -21,7 +21,7 @@ RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     genisoimage \
     gettext \
-    google-cloud-sdk-365.0.1 \
+    google-cloud-sdk \
     libvirt-client \
     libvirt-libs \
     nss_wrapper \
