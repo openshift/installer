@@ -206,7 +206,12 @@ func TestClusterPorts(t *testing.T) {
 		{ID: "3", Name: "infra-abcdef-master-0-0"},
 		{ID: "4", Name: "other-cluster-master-0-0"},
 		{ID: "5", Name: ""},
-		{ID: "6", Name: "infra-abcde-port", DeviceID: "bastion-server-id"},
+		{ID: "6", Name: "infra-abcde-master-1-0", DeviceID: "attached-server-id"},
+		{ID: "7", Name: "infra-abcde-worker-0-xyz12-0"},
+		{ID: "8", Name: "infra-abcde-bastion-0"},
+		{ID: "9", Name: "infra-abcde-bastion", DeviceID: "bastion-server-id"},
+		{ID: "10", Name: "infra-abcde-port"},
+		{ID: "11", Name: "infra-abcde-masterless-0"},
 	}
 
 	tests := []struct {
@@ -215,9 +220,9 @@ func TestClusterPorts(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "matches only unattached ports with the infraID prefix",
+			name:     "matches only unattached master, worker and bootstrap ports of the cluster",
 			infraID:  "infra-abcde",
-			expected: []string{"1", "2"},
+			expected: []string{"1", "2", "7"},
 		},
 		{
 			name:     "empty infraID matches nothing",
