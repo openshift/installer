@@ -1,0 +1,19 @@
+[Unit]
+Description=Ironic ramdisk logger
+BindsTo=ironic-volume.service
+Requires=build-ironic-env.service
+Wants=network-online.target ironic.service
+After=network-online.target ironic-volume.service build-ironic-env.service ironic.service
+
+[Container]
+ContainerName=ironic-ramdisk-logs
+Image=$IRONIC_IMAGE
+Exec=/bin/runlogwatch.sh
+Volume=ironic.volume:/shared:z
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

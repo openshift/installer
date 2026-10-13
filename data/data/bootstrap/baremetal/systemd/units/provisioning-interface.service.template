@@ -1,0 +1,18 @@
+[Unit]
+Description=Provisioning interface
+Requires=build-ironic-env.service
+Wants=network-online.target crio.service
+After=network-online.target crio.service build-ironic-env.service
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+EnvironmentFile=/etc/ironic-network.env
+Environment="PROVISIONING_SUBNET={{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}"
+ExecStart=/usr/local/bin/start-provisioning-nic.sh
+Type=oneshot
+RemainAfterExit=true
+
+Restart=on-failure
+RestartSec=10
+
+[Install]

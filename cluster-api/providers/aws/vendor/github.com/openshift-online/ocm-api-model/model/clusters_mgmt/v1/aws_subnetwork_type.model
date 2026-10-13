@@ -1,0 +1,36 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// AWS subnetwork object to be used while installing a cluster
+struct Subnetwork {
+	// The subnet ID to be used while installing a cluster.
+	SubnetID String
+
+	// Name of the subnet according to its `Name` tag on AWS.
+	Name String
+
+	// Whether or not it is a public subnet.
+	Public Boolean
+
+	// The availability zone to which the subnet is related.
+	AvailabilityZone String
+
+	// The CIDR Block of the subnet.
+	CIDRBlock String
+
+	// If the resource is RH managed.
+	RedHatManaged Boolean
+}

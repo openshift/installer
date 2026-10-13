@@ -1,0 +1,398 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for OpenShift Cluster Network Elements (Route53 & LBs)
+
+Parameters:
+  ClusterName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, representative cluster name to use for host names and other identifying names.
+    Type: String
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
+    Type: String
+  HostedZoneId:
+    Description: The Route53 public zone ID to register the targets with, such as Z21IXYZABCZ2A4.
+    Type: String
+  HostedZoneName:
+    Description: The Route53 zone to register the targets with, such as example.com. Omit the trailing period.
+    Type: String
+    Default: "example.com"
+  PublicSubnets:
+    Description: The internet-facing subnets.
+    Type: List<AWS::EC2::Subnet::Id>
+  PrivateSubnets:
+    Description: The internal subnets.
+    Type: List<AWS::EC2::Subnet::Id>
+  VpcId:
+    Description: The VPC-scoped resources will belong to this VPC.
+    Type: AWS::EC2::VPC::Id
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - ClusterName
+      - InfrastructureName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - PublicSubnets
+      - PrivateSubnets
+    - Label:
+        default: "DNS"
+      Parameters:
+      - HostedZoneName
+      - HostedZoneId
+    ParameterLabels:
+      ClusterName:
+        default: "Cluster Name"
+      InfrastructureName:
+        default: "Infrastructure Name"
+      VpcId:
+        default: "VPC ID"
+      PublicSubnets:
+        default: "Public Subnets"
+      PrivateSubnets:
+        default: "Private Subnets"
+      HostedZoneName:
+        default: "Public Hosted Zone Name"
+      HostedZoneId:
+        default: "Public Hosted Zone ID"
+
+Resources:
+  ExtApiElb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Join ["-", [!Ref InfrastructureName, "ext"]]
+      IpAddressType: ipv4
+      Subnets: !Ref PublicSubnets
+      Type: network
+
+  IntApiElb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Join ["-", [!Ref InfrastructureName, "int"]]
+      Scheme: internal
+      IpAddressType: ipv4
+      Subnets: !Ref PrivateSubnets
+      Type: network
+
+  IntDns:
+    Type: "AWS::Route53::HostedZone"
+    Properties:
+      HostedZoneConfig:
+        Comment: "Managed by CloudFormation"
+      Name: !Join [".", [!Ref ClusterName, !Ref HostedZoneName]]
+      HostedZoneTags:
+      - Key: Name
+        Value: !Join ["-", [!Ref InfrastructureName, "int"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "owned"
+      VPCs:
+      - VPCId: !Ref VpcId
+        VPCRegion: !Ref "AWS::Region"
+
+  ExternalApiServerRecord:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      Comment: Alias record for the API server
+      HostedZoneId: !Ref HostedZoneId
+      RecordSets:
+      - Name:
+          !Join [
+            ".",
+            ["api", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
+          ]
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt ExtApiElb.CanonicalHostedZoneID
+          DNSName: !GetAtt ExtApiElb.DNSName
+
+  InternalApiServerRecord:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      Comment: Alias record for the API server
+      HostedZoneId: !Ref IntDns
+      RecordSets:
+      - Name:
+          !Join [
+            ".",
+            ["api", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
+          ]
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
+          DNSName: !GetAtt IntApiElb.DNSName
+      - Name:
+          !Join [
+            ".",
+            ["api-int", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
+          ]
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
+          DNSName: !GetAtt IntApiElb.DNSName
+
+  ExternalApiListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ExternalApiTargetGroup
+      LoadBalancerArn:
+        Ref: ExtApiElb
+      Port: 6443
+      Protocol: TCP
+
+  ExternalApiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/readyz"
+      HealthCheckPort: 6443
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Port: 6443
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  InternalApiListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: InternalApiTargetGroup
+      LoadBalancerArn:
+        Ref: IntApiElb
+      Port: 6443
+      Protocol: TCP
+
+  InternalApiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/readyz"
+      HealthCheckPort: 6443
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Port: 6443
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  InternalServiceInternalListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: InternalServiceTargetGroup
+      LoadBalancerArn:
+        Ref: IntApiElb
+      Port: 22623
+      Protocol: TCP
+
+  InternalServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/healthz"
+      HealthCheckPort: 22623
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Port: 22623
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  RegisterTargetLambdaIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref InfrastructureName, "nlb", "lambda", "role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "lambda.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref InternalApiTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref InternalServiceTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref ExternalApiTargetGroup
+
+  RegisterNlbIpTargets:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+        - "RegisterTargetLambdaIamRole"
+        - "Arn"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+            elb = boto3.client('elbv2')
+            if event['RequestType'] == 'Delete':
+              elb.deregister_targets(TargetGroupArn=event['ResourceProperties']['TargetArn'],Targets=[{'Id': event['ResourceProperties']['TargetIp']}])
+            elif event['RequestType'] == 'Create':
+              elb.register_targets(TargetGroupArn=event['ResourceProperties']['TargetArn'],Targets=[{'Id': event['ResourceProperties']['TargetIp']}])
+            responseData = {}
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['TargetArn']+event['ResourceProperties']['TargetIp'])
+      Runtime: "python3.11"
+      Timeout: 120
+
+  RegisterSubnetTagsLambdaIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref InfrastructureName, "subnet-tags-lambda-role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "lambda.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "subnet-tagging-policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DeleteTags",
+                "ec2:CreateTags"
+              ]
+            Resource: "arn:aws:ec2:*:*:subnet/*"
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags"
+              ]
+            Resource: "*"
+
+  RegisterSubnetTags:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+        - "RegisterSubnetTagsLambdaIamRole"
+        - "Arn"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+            ec2_client = boto3.client('ec2')
+            if event['RequestType'] == 'Delete':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.delete_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName']}]);
+            elif event['RequestType'] == 'Create':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName'], 'Value': 'shared'}]);
+            responseData = {}
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['InfrastructureName']+event['ResourceProperties']['Subnets'][0])
+      Runtime: "python3.11"
+      Timeout: 120
+
+  RegisterPublicSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      InfrastructureName: !Ref InfrastructureName
+      Subnets: !Ref PublicSubnets
+
+  RegisterPrivateSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      InfrastructureName: !Ref InfrastructureName
+      Subnets: !Ref PrivateSubnets
+
+Outputs:
+  PrivateHostedZoneId:
+    Description: Hosted zone ID for the private DNS, which is required for private records.
+    Value: !Ref IntDns
+  ExternalApiLoadBalancerName:
+    Description: Full name of the external API load balancer.
+    Value: !GetAtt ExtApiElb.LoadBalancerFullName
+  InternalApiLoadBalancerName:
+    Description: Full name of the internal API load balancer.
+    Value: !GetAtt IntApiElb.LoadBalancerFullName
+  ApiServerDnsName:
+    Description: Full hostname of the API server, which is required for the Ignition config files.
+    Value: !Join [".", ["api-int", !Ref ClusterName, !Ref HostedZoneName]]
+  RegisterNlbIpTargetsLambda:
+    Description: Lambda ARN useful to help register or deregister IP targets for these load balancers.
+    Value: !GetAtt RegisterNlbIpTargets.Arn
+  ExternalApiTargetGroupArn:
+    Description: ARN of the external API target group.
+    Value: !Ref ExternalApiTargetGroup
+  InternalApiTargetGroupArn:
+    Description: ARN of the internal API target group.
+    Value: !Ref InternalApiTargetGroup
+  InternalServiceTargetGroupArn:
+    Description: ARN of the internal service target group.
+    Value: !Ref InternalServiceTargetGroup

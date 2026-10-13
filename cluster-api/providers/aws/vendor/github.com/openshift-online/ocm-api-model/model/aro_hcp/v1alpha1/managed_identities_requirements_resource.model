@@ -1,0 +1,42 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the ManagedIdentitiesRequirements resource.
+resource ManagedIdentitiesRequirements {
+	// Retrieves an ManagedIdentitiesRequirements by version query param.
+	method Get {
+		// Get the managed identities requirements by OpenShift version.
+		// The query parameter is optional, but when supplied it needs to be 
+		// in the format X.Y (e.g 4.18) where X and Y are major and minor segments of 
+		// the OpenShift version respectively.
+		// When supplied, the returned response will include all the control plane 
+		// and data plane operators requirements for the given version. 
+		// If not supplied, the OpenShift version constraint won't be taken into account 
+		// when returning the managed identities requirements.
+		in Version String
+
+		// Get the managed identities requirements depending on when they are required.
+		// The query parameter is optional, it needs to be either ("always" or "on_enablement"). 
+		// When not supplied, this enablement constraint won't be taken into account.
+		// When supplied and among the accepted values, the query parameter will be used to return all managed identities requirements
+		// that matches the value given in the query parameter.
+		// When supplied but the value is invalid, an error is going to be returned.
+		in Required String
+
+		// ManagedIdentitiesRequirements status response.
+		out Body ManagedIdentitiesRequirements
+	}
+}

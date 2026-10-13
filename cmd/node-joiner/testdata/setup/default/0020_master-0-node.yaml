@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: master-0
+  labels:
+    node-role.kubernetes.io/master: ""
+status:
+  nodeInfo:
+    architecture: amd64

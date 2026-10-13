@@ -1,0 +1,15 @@
+*.test
+/.idea/
+/.vscode/
+/examples/*
+/metamodel
+/model/
+/vendor/
+!/examples/*.go
+!/examples/*.yaml
+!/examples/go.mod
+!/examples/go.sum
+
+# local bin directory
+/bin
+/metamodel_generator/metamodel

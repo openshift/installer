@@ -1,0 +1,9 @@
+[Unit]
+Description=Node Image Overlay
+Requires=node-image-pull.service
+After=node-image-pull.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/node-image-overlay.sh
+RemainAfterExit=yes

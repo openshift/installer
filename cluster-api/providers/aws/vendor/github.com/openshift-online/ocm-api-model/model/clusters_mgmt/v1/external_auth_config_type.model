@@ -1,0 +1,51 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Represents an external authentication configuration
+class ExternalAuthConfig {
+    // Boolean flag indicating if the cluster should use an external authentication configuration for ROSA HCP clusters.
+    //
+    // By default this is false.
+    //
+    // To enable it the cluster needs to be ROSA HCP cluster and the organization of the user needs
+    // to have the `external-authentication` feature toggle enabled.
+    //
+    // For ARO HCP clusters, use the "State" property to enable/disable this feature instead.
+    Enabled Boolean
+
+    // Controls whether the cluster uses an external authentication configuration for ARO HCP clusters.
+    // 
+    // For ARO HCP clusters, this will be "enabled" by default and cannot be set to "disabled".
+    // 
+    // FOR ROSA HCP clusters, use the "Enabled" boolean flag to enable/disable this feature instead.
+    State ExternalAuthConfigState
+
+    // A list of external authentication providers configured for the cluster.
+    // 
+    // Only one external authentication provider can be configured.
+    link ExternalAuths []ExternalAuth
+}
+
+// Representation of the possible values for the state field of an external authentication configuration
+enum ExternalAuthConfigState {
+    // Indicates that the cluster supports configuration of external authentication providers
+    @json(name="enabled")
+    Enabled
+
+    // Indicates that the cluster does not support configuration of external authentication providers
+    @json(name="disabled")
+    Disabled
+}

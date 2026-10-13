@@ -1,0 +1,22 @@
+apiVersion: config.openshift.io/v1
+kind: ClusterVersion
+metadata:
+  namespace: openshift-cluster-version
+  name: version
+spec:
+{{- if .IsSCOS }}
+  upstream: https://amd64.origin.releases.ci.openshift.org/graph
+  channel: stable-scos-4
+{{- else }}
+  channel: stable-4.22
+{{- end }}
+  clusterID: {{.CVOClusterID}}
+{{- if .CVOCapabilities }}
+  capabilities:
+    baselineCapabilitySet: {{.CVOCapabilities.BaselineCapabilitySet}}
+    {{- if .CVOCapabilities.AdditionalEnabledCapabilities}}
+    additionalEnabledCapabilities: {{range .CVOCapabilities.AdditionalEnabledCapabilities}}
+    - {{.}}
+    {{- end}}
+    {{- end}}
+{{- end }}

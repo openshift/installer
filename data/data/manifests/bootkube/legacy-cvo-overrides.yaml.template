@@ -1,0 +1,8 @@
+apiVersion: clusterversion.openshift.io/v1
+kind: CVOConfig
+metadata:
+  namespace: openshift-cluster-version
+  name: cluster-version-operator
+upstream: http://localhost:8080/graph
+channel: fast
+clusterID: {{.CVOClusterID}}

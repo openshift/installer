@@ -1,0 +1,54 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Defines the configuration of a Node Pool's OS disk.
+struct AzureNodePoolOsDisk {
+    // The size in GiB to assign to the OS disks of the
+    // Nodes in the Node Pool. The property
+    // is the number of bytes x 1024^3.
+    // If not specified, OS disk size is 64 GiB.
+    SizeGibibytes Integer
+
+    // The disk storage account type to use for the OS disks of the Nodes in the
+    // Node Pool. Valid values are:
+    // * Standard_LRS: HDD
+    // * StandardSSD_LRS: Standard SSD
+    // * Premium_LRS: Premium SDD
+    // * UltraSSD_LRS: Ultra SDD
+    //
+    // If not specified, `Premium_LRS` is used.
+    StorageAccountType String
+
+    // Specifies the OS Disk persistence for the OS Disks of the Nodes in the Node Pool.
+    // Valid values are:
+    // * persistent
+    // * ephemeral
+    // If not specified, Persistent OS Disks are used.
+    Persistence String
+
+    // The Azure Resource ID of a pre-existing Azure Disk Encryption Set (DES).
+    // When provided, Server-Side Encryption (SSE) on the OS Disks of the Nodes of the Node Pool
+    // is performed using the provided Disk Encryption Set.
+    // It must be located in the same Azure location as the parent Cluster.  
+    // It must be located in the same Azure Subscription as the parent Cluster.
+    // The Azure Resource Group Name specified as part of it must be a different resource group name
+    // than the one specified in the parent Cluster's `managed_resource_group_name`.
+    // The Azure Resource Group Name specified as part of it can be the same, or a different one
+    // than the one specified in the parent Cluster's `resource_group_name`.
+    // If not specified, Server-Side Encryption (SSE) on the OS Disks of the Nodes of the Node Pool 
+    // is performed with platform managed keys.
+    SseEncryptionSetResourceId String
+}

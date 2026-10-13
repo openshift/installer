@@ -1,0 +1,22 @@
+[Unit]
+Description=Assisted Service database
+Wants=network.target
+RequiresMountsFor=%t/containers
+BindsTo=assisted-service-pod.service
+After=network-online.target assisted-service-pod.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
+Restart=on-failure
+TimeoutStartSec=500
+TimeoutStopSec=300
+ExecStartPre=/bin/rm -f %t/%n.ctr-id
+ExecStart=/usr/bin/podman run --net host --user=postgres --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --sdnotify=conmon --replace -d --name=assisted-db --env-file=/usr/local/share/assisted-service/assisted-db.env $SERVICE_IMAGE /bin/bash start_db.sh
+ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

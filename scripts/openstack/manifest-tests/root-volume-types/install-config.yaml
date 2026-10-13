@@ -1,0 +1,40 @@
+apiVersion: v1
+baseDomain: shiftstack.example.com
+controlPlane:
+  architecture: amd64
+  name: master
+  platform:
+    openstack:
+      rootVolume:
+        size: 100
+        types: ["type-1", "type-2", "type-3"]
+        zones: ["VolumeAZ1", "VolumeAZ2", "VolumeAZ3"]
+      type: ${COMPUTE_FLAVOR}
+      zones: ["MasterAZ1", "MasterAZ2", "MasterAZ3"]
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      rootVolume:
+        size: 100
+        types: ["type-A", "type-B", "type-C"]
+      type: ${COMPUTE_FLAVOR}
+  replicas: 1000
+metadata:
+  name: manifests1
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.128.0/17
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  openstack:
+    apiFloatingIP: ${API_FIP}
+    cloud: ${OS_CLOUD}
+    externalNetwork: ${EXTERNAL_NETWORK}
+pullSecret: ${PULL_SECRET}

@@ -1,0 +1,51 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Machine type.
+class MachineType {
+	// Human friendly identifier of the machine type, for example `r5.xlarge - Memory Optimized`.
+	Name String
+
+	// The category which the machine type is suitable for.
+	Category MachineTypeCategory
+
+	// The amount of memory of the machine type.
+	Memory Value
+
+	// The amount of cpu's of the machine type.
+	CPU Value
+
+	// The size of the machine type.
+	Size MachineTypeSize
+
+	// Generic name for quota purposes, for example `highmem-4`.
+	// Cloud provider agnostic - many values are shared between "similar"
+	// machine types on different providers.
+	// Corresponds to `resource_name` values in "compute.node"  quota cost data.
+	GenericName String
+
+	// Link to the cloud provider that the machine type belongs to.
+	link CloudProvider CloudProvider
+
+	// 'true' if the instance type is supported only for CCS clusters, 'false' otherwise.
+	CCSOnly Boolean
+
+	// The architecture of the machine type.
+	Architecture ProcessorType
+
+	// Features available to the particular MachineType
+	Features MachineTypeFeatures
+}

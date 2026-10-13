@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: installer-images
+  namespace: openshift-config
+  annotations:
+    include.release.openshift.io/ibm-cloud-managed: "true"
+    include.release.openshift.io/self-managed-high-availability: "true"
+    include.release.openshift.io/single-node-developer: "true"
+data:
+  images.json: >
+    {
+      "installer": "registry.ci.openshift.org/openshift:baremetal-installer",
+      "machine-os-images": "registry.ci.openshift.org/openshift:machine-os-images"
+    }

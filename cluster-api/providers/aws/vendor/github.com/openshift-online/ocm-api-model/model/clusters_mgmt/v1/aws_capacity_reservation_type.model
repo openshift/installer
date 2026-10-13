@@ -1,0 +1,35 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// AWS Capacity Reservation specification.
+struct AWSCapacityReservation {
+    // Specify the target Capacity Reservation in which the EC2 instances will be launched.
+    Id String
+
+    // marketType specifies the market type of the CapacityReservation for the EC2
+    // instances. Valid values are OnDemand, CapacityBlocks.
+    // "OnDemand": EC2 instances run as standard On-Demand instances.
+    // "CapacityBlocks": scheduled pre-purchased compute capacity.
+    MarketType MarketType
+
+	// preference specifies how capacity reservations should be used with this NodePool
+	// "none": EC2 instances in this NodePool should never make use of capacity reservations. Note that this value cannot
+	// be specified if a capacity reservation Id is also specified
+	// "capacity-reservations-only": EC2 instances in this NodePool should only run in a capacity reservation
+	// "open": EC2 instances in this NodePool should run in an Open capacity reservation if available, otherwise run on demand.
+	// Note that this value cannot be specified if a capacity reservation Id is also specified
+	Preference CapacityReservationPreference
+}

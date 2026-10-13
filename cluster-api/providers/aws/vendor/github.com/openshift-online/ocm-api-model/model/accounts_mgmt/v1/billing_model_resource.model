@@ -1,0 +1,6 @@
+resource BillingModel {
+	// Retrieves the details of the billing model
+	method Get {
+		out Body BillingModelItem
+	}
+}

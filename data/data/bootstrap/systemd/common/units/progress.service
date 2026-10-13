@@ -1,0 +1,14 @@
+[Unit]
+Description=Report the completion of the cluster bootstrap process
+# Workaround for https://github.com/systemd/systemd/issues/1312
+Wants=bootkube.service
+After=bootkube.service
+
+[Service]
+ExecStart=/usr/local/bin/report-progress.sh /opt/openshift/auth/kubeconfig
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

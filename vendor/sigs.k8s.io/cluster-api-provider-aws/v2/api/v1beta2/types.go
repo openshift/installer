@@ -1,0 +1,635 @@
+/*
+Copyright 2022 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1beta2
+
+import (
+	"strings"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+)
+
+const (
+	// PreventDeletionLabel can be used in situations where preventing delation is allowed. The docs
+	// and the CRD will call this out where its allowed.
+	PreventDeletionLabel = "aws.cluster.x-k8s.io/prevent-deletion"
+)
+
+// AWSResourceReference is a reference to a specific AWS resource by ID or filters.
+// Only one of ID or Filters may be specified. Specifying more than one will result in
+// a validation error.
+type AWSResourceReference struct {
+	// ID of resource
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// Filters is a set of key/value pairs used to identify a resource
+	// They are applied according to the rules defined by the AWS API:
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Filtering.html
+	// +optional
+	Filters []Filter `json:"filters,omitempty"`
+}
+
+// AMIReference is a reference to a specific AWS resource by ID, ARN, or filters.
+// Only one of ID, ARN or Filters may be specified. Specifying more than one will result in
+// a validation error.
+type AMIReference struct {
+	// ID of resource
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// EKSOptimizedLookupType If specified, will look up an EKS Optimized image in SSM Parameter store
+	// +kubebuilder:validation:Enum:=AmazonLinux;AmazonLinuxGPU;AmazonLinux2023;AmazonLinux2023GPU
+	// +optional
+	EKSOptimizedLookupType *EKSAMILookupType `json:"eksLookupType,omitempty"`
+}
+
+// Filter is a filter used to identify an AWS resource.
+type Filter struct {
+	// Name of the filter. Filter names are case-sensitive.
+	Name string `json:"name"`
+
+	// Values includes one or more filter values. Filter values are case-sensitive.
+	Values []string `json:"values"`
+}
+
+// AWSMachineProviderConditionType is a valid value for AWSMachineProviderCondition.Type.
+type AWSMachineProviderConditionType string
+
+// Valid conditions for an AWS machine instance.
+const (
+	// MachineCreated indicates whether the machine has been created or not. If not,
+	// it should include a reason and message for the failure.
+	MachineCreated AWSMachineProviderConditionType = "MachineCreated"
+)
+
+const (
+	// ExternalResourceGCAnnotation is the name of an annotation that indicates if
+	// external resources should be garbage collected for the cluster.
+	ExternalResourceGCAnnotation = "aws.cluster.x-k8s.io/external-resource-gc"
+
+	// ExternalResourceGCTasksAnnotation is the name of an annotation that indicates what
+	// external resources tasks should be executed by garbage collector for the cluster.
+	ExternalResourceGCTasksAnnotation = "aws.cluster.x-k8s.io/external-resource-tasks-gc"
+)
+
+// GCTask defines a task to be executed by the garbage collector.
+type GCTask string
+
+var (
+	// GCTaskLoadBalancer defines a task to cleaning up resources for AWS load balancers.
+	GCTaskLoadBalancer = GCTask("load-balancer")
+
+	// GCTaskTargetGroup defines a task to cleaning up resources for AWS target groups.
+	GCTaskTargetGroup = GCTask("target-group")
+
+	// GCTaskSecurityGroup defines a task to cleaning up resources for AWS security groups.
+	GCTaskSecurityGroup = GCTask("security-group")
+)
+
+// AZSelectionScheme defines the scheme of selecting AZs.
+type AZSelectionScheme string
+
+var (
+	// AZSelectionSchemeOrdered will select AZs based on alphabetical order.
+	AZSelectionSchemeOrdered = AZSelectionScheme("Ordered")
+
+	// AZSelectionSchemeRandom will select AZs randomly.
+	AZSelectionSchemeRandom = AZSelectionScheme("Random")
+)
+
+// InstanceState describes the state of an AWS instance.
+type InstanceState string
+
+var (
+	// InstanceStatePending is the string representing an instance in a pending state.
+	InstanceStatePending = InstanceState("pending")
+
+	// InstanceStateRunning is the string representing an instance in a running state.
+	InstanceStateRunning = InstanceState("running")
+
+	// InstanceStateShuttingDown is the string representing an instance shutting down.
+	InstanceStateShuttingDown = InstanceState("shutting-down")
+
+	// InstanceStateTerminated is the string representing an instance that has been terminated.
+	InstanceStateTerminated = InstanceState("terminated")
+
+	// InstanceStateStopping is the string representing an instance
+	// that is in the process of being stopped and can be restarted.
+	InstanceStateStopping = InstanceState("stopping")
+
+	// InstanceStateStopped is the string representing an instance
+	// that has been stopped and can be restarted.
+	InstanceStateStopped = InstanceState("stopped")
+
+	// InstanceRunningStates defines the set of states in which an EC2 instance is
+	// running or going to be running soon.
+	InstanceRunningStates = sets.NewString(
+		string(InstanceStatePending),
+		string(InstanceStateRunning),
+	)
+
+	// InstanceOperationalStates defines the set of states in which an EC2 instance is
+	// or can return to running, and supports all EC2 operations.
+	InstanceOperationalStates = InstanceRunningStates.Union(
+		sets.NewString(
+			string(InstanceStateStopping),
+			string(InstanceStateStopped),
+		),
+	)
+
+	// InstanceKnownStates represents all known EC2 instance states.
+	InstanceKnownStates = InstanceOperationalStates.Union(
+		sets.NewString(
+			string(InstanceStateShuttingDown),
+			string(InstanceStateTerminated),
+		),
+	)
+)
+
+// Instance describes an AWS instance.
+type Instance struct {
+	ID string `json:"id"`
+
+	// The current state of the instance.
+	State InstanceState `json:"instanceState,omitempty"`
+
+	// The instance type.
+	Type string `json:"type,omitempty"`
+
+	// The ID of the subnet of the instance.
+	SubnetID string `json:"subnetId,omitempty"`
+
+	// The ID of the AMI used to launch the instance.
+	ImageID string `json:"imageId,omitempty"`
+
+	// The name of the SSH key pair.
+	SSHKeyName *string `json:"sshKeyName,omitempty"`
+
+	// SecurityGroupIDs are one or more security group IDs this instance belongs to.
+	SecurityGroupIDs []string `json:"securityGroupIds,omitempty"`
+
+	// UserData is the raw data script passed to the instance which is run upon bootstrap.
+	// This field must not be base64 encoded and should only be used when running a new instance.
+	UserData *string `json:"userData,omitempty"`
+
+	// The name of the IAM instance profile associated with the instance, if applicable.
+	IAMProfile string `json:"iamProfile,omitempty"`
+
+	// Addresses contains the AWS instance associated addresses.
+	Addresses []clusterv1beta1.MachineAddress `json:"addresses,omitempty"`
+
+	// The private IPv4 address assigned to the instance.
+	PrivateIP *string `json:"privateIp,omitempty"`
+
+	// The IPv6 address assigned to the instance.
+	IPv6Address *string `json:"ipv6Address,omitempty"`
+
+	// The public IPv4 address assigned to the instance, if applicable.
+	PublicIP *string `json:"publicIp,omitempty"`
+
+	// Specifies whether enhanced networking with ENA is enabled.
+	ENASupport *bool `json:"enaSupport,omitempty"`
+
+	// Indicates whether the instance is optimized for Amazon EBS I/O.
+	EBSOptimized *bool `json:"ebsOptimized,omitempty"`
+
+	// Configuration options for the root storage volume.
+	// +optional
+	RootVolume *Volume `json:"rootVolume,omitempty"`
+
+	// Configuration options for the non root storage volumes.
+	// +optional
+	NonRootVolumes []Volume `json:"nonRootVolumes,omitempty"`
+
+	// Specifies ENIs attached to instance
+	NetworkInterfaces []string `json:"networkInterfaces,omitempty"`
+
+	// NetworkInterfaceType is the interface type of the primary network Interface.
+	NetworkInterfaceType NetworkInterfaceType `json:"networkInterfaceType,omitempty"`
+
+	// AssignPrimaryIPv6 specifies whether to enable assigning a primary IPv6 address to the primary network Interface.
+	AssignPrimaryIPv6 *PrimaryIPv6AssignmentState `json:"assignPrimaryIPv6,omitempty"`
+
+	// The tags associated with the instance.
+	Tags map[string]string `json:"tags,omitempty"`
+
+	// Availability zone of instance
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
+	// SpotMarketOptions option for configuring instances to be run using AWS Spot instances.
+	SpotMarketOptions *SpotMarketOptions `json:"spotMarketOptions,omitempty"`
+
+	// PlacementGroupName specifies the name of the placement group in which to launch the instance.
+	// +optional
+	PlacementGroupName string `json:"placementGroupName,omitempty"`
+
+	// PlacementGroupPartition is the partition number within the placement group in which to launch the instance.
+	// This value is only valid if the placement group, referred in `PlacementGroupName`, was created with
+	// strategy set to partition.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=7
+	// +optional
+	PlacementGroupPartition int64 `json:"placementGroupPartition,omitempty"`
+
+	// Tenancy indicates if instance should run on shared or single-tenant hardware.
+	// +optional
+	Tenancy string `json:"tenancy,omitempty"`
+
+	// IDs of the instance's volumes
+	// +optional
+	VolumeIDs []string `json:"volumeIDs,omitempty"`
+
+	// InstanceMetadataOptions is the metadata options for the EC2 instance.
+	// +optional
+	InstanceMetadataOptions *InstanceMetadataOptions `json:"instanceMetadataOptions,omitempty"`
+
+	// PrivateDNSName is the options for the instance hostname.
+	// +optional
+	PrivateDNSName *PrivateDNSName `json:"privateDnsName,omitempty"`
+
+	// PublicIPOnLaunch is the option to associate a public IP on instance launch
+	// +optional
+	PublicIPOnLaunch *bool `json:"publicIPOnLaunch,omitempty"`
+
+	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
+	// +optional
+	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
+
+	// MarketType specifies the type of market for the EC2 instance. Valid values include:
+	// "OnDemand" (default): The instance runs as a standard OnDemand instance.
+	// "Spot": The instance runs as a Spot instance. When SpotMarketOptions is provided, the marketType defaults to "Spot".
+	// "CapacityBlock": The instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	//  If this value is selected, CapacityReservationID must be specified to identify the target reservation.
+	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
+	// +optional
+	MarketType MarketType `json:"marketType,omitempty"`
+
+	// HostAffinity specifies the dedicated host affinity setting for the instance.
+	// When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+	// - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+	// - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+	// When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+	// - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+	// - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
+	// +optional
+	// +kubebuilder:validation:Enum:=default;host
+	HostAffinity *string `json:"hostAffinity,omitempty"`
+
+	// HostID specifies the dedicated host on which the instance should be started.
+	// +optional
+	HostID *string `json:"hostID,omitempty"`
+
+	// DynamicHostAllocation enables automatic allocation of dedicated hosts.
+	// This field is mutually exclusive with HostID.
+	// +optional
+	DynamicHostAllocation *DynamicHostAllocationSpec `json:"dynamicHostAllocation,omitempty"`
+
+	// CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
+	// "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
+	// "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
+	// "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+	// +kubebuilder:validation:Enum="";None;CapacityReservationsOnly;Open
+	// +optional
+	CapacityReservationPreference CapacityReservationPreference `json:"capacityReservationPreference,omitempty"`
+
+	// CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default.
+	// +optional
+	CPUOptions CPUOptions `json:"cpuOptions,omitempty,omitzero"`
+}
+
+// CapacityReservationPreference describes the preferred use of capacity reservations
+// of an instance
+// +kubebuilder:validation:Enum:="";None;CapacityReservationsOnly;Open
+type CapacityReservationPreference string
+
+const (
+	// CapacityReservationPreferenceNone the instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
+	CapacityReservationPreferenceNone CapacityReservationPreference = "None"
+
+	// CapacityReservationPreferenceOnly the instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+	CapacityReservationPreferenceOnly CapacityReservationPreference = "CapacityReservationsOnly"
+
+	// CapacityReservationPreferenceOpen the instance may make use of open Capacity Reservations that match its AZ and InstanceType.
+	CapacityReservationPreferenceOpen CapacityReservationPreference = "Open"
+)
+
+// DedicatedHostInfo contains information about a dedicated host.
+type DedicatedHostInfo struct {
+	// HostID is the ID of the dedicated host.
+	HostID string `json:"hostID"`
+
+	// InstanceFamily is the instance family supported by the host.
+	InstanceFamily string `json:"instanceFamily"`
+
+	// InstanceType is the instance type supported by the host.
+	InstanceType string `json:"instanceType"`
+
+	// AvailabilityZone is the AZ where the host is located.
+	AvailabilityZone string `json:"availabilityZone"`
+
+	// State is the current state of the dedicated host.
+	State string `json:"state"`
+
+	// TotalCapacity is the total number of instances that can be launched on the host.
+	TotalCapacity int32 `json:"totalCapacity"`
+
+	// AvailableCapacity is the number of instances that can still be launched on the host.
+	AvailableCapacity int32 `json:"availableCapacity"`
+
+	// Tags associated with the dedicated host.
+	Tags map[string]string `json:"tags,omitempty"`
+}
+
+// MarketType describes the market type of an Instance
+// +kubebuilder:validation:Enum:=OnDemand;Spot;CapacityBlock
+type MarketType string
+
+const (
+	// MarketTypeOnDemand is a MarketType enum value
+	MarketTypeOnDemand MarketType = "OnDemand"
+
+	// MarketTypeSpot is a MarketType enum value
+	MarketTypeSpot MarketType = "Spot"
+
+	// MarketTypeCapacityBlock is a MarketType enum value
+	MarketTypeCapacityBlock MarketType = "CapacityBlock"
+)
+
+// InstanceMetadataState describes the state of InstanceMetadataOptions.HttpEndpoint and InstanceMetadataOptions.InstanceMetadataTags
+type InstanceMetadataState string
+
+const (
+	// InstanceMetadataEndpointStateDisabled represents the disabled state
+	InstanceMetadataEndpointStateDisabled = InstanceMetadataState("disabled")
+
+	// InstanceMetadataEndpointStateEnabled represents the enabled state
+	InstanceMetadataEndpointStateEnabled = InstanceMetadataState("enabled")
+)
+
+// HTTPTokensState describes the state of InstanceMetadataOptions.HTTPTokensState
+type HTTPTokensState string
+
+const (
+	// HTTPTokensStateOptional represents the optional state
+	HTTPTokensStateOptional = HTTPTokensState("optional")
+
+	// HTTPTokensStateRequired represents the required state (IMDSv2)
+	HTTPTokensStateRequired = HTTPTokensState("required")
+)
+
+// PrimaryIPv6AssignmentState describes whether to assign a primary IPv6 address to the primary network interface.
+type PrimaryIPv6AssignmentState string
+
+const (
+	// PrimaryIPv6AssignmentStateEnabled enables assigning a primary IPv6 address
+	PrimaryIPv6AssignmentStateEnabled = PrimaryIPv6AssignmentState("enabled")
+
+	// PrimaryIPv6AssignmentStateDisabled disables assigning a primary IPv6 address
+	PrimaryIPv6AssignmentStateDisabled = PrimaryIPv6AssignmentState("disabled")
+)
+
+// InstanceMetadataOptions describes metadata options for the EC2 instance.
+type InstanceMetadataOptions struct {
+	// Enables or disables the HTTP metadata endpoint on your instances.
+	//
+	// If you specify a value of disabled, you cannot access your instance metadata.
+	//
+	// Default: enabled
+	//
+	// +kubebuilder:validation:Enum:=enabled;disabled
+	// +kubebuilder:default=enabled
+	HTTPEndpoint InstanceMetadataState `json:"httpEndpoint,omitempty"`
+
+	// Enables or disables the IPv6 endpoint for the instance metadata service.
+	// This applies only if you enabled the HTTP metadata endpoint.
+	//
+	// Default: disabled
+	//
+	// +kubebuilder:validation:Enum:=enabled;disabled
+	// +kubebuilder:default=disabled
+	HTTPProtocolIPv6 InstanceMetadataState `json:"httpProtocolIpv6,omitempty"`
+
+	// The desired HTTP PUT response hop limit for instance metadata requests. The
+	// larger the number, the further instance metadata requests can travel.
+	//
+	// Default: 1
+	//
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=64
+	// +kubebuilder:default=1
+	HTTPPutResponseHopLimit int64 `json:"httpPutResponseHopLimit,omitempty"`
+
+	// The state of token usage for your instance metadata requests.
+	//
+	// If the state is optional, you can choose to retrieve instance metadata with
+	// or without a session token on your request. If you retrieve the IAM role
+	// credentials without a token, the version 1.0 role credentials are returned.
+	// If you retrieve the IAM role credentials using a valid session token, the
+	// version 2.0 role credentials are returned.
+	//
+	// If the state is required, you must send a session token with any instance
+	// metadata retrieval requests. In this state, retrieving the IAM role credentials
+	// always returns the version 2.0 credentials; the version 1.0 credentials are
+	// not available.
+	//
+	// Default: optional
+	//
+	// +kubebuilder:validation:Enum:=optional;required
+	// +kubebuilder:default=optional
+	HTTPTokens HTTPTokensState `json:"httpTokens,omitempty"`
+
+	// Set to enabled to allow access to instance tags from the instance metadata.
+	// Set to disabled to turn off access to instance tags from the instance metadata.
+	// For more information, see Work with instance tags using the instance metadata
+	// (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html#work-with-tags-in-IMDS).
+	//
+	// Default: disabled
+	//
+	// +kubebuilder:validation:Enum:=enabled;disabled
+	// +kubebuilder:default=disabled
+	InstanceMetadataTags InstanceMetadataState `json:"instanceMetadataTags,omitempty"`
+}
+
+// SetDefaults sets the default values for the InstanceMetadataOptions.
+func (obj *InstanceMetadataOptions) SetDefaults() {
+	if obj.HTTPEndpoint == "" {
+		obj.HTTPEndpoint = InstanceMetadataEndpointStateEnabled
+	}
+	if obj.HTTPProtocolIPv6 == "" {
+		obj.HTTPProtocolIPv6 = InstanceMetadataEndpointStateDisabled
+	}
+	if obj.HTTPPutResponseHopLimit == 0 {
+		obj.HTTPPutResponseHopLimit = 1
+	}
+	if obj.HTTPTokens == "" {
+		obj.HTTPTokens = HTTPTokensStateOptional // Defaults to IMDSv1
+	}
+	if obj.InstanceMetadataTags == "" {
+		obj.InstanceMetadataTags = InstanceMetadataEndpointStateDisabled
+	}
+}
+
+// Volume encapsulates the configuration options for the storage device.
+type Volume struct {
+	// Device name
+	// +optional
+	DeviceName string `json:"deviceName,omitempty"`
+
+	// Size specifies size (in Gi) of the storage device.
+	// Must be greater than the image snapshot size or 8 (whichever is greater).
+	// +kubebuilder:validation:Minimum=8
+	Size int64 `json:"size"`
+
+	// Type is the type of the volume (e.g. gp2, io1, etc...).
+	// +optional
+	Type VolumeType `json:"type,omitempty"`
+
+	// IOPS is the number of IOPS requested for the disk. Not applicable to all types.
+	// +optional
+	IOPS int64 `json:"iops,omitempty"`
+
+	// Throughput to provision in MiB/s supported for the volume type. Not applicable to all types.
+	// +optional
+	Throughput *int64 `json:"throughput,omitempty"`
+
+	// Encrypted is whether the volume should be encrypted or not.
+	// +optional
+	Encrypted *bool `json:"encrypted,omitempty"`
+
+	// EncryptionKey is the KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
+	// If Encrypted is set and this is omitted, the default AWS key will be used.
+	// The key must already exist and be accessible by the controller.
+	// +optional
+	EncryptionKey string `json:"encryptionKey,omitempty"`
+}
+
+// VolumeType describes the EBS volume type.
+// See: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html
+type VolumeType string
+
+var (
+	// VolumeTypeIO1 is the string representing a provisioned iops ssd io1 volume.
+	VolumeTypeIO1 = VolumeType("io1")
+
+	// VolumeTypeIO2 is the string representing a provisioned iops ssd io2 volume.
+	VolumeTypeIO2 = VolumeType("io2")
+
+	// VolumeTypeGP2 is the string representing a general purpose ssd gp2 volume.
+	VolumeTypeGP2 = VolumeType("gp2")
+
+	// VolumeTypeGP3 is the string representing a general purpose ssd gp3 volume.
+	VolumeTypeGP3 = VolumeType("gp3")
+
+	// VolumeTypesGP are volume types provisioned for general purpose io.
+	VolumeTypesGP = sets.NewString(
+		string(VolumeTypeIO1),
+		string(VolumeTypeIO2),
+	)
+
+	// VolumeTypesProvisioned are volume types provisioned for high performance io.
+	VolumeTypesProvisioned = sets.NewString(
+		string(VolumeTypeIO1),
+		string(VolumeTypeIO2),
+	)
+)
+
+// SpotMarketOptions defines the options available to a user when configuring
+// Machines to run on Spot instances.
+// Most users should provide an empty struct.
+type SpotMarketOptions struct {
+	// MaxPrice defines the maximum price the user is willing to pay for Spot VM instances
+	// +optional
+	// +kubebuilder:validation:pattern="^[0-9]+(\.[0-9]+)?$"
+	MaxPrice *string `json:"maxPrice,omitempty"`
+}
+
+// EKSAMILookupType specifies which AWS AMI to use for a AWSMachine and AWSMachinePool.
+type EKSAMILookupType string
+
+const (
+	// AmazonLinux is the default AMI type.
+	AmazonLinux EKSAMILookupType = "AmazonLinux"
+	// AmazonLinuxGPU is the AmazonLinux GPU AMI type.
+	AmazonLinuxGPU EKSAMILookupType = "AmazonLinuxGPU"
+	// AmazonLinux2023 is the AmazonLinux 2023 AMI type.
+	AmazonLinux2023 EKSAMILookupType = "AmazonLinux2023"
+	// AmazonLinux2023GPU is the AmazonLinux 2023 GPU AMI type.
+	AmazonLinux2023GPU EKSAMILookupType = "AmazonLinux2023GPU"
+)
+
+// PrivateDNSName is the options for the instance hostname.
+type PrivateDNSName struct {
+	// EnableResourceNameDNSAAAARecord indicates whether to respond to DNS queries for instance hostnames with DNS AAAA records.
+	// +optional
+	EnableResourceNameDNSAAAARecord *bool `json:"enableResourceNameDnsAAAARecord,omitempty"`
+	// EnableResourceNameDNSARecord indicates whether to respond to DNS queries for instance hostnames with DNS A records.
+	// +optional
+	EnableResourceNameDNSARecord *bool `json:"enableResourceNameDnsARecord,omitempty"`
+	// The type of hostname to assign to an instance.
+	// +optional
+	// +kubebuilder:validation:Enum:=ip-name;resource-name
+	HostnameType *string `json:"hostnameType,omitempty"`
+}
+
+// SubnetSchemaType specifies how given network should be divided on subnets
+// in the VPC depending on the number of AZs.
+type SubnetSchemaType string
+
+// Name returns subnet schema type name without prefix.
+func (s *SubnetSchemaType) Name() string {
+	return strings.ToLower(strings.TrimPrefix(string(*s), "Prefer"))
+}
+
+var (
+	// SubnetSchemaPreferPrivate allocates more subnets in the VPC to private subnets.
+	SubnetSchemaPreferPrivate = SubnetSchemaType("PreferPrivate")
+	// SubnetSchemaPreferPublic allocates more subnets in the VPC to public subnets.
+	SubnetSchemaPreferPublic = SubnetSchemaType("PreferPublic")
+)
+
+// AWSConfidentialComputePolicy represents the confidential compute configuration for the instance.
+// +kubebuilder:validation:Enum=Disabled;AMDEncryptedVirtualizationNestedPaging
+type AWSConfidentialComputePolicy string
+
+const (
+	// AWSConfidentialComputePolicyDisabled disables confidential computing for the instance.
+	AWSConfidentialComputePolicyDisabled AWSConfidentialComputePolicy = "Disabled"
+	// AWSConfidentialComputePolicySEVSNP enables AMD SEV-SNP as the confidential computing technology for the instance.
+	AWSConfidentialComputePolicySEVSNP AWSConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
+)
+
+// CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
+// +kubebuilder:validation:MinProperties=1
+type CPUOptions struct {
+	// ConfidentialCompute specifies whether confidential computing should be enabled for the instance,
+	// and, if so, which confidential computing technology to use.
+	// Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging
+	// When set to Disabled, confidential computing will be disabled for the instance.
+	// When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance.
+	// In this case, ensure the following conditions are met:
+	// 1) The selected instance type supports AMD SEV-SNP.
+	// 2) The selected AWS region supports AMD SEV-SNP.
+	// 3) The selected AMI supports AMD SEV-SNP.
+	// More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+	// which is subject to change without notice. The current default is Disabled.
+	// +optional
+	ConfidentialCompute AWSConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+}

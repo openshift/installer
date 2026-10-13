@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Download the release image. This script is executed as a oneshot
+# service by systemd, because we cannot make use of Requires and a
+# simple service: https://github.com/systemd/systemd/issues/1312.
+#
+# This script continues trying to download the release image until
+# successful because we cannot use Restart=on-failure with a oneshot
+# service: https://github.com/systemd/systemd/issues/2582.
+#
+
+. /usr/local/bin/bootstrap-service-record.sh
+
+RELEASE_IMAGE={{.ReleaseImage}}
+
+release_image_issue="/etc/issue.d/50_release-image.issue"
+if podman image exists "$RELEASE_IMAGE"; then
+    record_service_stage_start "pull-release-image"
+    record_service_stage_success
+else
+    echo "Pulling $RELEASE_IMAGE..."
+    while true
+    do
+        record_service_stage_start "pull-release-image"
+        if podman pull --quiet "$RELEASE_IMAGE"
+        then
+            rm -f "${release_image_issue}"
+            agetty --reload
+            record_service_stage_success
+            break
+        else
+            printf '\n\\e{lightred}Unable to pull OpenShift release image\\e{reset}\n' >"${release_image_issue}"
+            agetty --reload
+            record_service_stage_failure
+            echo "Pull failed. Retrying $RELEASE_IMAGE..."
+        fi
+    done
+fi
+
+
+# Sanity check the image metadata to see if the arches match
+record_service_stage_start "image-metadata-arches-match"
+image_arch=$(podman inspect $RELEASE_IMAGE --format {{ "{{.Architecture}}" }})
+host_arch=$(uname -m)
+case $host_arch in
+    "x86_64")  host_arch="amd64"   ;;
+    "aarch64") host_arch="arm64"   ;; # not used, just for completeness
+esac
+
+if [[ "$image_arch" != "$host_arch" ]]; then
+    printf '\n\\e{lightred}Release image arch %s does not match host arch %s\\e{reset}\n' "${image_arch}" "${host_arch}" >"${release_image_issue}"
+    agetty --reload
+    record_service_stage_failure
+    echo "ERROR: release image arch $image_arch does not match host arch $host_arch"
+    exit 1
+else
+    record_service_stage_success
+fi

@@ -1,0 +1,74 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the collection of cloud providers.
+resource CloudProviders {
+	// Retrieves the list of cloud providers.
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
+
+		// Maximum number of items that will be contained in the returned page.
+		in out Size Integer = 100
+
+		// Search criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _where_ clause of a
+		// SQL statement, but using the names of the attributes of the cloud provider
+		// instead of the names of the columns of a table. For example, in order to retrieve
+		// all the cloud providers with a name starting with `A` the value should be:
+		//
+		// ```sql
+		// name like 'A%'
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then all the clusters
+		// that the user has permission to see will be returned.
+		in Search String
+
+		// Order criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _order by_ clause of
+		// a SQL statement, but using the names of the attributes of the cloud provider
+		// instead of the names of the columns of a table. For example, in order to sort the
+		// clusters descending by name identifier the value should be:
+		//
+		// ```sql
+		// name desc
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then the order of the
+		// results is undefined.
+		in Order String
+
+		// If true, includes the regions on each provider in the output. Could slow request response time.
+		@http(name = "fetchRegions")
+		in FetchRegions Boolean
+
+		// Total number of items of the collection that match the search criteria,
+		// regardless of the size of the page.
+		out Total Integer
+
+		// Retrieved list of cloud providers.
+		out Items []CloudProvider
+	}
+
+	// Returns a reference to the service that manages an specific cloud provider.
+	locator CloudProvider {
+		target CloudProvider
+		variable ID
+	}
+}

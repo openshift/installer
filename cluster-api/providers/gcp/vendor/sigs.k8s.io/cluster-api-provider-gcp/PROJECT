@@ -1,0 +1,40 @@
+version: "3"
+domain: cluster.x-k8s.io
+repo: sigs.k8s.io/cluster-api-provider-gcp
+resources:
+# v1alpha3 types
+- group: infrastructure
+  version: v1alpha3
+  kind: GCPMachine
+- group: infrastructure
+  version: v1alpha3
+  kind: GCPCluster
+- group: infrastructure
+  version: v1alpha3
+  kind: GCPMachineTemplate
+# v1alpha4 types
+- group: infrastructure
+  version: v1alpha4
+  kind: GCPMachine
+- group: infrastructure
+  version: v1alpha4
+  kind: GCPCluster
+- group: infrastructure
+  version: v1alpha4
+  kind: GCPMachineTemplate
+- group: infrastructure
+  version: v1alpha4
+  kind: GCPClusterTemplate
+# v1beta1 types
+- group: infrastructure
+  version: v1beta1
+  kind: GCPMachine
+- group: infrastructure
+  version: v1beta1
+  kind: GCPCluster
+- group: infrastructure
+  version: v1beta1
+  kind: GCPMachineTemplate
+- group: infrastructure
+  version: v1beta1
+  kind: GCPClusterTemplate

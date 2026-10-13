@@ -1,0 +1,15 @@
+[Unit]
+Description=Prepare network manager config content
+Before=NetworkManager.service
+DefaultDependencies=no
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/pre-network-manager-config.sh
+TimeoutSec=300
+Type=oneshot
+PrivateTmp=true
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

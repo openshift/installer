@@ -1,0 +1,49 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    var_files:
+    - metadata.json
+    - netid.json
+
+  tasks:
+  - name: "Include external vars"
+    include_vars: "{{ item }}"
+    when: item is exists
+    loop: "{{ var_files|flatten(levels=1) }}"
+
+  - name: "Check if metadata.json exists"
+    ansible.builtin.stat:
+      path: metadata.json
+    register: sym
+
+  - name: 'Compute resource names'
+    set_fact:
+      cluster_id_tag: "openshiftClusterID={{ infraID }}"
+      primary_cluster_network_tag: "{{ infraID }}-primaryClusterNetwork"
+      os_infra_id: "{{ infraID }}"
+      os_port_bootstrap: "{{ infraID }}-bootstrap-port"
+      os_port_master: "{{ infraID }}-master-port"
+      os_port_worker: "{{ infraID }}-worker-port"
+      # Security groups names
+      os_sg_master: "{{ infraID }}-master"
+      os_sg_worker: "{{ infraID }}-worker"
+      # Server names
+      os_bootstrap_server_name: "{{ infraID }}-bootstrap"
+      os_cp_server_name: "{{ infraID }}-master"
+      os_cp_server_group_name: "{{ infraID }}-master"
+      os_compute_server_name: "{{ infraID }}-worker"
+      os_compute_server_group_name: "{{ infraID }}-worker"
+      # Ignition files
+      os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"
+    when: sym.stat.exists
+
+  - name: 'Compute network resource names'
+    set_fact:
+      os_network: "{{ os_net_id }}-network"
+      os_subnet: "{{ os_net_id }}-nodes"
+      os_subnet6: "{{ os_net_id }}-nodes-v6"
+      os_router: "{{ os_net_id }}-external-router"
+      # Port names
+      os_port_api: "{{ os_net_id }}-api-port"
+      os_port_ingress: "{{ os_net_id }}-ingress-port"

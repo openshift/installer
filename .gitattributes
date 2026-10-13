@@ -1,0 +1,6 @@
+# the following files will be injected into the bootstrap node (CoreOS) as-is,
+# which must be in Unix line endings (LF)
+data/data/bootstrap/systemd/**/*.service text eol=lf
+data/data/bootstrap/systemd/**/*.socket text eol=lf
+data/data/bootstrap/systemd/**/*.conf text eol=lf
+data/data/bootstrap/files/** text eol=lf

@@ -1,0 +1,21 @@
+
+# Verify that the add-nodes command generates PXE files
+
+exec node-joiner add-nodes --pxe --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+
+exists $WORK/boot-artifacts/node.x86_64-initrd.img
+exists $WORK/boot-artifacts/node.x86_64-rootfs.img
+exists $WORK/boot-artifacts/node.x86_64-vmlinuz
+exists $WORK/boot-artifacts/node.x86_64.ipxe
+
+grep 'initrd --name initrd http://user-specified-pxe-infra.com/node.x86_64-initrd.img' $WORK/boot-artifacts/node.x86_64.ipxe
+grep 'kernel http://user-specified-pxe-infra.com/node.x86_64-vmlinuz initrd=initrd coreos.live.rootfs_url=http://user-specified-pxe-infra.com/node.x86_64-rootfs.img  fips=1' $WORK/boot-artifacts/node.x86_64.ipxe
+! grep 'coreos.liveiso=' $WORK/boot-artifacts/node.x86_64.ipxe
+
+-- nodes-config.yaml --
+bootArtifactsBaseURL: http://user-specified-pxe-infra.com
+hosts:
+    - hostname: extra-worker-0
+      interfaces:
+        - name: eth0
+          macAddress: 00:f4:3d:a0:0e:2b

@@ -1,0 +1,31 @@
+apiVersion: v1
+baseDomain: shiftstack.example.com
+controlPlane:
+  hyperthreading: Enabled
+  architecture: amd64
+  name: master
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: ${COMPUTE_FLAVOR}-worker
+  replicas: 3
+metadata:
+  name: manifests1
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.128.0/17
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  openstack:
+    cloud: ${OS_CLOUD}
+    externalNetwork: ${EXTERNAL_NETWORK}
+    computeFlavor: ${COMPUTE_FLAVOR}  # deprecated in 4.7
+    lbFloatingIP: ${API_FIP}
+pullSecret: ${PULL_SECRET}

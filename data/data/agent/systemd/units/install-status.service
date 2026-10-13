@@ -1,0 +1,13 @@
+[Unit]
+Description=Service that monitors host-specific configuration status
+Wants=network-online.target assisted-service-pod.service
+After=network-online.target assisted-service-pod.service
+ConditionPathExists=/etc/assisted/node0
+
+[Service]
+ExecStart=/usr/local/bin/install-status.sh
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

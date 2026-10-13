@@ -1,0 +1,60 @@
+# Required Python packages:
+#
+# ansible
+# openstackclient
+# openstacksdk
+# netaddr
+
+- ansible.builtin.import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Set tags on the primary cluster network'
+    ansible.builtin.command:
+      cmd: "openstack network set --tag {{ primary_cluster_network_tag }} --tag {{ cluster_id_tag }} {{ os_network }}"
+
+  - name: 'Set tags on primary cluster subnet IPv4'
+    ansible.builtin.command:
+      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
+
+  - name: 'Set tags on primary cluster subnet IPv6'
+    ansible.builtin.command:
+      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet6 }}"
+    when: os_subnet6_range is defined
+
+  - name: 'Set tags on the API VIP port'
+    ansible.builtin.command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_api }}"
+
+  - name: 'Set tags on the Ingress VIP port'
+    ansible.builtin.command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_ingress }}"
+
+  - name: 'Set external router tag'
+    ansible.builtin.command:
+      cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
+    when: os_external_network is defined and os_external_network|length>0
+
+  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
+  # ports, let's use the CLI instead
+  - name: 'Attach the API floating IP to API port'
+    ansible.builtin.command:
+      cmd: "openstack floating ip set --port {{ os_port_api }} {{ os_api_fip }}"
+    when: os_api_fip is defined and os_api_fip|length>0
+
+  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
+  # ports, let's use the CLI instead
+  - name: 'Attach the Ingress floating IP to Ingress port'
+    ansible.builtin.command:
+      cmd: "openstack floating ip set --port {{ os_port_ingress }} {{ os_ingress_fip }}"
+    when: os_ingress_fip is defined and os_ingress_fip|length>0
+
+  - name: 'Set security group to api port'
+    ansible.builtin.command:
+      cmd: "openstack port set --security-group {{ os_sg_master }} {{ os_port_api }}"
+
+  - name: 'Set security group to ingress port'
+    ansible.builtin.command:
+      cmd: "openstack port set --security-group {{ os_sg_worker }} {{ os_port_ingress }}"

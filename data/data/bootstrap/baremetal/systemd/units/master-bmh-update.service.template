@@ -1,0 +1,16 @@
+[Unit]
+Description=Update master BareMetalHosts with introspection data
+Wants=bootkube.service
+After=release-image.service ironic.service
+Before=progress.service
+
+[Service]
+Type=oneshot
+Environment="CONTROL_PLANE_REPLICA_COUNT={{.PlatformData.BareMetal.ControlPlaneReplicas}}"
+ExecStart=/usr/local/bin/master-bmh-update.sh
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,49 @@
+/*
+Copyright (c) 2022 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the quota rules.
+resource QuotaRules {
+	// Retrieves the quota rules.
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
+
+		// Maximum number of items that will be contained in the returned page.
+		in out Size Integer = 100
+
+		// Search criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _where_ clause
+		// of an SQL statement, but using the names of the attributes of the quota
+		// cost instead of the names of the columns of a table. For example, in order
+		// to retrieve the quota rule for all add-ons:
+		//
+		// ```sql
+		// quota_id LIKE 'add-on%'
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then all the
+		// items that the user has permission to see will be returned.
+		in Search String
+
+		// Total number of items of the collection that match the search criteria,
+		// regardless of the size of the page.
+		out Total Integer
+
+		// Retrieved quota rules items.
+		out Items []QuotaRules
+	}
+}

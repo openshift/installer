@@ -1,0 +1,46 @@
+apiVersion: v1
+baseDomain: shiftstack.example.com
+featureSet: TechPreviewNoUpgrade
+controlPlane:
+  hyperthreading: Enabled
+  architecture: amd64
+  name: master
+  platform:
+    openstack:
+      type: ${COMPUTE_FLAVOR}
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: ${COMPUTE_FLAVOR}
+  replicas: 3
+metadata:
+  name: manifests1
+networking:
+  machineNetwork:
+  - cidr: "192.168.25.0/24"
+  - cidr: "fd2e:6f44:5dd8:c956::/64"
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  - cidr: fd01::/48
+    hostPrefix: 64
+  serviceNetwork:
+  - 172.30.0.0/16
+  - fd02::/112
+platform:
+  openstack:
+    cloud: ${OS_CLOUD}
+    computeFlavor: ${COMPUTE_FLAVOR}  # deprecated in 4.7
+    ingressVIPs: ['192.168.25.79', 'fd2e:6f44:5dd8:c956:f816:3eff:fef1:1bad']
+    apiVIPs: ['192.168.25.199', 'fd2e:6f44:5dd8:c956:f816:3eff:fe78:cf36']
+    controlPlanePort:
+      fixedIPs:
+      - subnet:
+          name: external-subnet-v6
+      - subnet:
+          name: external-subnet
+      network:
+        name: external
+pullSecret: ${PULL_SECRET}

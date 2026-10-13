@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+  - import_tasks: common-auth.yml
+
+  - name: Start bootstrap VM
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      cluster: "{{ item.profile.cluster }}"
+      name: "{{ item.name }}"
+      state: running
+      cloud_init_persist: True
+      cloud_init:
+        custom_script: "{{ lookup('file', ocp.assets_dir+'/'+item.ocp_type+'.ign') | string }}"
+    with_items:
+    - "{{ vms }}"
+    when: item.ocp_type == 'bootstrap'

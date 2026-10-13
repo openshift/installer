@@ -1,0 +1,45 @@
+
+# Verify that the add-nodes command generates correctly the ISO image, using the default values.
+
+exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+
+grep '^0$' $WORK/exit_code
+exists $WORK/node.x86_64.iso
+isoCmpRegEx node.x86_64.iso /etc/assisted/add-nodes.env expected/add-nodes.env
+isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/cluster-image-set.yaml
+isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/infraenv.yaml
+isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
+isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
+isoIgnitionUser node.x86_64.iso core my-sshKey
+isoCmp node.x86_64.iso /etc/containers/registries.conf expected/registries.conf
+isoFileCmpRegEx node.x86_64.iso /EFI/redhat/grub.cfg expected/grub.cfg
+isoCmpRegEx node.x86_64.iso /etc/assisted/clusterconfig/import-cluster-config.json expected/import-cluster-config.json
+
+-- nodes-config.yaml --
+hosts:
+    - hostname: extra-worker-0
+      interfaces:
+        - name: eth0
+          macAddress: 00:f4:3d:a0:0e:2b
+          
+-- expected/registries.conf --
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "registry.example.com:5000/ocp4/openshift4"
+-- expected/add-nodes.env --
+CLUSTER_ID=c37c9544-4320-4380-9d8b-0753a4d9ea57
+CLUSTER_NAME=ostest
+CLUSTER_API_VIP_DNS_NAME=api.ostest.test.metalkube.org
+AUTH_TOKEN_EXPIRY=.*
+-- expected/grub.cfg --
+.*fips=1.*
+-- expected/import-cluster-config.json --
+.*"userManagedNetworking": false.*

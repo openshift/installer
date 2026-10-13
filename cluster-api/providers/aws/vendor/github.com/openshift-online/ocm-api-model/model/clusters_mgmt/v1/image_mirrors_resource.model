@@ -1,0 +1,55 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the collection of image mirror configurations for a cluster.
+// Image mirroring is only supported for ROSA HCP clusters in ready state (Day 2 operations only).
+resource ImageMirrors {
+	// Retrieves the list of image mirrors for the cluster.
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
+
+		// Number of items contained in the returned page.
+		in out Size Integer = 100
+
+		// Search criteria for filtering results.
+		// Searchable fields: id, name, cluster_id, source, type
+		// All searchable fields can be ordered with asc/desc direction, default order by id
+		in Search String
+
+		// Order criteria for sorting results.
+		in Order String
+
+		// Total number of items of the collection.
+		out Total Integer
+
+		// Retrieved list of image mirrors.
+		out Items []ImageMirror
+	}
+
+	// Creates a new image mirror configuration for the cluster.
+	// Cluster must be in ready state for this operation to succeed.
+	method Add {
+		// Description of the image mirror configuration.
+		in out Body ImageMirror
+	}
+
+	// Reference to the service that manages a specific image mirror.
+	locator ImageMirror {
+		target ImageMirror
+		variable ID
+	}
+}

@@ -1,0 +1,42 @@
+[Unit]
+Description=Customized Machine OS Image Server
+BindsTo=ironic-volume.service
+Requires=build-ironic-env.service
+PartOf=ironic.service
+Wants=network-online.target
+After=network-online.target ironic-volume.service build-ironic-env.service
+
+[Container]
+ContainerName=image-customization
+Image=$CUSTOMIZATION_IMAGE
+Exec=/image-customization-controller --namespace=openshift-machine-api --images-publish-addr=http://127.0.0.1:8084 --metrics-addr=127.0.0.1:7373
+Network=host
+PodmanArgs=--secret pull-secret,mode=400
+Volume=ironic.volume:/shared:z
+Volume=/etc/containers:/tmp/containers:z
+Volume=${AUTH_DIR}:/auth:z,ro
+Volume=/opt/openshift:/opt/openshift:z,ro
+Volume=/etc/pki/ca-trust/source/anchors/ca.crt:/tmp/ca.crt:z,ro
+AddDevice=/dev/sr0:/images/live.iso:r
+Volume=/run/media/iso/images/pxeboot:/images/pxe:ro
+SecurityLabelDisable=true
+Environment="DEPLOY_ISO=/images/live.iso"
+Environment="DEPLOY_INITRD=/images/pxe/initrd.img"
+Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
+Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
+Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
+Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
+Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
+Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
+Environment="ADDITIONAL_NTP_SERVERS=${ADDITIONAL_NTP_SERVERS}"
+Environment="CA_BUNDLE=/tmp/ca.crt"
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+Restart=always
+ExecStartPre=/usr/local/bin/setup-image-data.sh
+TimeoutStartSec=600
+ExecStopPost=podman secret rm pull-secret
+
+[Install]
+WantedBy=multi-user.target

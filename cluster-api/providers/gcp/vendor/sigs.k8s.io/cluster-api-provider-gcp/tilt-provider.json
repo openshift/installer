@@ -1,0 +1,16 @@
+{
+  "name": "gcp",
+  "config": {
+    "image": "gcr.io/k8s-staging-cluster-api-gcp/cluster-api-gcp-controller",
+    "live_reload_deps": [
+      "main.go",
+      "go.mod",
+      "go.sum",
+      "api",
+      "cloud",
+      "controllers",
+      "exp"
+    ],
+    "label": "CAPG"
+  }
+}

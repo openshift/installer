@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# shellcheck source=bootstrap-service-record.sh
+. /usr/local/bin/bootstrap-service-record.sh
+
+ /usr/bin/kubelet \
+    --anonymous-auth=false \
+    --container-runtime-endpoint=/var/run/crio/crio.sock \
+    --runtime-request-timeout="${KUBELET_RUNTIME_REQUEST_TIMEOUT}" \
+{{- if .BootstrapNodeIP }}
+    --node-ip="{{.BootstrapNodeIP}}" \
+    --address="{{.BootstrapNodeIP}}" \
+{{- else}}
+{{- if .UseIPv6ForNodeIP }}
+    --node-ip=:: \
+{{- end}}
+{{- end}}
+    --pod-manifest-path=/etc/kubernetes/manifests \
+    --minimum-container-ttl-duration=6m0s \
+    --cluster-domain=cluster.local \
+    --cgroup-driver=systemd \
+    --serialize-image-pulls=false \
+    --v=2 \
+    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec

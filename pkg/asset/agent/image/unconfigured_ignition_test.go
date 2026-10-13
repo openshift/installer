@@ -1,0 +1,342 @@
+package image
+
+import (
+	"context"
+	"encoding/base64"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
+	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/common"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	agenttypes "github.com/openshift/installer/pkg/types/agent"
+)
+
+func TestUnconfiguredIgnition_Generate(t *testing.T) {
+	skipTestIfnmstatectlIsMissing(t)
+
+	defer setupEmbeddedResources(t)()
+
+	nmStateConfig := getTestNMStateConfig()
+
+	cases := []struct {
+		name              string
+		overrideDeps      []asset.Asset
+		expectedError     string
+		expectedFiles     []string
+		serviceEnabledMap map[string]bool
+	}{
+		{
+			name:          "default-configs-and-no-nmstateconfigs",
+			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          true},
+		},
+		{
+			name: "with-nmstateconfigs",
+			overrideDeps: []asset.Asset{
+				&nmStateConfig,
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": true,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true},
+		},
+		{
+			name: "valid-agentconfig-with-rendezvousIP",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+					},
+				},
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/rendezvous-host.env", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          true},
+		},
+		{
+			name: "invalid-agentconfig-with-hosts",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+						Hosts: []agenttypes.Host{
+							{
+								Hostname: "master-0",
+								Role:     "master",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+		{
+			name: "invalid-agentconfig-with-additionalNTPSources",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP:         "192.168.111.20",
+						AdditionalNTPSources: []string{"ntp.example.com"},
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain additionalNTPSources. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-agentconfig-with-bootArtifactsBaseURL",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP:         "192.168.111.20",
+						BootArtifactsBaseURL: "http://example.com",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain bootArtifactsBaseURL. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-agentconfig-with-minimalISO",
+			overrideDeps: []asset.Asset{
+				&agentconfig.AgentConfig{
+					Config: &agenttypes.Config{
+						RendezvousIP: "192.168.111.20",
+						MinimalISO:   true,
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not set minimalISO. Only rendezvousIP is allowed",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			deps := buildUnconfiguredIgnitionAssetDefaultDependencies(t)
+
+			overrideDeps(deps, tc.overrideDeps)
+
+			parents := asset.Parents{}
+			parents.Add(deps...)
+
+			unconfiguredIgnitionAsset := &UnconfiguredIgnition{}
+			err := unconfiguredIgnitionAsset.Generate(context.Background(), parents)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+
+				assertExpectedFiles(t, unconfiguredIgnitionAsset.Config, tc.expectedFiles, nil)
+
+				assertServiceEnabled(t, unconfiguredIgnitionAsset.Config, tc.serviceEnabledMap)
+			}
+		})
+	}
+}
+
+// This test util create the minimum valid set of dependencies for the
+// UnconfiguredIgnition asset.
+func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
+	t.Helper()
+
+	infraEnv := getTestInfraEnv()
+	agentPullSecret := getTestAgentPullSecret(t)
+	clusterImageSet := getTestClusterImageSet()
+
+	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+		&infraEnv,
+		&agentPullSecret,
+		&clusterImageSet,
+		&manifests.NMStateConfigFile{},
+		&common.InfraEnvID{},
+		&agentconfig.AgentConfig{},
+		&gencrypto.AuthConfig{},
+	}
+}
+
+func getTestInfraEnv() manifests.InfraEnvFile {
+	return manifests.InfraEnvFile{
+		Config: &aiv1beta1.InfraEnv{
+			Spec: aiv1beta1.InfraEnvSpec{
+				SSHAuthorizedKey: "my-ssh-key",
+			},
+		},
+		File: &asset.File{
+			Filename: "infraenv.yaml",
+			Data:     []byte("infraenv"),
+		},
+	}
+}
+
+func getTestAgentPullSecret(t *testing.T) manifests.AgentPullSecret {
+	t.Helper()
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
+	assert.NoError(t, err)
+	return manifests.AgentPullSecret{
+		Config: &v1.Secret{
+			Data: map[string][]byte{
+				".dockerconfigjson": secretDataBytes,
+			},
+		},
+		File: &asset.File{
+			Filename: "pull-secret.yaml",
+			Data:     []byte("pull-secret"),
+		},
+	}
+}
+
+func getTestClusterImageSet() manifests.ClusterImageSet {
+	return manifests.ClusterImageSet{
+		Config: &hivev1.ClusterImageSet{
+			Spec: hivev1.ClusterImageSetSpec{
+				ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+			},
+		},
+		File: &asset.File{
+			Filename: "cluster-image-set.yaml",
+			Data:     []byte("cluster-image-set"),
+		},
+	}
+}
+
+func getTestNMStateConfig() manifests.NMStateConfigFile {
+	return manifests.NMStateConfigFile{
+		Config: []*aiv1beta1.NMStateConfig{
+			{
+				Spec: aiv1beta1.NMStateConfigSpec{
+					Interfaces: []*aiv1beta1.Interface{
+						{
+							Name:       "eth0",
+							MacAddress: "00:01:02:03:04:05",
+						},
+					},
+				},
+			},
+		},
+		StaticNetworkConfig: []*models.HostStaticNetworkConfig{
+			{
+				MacInterfaceMap: models.MacInterfaceMap{
+					{LogicalNicName: "eth0", MacAddress: "00:01:02:03:04:05"},
+				},
+				NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.21\n      prefix-length: 24\n    enabled: true\n  mac-address: 00:01:02:03:04:05\n  name: eth0\n  state: up\n  type: ethernet\n",
+			},
+		},
+		File: &asset.File{
+			Filename: "nmstateconfig.yaml",
+			Data:     []byte("nmstateconfig"),
+		},
+	}
+}
+
+func generatedFilesUnconfiguredIgnition(otherFiles ...string) []string {
+	unconfiguredIgnitionFiles := []string{
+		"/etc/assisted/manifests/pull-secret.yaml",
+		"/etc/assisted/manifests/cluster-image-set.yaml",
+		"/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/rendezvous-host.env.template",
+	}
+	unconfiguredIgnitionFiles = append(unconfiguredIgnitionFiles, otherFiles...)
+	return append(unconfiguredIgnitionFiles, commonFiles()...)
+}
+
+func TestValidateAgentConfigForUnconfiguredIgnition(t *testing.T) {
+	cases := []struct {
+		name          string
+		agentConfig   *agenttypes.Config
+		expectedError string
+	}{
+		{
+			name: "valid-with-rendezvousIP-only",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+			},
+			expectedError: "",
+		},
+		{
+			name:          "valid-empty-config",
+			agentConfig:   &agenttypes.Config{},
+			expectedError: "",
+		},
+		{
+			name: "invalid-with-hosts",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+				Hosts: []agenttypes.Host{
+					{
+						Hostname: "master-0",
+						Role:     "master",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+		{
+			name: "invalid-with-additionalNTPSources",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				AdditionalNTPSources: []string{"ntp.example.com"},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain additionalNTPSources. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-bootArtifactsBaseURL",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				BootArtifactsBaseURL: "http://example.com",
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain bootArtifactsBaseURL. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-minimalISO",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP: "192.168.111.20",
+				MinimalISO:   true,
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not set minimalISO. Only rendezvousIP is allowed",
+		},
+		{
+			name: "invalid-with-multiple-fields",
+			agentConfig: &agenttypes.Config{
+				RendezvousIP:         "192.168.111.20",
+				AdditionalNTPSources: []string{"ntp.example.com"},
+				BootArtifactsBaseURL: "http://example.com",
+				MinimalISO:           true,
+				Hosts: []agenttypes.Host{
+					{
+						Hostname: "master-0",
+					},
+				},
+			},
+			expectedError: "agent-config.yaml for unconfigured-ignition workflow must not contain hosts. Hosts configuration should be provided via nmstateconfig.yaml",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateAgentConfigForUnconfiguredIgnition(tc.agentConfig)
+
+			if tc.expectedError != "" {
+				assert.EqualError(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

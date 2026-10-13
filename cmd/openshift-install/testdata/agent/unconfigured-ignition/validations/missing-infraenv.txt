@@ -1,0 +1,36 @@
+# Missing infraenv.yaml should be detected.
+
+expandFile cluster-manifests/cluster-image-set.yaml
+
+! exec openshift-install agent create unconfigured-ignition --dir $WORK
+
+stderr 'failed to generate asset "InfraEnv Config File": configuration file not found: cluster-manifests/infraenv.yaml'
+
+! exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+-- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }

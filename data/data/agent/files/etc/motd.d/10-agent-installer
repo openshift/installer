@@ -1,0 +1,10 @@
+
+ **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **  **
+This is a host being installed by the OpenShift Agent Installer.
+It will be installed from scratch during the installation.
+
+To gather essential troubleshooting data for bug reports and support, run:
+
+  agent-gather
+ **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  **  ** **  **
+

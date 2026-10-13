@@ -1,0 +1,10 @@
+[Unit]
+Description=Ensure iscsid is started and iSCSI sessions are managed 
+After=iscsistart.service
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/sbin/iscsiadm -m session -P3
+
+[Install]
+WantedBy=multi-user.target

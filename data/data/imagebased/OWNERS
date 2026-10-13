@@ -1,0 +1,7 @@
+# This file just uses aliases defined in OWNERS_ALIASES.
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+
+approvers:
+  - imagebased-approvers
+reviewers:
+  - imagebased-reviewers

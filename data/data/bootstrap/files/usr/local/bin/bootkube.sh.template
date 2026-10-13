@@ -1,0 +1,656 @@
+#!/usr/bin/env bash
+set -euoE pipefail ## -E option will cause functions to inherit trap
+
+# shellcheck source=bootstrap-service-record.sh
+. /usr/local/bin/bootstrap-service-record.sh
+
+# shellcheck source=release-image.sh.template
+. /usr/local/bin/release-image.sh
+# shellcheck source=bootstrap-cluster-gather.sh
+. /usr/local/bin/bootstrap-cluster-gather.sh
+# shellcheck source=bootstrap-verify-api-server-urls.sh
+. /usr/local/bin/bootstrap-verify-api-server-urls.sh
+
+mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
+
+{{- if .BootstrapInPlace }}
+BOOTSTRAP_INPLACE=true
+{{ else }}
+BOOTSTRAP_INPLACE=false
+{{ end -}}
+
+ETCD_ENDPOINTS=
+
+bootkube_podman_run() {
+    # we run all commands in the host-network to prevent IP conflicts with
+    # end-user infrastructure.
+    podman run --quiet --net=host --rm --log-driver=k8s-file "${@}"
+}
+
+wait_for_etcd_cluster() {
+    until bootkube_podman_run \
+        --name etcdctl \
+        --env ETCDCTL_API=3 \
+        --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+        --entrypoint etcdctl \
+        "${MACHINE_CONFIG_ETCD_IMAGE}" \
+        --dial-timeout=10m \
+        --cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
+        --cert=/opt/openshift/tls/etcd-client.crt \
+        --key=/opt/openshift/tls/etcd-client.key \
+        --endpoints="${ETCD_ENDPOINTS}" \
+        endpoint health
+    do
+        echo "etcdctl failed. Retrying in 5 seconds..."
+        sleep 5
+    done
+}
+
+MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
+MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
+
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+API_IMAGE=$(image_for cluster-config-api)
+CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
+KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
+INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
+NODE_TUNING_OPERATOR_IMAGE=$(image_for cluster-node-tuning-operator)
+AUTH_OPERATOR_IMAGE=$(image_for cluster-authentication-operator)
+
+CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
+
+OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
+OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
+
+CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
+
+mkdir --parents ./{bootstrap-manifests,manifests}
+
+if [ ! -f openshift-manifests.done ]
+then
+    record_service_stage_start "openshift-manifests"
+	echo "Moving OpenShift manifests in with the rest of them"
+	cp openshift/* manifests/
+	touch openshift-manifests.done
+    record_service_stage_success
+fi
+
+ICSP_MANIFEST_FILE="$PWD/manifests/image-content-source-policy.yaml"
+IDMS_MANIFEST_FILE="$PWD/manifests/image-digest-mirror-set.yaml"
+
+MIRROR_FLAG=""
+if [ -f $ICSP_MANIFEST_FILE ]; then
+    MIRROR_FLAG="--icsp-file=$ICSP_MANIFEST_FILE"
+elif [ -f $IDMS_MANIFEST_FILE ]; then
+    # Requires https://issues.redhat.com/browse/OCPNODE-1656
+    MIRROR_FLAG="--idms-file=$IDMS_MANIFEST_FILE"
+fi
+
+VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
+KUBERNETES_VERSION="$(oc adm release info -o 'jsonpath={.displayVersions.kubernetes.Version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
+
+if [ ! -f api-bootstrap.done ]
+then
+    record_service_stage_start "api-bootstrap"
+	echo "Rendering api manifests..."
+
+	rm --recursive --force api-bootstrap
+
+  # A more desireable end state would be require wiring up the infrastructure in some way and read it from rendered-manifest-dir
+	CLUSTER_PROFILE_ANNOTATION="self-managed-high-availability"
+
+	bootkube_podman_run \
+		--name api-render \
+		--volume "$PWD:/assets:z" \
+		"${API_IMAGE}" \
+		/usr/bin/render \
+		--asset-output-dir=/assets/api-bootstrap \
+		--rendered-manifest-dir=/assets/manifests \
+		--cluster-profile=${CLUSTER_PROFILE_ANNOTATION} \
+		--payload-version=$VERSION
+
+	cp api-bootstrap/manifests/* manifests/
+
+	touch api-bootstrap.done
+    record_service_stage_success
+fi
+
+# The cluster-authentication-operator is going to be responsible for managing the
+# rolebindingrestrictions.authorization.openshift.io CRD as outlined in
+# https://github.com/openshift/enhancements/pull/1726
+#
+# This CRD is required for bootstrapping so that the authorization.openshift.io/RestrictSubjectBindings
+# default admission plugin on the kube-apiserver does not prevent
+# the creation of `system:*` RoleBindings.
+#
+# Because the only thing required for bootstrapping from the cluster-authentication-operator
+# is this API, and this API used to be part of the api-bootstrap process,
+# this stage is put immediately after the api-bootstrap stage.
+if [ ! -f auth-api-bootstrap.done ]
+then
+    record_service_stage_start "auth-api-bootstrap"
+	echo "Rendering auth api manifests..."
+
+	rm --recursive --force auth-api-bootstrap
+
+	CLUSTER_PROFILE_ANNOTATION="self-managed-high-availability"
+
+	bootkube_podman_run \
+		--name auth-api-render \
+		--volume "$PWD:/assets:z" \
+		"${AUTH_OPERATOR_IMAGE}" \
+		render \
+		--asset-output-dir=/assets/auth-api-bootstrap/manifests \
+		--rendered-manifest-dir=/assets/manifests \
+		--cluster-profile=${CLUSTER_PROFILE_ANNOTATION} \
+		--payload-version=$VERSION
+        
+
+	cp auth-api-bootstrap/manifests/* manifests/
+
+	touch auth-api-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f config-bootstrap.done ]
+then
+    record_service_stage_start "config-bootstrap"
+	echo "Rendering cluster config manifests..."
+
+	rm --recursive --force config-bootstrap
+
+	ADDITIONAL_FLAGS=()
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
+	fi
+
+	bootkube_podman_run \
+		--name config-render \
+		--volume "$PWD:/assets:z" \
+		"${CONFIG_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-config-operator render \
+		--skip-api-rendering \
+		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
+		--config-output-file=/assets/config-bootstrap/config \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/config-bootstrap \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION \
+		"${ADDITIONAL_FLAGS[@]}"
+
+	touch config-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f cvo-bootstrap.done ]
+then
+    record_service_stage_start "cvo-bootstrap"
+	echo "Rendering Cluster Version Operator Manifests..."
+
+	rm --recursive --force cvo-bootstrap
+
+	bootkube_podman_run \
+		--name cvo-render \
+		--volume "$PWD:/assets:z" \
+{{- if .ClusterProfile}}
+		--env CLUSTER_PROFILE="{{.ClusterProfile}}" \
+{{- end}}
+		"${RELEASE_IMAGE_DIGEST}" \
+		render \
+			--output-dir=/assets/cvo-bootstrap \
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml \
+			--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml
+
+	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
+	cp cvo-bootstrap/manifests/* manifests/
+	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
+	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
+
+	touch cvo-bootstrap.done
+    record_service_stage_success
+fi
+
+ETCD_ENDPOINTS=https://localhost:2379
+if [ ! -f etcd-bootstrap.done ]
+then
+    record_service_stage_start "etcd-bootstrap"
+	echo "Rendering CEO Manifests..."
+
+	rm --recursive --force etcd-bootstrap
+
+	bootkube_podman_run \
+		--name etcd-render \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-etcd-operator render \
+		--asset-output-dir=/assets/etcd-bootstrap \
+		--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
+		--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--network-config-file=/assets/manifests/cluster-network-02-config.yml
+
+	# Copy configuration required to start etcd
+	cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
+	# Copy manifests to apply to the bootstrap apiserver
+	cp etcd-bootstrap/manifests/* manifests/
+	# Copy the ca bundle and client certificate required by the bootstrap apiserver and wait_for_etcd_cluster
+	cp etcd-bootstrap/tls/* tls/
+
+	touch etcd-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-apiserver-bootstrap.done ]
+then
+    record_service_stage_start "kube-apiserver-bootstrap"
+	echo "Rendering Kubernetes API server core manifests..."
+
+	rm --recursive --force kube-apiserver-bootstrap
+
+	bootkube_podman_run  \
+		--name kube-apiserver-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-apiserver-operator render \
+		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
+		--manifest-etcd-server-urls="${ETCD_ENDPOINTS}" \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--manifest-operator-image="${KUBE_APISERVER_OPERATOR_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-apiserver-bootstrap \
+		--config-output-file=/assets/kube-apiserver-bootstrap/config \
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION \
+		--operand-kubernetes-version="${KUBERNETES_VERSION}"
+
+	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-apiserver-bootstrap/manifests/* manifests/
+
+	touch kube-apiserver-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-controller-manager-bootstrap.done ]
+then
+    record_service_stage_start "kube-controller-manager-bootstrap"
+	echo "Rendering Kubernetes Controller Manager core manifests..."
+
+	rm --recursive --force kube-controller-manager-bootstrap
+
+
+	bootkube_podman_run \
+		--name kube-controller-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-controller-manager-operator render \
+		--cluster-policy-controller-image="${OPENSHIFT_CLUSTER_POLICY_IMAGE}" \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
+		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
+		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
+
+	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
+	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
+	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-controller-manager-bootstrap/manifests/* manifests/
+
+	# Temporary check to provide forwards compatibility with ckcmo taking
+	# over responsibility for rendering the token signing keypair.
+	if [ -d kube-controller-manager-bootstrap/tls ]
+	then
+		# Copy the service account signing keypair for use by the
+		# bootstrap controller manager and apiserver.
+		cp kube-controller-manager-bootstrap/tls/* tls/
+	fi
+
+	touch kube-controller-manager-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-scheduler-bootstrap.done ]
+then
+    record_service_stage_start "kube-scheduler-bootstrap"
+	echo "Rendering Kubernetes Scheduler core manifests..."
+
+	rm --recursive --force kube-scheduler-bootstrap
+
+	bootkube_podman_run \
+		--name kube-scheduler-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-scheduler-operator render \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-scheduler-bootstrap \
+		--config-output-file=/assets/kube-scheduler-bootstrap/config
+
+	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
+	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-scheduler-bootstrap/manifests/* manifests/
+
+	touch kube-scheduler-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f ingress-operator-bootstrap.done ]
+then
+    record_service_stage_start "ingress-operator-bootstrap"
+	echo "Rendering Ingress Operator core manifests..."
+
+	rm --recursive --force ingress-operator-bootstrap
+
+	bootkube_podman_run \
+		--name ingress-render \
+		--volume "$PWD:/assets:z" \
+		"${INGRESS_OPERATOR_IMAGE}" \
+		render \
+		--prefix=cluster-ingress- \
+		--output-dir=/assets/ingress-operator-manifests
+
+	cp ingress-operator-manifests/* manifests/
+
+	touch ingress-operator-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f node-tuning-bootstrap.done ]
+then
+    record_service_stage_start "node-tuning-bootstrap"
+	echo "Rendering Node Tuning core manifests..."
+
+	rm --recursive --force node-tuning-bootstrap
+
+	bootkube_podman_run \
+		--name node-tuning-render \
+		--volume "$PWD:/assets:z" \
+		"${NODE_TUNING_OPERATOR_IMAGE}" \
+		render \
+		--asset-input-dir=/assets/manifests \
+		--asset-output-dir=/assets/node-tuning-bootstrap
+
+	# Copy over manifests if they were generated by NTO
+	if [ -n "$(ls -A node-tuning-bootstrap)" ]; then
+		cp node-tuning-bootstrap/* manifests/
+	fi
+
+	touch node-tuning-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ "$BOOTSTRAP_INPLACE" = true ] && [ ! -f cmdbootline-nto-bootstrap.done ]; then
+	record_service_stage_start "cmdbootline-nto-bootstrap"
+
+	rm --recursive --force cmdbootline-nto-bootstrap
+
+	# Create folders for overlay and podman command to use them
+	tmpfolder=$(mktemp -d)
+	echo ${tmpfolder}
+	podmancmd="bootkube_podman_run --attach=stderr --rm "
+	for folder in etc/modprobe.d etc/sysconfig etc/kubernetes etc/sysctl.d etc/systemd run sys lib/modules var/lib/kubelet usr/lib/tuned etc/tuned; do
+		lowerfolder="/${folder}"
+		if [ ! -d "$lowerfolder" ]; then
+			echo "Skipping mounting $lowerfolder"
+			continue
+		fi
+		upperfolder="${tmpfolder}/${folder}/upper"
+		workfolder="${tmpfolder}/${folder}/work"
+		mkdir -p ${upperfolder}
+		mkdir -p ${workfolder}
+		podmancmd="${podmancmd} -v ${lowerfolder}:/${folder}:O,upperdir=${upperfolder},workdir=${workfolder}"
+	done
+
+	podmancmd="${podmancmd} --volume $PWD:/assets:z --env=CLUSTER_NODE_TUNED_BOOTSTRAP_SAFE_ENV=true --name tuned ${NODE_TUNING_OPERATOR_IMAGE}"
+	podmancmd="${podmancmd} render-bootcmd-mc --asset-input-dir=/assets/manifests --asset-output-dir=/assets/cmdbootline-nto-bootstrap --mcp-name=master"
+
+	# execute podmancmd
+	$podmancmd
+
+	# Copy over manifests if they were generated by NTO
+	if [ -n "$(ls -A cmdbootline-nto-bootstrap)" ]; then
+		cp cmdbootline-nto-bootstrap/* manifests/
+	fi
+
+	rm -rf ${tmpfolder}
+	touch cmdbootline-nto-bootstrap.done
+	record_service_stage_success
+fi
+
+if [ ! -f mco-bootstrap.done ]
+then
+    record_service_stage_start "mco-bootstrap"
+	echo "Rendering MCO manifests..."
+
+	rm --recursive --force mco-bootstrap
+
+	ADDITIONAL_FLAGS=""
+	if [ -f "/opt/openshift/tls/cloud-ca-cert.pem" ]; then
+		ADDITIONAL_FLAGS="--cloud-provider-ca-file=/assets/tls/cloud-ca-cert.pem"
+	fi
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-config-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml"
+	fi
+	if [ -f "/opt/openshift/manifests/openshift-lbconfig-custom-dns.yaml" ]; then
+		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-lb-config-file=/assets/manifests/openshift-lb-config.yaml"
+	fi
+
+	# Dump out image reference file so MCO can consume multiple/additional image references
+	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
+
+	# NOTICE: If you change this, you probably also want to change https://github.com/openshift/hypershift/blob/f7e79bf1dc7e90000984bf9ffeafa740defbee0a/ignition-server/controllers/local_ignitionprovider.go
+	bootkube_podman_run \
+		--name mco-render \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+		bootstrap \
+			--root-ca=/assets/tls/root-ca.crt \
+			--kube-ca=/assets/tls/kube-apiserver-complete-client-ca-bundle.crt \
+			--config-file=/assets/manifests/cluster-config.yaml \
+			--dest-dir=/assets/mco-bootstrap \
+			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--image-references=assets/image-references \
+			--payload-version="${VERSION}" \
+			${ADDITIONAL_FLAGS}
+
+	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
+	# 1. read the controller config rendered by MachineConfigOperator
+	# 2. read the default MachineConfigPools rendered by MachineConfigOperator
+	# 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
+	mkdir --parents /etc/mcc/bootstrap /etc/mcs/bootstrap /etc/kubernetes/manifests /etc/kubernetes/static-pod-resources
+	cp mco-bootstrap/bootstrap/manifests/* /etc/mcc/bootstrap/
+	cp openshift/* /etc/mcc/bootstrap/
+	# 4. read ImageContentSourcePolicy objects generated by the installer
+	cp manifests/* /etc/mcc/bootstrap/
+	cp image-references /etc/mcc/bootstrap/image-references
+	cp auth/kubeconfig-kubelet /etc/mcs/kubeconfig
+	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
+
+	copy_static_resources_for() {
+	  # copy static resources from mco based on platform folder
+	  local platform=$1
+	  if [ -d mco-bootstrap/${platform}/manifests ]; then
+	    cp mco-bootstrap/${platform}/manifests/* /etc/kubernetes/manifests/
+	    cp --recursive mco-bootstrap/${platform}/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+	  fi
+	}
+
+	copy_static_resources_for baremetal
+	copy_static_resources_for openstack
+	copy_static_resources_for ovirt
+	copy_static_resources_for vsphere
+	copy_static_resources_for nutanix
+	copy_static_resources_for gcp
+	copy_static_resources_for aws
+	copy_static_resources_for azure
+
+	cp mco-bootstrap/manifests/* manifests/
+
+	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.
+	mkdir --parents /etc/ssl/mcs/
+	cp tls/machine-config-server.crt /etc/ssl/mcs/tls.crt
+	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
+
+	touch mco-bootstrap.done
+    record_service_stage_success
+fi
+
+API_SERVER_URL="{{.APIServerURL}}"
+API_INT_SERVER_URL="{{.APIIntServerURL}}"
+if [ ! -f api-dns-resolved.done ]; then
+  echo "Check if API URL is resolvable during bootstrap"
+
+  if resolve_url "API_URL" "${API_SERVER_URL}"; then
+    touch api-dns-resolved.done
+  fi
+fi
+
+if [ ! -f api-int-dns-resolved.done ]; then
+  echo "Check if API-Int URL is resolvable during bootstrap"
+  if resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
+    touch api-int-dns-resolved.done
+  fi
+fi
+
+if [ ! -f cco-bootstrap.done ]
+then
+    record_service_stage_start "cco-bootstrap"
+	echo "Rendering CCO manifests..."
+
+	rm --recursive --force cco-bootstrap
+
+	# shellcheck disable=SC2154
+	bootkube_podman_run \
+		--name cco-render \
+		--quiet \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		${CLOUD_CREDENTIAL_OPERATOR_IMAGE} \
+		render \
+			--dest-dir=/assets/cco-bootstrap \
+			--manifests-dir=/assets/manifests \
+			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
+
+    	# skip copy of manifests in case when CloudCredential capability disabled
+	if [ -d cco-bootstrap/manifests ]; then
+		cp cco-bootstrap/manifests/* manifests/
+	fi
+	# skip copy if static pod manifest does not exist (ie CCO has been disabled)
+	if [ -f cco-bootstrap/bootstrap-manifests/cloud-credential-operator-pod.yaml ]; then
+		cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	fi
+
+	touch cco-bootstrap.done
+    record_service_stage_success
+fi
+
+# in case of single node, if we removed etcd, there is no point to wait for it on restart
+if [ ! -f stop-etcd.done ]
+then
+    record_service_stage_start "wait-for-etcd"
+	# Wait for the etcd cluster to come up.
+	wait_for_etcd_cluster
+    record_service_stage_success
+fi
+
+REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+if [ "$BOOTSTRAP_INPLACE" = true ]
+then
+    REQUIRED_PODS=""
+fi
+
+echo "Starting cluster-bootstrap..."
+run_cluster_bootstrap() {
+	record_service_stage_start "cb-bootstrap"
+	bootkube_podman_run \
+        --name cluster-bootstrap \
+        --volume "$PWD:/assets:z" \
+        --volume /etc/kubernetes:/etc/kubernetes:z \
+        "${CLUSTER_BOOTSTRAP_IMAGE}" \
+        start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
+}
+    
+if [ ! -f cb-bootstrap.done ]
+then
+    if run_cluster_bootstrap
+    then
+        touch cb-bootstrap.done
+        record_service_stage_success
+    else
+        ret=$?
+        set +u
+        cluster_bootstrap_gather
+        exit $ret
+    fi
+fi
+
+if [ "$BOOTSTRAP_INPLACE" = true ]
+then
+    . /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
+else
+    if [ ! -f cvo-overrides.done ]
+    then
+        record_service_stage_start "cvo-overrides"
+        # remove overrides for installer manifests and restore any user-supplied overrides
+        echo "Restoring CVO overrides"
+        until \
+            oc patch clusterversion.config.openshift.io version \
+                --kubeconfig=/opt/openshift/auth/kubeconfig \
+                --type=merge \
+                --patch-file=/opt/openshift/original_cvo_overrides.patch
+        do
+            sleep 10
+            echo "Trying again to restore CVO overrides"
+        done
+        touch cvo-overrides.done
+        record_service_stage_success
+    fi
+
+    rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
+
+    if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+    then
+        record_service_stage_start "wait-for-ceo"
+        echo "Waiting for CEO to finish..."
+        bootkube_podman_run \
+            --name wait-for-ceo \
+            --volume "$PWD:/assets:z" \
+            "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+            /usr/bin/cluster-etcd-operator \
+            wait-for-ceo \
+            --kubeconfig /assets/auth/kubeconfig
+        record_service_stage_success
+    fi
+fi
+
+if [ ! -f api-dns-check.done ]; then
+  echo "Check if API URL is reachable during bootstrap"
+
+  if check_url "API_URL" "${API_SERVER_URL}"; then
+    touch api-dns-check.done
+  fi
+fi
+
+if [ ! -f api-int-dns-check.done ]; then
+  echo "Check if API-Int URL is reachable during bootstrap"
+  if check_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
+    touch api-int-dns-check.done
+  fi
+fi
+
+# Workaround for https://github.com/opencontainers/runc/pull/1807
+touch /opt/openshift/.bootkube.done
+echo "bootkube.service complete"

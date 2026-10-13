@@ -1,0 +1,118 @@
+diff --git a/pkg/clusterapi/internal/process/process.go b/pkg/clusterapi/internal/process/process.go
+index 29d4c37619..ce24efd886 100644
+--- a/pkg/clusterapi/internal/process/process.go
++++ b/pkg/clusterapi/internal/process/process.go
+@@ -231,26 +231,41 @@ func (ps *State) Stop() error {
+ 	if ps.Cmd == nil {
+ 		return nil
+ 	}
++
+ 	if done, err := ps.Exited(); done {
++
++		logrus.Infof("Process %s exited *withOUT* error", ps.Path)
++
+ 		if err != nil {
+ 			logrus.Warnf("process %s exited with error: %v", path.Base(ps.Path), err)
+ 		}
+ 		return nil
+ 	}
+-	if err := ps.Cmd.Process.Signal(syscall.SIGTERM); err != nil {
+-		return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
+-	}
+
+-	timedOut := time.After(ps.StopTimeout)
+-	select {
+-	case <-ps.waitDone:
+-		break
+-	case <-timedOut:
+-		if err := ps.Cmd.Process.Signal(syscall.SIGKILL); err != nil {
+-			return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
+-		}
+-		return fmt.Errorf("timeout waiting for process %s to stop, sent SIGKILL", path.Base(ps.Path))
++	if err := syscall.Kill(-ps.Cmd.Process.Pid, syscall.SIGTERM); err != nil {
++		return fmt.Errorf("unable to signal for group process %s to stop: %w", ps.Path, err)
+ 	}
++
++	/*
++		NOTE: rr doesn't like to be SIGKILL'ed and have a non-incomplete trace
++
++
++			if err := ps.Cmd.Process.Signal(syscall.SIGTERM); err != nil {
++				return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
++			}
++
++			timedOut := time.After(ps.StopTimeout)
++			select {
++			case <-ps.waitDone:
++				break
++			case <-timedOut:
++				if err := ps.Cmd.Process.Signal(syscall.SIGTERM); err != nil {
++					return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
++				}
++				return fmt.Errorf("timeout waiting for process %s to stop, sent SIGKILL", path.Base(ps.Path))
++			}
++
++	*/
+ 	ps.ready = false
+ 	return nil
+ }
+diff --git a/pkg/clusterapi/system.go b/pkg/clusterapi/system.go
+index 9fd5fcb2bb..80336a91d7 100644
+--- a/pkg/clusterapi/system.go
++++ b/pkg/clusterapi/system.go
+@@ -427,11 +427,15 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
+ 		logrus.Info("Shutting down local Cluster API controllers...")
+ 		for _, ct := range controllers {
+ 			if ct.state != nil {
+-				if err := ct.state.Stop(); err != nil {
+-					logrus.Warnf("Failed to stop controller: %s: %v", ct.Name, err)
+-					continue
+-				}
+-				logrus.Infof("Stopped controller: %s", ct.Name)
++				logrus.Warn("STOP CONTROLLER")
++				/*
++					if err := ct.state.Stop(); err != nil {
++						logrus.Warnf("Failed to stop controller: %s: %v", ct.Name, err)
++						continue
++					}
++					logrus.Infof("Stopped controller: %s", ct.Name)
++
++				*/
+ 			}
+ 		}
+ 	}()
+@@ -456,6 +460,10 @@ func (c *system) Client() client.Client {
+
+ // Teardown shuts down the local capi control plane and all its controllers.
+ func (c *system) Teardown() {
++
++	// We don't want to teardown any controllers while using rr
++	return
++
+ 	c.Lock()
+ 	defer c.Unlock()
+
+@@ -651,6 +659,23 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
+ 		}
+ 	}
+
++	if ct.Provider != nil {
++		capvPath := ct.Path
++		capvArgs := ct.Args
++
++		ct.Path = "/usr/bin/rr"
++		rrArgs := []string{
++			"record",
++			"--wait",
++			"--disable-avx-512",
++			"--bind-to-cpu=0",
++		}
++
++		rrArgs = append(rrArgs, capvPath)
++		rrArgs = append(rrArgs, capvArgs...)
++		ct.Args = rrArgs
++	}
++
+ 	// Create the process state.
+ 	pr := &process.State{
+ 		Path:         ct.Path,

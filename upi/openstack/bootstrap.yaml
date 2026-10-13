@@ -1,0 +1,54 @@
+# Required Python packages:
+#
+# ansible
+# openstackclient
+# openstacksdk
+# netaddr
+
+- ansible.builtin.import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Create the bootstrap server port'
+    os_port:
+      name: "{{ os_port_bootstrap }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_apiVIP }}"
+    when: os_subnet6_range is not defined
+
+  - name: 'Create the bootstrap dualstack server port'
+    os_port:
+      name: "{{ os_port_bootstrap }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_apiVIP }}"
+      - ip_address: "{{ os_apiVIP6 }}"
+    when: os_subnet6_range is defined
+
+  - name: 'Set bootstrap port tag'
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
+
+  - name: 'Set bootstrap auto_ip to false'
+    ansible.builtin.set_fact:
+      bootstrap_auto_ip: false
+    when: os_bootstrap_fip is not defined
+
+  - name: 'Create the bootstrap server'
+    os_server:
+      name: "{{ os_bootstrap_server_name }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_master }}"
+      userdata: "{{ lookup('file', os_bootstrap_ignition) | string }}"
+      floating_ips: "{{ os_bootstrap_fip | default(omit) }}"
+      auto_ip: "{{ bootstrap_auto_ip | default(omit) }}"
+      nics:
+      - port-name: "{{ os_port_bootstrap }}"
+      meta: "{{ cluster_id_tag }}"

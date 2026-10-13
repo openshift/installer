@@ -1,0 +1,2111 @@
+package gcp
+
+import (
+	"context"
+	"fmt"
+	"net"
+	"net/http"
+	"regexp"
+	"strings"
+	"testing"
+
+	iampb "cloud.google.com/go/iam/apiv1/iampb"
+	"cloud.google.com/go/kms/apiv1/kmspb"
+	"github.com/jarcoal/httpmock"
+	logrusTest "github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	googleoauth "golang.org/x/oauth2/google"
+	"google.golang.org/api/cloudresourcemanager/v3"
+	compute "google.golang.org/api/compute/v1"
+	dns "google.golang.org/api/dns/v1"
+	"google.golang.org/api/googleapi"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
+	customDNS "github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/gcp"
+)
+
+type editFunctions []func(ic *types.InstallConfig)
+
+var (
+	validNetworkName          = "valid-vpc"
+	validProjectName          = "valid-project"
+	invalidProjectName        = "invalid-project"
+	validRegion               = "us-east1"
+	invalidRegion             = "us-east4"
+	validZone                 = "us-east1-b"
+	validComputeSubnet        = "valid-compute-subnet"
+	validCPSubnet             = "valid-controlplane-subnet"
+	validCIDR                 = "10.0.0.0/16"
+	validClusterName          = "valid-cluster"
+	validPrivateZone          = "valid-short-private-zone"
+	validPublicZone           = "valid-short-public-zone"
+	invalidPublicZone         = "invalid-short-public-zone"
+	validBaseDomain           = "example.installer.domain."
+	invalidBaseDomain         = "invalid.installer.domain."
+	validXpnSA                = "valid-example-sa@gcloud.serviceaccount.com"
+	invalidXpnSA              = "invalid-example-sa@gcloud.serviceaccount.com"
+	validServiceEndpointURL   = "https://computeexample.googleapis.com/compute/v1/"
+	invalidServiceEndpointURL = "http://badstorage.googleapis"
+
+	// #nosec G101
+	fakeCreds = `{
+  "client_id": "fake.apps.googleusercontent.com",
+  "client_secret": "fake-secret",
+  "quota_project_id": "openshift-installer-fake",
+  "refresh_token": "fake_token",
+  "type": "authorized_user"
+}`
+
+	validPrivateDNSZone = dns.ManagedZone{
+		Name:    validPrivateZone,
+		DnsName: fmt.Sprintf("%s.%s", validClusterName, strings.TrimSuffix(validBaseDomain, ".")),
+	}
+	validPublicDNSZone = dns.ManagedZone{
+		Name:    validPublicZone,
+		DnsName: validBaseDomain,
+	}
+
+	invalidateMachineCIDR = func(ic *types.InstallConfig) {
+		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
+		ic.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: ipnet.IPNet{IPNet: *newCidr}},
+		}
+	}
+
+	validMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-standard-2"
+		ic.ControlPlane.Platform.GCP.InstanceType = "n1-standard-4"
+		ic.Compute[0].Platform.GCP.InstanceType = "n1-standard-2"
+	}
+
+	invalidateDefaultMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-standard-1"
+	}
+
+	invalidateControlPlaneMachineTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.InstanceType = "n1-standard-1"
+	}
+
+	invalidateComputeMachineTypes = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.InstanceType = "n1-standard-1"
+	}
+
+	undefinedDefaultMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-dne-1"
+	}
+
+	invalidateControlPlaneDiskTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.DiskType = "pd-standard"
+	}
+
+	invalidateNetwork        = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
+	invalidateComputeSubnet  = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
+	invalidateCPSubnet       = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
+	invalidateRegion         = func(ic *types.InstallConfig) { ic.GCP.Region = invalidRegion }
+	invalidateProject        = func(ic *types.InstallConfig) { ic.GCP.ProjectID = invalidProjectName }
+	invalidateNetworkProject = func(ic *types.InstallConfig) { ic.GCP.NetworkProjectID = invalidProjectName }
+	removeVPC                = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
+	removeSubnets            = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
+	invalidClusterName       = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
+	validNetworkProject      = func(ic *types.InstallConfig) { ic.GCP.NetworkProjectID = validProjectName }
+	validateXpnSA            = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = validXpnSA }
+	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
+	invalidateBaseDomain     = func(ic *types.InstallConfig) { ic.BaseDomain = invalidBaseDomain }
+	enableCustomDNS          = func(ic *types.InstallConfig) { ic.GCP.UserProvisionedDNS = customDNS.UserProvisionedDNSEnabled }
+
+	invalidKeyRing = gcp.KMSKeyReference{
+		Name:      "invalidKeyName",
+		KeyRing:   "invalidKeyRingName",
+		Location:  "validLocation",
+		ProjectID: "validProjectID",
+	}
+
+	validKeyRing = gcp.KMSKeyReference{
+		Name:      "validKeyName",
+		KeyRing:   "validKeyRingName",
+		Location:  "validLocation",
+		ProjectID: "validProjectID",
+	}
+
+	globalKeyRing = gcp.KMSKeyReference{
+		Name:      "validKeyName",
+		KeyRing:   "validKeyRingName",
+		Location:  "global",
+		ProjectID: "validProjectID",
+	}
+
+	globalCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+	globalComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+	globalDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &globalKeyRing,
+			},
+		}
+	}
+
+	invalidDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &invalidKeyRing,
+			},
+		}
+	}
+
+	validCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &validKeyRing,
+			},
+		}
+	}
+	invalidateCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &invalidKeyRing,
+			},
+		}
+	}
+
+	validComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &validKeyRing,
+			},
+		}
+	}
+	invalidateComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &invalidKeyRing,
+			},
+		}
+	}
+
+	machineTypeAPIResult = map[string]*compute.MachineType{
+		"n1-standard-1":     {GuestCpus: 1, MemoryMb: 3840},
+		"n1-standard-2":     {GuestCpus: 2, MemoryMb: 7680},
+		"n1-standard-4":     {GuestCpus: 4, MemoryMb: 15360},
+		"n2-standard-1":     {GuestCpus: 1, MemoryMb: 8192},
+		"n2-standard-2":     {GuestCpus: 2, MemoryMb: 16384},
+		"n2-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"n4-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"t2a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"n4-custom-4-16384": {GuestCpus: 4, MemoryMb: 16384}, // custom machine type
+		"custom-4-16384":    {GuestCpus: 4, MemoryMb: 16384}, // custom machine type - default type
+		"c2d-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"n2d-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"c3d-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"c3-standard-4":     {GuestCpus: 4, MemoryMb: 16384},
+		"n4a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+	}
+
+	subnetAPIResult = []*compute.Subnetwork{
+		{
+			Name:        validCPSubnet,
+			IpCidrRange: validCIDR,
+		},
+		{
+			Name:        validComputeSubnet,
+			IpCidrRange: validCIDR,
+		},
+	}
+)
+
+func validInstallConfig() *types.InstallConfig {
+	return &types.InstallConfig{
+		BaseDomain: validBaseDomain,
+		ObjectMeta: metav1.ObjectMeta{
+			Name: validClusterName,
+		},
+		Networking: &types.Networking{
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
+			},
+		},
+		Platform: types.Platform{
+			GCP: &gcp.Platform{
+				DefaultMachinePlatform: &gcp.MachinePool{},
+				ProjectID:              validProjectName,
+				Region:                 validRegion,
+				Network:                validNetworkName,
+				ComputeSubnet:          validComputeSubnet,
+				ControlPlaneSubnet:     validCPSubnet,
+			},
+		},
+		ControlPlane: &types.MachinePool{
+			Architecture: types.ArchitectureAMD64,
+			Platform: types.MachinePoolPlatform{
+				GCP: &gcp.MachinePool{},
+			},
+		},
+		Compute: []types.MachinePool{{
+			Architecture: types.ArchitectureAMD64,
+			Platform: types.MachinePoolPlatform{
+				GCP: &gcp.MachinePool{},
+			},
+		}},
+		// Setting to manual for testing the ValidateCredentials
+		CredentialsMode: types.ManualCredentialsMode,
+	}
+}
+
+func TestGCPInstallConfigValidation(t *testing.T) {
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		records        []*dns.ResourceRecordSet
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Valid network & subnets",
+			edits:          editFunctions{},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid ClusterName",
+			edits:          editFunctions{invalidClusterName},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `clusterName: Invalid value: "testgoogletest": cluster name must not start with "goog" or contain variations of "google"`,
+		},
+		{
+			name:           "Valid install config without network & subnets",
+			edits:          editFunctions{removeVPC, removeSubnets},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid subnet range",
+			edits:          editFunctions{invalidateMachineCIDR},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "computeSubnet: Invalid value.*subnet CIDR range start 10.0.0.0 is outside of the specified machine networks",
+		},
+		{
+			name:           "Invalid network",
+			edits:          editFunctions{invalidateNetwork},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "network: Invalid value",
+		},
+		{
+			name:           "Invalid compute subnet",
+			edits:          editFunctions{invalidateComputeSubnet},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "computeSubnet: Invalid value",
+		},
+		{
+			name:           "Invalid control plane subnet",
+			edits:          editFunctions{invalidateCPSubnet},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "controlPlaneSubnet: Invalid value",
+		},
+		{
+			name:           "Invalid both subnets",
+			edits:          editFunctions{invalidateCPSubnet, invalidateComputeSubnet},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "computeSubnet: Invalid value.*controlPlaneSubnet: Invalid value",
+		},
+		{
+			name:           "Valid machine types",
+			edits:          editFunctions{validMachineTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid default machine type",
+			edits:          editFunctions{invalidateDefaultMachineTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `\[platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 7680 MB Memory\]`,
+		},
+		{
+			name:           "Invalid control plane machine disk types",
+			edits:          editFunctions{validMachineTypes, invalidateControlPlaneDiskTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `controlPlane.type: Unsupported value: "pd-standard": supported values: "hyperdisk-balanced", "pd-balanced", "pd-ssd"`,
+		},
+		{
+			name:           "Invalid control plane machine types",
+			edits:          editFunctions{invalidateControlPlaneMachineTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `[controlPlane.platform.gcp.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.gcp.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 15361 MB Memory]`,
+		},
+		{
+			name:           "Invalid compute machine types",
+			edits:          editFunctions{invalidateComputeMachineTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `\[compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 7680 MB Memory\]`,
+		},
+		{
+			name:           "Undefined default machine types",
+			edits:          editFunctions{undefinedDefaultMachineTypes},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `Internal error: 404`,
+		},
+		{
+			name:           "Invalid region",
+			edits:          editFunctions{invalidateRegion},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "could not find subnet valid-compute-subnet in network valid-vpc and region us-east4",
+		},
+		{
+			name:           "Invalid project",
+			edits:          editFunctions{invalidateProject},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "network: Invalid value",
+		},
+		{
+			name:           "Invalid project & region",
+			edits:          editFunctions{invalidateRegion, invalidateProject},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "network: Invalid value",
+		},
+		{
+			name:           "Invalid project ID",
+			edits:          editFunctions{invalidateProject, removeSubnets, removeVPC},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
+		},
+		{
+			name:           "Invalid network project ID",
+			edits:          editFunctions{invalidateNetworkProject},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.networkProjectID: Invalid value: \"invalid-project\": invalid project ID",
+		},
+		{
+			name:           "Valid Region",
+			edits:          editFunctions{},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid region not found",
+			edits:          editFunctions{invalidateRegion, invalidateProject},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
+		},
+		{
+			name:           "Region not validated",
+			edits:          editFunctions{invalidateRegion},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.region: Invalid value: \"us-east4\": invalid region",
+		},
+		{
+			name:          "Valid XPN Service Account",
+			edits:         editFunctions{validNetworkProject, validateXpnSA},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid XPN Service Account",
+			edits:          editFunctions{validNetworkProject, invalidateXpnSA},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "controlPlane.platform.gcp.serviceAccount: Internal error\"",
+		},
+		{
+			name:          "Valid Control Plane KMS Key",
+			edits:         editFunctions{validCPKMSKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Control Plane KMS Key",
+			edits:          editFunctions{invalidateCPKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "controlPlane.platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:          "Valid Compute KMS Key",
+			edits:         editFunctions{validComputeKMSKeyRing},
+			records:       []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Compute KMS Key",
+			edits:          editFunctions{invalidateComputeKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:           "Valid Control Plane Invalid Compute Invalid Default Machine KMS Key",
+			edits:          editFunctions{validCPKMSKeyRing, invalidateComputeKMSKeyRing, invalidDefaultMachineKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: "compute\\[0\\].platform.gcp.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:           "Global Control Plane KMS Key Location",
+			edits:          editFunctions{globalCPKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `controlPlane.platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			name:           "Global Compute KMS Key Location",
+			edits:          editFunctions{globalComputeKMSKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.gcp.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			name:           "Global Default Machine KMS Key Location",
+			edits:          editFunctions{globalDefaultMachineKeyRing},
+			records:        []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.example.installer.domain."}},
+			expectedError:  true,
+			expectedErrMsg: `platform.gcp.defaultMachinePlatform.osDisk.encryptionKey.kmsKey.location: Invalid value: "global".*global location which is not supported`,
+		},
+		{
+			name:           "Invalid Base Domain",
+			edits:          editFunctions{invalidateBaseDomain},
+			records:        []*dns.ResourceRecordSet{},
+			expectedError:  true,
+			expectedErrMsg: `baseDomain: Not found: "invalid.installer.domain."`,
+		},
+		{
+			name:          "Custom DNS does not require existing base domain",
+			edits:         editFunctions{enableCustomDNS, invalidateBaseDomain},
+			records:       []*dns.ResourceRecordSet{},
+			expectedError: false,
+		},
+	}
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	errNotFound := &googleapi.Error{Code: http.StatusNotFound}
+
+	// Should get the list of projects.
+	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "valid-project").Return(&cloudresourcemanager.Project{Name: "projects/123456789"}, nil).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "invalid-project").Return(nil, errNotFound).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
+
+	// Should get the list of zones.
+	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*compute.Zone{{Name: validZone}}, nil).AnyTimes()
+
+	// When passed an invalid project, no regions will be returned
+	gcpClient.EXPECT().GetRegions(gomock.Any(), invalidProjectName).Return(nil, fmt.Errorf("failed to get regions for project")).AnyTimes()
+	// When passed a project that is valid but the region is not contained, an error should still occur
+	gcpClient.EXPECT().GetRegions(gomock.Any(), validProjectName).Return([]string{validRegion}, nil).AnyTimes()
+
+	// Should return the machine type as specified.
+	for key, value := range machineTypeAPIResult {
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New(validZone), nil).AnyTimes()
+	}
+	// When passed incorrect machine type, the API returns nil.
+	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
+
+	// Mock disk type availability - all disk types available in valid zones
+	gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&compute.DiskType{Name: "available"}, sets.New(validZone), nil).AnyTimes()
+
+	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
+	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
+
+	// When passed an incorrect network or incorrect project, the API returns nil
+	gcpClient.EXPECT().GetNetwork(gomock.Any(), gomock.Not(validNetworkName), gomock.Any()).Return(nil, fmt.Errorf("404")).AnyTimes()
+	gcpClient.EXPECT().GetNetwork(gomock.Any(), gomock.Any(), gomock.Not(validProjectName)).Return(nil, fmt.Errorf("404")).AnyTimes()
+
+	// When passed a correct network, project, & region, returns valid subnets.
+	// We will test incorrect subnets, by changing the install config.
+	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), validNetworkName, validProjectName, validRegion).Return(subnetAPIResult, nil).AnyTimes()
+
+	// When passed an incorrect network, project or region, return empty list.
+	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Not(validNetworkName), gomock.Any(), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
+	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Not(validProjectName), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
+	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Not(validRegion)).Return([]*compute.Subnetwork{}, nil).AnyTimes()
+
+	// Return fake credentials when asked
+	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte(fakeCreds)}).AnyTimes()
+
+	params := gcp.DNSZoneParams{
+		Project:    validProjectName,
+		IsPublic:   false,
+		BaseDomain: "valid-cluster.example.installer.domain",
+	}
+	gcpClient.EXPECT().GetDNSZoneFromParams(gomock.Any(), params).Return(&validPrivateDNSZone, nil).AnyTimes()
+
+	// Expected results for the managed zone tests
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&validPublicDNSZone, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPrivateZone).Return(&validPrivateDNSZone, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), invalidPublicZone).Return(nil, fmt.Errorf("no matching DNS Zone found")).AnyTimes()
+
+	records := []*dns.ResourceRecordSet{{Name: "valid-cluster.example.installer.domain."}}
+	gcpClient.EXPECT().GetRecordSets(gomock.Any(), validProjectName, validPrivateZone).Return(records, nil).AnyTimes()
+
+	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, validXpnSA).Return(validXpnSA, nil).AnyTimes()
+	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, invalidXpnSA).Return("", fmt.Errorf("controlPlane.platform.gcp.serviceAccount: Internal error\"")).AnyTimes()
+
+	validKeyRingRet := &kmspb.KeyRing{
+		Name: "validKeyRingName",
+	}
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &validKeyRing).Return(validKeyRingRet, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), &invalidKeyRing).Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+
+	// Default: both service agents have the encrypter/decrypter role on the KMS key
+	gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(&iampb.Policy{
+		Bindings: []*iampb.Binding{
+			{
+				Role: "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+				Members: []string{
+					"serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com",
+					"serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com",
+				},
+			},
+		},
+	}, nil).AnyTimes()
+
+	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZone(gomock.Any(), invalidProjectName, validBaseDomain, true).Return(&dns.ManagedZone{Name: validZone}, nil).AnyTimes()
+	gcpClient.EXPECT().GetDNSZone(gomock.Any(), validProjectName, invalidBaseDomain, true).Return(nil, fmt.Errorf("baseDomain: Not found: \"%s\"", invalidBaseDomain)).AnyTimes()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("HEAD", validServiceEndpointURL,
+		func(req *http.Request) (*http.Response, error) {
+			if req.Method != http.MethodHead {
+				return httpmock.NewStringResponse(http.StatusMethodNotAllowed, ""), nil
+			}
+			return httpmock.NewStringResponse(http.StatusOK, ""), nil
+		},
+	)
+
+	httpmock.RegisterResponder("HEAD", invalidServiceEndpointURL,
+		func(req *http.Request) (*http.Response, error) {
+			return nil,
+				fmt.Errorf("Head %s: dial tcp: lookup %s: no such host",
+					invalidServiceEndpointURL,
+					strings.ReplaceAll(invalidServiceEndpointURL, "http://", ""),
+				)
+		},
+	)
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq(editedInstallConfig.GCP.ProjectID), gomock.Eq(validZone)).Return(tc.records, nil).AnyTimes()
+
+			errs := Validate(gcpClient, editedInstallConfig)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidatePreExistingPublicDNS(t *testing.T) {
+	cases := []struct {
+		name     string
+		records  []*dns.ResourceRecordSet
+		platform types.Platform
+		err      string
+	}{{
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		records:  nil,
+	}, {
+		name:     "no pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name: "no pre-existing with specified zone",
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			DNS: &gcp.DNS{
+				PrivateZone: &gcp.DNSZone{
+					Name:      "zone-name",
+					ProjectID: "project-id",
+				},
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+	}, {
+		name:    "pre-existing with specified zone",
+		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			DNS: &gcp.DNS{
+				PrivateZone: &gcp.DNSZone{
+					Name:      "zone-name",
+					ProjectID: "project-id",
+				},
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+		err: `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			gcpClient.EXPECT().GetDNSZone(gomock.Any(), "project-id", "base-domain", true).Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
+			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq("project-id"), gomock.Eq("zone-name")).Return(test.records, nil).AnyTimes()
+
+			err := ValidatePreExistingPublicDNS(gcpClient, &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain: "base-domain",
+				Platform:   types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+			}).ToAggregate()
+			if test.err == "" {
+				assert.True(t, err == nil)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func TestValidatePrivateDNSZone(t *testing.T) {
+	cases := []struct {
+		name     string
+		records  []*dns.ResourceRecordSet
+		platform types.Platform
+		err      string
+	}{{
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		records:  nil,
+	}, {
+		name:     "no pre-existing",
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		records:  []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name:     "pre-existing",
+		records:  []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", Network: "shared-vpc", NetworkProjectID: "test-network-project"}},
+		err:      `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name: "no pre-existing with specified zone",
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			DNS: &gcp.DNS{
+				PrivateZone: &gcp.DNSZone{
+					Name:      "zone-name",
+					ProjectID: "project-id",
+				},
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+	}, {
+		name:    "pre-existing with specified zone",
+		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		platform: types.Platform{GCP: &gcp.Platform{
+			ProjectID: "other-project-id",
+			DNS: &gcp.DNS{
+				PrivateZone: &gcp.DNSZone{
+					Name:      "zone-name",
+					ProjectID: "project-id",
+				},
+			},
+			NetworkProjectID:   "network-project-id",
+			Network:            "test-network",
+			ControlPlaneSubnet: "test-subnet",
+			ComputeSubnet:      "test-subnet",
+		}},
+		err: `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}}
+
+	params := gcp.DNSZoneParams{Project: "project-id", IsPublic: false, BaseDomain: "cluster-name.base-domain"}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			gcpClient.EXPECT().GetDNSZoneFromParams(gomock.Any(), params).Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
+			if test.platform.GCP.DNS != nil && test.platform.GCP.DNS.PrivateZone != nil {
+				paramsWithName := gcp.DNSZoneParams{Project: "project-id", IsPublic: false, BaseDomain: "cluster-name.base-domain", Name: test.platform.GCP.DNS.PrivateZone.Name}
+				gcpClient.EXPECT().GetDNSZoneFromParams(gomock.Any(), paramsWithName).Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
+			}
+			gcpClient.EXPECT().GetDNSZone(gomock.Any(), "project-id", "cluster-name.base-domain", false).Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
+			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq("project-id"), gomock.Eq("zone-name")).Return(test.records, nil).AnyTimes()
+
+			err := ValidatePrivateDNSZone(gcpClient, &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain: "base-domain",
+				Platform:   test.platform,
+			}).ToAggregate()
+			if test.err == "" {
+				assert.True(t, err == nil)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func TestGCPEnabledServicesList(t *testing.T) {
+	cases := []struct {
+		name     string
+		services []string
+		err      string
+	}{{
+		name:     "No services present",
+		services: nil,
+		err:      "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled",
+	}, {
+		name:     "Service Usage missing",
+		services: []string{"compute.googleapis.com"},
+		err:      "unable to fetch enabled services for project. Make sure 'serviceusage.googleapis.com' is enabled",
+	}, {
+		name: "All pre-existing",
+		services: []string{
+			"compute.googleapis.com",
+			"cloudresourcemanager.googleapis.com", "dns.googleapis.com",
+			"iam.googleapis.com", "iamcredentials.googleapis.com", "serviceusage.googleapis.com",
+			"deploymentmanager.googleapis.com",
+		},
+	}, {
+		name:     "Some services present",
+		services: []string{"compute.googleapis.com", "serviceusage.googleapis.com"},
+		err:      "the following required services are not enabled in this project: cloudresourcemanager.googleapis.com,dns.googleapis.com,iam.googleapis.com,iamcredentials.googleapis.com",
+	}}
+
+	errForbidden := &googleapi.Error{Code: http.StatusForbidden}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			if !sets.NewString(test.services...).Has("serviceusage.googleapis.com") {
+				gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(nil, errForbidden).AnyTimes()
+			} else {
+				gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
+			}
+			err := ValidateEnabledServices(context.TODO(), gcpClient, "")
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func TestValidateCredentialMode(t *testing.T) {
+	cases := []struct {
+		name       string
+		creds      types.CredentialsMode
+		emptyCreds bool
+		err        string
+	}{{
+		name:       "missing json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: true,
+	}, {
+		name:       "missing json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: true,
+		err:        "credentialsMode: Forbidden: Manual credentials mode needs to be enabled to use environmental authentication",
+	}, {
+		name:       "supplied json with manual creds",
+		creds:      types.ManualCredentialsMode,
+		emptyCreds: false,
+	}, {
+		name:       "supplied json without manual creds",
+		creds:      types.PassthroughCredentialsMode,
+		emptyCreds: false,
+		err:        "credentialsMode: Forbidden: environmental authentication is only supported with Manual credentials mode",
+	}}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	// Client where the creds are empty
+	gcpClientEmptyCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientEmptyCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: nil}).AnyTimes()
+
+	// Client that contains creds
+
+	gcpClientWithCreds := mock.NewMockAPI(mockCtrl)
+	gcpClientWithCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte(fakeCreds)}).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			ic := types.InstallConfig{
+				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain:      "base-domain",
+				Platform:        types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+				CredentialsMode: test.creds,
+			}
+
+			var err error
+			if test.emptyCreds {
+				err = ValidateCredentialMode(gcpClientEmptyCreds, &ic).ToAggregate()
+			} else {
+				err = ValidateCredentialMode(gcpClientWithCreds, &ic).ToAggregate()
+			}
+
+			if test.err == "" {
+				assert.Nil(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
+
+func TestValidateServiceAccountPresent(t *testing.T) {
+	cases := []struct {
+		name             string
+		creds            *googleoauth.Credentials
+		serviceAccount   string
+		networkProjectID string
+		expectedError    string
+	}{
+		{
+			name:  "Test no network project ID",
+			creds: &googleoauth.Credentials{},
+		},
+		{
+			name:             "Test network project ID with service account",
+			creds:            &googleoauth.Credentials{},
+			serviceAccount:   "test-service-account",
+			networkProjectID: "test-network-project",
+		},
+		{
+			name:             "Test network project ID service account and creds",
+			creds:            &googleoauth.Credentials{JSON: []byte("{}")},
+			serviceAccount:   "test-service-account",
+			networkProjectID: "test-network-project",
+		},
+		{
+			name:             "Test network project ID no creds",
+			creds:            &googleoauth.Credentials{JSON: nil},
+			networkProjectID: "test-network-project",
+			expectedError:    "controlPlane.platform.gcp.serviceAccount: Required value: service account must be provided when authentication credentials do not provide a service account",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	for _, test := range cases {
+		gcpClient := mock.NewMockAPI(mockCtrl)
+		if test.networkProjectID != "" {
+			gcpClient.EXPECT().GetCredentials().Return(test.creds)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			ic := types.InstallConfig{
+				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain:      "base-domain",
+				Platform:        types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", NetworkProjectID: test.networkProjectID}},
+				CredentialsMode: types.PassthroughCredentialsMode,
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{
+						GCP: &gcp.MachinePool{
+							ServiceAccount: test.serviceAccount,
+						},
+					},
+				},
+			}
+
+			errorList := validateServiceAccountPresent(gcpClient, &ic)
+			if errorList == nil && test.expectedError == "" {
+				assert.NoError(t, errorList.ToAggregate())
+			} else {
+				assert.Regexp(t, test.expectedError, errorList.ToAggregate())
+			}
+		})
+	}
+}
+
+func TestValidateZones(t *testing.T) {
+	validZonesDefaultMachine := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-c"}
+	}
+	validZonesControlPlane := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-a", "us-central1-b"}
+	}
+	validZonesCompute := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-b", "us-central1-c", "us-central1-d"}
+	}
+	invalidZonesDefaultMachine := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-x", "us-central1-y"}
+	}
+	invalidZonesControlPlane := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-d", "us-central1-x", "us-central1-y"}
+	}
+	invalidZonesCompute := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-y", "us-central1-z", "us-central1-w"}
+	}
+
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Valid zones for defaultMachine",
+			edits:          editFunctions{validZonesDefaultMachine},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for defaultMachine",
+			edits:          editFunctions{invalidZonesDefaultMachine},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.zones: Invalid value: \["us\-central1\-x","us\-central1\-y"\]: zone\(s\) not found in region\]$`,
+		},
+		{
+			name:           "Valid zones for controlPlane",
+			edits:          editFunctions{validZonesControlPlane},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for controlPlane",
+			edits:          editFunctions{invalidZonesControlPlane},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.zones: Invalid value: \["us\-central1\-x","us\-central1\-y"\]: zone\(s\) not found in region\]$`,
+		},
+		{
+			name:           "Valid zones for compute",
+			edits:          editFunctions{validZonesCompute},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for compute",
+			edits:          editFunctions{invalidZonesCompute},
+			expectedError:  true,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.zones: Invalid value: \["us\-central1\-w","us\-central1\-y","us\-central1\-z"\]: zone\(s\) not found in region\]$`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	validZones := []*compute.Zone{
+		{Name: "us-central1-a"},
+		{Name: "us-central1-b"},
+		{Name: "us-central1-c"},
+		{Name: "us-central1-d"},
+	}
+
+	// Should get the list of zones.
+	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return(validZones, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errs := validateZones(gcpClient, editedInstallConfig)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateInstanceType(t *testing.T) {
+	cases := []struct {
+		name                string
+		zones               []string
+		diskType            string
+		instanceType        string
+		arch                string
+		onHostMaintenance   string
+		confidentialCompute string
+		expectedError       bool
+		expectedErrMsg      string
+	}{
+		{
+			name:                "Valid instance type with min requirements and no zones specified",
+			zones:               []string{},
+			instanceType:        "n1-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid instance type with min requirements and valid zones specified",
+			zones:               []string{"a", "b"},
+			instanceType:        "n1-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			arch:                "amd64",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid instance type with min requirements and invalid zones specified",
+			zones:               []string{"a", "b", "d", "x", "y"},
+			instanceType:        "n1-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `\[instance.diskType: Invalid value: "pd\-ssd": disk type pd\-ssd is not available in zones: \[x y\] instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
+		},
+		{
+			name:                "Valid instance fails min requirements and no zones specified",
+			zones:               []string{},
+			instanceType:        "n1-standard-2",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
+		},
+		{
+			name:                "Valid instance fails min requirements and valid zones specified",
+			zones:               []string{"a", "b"},
+			instanceType:        "n1-standard-1",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      ``,
+		},
+		{
+			name:                "Valid instance fails min requirements and invalid zones specified",
+			zones:               []string{"a", "x", "y"},
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      ``,
+		},
+		{
+			name:                "Invalid instance and no zones specified",
+			zones:               []string{},
+			instanceType:        "invalid-instance-1",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[<nil>: Internal error: 404\]$`,
+		},
+		{
+			name:                "Invalid instance and valid zones specified",
+			zones:               []string{"a", "b"},
+			instanceType:        "invalid-instance-1",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[<nil>: Internal error: 404\]$`,
+		},
+		{
+			name:                "Invalid instance and invalid zones specified",
+			zones:               []string{"a", "x", "y", "z"},
+			instanceType:        "invalid-instance-1",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[<nil>: Internal error: 404\]$`,
+		},
+		{
+			name:                "Invalid instance architecture",
+			zones:               []string{"a", "b"},
+			instanceType:        "t2a-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			arch:                "amd64",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "t2a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
+		},
+		{
+			name:                "Valid special instance type with min requirements",
+			zones:               []string{"a"},
+			instanceType:        "n4-standard-4",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Invalid special instance type with min requirements",
+			zones:               []string{"a"},
+			instanceType:        "n2-standard-4",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": n2\-standard\-4 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
+		},
+		{
+			name:                "Valid custom instance type",
+			zones:               []string{"a"},
+			instanceType:        "n4-custom-4-16384",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid custom instance type invalid disk type",
+			zones:               []string{"a"},
+			instanceType:        "n4-custom-4-16384",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.diskType: Invalid value: "pd\-ssd": n4\-custom\-4\-16384 instance requires one of the following disk types: \[hyperdisk\-balanced\]\]$`,
+		},
+		{
+			name:                "Valid custom default instance type",
+			zones:               []string{"a"},
+			instanceType:        "custom-4-16384",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Invalid disk type custom default instance type",
+			zones:               []string{"a"},
+			instanceType:        "custom-4-16384",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": custom\-4\-16384 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
+		},
+		{
+			name:                "Enable confidential compute with correct on host maintenance",
+			zones:               []string{"a"},
+			instanceType:        "c2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "Enabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Enable confidential compute with incorrect on host maintenance",
+			zones:               []string{"a"},
+			instanceType:        "c2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Enabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.onHostMaintenance: Invalid value: "Migrate": onHostMaintenace must be set to Terminate when confidentialCompute is Enabled\]`,
+		},
+		{
+			name:                "AMDEncryptedVirtualization confidential compute with incorrect on host maintenance",
+			zones:               []string{"a"},
+			instanceType:        "c2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "AMDEncryptedVirtualization",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.onHostMaintenance: Invalid value: "Migrate": onHostMaintenace must be set to Terminate when confidentialCompute is AMDEncryptedVirtualization\]`,
+		},
+		{
+			name:                "AMDEncryptedVirtualizationNestedPaging confidential compute with incorrect on host maintenance",
+			zones:               []string{"a"},
+			instanceType:        "n2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "AMDEncryptedVirtualizationNestedPaging",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.onHostMaintenance: Invalid value: "Migrate": onHostMaintenace must be set to Terminate when confidentialCompute is AMDEncryptedVirtualizationNestedPaging\]`,
+		},
+		{
+			name:                "IntelTrustedDomainExtensions confidential compute with incorrect on host maintenance",
+			zones:               []string{"a"},
+			instanceType:        "c3-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "IntelTrustedDomainExtensions",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.onHostMaintenance: Invalid value: "Migrate": onHostMaintenace must be set to Terminate when confidentialCompute is IntelTrustedDomainExtensions\]`,
+		},
+		{
+			name:                "Enabled confidential compute with unsupported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "Enabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c3-standard-4": Machine type does not support a Confidential Compute value of Enabled. Machine types supporting Enabled: c2d, n2d, c3d\]`,
+		},
+		{
+			name:                "Enabled confidential compute with supported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "Enabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "AMDEncryptedVirtualization confidential compute with unsupported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "AMDEncryptedVirtualization",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c3-standard-4": Machine type does not support a Confidential Compute value of AMDEncryptedVirtualization. Machine types supporting AMDEncryptedVirtualization: c2d, n2d, c3d\]`,
+		},
+		{
+			name:                "AMDEncryptedVirtualization confidential compute with supported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "AMDEncryptedVirtualization",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "AMDEncryptedVirtualizationNestedPaging confidential compute with unsupported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "AMDEncryptedVirtualizationNestedPaging",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "c2d-standard-4": Machine type does not support a Confidential Compute value of AMDEncryptedVirtualizationNestedPaging. Machine types supporting AMDEncryptedVirtualizationNestedPaging: n2d\]`,
+		},
+		{
+			name:                "AMDEncryptedVirtualizationNestedPaging confidential compute with supported machine type",
+			zones:               []string{"a"},
+			instanceType:        "n2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "AMDEncryptedVirtualizationNestedPaging",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "IntelTrustedDomainExtensions confidential compute with unsupported machine type",
+			zones:               []string{"a"},
+			instanceType:        "n2d-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "IntelTrustedDomainExtensions",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "n2d-standard-4": Machine type does not support a Confidential Compute value of IntelTrustedDomainExtensions. Machine types supporting IntelTrustedDomainExtensions: c3\]`,
+		},
+		{
+			name:                "IntelTrustedDomainExtensions confidential compute with supported machine type",
+			zones:               []string{"a"},
+			instanceType:        "c3-standard-4",
+			diskType:            "pd-ssd",
+			onHostMaintenance:   "Terminate",
+			confidentialCompute: "IntelTrustedDomainExtensions",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid n4a ARM instance type with hyperdisk-balanced",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "hyperdisk-balanced",
+			arch:                "arm64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Invalid n4a instance with pd-ssd disk type",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "pd-ssd",
+			arch:                "arm64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.diskType: Invalid value: \"pd\-ssd\": n4a\-standard\-4 instance requires one of the following disk types: \[hyperdisk\-balanced\]\]$`,
+		},
+		{
+			name:                "Invalid n4a instance with amd64 architecture",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "hyperdisk-balanced",
+			arch:                "amd64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "n4a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	// Should return the machine type as specified
+	for key, value := range machineTypeAPIResult {
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New("a", "b", "c", "d"), nil).AnyTimes()
+	}
+	// When passed incorrect machine type, the API returns nil.
+	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
+
+	// Mock disk type availability - all disk types available in all test zones
+	gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&compute.DiskType{Name: "available"}, sets.New("a", "b", "c", "d"), nil).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.diskType, test.instanceType, controlPlaneReq, test.arch, test.onHostMaintenance, test.confidentialCompute)
+			if test.expectedError {
+				assert.Regexp(t, test.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateDiskTypeAvailability(t *testing.T) {
+	cases := []struct {
+		name           string
+		diskType       string
+		zones          sets.Set[string]
+		mockDiskType   *compute.DiskType
+		mockZones      sets.Set[string]
+		mockErr        error
+		expectedError  bool
+		expectedErrMsg string
+		expectedWarn   string
+	}{
+		{
+			name:          "Empty disk type is a no-op",
+			diskType:      "",
+			expectedError: false,
+		},
+		{
+			name:          "Disk type available in all zones",
+			diskType:      "pd-ssd",
+			zones:         sets.New("us-east1-b", "us-east1-c"),
+			mockDiskType:  &compute.DiskType{Name: "pd-ssd"},
+			mockZones:     sets.New("us-east1-b", "us-east1-c", "us-east1-d"),
+			expectedError: false,
+		},
+		{
+			name:           "Disk type not available in region",
+			diskType:       "hyperdisk-balanced",
+			zones:          sets.New[string](),
+			mockDiskType:   nil,
+			mockZones:      nil,
+			expectedError:  true,
+			expectedErrMsg: `disk type hyperdisk-balanced is not available in region us-east1`,
+		},
+		{
+			name:           "Disk type not available in specific zones",
+			diskType:       "pd-ssd",
+			zones:          sets.New("us-east1-b", "us-east1-x"),
+			mockDiskType:   &compute.DiskType{Name: "pd-ssd"},
+			mockZones:      sets.New("us-east1-b", "us-east1-c"),
+			expectedError:  true,
+			expectedErrMsg: `disk type pd-ssd is not available in zones: \[us-east1-x\]`,
+		},
+		{
+			name:           "Disk type available in fewer zones than requested",
+			diskType:       "pd-ssd",
+			zones:          sets.New("us-east1-b", "us-east1-c", "us-east1-d"),
+			mockDiskType:   &compute.DiskType{Name: "pd-ssd"},
+			mockZones:      sets.New("us-east1-b", "us-east1-c"),
+			expectedError:  true,
+			expectedErrMsg: `disk type pd-ssd is not available in zones: \[us-east1-d\]`,
+		},
+		{
+			name:           "GCP API error returns field error",
+			diskType:       "pd-ssd",
+			mockErr:        &googleapi.Error{Code: http.StatusBadRequest, Message: "bad request"},
+			expectedError:  true,
+			expectedErrMsg: `bad request`,
+		},
+		{
+			name:         "GCP 403 permission denied degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      &googleapi.Error{Code: http.StatusForbidden, Message: "Required 'compute.diskTypes.get' permission"},
+			expectedWarn: `could not verify disk type pd-ssd availability`,
+		},
+		{
+			name:         "GCP 503 server error degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      &googleapi.Error{Code: http.StatusServiceUnavailable, Message: "backend error"},
+			expectedWarn: `could not verify disk type pd-ssd availability`,
+		},
+		{
+			name:         "Non-API error degrades gracefully",
+			diskType:     "pd-ssd",
+			mockErr:      fmt.Errorf("network timeout"),
+			expectedWarn: `could not verify disk type pd-ssd availability`,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			hook := logrusTest.NewGlobal()
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			if test.diskType != "" {
+				gcpClient.EXPECT().GetDiskTypeWithZones(gomock.Any(), "project-id", "us-east1", test.diskType).
+					Return(test.mockDiskType, test.mockZones, test.mockErr).AnyTimes()
+			}
+
+			errs := validateDiskTypeAvailability(gcpClient, field.NewPath("test"), "project-id", "us-east1", test.zones, test.diskType)
+			if test.expectedError {
+				assert.Regexp(t, test.expectedErrMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
+			}
+			if test.expectedWarn != "" {
+				assert.NotEmpty(t, hook.Entries)
+				assert.Regexp(t, test.expectedWarn, hook.LastEntry().Message)
+			}
+		})
+	}
+}
+
+func TestValidateMarketplaceImages(t *testing.T) {
+	var (
+		validImage     = "valid-image"
+		projectID      = "project-id"
+		invalidImage   = "invalid-image"
+		mismatchedArch = "mismatched-arch"
+		osImage        = &gcp.OSImage{}
+
+		validDefaultMachineImage = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = osImage
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Name = validImage
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Project = projectID
+		}
+		validControlPlaneImage = func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSImage = osImage
+			ic.ControlPlane.Platform.GCP.OSImage.Name = validImage
+			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+		}
+		validComputeImage = func(ic *types.InstallConfig) {
+			ic.Compute[0].Platform.GCP.OSImage = osImage
+			ic.Compute[0].Platform.GCP.OSImage.Name = validImage
+			ic.Compute[0].Platform.GCP.OSImage.Project = projectID
+		}
+
+		invalidDefaultMachineImage = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = osImage
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Name = invalidImage
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Project = projectID
+		}
+		invalidControlPlaneImage = func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSImage = osImage
+			ic.ControlPlane.Platform.GCP.OSImage.Name = invalidImage
+			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+		}
+		invalidComputeImage = func(ic *types.InstallConfig) {
+			ic.Compute[0].Platform.GCP.OSImage = osImage
+			ic.Compute[0].Platform.GCP.OSImage.Name = invalidImage
+			ic.Compute[0].Platform.GCP.OSImage.Project = projectID
+		}
+
+		mismatchedDefaultMachineImageArchitecture = func(ic *types.InstallConfig) {
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage = osImage
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Name = mismatchedArch
+			ic.Platform.GCP.DefaultMachinePlatform.OSImage.Project = projectID
+			ic.ControlPlane.Architecture = types.ArchitectureARM64
+			ic.Compute[0].Architecture = types.ArchitectureARM64
+		}
+		mismatchedControlPlaneImageArchitecture = func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSImage = osImage
+			ic.ControlPlane.Platform.GCP.OSImage.Name = mismatchedArch
+			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+			ic.ControlPlane.Architecture = types.ArchitectureARM64
+		}
+		mismatchedComputeImageArchitecture = func(ic *types.InstallConfig) {
+			ic.Compute[0].Platform.GCP.OSImage = osImage
+			ic.Compute[0].Platform.GCP.OSImage.Name = mismatchedArch
+			ic.Compute[0].Platform.GCP.OSImage.Project = projectID
+			ic.Compute[0].Architecture = types.ArchitectureARM64
+		}
+		unspecifiedImageArchitecture = func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSImage = osImage
+			ic.ControlPlane.Platform.GCP.OSImage.Name = "unspecified-arch"
+			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+		}
+		missingImageArchitecture = func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSImage = osImage
+			ic.ControlPlane.Platform.GCP.OSImage.Name = "missing-arch"
+			ic.ControlPlane.Platform.GCP.OSImage.Project = projectID
+		}
+
+		marketplaceImageAPIResult = &compute.Image{
+			Architecture: "X86_64",
+		}
+
+		unspecifiedMarketplaceImageAPIResult = &compute.Image{
+			Architecture: "ARCHITECTURE_UNSPECIFIED",
+		}
+		emptyMarketplaceImageAPIResult = &compute.Image{}
+	)
+
+	cases := []struct {
+		name            string
+		edits           editFunctions
+		expectedError   bool
+		expectedErrMsg  string
+		expectedWarnMsg string //NOTE: this is a REGEXP
+	}{
+		{
+			name:          "Valid default machine image",
+			edits:         editFunctions{validDefaultMachineImage},
+			expectedError: false,
+		},
+		{
+			name:          "Valid control plane image",
+			edits:         editFunctions{validControlPlaneImage},
+			expectedError: false,
+		},
+		{
+			name:          "Valid compute image",
+			edits:         editFunctions{validComputeImage},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid default machine image",
+			edits:          editFunctions{invalidDefaultMachineImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
+		},
+		{
+			name:           "Invalid control plane image",
+			edits:          editFunctions{invalidControlPlaneImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
+		},
+		{
+			name:           "Invalid compute image",
+			edits:          editFunctions{invalidComputeImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: {"name":"invalid-image","project":"project-id"}: could not find the boot image: image not found\]$`,
+		},
+		{
+			name:           "Invalid images",
+			edits:          editFunctions{invalidDefaultMachineImage, invalidControlPlaneImage, invalidComputeImage},
+			expectedError:  true,
+			expectedErrMsg: `^\[(.*?\.osImage: Invalid value: \{"name":"invalid-image","project":"project-id"\}: could not find the boot image: image not found){3}\]$`,
+		},
+		{
+			name:           "Mismatched default machine image architecture",
+			edits:          editFunctions{mismatchedDefaultMachineImageArchitecture},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64 compute\[0\].platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
+		},
+		{
+			name:           "Mismatched control plane image architecture",
+			edits:          editFunctions{mismatchedControlPlaneImageArchitecture},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match controlPlane node architecture arm64]$`,
+		},
+		{
+			name:           "Mismatched compute image architecture",
+			edits:          editFunctions{mismatchedComputeImageArchitecture},
+			expectedError:  true,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.osImage: Invalid value: {"name":"mismatched-arch","project":"project-id"}: image architecture X86_64 does not match compute node architecture arm64]$`,
+		},
+		{
+			name:            "Missing image architecture",
+			edits:           editFunctions{missingImageArchitecture},
+			expectedError:   false,
+			expectedWarnMsg: "Boot image architecture is unspecified and might not be compatible with amd64 controlPlane nodes",
+		},
+		{
+			name:            "Unspecified image architecture",
+			edits:           editFunctions{unspecifiedImageArchitecture},
+			expectedError:   false,
+			expectedWarnMsg: "Boot image architecture is unspecified and might not be compatible with amd64 controlPlane nodes",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	// Mocks: valid image with matching architecture
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq(validImage), gomock.Any()).Return(marketplaceImageAPIResult, nil).AnyTimes()
+
+	//Mocks: invalid image
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq(invalidImage), gomock.Any()).Return(marketplaceImageAPIResult, fmt.Errorf("image not found")).AnyTimes()
+
+	//Mocks: valid image with mismatched architecture
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq(mismatchedArch), gomock.Any()).Return(marketplaceImageAPIResult, nil).AnyTimes()
+
+	//Mocks: valid image with no specified architecture
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq("unspecified-arch"), gomock.Any()).Return(unspecifiedMarketplaceImageAPIResult, nil).AnyTimes()
+	gcpClient.EXPECT().GetImage(gomock.Any(), gomock.Eq("missing-arch"), gomock.Any()).Return(emptyMarketplaceImageAPIResult, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			hook := logrusTest.NewGlobal()
+			errs := validateMarketplaceImages(gcpClient, editedInstallConfig)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+			if len(tc.expectedWarnMsg) > 0 {
+				// Check that at least one entry matches the expected warning
+				found := false
+				for _, entry := range hook.AllEntries() {
+					matched, err := regexp.MatchString(tc.expectedWarnMsg, entry.Message)
+					assert.NoError(t, err, "Invalid regex pattern: %s", tc.expectedWarnMsg)
+					if matched {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Expected warning message not found: %s", tc.expectedWarnMsg)
+			}
+		})
+	}
+}
+
+func TestValidateServiceEndpointOverride(t *testing.T) {
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:          "No endpoint configured",
+			edits:         editFunctions{},
+			expectedError: false,
+		},
+		{
+			name: "Sovereign cloud project with endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.ProjectID = "eu0:my-project"
+				ic.GCP.Region = "u-de-1"
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "test-endpoint"}
+			}},
+			expectedError:  true,
+			expectedErrMsg: `platform\.gcp\.endpoint\.name: Forbidden: endpoint overrides are not supported in sovereign clouds`,
+		},
+		{
+			name: "Regular project with valid endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "valid-endpoint"}
+			}},
+			expectedError: false,
+		},
+		{
+			name: "Regular project with invalid endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.Endpoint = &gcp.PSCEndpoint{Name: "invalid-endpoint"}
+			}},
+			expectedError:  true,
+			expectedErrMsg: `platform\.gcp\.endpoint\.name: Not found: "invalid-endpoint"`,
+		},
+		{
+			name: "Sovereign cloud project without endpoint",
+			edits: editFunctions{func(ic *types.InstallConfig) {
+				ic.GCP.ProjectID = "s-cloud-domain:my-project"
+				ic.GCP.Region = "u-fr-1"
+			}},
+			expectedError: false,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	gcpClient.EXPECT().GetPrivateServiceConnectEndpoint(gomock.Any(), validProjectName, &gcp.PSCEndpoint{Name: "valid-endpoint"}).
+		Return(&compute.ForwardingRule{Name: "valid-endpoint", Network: "projects/valid-project/global/networks/" + validNetworkName}, nil).AnyTimes()
+	gcpClient.EXPECT().GetPrivateServiceConnectEndpoint(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("not found")).AnyTimes()
+
+	fieldPath := field.NewPath("platform").Child("gcp")
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errs := validateServiceEndpointOverride(gcpClient, editedInstallConfig, fieldPath)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs.ToAggregate())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateKMSKeyServiceAgentAccess(t *testing.T) {
+	validKMSKey := gcp.KMSKeyReference{
+		Name:      "myKey",
+		KeyRing:   "myKeyRing",
+		Location:  "us-east1",
+		ProjectID: "valid-project",
+	}
+
+	computeAgent := "serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com"
+	gcsAgent := "serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com"
+
+	setDefaultMachineKMS := func(key *gcp.KMSKeyReference) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+			ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: key,
+				},
+			}
+		}
+	}
+
+	setControlPlaneKMS := func(key *gcp.KMSKeyReference) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: key,
+				},
+			}
+		}
+	}
+
+	cases := []struct {
+		name          string
+		edits         editFunctions
+		policy        *iampb.Policy
+		policyErr     error
+		expectedError bool
+		expectedMsg   string
+	}{
+		{
+			name:          "No encryption key configured",
+			expectedError: false,
+		},
+		{
+			name:  "All agents have access on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent, gcsAgent},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:  "Compute agent missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{gcsAgent},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:  "GCS agent missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Cloud Storage service agent.*does not have",
+		},
+		{
+			name:  "Both agents missing on defaultMachinePlatform key",
+			edits: editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:  "Compute agent has access on controlPlane key",
+			edits: editFunctions{setControlPlaneKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{computeAgent},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:  "Compute agent missing on controlPlane key",
+			edits: editFunctions{setControlPlaneKMS(&validKMSKey)},
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:          "Policy retrieval fails gracefully",
+			edits:         editFunctions{setDefaultMachineKMS(&validKMSKey)},
+			policyErr:     fmt.Errorf("permission denied"),
+			expectedError: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			gcpClient := mock.NewMockAPI(mockCtrl)
+			gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(
+				&cloudresourcemanager.Project{Name: "projects/123456789"}, nil,
+			).AnyTimes()
+			gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				tc.policy, tc.policyErr,
+			).AnyTimes()
+
+			ic := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(ic)
+			}
+
+			errs := validateKMSKeyServiceAgentAccess(gcpClient, ic)
+			if tc.expectedError {
+				assert.NotEmpty(t, errs)
+				assert.Regexp(t, tc.expectedMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateKMSKeyServiceAgentAccessDomainScoped(t *testing.T) {
+	validKMSKey := gcp.KMSKeyReference{
+		Name:     "myKey",
+		KeyRing:  "myKeyRing",
+		Location: "us-east1",
+	}
+
+	sovereignComputeAccount := "serviceAccount:service-123456789@compute-system.eu0-system.iam.gserviceaccount.com"
+	sovereignGCSAccount := "serviceAccount:service-123456789@gs-project-accounts.eu0-system.iam.gserviceaccount.com"
+	nonSovereignComputeAccount := "serviceAccount:service-123456789@compute-system.iam.gserviceaccount.com"
+	nonSovereignGCSAccount := "serviceAccount:service-123456789@gs-project-accounts.iam.gserviceaccount.com"
+
+	cases := []struct {
+		name          string
+		projectID     string
+		region        string
+		policy        *iampb.Policy
+		expectedError bool
+		expectedMsg   string
+	}{
+		{
+			name:      "Sovereign domain-scoped agents have access",
+			projectID: "eu0:openshift",
+			region:    "u-de-1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{sovereignComputeAccount, sovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:      "Sovereign domain-scoped compute agent missing",
+			projectID: "eu0:openshift",
+			region:    "u-de-1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{sovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+		{
+			name:      "Non-sovereign domain-scoped agents have access with unsuffixed domains",
+			projectID: "myorg:myproject",
+			region:    "us-central1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{nonSovereignComputeAccount, nonSovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:      "Non-sovereign domain-scoped compute agent missing",
+			projectID: "myorg:myproject",
+			region:    "us-central1",
+			policy: &iampb.Policy{
+				Bindings: []*iampb.Binding{
+					{
+						Role:    "roles/cloudkms.cryptoKeyEncrypterDecrypter",
+						Members: []string{nonSovereignGCSAccount},
+					},
+				},
+			},
+			expectedError: true,
+			expectedMsg:   "Compute Engine service agent.*does not have",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			gcpClient := mock.NewMockAPI(mockCtrl)
+			gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(
+				&cloudresourcemanager.Project{Name: "projects/123456789"}, nil,
+			).AnyTimes()
+			gcpClient.EXPECT().GetKMSCryptoKeyIamPolicy(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				tc.policy, nil,
+			).AnyTimes()
+
+			ic := validInstallConfig()
+			ic.GCP.ProjectID = tc.projectID
+			ic.GCP.Region = tc.region
+			ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+			ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+				EncryptionKey: &gcp.EncryptionKeyReference{
+					KMSKey: &validKMSKey,
+				},
+			}
+
+			errs := validateKMSKeyServiceAgentAccess(gcpClient, ic)
+			if tc.expectedError {
+				assert.NotEmpty(t, errs)
+				assert.Regexp(t, tc.expectedMsg, errs.ToAggregate().Error())
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}

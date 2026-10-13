@@ -1,0 +1,65 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Ansible
+*.retry
+
+# vim
+*~
+*.swp
+
+# envfiles
+.env
+envfile
+.envrc
+
+# kubeconfigs
+kind.kubeconfig
+minikube.kubeconfig
+kubeconfig
+!kubeconfig/
+
+# Example and binary output directory
+/out
+
+# build
+.build
+
+# vscode
+.vscode
+
+# go.work files
+go.work
+go.work.sum
+
+# goland
+.idea
+
+# Ignore output manifests
+config/samples
+manager_image_patch.yaml-e
+manager_pull_policy.yaml-e
+
+# junit files
+junit.*.xml
+
+.DS_Store
+
+.tiltbuild
+dist
+
+# test results
+_artifacts
+awsiamconfiguration.yaml
+cloudformation.yaml

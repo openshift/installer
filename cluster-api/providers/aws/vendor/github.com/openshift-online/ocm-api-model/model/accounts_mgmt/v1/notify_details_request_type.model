@@ -1,0 +1,43 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// This struct is a request to get a templated email to a user related to this.
+// subscription/cluster.
+struct NotificationDetailsRequest {
+	// Indicates which Cluster (internal id) the resource type belongs to.
+	ClusterID String
+
+	// Indicates which Cluster (external id) the resource type belongs to.
+	ClusterUUID String
+
+	// Indicates which Subscription the resource type belongs to.
+	SubscriptionID String
+
+	// The BCC address to be included on the email that is sent.
+	BccAddress String
+
+	// The email subject.
+	Subject String
+
+	// Indicates whether to include red hat associates in the email notification.
+	IncludeRedHatAssociates Boolean
+
+	// Indicates whether the service log is internal only to RH.
+	InternalOnly Boolean
+
+	// Indicates the type of the service log.
+	LogType String
+}

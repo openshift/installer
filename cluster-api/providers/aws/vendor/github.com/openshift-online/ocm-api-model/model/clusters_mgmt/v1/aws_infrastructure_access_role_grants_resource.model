@@ -1,0 +1,78 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the collection of AWS infrastructure access role grants.
+resource AWSInfrastructureAccessRoleGrants {
+	// Retrieves the list of AWS infrastructure access role grants.
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
+
+		// Maximum number of items that will be contained in the returned page.
+		in out Size Integer = 100
+
+		// Search criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _where_ clause of an
+		// SQL statement, but using the names of the attributes of the AWS infrastructure access role grant
+		// instead of the names of the columns of a table. For example, in order to retrieve
+		// all the AWS infrastructure access role grants with a user ARN starting with `user` the value should be:
+		//
+		// ```sql
+		// user_arn like '%user'
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then all the AWS
+		// infrastructure access role grants that the user has permission to see will be returned.
+		in Search String
+
+		// Order criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _order by_ clause of
+		// a SQL statement, but using the names of the attributes of the AWS infrastructure access role grant
+		// instead of the names of the columns of a table. For example, in order to sort the
+		// AWS infrastructure access role grants descending by user ARN the value should be:
+		//
+		// ```sql
+		// user_arn desc
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then the order of the
+		// results is undefined.
+		in Order String
+
+		// Total number of items of the collection that match the search criteria,
+		// regardless of the size of the page.
+		out Total Integer
+
+		// Retrieved list of AWS infrastructure access role grants.
+		out Items []AWSInfrastructureAccessRoleGrant
+	}
+
+	// Create a new AWS infrastructure access role grant and add it to the collection of
+	// AWS infrastructure access role grants on the cluster.
+	method Add {
+		// Description of the AWS infrastructure access role grant.
+		in out Body AWSInfrastructureAccessRoleGrant
+	}
+
+	// Returns a reference to the service that manages a specific AWS infrastructure access role grant.
+	locator AWSInfrastructureAccessRoleGrant {
+		target AWSInfrastructureAccessRoleGrant
+		variable ID
+	}
+}
+

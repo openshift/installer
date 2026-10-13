@@ -1,0 +1,153 @@
+package powervs
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/core"
+
+	"github.com/openshift/installer/pkg/types/powervs"
+)
+
+func knownRegions() map[string]string {
+
+	regions := make(map[string]string)
+
+	for name, region := range powervs.Regions {
+		regions[name] = region.Description
+	}
+	return regions
+}
+
+// IsKnownRegion return true is a specified region is Known to the installer.
+func IsKnownRegion(region string) bool {
+	if _, ok := knownRegions()[region]; ok {
+		return true
+	}
+	return false
+}
+
+func knownZones(region string) []string {
+	zones := make([]string, 0, len(powervs.Regions[region].Zones))
+	for z := range powervs.Regions[region].Zones {
+		zones = append(zones, z)
+	}
+	return zones
+}
+
+// IsKnownZone return true is a specified zone is Known to the installer.
+func IsKnownZone(region string, zone string) bool {
+	if _, ok := knownRegions()[region]; ok {
+		zones := knownZones(region)
+		for _, z := range zones {
+			if z == zone {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
+// GetRegion prompts the user to select a region and returns that region.
+func GetRegion(defaultRegion string) (string, error) {
+	regions := knownRegions()
+	var idToLocationMappingHelpText string
+	shortRegions := make([]string, 0, len(regions))
+	for id, location := range regions {
+		shortRegions = append(shortRegions, id)
+		idToLocationMappingHelpText += fmt.Sprintf("%s: %s ", id, location)
+	}
+	sort.Strings(shortRegions)
+
+	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
+		switch v := ans.(type) {
+		case core.OptionAnswer:
+			return core.OptionAnswer{Value: strings.SplitN(v.Value, " ", 2)[0], Index: v.Index}
+		case string:
+			return strings.SplitN(v, " ", 2)[0]
+		}
+		return ""
+	}
+
+	var region string
+	li := sort.SearchStrings(shortRegions, defaultRegion)
+	if li == len(shortRegions) || shortRegions[li] != defaultRegion {
+		defaultRegion = "dal"
+	} else {
+		defaultRegion = shortRegions[li]
+	}
+
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select{
+				Message: "Region",
+				Help:    fmt.Sprintf("The Power VS region to be used for installation. The available regions are: %s", idToLocationMappingHelpText),
+				Default: defaultRegion,
+				Options: shortRegions,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				choice := regionTransform(ans).(core.OptionAnswer).Value
+				i := sort.SearchStrings(shortRegions, choice)
+				if i == len(shortRegions) || shortRegions[i] != choice {
+					return fmt.Errorf("invalid region %q", choice)
+				}
+				return nil
+			}),
+			Transform: regionTransform,
+		},
+	}, &region)
+	if err != nil {
+		return "", err
+	}
+
+	return region, nil
+}
+
+// GetZone prompts the user for a zone given a zone.
+func GetZone(region string, defaultZone string) (string, error) {
+	zones := knownZones(region)
+	if len(defaultZone) == 0 {
+		defaultZone = zones[0]
+	}
+
+	var zoneTransform survey.Transformer = func(ans interface{}) interface{} {
+		switch v := ans.(type) {
+		case core.OptionAnswer:
+			return core.OptionAnswer{Value: strings.SplitN(v.Value, " ", 2)[0], Index: v.Index}
+		case string:
+			return strings.SplitN(v, " ", 2)[0]
+		}
+		return ""
+	}
+
+	var zone string
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select{
+				Message: "Zone",
+				Help:    "The Power VS zone within the region to be used for installation.",
+				Default: fmt.Sprintf("%s", defaultZone),
+				Options: zones,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				choice := zoneTransform(ans).(core.OptionAnswer).Value
+				sort.Slice(zones, func(i, j int) bool {
+					return strings.ToLower(zones[i]) < strings.ToLower(zones[j])
+				})
+				i := sort.SearchStrings(zones, choice)
+				if i == len(zones) || zones[i] != choice {
+					return fmt.Errorf("invalid zone %q", choice)
+				}
+				return nil
+			}),
+			Transform: zoneTransform,
+		},
+	}, &zone)
+	if err != nil {
+		return "", err
+	}
+	return zone, err
+}

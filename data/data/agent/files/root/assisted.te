@@ -1,0 +1,13 @@
+module assisted 1.0;
+require {
+        type chronyd_t;
+        type container_file_t;
+        type spc_t;
+        class unix_dgram_socket sendto;
+        class dir search;
+        class sock_file write;
+}
+#============= chronyd_t ==============
+allow chronyd_t container_file_t:dir search;
+allow chronyd_t container_file_t:sock_file write;
+allow chronyd_t spc_t:unix_dgram_socket sendto;

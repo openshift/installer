@@ -1,0 +1,188 @@
+// © Broadcom. All Rights Reserved.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
+
+package vmdk
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
+)
+
+type VirtualDiskCryptoKey struct {
+	KeyID      string
+	ProviderID string
+}
+
+type VirtualDiskInfo struct {
+	CapacityInBytes int64
+	DeviceKey       int32
+	FileName        string
+	Size            int64
+	UniqueSize      int64
+	CryptoKey       VirtualDiskCryptoKey
+}
+
+// GetVirtualDiskInfoByUUID returns information about a virtual disk identified
+// by the provided UUID. This method is valid for the following backing types:
+//
+// - VirtualDiskFlatVer2BackingInfo
+// - VirtualDiskSeSparseBackingInfo
+// - VirtualDiskRawDiskMappingVer1BackingInfo
+// - VirtualDiskSparseVer2BackingInfo
+// - VirtualDiskRawDiskVer2BackingInfo
+//
+// These are the only backing types that have a UUID property for comparing the
+// provided value.
+//
+// excludeSnapshots is used to determine if the delta disks for snapshot should
+// be excluded when calculating the disk size. If true, only the file keys from
+// the last chain, which is last delta disk, will be used. If false, all the
+// file keys from all the chains will be included.
+func GetVirtualDiskInfoByUUID(
+	ctx context.Context,
+	client *vim25.Client,
+	mo mo.VirtualMachine,
+	fetchProperties bool,
+	excludeSnapshots bool,
+	diskUUID string,
+) (VirtualDiskInfo, error) {
+
+	if diskUUID == "" {
+		return VirtualDiskInfo{}, fmt.Errorf("diskUUID is empty")
+	}
+
+	switch {
+	case fetchProperties,
+		mo.Config == nil,
+		mo.Config.Hardware.Device == nil,
+		mo.LayoutEx == nil,
+		mo.LayoutEx.Disk == nil,
+		mo.LayoutEx.File == nil:
+
+		if ctx == nil {
+			return VirtualDiskInfo{}, fmt.Errorf("ctx is nil")
+		}
+		if client == nil {
+			return VirtualDiskInfo{}, fmt.Errorf("client is nil")
+		}
+
+		obj := object.NewVirtualMachine(client, mo.Self)
+
+		if err := obj.Properties(
+			ctx,
+			mo.Self,
+			[]string{"config", "layoutEx"},
+			&mo); err != nil {
+
+			return VirtualDiskInfo{},
+				fmt.Errorf("failed to retrieve properties: %w", err)
+		}
+	}
+
+	// Find the disk by UUID by inspecting all of the disk backing types that
+	// can have an associated UUID.
+	var (
+		disk      *types.VirtualDisk
+		fileName  string
+		cryptoKey *types.CryptoKeyId
+	)
+	for i := range mo.Config.Hardware.Device {
+		switch tvd := mo.Config.Hardware.Device[i].(type) {
+		case *types.VirtualDisk:
+			switch tb := tvd.Backing.(type) {
+			case *types.VirtualDiskFlatVer2BackingInfo:
+				if tb.Uuid == diskUUID {
+					disk = tvd
+					fileName = tb.FileName
+					cryptoKey = tb.KeyId
+				}
+			case *types.VirtualDiskSeSparseBackingInfo:
+				if tb.Uuid == diskUUID {
+					disk = tvd
+					fileName = tb.FileName
+					cryptoKey = tb.KeyId
+				}
+			case *types.VirtualDiskRawDiskMappingVer1BackingInfo:
+				if tb.Uuid == diskUUID {
+					disk = tvd
+					fileName = tb.FileName
+				}
+			case *types.VirtualDiskSparseVer2BackingInfo:
+				if tb.Uuid == diskUUID {
+					disk = tvd
+					fileName = tb.FileName
+					cryptoKey = tb.KeyId
+				}
+			case *types.VirtualDiskRawDiskVer2BackingInfo:
+				if tb.Uuid == diskUUID {
+					disk = tvd
+					fileName = tb.DescriptorFileName
+				}
+			}
+		}
+	}
+
+	if disk == nil {
+		return VirtualDiskInfo{},
+			fmt.Errorf("disk not found with uuid %q", diskUUID)
+	}
+
+	// Build a lookup table for determining if file key belongs to this disk
+	// chain.
+	diskFileKeys := map[int32]struct{}{}
+	for _, d := range mo.LayoutEx.Disk {
+		if d.Key != disk.Key || len(d.Chain) == 0 {
+			continue
+		}
+
+		// Take the file keys from the child most delta disk chain.
+		for _, fileKey := range d.Chain[len(d.Chain)-1].FileKey {
+			diskFileKeys[fileKey] = struct{}{}
+		}
+		if !excludeSnapshots {
+			// Take all the file keys from previous delta disk chains.
+			// These are for the snapshots.
+			for _, chain := range d.Chain[:len(d.Chain)-1] {
+				for _, fileKey := range chain.FileKey {
+					diskFileKeys[fileKey] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// Sum the disk's total size and unique size.
+	var (
+		size       int64
+		uniqueSize int64
+	)
+	for i := range mo.LayoutEx.File {
+		f := mo.LayoutEx.File[i]
+		if _, ok := diskFileKeys[f.Key]; ok {
+			size += f.Size
+			uniqueSize += f.UniqueSize
+		}
+	}
+
+	di := VirtualDiskInfo{
+		CapacityInBytes: disk.CapacityInBytes,
+		DeviceKey:       disk.Key,
+		FileName:        fileName,
+		Size:            size,
+		UniqueSize:      uniqueSize,
+	}
+
+	if ck := cryptoKey; ck != nil {
+		di.CryptoKey.KeyID = ck.KeyId
+		if pid := ck.ProviderId; pid != nil {
+			di.CryptoKey.ProviderID = pid.Id
+		}
+	}
+
+	return di, nil
+}

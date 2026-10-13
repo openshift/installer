@@ -1,0 +1,11 @@
+{{if .Proxy -}}
+{{if .Proxy.HTTPProxy -}}
+export HTTP_PROXY="{{.Proxy.HTTPProxy}}"
+{{end -}}
+{{if .Proxy.HTTPSProxy -}}
+export HTTPS_PROXY="{{.Proxy.HTTPSProxy}}"
+{{end -}}
+{{if .Proxy.NoProxy -}}
+export NO_PROXY="{{.Proxy.NoProxy}}"
+{{end -}}
+{{end -}}

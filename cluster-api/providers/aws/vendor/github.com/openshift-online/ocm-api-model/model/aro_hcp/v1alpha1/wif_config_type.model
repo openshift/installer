@@ -1,0 +1,69 @@
+/*
+Copyright (c) 2024 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Definition of an wif_config resource.
+class WifConfig {
+	// The name OCM clients will display for this wif_config.
+	DisplayName String
+	// Holds GCP related data.
+	Gcp WifGcp
+	// The OCM organization that this wif_config resource belongs to.
+	Organization OrganizationLink
+	// Wif template(s) used to configure IAM resources
+	WifTemplates []String
+}
+
+struct WifGcp {
+	// This is the service account email that OCM will use to access other SAs. 
+	ImpersonatorEmail String
+	// This represents the GCP project ID in which the wif resources will be configured.
+	ProjectId String
+	// This represents the GCP project number in which the wif resources will be configured.
+	ProjectNumber String
+	// This represents the GCP project ID in which, when specified,
+	// the wif workload WorkloadIdentityPool resources will be configured.
+	FederatedProjectId String
+	// This represents the GCP project number in which, when specified,
+	// the wif workload WorkloadIdentityPool resources will be configured.
+	FederatedProjectNumber String
+	// Prefix for naming GCP custom roles configured.
+	RolePrefix String
+	// The list of service accounts and their associated roles that will need to be
+	// configured on the user's GCP project.
+	ServiceAccounts []WifServiceAccount
+	// Defines the access configuration for support.
+	Support WifSupport
+	// The workload identity configuration data that will be used to create the
+	// workload identity pool on the user's account.
+	WorkloadIdentityPool WifPool
+}
+
+struct WifPool {
+	// Identity provider configuration data that will be created as part of the
+	// workload identity pool.
+	IdentityProvider WifIdentityProvider
+	// The Id of the workload identity pool.
+	PoolId String
+	// The display name of the workload identity pool.
+	PoolName String
+}
+
+struct WifIdentityProvider {
+	AllowedAudiences []String
+	IdentityProviderId String
+	IssuerUrl String
+	Jwks string
+}

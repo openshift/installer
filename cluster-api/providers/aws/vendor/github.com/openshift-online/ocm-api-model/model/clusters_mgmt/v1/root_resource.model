@@ -1,0 +1,144 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Root of the tree of resources of the clusters management service.
+resource Root {
+	// Reference to the resource that manages the collection of add-ons.
+	locator Addons {
+		target AddOns
+	}
+
+	// Reference to the resource that manages the collection of cloud providers.
+	locator CloudProviders {
+		target CloudProviders
+	}
+
+	// Reference to the resource that manages the collection of clusters.
+	locator Clusters {
+		target Clusters
+	}
+
+	// Reference to the service that manages the collection of flavours.
+	locator Flavours {
+		target Flavours
+	}
+
+	// Reference to the resource that manage the collection of versions.
+	locator Versions {
+		target Versions
+	}
+
+	// Reference to the resource that manage the collection of machine types.
+	locator MachineTypes {
+		target MachineTypes
+	}
+
+	// Reference to the resource that manages the collection of AWS
+	// infrastructure access roles.
+	locator AWSInfrastructureAccessRoles {
+		target AWSInfrastructureAccessRoles
+	}
+
+	// Reference to the resource that manages the collection of products.
+	locator Products {
+		target Products
+	}
+
+	// Reference to the resource that manages the collection of provision shards.
+	locator ProvisionShards {
+		target ProvisionShards
+	}
+
+	// Reference to the resource that manages the collection of trackable events.
+	locator Events {
+		target Events
+	}
+
+	// Reference to the resource that manages the collection of aws inquiries.
+	locator AWSInquiries {
+		target AWSInquiries
+	}
+
+	// Reference to the resource that manages the collection of gcp inquiries.
+	locator GCPInquiries {
+		target GCPInquiries
+	}
+
+	// Reference to limited support reason templates.
+	locator LimitedSupportReasonTemplates {
+	    target LimitedSupportReasonTemplates
+	}
+
+	// Reference to version gates.
+	locator VersionGates {
+	    target VersionGates
+	}
+
+	// Reference to the resource that manages the environment.
+	locator Environment {
+		target Environment
+	}
+
+	// Reference to the resource that manages oidc.
+	locator OidcConfigs {
+		target OidcConfigs
+	}
+
+	// Reference to the resource that manages the collection of pending delete clusters.
+	locator PendingDeleteClusters {
+		target PendingDeleteClusters
+	}
+
+	//Reference to the resource that manages dns domains.
+	locator DNSDomains {
+	    target DNSDomains
+	}
+
+	// Reference to the resource that manages network verifications.
+	locator NetworkVerifications {
+		target NetworkVerifications
+	}
+
+	// Reference to the resource that manages the collection of trusted ip addresses.
+	locator TrustedIPAddresses {
+		target TrustedIps
+	}
+
+	// Reference to the resource that manages the load balancer quota values.
+	locator LoadBalancerQuotaValues{
+		target LoadBalancerQuotaValues
+	}
+
+	// Reference to the resource that manages the storage quota values.
+	locator StorageQuotaValues {
+		target StorageQuotaValues
+	}
+
+	// Reference to the resource that manages the collection of gcp endpoints.
+	locator GCP {
+		target GCP
+	}
+
+	// Reference to the resource that manages the collection of registry allowlists.
+	locator RegistryAllowlists {
+		target RegistryAllowlists
+	}
+
+	// Reference to log forwarding related resources.
+	locator LogForwarding {
+		target LogForwarding
+	}
+}

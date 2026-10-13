@@ -1,0 +1,20 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- ansible.builtin.import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Remove the bootstrap server'
+    openstack.cloud.server:
+      name: "{{ os_bootstrap_server_name }}"
+      state: absent
+
+  - name: 'Remove the bootstrap server port'
+    openstack.cloud.port:
+      name: "{{ os_port_bootstrap }}"
+      state: absent

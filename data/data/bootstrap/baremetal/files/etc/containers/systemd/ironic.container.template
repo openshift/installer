@@ -1,0 +1,49 @@
+[Unit]
+Description=Ironic baremetal deployment service
+BindsTo=ironic-volume.service
+Requires=build-ironic-env.service
+{{ if .PlatformData.BareMetal.ProvisioningIP }}
+Requires=provisioning-interface.service
+{{ end }}
+{{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
+Wants=ironic-dnsmasq.service
+{{ end }}
+Wants=network-online.target ironic-httpd.service ironic-ramdisk-logs.service extract-machine-os.service
+After=network-online.target ironic-volume.service build-ironic-env.service provisioning-interface.service ironic-dnsmasq.service extract-machine-os.service
+
+[Container]
+ContainerName=ironic
+Image=$IRONIC_IMAGE
+Exec=/bin/runironic
+Network=host
+Volume=${AUTH_DIR}:/auth:z,ro
+Volume=ironic.volume:/shared:z
+{{ if not .PlatformData.BareMetal.DisableIronicVirtualMediaTLS }}
+Volume=/opt/openshift/tls/ironic/:/certs/vmedia/:z
+{{ end }}
+Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
+{{ if .PlatformData.BareMetal.BMCVerifyCA }}
+Volume=/opt/openshift/bmc-ca:/certs/ca/bmc:z
+{{ end }}
+# Note we are limited here by conductor.file_url_allowed_paths in the ironic config
+Volume=/run/media/iso/images/pxeboot/vmlinuz:/var/lib/ironic/pxe/vmlinuz:ro
+SecurityLabelDisable=true
+Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
+Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
+Environment="OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120"
+Environment="IRONIC_HTPASSWD=${IRONIC_HTPASSWD}"
+Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
+Environment="HTTP_PORT=${HTTP_PORT}"
+Environment="OS_DEFAULT__FORCE_RAW_IMAGES=False"
+Environment="USE_IRONIC_INSPECTOR=false"
+Environment="VMEDIA_TLS_PORT=6183"
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+# Add firewall rules to ensure the IPA ramdisk can reach ironic
+ExecStartPre=/usr/local/bin/prov-iptables.sh --enable-port 6385
+ExecStopPost=/usr/local/bin/prov-iptables.sh --disable-port 6385
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

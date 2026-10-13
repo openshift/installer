@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:rhcos.mirror.openshift.com)",
+      "WebFetch(domain:mirror.openshift.com)",
+      "WebFetch(domain:registry.ci.openshift.org)"
+    ],
+    "deny": [
+      "WebFetch(domain:vcenter.test)"
+    ],
+    "ask": []
+  }
+}

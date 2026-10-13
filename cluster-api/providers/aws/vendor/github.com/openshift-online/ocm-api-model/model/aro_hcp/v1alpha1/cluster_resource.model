@@ -1,0 +1,69 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages a specific cluster.
+resource Cluster {
+	// Retrieves the details of the cluster.
+	method Get {
+		out Body Cluster
+	}
+
+	// Updates the cluster.
+	@go(name="Update")
+	method AsyncUpdate {
+		in out Body Cluster
+	}
+
+	// Deletes the cluster.
+	@go(name="Delete")
+	method AsyncDelete {
+		// If false it will only delete from OCM but not the actual cluster resources.
+		// false is only allowed for OCP clusters. true by default.
+		in Deprovision Boolean = true
+
+		// Dry run flag is used to check if the operation can be completed, but won't delete.
+		in DryRun Boolean = false
+
+		// BestEffort flag is used to check if the cluster deletion should be best-effort mode or not.
+		in BestEffort Boolean = false
+	}
+
+	// Reference to the resource that manages the detailed status of the cluster.
+	locator Status {
+		target ClusterStatus
+	}
+
+	// Reference to the resource that manages the collection of inflight checks.
+	locator InflightChecks {
+		target InflightChecks
+	}
+
+	// Reference to the resource that manages the collection of node pool resources.
+	locator NodePools {
+		target NodePools
+	}
+
+	// Reference to the resource that manages the external authentication configuration.
+	locator ExternalAuthConfig {
+		target ExternalAuthConfig
+	}
+
+	locator Autoscaler {
+		target Autoscaler
+	}
+
+
+}

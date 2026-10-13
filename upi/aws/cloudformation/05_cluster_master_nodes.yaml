@@ -1,0 +1,299 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for OpenShift Cluster Node Launch (EC2 master instances)
+
+Parameters:
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
+    Type: String
+  RhcosAmi:
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
+    Type: AWS::EC2::Image::Id
+  AutoRegisterDNS:
+    Default: ""
+    Description: unused
+    Type: String
+  PrivateHostedZoneId:
+    Default: ""
+    Description: unused
+    Type: String
+  PrivateHostedZoneName:
+    Default: ""
+    Description: unused
+    Type: String
+  Master0Subnet:
+    Description: The subnets, recommend private, to launch the master nodes into.
+    Type: AWS::EC2::Subnet::Id
+  Master1Subnet:
+    Description: The subnets, recommend private, to launch the master nodes into.
+    Type: AWS::EC2::Subnet::Id
+  Master2Subnet:
+    Description: The subnets, recommend private, to launch the master nodes into.
+    Type: AWS::EC2::Subnet::Id
+  MasterSecurityGroupId:
+    Description: The master security group ID to associate with master nodes.
+    Type: AWS::EC2::SecurityGroup::Id
+  IgnitionLocation:
+    Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/master
+    Description: Ignition config file location.
+    Type: String
+  CertificateAuthorities:
+    Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
+    Description: Base64 encoded certificate authority string to use.
+    Type: String
+  MasterInstanceProfileName:
+    Description: IAM profile to associate with master nodes.
+    Type: String
+  MasterInstanceType:
+    Default: m5.xlarge
+    Type: String
+
+  AutoRegisterELB:
+    Default: "yes"
+    AllowedValues:
+    - "yes"
+    - "no"
+    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
+    Type: String
+  RegisterNlbIpTargetsLambdaArn:
+    Description: ARN for NLB IP target registration lambda. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
+    Type: String
+  ExternalApiTargetGroupArn:
+    Description: ARN for external API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
+    Type: String
+  InternalApiTargetGroupArn:
+    Description: ARN for internal API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
+    Type: String
+  InternalServiceTargetGroupArn:
+    Description: ARN for internal service load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - MasterInstanceType
+      - RhcosAmi
+      - IgnitionLocation
+      - CertificateAuthorities
+      - MasterSecurityGroupId
+      - MasterInstanceProfileName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedBootstrapSshCidr
+      - Master0Subnet
+      - Master1Subnet
+      - Master2Subnet
+    - Label:
+        default: "Load Balancer Automation"
+      Parameters:
+      - AutoRegisterELB
+      - RegisterNlbIpTargetsLambdaArn
+      - ExternalApiTargetGroupArn
+      - InternalApiTargetGroupArn
+      - InternalServiceTargetGroupArn
+    ParameterLabels:
+      InfrastructureName:
+        default: "Infrastructure Name"
+      VpcId:
+        default: "VPC ID"
+      Master0Subnet:
+        default: "Master-0 Subnet"
+      Master1Subnet:
+        default: "Master-1 Subnet"
+      Master2Subnet:
+        default: "Master-2 Subnet"
+      MasterInstanceType:
+        default: "Master Instance Type"
+      MasterInstanceProfileName:
+        default: "Master Instance Profile Name"
+      RhcosAmi:
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
+      BootstrapIgnitionLocation:
+        default: "Master Ignition Source"
+      CertificateAuthorities:
+        default: "Ignition CA String"
+      MasterSecurityGroupId:
+        default: "Master Security Group ID"
+      AutoRegisterELB:
+        default: "Use Provided ELB Automation"
+
+Conditions:
+  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
+
+Resources:
+  Master0:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master0Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "shared"
+
+  RegisterMaster0:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  RegisterMaster0InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  RegisterMaster0InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  Master1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master1Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "shared"
+
+  RegisterMaster1:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  RegisterMaster1InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  RegisterMaster1InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  Master2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master2Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "shared"
+
+  RegisterMaster2:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+  RegisterMaster2InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+  RegisterMaster2InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+Outputs:
+  PrivateIPs:
+    Description: The control-plane node private IP addresses.
+    Value:
+      !Join [
+        ",",
+        [!GetAtt Master0.PrivateIp, !GetAtt Master1.PrivateIp, !GetAtt Master2.PrivateIp]
+      ]

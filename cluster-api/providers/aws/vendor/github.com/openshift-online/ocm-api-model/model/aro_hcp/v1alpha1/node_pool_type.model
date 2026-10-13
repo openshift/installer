@@ -1,0 +1,65 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of a node pool in a cluster.
+class NodePool {
+    // The number of Machines (and Nodes) to create.
+    // Replicas and autoscaling cannot be used together.
+    Replicas Integer
+
+    // Details for auto-scaling the machine pool.
+    // Replicas and autoscaling cannot be used together.
+    Autoscaling NodePoolAutoscaling
+
+    // Specifies whether health checks should be enabled for machines in the NodePool.
+    AutoRepair Boolean
+
+    // AWS specific parameters (Optional).
+    AWSNodePool AWSNodePool
+
+    // Azure specific parameters.
+    AzureNodePool AzureNodePool
+
+    // The availability zone upon which the node is created.
+    AvailabilityZone String
+
+    // The subnet upon which the nodes are created.
+    Subnet String
+
+    // NodePool status.
+    Status NodePoolStatus
+
+    // Version of the node pool.
+    Version Version
+
+    // The labels set on the Nodes created.
+    Labels [String]String
+
+    // The taints set on the Nodes created.
+    Taints []Taint
+
+    // The names of the tuning configs for this node pool.
+    TuningConfigs []String
+
+    // The names of the KubeletConfigs for this node pool.
+    KubeletConfigs []String
+
+    // Time to wait for a NodePool to drain when it is upgraded or replaced before it is forcibly removed.
+    NodeDrainGracePeriod Value
+
+    // Management parameters (Optional).
+    ManagementUpgrade NodePoolManagementUpgrade
+}

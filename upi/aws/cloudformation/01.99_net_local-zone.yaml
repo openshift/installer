@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for create Public Local Zone subnets
+
+Parameters:
+  VpcId:
+    Description: VPC Id
+    Type: String
+  ZoneName:
+    Description: Local Zone Name (Example us-west-2-lax-1a)
+    Type: String
+  SubnetName:
+    Description: Local Zone Name (Example cluster-usw2-lax-1a)
+    Type: String
+  PublicRouteTableId:
+    Description: Public Route Table ID to associate the Local Zone subnet
+    Type: String
+  PublicSubnetCidr:
+    # yamllint disable-line rule:line-length
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
+    Default: 10.0.128.0/20
+    Description: CIDR block for Public Subnet
+    Type: String
+
+Resources:
+  PublicSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref PublicSubnetCidr
+      AvailabilityZone: !Ref ZoneName
+      Tags:
+      - Key: Name
+        Value: !Ref SubnetName
+      - Key: kubernetes.io/cluster/unmanaged
+        Value: "true"
+
+  PublicSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTableId
+
+Outputs:
+  PublicSubnetIds:
+    Description: Subnet IDs of the public subnets.
+    Value:
+      !Join ["", [!Ref PublicSubnet]]

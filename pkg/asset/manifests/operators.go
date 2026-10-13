@@ -1,0 +1,389 @@
+// Package manifests deals with creating manifests for all manifests to be installed for the cluster
+package manifests
+
+import (
+	"bytes"
+	"context"
+	"encoding/base64"
+	"path"
+	"path/filepath"
+	"strings"
+	"text/template"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/yaml"
+
+	"github.com/openshift/api/features"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
+	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
+	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/library-go/pkg/crypto"
+)
+
+const (
+	manifestDir = "manifests"
+)
+
+var (
+	kubeSysConfigPath = path.Join(manifestDir, "cluster-config.yaml")
+
+	_ asset.WritableAsset = (*Manifests)(nil)
+
+	customTmplFuncs = template.FuncMap{
+		"indent": indent,
+		"add": func(i, j int) int {
+			return i + j
+		},
+	}
+)
+
+// Manifests generates the dependent operator config.yaml files
+type Manifests struct {
+	KubeSysConfig *configurationObject
+	FileList      []*asset.File
+}
+
+type genericData map[string]string
+
+// Name returns a human friendly name for the operator
+func (m *Manifests) Name() string {
+	return "Common Manifests"
+}
+
+// Dependencies returns all of the dependencies directly needed by a
+// Manifests asset.
+func (m *Manifests) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&installconfig.ClusterID{},
+		&installconfig.InstallConfig{},
+		&manifests.MCO{},
+		&Ingress{},
+		&DNS{},
+		&Infrastructure{},
+		&Networking{},
+		&Proxy{},
+		&Scheduler{},
+		&ImageContentSourcePolicy{},
+		&ClusterCSIDriverConfig{},
+		&ImageDigestMirrorSet{},
+		&tls.RootCA{},
+		&tls.MCSCertKey{},
+		&tls.IRICertKey{},
+		&tls.IRIRegistryCredentials{},
+		&manifests.InternalReleaseImage{},
+		new(rhcos.Image),
+
+		&bootkube.CVOOverrides{},
+		&bootkube.KubeCloudConfig{},
+		&bootkube.KubeSystemConfigmapRootCA{},
+		&bootkube.MachineConfigServerCASecret{},
+		&bootkube.MachineConfigServerCAConfigMap{},
+		&bootkube.MachineConfigServerTLSSecret{},
+		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&bootkube.InternalReleaseImageTLSSecret{},
+		&bootkube.InternalReleaseImageRegistryAuthSecret{},
+		&BMCVerifyCAConfigMap{},
+	}
+}
+
+// Generate generates the respective operator config.yml files
+func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) error {
+	ingress := &Ingress{}
+	dns := &DNS{}
+	network := &Networking{}
+	infra := &Infrastructure{}
+	installConfig := &installconfig.InstallConfig{}
+	proxy := &Proxy{}
+	scheduler := &Scheduler{}
+	imageContentSourcePolicy := &ImageContentSourcePolicy{}
+	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
+	imageDigestMirrorSet := &ImageDigestMirrorSet{}
+	mcoCfgTemplate := &manifests.MCO{}
+	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
+
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap)
+
+	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to redact install-config")
+	}
+	// mao go to kube-system config map
+	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
+		"install-config": string(redactedConfig),
+	})
+	if m.KubeSysConfig.Metadata.Annotations == nil {
+		m.KubeSysConfig.Metadata.Annotations = make(map[string]string, 1)
+	}
+	m.KubeSysConfig.Metadata.Annotations["kubernetes.io/description"] = "The install-config content used to create the cluster.  The cluster configuration may have evolved since installation, so check cluster configuration resources directly if you are interested in the current cluster state."
+
+	kubeSysConfigData, err := yaml.Marshal(m.KubeSysConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to create kube-system/cluster-config-v1 configmap")
+	}
+
+	m.FileList = []*asset.File{
+		{
+			Filename: kubeSysConfigPath,
+			Data:     kubeSysConfigData,
+		},
+	}
+	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
+	m.FileList = append(m.FileList, generateMCOManifest(installConfig.Config, mcoCfgTemplate.Files())...)
+
+	m.FileList = append(m.FileList, ingress.Files()...)
+	m.FileList = append(m.FileList, dns.Files()...)
+	m.FileList = append(m.FileList, network.Files()...)
+	m.FileList = append(m.FileList, infra.Files()...)
+	m.FileList = append(m.FileList, proxy.Files()...)
+	m.FileList = append(m.FileList, scheduler.Files()...)
+	m.FileList = append(m.FileList, imageContentSourcePolicy.Files()...)
+	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
+	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
+	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
+
+	asset.SortFiles(m.FileList)
+
+	return nil
+}
+
+// Files returns the files generated by the asset.
+func (m *Manifests) Files() []*asset.File {
+	return m.FileList
+}
+
+func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
+	clusterID := &installconfig.ClusterID{}
+	installConfig := &installconfig.InstallConfig{}
+	mcsCertKey := &tls.MCSCertKey{}
+	rootCA := &tls.RootCA{}
+	dependencies.Get(
+		clusterID,
+		installConfig,
+		mcsCertKey,
+		rootCA,
+	)
+
+	templateData := &bootkubeTemplateData{
+		CVOCapabilities:       installConfig.Config.Capabilities,
+		CVOClusterID:          clusterID.UUID,
+		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
+		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
+		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:            string(rootCA.Cert()),
+		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
+		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
+		IsSCOS:                installConfig.Config.IsSCOS(),
+		IsOKD:                 installConfig.Config.IsOKD(),
+	}
+
+	// Populate MCS CA(also called root-CA) specifics
+	if rootCAPair, err := crypto.GetCAFromBytes(rootCA.Cert(), rootCA.Key()); err == nil {
+		templateData.RootCAIssuerName = rootCAPair.Config.Certs[0].Issuer.CommonName
+		templateData.RootCANotAfter = rootCAPair.Config.Certs[0].NotAfter.Format(time.RFC3339)
+		templateData.RootCANotBefore = rootCAPair.Config.Certs[0].NotBefore.Format(time.RFC3339)
+		logrus.Infof("Successfully populated MCS CA cert information: %s %s %s", templateData.RootCAIssuerName, templateData.RootCANotAfter, templateData.RootCANotBefore)
+	} else {
+		logrus.Errorf("error populating MCS CA cert details: %v", err)
+	}
+	// Populate MCS TLS Cert specifics
+	if MCSTLSCertPair, err := crypto.GetCAFromBytes(mcsCertKey.Cert(), mcsCertKey.Key()); err == nil {
+		// Hostname annottation need a little massaging
+		hostnames := sets.Set[string]{}
+		for _, ip := range MCSTLSCertPair.Config.Certs[0].IPAddresses {
+			hostnames.Insert(ip.String())
+		}
+		for _, dnsName := range MCSTLSCertPair.Config.Certs[0].DNSNames {
+			hostnames.Insert(dnsName)
+		}
+		templateData.McsHostName = strings.Join(sets.List(hostnames), ",")
+		templateData.McsTLSCertNotAfter = MCSTLSCertPair.Config.Certs[0].NotAfter.Format(time.RFC3339)
+		templateData.McsTLSCertNotBefore = MCSTLSCertPair.Config.Certs[0].NotBefore.Format(time.RFC3339)
+		logrus.Infof("Successfully populated MCS TLS cert information: %s %s %s", templateData.RootCAIssuerName, templateData.RootCANotAfter, templateData.RootCANotBefore)
+	} else {
+		logrus.Errorf("error populating MCS TLS cert details: %v", err)
+	}
+
+	files := []*asset.File{}
+	for _, a := range []asset.WritableAsset{
+		&bootkube.CVOOverrides{},
+		&bootkube.KubeCloudConfig{},
+		&bootkube.MachineConfigServerCASecret{},
+		&bootkube.MachineConfigServerCAConfigMap{},
+		&bootkube.KubeSystemConfigmapRootCA{},
+		&bootkube.MachineConfigServerTLSSecret{},
+		&bootkube.OpenshiftConfigSecretPullSecret{},
+	} {
+		dependencies.Get(a)
+		for _, f := range a.Files() {
+			files = append(files, &asset.File{
+				Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+				Data:     applyTemplateData(f.Data, templateData),
+			})
+		}
+	}
+
+	if installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
+		iri := &manifests.InternalReleaseImage{}
+		dependencies.Get(iri)
+
+		// Skip if InternalReleaseImage manifest wasn't found.
+		if len(iri.FileList) > 0 {
+			files = append(files, appendIRIcerts(dependencies))
+			files = append(files, appendIRIRegistryCredentials(dependencies))
+		}
+	}
+
+	return files
+}
+
+func appendIRIcerts(dependencies asset.Parents) *asset.File {
+	iriCertKey := &tls.IRICertKey{}
+	iriTLSSecret := &bootkube.InternalReleaseImageTLSSecret{}
+	dependencies.Get(iriCertKey, iriTLSSecret)
+
+	f := iriTLSSecret.Files()[0]
+
+	templateData := struct {
+		IriTLSCert string
+		IriTLSKey  string
+	}{
+		IriTLSCert: base64.StdEncoding.EncodeToString(iriCertKey.Cert()),
+		IriTLSKey:  base64.StdEncoding.EncodeToString(iriCertKey.Key()),
+	}
+	fileData := applyTemplateData(f.Data, templateData)
+
+	return &asset.File{
+		Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+		Data:     fileData,
+	}
+}
+
+// appendIRIRegistryCredentials renders the IRI registry auth secret template with the generated credentials.
+func appendIRIRegistryCredentials(dependencies asset.Parents) *asset.File {
+	iriAuth := &tls.IRIRegistryCredentials{}
+	iriAuthSecret := &bootkube.InternalReleaseImageRegistryAuthSecret{}
+	dependencies.Get(iriAuth, iriAuthSecret)
+
+	f := iriAuthSecret.Files()[0]
+
+	templateData := struct {
+		IriRegistryHtpasswd string
+		IriRegistryPassword string
+	}{
+		IriRegistryHtpasswd: base64.StdEncoding.EncodeToString([]byte(iriAuth.HtpasswdContent)),
+		IriRegistryPassword: base64.StdEncoding.EncodeToString([]byte(iriAuth.Password)),
+	}
+	fileData := applyTemplateData(f.Data, templateData)
+
+	return &asset.File{
+		Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+		Data:     fileData,
+	}
+}
+
+func applyTemplateData(data []byte, templateData interface{}) []byte {
+	template := template.Must(template.New("template").Funcs(customTmplFuncs).Parse(string(data)))
+	buf := &bytes.Buffer{}
+	if err := template.Execute(buf, templateData); err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
+}
+
+// Load returns the manifests asset from disk.
+func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
+	yamlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yaml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yaml files")
+	}
+	ymlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yml files")
+	}
+	jsonFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.json"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.json files")
+	}
+	fileList := append(yamlFileList, ymlFileList...)
+	fileList = append(fileList, jsonFileList...)
+
+	if len(fileList) == 0 {
+		return false, nil
+	}
+
+	kubeSysConfig := &configurationObject{}
+	var found bool
+	for _, file := range fileList {
+		if file.Filename == kubeSysConfigPath {
+			if err := yaml.Unmarshal(file.Data, kubeSysConfig); err != nil {
+				return false, errors.Wrapf(err, "failed to unmarshal %s", kubeSysConfigPath)
+			}
+			found = true
+		}
+	}
+
+	if !found {
+		return false, nil
+
+	}
+
+	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
+
+	asset.SortFiles(m.FileList)
+
+	return true, nil
+}
+
+func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
+	// Use DeepCopy to create a proper deep copy, avoiding the shallow copy issue
+	// where nested pointer fields would still reference the original struct.
+	newConfig := config.DeepCopy()
+
+	// Redact top-level sensitive fields
+	newConfig.PullSecret = ""
+
+	// Redact platform-specific sensitive fields
+	// Platforms are mutually exclusive, so we use a switch statement
+	switch {
+	case newConfig.Platform.VSphere != nil:
+		// Redact deprecated credentials
+		newConfig.Platform.VSphere.DeprecatedUsername = ""
+		newConfig.Platform.VSphere.DeprecatedPassword = ""
+
+		// Redact VCenter credentials
+		for i := range newConfig.Platform.VSphere.VCenters {
+			newConfig.Platform.VSphere.VCenters[i].Username = ""
+			newConfig.Platform.VSphere.VCenters[i].Password = ""
+			newConfig.Platform.VSphere.VCenters[i].Port = 0
+		}
+
+	case newConfig.Platform.Nutanix != nil:
+		// Redact PrismCentral credentials
+		newConfig.Platform.Nutanix.PrismCentral.Username = ""
+		newConfig.Platform.Nutanix.PrismCentral.Password = ""
+		// Endpoint is preserved (non-sensitive)
+
+	case newConfig.Platform.BareMetal != nil:
+		// Redact BMC credentials for all hosts
+		for _, host := range newConfig.Platform.BareMetal.Hosts {
+			if host != nil {
+				host.BMC.Username = ""
+				host.BMC.Password = ""
+			}
+		}
+	}
+
+	return yaml.Marshal(newConfig)
+}
+
+func indent(indention int, v string) string {
+	newline := "\n" + strings.Repeat(" ", indention)
+	return strings.Replace(v, "\n", newline, -1)
+}

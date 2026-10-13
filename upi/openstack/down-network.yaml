@@ -1,0 +1,56 @@
+# Required Python packages:
+#
+# ansible
+# openstackclient
+# openstacksdk
+
+- ansible.builtin.import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'List ports attatched to router'
+    ansible.builtin.command:
+      cmd: "openstack port list --device-owner=network:router_interface --tags {{ cluster_id_tag }} -f value -c id"
+    register: router_ports
+
+  - name: 'Remove the ports from router'
+    ansible.builtin.command:
+      cmd: "openstack router remove port {{ os_router }} {{ item.1}}"
+    with_indexed_items: "{{ router_ports.stdout_lines }}"
+
+  - name: 'List ha ports attached to router'
+    ansible.builtin.command:
+      cmd: "openstack port list --device-owner=network:ha_router_replicated_interface --tags {{ cluster_id_tag }} -f value -c id"
+    register: ha_router_ports
+
+  - name: 'Remove the ha ports from router'
+    ansible.builtin.command:
+      cmd: "openstack router remove port {{ os_router }} {{ item.1}}"
+    with_indexed_items: "{{ ha_router_ports.stdout_lines }}"
+
+  - name: 'List ports'
+    ansible.builtin.command:
+      cmd: "openstack port list --tags {{ cluster_id_tag }} -f value -c id"
+    register: ports
+
+  - name: 'Remove the cluster ports'
+    ansible.builtin.command:
+      cmd: "openstack port delete {{ ports.stdout_lines | join(' ') }}"
+    when: ports.stdout != ""
+
+  - name: 'Remove the cluster router'
+    openstack.cloud.router:
+      name: "{{ os_router }}"
+      state: absent
+
+  - name: 'List cluster networks'
+    ansible.builtin.command:
+      cmd: "openstack network list --tags {{ cluster_id_tag }} -f value -c ID"
+    register: networks
+
+  - name: 'Remove the cluster networks'
+    ansible.builtin.command:
+      cmd: "openstack network delete {{ networks.stdout_lines | join(' ') }}"
+    when: networks.stdout != ""

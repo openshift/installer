@@ -1,0 +1,32 @@
+---
+- name: include metadata.json vars
+  include_vars:
+    file: "{{ ocp.assets_dir }}/metadata.json"
+    name: metadata
+
+- name: Include ocp ovirt conf variables
+  include_vars:
+    file: "{{ ocp.ovirt_config_path }}"
+    name: ocp_ovirt
+
+# check the CA stuff from the installer
+- name: Set ovirt CA file path
+  set_fact:
+    ovirt_ca_file: "/tmp/ca_file"
+  when: (ocp_ovirt.ovirt_ca_bundle is defined)
+
+- name: Write cafile
+  copy:
+    content: "{{ ocp_ovirt.ovirt_ca_bundle }}"
+    dest: "{{ ovirt_ca_file }}"
+    force: no
+  when: ovirt_ca_file is defined
+
+- name: Login to oVirt engine
+  ovirt_auth:
+    url: "{{ ocp_ovirt.ovirt_url}}"
+    username: "{{ ocp_ovirt.ovirt_username }}"
+    password: "{{ ocp_ovirt.ovirt_password }}"
+    ca_file: "{{ ovirt_ca_file | default(omit) }}"
+    insecure: "{{ ocp_ovirt.insecure | default(False) }}"
+  register: ovirt_loggedin

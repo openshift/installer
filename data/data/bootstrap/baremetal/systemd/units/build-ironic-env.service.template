@@ -1,0 +1,18 @@
+[Unit]
+Description=Build Ironic environment
+Requires=release-image.service
+Wants=network-online.target crio.service
+After=network-online.target crio.service release-image.service
+
+[Service]
+EnvironmentFile=/etc/ironic-network.env
+Environment="PROVISIONING_MAC={{.PlatformData.BareMetal.ProvisioningInterfaceMAC}}"
+Environment="PROVISIONING_NETWORK_TYPE={{.PlatformData.BareMetal.ProvisioningNetwork}}"
+Environment="IRONIC_IP={{index .PlatformData.BareMetal.APIVIPs 0}}"
+Environment="IRONIC_USERNAME={{.PlatformData.BareMetal.IronicUsername}}"
+ExecStart=/usr/local/bin/build-ironic-env.sh
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

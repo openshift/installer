@@ -1,0 +1,75 @@
+/*
+Copyright (c) 2022 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Manages the collection of node pools of a cluster.
+resource NodePools {
+	// Retrieves the list of node pools.
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
+
+		// Number of items contained in the returned page.
+		in out Size Integer = 100
+
+		// Search criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _where_ clause of a
+		// SQL statement, but using the names of the attributes of the node pools instead of
+		// the names of the columns of a table. For example, in order to retrieve all the
+		// node pools with replicas of two the following is required:
+		//
+		// ```sql
+		// replicas = 2
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then all the
+		// node pools that the user has permission to see will be returned.
+		in Search String
+
+		// Order criteria.
+		//
+		// The syntax of this parameter is similar to the syntax of the _order by_ clause of
+		// a SQL statement, but using the names of the attributes of the node pools instead of
+		// the names of the columns of a table. For example, in order to sort the node pools
+		// descending by identifier the value should be:
+		//
+		// ```sql
+		// id desc
+		// ```
+		//
+		// If the parameter isn't provided, or if the value is empty, then the order of the
+		// results is undefined.
+		in Order String
+
+		// Total number of items of the collection.
+		out Total Integer
+
+		// Retrieved list of node pools.
+		out Items []NodePool
+	}
+
+	// Adds a new node pool to the cluster.
+	method Add {
+		// Description of the node pool
+		in out Body NodePool
+	}
+
+	// Reference to the service that manages a specific node pool.
+	locator NodePool {
+		target NodePool
+		variable ID
+	}
+}

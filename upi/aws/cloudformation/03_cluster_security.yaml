@@ -1,0 +1,598 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for OpenShift Cluster Security Elements (Security Groups & IAM)
+
+Parameters:
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
+    Type: String
+  VpcCidr:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
+    Default: 10.0.0.0/16
+    Description: CIDR block for VPC.
+    Type: String
+  VpcId:
+    Description: The VPC-scoped resources will belong to this VPC.
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnets:
+    Description: The internal subnets.
+    Type: List<AWS::EC2::Subnet::Id>
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - VpcCidr
+      - PrivateSubnets
+    ParameterLabels:
+      InfrastructureName:
+        default: "Infrastructure Name"
+      VpcId:
+        default: "VPC ID"
+      VpcCidr:
+        default: "VPC CIDR"
+      PrivateSubnets:
+        default: "Private Subnets"
+
+Resources:
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cluster Master Security Group
+      SecurityGroupIngress:
+      - IpProtocol: icmp
+        FromPort: 0
+        ToPort: 0
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        ToPort: 6443
+        FromPort: 6443
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22623
+        ToPort: 22623
+        CidrIp: !Ref VpcCidr
+      VpcId: !Ref VpcId
+
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cluster Worker Security Group
+      SecurityGroupIngress:
+      - IpProtocol: icmp
+        FromPort: 0
+        ToPort: 0
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref VpcCidr
+      VpcId: !Ref VpcId
+
+  MasterIngressEtcd:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: etcd
+      FromPort: 2379
+      ToPort: 2380
+      IpProtocol: tcp
+
+  MasterIngressVxlan:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Vxlan packets
+      FromPort: 4789
+      ToPort: 4789
+      IpProtocol: udp
+
+  MasterIngressWorkerVxlan:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Vxlan packets
+      FromPort: 4789
+      ToPort: 4789
+      IpProtocol: udp
+
+  MasterIngressGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  MasterIngressWorkerGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  MasterIngressIpsecIke:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec IKE packets
+      FromPort: 500
+      ToPort: 500
+      IpProtocol: udp
+
+  MasterIngressIpsecNat:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec NAT-T packets
+      FromPort: 4500
+      ToPort: 4500
+      IpProtocol: udp
+
+  MasterIngressIpsecEsp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec ESP packets
+      IpProtocol: 50
+
+  MasterIngressWorkerIpsecIke:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec IKE packets
+      FromPort: 500
+      ToPort: 500
+      IpProtocol: udp
+
+  MasterIngressWorkerIpsecNat:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec NAT-T packets
+      FromPort: 4500
+      ToPort: 4500
+      IpProtocol: udp
+
+  MasterIngressWorkerIpsecEsp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec ESP packets
+      IpProtocol: 50
+
+  MasterIngressInternal:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: tcp
+
+  MasterIngressWorkerInternal:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: tcp
+
+  MasterIngressInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  MasterIngressWorkerInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  MasterIngressKube:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes kubelet, scheduler and controller manager
+      FromPort: 10250
+      ToPort: 10259
+      IpProtocol: tcp
+
+  MasterIngressWorkerKube:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes kubelet, scheduler and controller manager
+      FromPort: 10250
+      ToPort: 10259
+      IpProtocol: tcp
+
+  MasterIngressIngressServices:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: tcp
+
+  MasterIngressWorkerIngressServices:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: tcp
+
+  MasterIngressIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  MasterIngressWorkerIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  WorkerIngressVxlan:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Vxlan packets
+      FromPort: 4789
+      ToPort: 4789
+      IpProtocol: udp
+
+  WorkerIngressMasterVxlan:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Vxlan packets
+      FromPort: 4789
+      ToPort: 4789
+      IpProtocol: udp
+
+  WorkerIngressGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  WorkerIngressMasterGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  WorkerIngressIpsecIke:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec IKE packets
+      FromPort: 500
+      ToPort: 500
+      IpProtocol: udp
+
+  WorkerIngressIpsecNat:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec NAT-T packets
+      FromPort: 4500
+      ToPort: 4500
+      IpProtocol: udp
+
+  WorkerIngressIpsecEsp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: IPsec ESP packets
+      IpProtocol: 50
+
+  WorkerIngressMasterIpsecIke:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec IKE packets
+      FromPort: 500
+      ToPort: 500
+      IpProtocol: udp
+
+  WorkerIngressMasterIpsecNat:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec NAT-T packets
+      FromPort: 4500
+      ToPort: 4500
+      IpProtocol: udp
+
+  WorkerIngressMasterIpsecEsp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: IPsec ESP packets
+      IpProtocol: 50
+
+  WorkerIngressInternal:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: tcp
+
+  WorkerIngressMasterInternal:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: tcp
+
+  WorkerIngressInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  WorkerIngressMasterInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  WorkerIngressKube:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes secure kubelet port
+      FromPort: 10250
+      ToPort: 10250
+      IpProtocol: tcp
+
+  WorkerIngressWorkerKube:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal Kubernetes communication
+      FromPort: 10250
+      ToPort: 10250
+      IpProtocol: tcp
+
+  WorkerIngressIngressServices:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: tcp
+
+  WorkerIngressMasterIngressServices:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: tcp
+
+  WorkerIngressIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  WorkerIngressMasterIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  MasterIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "ec2:AttachVolume"
+            - "ec2:AuthorizeSecurityGroupIngress"
+            - "ec2:CreateSecurityGroup"
+            - "ec2:CreateTags"
+            - "ec2:CreateVolume"
+            - "ec2:DeleteSecurityGroup"
+            - "ec2:DeleteVolume"
+            - "ec2:Describe*"
+            - "ec2:DetachVolume"
+            - "ec2:ModifyInstanceAttribute"
+            - "ec2:ModifyVolume"
+            - "ec2:RevokeSecurityGroupIngress"
+            - "elasticloadbalancing:AddTags"
+            - "elasticloadbalancing:AttachLoadBalancerToSubnets"
+            - "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer"
+            - "elasticloadbalancing:CreateListener"
+            - "elasticloadbalancing:CreateLoadBalancer"
+            - "elasticloadbalancing:CreateLoadBalancerPolicy"
+            - "elasticloadbalancing:CreateLoadBalancerListeners"
+            - "elasticloadbalancing:CreateTargetGroup"
+            - "elasticloadbalancing:ConfigureHealthCheck"
+            - "elasticloadbalancing:DeleteListener"
+            - "elasticloadbalancing:DeleteLoadBalancer"
+            - "elasticloadbalancing:DeleteLoadBalancerListeners"
+            - "elasticloadbalancing:DeleteTargetGroup"
+            - "elasticloadbalancing:DeregisterInstancesFromLoadBalancer"
+            - "elasticloadbalancing:DeregisterTargets"
+            - "elasticloadbalancing:Describe*"
+            - "elasticloadbalancing:DetachLoadBalancerFromSubnets"
+            - "elasticloadbalancing:ModifyListener"
+            - "elasticloadbalancing:ModifyLoadBalancerAttributes"
+            - "elasticloadbalancing:ModifyTargetGroup"
+            - "elasticloadbalancing:ModifyTargetGroupAttributes"
+            - "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+            - "elasticloadbalancing:RegisterTargets"
+            - "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
+            - "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
+            - "kms:DescribeKey"
+            Resource: "*"
+
+  MasterInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+      - Ref: "MasterIamRole"
+
+  WorkerIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "worker", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "ec2:DescribeInstances"
+            - "ec2:DescribeRegions"
+            Resource: "*"
+
+  WorkerInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+      - Ref: "WorkerIamRole"
+
+Outputs:
+  MasterSecurityGroupId:
+    Description: Master Security Group ID
+    Value: !GetAtt MasterSecurityGroup.GroupId
+
+  WorkerSecurityGroupId:
+    Description: Worker Security Group ID
+    Value: !GetAtt WorkerSecurityGroup.GroupId
+
+  MasterInstanceProfile:
+    Description: Master IAM Instance Profile
+    Value: !Ref MasterInstanceProfile
+
+  WorkerInstanceProfile:
+    Description: Worker IAM Instance Profile
+    Value: !Ref WorkerInstanceProfile

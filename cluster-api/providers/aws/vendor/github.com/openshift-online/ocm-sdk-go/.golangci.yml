@@ -1,0 +1,50 @@
+version: "2"
+run:
+  issues-exit-code: 1
+linters:
+  settings:
+    custom:
+      ocmlogger:
+        type: "module"
+        description: >
+          Verifies that calls to the OCM logger (such as logger.Info, logger.Warn, etc.) use format strings correctly.
+          It ensures that the number of format specifiers (e.g. %s, %v, %d, ...) in the log message matches the number of
+          arguments passed. The check only applies to receivers of type
+          github.com/openshift-online/ocm-sdk-go/logging.Logger (or a pointer to it).
+          You can disable the warning on a specific line using either //nolint:ocmlogger or // ocm-linter:ignore.
+  enable:
+    - ocmlogger
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - server.go
+      - accesstransparency
+      - accountsmgmt
+      - addonsmgmt
+      - authorizations
+      - clustersmgmt
+      - arohcp
+      - errors
+      - helpers
+      - jobqueue
+      - metamodel
+      - osdfleetmgmt
+      - servicelogs
+      - servicemgmt
+      - statusboard
+      - webrca
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

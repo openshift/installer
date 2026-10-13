@@ -1,0 +1,68 @@
+# This Dockerfile is used by CI to test using OpenShift Installer against an OpenStack cloud.
+# It builds an image containing the openshift-install command as well as the openstack cli.
+
+# We copy from the -artifacts images because they are statically linked
+FROM registry.ci.openshift.org/ocp/4.17:installer-kube-apiserver-artifacts AS kas-artifacts
+FROM registry.ci.openshift.org/ocp/4.17:installer-etcd-artifacts AS etcd-artifacts
+
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.26-openshift-4.22 AS builder
+# FIPS support is offered via the baremetal-installer image
+ENV GO_COMPLIANCE_EXCLUDE=".*"
+ARG TAGS=""
+ARG SKIP_ENVTEST="y"
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+COPY --from=kas-artifacts /usr/share/openshift/ cluster-api/bin/
+COPY --from=etcd-artifacts /usr/share/openshift/ cluster-api/bin/
+RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
+	mv cluster-api/bin/$(go env GOOS)/$(go env GOHOSTARCH)/* -t cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/
+RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
+
+FROM registry.ci.openshift.org/ocp/4.17:cli AS cli
+
+FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
+COPY --from=cli /usr/bin/oc /bin/oc
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/upi/openstack /var/lib/openshift-install/upi
+COPY --from=builder /go/src/github.com/openshift/installer/docs/user/openstack /var/lib/openshift-install/docs
+COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-manifests.sh /go/src/github.com/openshift/installer/scripts/openstack/manifest-tests /var/lib/openshift-install/manifest-tests
+
+# Install Dependendencies for tests
+RUN yum update -y && \
+    yum install --setopt=tsflags=nodocs -y \
+    ansible-collection-ansible-netcommon \
+    ansible-collection-community-general \
+    ansible-collections-openstack \
+    gettext \
+    git \
+    glibc-locale-source \
+    gzip \
+    jq \
+    make \
+    nmap \
+    python3-netaddr \
+    python3-openstackclient \
+    python3-pip \
+    unzip \
+    util-linux && \
+    yum clean all && rm -rf /var/cache/yum/* && \
+    localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
+    git config --system user.name test && \
+    git config --system user.email test@example.com && \
+    chmod g+w /etc/passwd
+
+# Exclude argcomplete 3.7.1: PEP604 annotations crash on Python 3.9.
+RUN python3 -m pip install 'yq' 'argcomplete!=3.7.1'
+
+# The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install -b /bin && \
+    rm -rf ./aws awscliv2.zip
+
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV HOME /output
+ENV LC_ALL en_US.UTF-8
+WORKDIR /output
+ENTRYPOINT ["/bin/openshift-install"]

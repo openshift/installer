@@ -1,0 +1,4 @@
+[Unit]
+Description=Shared volume for ironic
+
+[Volume]

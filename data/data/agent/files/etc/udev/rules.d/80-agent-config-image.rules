@@ -1,0 +1,1 @@
+ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="agent_configimage", ENV{SYSTEMD_WANTS}+="load-config-iso@$devnode.service"

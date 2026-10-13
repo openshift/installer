@@ -1,0 +1,194 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" height="31cm" viewBox="-14 -58 1377 618" width="69cm">
+  <ns0:defs><ns0:svg data-name="Product Icon" height="75" id="Amazon-VPC.svg" viewBox="0 0 75 75" width="75"><ns0:defs><ns0:linearGradient gradientTransform="translate(0 75) rotate(-90)" gradientUnits="userSpaceOnUse" id="PurpleGradient" x1="-15.53" x2="90.53" y1="-15.53" y2="90.53"><ns0:stop offset="0" stop-color="#4d27a8" /><ns0:stop offset="1" stop-color="#a166ff" /></ns0:linearGradient></ns0:defs><ns0:title>Amazon-VPC</ns0:title><ns0:rect data-name="Purple Gradient" height="75" id="Purple_Gradient" style="fill:url(#PurpleGradient)" width="75" /><ns0:g data-name="Icon Test" id="Icon_Test"><ns0:path d="M36.44,46.52h-14c-5.48,0-9.67-3.66-9.95-8.69,0-.21,0-.45,0-.69a9.23,9.23,0,0,1,6.79-9.28c0-.27,0-.53,0-.8a13.64,13.64,0,0,1,23.42-9.25,15.28,15.28,0,0,1,3.14,4.49,6.17,6.17,0,0,1,3.87-1.36c2.9,0,6,2.07,6.51,6.68a11,11,0,0,1,6.3,3.73l-1.57,1.23a9.53,9.53,0,0,0-5.81-3.16,1,1,0,0,1-.84-.93c-.23-3.83-2.47-5.55-4.59-5.55a4.31,4.31,0,0,0-3.42,1.74,1,1,0,0,1-.94.39,1,1,0,0,1-.79-.65,13.83,13.83,0,0,0-3.25-5.17,11.65,11.65,0,0,0-20,7.81,13.55,13.55,0,0,0,.08,1.43,1,1,0,0,1-.75,1.07c-2.27.56-6.1,2.3-6.1,7.58a4.87,4.87,0,0,0,0,.54c.22,4,3.57,6.84,8,6.84h14Z" style="fill:#fff" /><ns0:path d="M50.44,61.26c-11.86,0-12-13.33-12-13.46V35.63a1,1,0,0,1,.65-.94l11-4.07a1.05,1.05,0,0,1,.7,0l11,4.07a1,1,0,0,1,.65.94V48.55C62.44,48.68,62.3,61.26,50.44,61.26Zm-10-24.93V47.8c0,.47.14,11.46,10,11.46s10-10.27,10-10.71V36.33l-10-3.71Z" style="fill:#fff" /><ns0:path d="M50.44,57.52c-6.36,0-7.92-8.07-8-8.41a.55.55,0,0,1,0-.18V38.57a1,1,0,0,1,.63-.93l7-2.76a1,1,0,0,1,.74,0l7,2.76a1,1,0,0,1,.63.93V48.93a1.1,1.1,0,0,1,0,.18C58.36,49.45,56.8,57.52,50.44,57.52Zm-6-8.69c.16.76,1.59,6.69,6,6.69s5.84-5.92,6-6.69V39.25l-6-2.36-6,2.36Z" style="fill:#fff" /></ns0:g></ns0:svg><ns0:svg data-name="Layer 1" height="50" id="Amazon-VPC_Internet-Gateway_light-bg.svg" viewBox="0 0 50 50" width="50"><ns0:title>Amazon-VPC_Internet-Gateway_light-bg</ns0:title><ns0:path d="M25,48.5A23.5,23.5,0,1,1,48.5,25,23.52,23.52,0,0,1,25,48.5Zm0-45A21.5,21.5,0,1,0,46.5,25,21.52,21.52,0,0,0,25,3.5Z" style="fill:#693cc5" /><ns0:path d="M36.25,39.12H32.49a1,1,0,0,1-1-1V18.72a14.3,14.3,0,0,0-6.25-1.58,14.67,14.67,0,0,0-6.77,1.8V38.12a1,1,0,0,1-1,1H13.75a1,1,0,0,1-1-1V16.3a1,1,0,0,1,.34-.75,18.48,18.48,0,0,1,12.16-4.17,19,19,0,0,1,11.62,3.71,1,1,0,0,1,.38.79V38.12A1,1,0,0,1,36.25,39.12Zm-2.76-2h1.76V16.37a17.18,17.18,0,0,0-10-3,16.73,16.73,0,0,0-10.5,3.38V37.12h1.72V18.32a1,1,0,0,1,.55-.9,17.55,17.55,0,0,1,8.22-2.28,17.12,17.12,0,0,1,7.57,2l.1,0a1,1,0,0,1,.58.91Z" style="fill:#693cc5" /><ns0:polygon points="212 204 61 204 55.55 271.5 -83 271.5 -90 -354 212 -354 212 204" style="fill:none;stroke:#a166ff;stroke-miterlimit:10;stroke-width:3px" /></ns0:svg><ns0:svg data-name="Layer 1" height="50" id="Amazon-VPC_Endpoints_light-bg.svg" viewBox="0 0 50 50" width="50"><ns0:title>Amazon-VPC_Endpoints_light-bg</ns0:title><ns0:path d="M25,41.94c-5,0-8.76-2.61-10.77-7.54a21.33,21.33,0,0,1-1.45-6.52l2-.13a19.52,19.52,0,0,0,1.3,5.89c1.7,4.18,4.7,6.3,8.92,6.3,10.1,0,10.25-11.52,10.25-12V14.27L25,10.14,14.75,14.27v7.92h-2v-8.6a1,1,0,0,1,.63-.93L24.63,8.13a1,1,0,0,1,.74,0l11.25,4.53a1,1,0,0,1,.63.93V27.93C37.25,28.07,37.11,41.94,25,41.94Z" style="fill:#693cc5" /><ns0:path d="M25,37.62c-6.76,0-8.42-8.77-8.48-9.14a1.1,1.1,0,0,1,0-.18v-.49h2v.39c.17.81,1.7,7.42,6.5,7.42S31.33,29,31.5,28.2V17.64L25,15l-6.5,2.61v4.55h-2V17a1,1,0,0,1,.63-.93l7.5-3a1,1,0,0,1,.74,0l7.5,3a1,1,0,0,1,.63.93V28.3a1.1,1.1,0,0,1,0,.18C33.42,28.85,31.76,37.62,25,37.62Z" style="fill:#693cc5" /><ns0:path d="M25,48.5A23.5,23.5,0,1,1,48.5,25,23.52,23.52,0,0,1,25,48.5Zm0-45A21.5,21.5,0,1,0,46.5,25,21.52,21.52,0,0,0,25,3.5Z" style="fill:#693cc5" /><ns0:path d="M22.89,30.39,21.48,29l4-4-4-4,1.41-1.41,4.69,4.68a1,1,0,0,1,0,1.42Z" style="fill:#693cc5" /><ns0:rect height="2" style="fill:#693cc5" width="20.63" x="6.25" y="24" /><ns0:polygon points="212 274 61 274 55.55 341.5 -83 341.5 -90 -284 212 -284 212 274" style="fill:none;stroke:#a166ff;stroke-miterlimit:10;stroke-width:3px" /></ns0:svg><ns0:svg data-name="Layer 1" height="50" id="Amazon-VPC_Router_light-bg.svg" viewBox="0 0 50 50" width="50"><ns0:title>Amazon-VPC_Router_light-bg</ns0:title><ns0:path d="M25,48.5A23.5,23.5,0,1,1,48.5,25,23.52,23.52,0,0,1,25,48.5Zm0-45A21.5,21.5,0,1,0,46.5,25,21.52,21.52,0,0,0,25,3.5Z" style="fill:#693cc5" /><ns0:path d="M28.9,12.46,25,7.92l-3.9,4.54-1.51-1.3,4.65-5.43a1,1,0,0,1,1.52,0l4.65,5.43Z" style="fill:#693cc5" /><ns0:rect height="35.75" style="fill:#693cc5" width="2" x="24" y="7.12" /><ns0:path d="M25,44.62h0a1,1,0,0,1-.71-.29l-4.65-4.66,1.41-1.41,3.95,4,3.95-4,1.41,1.41-4.65,4.66A1,1,0,0,1,25,44.62Z" style="fill:#693cc5" /><ns0:path d="M18,30.36,16.53,29,20.48,25l-3.95-3.95L18,19.64l4.65,4.65a1,1,0,0,1,0,1.42Z" style="fill:#693cc5" /><ns0:path d="M32.05,30.36,27.4,25.71a1,1,0,0,1,0-1.42l4.65-4.65,1.42,1.41L29.52,25,33.47,29Z" style="fill:#693cc5" /><ns0:rect height="2" style="fill:#693cc5" width="17.07" x="28.1" y="24" /><ns0:rect height="2" style="fill:#693cc5" width="17.07" x="4.83" y="24" /><ns0:polygon points="212 64 61 64 55.55 131.5 -83 131.5 -90 -494 212 -494 212 64" style="fill:none;stroke:#a166ff;stroke-miterlimit:10;stroke-width:3px" /></ns0:svg><ns0:svg data-name="Product Icon" height="75" id="Amazon-Route-53.svg" viewBox="0 0 75 75" width="75"><ns0:defs><ns0:linearGradient gradientTransform="translate(-15.53 37.5) rotate(-45)" gradientUnits="userSpaceOnUse" id="PurpleGradient" x1="-37.5" x2="112.5" y1="37.5" y2="37.5"><ns0:stop offset="0" stop-color="#4d27a8" /><ns0:stop offset="1" stop-color="#a166ff" /></ns0:linearGradient></ns0:defs><ns0:title>Amazon-Route-53</ns0:title><ns0:rect data-name="Purple Gradient" height="75" id="Purple_Gradient" style="fill:url(#PurpleGradient)" width="75" /><ns0:g data-name="Icon Test" id="Icon_Test"><ns0:path d="M27.29,42.94a13,13,0,0,0,3.92.74A3.59,3.59,0,0,0,33.62,43a2.56,2.56,0,0,0,.83-2,2.62,2.62,0,0,0-.78-2.12,4,4,0,0,0-2.56-.66,30.05,30.05,0,0,0-3.2.2V37l.39-6.17h7.53V32.5H30l-.27,4.19a11.13,11.13,0,0,1,2-.2,4.93,4.93,0,0,1,3.49,1.17,4.23,4.23,0,0,1,1.25,3.24,4.07,4.07,0,0,1-1.46,3.27,5.76,5.76,0,0,1-3.86,1.25,9.53,9.53,0,0,1-3.94-.83Z" style="fill:#fff" /><ns0:path d="M43.63,36.94l.21,0H44A4.62,4.62,0,0,1,47.28,38a3.83,3.83,0,0,1,1.2,3A4,4,0,0,1,47,44.21a6,6,0,0,1-3.91,1.21,9.51,9.51,0,0,1-3.83-.83V42.94a12.4,12.4,0,0,0,3.83.74,3.69,3.69,0,0,0,2.42-.7,2.44,2.44,0,0,0,.84-2q0-2.49-3.15-2.49a18.11,18.11,0,0,0-2,.1V37.23l4.33-4.73H39.48V30.81h8.4v1.63Z" style="fill:#fff" /><ns0:path d="M37.5,56.5a1,1,0,0,1-.5-.14,33.17,33.17,0,0,0-10.48-4c-2.11-.38-9-2-9-7,0-2.26.87-3.76,2-5.66a15.66,15.66,0,0,0,2.71-8.21,14.58,14.58,0,0,0-2.38-7.93,1,1,0,0,1,.07-1.17l1.6-2a1,1,0,0,1,1.27-.24A13.69,13.69,0,0,0,29.54,22a12.33,12.33,0,0,0,7.38-2.32,1,1,0,0,1,1.16,0A12.33,12.33,0,0,0,45.46,22a13.69,13.69,0,0,0,6.77-1.86,1,1,0,0,1,1.27.24l1.6,2a1,1,0,0,1,.07,1.17,14.56,14.56,0,0,0-2.38,7.93c0,3.55,1.44,6,2.7,8.21,1.11,1.9,2,3.4,2,5.66,0,5-6.88,6.65-9,7a33.17,33.17,0,0,0-10.48,4A1,1,0,0,1,37.5,56.5ZM21.9,23a16.44,16.44,0,0,1,2.31,8.38c0,4.09-1.65,6.93-3,9.21-1,1.77-1.7,2.94-1.7,4.66,0,3.56,6.11,4.84,7.34,5.06a34.88,34.88,0,0,1,10.63,4,34.88,34.88,0,0,1,10.63-4c1.23-.22,7.34-1.5,7.34-5.06,0-1.72-.68-2.89-1.7-4.66-1.33-2.28-3-5.12-3-9.21A16.44,16.44,0,0,1,53.1,23l-.63-.78a15.44,15.44,0,0,1-7,1.72,14.43,14.43,0,0,1-8-2.3,14.43,14.43,0,0,1-8,2.3,15.44,15.44,0,0,1-7-1.72Z" style="fill:#fff" /><ns0:path d="M37.5,62.5a1,1,0,0,1-.63-.22,30,30,0,0,0-11.25-5c-8.22-1.48-13.13-6-13.13-12a15.29,15.29,0,0,1,2.65-8.19c1.09-1.87,2-3.49,2-5.68a10.77,10.77,0,0,0-3.64-7.63,1,1,0,0,1-.14-1.48c0-.07,5.87-7.11,7.2-8.94a1,1,0,0,1,.78-.42,1,1,0,0,1,.82.32,10.34,10.34,0,0,0,7.35,3.66c2.79,0,5-1.24,7.13-4a1.08,1.08,0,0,1,1.66,0c2.14,2.8,4.34,4,7.13,4a10.34,10.34,0,0,0,7.35-3.66,1,1,0,0,1,.82-.32,1,1,0,0,1,.78.42c1.33,1.83,7.15,8.87,7.2,8.94a1,1,0,0,1,.24.77,1.09,1.09,0,0,1-.38.71,10.77,10.77,0,0,0-3.64,7.63c0,2.19.94,3.81,2,5.68a15.29,15.29,0,0,1,2.65,8.19c0,6-4.91,10.52-13.13,12a29.71,29.71,0,0,0-11.24,5A1,1,0,0,1,37.5,62.5ZM15.61,22.89a12.51,12.51,0,0,1,3.64,8.53c0,2.75-1.17,4.77-2.3,6.72-1.22,2.11-2.38,4.09-2.38,7.15,0,7.32,8.74,9.46,11.42,9.94A31.34,31.34,0,0,1,37.5,60.17,31.34,31.34,0,0,1,49,55.23c2.68-.48,11.42-2.62,11.42-9.94,0-3.06-1.16-5-2.38-7.15-1.13-2-2.3-4-2.3-6.72a12.51,12.51,0,0,1,3.64-8.53c-1.31-1.59-4.34-5.28-5.93-7.33a11.92,11.92,0,0,1-8,3.46,10.16,10.16,0,0,1-8-3.86,10.16,10.16,0,0,1-8,3.86,11.92,11.92,0,0,1-8-3.46C20,17.61,16.92,21.3,15.61,22.89Z" style="fill:#fff" /></ns0:g></ns0:svg><ns0:svg data-name="Layer 1" height="50" id="Amazon-VPC_NAT-Gateway_light-bg.svg" viewBox="0 0 50 50" width="50"><ns0:title>Amazon-VPC_NAT-Gateway_light-bg</ns0:title><ns0:path d="M25,48.5A23.5,23.5,0,1,1,48.5,25,23.52,23.52,0,0,1,25,48.5Zm0-45A21.5,21.5,0,1,0,46.5,25,21.52,21.52,0,0,0,25,3.5Z" style="fill:#693cc5" /><ns0:path d="M27.81,38.19H19.57v-2h7.24V15.69H19.57v-2h8.24a1,1,0,0,1,1,1v22.5A1,1,0,0,1,27.81,38.19Z" style="fill:#693cc5" /><ns0:rect height="2" style="fill:#693cc5" width="17.81" x="19.37" y="24.94" /><ns0:path d="M12.81,19.44a1,1,0,0,1-.43-.1,1,1,0,0,1-.57-.9v-7.5a1,1,0,0,1,.57-.9,1,1,0,0,1,1.06.12l4.68,3.75a1,1,0,0,1,.38.78,1,1,0,0,1-.38.78l-4.68,3.75A1,1,0,0,1,12.81,19.44Zm1-6.42v3.34l2.09-1.67Z" style="fill:#693cc5" /><ns0:path d="M12.81,30.69a1,1,0,0,1-.43-.1,1,1,0,0,1-.57-.9v-7.5a1,1,0,0,1,.57-.9,1,1,0,0,1,1.06.12l4.68,3.75a1,1,0,0,1,.38.78,1,1,0,0,1-.38.78l-4.68,3.75A1,1,0,0,1,12.81,30.69Zm1-6.42v3.34l2.09-1.67Z" style="fill:#693cc5" /><ns0:path d="M38.12,31.62a1.06,1.06,0,0,1-.38-.07,1,1,0,0,1-.62-.93V21.25a1,1,0,0,1,1.71-.71l4.69,4.69a1,1,0,0,1,0,1.41l-4.69,4.69A1,1,0,0,1,38.12,31.62Zm1-8v4.55l2.28-2.27Z" style="fill:#693cc5" /><ns0:path d="M12.81,41a1,1,0,0,1-.43-.1,1,1,0,0,1-.57-.9V32.5a1,1,0,0,1,1.63-.78l4.68,3.75a1,1,0,0,1,0,1.56l-4.68,3.75A1,1,0,0,1,12.81,41Zm1-6.42v3.34l2.09-1.67Z" style="fill:#693cc5" /><ns0:polygon points="72 204 -79 204 -84.45 271.5 -223 271.5 -230 -354 72 -354 72 204" style="fill:none;stroke:#a166ff;stroke-miterlimit:10;stroke-width:3px" /></ns0:svg></ns0:defs><ns0:g>
+    <ns0:rect height="447" style="fill: #ffffff" width="1375" x="-12.1646" y="69" />
+    <ns0:rect height="447" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" width="1375" x="-12.1646" y="69" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="12" y="43" ns1:href="#Amazon-VPC.svg" /><ns0:text font-size="13.0274" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:700" x="16.3333" y="100.333">
+    <ns0:tspan x="16.3333" y="100.333">VPC</ns0:tspan>
+  </ns0:text>
+  <ns0:use height="40" width="40" x="1217.83" y="75" ns1:href="#Amazon-VPC_Internet-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.43" y="98">
+    <ns0:tspan x="1275.43" y="98">Internet</ns0:tspan>
+    <ns0:tspan x="1275.43" y="114">Gateway</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1237.98" x2="1238.77" y1="73.009" y2="-45.2641" />
+    <ns0:polygon points="1238.82,-52.764 1243.75,-42.7309 1238.77,-45.2641 1233.75,-42.7975 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.82,-52.764 1243.75,-42.7309 1238.77,-45.2641 1233.75,-42.7975 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="1218.83" y="242" ns1:href="#Amazon-VPC_Endpoints_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.43" y="259">
+    <ns0:tspan x="1275.43" y="259">S3 VPC</ns0:tspan>
+    <ns0:tspan x="1275.43" y="275">Endpoint</ns0:tspan>
+  </ns0:text>
+  <ns0:use height="40" width="40" x="1218.43" y="150.2" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.43" y="172.2">
+    <ns0:tspan x="1275.43" y="172.2">Route Table</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1238.26" x2="1238.09" y1="148.196" y2="126.739" />
+    <ns0:polygon points="1238.03,119.24 1243.11,129.199 1238.09,126.739 1233.11,129.279 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.03,119.24 1243.11,129.199 1238.09,126.739 1233.11,129.279 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1238.53" x2="1238.7" y1="192.186" y2="230.278" />
+    <ns0:polygon points="1238.73,237.778 1233.68,227.8 1238.7,230.278 1243.68,227.756 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.73,237.778 1233.68,227.8 1238.7,230.278 1243.68,227.756 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1334.83" y="89">
+    <ns0:tspan x="1334.83" y="89" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.33" y="505.5">
+    <ns0:tspan x="1275.33" y="505.5">10.0.0.0/16</ns0:tspan>
+  </ns0:text>
+  <ns0:use height="42.3" width="42.3" x="8.1" y="276.7" ns1:href="#Amazon-Route-53.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="30.1" y="334.6">
+    <ns0:tspan x="30.1" y="334.6">Private</ns0:tspan>
+    <ns0:tspan x="30.1" y="350.6">Hosted</ns0:tspan>
+    <ns0:tspan x="30.1" y="366.6">Zone</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="51.834" y="251">
+    <ns0:tspan x="51.834" y="251" />
+  </ns0:text>
+  <ns0:rect height="577" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20 4 4 4 4 4; stroke: #000000" width="346" x="74.6666" y="-18" />
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="89.6666" y="546.25">
+    <ns0:tspan x="89.6666" y="546.25">Availability Zone A</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="625.1" y="357.95">
+    <ns0:tspan x="625.1" y="357.95" />
+  </ns0:text>
+  <ns0:rect height="576.8" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20 4 4 4 4 4; stroke: #000000" width="346" x="444.436" y="-20" />
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="459.436" y="544.05">
+    <ns0:tspan x="459.436" y="544.05">Availability Zone B</ns0:tspan>
+  </ns0:text>
+  <ns0:rect height="574.6" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20 4 4 4 4 4; stroke: #000000" width="346" x="810.036" y="-20" />
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="825.036" y="541.85">
+    <ns0:tspan x="825.036" y="541.85">Availability Zone C</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:rect height="153.25" style="fill: #ffffff" width="280" x="840.036" y="93.3" />
+    <ns0:rect height="153.25" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="840.036" y="93.3" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:rect height="153.25" style="fill: #ffffff" width="280" x="106.15" y="93.3" />
+    <ns0:rect height="153.25" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="106.15" y="93.3" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="106.15" y="340" />
+    <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="106.15" y="340" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="324.334" y="144.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="246.15" y="169.925">
+    <ns0:tspan x="246.15" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="163.825" y="107.916">
+    <ns0:tspan x="163.825" y="107.916">Public Subnet - 10.0.0.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="157.967" y="462.758">
+    <ns0:tspan x="157.967" y="462.758">Private Subnet - 10.0.128.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="246.15" y="169.925">
+    <ns0:tspan x="246.15" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="297.15" y="135.625">
+    <ns0:tspan x="297.15" y="135.625">NAT Gateway</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:rect height="153.25" style="fill: #ffffff" width="280" x="482.436" y="93.3" />
+    <ns0:rect height="153.25" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="482.436" y="93.3" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="482.436" y="337.8" />
+    <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="482.436" y="337.8" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="691.62" y="145.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="169.925">
+    <ns0:tspan x="622.436" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="539.11" y="108.716">
+    <ns0:tspan x="539.11" y="108.716">Public Subnet - 10.0.16.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="523.252" y="462.558">
+    <ns0:tspan x="523.252" y="462.558">Private Subnet - 10.0.144.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="169.925">
+    <ns0:tspan x="622.436" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="670.436" y="135.425">
+    <ns0:tspan x="670.436" y="135.425">NAT Gateway</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="840.036" y="336.6" />
+    <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="840.036" y="336.6" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="1056.23" y="145.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="980.036" y="169.925">
+    <ns0:tspan x="980.036" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="897.71" y="108.516">
+    <ns0:tspan x="897.71" y="108.516">Public Subnet - 10.0.32.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="884.852" y="462.358">
+    <ns0:tspan x="884.852" y="462.358">Private Subnet - 10.0.160.0/20</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="980.036" y="169.925">
+    <ns0:tspan x="980.036" y="169.925" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1031.04" y="135.225">
+    <ns0:tspan x="1031.04" y="135.225">NAT Gateway</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1120.04" x2="1208.1" y1="169.925" y2="169.092" />
+    <ns0:polygon points="1215.6,169.021 1205.65,174.116 1208.1,169.092 1205.55,164.116 " style="fill: #8b00ff" />
+    <ns0:polygon points="1215.6,169.021 1205.65,174.116 1208.1,169.092 1205.55,164.116 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="324.834" y="388" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="693.034" y="385.4" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="1058.23" y="382.8" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="344.789" x2="344.399" y1="386.013" y2="196.648" />
+    <ns0:polygon points="344.384,189.148 349.404,199.138 344.399,196.648 339.404,199.158 " style="fill: #8b00ff" />
+    <ns0:polygon points="344.384,189.148 349.404,199.138 344.399,196.648 339.404,199.158 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="712.904" x2="711.807" y1="383.402" y2="197.659" />
+    <ns0:polygon points="711.763,190.159 716.822,200.129 711.807,197.659 706.822,200.188 " style="fill: #8b00ff" />
+    <ns0:polygon points="711.763,190.159 716.822,200.129 711.807,197.659 706.822,200.188 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1078.04" x2="1076.5" y1="380.81" y2="197.651" />
+    <ns0:polygon points="1076.43,190.151 1081.52,200.109 1076.5,197.651 1071.52,200.193 " style="fill: #8b00ff" />
+    <ns0:polygon points="1076.43,190.151 1081.52,200.109 1076.5,197.651 1071.52,200.193 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="387.119" x2="481.467" y1="169.925" y2="169.925" />
+  <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="763.444" x2="839.028" y1="169.925" y2="169.925" />
+  <ns0:g>
+    <ns0:polyline points="1078.23,380.804 1078.23,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:polyline points="713.034,383.412 713.034,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:g>
+    <ns0:polyline points="344.834,385.994 344.834,323.004 1238.83,323.004 1238.83,293.734 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polygon points="1238.83,286.234 1243.83,296.234 1238.83,293.734 1233.83,296.234 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.83,286.234 1243.83,296.234 1238.83,293.734 1233.83,296.234 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  </ns0:g>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="898.834" y="103">
+    <ns0:tspan x="898.834" y="103" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="599.834" y="107">
+    <ns0:tspan x="599.834" y="107" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="211.834" y="105">
+    <ns0:tspan x="211.834" y="105" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="262.834" y="459">
+    <ns0:tspan x="262.834" y="459" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="406.184">
+    <ns0:tspan x="622.436" y="406.184" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="191.834" y="460">
+    <ns0:tspan x="191.834" y="460" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1013.83" y="459">
+    <ns0:tspan x="1013.83" y="459" />
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="250.834" y="458">
+    <ns0:tspan x="250.834" y="458" />
+  </ns0:text>
+</ns0:svg>
