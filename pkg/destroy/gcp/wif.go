@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/iam/v1"
 )
 
 // wifPoolID is the ID of the workload identity pool owned by the cluster. WIF
@@ -32,27 +32,33 @@ func (o *ClusterUninstaller) listWIFProviders(ctx context.Context) ([]cloudResou
 	o.Logger.Debugf("Listing WIF providers")
 	result := []cloudResource{}
 
+	// Unlike the pool, provider names are not ours to predict, so every provider
+	// in the cluster-owned pool is claimed. The parent already scopes the search
+	// to this cluster.
 	parent := fmt.Sprintf("projects/%s/locations/global/workloadIdentityPools/%s", o.ProjectID, o.wifPoolID())
-	resp, err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.Providers.List(parent).Context(ctx).Do()
+	err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.Providers.List(parent).
+		Pages(ctx, func(resp *iam.ListWorkloadIdentityPoolProvidersResponse) error {
+			for _, provider := range resp.WorkloadIdentityPoolProviders {
+				if provider.State == "DELETED" {
+					continue
+				}
+				o.Logger.Debugf("Found WIF provider: %s", provider.Name)
+				result = append(result, cloudResource{
+					key:      provider.Name,
+					name:     provider.Name,
+					typeName: "wifprovider",
+				})
+			}
+			return nil
+		})
 	if err != nil {
 		if isWIFUnavailable(err) {
-			o.Logger.Debugf("Skipping WIF providers: %v", err)
+			o.Logger.Debugf("Skipping WIF providers in %s: %v", parent, err)
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to list WIF providers: %w", err)
 	}
 
-	for _, provider := range resp.WorkloadIdentityPoolProviders {
-		if provider.State == "DELETED" {
-			continue
-		}
-		o.Logger.Debugf("Found WIF provider: %s", provider.Name)
-		result = append(result, cloudResource{
-			key:      provider.Name,
-			name:     provider.Name,
-			typeName: "wifprovider",
-		})
-	}
 	return result, nil
 }
 
@@ -93,34 +99,30 @@ func (o *ClusterUninstaller) destroyWIFProviders(ctx context.Context) error {
 
 func (o *ClusterUninstaller) listWIFPools(ctx context.Context) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing WIF pools")
-	result := []cloudResource{}
 
-	parent := fmt.Sprintf("projects/%s/locations/global", o.ProjectID)
-	resp, err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.List(parent).Context(ctx).Do()
+	// The pool name is fully determined by the cluster ID, so fetch it directly
+	// rather than paging through every pool in the project.
+	name := fmt.Sprintf("projects/%s/locations/global/workloadIdentityPools/%s", o.ProjectID, o.wifPoolID())
+	pool, err := o.iamSvc.Projects.Locations.WorkloadIdentityPools.Get(name).Context(ctx).Do()
 	if err != nil {
 		if isWIFUnavailable(err) {
-			o.Logger.Debugf("Skipping WIF pools: %v", err)
+			o.Logger.Debugf("Skipping WIF pool %s: %v", name, err)
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to list WIF pools: %w", err)
+		return nil, fmt.Errorf("failed to get WIF pool %s: %w", name, err)
 	}
 
-	expectedPoolID := o.wifPoolID()
-	for _, pool := range resp.WorkloadIdentityPools {
-		if pool.State == "DELETED" {
-			continue
-		}
-		poolID := pool.Name[strings.LastIndex(pool.Name, "/")+1:]
-		if poolID == expectedPoolID {
-			o.Logger.Debugf("Found WIF pool: %s", pool.Name)
-			result = append(result, cloudResource{
-				key:      pool.Name,
-				name:     pool.Name,
-				typeName: "wifpool",
-			})
-		}
+	// A deleted pool lingers in a soft-deleted state until GCP purges it.
+	if pool.State == "DELETED" {
+		return nil, nil
 	}
-	return result, nil
+
+	o.Logger.Debugf("Found WIF pool: %s", pool.Name)
+	return []cloudResource{{
+		key:      pool.Name,
+		name:     pool.Name,
+		typeName: "wifpool",
+	}}, nil
 }
 
 func (o *ClusterUninstaller) deleteWIFPool(ctx context.Context, item cloudResource) error {
