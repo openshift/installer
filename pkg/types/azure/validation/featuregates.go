@@ -27,31 +27,6 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Field:           field.NewPath("platform", "azure", "defaultMachinePlatform", "identity", "userAssignedIdentities"),
 		},
 		{
-			FeatureGateName: features.FeatureGateAzureMultiDisk,
-			Condition:       defMp != nil && len(defMp.DataDisks) != 0,
-			Field:           field.NewPath("platform", "azure", "defaultMachinePlatform", "dataDisks"),
-		},
-		{
-			FeatureGateName: features.FeatureGateAzureMultiDisk,
-			Condition:       cp.Azure != nil && len(cp.Azure.DataDisks) != 0,
-			Field:           field.NewPath("controlPlane", "azure", "dataDisks"),
-		},
-		{
-			FeatureGateName: features.FeatureGateAzureMultiDisk,
-			Condition: func() bool {
-				computeMachinePool := c.Compute
-				for _, compute := range computeMachinePool {
-					if compute.Platform.Azure != nil {
-						if len(compute.Platform.Azure.DataDisks) != 0 {
-							return true
-						}
-					}
-				}
-				return false
-			}(),
-			Field: field.NewPath("compute", "azure", "dataDisks"),
-		},
-		{
 			FeatureGateName: features.FeatureGateAzureDualStackInstall,
 			Condition:       azure.IPFamily.DualStackEnabled(),
 			Field:           field.NewPath("platform", "azure", "ipFamily"),

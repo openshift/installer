@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
-	"github.com/openshift/api/features"
 	v1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
@@ -55,17 +54,15 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 
 	switch ic.Platform.Name() {
 	case azuretypes.Name:
-		if installConfig.Config.Enabled(features.FeatureGateAzureMultiDisk) {
-			if azureDataDisk, ok := dataDisk.(v1beta1.DataDisk); ok {
-				device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azureDataDisk.Lun)
-				diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
-				if err != nil {
-					return nil, errors.Wrap(err, "failed to create ignition to setup disks for master machines")
-				}
-				return diskSetupIgn, nil
+		if azureDataDisk, ok := dataDisk.(v1beta1.DataDisk); ok {
+			device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azureDataDisk.Lun)
+			diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to create ignition to setup disks for master machines")
 			}
-			return nil, errors.Errorf("unsupported azure data disk type")
+			return diskSetupIgn, nil
 		}
+		return nil, errors.Errorf("unsupported azure data disk type")
 	case vspheretypes.Name:
 		if vsphereDataDisk, ok := dataDisk.(vsphere.DiskInfo); ok {
 			device := fmt.Sprintf(VsphereScsiByPath, vsphereDataDisk.Index+1)
@@ -79,5 +76,4 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 	default:
 		return nil, errors.Errorf("unsupported platform %q", ic.Platform.Name())
 	}
-	return nil, nil
 }

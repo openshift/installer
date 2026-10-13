@@ -20,7 +20,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -404,43 +403,41 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				machineConfigs = append(machineConfigs, ignRoutes)
 			}
 		}
-		if installConfig.Config.Enabled(features.FeatureGateMultiDiskSetup) {
-			for i, diskSetup := range pool.DiskSetup {
-				var dataDisk any
+		for i, diskSetup := range pool.DiskSetup {
+			var dataDisk any
 
-				diskName, err := DiskName(diskSetup)
-				if err != nil {
-					return err
+			diskName, err := DiskName(diskSetup)
+			if err != nil {
+				return err
+			}
+
+			switch ic.Platform.Name() {
+			// Each platform has their unique dataDisk type
+			case azuretypes.Name:
+				if i < len(pool.Platform.Azure.DataDisks) {
+					dataDisk = pool.Platform.Azure.DataDisks[i]
 				}
-
-				switch ic.Platform.Name() {
-				// Each platform has their unique dataDisk type
-				case azuretypes.Name:
-					if i < len(pool.Platform.Azure.DataDisks) {
-						dataDisk = pool.Platform.Azure.DataDisks[i]
-					}
-				case vspheretypes.Name:
-					vsphereMachinePool := pool.Platform.VSphere
-					for index, disk := range vsphereMachinePool.DataDisks {
-						if disk.Name == diskName {
-							dataDisk = vsphere.DiskInfo{
-								Index: index,
-								Disk:  disk,
-							}
-							break
+			case vspheretypes.Name:
+				vsphereMachinePool := pool.Platform.VSphere
+				for index, disk := range vsphereMachinePool.DataDisks {
+					if disk.Name == diskName {
+						dataDisk = vsphere.DiskInfo{
+							Index: index,
+							Disk:  disk,
 						}
+						break
 					}
-				default:
-					return errors.Errorf("disk setup for %s is not supported", ic.Platform.Name())
 				}
+			default:
+				return errors.Errorf("disk setup for %s is not supported", ic.Platform.Name())
+			}
 
-				if dataDisk != nil {
-					diskSetupIgn, err := NodeDiskSetup(installConfig, "worker", diskSetup, dataDisk)
-					if err != nil {
-						return errors.Wrap(err, "failed to create ignition to setup disks for compute")
-					}
-					machineConfigs = append(machineConfigs, diskSetupIgn)
+			if dataDisk != nil {
+				diskSetupIgn, err := NodeDiskSetup(installConfig, "worker", diskSetup, dataDisk)
+				if err != nil {
+					return errors.Wrap(err, "failed to create ignition to setup disks for compute")
 				}
+				machineConfigs = append(machineConfigs, diskSetupIgn)
 			}
 		}
 		// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.

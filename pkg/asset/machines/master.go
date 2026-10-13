@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -622,44 +621,42 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		machineConfigs = append(machineConfigs, ignIPv6)
 	}
 
-	if installConfig.Config.Enabled(features.FeatureGateMultiDiskSetup) {
-		for i, diskSetup := range installConfig.Config.ControlPlane.DiskSetup {
-			var dataDisk any
+	for i, diskSetup := range installConfig.Config.ControlPlane.DiskSetup {
+		var dataDisk any
 
-			diskName, err := DiskName(diskSetup)
-			if err != nil {
-				return err
+		diskName, err := DiskName(diskSetup)
+		if err != nil {
+			return err
+		}
+
+		switch ic.Platform.Name() {
+		case azuretypes.Name:
+			azureControlPlaneMachinePool := ic.ControlPlane.Platform.Azure
+
+			if i < len(azureControlPlaneMachinePool.DataDisks) {
+				dataDisk = azureControlPlaneMachinePool.DataDisks[i]
 			}
-
-			switch ic.Platform.Name() {
-			case azuretypes.Name:
-				azureControlPlaneMachinePool := ic.ControlPlane.Platform.Azure
-
-				if i < len(azureControlPlaneMachinePool.DataDisks) {
-					dataDisk = azureControlPlaneMachinePool.DataDisks[i]
-				}
-			case vspheretypes.Name:
-				vsphereControlPlaneMachinePool := ic.ControlPlane.Platform.VSphere
-				for index, disk := range vsphereControlPlaneMachinePool.DataDisks {
-					if disk.Name == diskName {
-						dataDisk = vsphere.DiskInfo{
-							Index: index,
-							Disk:  disk,
-						}
-						break
+		case vspheretypes.Name:
+			vsphereControlPlaneMachinePool := ic.ControlPlane.Platform.VSphere
+			for index, disk := range vsphereControlPlaneMachinePool.DataDisks {
+				if disk.Name == diskName {
+					dataDisk = vsphere.DiskInfo{
+						Index: index,
+						Disk:  disk,
 					}
+					break
 				}
-			default:
-				return errors.Errorf("disk setup for %s is not supported", ic.Platform.Name())
 			}
+		default:
+			return errors.Errorf("disk setup for %s is not supported", ic.Platform.Name())
+		}
 
-			if dataDisk != nil {
-				diskSetupIgn, err := NodeDiskSetup(installConfig, "master", diskSetup, dataDisk)
-				if err != nil {
-					return errors.Wrap(err, "failed to create ignition to setup disks for control plane")
-				}
-				machineConfigs = append(machineConfigs, diskSetupIgn)
+		if dataDisk != nil {
+			diskSetupIgn, err := NodeDiskSetup(installConfig, "master", diskSetup, dataDisk)
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition to setup disks for control plane")
 			}
+			machineConfigs = append(machineConfigs, diskSetupIgn)
 		}
 	}
 
