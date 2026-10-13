@@ -402,7 +402,11 @@ func serverTimeoutError(pending, failed []servers.Server, lastServerErr error) e
 	return fmt.Errorf("timed out waiting for servers to be deleted (pending: %s%s)", describeServers(pending, false), extra)
 }
 
-// deleteUntaggedPorts deletes the ports whose names begin with the infraID.
+// bootstrapRole is the role name in the bootstrap machine's name.
+const bootstrapRole = "bootstrap"
+
+// deleteUntaggedPorts deletes the cluster machines' ports that are not
+// attached to a server.
 func deleteUntaggedPorts(ctx context.Context, cloud, infraID string, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting PowerVC cluster ports by name")
 	defer logger.Debug("Exiting deleting PowerVC cluster ports by name")
@@ -436,21 +440,28 @@ func deleteUntaggedPorts(ctx context.Context, cloud, infraID string, logger logr
 	return nil
 }
 
-// clusterPorts returns the unattached ports that belong to the cluster,
-// identified by the CAPO port naming scheme "<infraID>-<machine>-<index>".
-// Ports still attached to a server (non-empty DeviceID) are skipped: the
-// cluster's servers are gone by now, so an attached port with a matching name
-// belongs to something else, for example a bastion server that is named after
-// the infraID.
+// clusterPorts returns the unattached ports that belong to the cluster's
+// machines. Machine ports are named "<infraID>-<role>-...", where the role is
+// master, worker or bootstrap. Only these roles are matched, so that a port
+// of anything else that merely starts with the infraID, for example a
+// bastion, is never selected, even when it is not attached to a server.
+// Ports still attached to a server (non-empty DeviceID) are also skipped:
+// the cluster's servers are gone by now.
 func clusterPorts(allPorts []ports.Port, infraID string) []ports.Port {
 	if infraID == "" {
 		return nil
 	}
-	prefix := infraID + "-"
+	roles := []string{types.MachinePoolControlPlaneRoleName, types.MachinePoolComputeRoleName, bootstrapRole}
 	var result []ports.Port
 	for _, port := range allPorts {
-		if strings.HasPrefix(port.Name, prefix) && port.DeviceID == "" {
-			result = append(result, port)
+		if port.DeviceID != "" {
+			continue
+		}
+		for _, role := range roles {
+			if strings.HasPrefix(port.Name, infraID+"-"+role+"-") {
+				result = append(result, port)
+				break
+			}
 		}
 	}
 	return result
