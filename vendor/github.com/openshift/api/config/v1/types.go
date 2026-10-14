@@ -61,6 +61,15 @@ type ServingInfo struct {
 	// cipherSuites contains an overridden list of ciphers for the server to support.
 	// Values must match cipher suite IDs from https://golang.org/pkg/crypto/tls/#pkg-constants
 	CipherSuites []string `json:"cipherSuites,omitempty"`
+	// curvePreferences contains the allowed TLS key-exchange groups for the server.
+	// Values must match curve IDs from https://golang.org/pkg/crypto/tls/#pkg-constants.
+	// When omitted, the Go TLS implementation uses its default curve set.
+	// +kubebuilder:validation:MaxItems=7
+	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
+	// +optional
+	// +openshift:enable:FeatureGate=TLSGroupPreferences
+	CurvePreferences []int32 `json:"curvePreferences,omitempty"`
 }
 
 // CertInfo relates a certificate with a private key

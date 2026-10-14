@@ -38,6 +38,52 @@ type AWSNetworkLoadBalancerParametersApplyConfiguration struct {
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html for general
 	// information about configuration, characteristics, and limitations of Elastic IP addresses.
 	EIPAllocations []operatorv1.EIPAllocation `json:"eipAllocations,omitempty"`
+	// securityGroups is a list of security group IDs to attach to the
+	// Network Load Balancer. When specified, these security groups replace
+	// the managed security group that the Cloud Controller Manager would
+	// otherwise create automatically. The user is responsible for
+	// configuring the ingress and egress rules on the specified security
+	// groups.
+	//
+	// The specified security groups must exist in the same VPC as the
+	// cluster and must allow the necessary traffic for the
+	// IngressController to function.
+	//
+	// When this field is omitted, the Cloud Controller Manager
+	// automatically creates and manages a security group for the NLB.
+	//
+	// Each security group ID must be unique and must begin with "sg-"
+	// followed by 8 or 17 lowercase hexadecimal characters
+	// (e.g. "sg-abcd1234" or "sg-abcd1234abcd12345"). At least 1 and
+	// at most 5 security groups can be specified.
+	SecurityGroups []operatorv1.SecurityGroupID `json:"securityGroups,omitempty"`
+	// protocol specifies whether the Network Load Balancer uses PROXY
+	// protocol to forward connections to the IngressController.
+	//
+	// When set to "TCP", the NLB uses AWS's native client IP preservation.
+	// This may cause hairpin connection failures for internal load
+	// balancers when connections are made from pods to router pods on
+	// the same node.
+	//
+	// When set to "PROXY", the NLB disables native client IP preservation
+	// and uses PROXY protocol v2. The IngressController enables PROXY
+	// protocol on HAProxy so that it can parse PROXY protocol headers to
+	// obtain the original client IP. This avoids hairpin connection
+	// failures.
+	//
+	// The following values are valid for this field:
+	//
+	// * "TCP".
+	// * "PROXY".
+	//
+	// When omitted, this means the user has no opinion and the value is
+	// left to the platform to choose a reasonable default, which is subject to
+	// change over time. The current default is "PROXY".
+	//
+	// Note that changing this field may cause brief connection failures
+	// during the transition as the NLB attribute change and router rollout
+	// occur independently.
+	Protocol *operatorv1.NLBProtocol `json:"protocol,omitempty"`
 }
 
 // AWSNetworkLoadBalancerParametersApplyConfiguration constructs a declarative configuration of the AWSNetworkLoadBalancerParameters type for use with
@@ -61,5 +107,23 @@ func (b *AWSNetworkLoadBalancerParametersApplyConfiguration) WithEIPAllocations(
 	for i := range values {
 		b.EIPAllocations = append(b.EIPAllocations, values[i])
 	}
+	return b
+}
+
+// WithSecurityGroups adds the given value to the SecurityGroups field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the SecurityGroups field.
+func (b *AWSNetworkLoadBalancerParametersApplyConfiguration) WithSecurityGroups(values ...operatorv1.SecurityGroupID) *AWSNetworkLoadBalancerParametersApplyConfiguration {
+	for i := range values {
+		b.SecurityGroups = append(b.SecurityGroups, values[i])
+	}
+	return b
+}
+
+// WithProtocol sets the Protocol field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Protocol field is set to the value of the last call.
+func (b *AWSNetworkLoadBalancerParametersApplyConfiguration) WithProtocol(value operatorv1.NLBProtocol) *AWSNetworkLoadBalancerParametersApplyConfiguration {
+	b.Protocol = &value
 	return b
 }
