@@ -63,10 +63,14 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 	ctx := context.TODO()
 	for _, vcenter := range ic.VSphere.VCenters {
 		if vcenter.Server == server {
+			credentials, err := ic.VSphere.CredentialsForVCenter(vcenter.Server)
+			if err != nil {
+				return nil, nil, err
+			}
 			vim25Client, vim25RestClient, cleanup, err := CreateVSphereClients(ctx,
 				vcenter.Server,
-				vcenter.Username,
-				vcenter.Password)
+				credentials.User,
+				credentials.Password)
 
 			if err != nil {
 				return nil, nil, err
