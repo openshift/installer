@@ -817,8 +817,6 @@ github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071 h1:l0++HnGVKBc
 github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071/go.mod h1:gL0laCCiIaNTNw1ZsMQZXBVu2NeQFpNWm9bLtYO9+ZU=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187 h1:v2D/+SWsOPsl4Syz1SVjo7m3L0ethuRGR++ubsb89oA=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187/go.mod h1:eyA6FG71366St6Q1TW+jXdQbald0rUwtEPhAREMlyhA=
-github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928 h1:gX0HAKR0f40xmMWlUSn8DBMCjip8Iuzg5XToWAv6Uzw=
-github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928/go.mod h1:eVEtCena8tmeeYDKwZlA2w+xBKzBHbQZ4CNHV8KL4ho=
 github.com/openshift/cluster-api-actuator-pkg/testutils v0.0.0-20240626103413-ddea9c7c0aca h1:HFFzJznFQVudyVSpMa+hZwXZpc0ZvFCIpiMNFdf21g8=
 github.com/openshift/cluster-api-actuator-pkg/testutils v0.0.0-20240626103413-ddea9c7c0aca/go.mod h1:osVq9/R6qKHBQxDP4cYTvkgXVBKOMs1SOfPLFfn0m7A=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e h1:FWzYb0sH16yVOyySUwY5yXtZFW/U2bPoK38SEGjC5D8=
