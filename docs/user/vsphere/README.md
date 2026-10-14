@@ -7,6 +7,7 @@ Follow along with the steps and links below to prepare your vCenter and provisio
 1. [Virtual IPs and DNS](vips-dns.md)
 1. [Requirements](requirements.md)
 1. [Privileges](privileges.md)
+1. [Candidate component-scoped privilege matrix](component-privileges.md)
 1. [Cluster Installation](install.md)
 
 ## Reporting Issues
