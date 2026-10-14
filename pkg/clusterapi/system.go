@@ -338,7 +338,6 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		)
 	case ibmcloud.Name:
 		ibmcloudFlags := []string{
-			"--provider-id-fmt=v2",
 			"-v=2",
 			"--diagnostics-address=0",
 			"--health-addr={{suggestHealthHostPort}}",
@@ -468,7 +467,6 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		controller := c.getInfrastructureController(
 			&IBMCloud,
 			[]string{
-				"--provider-id-fmt=v2",
 				"--v=2",
 				"--diagnostics-address=0",
 				"--health-addr={{suggestHealthHostPort}}",

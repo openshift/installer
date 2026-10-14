@@ -24,7 +24,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
-	var network string
+	network := networkName(clusterID, platform)
 	image := fmt.Sprintf("rhcos-%s", clusterID)
 
 	total := int32(0)

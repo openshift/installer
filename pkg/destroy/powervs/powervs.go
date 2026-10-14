@@ -279,6 +279,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
+		{name: "VPC Routing Tables", execute: o.destroyRoutingTables},
+	}, {
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {

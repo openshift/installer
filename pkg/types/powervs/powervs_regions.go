@@ -303,3 +303,24 @@ func ValidateCOSRegion(region string) bool {
 	}
 	return false
 }
+
+// VPCZoneForPowerVSZone returns the first VPC zone for the VPC region that corresponds
+// to the given PowerVS zone. This is used when the installer needs a single VPC zone to
+// attach a Public Gateway or Routing Table to, and the user has not specified one explicitly.
+//
+// For example, PowerVS zone "dal12" → PowerVS region "dal" → VPC region "us-south" →
+// first VPC zone "us-south-1".
+func VPCZoneForPowerVSZone(zone string) (string, error) {
+	region := RegionFromZone(zone)
+	if region == "" {
+		return "", fmt.Errorf("PowerVS region not found for zone %s", zone)
+	}
+	r, ok := Regions[region]
+	if !ok {
+		return "", fmt.Errorf("PowerVS region %s not found in Regions map", region)
+	}
+	if len(r.VPCZones) == 0 {
+		return "", fmt.Errorf("no VPC zones defined for PowerVS region %s", region)
+	}
+	return r.VPCZones[0], nil
+}

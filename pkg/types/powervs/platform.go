@@ -4,6 +4,24 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 )
 
+// NetworkType defines which PowerVS network provisioning strategy to use.
+// +kubebuilder:validation:Enum=DHCPSubnet;DHCPServer
+type NetworkType string
+
+const (
+	// NetworkTypeDHCPSubnet creates a plain PowerVS network with DHCP natively enabled
+	// (NetworkCreate.EnableDHCP). No separate DHCP server VM is created.
+	// This is the default and recommended mode for new clusters.
+	NetworkTypeDHCPSubnet NetworkType = "DHCPSubnet"
+
+	// NetworkTypeDHCPServer creates a dedicated PowerVS DHCP Service resource (a managed VM)
+	// and its associated private network. This is the legacy mode used by clusters created
+	// before OPENSHIFTP-855.
+	// When this mode is selected the route-mode NLB, VPC Routing Table, and Public Gateway
+	// are NOT provisioned, because the DHCP Server handles its own SNAT/egress.
+	NetworkTypeDHCPServer NetworkType = "DHCPServer"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -86,4 +104,20 @@ type Platform struct {
 	//
 	// +optional
 	TransitGateway string `json:"tgName,omitempty"`
+
+	// NetworkType selects the PowerVS network provisioning strategy.
+	// Allowed values are "DHCPSubnet" (default) and "DHCPServer" (legacy).
+	//
+	// DHCPSubnet creates a plain PowerVS network with DHCP natively enabled and is the
+	// recommended mode. It enables the full new networking model: route-mode Network Load
+	// Balancer, VPC Routing Table advertising 0.0.0.0/0, and a VPC Public Gateway.
+	//
+	// DHCPServer creates a dedicated DHCP Service VM (legacy). When this mode is selected
+	// the route-mode NLB, Routing Table, and Public Gateway are suppressed because the
+	// DHCP Server manages its own SNAT and egress.
+	//
+	// Leave unset to use DHCPSubnet.
+	//
+	// +optional
+	NetworkType NetworkType `json:"networkType,omitempty"`
 }
