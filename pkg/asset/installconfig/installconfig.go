@@ -244,7 +244,11 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 		a.VSphere = icvsphere.NewMetadata()
 
 		for _, v := range a.Config.VSphere.VCenters {
-			_ = a.VSphere.AddCredentials(v.Server, v.Username, v.Password)
+			credentials, err := a.Config.VSphere.CredentialsForVCenter(v.Server)
+			if err != nil {
+				return errors.Wrapf(err, "failed to select credentials for vCenter %s", v.Server)
+			}
+			_ = a.VSphere.AddCredentials(v.Server, credentials.User, credentials.Password)
 		}
 	}
 

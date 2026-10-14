@@ -2195,6 +2195,15 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "valid manual credentials mode for vSphere",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{VSphere: validVSpherePlatform()}
+				c.CredentialsMode = types.ManualCredentialsMode
+				return c
+			}(),
+		},
+		{
 			name: "invalidly set cloud credentials mode",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
