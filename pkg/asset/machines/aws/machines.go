@@ -22,6 +22,11 @@ import (
 	"github.com/openshift/installer/pkg/utils"
 )
 
+const (
+	subnetScopePrivate = "private"
+	subnetScopePublic  = "public"
+)
+
 type machineProviderInput struct {
 	clusterID        string
 	region           string
@@ -264,10 +269,10 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		SecurityGroups:    securityGroups,
 	}
 
-	visibility := "private"
+	visibility := subnetScopePrivate
 	if in.publicSubnet {
 		config.PublicIP = pointer.Bool(in.publicSubnet)
-		visibility = "public"
+		visibility = subnetScopePublic
 	}
 
 	subnetFilters := []machineapi.Filter{
