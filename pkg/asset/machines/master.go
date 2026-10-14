@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -622,7 +621,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		machineConfigs = append(machineConfigs, ignIPv6)
 	}
 
-	if installConfig.Config.Enabled(features.FeatureGateMultiDiskSetup) {
+	if installConfig.Config.DiskSetupEnabled() {
 		for i, diskSetup := range installConfig.Config.ControlPlane.DiskSetup {
 			var dataDisk any
 
