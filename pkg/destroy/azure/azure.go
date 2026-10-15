@@ -232,7 +232,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("disassociating NAT gateway from subnets")
 			if o.CloudName != azure.StackCloud {
-				err = disassociateNATGateways(ctx, o.vnetClient, o.subnetClient, o.Logger, o.ResourceGroupName, o.InfraID)
+				err = disassociateNATGateways(ctx, o.vnetClient, o.subnetClient, o.Logger, o.resourceGroupsClient, o.InfraID)
 			}
 			if err != nil {
 				o.Logger.Debug(err)
@@ -823,7 +823,7 @@ func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.Grap
 	return resp.GetValue(), nil
 }
 
-func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceGroupName, infraID string) error {
+func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceClient resources.GroupsClient, infraID string) error {
 	vnets := vnetClient.NewListAllPager(nil)
 	for vnets.More() {
 		vnetPage, err := vnets.NextPage(ctx)
@@ -863,7 +863,15 @@ func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.Virtual
 					if !strings.HasPrefix(natGateway.Name, infraID) {
 						continue
 					}
-					if !strings.HasPrefix(natGateway.ResourceGroupName, infraID) {
+					group, err := resourceClient.Get(ctx, natGateway.ResourceGroupName)
+					if err != nil {
+						logger.Warnf("unable to get nat gateway resource group %s: %v", natGateway.ResourceGroupName, err)
+					}
+					if tagValue := group.Tags[fmt.Sprintf("kubernetes.io_cluster.%s", infraID)]; tagValue != nil {
+						if to.String(tagValue) != "owned" && to.String(tagValue) != "shared" {
+							continue
+						}
+					} else {
 						continue
 					}
 					logger.Debugf("found NAT Gateway association in Subnet: %s", subnetName)
