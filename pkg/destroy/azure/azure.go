@@ -225,6 +225,9 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		o.Logger.Debug(err)
 	}
 
+	// reducing the number of times this function runs. Don't want the installer
+	// to wait for 2 hours just for this step to succeed.
+	retryCount := 1
 	err = wait.PollUntilContextCancel(
 		waitCtx,
 		1*time.Second,
@@ -232,21 +235,22 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("disassociating NAT gateway from subnets")
 			if o.CloudName != azure.StackCloud {
-				err = disassociateNATGateways(ctx, o.vnetClient, o.subnetClient, o.Logger, o.ResourceGroupName, o.InfraID)
+				err = disassociateNATGateways(ctx, o.vnetClient, o.subnetClient, o.Logger, o.resourceGroupsClient, o.InfraID)
 			}
 			if err != nil {
 				o.Logger.Debug(err)
-				if isAuthError(err) {
-					errs = append(errs, fmt.Errorf("unable to authenticate when disassociating NAT gateways: %w", err))
+				// Setting this to arbitrary number 3 times to run the loop.
+				if retryCount == 3 {
 					return true, err
 				}
+				retryCount++
 				return false, nil
 			}
 			return true, nil
 		},
 	)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("failed to delete public DNS records: %w", err))
+		errs = append(errs, fmt.Errorf("failed to disassociate NAT gateway: %w", err))
 		o.Logger.Debug(err)
 	}
 
@@ -823,8 +827,9 @@ func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.Grap
 	return resp.GetValue(), nil
 }
 
-func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceGroupName, infraID string) error {
+func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.VirtualNetworksClient, subnetsClient *armnetwork.SubnetsClient, logger logrus.FieldLogger, resourceClient resources.GroupsClient, infraID string) error {
 	vnets := vnetClient.NewListAllPager(nil)
+	var subnetError error
 	for vnets.More() {
 		vnetPage, err := vnets.NextPage(ctx)
 		if err != nil {
@@ -863,20 +868,40 @@ func disassociateNATGateways(ctx context.Context, vnetClient *armnetwork.Virtual
 					if !strings.HasPrefix(natGateway.Name, infraID) {
 						continue
 					}
-					if !strings.HasPrefix(natGateway.ResourceGroupName, infraID) {
+					group, err := resourceClient.Get(ctx, natGateway.ResourceGroupName)
+					if err != nil {
+						// Stopping here will cause this code to not check the other subnets but we do want to return
+						// at least one error if there has been any failure here so it can be retried.
+						logger.Warnf("unable to get nat gateway resource group %s: %v", natGateway.ResourceGroupName, err)
+						if !isAuthError(err) {
+							subnetError = err
+						} else {
+							logger.Warnf("unable to authenticate nat gateway resource group %s", natGateway.ResourceGroupName)
+						}
+					}
+					if tagValue := group.Tags[fmt.Sprintf("kubernetes.io_cluster.%s", infraID)]; tagValue != nil {
+						if to.String(tagValue) != "owned" && to.String(tagValue) != "shared" {
+							continue
+						}
+					} else {
 						continue
 					}
 					logger.Debugf("found NAT Gateway association in Subnet: %s", subnetName)
 					err = removeSubnetFromNATGateway(ctx, subnetsClient, vnetInfo.ResourceGroupName, vnetName, subnetName, subnet)
 					if err != nil {
 						logger.Warnf("error disassociating NAT Gateway from subnet '%s': %v", subnetName, err)
+						if !isAuthError(err) {
+							subnetError = err
+						} else {
+							logger.Warnf("unable to authenticate nat gateway subnet disassociation %s", subnetName)
+						}
 					}
 					logger.Debug("subnet disassociated")
 				}
 			}
 		}
 	}
-	return nil
+	return subnetError
 }
 
 func removeSubnetFromNATGateway(ctx context.Context, subnetsClient *armnetwork.SubnetsClient, resourceGroupName, vnetName, subnetName string, subnet *armnetwork.Subnet) error {
