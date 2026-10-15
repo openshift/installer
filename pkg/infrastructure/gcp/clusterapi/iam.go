@@ -88,17 +88,18 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, 
 		return "", fmt.Errorf("Projects.ServiceAccounts.Create: %w", err)
 	}
 
+	var saErr error
 	// Poll for service account
 	for i := 0; i < retryCount; i++ {
-		_, err := service.Projects.ServiceAccounts.Get(sa.Name).Do()
-		if err == nil {
+		_, saErr = service.Projects.ServiceAccounts.Get(sa.Name).Do()
+		if saErr == nil {
 			logrus.Debugf("Service account created for %s", accountID)
 			return sa.Email, nil
 		}
 		time.Sleep(retryTime)
 	}
 
-	return "", fmt.Errorf("failure creating service account: %w", err)
+	return "", fmt.Errorf("failure creating service account: %w", saErr)
 }
 
 // AddServiceAccountRoles adds predefined roles for service account.
