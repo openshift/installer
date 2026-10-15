@@ -719,7 +719,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 					}
 				}
 				for _, pool := range p.lbBackendAddressPools {
-					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") && pool.ID != nil && !existing[*pool.ID] {
+					if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") && pool.ID != nil && !existing[*pool.ID] {
 						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
 							ipconfig.Properties.LoadBalancerBackendAddressPools,
 							pool,
@@ -1199,7 +1199,7 @@ func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, n
 	// Find the IPv6 backend pool
 	var ipv6BackendPoolID string
 	for _, pool := range lb.Properties.BackendAddressPools {
-		if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+		if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
 			ipv6BackendPoolID = *pool.ID
 			break
 		}
