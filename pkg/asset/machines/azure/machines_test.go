@@ -1,16 +1,256 @@
 package azure
 
 import (
+	"encoding/json"
 	"testing"
 
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
+
+func TestGenerateSecurityProfile(t *testing.T) {
+	enabled := "Enabled"
+	disabled := "Disabled"
+	encryptionAtHost := true
+
+	testCases := []struct {
+		name     string
+		mpool    *aztypes.MachinePool
+		expected *machineapi.SecurityProfile
+	}{
+		{
+			name:     "no security features",
+			mpool:    &aztypes.MachinePool{},
+			expected: nil,
+		},
+		{
+			name: "encryption at host only",
+			mpool: &aztypes.MachinePool{
+				EncryptionAtHost: true,
+			},
+			expected: &machineapi.SecurityProfile{
+				EncryptionAtHost: &encryptionAtHost,
+			},
+		},
+		{
+			name: "trusted launch",
+			mpool: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &aztypes.TrustedLaunch{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &enabled,
+							VirtualizedTrustedPlatformModule: &disabled,
+						},
+					},
+				},
+			},
+			expected: &machineapi.SecurityProfile{
+				Settings: machineapi.SecuritySettings{
+					SecurityType: machineapi.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &machineapi.TrustedLaunch{
+						UEFISettings: machineapi.UEFISettings{
+							SecureBoot:                       machineapi.SecureBootPolicyEnabled,
+							VirtualizedTrustedPlatformModule: machineapi.VirtualizedTrustedPlatformModulePolicyDisabled,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "confidential VM",
+			mpool: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesConfidentialVM,
+					ConfidentialVM: &aztypes.ConfidentialVM{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &disabled,
+							VirtualizedTrustedPlatformModule: &enabled,
+						},
+					},
+				},
+			},
+			expected: &machineapi.SecurityProfile{
+				Settings: machineapi.SecuritySettings{
+					SecurityType: machineapi.SecurityTypesConfidentialVM,
+					ConfidentialVM: &machineapi.ConfidentialVM{
+						UEFISettings: machineapi.UEFISettings{
+							SecureBoot:                       machineapi.SecureBootPolicyDisabled,
+							VirtualizedTrustedPlatformModule: machineapi.VirtualizedTrustedPlatformModulePolicyEnabled,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, generateSecurityProfile(tc.mpool))
+		})
+	}
+}
+
+func TestEmptySecurityProfileIsOmittedFromProvider(t *testing.T) {
+	azIdx := 0
+	spec, err := provider(
+		&aztypes.Platform{Region: "eastus"},
+		&aztypes.MachinePool{
+			InstanceType: "Standard_D2s_v3",
+			Zones:        []string{"1"},
+			Identity:     &aztypes.VMIdentity{},
+		},
+		"",
+		"user-data",
+		"test-cluster",
+		"master",
+		&azIdx,
+		map[string]string{"HyperVGenerations": "V1,V2"},
+		&icazure.Session{
+			Credentials: icazure.Credentials{SubscriptionID: "test-subscription"},
+			Environment: azureenv.PublicCloud,
+		},
+		"test-network-resource-group",
+		"test-vnet",
+		"test-subnet",
+	)
+	assert.NoError(t, err)
+	assert.Nil(t, spec.SecurityProfile)
+
+	serialized, err := json.Marshal(spec)
+	assert.NoError(t, err)
+
+	var serializedSpec map[string]json.RawMessage
+	err = json.Unmarshal(serialized, &serializedSpec)
+	assert.NoError(t, err)
+	_, securityProfilePresent := serializedSpec["securityProfile"]
+	assert.False(t, securityProfilePresent)
+}
+
+func TestGenerateMachinesSecurityProfile(t *testing.T) {
+	enabled := "Enabled"
+	disabled := "Disabled"
+
+	testCases := []struct {
+		name     string
+		settings *aztypes.MachinePool
+		expected *capz.SecurityProfile
+	}{
+		{
+			name:     "no security features",
+			settings: &aztypes.MachinePool{},
+			expected: nil,
+		},
+		{
+			name: "encryption at host only",
+			settings: &aztypes.MachinePool{
+				EncryptionAtHost: true,
+			},
+			expected: &capz.SecurityProfile{
+				EncryptionAtHost: ptr.To(true),
+			},
+		},
+		{
+			name: "trusted launch",
+			settings: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &aztypes.TrustedLaunch{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &enabled,
+							VirtualizedTrustedPlatformModule: &disabled,
+						},
+					},
+				},
+			},
+			expected: &capz.SecurityProfile{
+				SecurityType: capz.SecurityTypesTrustedLaunch,
+				UefiSettings: &capz.UefiSettings{
+					SecureBootEnabled: ptr.To(true),
+					VTpmEnabled:       ptr.To(false),
+				},
+			},
+		},
+		{
+			name: "confidential VM",
+			settings: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesConfidentialVM,
+					ConfidentialVM: &aztypes.ConfidentialVM{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &disabled,
+							VirtualizedTrustedPlatformModule: &enabled,
+						},
+					},
+				},
+			},
+			expected: &capz.SecurityProfile{
+				SecurityType: capz.SecurityTypesConfidentialVM,
+				UefiSettings: &capz.UefiSettings{
+					SecureBootEnabled: ptr.To(false),
+					VTpmEnabled:       ptr.To(true),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			machinePool := &types.MachinePool{
+				Name:     "master",
+				Replicas: ptr.To[int64](1),
+				Platform: types.MachinePoolPlatform{
+					Azure: tc.settings,
+				},
+			}
+			machinePool.Platform.Azure.Identity = &aztypes.VMIdentity{}
+
+			files, err := GenerateMachines(
+				"test-cluster",
+				"test-resource-group",
+				"test-subscription",
+				&icazure.Session{Environment: azureenv.PublicCloud},
+				&MachineInput{
+					Environment: aztypes.PublicCloud,
+					Platform:    &aztypes.Platform{},
+					Pool:        machinePool,
+				},
+			)
+			assert.NoError(t, err)
+
+			azureMachineCount := 0
+			for _, file := range files {
+				azureMachine, ok := file.Object.(*capz.AzureMachine)
+				if !ok {
+					continue
+				}
+				azureMachineCount++
+				assert.Equal(t, tc.expected, azureMachine.Spec.SecurityProfile)
+
+				if tc.expected == nil {
+					serialized, err := json.Marshal(azureMachine)
+					assert.NoError(t, err)
+
+					var serializedMachine struct {
+						Spec map[string]json.RawMessage `json:"spec"`
+					}
+					err = json.Unmarshal(serialized, &serializedMachine)
+					assert.NoError(t, err)
+					_, securityProfilePresent := serializedMachine.Spec["securityProfile"]
+					assert.False(t, securityProfilePresent)
+				}
+			}
+			assert.Equal(t, 2, azureMachineCount)
+		})
+	}
+}
 
 func TestCapzImage(t *testing.T) {
 	testCases := []struct {
