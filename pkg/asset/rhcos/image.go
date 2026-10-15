@@ -139,10 +139,10 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 		}
 		return "", fmt.Errorf("%s: No openstack build found", streamArchPrefix)
 	case azure.Name:
-		ext := streamArch.RHELCoreOSExtensions
-		if platform.Azure.CloudName == azure.StackCloud {
+		if platform.Azure.CloudName == azure.StackCloud || platform.Azure.CloudName == azure.USSecCloud {
 			return platform.Azure.ClusterOSImage, nil
 		}
+		ext := streamArch.RHELCoreOSExtensions
 		if ext == nil {
 			return "", fmt.Errorf("%s: No extensions found in stream", streamArchPrefix)
 		}
