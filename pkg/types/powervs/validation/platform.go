@@ -43,6 +43,11 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	// validate OSImage — requires ServiceInstanceGUID to be set
+	if p.OSImage != "" && p.ServiceInstanceGUID == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("osImage"), p.OSImage, "osImage requires serviceInstanceGUID to be set"))
+	}
+
 	// validate ServiceInstanceGUID
 	if p.ServiceInstanceGUID != "" {
 		_, err := uuid.Parse(p.ServiceInstanceGUID)

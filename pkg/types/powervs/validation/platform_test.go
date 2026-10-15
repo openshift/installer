@@ -120,6 +120,34 @@ func TestValidatePlatform(t *testing.T) {
 			valid: false,
 		},
 		{
+			name: "OSImage: valid when both osImage and serviceInstanceGUID are set",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = "my-workspace-image"
+				p.ServiceInstanceGUID = "05d5dbfd-2a62-4d01-b37b-71211be442f6"
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "OSImage: invalid when osImage is set without serviceInstanceGUID",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = "my-workspace-image"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "OSImage: valid when osImage is empty (serviceInstanceGUID not required)",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = ""
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name: "invalid url (no hostname) for service endpoint",
 			platform: func() *powervs.Platform {
 				p := validMinimalPlatform()

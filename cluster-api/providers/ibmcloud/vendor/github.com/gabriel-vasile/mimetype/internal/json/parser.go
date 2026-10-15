@@ -10,6 +10,7 @@ const (
 	QueryGeo     = "geo"
 	QueryHAR     = "har"
 	QueryGLTF    = "gltf"
+	QueryCDX     = "cdx"
 	maxRecursion = 4096
 )
 
@@ -40,6 +41,10 @@ var queries = map[string][]query{
 		SearchPath: [][]byte{[]byte("asset"), []byte("version")},
 		SearchVals: [][]byte{[]byte(`"1.0"`), []byte(`"2.0"`)},
 	}},
+	QueryCDX: {{
+		SearchPath: [][]byte{[]byte("bomFormat")},
+		SearchVals: [][]byte{[]byte(`"CycloneDX"`)},
+	}},
 }
 
 var parserPool = sync.Pool{
@@ -63,8 +68,6 @@ type parserState struct {
 	// mainly because the functionality is not needed.
 	currPath [][]byte
 	// firstToken stores the first JSON token encountered in input.
-	// TODO: performance would be better if we would stop parsing as soon
-	// as we see that first token is not what we are interested in.
 	firstToken int
 	// querySatisfied is true if both path and value of any queries passed to
 	// consumeAny are satisfied.
@@ -92,20 +95,6 @@ func eq(path1, path2 [][]byte) bool {
 		}
 	}
 	return true
-}
-
-// LooksLikeObjectOrArray reports if first non white space character from raw
-// is either { or [. Parsing raw as JSON is a heavy operation. When receiving some
-// text input we can skip parsing if the input does not even look like JSON.
-func LooksLikeObjectOrArray(raw []byte) bool {
-	for i := range raw {
-		if isSpace(raw[i]) {
-			continue
-		}
-		return raw[i] == '{' || raw[i] == '['
-	}
-
-	return false
 }
 
 // Parse will take out a parser from the pool depending on queryType and tries
@@ -257,8 +246,11 @@ out:
 	return 0
 }
 
+// openArray is used instead of an inline []byte{'['} to avoid mem alllocs.
+var openArray = []byte{'['}
+
 func (p *parserState) consumeArray(b []byte, qs []query, lvl int) (n int) {
-	p.currPath = append(p.currPath, []byte{'['})
+	p.appendPath(openArray, qs)
 	if len(b) == 0 {
 		return 0
 	}
@@ -270,7 +262,7 @@ func (p *parserState) consumeArray(b []byte, qs []query, lvl int) (n int) {
 		}
 		if b[n] == ']' {
 			p.ib++
-			p.currPath = p.currPath[:len(p.currPath)-1]
+			p.popLastPath(qs)
 			return n + 1
 		}
 		innerParsed := p.consumeAny(b[n:], qs, lvl)
@@ -305,6 +297,20 @@ func queryPathMatch(qs []query, path [][]byte) int {
 	return -1
 }
 
+// appendPath will append a path fragment if queries is not empty.
+// If we don't need query functionality (just checking if a JSON is valid),
+// then we can skip keeping track of the path we're currently in.
+func (p *parserState) appendPath(path []byte, qs []query) {
+	if len(qs) != 0 {
+		p.currPath = append(p.currPath, path)
+	}
+}
+func (p *parserState) popLastPath(qs []query) {
+	if len(qs) != 0 {
+		p.currPath = p.currPath[:len(p.currPath)-1]
+	}
+}
+
 func (p *parserState) consumeObject(b []byte, qs []query, lvl int) (n int) {
 	for n < len(b) {
 		n += p.consumeSpace(b[n:])
@@ -326,7 +332,7 @@ func (p *parserState) consumeObject(b []byte, qs []query, lvl int) (n int) {
 		if keyLen := p.consumeString(b[n:]); keyLen == 0 {
 			return 0
 		} else {
-			p.currPath = append(p.currPath, b[n:n+keyLen-1])
+			p.appendPath(b[n:n+keyLen-1], qs)
 			if !p.querySatisfied {
 				queryMatched = queryPathMatch(qs, p.currPath)
 			}
@@ -368,12 +374,12 @@ func (p *parserState) consumeObject(b []byte, qs []query, lvl int) (n int) {
 		}
 		switch b[n] {
 		case ',':
-			p.currPath = p.currPath[:len(p.currPath)-1]
+			p.popLastPath(qs)
 			n++
 			p.ib++
 			continue
 		case '}':
-			p.currPath = p.currPath[:len(p.currPath)-1]
+			p.popLastPath(qs)
 			p.ib++
 			return n + 1
 		default:
@@ -387,6 +393,9 @@ func (p *parserState) consumeAny(b []byte, qs []query, lvl int) (n int) {
 	// Avoid too much recursion.
 	if p.maxRecursion != 0 && lvl > p.maxRecursion {
 		return 0
+	}
+	if len(qs) == 0 {
+		p.querySatisfied = true
 	}
 	n += p.consumeSpace(b)
 	if len(b[n:]) == 0 {
@@ -425,9 +434,6 @@ func (p *parserState) consumeAny(b []byte, qs []query, lvl int) (n int) {
 	}
 	if lvl == 0 {
 		p.firstToken = t
-	}
-	if len(qs) == 0 {
-		p.querySatisfied = true
 	}
 	if rv <= 0 {
 		return n

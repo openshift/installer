@@ -9,42 +9,40 @@ import (
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
-	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	machinespowervs "github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
-func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, bucket string, object string) (*capiutils.GenerateClusterAssetsOutput, error) {
+func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	var (
-		manifests          []*asset.RuntimeFile
-		network            string
-		dhcpSubnet         string
-		service            capibm.IBMPowerVSResourceReference
-		vpcNameOrID        string
-		vpcStruct          *vpcv1.VPC
-		vpcRegion          string
-		cosName            string
-		cosRegion          string
-		imageName          string
-		bucketName         string
-		transitGatewayName string
-		client             *powervsconfig.Client
-		vpcResourceRef     *capibm.VPCResourceReference
-		transitGateway     *capibm.TransitGateway
-		err                error
-		powerVSCluster     *capibm.IBMPowerVSCluster
-		powerVSImage       *capibm.IBMPowerVSImage
+		manifests            []*asset.RuntimeFile
+		dhcpSubnet           string
+		service              capibm.ResourceIdentifier
+		vpcNameOrID          string
+		vpcStruct            *vpcv1.VPC
+		vpcRegion            string
+		vpcSource            capibm.VPCSource
+		cosName              string
+		cosRegion            string
+		bucketName           string
+		transitGatewayName   string
+		client               *powervsconfig.Client
+		transitGatewaySource capibm.TransitGatewaySource
+		err                  error
+		powerVSCluster       *capibm.IBMPowerVSCluster
+		workspaceSource      capibm.WorkspaceSource
 	)
 
 	defer func() {
-		logrus.Debugf("GenerateClusterAssets: installConfig = %+v, clusterID = %v, bucket = %v, object = %v", installConfig, *clusterID, bucket, object)
+		logrus.Debugf("GenerateClusterAssets: installConfig = %+v, clusterID = %v", installConfig, *clusterID)
 		logrus.Debugf("GenerateClusterAssets: ic.ObjectMeta = %+v", installConfig.Config.ObjectMeta.Name)
 		logrus.Debugf("GenerateClusterAssets: installConfig.Config.PowerVS = %+v", *installConfig.Config.PowerVS)
 		logrus.Debugf("GenerateClusterAssets: installConfig.Config.Platform.PowerVS.VPC = %v", installConfig.Config.Platform.PowerVS.VPC)
@@ -54,14 +52,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		logrus.Debugf("GenerateClusterAssets: transitGatewayName = %v", transitGatewayName)
 		logrus.Debugf("GenerateClusterAssets: cosName = %v", cosName)
 		logrus.Debugf("GenerateClusterAssets: cosRegion = %v", cosRegion)
-		logrus.Debugf("GenerateClusterAssets: imageName = %v", imageName)
 		logrus.Debugf("GenerateClusterAssets: bucketName = %v", bucketName)
 		logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
 	}()
 
 	manifests = []*asset.RuntimeFile{}
-
-	network = fmt.Sprintf("%s-network", clusterID.InfraID)
 
 	logrus.Debugf("GenerateClusterAssets: len MachineNetwork = %d", len(installConfig.Config.Networking.MachineNetwork))
 	dhcpSubnet = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
@@ -72,13 +67,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
-
-		service = capibm.IBMPowerVSResourceReference{
-			Name: &serviceName,
+		service = capibm.ResourceIdentifier{Name: serviceName}
+		workspaceSource = capibm.WorkspaceSource{
+			Type:      capibm.SourceTypeProvision,
+			Provision: capibm.WorkspaceProvisionConfig{Name: serviceName},
 		}
 	} else {
-		service = capibm.IBMPowerVSResourceReference{
-			ID: &installConfig.Config.PowerVS.ServiceInstanceGUID,
+		service = capibm.ResourceIdentifier{
+			ID: installConfig.Config.PowerVS.ServiceInstanceGUID,
+		}
+		workspaceSource = capibm.WorkspaceSource{
+			Type:      capibm.SourceTypeReference,
+			Reference: service,
 		}
 	}
 
@@ -102,34 +102,23 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// 2) an id of an existing VPC.
 	// 3) a name of an existing VPC.
 	vpcNameOrID = installConfig.Config.Platform.PowerVS.VPC
+	vpcSource = capibm.VPCSource{Region: vpcRegion}
+
 	if vpcStruct, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
-		// #2
 		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC ID is valid")
-
-		vpcResourceRef = &capibm.VPCResourceReference{
-			ID:     &installConfig.Config.Platform.PowerVS.VPC,
-			Region: &vpcRegion,
-		}
+		vpcSource.Type = capibm.SourceTypeReference
+		vpcSource.Reference = capibm.ResourceIdentifier{ID: vpcNameOrID}
 	} else if vpcStruct, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
-		// #3
 		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC Name is valid")
-
-		vpcResourceRef = &capibm.VPCResourceReference{
-			Name:   &vpcNameOrID,
-			Region: &vpcRegion,
-		}
+		vpcSource.Type = capibm.SourceTypeReference
+		vpcSource.Reference = capibm.ResourceIdentifier{Name: vpcNameOrID}
 	} else {
 		if vpcNameOrID == "" {
-			// #1
 			logrus.Debugf("GenerateClusterAssets: PowerVS.VPC is empty")
-
 			vpcNameOrID = fmt.Sprintf("vpc-%s", clusterID.InfraID)
 			vpcStruct = nil
-
-			vpcResourceRef = &capibm.VPCResourceReference{
-				Name:   &vpcNameOrID,
-				Region: &vpcRegion,
-			}
+			vpcSource.Type = capibm.SourceTypeProvision
+			vpcSource.Provision = capibm.VPCProvision{Name: vpcNameOrID}
 		} else {
 			return nil, fmt.Errorf("generateClusterAssets could not handle vpc")
 		}
@@ -140,33 +129,51 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// 2) an id of an existing TG.
 	// 3) a name of an existing TG.
 	transitGatewayName = installConfig.Config.Platform.PowerVS.TransitGateway
+	transitGatewaySource = capibm.TransitGatewaySource{}
+
 	if err = client.TransitGatewayIDValid(ctx, transitGatewayName); err == nil {
 		logrus.Debugf("GenerateClusterAssets: TG ID is valid")
-
-		transitGateway = &capibm.TransitGateway{
-			ID: &installConfig.Config.Platform.PowerVS.TransitGateway,
+		transitGatewaySource.Type = capibm.SourceTypeReference
+		transitGatewaySource.Reference = capibm.ResourceIdentifier{
+			ID: transitGatewayName,
+		}
+	} else if transitGatewayName == "" {
+		logrus.Debugf("GenerateClusterAssets: PowerVS.TransitGateway is empty")
+		transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
+		transitGatewaySource.Type = capibm.SourceTypeProvision
+		transitGatewaySource.Provision = capibm.TransitGatewayProvision{
+			Name: transitGatewayName,
+		}
+		transitGatewaySource.VPCConnection = capibm.TransitGatewayConnectionSource{
+			Type: capibm.SourceTypeProvision,
+		}
+		transitGatewaySource.PowerVSConnection = capibm.TransitGatewayConnectionSource{
+			Type: capibm.SourceTypeProvision,
 		}
 	} else {
-		if transitGatewayName == "" {
-			logrus.Debugf("GenerateClusterAssets: PowerVS.TransitGateway is empty")
-
-			transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
-		}
-
-		transitGateway = &capibm.TransitGateway{
-			Name: &transitGatewayName,
+		logrus.Debugf("GenerateClusterAssets: TG name is being used")
+		transitGatewaySource.Type = capibm.SourceTypeReference
+		transitGatewaySource.Reference = capibm.ResourceIdentifier{
+			Name: transitGatewayName,
 		}
 	}
-
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
 
 	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
 		return nil, fmt.Errorf("unable to derive cosRegion from region: %s %w", installConfig.Config.PowerVS.Region, err)
 	}
 
-	imageName = fmt.Sprintf("rhcos-%s", clusterID.InfraID)
-
 	bucketName = fmt.Sprintf("%s-bootstrap-ign", clusterID.InfraID)
+
+	vpcSubnets := make([]capibm.VPCSubnetSource, 0)
+	if vpcStruct == nil {
+		vpcSubnets = append(vpcSubnets, capibm.VPCSubnetSource{
+			Type: capibm.SourceTypeProvision,
+			Provision: capibm.VPCSubnetProvision{
+				Name: fmt.Sprintf("%s-vpcsubnet", clusterID.InfraID),
+			},
+		})
+	}
 
 	powerVSCluster = &capibm.IBMPowerVSCluster{
 		TypeMeta: metav1.TypeMeta{
@@ -181,56 +188,74 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 		Spec: capibm.IBMPowerVSClusterSpec{
-			Network: capibm.IBMPowerVSResourceReference{
-				Name: &network,
+			Topology: capibm.PowerVSLoadBalancerTopology,
+			ResourceGroup: capibm.ResourceGroupSource{
+				Type: capibm.SourceTypeReference,
+				Reference: capibm.ResourceIdentifier{
+					Name: installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
+				},
 			},
-			DHCPServer: &capibm.DHCPServer{
-				Cidr: &dhcpSubnet,
+			Zone:      installConfig.Config.Platform.PowerVS.Zone,
+			Workspace: workspaceSource,
+			Network: capibm.NetworkSource{
+				Type: capibm.SourceTypeProvision,
+				Provision: capibm.NetworkProvisionConfig{
+					Type: capibm.NetworkProvisionTypeDHCPServer,
+					DHCPServer: capibm.DHCPServer{
+						Name: fmt.Sprintf("%s-dhcp", clusterID.InfraID),
+						CIDR: dhcpSubnet,
+					},
+				},
 			},
-			ServiceInstance: &service,
-			Zone:            &installConfig.Config.Platform.PowerVS.Zone,
-			ResourceGroup: &capibm.IBMPowerVSResourceReference{
-				Name: &installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
-			},
-			VPC:               vpcResourceRef,
+			VPC:               vpcSource,
+			VPCSubnets:        vpcSubnets,
 			VPCSecurityGroups: vpcSecurityGroups,
-			TransitGateway:    transitGateway,
-			LoadBalancers: []capibm.VPCLoadBalancerSpec{
+			TransitGateway:    transitGatewaySource,
+			LoadBalancers: []capibm.LoadBalancerSource{
 				{
-					Name:   fmt.Sprintf("%s-loadbalancer", clusterID.InfraID),
-					Public: ptr.To(true),
-					AdditionalListeners: []capibm.AdditionalListenerSpec{
-						{
-							Port:     22,
-							Protocol: ptr.To(capibm.VPCLoadBalancerListenerProtocolTCP),
+					Type: capibm.SourceTypeProvision,
+					Provision: capibm.LoadBalancerProvision{
+						Name: fmt.Sprintf("%s-loadbalancer", clusterID.InfraID),
+						Type: capibm.LoadBalancerTypePublic,
+						AdditionalListeners: []capibm.AdditionalListener{
+							{
+								Port:     22,
+								Protocol: capibm.LoadBalancerListenerProtocolTCP,
+							},
+							// @BUG We should be able to specify this:
+							// capibm.AdditionalListener{
+							//	Port: 6443,
+							// },
 						},
-						// @BUG We should be able to specify this:
-						// capibm.AdditionalListenerSpec{
-						//	Port: 6443,
-						// },
 					},
 				},
 				{
-					Name:   fmt.Sprintf("%s-loadbalancer-int", clusterID.InfraID),
-					Public: ptr.To(false),
-					AdditionalListeners: []capibm.AdditionalListenerSpec{
-						// @BUG We should be able to specify this:
-						// capibm.AdditionalListenerSpec{
-						//	Port: 6443,
-						// },
-						{
-							Port:     22623,
-							Protocol: ptr.To(capibm.VPCLoadBalancerListenerProtocolTCP),
+					Type: capibm.SourceTypeProvision,
+					Provision: capibm.LoadBalancerProvision{
+						Name: fmt.Sprintf("%s-loadbalancer-int", clusterID.InfraID),
+						Type: capibm.LoadBalancerTypePrivate,
+						AdditionalListeners: []capibm.AdditionalListener{
+							// @BUG We should be able to specify this:
+							// capibm.AdditionalListener{
+							//	Port: 6443,
+							// },
+							{
+								Port:     22623,
+								Protocol: capibm.LoadBalancerListenerProtocolTCP,
+							},
 						},
 					},
 				},
 			},
-			CosInstance: &capibm.CosInstance{
-				Name:         cosName,
+			COSInstance: capibm.COSInstanceSource{
+				Type:         capibm.SourceTypeProvision,
 				BucketName:   bucketName,
 				BucketRegion: cosRegion,
+				Provision: capibm.COSInstanceProvision{
+					Name: cosName,
+				},
 			},
-			Ignition: &capibm.Ignition{
+			Ignition: capibm.Ignition{
 				Version: "3.4",
 			},
 		},
@@ -248,9 +273,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPC, err)
 		}
 
-		powerVSCluster.Spec.DHCPServer.DNSServer = &dnsServerIP
+		powerVSCluster.Spec.Network.Provision.DHCPServer.DNSServer = dnsServerIP
 		// Disable SNAT for disconnected scenario.
-		powerVSCluster.Spec.DHCPServer.Snat = ptr.To(len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0)
+		if len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0 {
+			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = capibm.DHCPSnatPolicyEnabled
+		} else {
+			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = capibm.DHCPSnatPolicyDisabled
+		}
 	}
 
 	// If a VPC was specified, pass all subnets in it to cluster API
@@ -265,11 +294,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", *vpcStruct.Name, err)
 		}
+		powerVSCluster.Spec.VPCSubnets = nil
 		for _, subnet := range subnets {
 			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets,
-				capibm.Subnet{
-					ID:   subnet.ID,
-					Name: subnet.Name,
+				capibm.VPCSubnetSource{
+					Type: capibm.SourceTypeReference,
+					Reference: capibm.ResourceIdentifier{
+						ID: *subnet.ID,
+					},
 				})
 		}
 		logrus.Debugf("GenerateClusterAssets: subnets = %+v", powerVSCluster.Spec.VPCSubnets)
@@ -279,40 +311,20 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Object: powerVSCluster,
 		File:   asset.File{Filename: "02_powervs-cluster.yaml"},
 	})
-
-	if vpcRegion != cosRegion {
-		logrus.Debugf("GenerateClusterAssets: vpcRegion(%s) is different than cosRegion(%s), cosRegion. Overriding bucket name", vpcRegion, cosRegion)
-		bucket = fmt.Sprintf("rhcos-powervs-images-%s", cosRegion)
+	powerVSPlatform := installConfig.Config.Platform.PowerVS
+	var resolvedImage string
+	if powerVSPlatform.OSImage != "" && powerVSPlatform.ServiceInstanceGUID != "" {
+		resolvedImage = powerVSPlatform.OSImage
+	} else {
+		resolvedImage = machinespowervs.OSImageNameFromStream(installConfig.Config.OSImageStream)
 	}
-
-	powerVSImage = &capibm.IBMPowerVSImage{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: capibm.GroupVersion.String(),
-			Kind:       "IBMPowerVSImage",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      imageName,
-			Namespace: capiutils.Namespace,
-		},
-		Spec: capibm.IBMPowerVSImageSpec{
-			ClusterName:     clusterID.InfraID,
-			ServiceInstance: &service,
-			Bucket:          &bucket,
-			Object:          &object,
-			Region:          &cosRegion,
-		},
-	}
-
-	manifests = append(manifests, &asset.RuntimeFile{
-		Object: powerVSImage,
-		File:   asset.File{Filename: "03_powervs-image.yaml"},
-	})
+	logrus.Infof("Using PowerVS image: %s", resolvedImage)
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRefs: []*corev1.ObjectReference{
 			{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: capibm.GroupVersion.String(),
 				Kind:       "IBMPowerVSCluster",
 				Name:       powerVSCluster.Name,
 				Namespace:  powerVSCluster.Namespace,

@@ -8361,6 +8361,13 @@ spec:
                           type: string
                         type: array
                     type: object
+                  osImage:
+                    description: |-
+                      OSImage is the name of an existing image in the Power VS Workspace to use for
+                      cluster nodes.  When both OSImage and ServiceInstanceGUID are specified, this
+                      image name is used directly instead of deriving it from osImageStream.
+                      OSImage requires ServiceInstanceGUID to be set.
+                    type: string
                   powervsResourceGroup:
                     description: PowerVSResourceGroup is the resource group in which
                       Power VS resources will be created.
