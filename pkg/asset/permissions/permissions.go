@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	gcpiam "google.golang.org/api/iam/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 
@@ -115,7 +116,7 @@ func (o *Permissions) writeAWSPolicy(groups []awsconfig.PermissionGroup, filenam
 }
 
 func (o *Permissions) writeGCPPolicy(groups []gcpconfig.PermissionGroup, filename, clusterName string) error {
-	role := gcpconfig.CustomIAMRole{
+	role := gcpiam.Role{
 		Title:               fmt.Sprintf("IAM Role %s", clusterName),
 		Description:         "Custom role providing OpenShift Installer required permissions",
 		Stage:               "GA",

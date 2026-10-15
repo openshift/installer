@@ -39,6 +39,9 @@ const (
 	// PermissionCreateDNS is the set of permissions required to create DNS resources.
 	PermissionCreateDNS PermissionGroup = "create-dns"
 
+	// PermissionBYOImage is the set of permissions required when the user chooses to supply an OS Image.
+	PermissionBYOImage PermissionGroup = "byo-image"
+
 	// PermissionCreateServiceAccounts is the set of permissions required to create Service Account resources.
 	PermissionCreateServiceAccounts PermissionGroup = "create-service-accounts"
 
@@ -75,6 +78,36 @@ var permissions = map[PermissionGroup][]string{
 		"compute.machineTypes.get",
 		"compute.machineTypes.list",
 		"compute.images.list",
+		// Networking
+		"compute.addresses.create",
+		"compute.addresses.createInternal",
+		"compute.addresses.delete",
+		"compute.addresses.get",
+		"compute.addresses.list",
+		"compute.addresses.use",
+		"compute.addresses.useInternal",
+		"compute.forwardingRules.create",
+		"compute.forwardingRules.get",
+		"compute.forwardingRules.list",
+		"compute.forwardingRules.setLabels",
+		"compute.globalAddresses.create",
+		"compute.globalAddresses.get",
+		"compute.globalAddresses.use",
+		"compute.globalForwardingRules.create",
+		"compute.globalForwardingRules.get",
+		"compute.globalForwardingRules.setLabels",
+		"compute.networks.get",
+		"compute.networks.list",
+		"compute.networks.use",
+		"compute.firewalls.get",
+		"compute.firewalls.list",
+		"compute.routers.get",
+		"compute.routers.list",
+		"compute.routes.list",
+		"compute.subnetworks.use",
+		"compute.subnetworks.useExternalIp",
+		"compute.subnetworks.get",
+		"compute.subnetworks.list",
 		// Load Balancers
 		"compute.backendServices.create",
 		"compute.backendServices.get",
@@ -140,46 +173,18 @@ var permissions = map[PermissionGroup][]string{
 		// The following permission is required for bootstrap gather
 		// and cannot be determined from an install-config
 		"compute.instances.getSerialPortOutput",
+		// Attach any SA to an instance
+		"iam.serviceAccounts.actAs",
 	},
 	PermissionCreateFirewall: {
 		"compute.firewalls.create",
-		"compute.firewalls.delete",
 	},
 	PermissionCreateNetwork: {
-		"compute.addresses.create",
-		"compute.addresses.createInternal",
-		"compute.addresses.delete",
-		"compute.addresses.get",
-		"compute.addresses.list",
-		"compute.addresses.use",
-		"compute.addresses.useInternal",
-		"compute.firewalls.get",
-		"compute.firewalls.list",
-		"compute.forwardingRules.create",
-		"compute.forwardingRules.get",
-		"compute.forwardingRules.list",
-		"compute.forwardingRules.setLabels",
-		"compute.globalAddresses.create",
-		"compute.globalAddresses.get",
-		"compute.globalAddresses.use",
-		"compute.globalForwardingRules.create",
-		"compute.globalForwardingRules.get",
-		"compute.globalForwardingRules.setLabels",
 		"compute.networks.create",
-		"compute.networks.get",
-		"compute.networks.list",
 		"compute.networks.updatePolicy",
-		"compute.networks.use",
 		"compute.routers.create",
-		"compute.routers.get",
-		"compute.routers.list",
 		"compute.routers.update",
-		"compute.routes.list",
 		"compute.subnetworks.create",
-		"compute.subnetworks.get",
-		"compute.subnetworks.list",
-		"compute.subnetworks.use",
-		"compute.subnetworks.useExternalIp",
 	},
 	PermissionCreateDNS: {
 		"dns.managedZones.get",
@@ -190,13 +195,17 @@ var permissions = map[PermissionGroup][]string{
 		"dns.resourceRecordSets.create",
 		"dns.resourceRecordSets.list",
 		"dns.managedZones.create",
+		"dns.managedZones.update",
+	},
+	PermissionBYOImage: {
+		"compute.images.get",
+		"compute.images.useReadOnly",
 	},
 	PermissionCreateServiceAccounts: {
 		"iam.serviceAccountKeys.create",
 		"iam.serviceAccountKeys.delete",
 		"iam.serviceAccountKeys.get",
 		"iam.serviceAccountKeys.list",
-		"iam.serviceAccounts.actAs",
 		"iam.serviceAccounts.create",
 		"iam.serviceAccounts.delete",
 		"iam.serviceAccounts.get",
@@ -297,14 +306,6 @@ const (
 	UpdateNetworksPermission = "compute.networks.updatePolicy"
 )
 
-// CustomIAMRole contains the data to create the custom IAM role file.
-type CustomIAMRole struct {
-	Title               string   `json:"title,omitempty"`
-	Description         string   `json:"description,omitempty"`
-	Stage               string   `json:"stage,omitempty"`
-	IncludedPermissions []string `json:"includedPermissions"`
-}
-
 // HasPermission determines if the permission exists for the service account in the project.
 func HasPermission(ctx context.Context, projectID string, permissions []string, endpoint *gcptypes.PSCEndpoint) (bool, error) {
 	client, err := NewClient(ctx, endpoint)
@@ -342,6 +343,11 @@ func hasKMSKey(mpool *gcptypes.MachinePool) bool {
 	return mpool != nil && mpool.OSDisk.EncryptionKey != nil && mpool.OSDisk.EncryptionKey.KMSKey != nil
 }
 
+// hasOSImage reports whether the machine pool contains OS Image information.
+func hasOSImage(mpool *gcptypes.MachinePool) bool {
+	return mpool != nil && mpool.OSImage != nil && mpool.OSImage.Name != ""
+}
+
 // RequiredPermissionGroups returns the permissions the installer itself exercises for a given
 // cluster configuration.
 //
@@ -363,64 +369,64 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionCreateDNS)
 	}
 
-	usingExistingVPC := len(ic.GCP.Network) != 0 && (len(ic.GCP.ControlPlaneSubnet) != 0 && len(ic.GCP.ComputeSubnet) != 0)
+	// Validation requires both subnets whenever a network is set, so the network alone
+	// decides whether the installer has to create one.
+	usingExistingVPC := len(ic.GCP.Network) != 0
 	if !usingExistingVPC {
 		permissionGroups = append(permissionGroups, PermissionCreateNetwork, PermissionDeleteNetwork)
-		if ic.GCP.FirewallRulesManagement == gcptypes.ManagedFirewallRules {
-			permissionGroups = append(permissionGroups, PermissionCreateFirewall, PermissionDeleteManagedFirewalls)
-		}
 	}
 
-	serviceAccountPermissionsNeeded := ic.ControlPlane == nil || ic.ControlPlane.Platform.GCP == nil || ic.ControlPlane.Platform.GCP.ServiceAccount == ""
-
-	// Only check compute if control plane turned up nothing.
-	if !serviceAccountPermissionsNeeded {
-		for _, compute := range ic.Compute {
-			if compute.Platform.GCP == nil || compute.Platform.GCP.ServiceAccount == "" {
-				serviceAccountPermissionsNeeded = true
-				break
-			}
-		}
+	if ic.GCP.FirewallRulesManagement == gcptypes.ManagedFirewallRules {
+		permissionGroups = append(permissionGroups, PermissionCreateFirewall, PermissionDeleteManagedFirewalls)
 	}
 
-	// Only check default machine platform if the compute and control plane turned up nothing.
-	if !serviceAccountPermissionsNeeded {
-		if ic.GCP.DefaultMachinePlatform == nil || ic.GCP.DefaultMachinePlatform.ServiceAccount == "" {
-			serviceAccountPermissionsNeeded = true
+	// A pool uses its own service account when it sets one, and otherwise inherits the one from
+	// defaultMachinePlatform -- pkg/asset/machines/master.go merges in that order. The installer
+	// only has to mint service accounts if some pool ends up without one.
+	defaultMachinePlatform := ic.GCP.DefaultMachinePlatform
+	defaultServiceAccount := ""
+	if defaultMachinePlatform != nil {
+		defaultServiceAccount = defaultMachinePlatform.ServiceAccount
+	}
+	hasServiceAccount := func(mpool *gcptypes.MachinePool) bool {
+		if mpool != nil && mpool.ServiceAccount != "" {
+			return true
 		}
+		return defaultServiceAccount != ""
+	}
+
+	// A KMS key or an OS image on the default machine platform applies to every pool, so these
+	// are seeded from it and only ever added to by the pools themselves.
+	serviceAccountPermissionsNeeded := ic.ControlPlane == nil || !hasServiceAccount(ic.ControlPlane.Platform.GCP)
+	kmsKeyPermissionsNeeded := hasKMSKey(defaultMachinePlatform)
+	osImagePermissionsNeeded := hasOSImage(defaultMachinePlatform)
+
+	if ic.ControlPlane != nil {
+		kmsKeyPermissionsNeeded = kmsKeyPermissionsNeeded || hasKMSKey(ic.ControlPlane.Platform.GCP)
+		osImagePermissionsNeeded = osImagePermissionsNeeded || hasOSImage(ic.ControlPlane.Platform.GCP)
+	}
+
+	for _, compute := range ic.Compute {
+		serviceAccountPermissionsNeeded = serviceAccountPermissionsNeeded || !hasServiceAccount(compute.Platform.GCP)
+		kmsKeyPermissionsNeeded = kmsKeyPermissionsNeeded || hasKMSKey(compute.Platform.GCP)
+		osImagePermissionsNeeded = osImagePermissionsNeeded || hasOSImage(compute.Platform.GCP)
 	}
 
 	if serviceAccountPermissionsNeeded {
 		permissionGroups = append(permissionGroups, PermissionCreateServiceAccounts, PermissionDeleteServiceAccounts)
 	}
-
-	// ValidateKMSKeys checks a key wherever it is configured -- on the control plane pool, on any
-	// compute pool, or on the default machine platform -- so the permissions have to follow the
-	// same rule. Checking only the default machine platform leaves a per-pool key unvalidatable.
-	kmsKeyPermissionsNeeded := ic.GCP.DefaultMachinePlatform != nil && hasKMSKey(ic.GCP.DefaultMachinePlatform)
-
-	if !kmsKeyPermissionsNeeded && ic.ControlPlane != nil {
-		kmsKeyPermissionsNeeded = hasKMSKey(ic.ControlPlane.Platform.GCP)
-	}
-
-	if !kmsKeyPermissionsNeeded {
-		for _, compute := range ic.Compute {
-			if hasKMSKey(compute.Platform.GCP) {
-				kmsKeyPermissionsNeeded = true
-				break
-			}
-		}
-	}
-
 	if kmsKeyPermissionsNeeded {
 		permissionGroups = append(permissionGroups, PermissionCreateKMSSupport)
+	}
+	if osImagePermissionsNeeded {
+		permissionGroups = append(permissionGroups, PermissionBYOImage)
 	}
 
 	if len(ic.GCP.NetworkProjectID) > 0 && serviceAccountPermissionsNeeded {
 		// Shared VPC installs grant roles to the machine service accounts in the host project as
 		// well, so resourcemanager.projects.setIamPolicy is needed there too. A project-scoped
 		// custom role cannot express that, so surface it instead.
-		logrus.Infof("Shared VPC install: the host project requires resourcemanager.projects.setIamPolicy and resourcemanager.projects.getIamPolicy")
+		logrus.Warnf("Shared VPC install: the host project requires resourcemanager.projects.setIamPolicy and resourcemanager.projects.getIamPolicy")
 	}
 
 	return permissionGroups

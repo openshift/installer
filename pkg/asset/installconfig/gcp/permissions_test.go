@@ -40,9 +40,22 @@ func installConfig(mode types.CredentialsMode, opts ...func(*types.InstallConfig
 	return ic
 }
 
+// withServiceAccounts sets a service account everywhere it can be set.
 func withServiceAccounts(ic *types.InstallConfig) {
+	withPoolServiceAccounts(ic)
+	withDefaultServiceAccount(ic)
+}
+
+// withPoolServiceAccounts gives every pool its own service account and leaves the default machine
+// platform unset, so the pools alone have to satisfy the requirement.
+func withPoolServiceAccounts(ic *types.InstallConfig) {
 	ic.ControlPlane.Platform.GCP = &gcptypes.MachinePool{ServiceAccount: "master@test-project.iam.gserviceaccount.com"}
 	ic.Compute[0].Platform.GCP = &gcptypes.MachinePool{ServiceAccount: "worker@test-project.iam.gserviceaccount.com"}
+}
+
+// withDefaultServiceAccount sets a service account only on the default machine platform, which
+// every pool inherits.
+func withDefaultServiceAccount(ic *types.InstallConfig) {
 	ic.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ServiceAccount: "nodes@test-project.iam.gserviceaccount.com"}
 }
 
@@ -64,9 +77,11 @@ func TestRequiredPermissionGroupsIgnoresCredentialsMode(t *testing.T) {
 	}
 
 	configs := map[string][]func(*types.InstallConfig){
-		"defaults":                     nil,
-		"pre-created service accounts": {withServiceAccounts},
-		"existing vpc":                 {withExistingVPC},
+		"defaults":                         nil,
+		"pre-created service accounts":     {withServiceAccounts},
+		"pool service accounts":            {withPoolServiceAccounts},
+		"default platform service account": {withDefaultServiceAccount},
+		"existing vpc":                     {withExistingVPC},
 	}
 
 	for name, opts := range configs {
@@ -100,6 +115,25 @@ func TestRequiredPermissionGroups(t *testing.T) {
 		name:     "pre-created service accounts drop the service account groups",
 		opts:     []func(*types.InstallConfig){withServiceAccounts},
 		excluded: []PermissionGroup{PermissionCreateServiceAccounts, PermissionDeleteServiceAccounts},
+	}, {
+		// Every pool carries its own service account, so there is nothing left for a default
+		// machine platform to supply and its absence must not pull the groups back in.
+		name:     "service accounts on the pools alone drop the service account groups",
+		opts:     []func(*types.InstallConfig){withPoolServiceAccounts},
+		excluded: []PermissionGroup{PermissionCreateServiceAccounts, PermissionDeleteServiceAccounts},
+	}, {
+		// Neither pool sets a service account, but both inherit one from the default machine
+		// platform, so the installer still has none to mint.
+		name:     "a default machine platform service account covers every pool",
+		opts:     []func(*types.InstallConfig){withDefaultServiceAccount},
+		excluded: []PermissionGroup{PermissionCreateServiceAccounts, PermissionDeleteServiceAccounts},
+	}, {
+		// One pool is left without a service account, so the installer has to mint that one.
+		name: "a service account on only one pool keeps the service account groups",
+		opts: []func(*types.InstallConfig){func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP = &gcptypes.MachinePool{ServiceAccount: "master@test-project.iam.gserviceaccount.com"}
+		}},
+		expected: []PermissionGroup{PermissionCreateServiceAccounts, PermissionDeleteServiceAccounts},
 	}, {
 		name: "existing vpc drops the network and firewall groups",
 		opts: []func(*types.InstallConfig){withExistingVPC},
@@ -218,6 +252,59 @@ func TestRequiredPermissionGroupsKMSKey(t *testing.T) {
 	}
 }
 
+// A user-supplied OS image can be set on the control plane pool, on a compute pool, or on the
+// default machine platform, and the installer has to read it wherever it appears.
+func TestRequiredPermissionGroupsOSImage(t *testing.T) {
+	osImage := func() *gcptypes.OSImage {
+		return &gcptypes.OSImage{Name: "test-image", Project: "test-project"}
+	}
+
+	cases := []struct {
+		name     string
+		opt      func(*types.InstallConfig)
+		expected bool
+	}{{
+		name:     "no image",
+		opt:      func(ic *types.InstallConfig) {},
+		expected: false,
+	}, {
+		name: "default machine platform",
+		opt: func(ic *types.InstallConfig) {
+			ic.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{OSImage: osImage()}
+		},
+		expected: true,
+	}, {
+		name: "control plane only",
+		opt: func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP = &gcptypes.MachinePool{OSImage: osImage()}
+		},
+		expected: true,
+	}, {
+		name: "compute only",
+		opt: func(ic *types.InstallConfig) {
+			ic.Compute[0].Platform.GCP = &gcptypes.MachinePool{OSImage: osImage()}
+		},
+		expected: true,
+	}, {
+		name: "image without a name",
+		opt: func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.GCP = &gcptypes.MachinePool{OSImage: &gcptypes.OSImage{Project: "test-project"}}
+		},
+		expected: false,
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			groups := RequiredPermissionGroups(installConfig(types.ManualCredentialsMode, tc.opt))
+			if tc.expected {
+				assert.Contains(t, groups, PermissionBYOImage)
+			} else {
+				assert.NotContains(t, groups, PermissionBYOImage)
+			}
+		})
+	}
+}
+
 // Every group returned by RequiredPermissionGroups must resolve to a permission list, otherwise
 // writing the custom role fails at install time rather than here. Guards against a group constant
 // outliving its entry in the permissions map.
@@ -225,7 +312,14 @@ func TestRequiredPermissionGroupsAreDefined(t *testing.T) {
 	configs := [][]func(*types.InstallConfig){
 		nil,
 		{withServiceAccounts},
+		{withPoolServiceAccounts},
+		{withDefaultServiceAccount},
 		{withExistingVPC},
+		{func(ic *types.InstallConfig) {
+			ic.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{
+				OSImage: &gcptypes.OSImage{Name: "test-image", Project: "test-project"},
+			}
+		}},
 		{func(ic *types.InstallConfig) {
 			ic.GCP.UserProvisionedDNS = dnstypes.UserProvisionedDNSEnabled
 		}},
