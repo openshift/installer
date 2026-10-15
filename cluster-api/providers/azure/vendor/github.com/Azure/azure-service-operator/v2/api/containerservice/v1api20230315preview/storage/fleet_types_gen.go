@@ -4,7 +4,11 @@
 package storage
 
 import (
-	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
+	"fmt"
+	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
+	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	v20240901s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -13,14 +17,12 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=containerservice.azure.com,resources={fleets/status,fleets/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -46,6 +48,28 @@ func (fleet *Fleet) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (fleet *Fleet) SetConditions(conditions conditions.Conditions) {
 	fleet.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &Fleet{}
+
+// ConvertFrom populates our Fleet from the provided hub Fleet
+func (fleet *Fleet) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.Fleet)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250301/storage/Fleet but received %T instead", hub)
+	}
+
+	return fleet.AssignProperties_From_Fleet(source)
+}
+
+// ConvertTo populates the provided hub Fleet from our Fleet
+func (fleet *Fleet) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.Fleet)
+	if !ok {
+		return fmt.Errorf("expected containerservice/v1api20250301/storage/Fleet but received %T instead", hub)
+	}
+
+	return fleet.AssignProperties_To_Fleet(destination)
 }
 
 var _ configmaps.Exporter = &Fleet{}
@@ -143,8 +167,75 @@ func (fleet *Fleet) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this Fleet is the hub type for conversion
-func (fleet *Fleet) Hub() {}
+// AssignProperties_From_Fleet populates our Fleet from the provided source Fleet
+func (fleet *Fleet) AssignProperties_From_Fleet(source *v20250301s.Fleet) error {
+
+	// ObjectMeta
+	fleet.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec Fleet_Spec
+	err := spec.AssignProperties_From_Fleet_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Fleet_Spec() to populate field Spec")
+	}
+	fleet.Spec = spec
+
+	// Status
+	var status Fleet_STATUS
+	err = status.AssignProperties_From_Fleet_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Fleet_STATUS() to populate field Status")
+	}
+	fleet.Status = status
+
+	// Invoke the augmentConversionForFleet interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet); ok {
+		err := augmentedFleet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Fleet populates the provided destination Fleet from our Fleet
+func (fleet *Fleet) AssignProperties_To_Fleet(destination *v20250301s.Fleet) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *fleet.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.Fleet_Spec
+	err := fleet.Spec.AssignProperties_To_Fleet_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Fleet_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.Fleet_STATUS
+	err = fleet.Status.AssignProperties_To_Fleet_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Fleet_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForFleet interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet); ok {
+		err := augmentedFleet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (fleet *Fleet) OriginalGVK() *schema.GroupVersionKind {
@@ -172,6 +263,11 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2023-03-15-preview")
 
+type augmentConversionForFleet interface {
+	AssignPropertiesFrom(src *v20250301s.Fleet) error
+	AssignPropertiesTo(dst *v20250301s.Fleet) error
+}
+
 // Storage version of v1api20230315preview.Fleet_Spec
 type Fleet_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
@@ -195,20 +291,208 @@ var _ genruntime.ConvertibleSpec = &Fleet_Spec{}
 
 // ConvertSpecFrom populates our Fleet_Spec from the provided source
 func (fleet *Fleet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == fleet {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.Fleet_Spec)
+	if ok {
+		// Populate our instance from source
+		return fleet.AssignProperties_From_Fleet_Spec(src)
 	}
 
-	return source.ConvertSpecTo(fleet)
+	// Convert to an intermediate form
+	src = &v20250301s.Fleet_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = fleet.AssignProperties_From_Fleet_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our Fleet_Spec
 func (fleet *Fleet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == fleet {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.Fleet_Spec)
+	if ok {
+		// Populate destination from our instance
+		return fleet.AssignProperties_To_Fleet_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(fleet)
+	// Convert to an intermediate form
+	dst = &v20250301s.Fleet_Spec{}
+	err := fleet.AssignProperties_To_Fleet_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Fleet_Spec populates our Fleet_Spec from the provided source Fleet_Spec
+func (fleet *Fleet_Spec) AssignProperties_From_Fleet_Spec(source *v20250301s.Fleet_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	fleet.AzureName = source.AzureName
+
+	// HubProfile
+	if source.HubProfile != nil {
+		var hubProfile FleetHubProfile
+		err := hubProfile.AssignProperties_From_FleetHubProfile(source.HubProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FleetHubProfile() to populate field HubProfile")
+		}
+		fleet.HubProfile = &hubProfile
+	} else {
+		fleet.HubProfile = nil
+	}
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// Location
+	fleet.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FleetOperatorSpec
+		err := operatorSpec.AssignProperties_From_FleetOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FleetOperatorSpec() to populate field OperatorSpec")
+		}
+		fleet.OperatorSpec = &operatorSpec
+	} else {
+		fleet.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	fleet.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		fleet.Owner = &owner
+	} else {
+		fleet.Owner = nil
+	}
+
+	// Tags
+	fleet.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		fleet.PropertyBag = propertyBag
+	} else {
+		fleet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleet_Spec interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet_Spec); ok {
+		err := augmentedFleet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Fleet_Spec populates the provided destination Fleet_Spec from our Fleet_Spec
+func (fleet *Fleet_Spec) AssignProperties_To_Fleet_Spec(destination *v20250301s.Fleet_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(fleet.PropertyBag)
+
+	// AzureName
+	destination.AzureName = fleet.AzureName
+
+	// HubProfile
+	if fleet.HubProfile != nil {
+		var hubProfile v20250301s.FleetHubProfile
+		err := fleet.HubProfile.AssignProperties_To_FleetHubProfile(&hubProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FleetHubProfile() to populate field HubProfile")
+		}
+		destination.HubProfile = &hubProfile
+	} else {
+		destination.HubProfile = nil
+	}
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity v20250301s.ManagedServiceIdentity
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(fleet.Location)
+
+	// OperatorSpec
+	if fleet.OperatorSpec != nil {
+		var operatorSpec v20250301s.FleetOperatorSpec
+		err := fleet.OperatorSpec.AssignProperties_To_FleetOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FleetOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = fleet.OriginalVersion
+
+	// Owner
+	if fleet.Owner != nil {
+		owner := fleet.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(fleet.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleet_Spec interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet_Spec); ok {
+		err := augmentedFleet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.Fleet_STATUS
@@ -231,20 +515,276 @@ var _ genruntime.ConvertibleStatus = &Fleet_STATUS{}
 
 // ConvertStatusFrom populates our Fleet_STATUS from the provided source
 func (fleet *Fleet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == fleet {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.Fleet_STATUS)
+	if ok {
+		// Populate our instance from source
+		return fleet.AssignProperties_From_Fleet_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(fleet)
+	// Convert to an intermediate form
+	src = &v20250301s.Fleet_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = fleet.AssignProperties_From_Fleet_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our Fleet_STATUS
 func (fleet *Fleet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == fleet {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.Fleet_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return fleet.AssignProperties_To_Fleet_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(fleet)
+	// Convert to an intermediate form
+	dst = &v20250301s.Fleet_STATUS{}
+	err := fleet.AssignProperties_To_Fleet_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Fleet_STATUS populates our Fleet_STATUS from the provided source Fleet_STATUS
+func (fleet *Fleet_STATUS) AssignProperties_From_Fleet_STATUS(source *v20250301s.Fleet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	fleet.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// ETag
+	fleet.ETag = genruntime.ClonePointerToString(source.ETag)
+
+	// HubProfile
+	if source.HubProfile != nil {
+		var hubProfile FleetHubProfile_STATUS
+		err := hubProfile.AssignProperties_From_FleetHubProfile_STATUS(source.HubProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FleetHubProfile_STATUS() to populate field HubProfile")
+		}
+		fleet.HubProfile = &hubProfile
+	} else {
+		fleet.HubProfile = nil
+	}
+
+	// Id
+	fleet.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		propertyBag.Add("Identity", *source.Identity)
+	} else {
+		propertyBag.Remove("Identity")
+	}
+
+	// Location
+	fleet.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	fleet.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ProvisioningState
+	fleet.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// Status
+	if source.Status != nil {
+		propertyBag.Add("Status", *source.Status)
+	} else {
+		propertyBag.Remove("Status")
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDataSTATUSStash v20240901s.SystemData_STATUS
+		err := systemDataSTATUSStash.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDataSTATUSStashLocal v20231001s.SystemData_STATUS
+		err = systemDataSTATUSStashLocal.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDataSTATUSStashCopy v20230201s.SystemData_STATUS
+		err = systemDataSTATUSStashCopy.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDatum SystemData_STATUS
+		err = systemDatum.AssignProperties_From_SystemData_STATUS(&systemDataSTATUSStashCopy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		fleet.SystemData = &systemDatum
+	} else {
+		fleet.SystemData = nil
+	}
+
+	// Tags
+	fleet.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	fleet.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		fleet.PropertyBag = propertyBag
+	} else {
+		fleet.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleet_STATUS interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet_STATUS); ok {
+		err := augmentedFleet.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Fleet_STATUS populates the provided destination Fleet_STATUS from our Fleet_STATUS
+func (fleet *Fleet_STATUS) AssignProperties_To_Fleet_STATUS(destination *v20250301s.Fleet_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(fleet.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(fleet.Conditions)
+
+	// ETag
+	destination.ETag = genruntime.ClonePointerToString(fleet.ETag)
+
+	// HubProfile
+	if fleet.HubProfile != nil {
+		var hubProfile v20250301s.FleetHubProfile_STATUS
+		err := fleet.HubProfile.AssignProperties_To_FleetHubProfile_STATUS(&hubProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FleetHubProfile_STATUS() to populate field HubProfile")
+		}
+		destination.HubProfile = &hubProfile
+	} else {
+		destination.HubProfile = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(fleet.Id)
+
+	// Identity
+	if propertyBag.Contains("Identity") {
+		var identity v20250301s.ManagedServiceIdentity_STATUS
+		err := propertyBag.Pull("Identity", &identity)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
+		}
+
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(fleet.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(fleet.Name)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(fleet.ProvisioningState)
+
+	// Status
+	if propertyBag.Contains("Status") {
+		var status v20250301s.FleetStatus_STATUS
+		err := propertyBag.Pull("Status", &status)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'Status' from propertyBag")
+		}
+
+		destination.Status = &status
+	} else {
+		destination.Status = nil
+	}
+
+	// SystemData
+	if fleet.SystemData != nil {
+		var systemDataSTATUSStash v20230201s.SystemData_STATUS
+		err := fleet.SystemData.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash from SystemData")
+		}
+		var systemDataSTATUSStashLocal v20231001s.SystemData_STATUS
+		err = systemDataSTATUSStash.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStashLocal)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDataSTATUSStashCopy v20240901s.SystemData_STATUS
+		err = systemDataSTATUSStashLocal.AssignProperties_To_SystemData_STATUS(&systemDataSTATUSStashCopy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData_STATUSStash")
+		}
+		var systemDatum v20250301s.SystemData_STATUS
+		err = systemDataSTATUSStashCopy.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData from SystemData_STATUSStash")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(fleet.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(fleet.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleet_STATUS interface (if implemented) to customize the conversion
+	var fleetAsAny any = fleet
+	if augmentedFleet, ok := fleetAsAny.(augmentConversionForFleet_STATUS); ok {
+		err := augmentedFleet.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFleet_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.Fleet_Spec) error
+	AssignPropertiesTo(dst *v20250301s.Fleet_Spec) error
+}
+
+type augmentConversionForFleet_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.Fleet_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.Fleet_STATUS) error
 }
 
 // Storage version of v1api20230315preview.FleetHubProfile
@@ -252,6 +792,102 @@ func (fleet *Fleet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleSta
 type FleetHubProfile struct {
 	DnsPrefix   *string                `json:"dnsPrefix,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_FleetHubProfile populates our FleetHubProfile from the provided source FleetHubProfile
+func (profile *FleetHubProfile) AssignProperties_From_FleetHubProfile(source *v20250301s.FleetHubProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AgentProfile
+	if source.AgentProfile != nil {
+		propertyBag.Add("AgentProfile", *source.AgentProfile)
+	} else {
+		propertyBag.Remove("AgentProfile")
+	}
+
+	// ApiServerAccessProfile
+	if source.ApiServerAccessProfile != nil {
+		propertyBag.Add("ApiServerAccessProfile", *source.ApiServerAccessProfile)
+	} else {
+		propertyBag.Remove("ApiServerAccessProfile")
+	}
+
+	// DnsPrefix
+	profile.DnsPrefix = genruntime.ClonePointerToString(source.DnsPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetHubProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForFleetHubProfile); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetHubProfile populates the provided destination FleetHubProfile from our FleetHubProfile
+func (profile *FleetHubProfile) AssignProperties_To_FleetHubProfile(destination *v20250301s.FleetHubProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// AgentProfile
+	if propertyBag.Contains("AgentProfile") {
+		var agentProfile v20250301s.AgentProfile
+		err := propertyBag.Pull("AgentProfile", &agentProfile)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AgentProfile' from propertyBag")
+		}
+
+		destination.AgentProfile = &agentProfile
+	} else {
+		destination.AgentProfile = nil
+	}
+
+	// ApiServerAccessProfile
+	if propertyBag.Contains("ApiServerAccessProfile") {
+		var apiServerAccessProfile v20250301s.APIServerAccessProfile
+		err := propertyBag.Pull("ApiServerAccessProfile", &apiServerAccessProfile)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'ApiServerAccessProfile' from propertyBag")
+		}
+
+		destination.ApiServerAccessProfile = &apiServerAccessProfile
+	} else {
+		destination.ApiServerAccessProfile = nil
+	}
+
+	// DnsPrefix
+	destination.DnsPrefix = genruntime.ClonePointerToString(profile.DnsPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetHubProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForFleetHubProfile); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.FleetHubProfile_STATUS
@@ -263,6 +899,134 @@ type FleetHubProfile_STATUS struct {
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_FleetHubProfile_STATUS populates our FleetHubProfile_STATUS from the provided source FleetHubProfile_STATUS
+func (profile *FleetHubProfile_STATUS) AssignProperties_From_FleetHubProfile_STATUS(source *v20250301s.FleetHubProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AgentProfile
+	if source.AgentProfile != nil {
+		propertyBag.Add("AgentProfile", *source.AgentProfile)
+	} else {
+		propertyBag.Remove("AgentProfile")
+	}
+
+	// ApiServerAccessProfile
+	if source.ApiServerAccessProfile != nil {
+		propertyBag.Add("ApiServerAccessProfile", *source.ApiServerAccessProfile)
+	} else {
+		propertyBag.Remove("ApiServerAccessProfile")
+	}
+
+	// DnsPrefix
+	profile.DnsPrefix = genruntime.ClonePointerToString(source.DnsPrefix)
+
+	// Fqdn
+	profile.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
+
+	// KubernetesVersion
+	profile.KubernetesVersion = genruntime.ClonePointerToString(source.KubernetesVersion)
+
+	// PortalFqdn
+	if source.PortalFqdn != nil {
+		propertyBag.Add("PortalFqdn", *source.PortalFqdn)
+	} else {
+		propertyBag.Remove("PortalFqdn")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetHubProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForFleetHubProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetHubProfile_STATUS populates the provided destination FleetHubProfile_STATUS from our FleetHubProfile_STATUS
+func (profile *FleetHubProfile_STATUS) AssignProperties_To_FleetHubProfile_STATUS(destination *v20250301s.FleetHubProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// AgentProfile
+	if propertyBag.Contains("AgentProfile") {
+		var agentProfile v20250301s.AgentProfile_STATUS
+		err := propertyBag.Pull("AgentProfile", &agentProfile)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'AgentProfile' from propertyBag")
+		}
+
+		destination.AgentProfile = &agentProfile
+	} else {
+		destination.AgentProfile = nil
+	}
+
+	// ApiServerAccessProfile
+	if propertyBag.Contains("ApiServerAccessProfile") {
+		var apiServerAccessProfile v20250301s.APIServerAccessProfile_STATUS
+		err := propertyBag.Pull("ApiServerAccessProfile", &apiServerAccessProfile)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'ApiServerAccessProfile' from propertyBag")
+		}
+
+		destination.ApiServerAccessProfile = &apiServerAccessProfile
+	} else {
+		destination.ApiServerAccessProfile = nil
+	}
+
+	// DnsPrefix
+	destination.DnsPrefix = genruntime.ClonePointerToString(profile.DnsPrefix)
+
+	// Fqdn
+	destination.Fqdn = genruntime.ClonePointerToString(profile.Fqdn)
+
+	// KubernetesVersion
+	destination.KubernetesVersion = genruntime.ClonePointerToString(profile.KubernetesVersion)
+
+	// PortalFqdn
+	if propertyBag.Contains("PortalFqdn") {
+		var portalFqdn string
+		err := propertyBag.Pull("PortalFqdn", &portalFqdn)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'PortalFqdn' from propertyBag")
+		}
+
+		destination.PortalFqdn = &portalFqdn
+	} else {
+		destination.PortalFqdn = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetHubProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForFleetHubProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230315preview.FleetOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type FleetOperatorSpec struct {
@@ -270,6 +1034,144 @@ type FleetOperatorSpec struct {
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 	Secrets              *FleetOperatorSecrets         `json:"secrets,omitempty"`
+}
+
+// AssignProperties_From_FleetOperatorSpec populates our FleetOperatorSpec from the provided source FleetOperatorSpec
+func (operator *FleetOperatorSpec) AssignProperties_From_FleetOperatorSpec(source *v20250301s.FleetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Secrets
+	if source.Secrets != nil {
+		var secret FleetOperatorSecrets
+		err := secret.AssignProperties_From_FleetOperatorSecrets(source.Secrets)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_FleetOperatorSecrets() to populate field Secrets")
+		}
+		operator.Secrets = &secret
+	} else {
+		operator.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFleetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetOperatorSpec populates the provided destination FleetOperatorSpec from our FleetOperatorSpec
+func (operator *FleetOperatorSpec) AssignProperties_To_FleetOperatorSpec(destination *v20250301s.FleetOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Secrets
+	if operator.Secrets != nil {
+		var secret v20250301s.FleetOperatorSecrets
+		err := operator.Secrets.AssignProperties_To_FleetOperatorSecrets(&secret)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_FleetOperatorSecrets() to populate field Secrets")
+		}
+		destination.Secrets = &secret
+	} else {
+		destination.Secrets = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFleetOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230315preview.SystemData_STATUS
@@ -285,7 +1187,7 @@ type SystemData_STATUS struct {
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20230201s.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -328,7 +1230,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *s
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20230201s.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
 
@@ -370,15 +1272,101 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 	return nil
 }
 
+type augmentConversionForFleetHubProfile interface {
+	AssignPropertiesFrom(src *v20250301s.FleetHubProfile) error
+	AssignPropertiesTo(dst *v20250301s.FleetHubProfile) error
+}
+
+type augmentConversionForFleetHubProfile_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.FleetHubProfile_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.FleetHubProfile_STATUS) error
+}
+
+type augmentConversionForFleetOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.FleetOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.FleetOperatorSpec) error
+}
+
 type augmentConversionForSystemData_STATUS interface {
-	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
-	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
+	AssignPropertiesFrom(src *v20230201s.SystemData_STATUS) error
+	AssignPropertiesTo(dst *v20230201s.SystemData_STATUS) error
 }
 
 // Storage version of v1api20230315preview.FleetOperatorSecrets
 type FleetOperatorSecrets struct {
 	PropertyBag     genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	UserCredentials *genruntime.SecretDestination `json:"userCredentials,omitempty"`
+}
+
+// AssignProperties_From_FleetOperatorSecrets populates our FleetOperatorSecrets from the provided source FleetOperatorSecrets
+func (secrets *FleetOperatorSecrets) AssignProperties_From_FleetOperatorSecrets(source *v20250301s.FleetOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// UserCredentials
+	if source.UserCredentials != nil {
+		userCredential := source.UserCredentials.Copy()
+		secrets.UserCredentials = &userCredential
+	} else {
+		secrets.UserCredentials = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		secrets.PropertyBag = propertyBag
+	} else {
+		secrets.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForFleetOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetOperatorSecrets populates the provided destination FleetOperatorSecrets from our FleetOperatorSecrets
+func (secrets *FleetOperatorSecrets) AssignProperties_To_FleetOperatorSecrets(destination *v20250301s.FleetOperatorSecrets) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(secrets.PropertyBag)
+
+	// UserCredentials
+	if secrets.UserCredentials != nil {
+		userCredential := secrets.UserCredentials.Copy()
+		destination.UserCredentials = &userCredential
+	} else {
+		destination.UserCredentials = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFleetOperatorSecrets interface (if implemented) to customize the conversion
+	var secretsAsAny any = secrets
+	if augmentedSecrets, ok := secretsAsAny.(augmentConversionForFleetOperatorSecrets); ok {
+		err := augmentedSecrets.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForFleetOperatorSecrets interface {
+	AssignPropertiesFrom(src *v20250301s.FleetOperatorSecrets) error
+	AssignPropertiesTo(dst *v20250301s.FleetOperatorSecrets) error
 }
 
 func init() {

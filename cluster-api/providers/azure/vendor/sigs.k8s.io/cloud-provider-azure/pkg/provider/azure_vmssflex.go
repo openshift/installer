@@ -95,7 +95,7 @@ func newFlexScaleSet(az *Cloud) (VMSet, error) {
 // GetPrimaryVMSetName returns the VM set name depending on the configured vmType.
 // It returns config.PrimaryScaleSetName for vmss and config.PrimaryAvailabilitySetName for standard vmType.
 func (fs *FlexScaleSet) GetPrimaryVMSetName() string {
-	return fs.Config.PrimaryScaleSetName
+	return fs.PrimaryScaleSetName
 }
 
 // getNodeVMSetName returns the vmss flex name by the node name.
@@ -141,7 +141,7 @@ func (fs *FlexScaleSet) GetVMSetNames(ctx context.Context, service *v1.Service, 
 	if !hasMode || fs.UseStandardLoadBalancer() {
 		// no mode specified in service annotation or use single SLB mode
 		// default to PrimaryScaleSetName
-		vmssFlexNames := to.SliceOfPtrs(fs.Config.PrimaryScaleSetName)
+		vmssFlexNames := to.SliceOfPtrs(fs.PrimaryScaleSetName)
 		return vmssFlexNames, nil
 	}
 
@@ -310,7 +310,7 @@ func (fs *FlexScaleSet) GetPrimaryInterface(ctx context.Context, nodeName string
 		return nil, err
 	}
 
-	nic, rerr := fs.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := fs.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return nil, rerr
 	}
@@ -483,7 +483,7 @@ func (fs *FlexScaleSet) EnsureHostInPool(ctx context.Context, service *v1.Servic
 
 	var primaryIPConfig *armnetwork.InterfaceIPConfiguration
 	ipv6 := isBackendPoolIPv6(backendPoolID)
-	if !fs.Cloud.ipv6DualStackEnabled && !ipv6 {
+	if !fs.ipv6DualStackEnabled && !ipv6 {
 		primaryIPConfig, err = getPrimaryIPConfig(nic)
 		if err != nil {
 			return "", "", "", nil, err
@@ -953,7 +953,7 @@ func (fs *FlexScaleSet) ensureBackendPoolDeletedFromNode(ctx context.Context, vm
 			continue
 		}
 
-		nic, rerr := fs.NetworkClientFactory.GetInterfaceClient().Get(ctx, fs.ResourceGroup, nicName, nil)
+		nic, rerr := fs.ComputeClientFactory.GetInterfaceClient().Get(ctx, fs.ResourceGroup, nicName, nil)
 		if rerr != nil {
 			return false, fmt.Errorf("ensureBackendPoolDeletedFromNode: failed to get interface of name %s: %w", nicName, rerr)
 		}
@@ -994,7 +994,7 @@ func (fs *FlexScaleSet) ensureBackendPoolDeletedFromNode(ctx context.Context, vm
 
 		nicUpdaters = append(nicUpdaters, func() error {
 			klog.V(2).Infof("EnsureBackendPoolDeleted begins to CreateOrUpdate for NIC(%s, %s) with backendPoolIDs %q", fs.ResourceGroup, ptr.Deref(nic.Name, ""), backendPoolIDs)
-			_, rerr := fs.NetworkClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, fs.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
+			_, rerr := fs.ComputeClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, fs.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
 			if rerr != nil {
 				klog.Errorf("EnsureBackendPoolDeleted CreateOrUpdate for NIC(%s, %s) failed with error %v", fs.ResourceGroup, ptr.Deref(nic.Name, ""), rerr.Error())
 				return rerr

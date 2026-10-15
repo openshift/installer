@@ -1,3 +1,5 @@
+# NOTE: When updating shared linter settings, keep test/.golangci.yml in sync.
+# The test config excludes kubeapilinter (which requires a custom-built binary).
 version: "2"
 run:
   build-tags:
@@ -7,6 +9,7 @@ linters:
   default: none
   enable:
     - asasalint # warns about passing []any to func(...any) without expanding it
+    - kubeapilinter # validates Kubernetes API types against API conventions
     - asciicheck # non ascii symbols
     - bidichk # dangerous unicode sequences
     - bodyclose # unclosed http bodies
@@ -101,11 +104,21 @@ linters:
         - pkg: sigs.k8s.io/controller-runtime
           alias: ctrl
         # CAPI
-        - pkg: sigs.k8s.io/cluster-api/api/v1beta1
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta2
           alias: clusterv1
-        # CAPI exp
-        - pkg: sigs.k8s.io/cluster-api/exp/api/v1beta1
-          alias: expv1
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta1
+          alias: clusterv1beta1
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions
+          alias: v1beta1conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2
+          alias: v1beta2conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch
+          alias: v1beta1patch
+        # CAPBK
+        - pkg: sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2
+          alias: bootstrapv1
+        - pkg: sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1
+          alias: bootstrapv1beta1
         # CAPZ
         - pkg: sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
           alias: infrav1
@@ -130,6 +143,27 @@ linters:
     nolintlint:
       require-specific: true
       allow-unused: false
+    custom:
+      kubeapilinter:
+        type: module
+        path: sigs.k8s.io/kube-api-linter
+        description: Kube API Linter validates Kubernetes API types against API conventions
+        settings:
+          linters:
+            # Disable all linters by default and enable only specific ones.
+            # This allows gradual adoption of API conventions.
+            disable:
+              - "*"
+            enable:
+              # Enable linters with low/zero issue counts that enforce critical conventions
+              - duplicatemarkers  # Removes duplicate markers (1 issue, has auto-fix)
+              - jsontags          # Ensures proper JSON tag formatting
+              - nofloats          # Prevents float type usage
+              - nomaps            # Restricts map usage
+              - nonullable        # Prevents usage of the nullable marker
+              - nophase           # Prevents Phase field usage
+              - notimestamp       # Prevents TimeStamp field usage
+          lintersConfig: {}
     revive:
       rules:
         # The following rules are recommended https://github.com/mgechev/revive#recommended-configuration
@@ -167,6 +201,10 @@ linters:
   exclusions:
     generated: lax
     rules:
+      # Only run kubeapilinter on API type files (not tests, webhooks, validation, conversion, defaults)
+      - linters:
+          - kubeapilinter
+        path-except: "^api/.*_types\\.go$|^exp/api/.*_types\\.go$|^api/.*/types\\.go$|^api/.*/types_.*\\.go$|^api/.*/consts\\.go$"
       - path: (\w*)conversion.go
         text: use underscores in Go names|receiver name (.+) should be consistent|methods on the same type should have the same receiver name
       - path: mock(\w+)/doc.go$
@@ -193,7 +231,6 @@ linters:
       # within test files and test utils.
       - linters:
           - revive
-          - staticcheck
         path: _test\.go
         text: should not use dot imports
       # Exclude some packages or code to require comments, for example test code, or fake clients.
@@ -294,6 +331,26 @@ linters:
       - linters:
           - goconst
         path: (.+)_test\.go
+      # Ignore Cluster API v1beta1 deprecations.
+      - linters:
+        - staticcheck
+        path: .*\.go$
+        text: 'SA1019: "sigs.k8s.io\/cluster-api/api/core/v1beta1" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+      - linters:
+        - staticcheck
+        path: .*\.go$
+        text: 'SA1019: "sigs.k8s.io/cluster-api/util/deprecated/.*" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+      # Ignore GetEventRecorderFor deprecation (CAPI itself still uses it).
+      - linters:
+          - staticcheck
+        text: 'SA1019: (env|mgr|testEnv).GetEventRecorderFor is deprecated'
+      # Ignore CAPZ v1beta1 deprecations (SharedGallery, VMState) still used for backward compatibility.
+      - linters:
+          - staticcheck
+        text: 'SA1019: .*SharedGallery is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: .*VMState is deprecated'
     paths:
       - zz_generated\.(\w*)\.go$
       - third_party$

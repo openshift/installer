@@ -243,6 +243,7 @@ type CreateManagedImageInput struct {
 	ResourceGroupName string
 	Region            string
 	InfraID           string
+	HyperVGeneration  armcompute.HyperVGenerationTypes
 	Tags              map[string]*string
 	Client            *armcompute.ImagesClient
 }
@@ -253,7 +254,7 @@ func CreateManagedImage(ctx context.Context, in *CreateManagedImageInput) error 
 		Location: to.Ptr(in.Region),
 		Tags:     in.Tags,
 		Properties: &armcompute.ImageProperties{
-			HyperVGeneration: to.Ptr(armcompute.HyperVGenerationTypesV1),
+			HyperVGeneration: to.Ptr(in.HyperVGeneration),
 			StorageProfile: &armcompute.ImageStorageProfile{
 				OSDisk: &armcompute.ImageOSDisk{
 					OSState: to.Ptr(armcompute.OperatingSystemStateTypesGeneralized),

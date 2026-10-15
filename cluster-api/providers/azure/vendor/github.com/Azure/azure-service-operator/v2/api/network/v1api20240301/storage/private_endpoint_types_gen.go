@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={privateendpoints/status,privateendpoints/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -31,8 +32,8 @@ import (
 type PrivateEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              PrivateEndpoint_Spec                                       `json:"spec,omitempty"`
-	Status            PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              PrivateEndpoint_Spec   `json:"spec,omitempty"`
+	Status            PrivateEndpoint_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &PrivateEndpoint{}
@@ -110,7 +111,7 @@ func (endpoint *PrivateEndpoint) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (endpoint *PrivateEndpoint) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded{}
+	return &PrivateEndpoint_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -126,13 +127,13 @@ func (endpoint *PrivateEndpoint) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (endpoint *PrivateEndpoint) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded); ok {
+	if st, ok := status.(*PrivateEndpoint_STATUS); ok {
 		endpoint.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded
+	var st PrivateEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -211,9 +212,9 @@ func (endpoint *PrivateEndpoint_Spec) ConvertSpecTo(destination genruntime.Conve
 	return destination.ConvertSpecFrom(endpoint)
 }
 
-// Storage version of v1api20240301.PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded
+// Storage version of v1api20240301.PrivateEndpoint_STATUS
 // Private endpoint resource.
-type PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded struct {
+type PrivateEndpoint_STATUS struct {
 	ApplicationSecurityGroups           []ApplicationSecurityGroup_STATUS_PrivateEndpoint_SubResourceEmbedded `json:"applicationSecurityGroups,omitempty"`
 	Conditions                          []conditions.Condition                                                `json:"conditions,omitempty"`
 	CustomDnsConfigs                    []CustomDnsConfigPropertiesFormat_STATUS                              `json:"customDnsConfigs,omitempty"`
@@ -234,24 +235,24 @@ type PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded struct {
 	Type                                *string                                                               `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &PrivateEndpoint_STATUS{}
 
-// ConvertStatusFrom populates our PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded from the provided source
-func (embedded *PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
+// ConvertStatusFrom populates our PrivateEndpoint_STATUS from the provided source
+func (endpoint *PrivateEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == endpoint {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(embedded)
+	return source.ConvertStatusTo(endpoint)
 }
 
-// ConvertStatusTo populates the provided destination from our PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded
-func (embedded *PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
+// ConvertStatusTo populates the provided destination from our PrivateEndpoint_STATUS
+func (endpoint *PrivateEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == endpoint {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	return destination.ConvertStatusFrom(endpoint)
 }
 
 // Storage version of v1api20240301.ApplicationSecurityGroup_STATUS_PrivateEndpoint_SubResourceEmbedded
