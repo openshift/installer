@@ -58,7 +58,7 @@ func (s *PublicIPSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the public IP.
-func (s *PublicIPSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *PublicIPSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.PublicIPAddress); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.PublicIPAddress", existing)

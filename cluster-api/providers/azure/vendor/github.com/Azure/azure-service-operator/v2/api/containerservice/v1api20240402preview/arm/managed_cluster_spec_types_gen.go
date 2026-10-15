@@ -103,8 +103,11 @@ type ManagedClusterProperties struct {
 	// DisableLocalAccounts: If set to true, getting static credentials will be disabled for this cluster. This must only be
 	// used on Managed Clusters that are AAD enabled. For more details see [disable local
 	// accounts](https://docs.microsoft.com/azure/aks/managed-aad#disable-local-accounts-preview).
-	DisableLocalAccounts *bool   `json:"disableLocalAccounts,omitempty"`
-	DiskEncryptionSetID  *string `json:"diskEncryptionSetID,omitempty"`
+	DisableLocalAccounts *bool `json:"disableLocalAccounts,omitempty"`
+
+	// DiskEncryptionSetID: This is of the form:
+	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskEncryptionSets/{encryptionSetName}'
+	DiskEncryptionSetID *string `json:"diskEncryptionSetID,omitempty"`
 
 	// DnsPrefix: This cannot be updated once the Managed Cluster has been created.
 	DnsPrefix *string `json:"dnsPrefix,omitempty"`
@@ -300,6 +303,7 @@ type ContainerServiceNetworkProfile struct {
 
 // Data used when creating a target resource from a source resource.
 type CreationData struct {
+	// SourceResourceId: This is the ARM ID of the source object to be used to create the target object.
 	SourceResourceId *string `json:"sourceResourceId,omitempty"`
 }
 
@@ -310,7 +314,9 @@ type DelegatedResource struct {
 
 	// ReferralResource: The delegation id of the referral delegation (optional) - internal use only.
 	ReferralResource *string `json:"referralResource,omitempty"`
-	ResourceId       *string `json:"resourceId,omitempty"`
+
+	// ResourceId: The ARM resource id of the delegated resource - internal use only.
+	ResourceId *string `json:"resourceId,omitempty"`
 
 	// TenantId: The tenant id of the delegated resource - internal use only.
 	TenantId *string `json:"tenantId,omitempty"`
@@ -383,8 +389,10 @@ type ManagedClusterAgentPoolProfile struct {
 
 	// AvailabilityZones: The list of Availability zones to use for nodes. This can only be specified if the AgentPoolType
 	// property is 'VirtualMachineScaleSets'.
-	AvailabilityZones          []string `json:"availabilityZones"`
-	CapacityReservationGroupID *string  `json:"capacityReservationGroupID,omitempty"`
+	AvailabilityZones []string `json:"availabilityZones"`
+
+	// CapacityReservationGroupID: AKS will associate the specified agent pool with the Capacity Reservation Group.
+	CapacityReservationGroupID *string `json:"capacityReservationGroupID,omitempty"`
 
 	// Count: Number of agents (VMs) to host docker containers. Allowed values must be in the range of 0 to 1000 (inclusive)
 	// for user pools and in the range of 1 to 1000 (inclusive) for system pools. The default value is 1.
@@ -429,8 +437,12 @@ type ManagedClusterAgentPoolProfile struct {
 	GpuInstanceProfile *GPUInstanceProfile `json:"gpuInstanceProfile,omitempty"`
 
 	// GpuProfile: The GPU settings of an agent pool.
-	GpuProfile  *AgentPoolGPUProfile `json:"gpuProfile,omitempty"`
-	HostGroupID *string              `json:"hostGroupID,omitempty"`
+	GpuProfile *AgentPoolGPUProfile `json:"gpuProfile,omitempty"`
+
+	// HostGroupID: This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}.
+	// For more information see [Azure dedicated hosts](https://docs.microsoft.com/azure/virtual-machines/dedicated-hosts).
+	HostGroupID *string `json:"hostGroupID,omitempty"`
 
 	// KubeletConfig: The Kubelet configuration on the agent pool nodes.
 	KubeletConfig *KubeletConfig `json:"kubeletConfig,omitempty"`
@@ -474,8 +486,11 @@ type ManagedClusterAgentPoolProfile struct {
 	NodeInitializationTaints []string `json:"nodeInitializationTaints"`
 
 	// NodeLabels: The node labels to be persisted across all nodes in agent pool.
-	NodeLabels           map[string]string `json:"nodeLabels" serializationType:"explicitEmptyCollection"`
-	NodePublicIPPrefixID *string           `json:"nodePublicIPPrefixID,omitempty"`
+	NodeLabels map[string]string `json:"nodeLabels" serializationType:"explicitEmptyCollection"`
+
+	// NodePublicIPPrefixID: This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
+	NodePublicIPPrefixID *string `json:"nodePublicIPPrefixID,omitempty"`
 
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
 	NodeTaints []string `json:"nodeTaints" serializationType:"explicitEmptyCollection"`
@@ -506,13 +521,19 @@ type ManagedClusterAgentPoolProfile struct {
 	// PodIPAllocationMode: The IP allocation mode for pods in the agent pool. Must be used with podSubnetId. The default is
 	// 'DynamicIndividual'.
 	PodIPAllocationMode *PodIPAllocationMode `json:"podIPAllocationMode,omitempty"`
-	PodSubnetID         *string              `json:"podSubnetID,omitempty"`
+
+	// PodSubnetID: If omitted, pod IPs are statically assigned on the node subnet (see vnetSubnetID for more details). This is
+	// of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}
+	PodSubnetID *string `json:"podSubnetID,omitempty"`
 
 	// PowerState: When an Agent Pool is first created it is initially Running. The Agent Pool can be stopped by setting this
 	// field to Stopped. A stopped Agent Pool stops all of its VMs and does not accrue billing charges. An Agent Pool can only
 	// be stopped if it is Running and provisioning state is Succeeded
-	PowerState                *PowerState `json:"powerState,omitempty"`
-	ProximityPlacementGroupID *string     `json:"proximityPlacementGroupID,omitempty"`
+	PowerState *PowerState `json:"powerState,omitempty"`
+
+	// ProximityPlacementGroupID: The ID for Proximity Placement Group.
+	ProximityPlacementGroupID *string `json:"proximityPlacementGroupID,omitempty"`
 
 	// ScaleDownMode: This also effects the cluster autoscaler behavior. If not specified, it defaults to Delete.
 	ScaleDownMode *ScaleDownMode `json:"scaleDownMode,omitempty"`
@@ -548,7 +569,11 @@ type ManagedClusterAgentPoolProfile struct {
 	// VmSize: VM size availability varies by region. If a node contains insufficient compute resources (memory, cpu, etc) pods
 	// might fail to run correctly. For more details on restricted VM sizes, see:
 	// https://docs.microsoft.com/azure/aks/quotas-skus-regions
-	VmSize       *string `json:"vmSize,omitempty"`
+	VmSize *string `json:"vmSize,omitempty"`
+
+	// VnetSubnetID: If this is not specified, a VNET and subnet will be generated and used. If no podSubnetID is specified,
+	// this applies to nodes and pods, otherwise it applies to just nodes. This is of the form:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}
 	VnetSubnetID *string `json:"vnetSubnetID,omitempty"`
 
 	// WindowsProfile: The Windows agent pool's specific profile.
@@ -624,8 +649,11 @@ type ManagedClusterAzureMonitorProfile struct {
 // The bootstrap profile.
 type ManagedClusterBootstrapProfile struct {
 	// ArtifactSource: The source where the artifacts are downloaded from.
-	ArtifactSource      *ManagedClusterBootstrapProfile_ArtifactSource `json:"artifactSource,omitempty"`
-	ContainerRegistryId *string                                        `json:"containerRegistryId,omitempty"`
+	ArtifactSource *ManagedClusterBootstrapProfile_ArtifactSource `json:"artifactSource,omitempty"`
+
+	// ContainerRegistryId: The resource Id of Azure Container Registry. The registry must have private network access, premium
+	// SKU and zone redundancy.
+	ContainerRegistryId *string `json:"containerRegistryId,omitempty"`
 }
 
 // Cluster HTTP proxy configuration.
@@ -930,7 +958,9 @@ type ManagedClusterWorkloadAutoScalerProfile struct {
 type PrivateLinkResource struct {
 	// GroupId: The group ID of the resource.
 	GroupId *string `json:"groupId,omitempty"`
-	Id      *string `json:"id,omitempty"`
+
+	// Id: The ID of the private link resource.
+	Id *string `json:"id,omitempty"`
 
 	// Name: The name of the private link resource.
 	Name *string `json:"name,omitempty"`
@@ -967,10 +997,12 @@ type ServiceMeshProfile struct {
 // Details about a user assigned identity.
 type UserAssignedIdentity struct {
 	// ClientId: The client ID of the user assigned identity.
-	ClientId *string `json:"clientId,omitempty"`
+	ClientId *string `json:"clientId,omitempty" optionalConfigMapPair:"ClientId"`
 
 	// ObjectId: The object ID of the user assigned identity.
-	ObjectId   *string `json:"objectId,omitempty"`
+	ObjectId *string `json:"objectId,omitempty" optionalConfigMapPair:"ObjectId"`
+
+	// ResourceId: The resource ID of the user assigned identity.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -1000,7 +1032,10 @@ type AzureKeyVaultKms struct {
 	// key vault allows public access from all networks. `Private` means the key vault disables public access and enables
 	// private link. The default value is `Public`.
 	KeyVaultNetworkAccess *AzureKeyVaultKms_KeyVaultNetworkAccess `json:"keyVaultNetworkAccess,omitempty"`
-	KeyVaultResourceId    *string                                 `json:"keyVaultResourceId,omitempty"`
+
+	// KeyVaultResourceId: Resource ID of key vault. When keyVaultNetworkAccess is `Private`, this field is required and must
+	// be a valid resource ID. When keyVaultNetworkAccess is `Public`, leave the field empty.
+	KeyVaultResourceId *string `json:"keyVaultResourceId,omitempty"`
 }
 
 type ContainerServiceNetworkProfile_KubeProxyConfig struct {
@@ -1180,7 +1215,10 @@ type ManagedClusterAzureMonitorProfileContainerInsights struct {
 	DisablePrometheusMetricsScraping *bool `json:"disablePrometheusMetricsScraping,omitempty"`
 
 	// Enabled: Indicates if Azure Monitor Container Insights Logs Addon is enabled or not.
-	Enabled                         *bool   `json:"enabled,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// LogAnalyticsWorkspaceResourceId: Fully Qualified ARM Resource Id of Azure Log Analytics Workspace for storing Azure
+	// Monitor Container Insights Logs.
 	LogAnalyticsWorkspaceResourceId *string `json:"logAnalyticsWorkspaceResourceId,omitempty"`
 
 	// SyslogPort: The syslog host port. If not specified, the default port is 28330.
@@ -1220,6 +1258,9 @@ type ManagedClusterCostAnalysis struct {
 
 // Web App Routing settings for the ingress profile.
 type ManagedClusterIngressProfileWebAppRouting struct {
+	// DnsZoneResourceIds: Resource IDs of the DNS zones to be associated with the Web App Routing add-on. Used only when Web
+	// App Routing is enabled. Public and private DNS zones can be in different resource groups, but all public DNS zones must
+	// be in the same resource group and all private DNS zones must be in the same resource group.
 	DnsZoneResourceIds []string `json:"dnsZoneResourceIds,omitempty"`
 
 	// Enabled: Whether to enable Web App Routing.
@@ -1329,6 +1370,9 @@ type ManagedClusterPodIdentityException struct {
 
 // Microsoft Defender settings for the security profile.
 type ManagedClusterSecurityProfileDefender struct {
+	// LogAnalyticsWorkspaceResourceId: Resource ID of the Log Analytics workspace to be associated with Microsoft Defender.
+	// When Microsoft Defender is enabled, this field is required and must be a valid workspace resource ID. When Microsoft
+	// Defender is disabled, leave the field empty.
 	LogAnalyticsWorkspaceResourceId *string `json:"logAnalyticsWorkspaceResourceId,omitempty"`
 
 	// SecurityMonitoring: Microsoft Defender threat detection for Cloud settings for the security profile.
@@ -1763,6 +1807,7 @@ var managedClusterWorkloadAutoScalerProfileVerticalPodAutoscaler_AddonAutoscalin
 
 // A reference to an Azure resource.
 type ResourceReference struct {
+	// Id: The fully qualified Azure resource id.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -1806,7 +1851,9 @@ type IstioPluginCertificateAuthority struct {
 
 	// KeyObjectName: Intermediate certificate private key object name in Azure Key Vault.
 	KeyObjectName *string `json:"keyObjectName,omitempty"`
-	KeyVaultId    *string `json:"keyVaultId,omitempty"`
+
+	// KeyVaultId: The resource ID of the Key Vault.
+	KeyVaultId *string `json:"keyVaultId,omitempty"`
 
 	// RootCertObjectName: Root certificate object name in Azure Key Vault.
 	RootCertObjectName *string `json:"rootCertObjectName,omitempty"`

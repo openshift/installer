@@ -175,3 +175,42 @@ func (c *MockInterfaceGetCall) DoAndReturn(f func(context.Context, string, strin
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
+
+// List mocks base method.
+func (m *MockInterface) List(ctx context.Context, resourceGroupName, parentResourceName string) ([]*armprivatedns.VirtualNetworkLink, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, resourceGroupName, parentResourceName)
+	ret0, _ := ret[0].([]*armprivatedns.VirtualNetworkLink)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockInterfaceMockRecorder) List(ctx, resourceGroupName, parentResourceName any) *MockInterfaceListCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockInterface)(nil).List), ctx, resourceGroupName, parentResourceName)
+	return &MockInterfaceListCall{Call: call}
+}
+
+// MockInterfaceListCall wrap *gomock.Call
+type MockInterfaceListCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockInterfaceListCall) Return(result []*armprivatedns.VirtualNetworkLink, rerr error) *MockInterfaceListCall {
+	c.Call = c.Call.Return(result, rerr)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockInterfaceListCall) Do(f func(context.Context, string, string) ([]*armprivatedns.VirtualNetworkLink, error)) *MockInterfaceListCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockInterfaceListCall) DoAndReturn(f func(context.Context, string, string) ([]*armprivatedns.VirtualNetworkLink, error)) *MockInterfaceListCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}

@@ -23,8 +23,7 @@ import (
 
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -36,7 +35,7 @@ import (
 var ErrNoManagedClustersAgentPoolDefined = fmt.Errorf("no %s ManagedClustersAgentPools defined in AzureASOManagedMachinePool spec.resources", asocontainerservicev1.GroupVersion.Group)
 
 // SetAgentPoolDefaults propagates config from a MachinePool to an AzureASOManagedMachinePool's defined ManagedClustersAgentPool.
-func SetAgentPoolDefaults(ctrlClient client.Client, machinePool *expv1.MachinePool) ResourcesMutator {
+func SetAgentPoolDefaults(ctrlClient client.Client, machinePool *clusterv1.MachinePool) ResourcesMutator {
 	return func(ctx context.Context, us []*unstructured.Unstructured) error {
 		ctx, _, done := tele.StartSpanWithLogger(ctx, "mutators.SetAgentPoolDefaults")
 		defer done()
@@ -71,16 +70,16 @@ func SetAgentPoolDefaults(ctrlClient client.Client, machinePool *expv1.MachinePo
 	}
 }
 
-func setAgentPoolOrchestratorVersion(ctx context.Context, machinePool *expv1.MachinePool, agentPoolPath string, agentPool *unstructured.Unstructured) error {
+func setAgentPoolOrchestratorVersion(ctx context.Context, machinePool *clusterv1.MachinePool, agentPoolPath string, agentPool *unstructured.Unstructured) error {
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setAgentPoolOrchestratorVersion")
 	defer done()
 
-	if machinePool.Spec.Template.Spec.Version == nil {
+	if machinePool.Spec.Template.Spec.Version == "" {
 		return nil
 	}
 
 	k8sVersionPath := []string{"spec", "orchestratorVersion"}
-	capiK8sVersion := strings.TrimPrefix(*machinePool.Spec.Template.Spec.Version, "v")
+	capiK8sVersion := strings.TrimPrefix(machinePool.Spec.Template.Spec.Version, "v")
 	userK8sVersion, k8sVersionFound, err := unstructured.NestedString(agentPool.UnstructuredContent(), k8sVersionPath...)
 	if err != nil {
 		return err
@@ -88,7 +87,7 @@ func setAgentPoolOrchestratorVersion(ctx context.Context, machinePool *expv1.Mac
 	setK8sVersion := mutation{
 		location: agentPoolPath + "." + strings.Join(k8sVersionPath, "."),
 		val:      capiK8sVersion,
-		reason:   fmt.Sprintf("because MachinePool %s's spec.template.spec.version is %s", machinePool.Name, *machinePool.Spec.Template.Spec.Version),
+		reason:   fmt.Sprintf("because MachinePool %s's spec.template.spec.version is %s", machinePool.Name, machinePool.Spec.Template.Spec.Version),
 	}
 	if k8sVersionFound && userK8sVersion != capiK8sVersion {
 		return Incompatible{
@@ -100,7 +99,7 @@ func setAgentPoolOrchestratorVersion(ctx context.Context, machinePool *expv1.Mac
 	return unstructured.SetNestedField(agentPool.UnstructuredContent(), capiK8sVersion, k8sVersionPath...)
 }
 
-func reconcileAutoscaling(agentPool *unstructured.Unstructured, machinePool *expv1.MachinePool) error {
+func reconcileAutoscaling(agentPool *unstructured.Unstructured, machinePool *clusterv1.MachinePool) error {
 	autoscaling, _, err := unstructured.NestedBool(agentPool.UnstructuredContent(), "spec", "enableAutoScaling")
 	if err != nil {
 		return err
@@ -128,7 +127,7 @@ func reconcileAutoscaling(agentPool *unstructured.Unstructured, machinePool *exp
 	return nil
 }
 
-func setAgentPoolCount(ctx context.Context, ctrlClient client.Client, machinePool *expv1.MachinePool, agentPoolPath string, agentPool *unstructured.Unstructured) error {
+func setAgentPoolCount(ctx context.Context, ctrlClient client.Client, machinePool *clusterv1.MachinePool, agentPoolPath string, agentPool *unstructured.Unstructured) error {
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setAgentPoolCount")
 	defer done()
 
