@@ -6182,23 +6182,30 @@ spec:
                           description: BGPPeerConfig defines the configuration for
                             a BGP peer.
                           properties:
-                            bfdEnabled:
+                            failureDetection:
                               description: |-
-                                BFDEnabled configures Bi-directional Forwarding Detection.
-                                Valid values are "true" and "false".
+                                FailureDetection determines how a failed peer is detected. When set
+                                to "BFD", a BFD session is established with the peer and BGP reacts
+                                to BFD failure detection. When set to "HoldTimer", failure detection
+                                relies on the BGP hold timer alone. When omitted, failure detection
+                                relies on the BGP hold timer.
                               type: string
-                            ebgpMultiHop:
-                              description: EBGPMultiHop enables multi-hop eBGP when
-                                the peer is not directly connected.
-                              type: string
-                            holdTime:
-                              description: HoldTime is the BGP hold time for this
-                                peer (e.g., "90s").
-                              type: string
-                            keepaliveTime:
-                              description: KeepaliveTime is the BGP keepalive interval
-                                for this peer (e.g., "30s").
-                              type: string
+                            holdTimeSeconds:
+                              description: |-
+                                HoldTimeSeconds is the BGP hold time in seconds, between 3 (the RFC
+                                4271 minimum for a non-zero hold time) and 65535. When omitted, no
+                                hold time is configured and the FRR default (180 seconds) applies.
+                                When both HoldTimeSeconds and KeepaliveTimeSeconds are set,
+                                HoldTimeSeconds must be at least 3 times KeepaliveTimeSeconds.
+                              format: int32
+                              type: integer
+                            keepaliveTimeSeconds:
+                              description: |-
+                                KeepaliveTimeSeconds is the BGP keepalive interval in seconds,
+                                between 1 and 65535. When omitted, no keepalive interval is
+                                configured and the FRR default (60 seconds) applies.
+                              format: int32
+                              type: integer
                             password:
                               description: |-
                                 Password is the optional TCP MD5 signature password for the BGP
@@ -6212,6 +6219,14 @@ spec:
                             peerAddress:
                               description: PeerAddress is the IP address of the BGP
                                 peer (e.g., ToR switch).
+                              type: string
+                            peerReachability:
+                              description: |-
+                                PeerReachability describes how the peer is reached. When set to
+                                "MultiHop", the session may be established with a peer several
+                                router hops away. When set to "DirectlyConnected", the peer must be
+                                on a directly connected network. When omitted, the peer must be
+                                directly connected.
                               type: string
                             port:
                               description: Port is the TCP port for the BGP session.
@@ -6325,23 +6340,30 @@ spec:
                             description: BGPPeerConfig defines the configuration for
                               a BGP peer.
                             properties:
-                              bfdEnabled:
+                              failureDetection:
                                 description: |-
-                                  BFDEnabled configures Bi-directional Forwarding Detection.
-                                  Valid values are "true" and "false".
+                                  FailureDetection determines how a failed peer is detected. When set
+                                  to "BFD", a BFD session is established with the peer and BGP reacts
+                                  to BFD failure detection. When set to "HoldTimer", failure detection
+                                  relies on the BGP hold timer alone. When omitted, failure detection
+                                  relies on the BGP hold timer.
                                 type: string
-                              ebgpMultiHop:
-                                description: EBGPMultiHop enables multi-hop eBGP when
-                                  the peer is not directly connected.
-                                type: string
-                              holdTime:
-                                description: HoldTime is the BGP hold time for this
-                                  peer (e.g., "90s").
-                                type: string
-                              keepaliveTime:
-                                description: KeepaliveTime is the BGP keepalive interval
-                                  for this peer (e.g., "30s").
-                                type: string
+                              holdTimeSeconds:
+                                description: |-
+                                  HoldTimeSeconds is the BGP hold time in seconds, between 3 (the RFC
+                                  4271 minimum for a non-zero hold time) and 65535. When omitted, no
+                                  hold time is configured and the FRR default (180 seconds) applies.
+                                  When both HoldTimeSeconds and KeepaliveTimeSeconds are set,
+                                  HoldTimeSeconds must be at least 3 times KeepaliveTimeSeconds.
+                                format: int32
+                                type: integer
+                              keepaliveTimeSeconds:
+                                description: |-
+                                  KeepaliveTimeSeconds is the BGP keepalive interval in seconds,
+                                  between 1 and 65535. When omitted, no keepalive interval is
+                                  configured and the FRR default (60 seconds) applies.
+                                format: int32
+                                type: integer
                               password:
                                 description: |-
                                   Password is the optional TCP MD5 signature password for the BGP
@@ -6355,6 +6377,14 @@ spec:
                               peerAddress:
                                 description: PeerAddress is the IP address of the
                                   BGP peer (e.g., ToR switch).
+                                type: string
+                              peerReachability:
+                                description: |-
+                                  PeerReachability describes how the peer is reached. When set to
+                                  "MultiHop", the session may be established with a peer several
+                                  router hops away. When set to "DirectlyConnected", the peer must be
+                                  on a directly connected network. When omitted, the peer must be
+                                  directly connected.
                                 type: string
                               port:
                                 description: Port is the TCP port for the BGP session.
