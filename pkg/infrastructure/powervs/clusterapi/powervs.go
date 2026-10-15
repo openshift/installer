@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"reflect"
 	"regexp"
 	"time"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
-	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibmv2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta2"
+	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
@@ -24,15 +24,19 @@ import (
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
-// Provider is the vSphere implementation of the clusterapi InfraProvider.
+// Provider is the PowerVS implementation of the clusterapi InfraProvider.
 type Provider struct {
 	clusterapi.InfraProvider
+	// provisionTimeoutMinutes is populated from Platform.ProvisionTimeoutMinutes
+	// during PreProvision and used by ProvisionTimeout.
+	provisionTimeoutMinutes int
 }
 
 var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
+var _ clusterapi.PreProvider = (*Provider)(nil)
 
 // Name returns the PowerVS provider name.
 func (p Provider) Name() string {
@@ -63,9 +67,18 @@ func (p Provider) NetworkTimeout() time.Duration {
 	return 30 * time.Minute
 }
 
+// PreProvision reads install-config fields needed before CAPI provisioning begins.
+func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	p.provisionTimeoutMinutes = in.InstallConfig.Config.Platform.PowerVS.ProvisionTimeoutMinutes
+	return nil
+}
+
 // ProvisionTimeout allows platform provider to override the timeout
 // when waiting for the machines to provision.
 func (p Provider) ProvisionTimeout() time.Duration {
+	if p.provisionTimeoutMinutes > 0 {
+		return time.Duration(p.provisionTimeoutMinutes) * time.Minute
+	}
 	return 15 * time.Minute
 }
 
@@ -92,21 +105,27 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
 		return fmt.Errorf("failed to get PowerVS cluster in InfraReady: %w", err)
 	}
+
 	logrus.Debugf("InfraReady: powerVSCluster = %+v", powerVSCluster)
 	logrus.Debugf("InfraReady: powerVSCluster.Status = %+v", powerVSCluster.Status)
-	if powerVSCluster.Status.VPC == nil || powerVSCluster.Status.VPC.ID == nil {
+
+	// v1beta3: Status.VPC is a value type (VPCStatus), ID is a plain string.
+	if powerVSCluster.Status.VPC.ID == "" {
 		return fmt.Errorf("vpc is empty in InfraReady?")
 	}
-	logrus.Debugf("InfraReady: powerVSCluster.Status.VPC.ID = %s", *powerVSCluster.Status.VPC.ID)
+	logrus.Debugf("InfraReady: powerVSCluster.Status.VPC.ID = %s", powerVSCluster.Status.VPC.ID)
 
 	// Get the image from the provider
-	key = crclient.ObjectKey{
+	imageKey := crclient.ObjectKey{
 		Name:      fmt.Sprintf("rhcos-%s", in.InfraID),
 		Namespace: capiutils.Namespace,
 	}
-	logrus.Debugf("InfraReady: image key = %+v", key)
-	powerVSImage := &capibm.IBMPowerVSImage{}
-	if err = in.Client.Get(ctx, key, powerVSImage); err != nil {
+	logrus.Debugf("InfraReady: image key = %+v", imageKey)
+	// IBMPowerVSImage is still on v1beta2; the v1beta3 image type does not exist yet.
+	// This fetch confirms the image object exists before proceeding.
+	// NOTE: once IBMPowerVSImage is promoted to v1beta3, replace this with the v1beta3 type.
+	powerVSImage := &capibmv2.IBMPowerVSImage{}
+	if err = in.Client.Get(ctx, imageKey, powerVSImage); err != nil {
 		return fmt.Errorf("failed to get PowerVS image in InfraReady: %w", err)
 	}
 	logrus.Debugf("InfraReady: image = %+v", powerVSImage)
@@ -124,13 +143,14 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to set the VPC service region (%s) in InfraReady: %w", vpcRegion, err)
 	}
 
-	// Step 1: Create DNS records for the two load balancers
+	// Step 1: Create DNS records for the two load balancers.
+	// v1beta3: Status.LoadBalancers is []LoadBalancerStatus (slice, not map).
 	if err = createLoadBalancerDNSRecords(ctx, in, powerVSCluster.Status.LoadBalancers); err != nil {
 		return fmt.Errorf("failed to create DNS records for loadbalancers: %w", err)
 	}
 
 	// Step 2: See which ports are already allowed.
-	missingPorts, err := findMissingSecurityGroupRules(ctx, in, *powerVSCluster.Status.VPC.ID)
+	missingPorts, err := findMissingSecurityGroupRules(ctx, in, powerVSCluster.Status.VPC.ID)
 	if err != nil {
 		return fmt.Errorf("failed to find missing security group rules: %w", err)
 	}
@@ -144,8 +164,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			PortMax:   ptr.To(port),
 		}
 
-		logrus.Debugf("InfraReady: Adding port %d to security group rule to %v", port, *powerVSCluster.Status.VPC.ID)
-		err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+		logrus.Debugf("InfraReady: Adding port %d to security group rule to %v", port, powerVSCluster.Status.VPC.ID)
+		err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, powerVSCluster.Status.VPC.ID)
 		if err != nil {
 			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
 		}
@@ -157,17 +177,22 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		Protocol:  ptr.To("icmp"),
 	}
 
-	err = in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+	err = in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, powerVSCluster.Status.VPC.ID)
 	if err != nil {
 		return fmt.Errorf("failed to add ping security group rule: %w", err)
 	}
 
 	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy &&
 		(len(in.InstallConfig.Config.ImageDigestSources) > 0 || len(in.InstallConfig.Config.DeprecatedImageContentSources) > 0) {
-		vpcID := *powerVSCluster.Status.VPC.ID
+		vpcID := powerVSCluster.Status.VPC.ID
 		logrus.Debugf("InfraReady: Ensuring necessary VPE gateways are in place in VPC %v", vpcID)
-		groupID := *powerVSCluster.Status.ResourceGroup.ID
-		subnetID := *powerVSCluster.Status.VPCSubnet[*powerVSCluster.Spec.VPCSubnets[1].Name].ID
+		// v1beta3: ResourceGroup.ID is a plain string value.
+		groupID := powerVSCluster.Status.ResourceGroup.ID
+		// v1beta3: VPCSubnets is a slice []VPCSubnetStatus. Find the second subnet by index.
+		subnetID, err := findVPCSubnetID(powerVSCluster.Status.VPCSubnets, 1)
+		if err != nil {
+			return fmt.Errorf("failed to find VPC subnet in InfraReady: %w", err)
+		}
 		err = in.InstallConfig.PowerVS.CreateVirtualPrivateEndpointGateways(ctx, in.InfraID, vpcRegion, vpcID, subnetID, groupID, in.InstallConfig.Config.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return fmt.Errorf("failed to create VPE: %w", err)
@@ -177,22 +202,35 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
-func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyInput, loadBalancers map[string]capibm.VPCLoadBalancerStatus) error {
+// findVPCSubnetID returns the ID of the subnet at the given index in the v1beta3 VPCSubnets slice.
+func findVPCSubnetID(subnets []capibm.VPCSubnetStatus, index int) (string, error) {
+	if index >= len(subnets) {
+		return "", fmt.Errorf("VPCSubnets slice has %d entries, need index %d", len(subnets), index)
+	}
+	id := subnets[index].ID
+	if id == "" {
+		return "", fmt.Errorf("VPCSubnet at index %d has empty ID", index)
+	}
+	return id, nil
+}
+
+// createLoadBalancerDNSRecords creates DNS records for all provisioned load balancers.
+// v1beta3: loadBalancers is []LoadBalancerStatus (slice). Name and Hostname are plain strings.
+func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyInput, loadBalancers []capibm.LoadBalancerStatus) error {
 	lbExtExp := regexp.MustCompile(`\b-loadbalancer\b$`)
 	lbIntExp := regexp.MustCompile(`\b-loadbalancer-int\b$`)
-	for lbKey, loadBalancerStatus := range loadBalancers {
+	for _, loadBalancerStatus := range loadBalancers {
 		var hostnames []string
 
 		clusterName := in.InstallConfig.Config.ObjectMeta.Name
 
-		// Is it external (public) or internal (private)?
-		logrus.Debugf("lbKey = %s", lbKey)
+		logrus.Debugf("createLoadBalancerDNSRecords: lbName = %s", loadBalancerStatus.Name)
 		switch {
-		case lbExtExp.MatchString(lbKey):
+		case lbExtExp.MatchString(loadBalancerStatus.Name):
 			if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
 				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, clusterName))
 			}
-		case lbIntExp.MatchString(lbKey):
+		case lbIntExp.MatchString(loadBalancerStatus.Name):
 			hostnames = append(hostnames, fmt.Sprintf("%s%s", privatePrefix, clusterName))
 			// In the private cluster scenario, also point api.* to internal LB
 			if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
@@ -203,11 +241,11 @@ func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyI
 		for _, hostname := range hostnames {
 			logrus.Debugf("InfraReady: hostname = %s, cname = %s",
 				hostname,
-				*loadBalancerStatus.Hostname)
+				loadBalancerStatus.Hostname)
 
 			err := in.InstallConfig.PowerVS.CreateDNSRecord(ctx,
 				hostname,
-				*loadBalancerStatus.Hostname)
+				loadBalancerStatus.Hostname)
 			if err != nil {
 				return fmt.Errorf("InfraReady: Failed to create DNS record: %w", err)
 			}
@@ -226,23 +264,20 @@ func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReady
 	}
 
 	for _, existingRule := range existingRules.Rules {
-		switch reflect.TypeOf(existingRule).String() {
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
-			securityGroupRule, ok := existingRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
-			if !ok {
-				return nil, fmt.Errorf("could not convert to ProtocolTcpudp")
-			}
+		switch r := existingRule.(type) {
+		case *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll:
+			// all-protocol rules: do nothing here
+		case *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp:
 			logrus.Debugf("InfraReady: VPC has rule: direction = %s, proto = %s, min = %d, max = %d",
-				*securityGroupRule.Direction,
-				*securityGroupRule.Protocol,
-				*securityGroupRule.PortMin,
-				*securityGroupRule.PortMax)
-			if *securityGroupRule.Direction == "inbound" &&
-				*securityGroupRule.Protocol == "tcp" {
-				foundPorts.Insert(*securityGroupRule.PortMin)
+				*r.Direction,
+				*r.Protocol,
+				*r.PortMin,
+				*r.PortMax)
+			if *r.Direction == "inbound" && *r.Protocol == "tcp" {
+				foundPorts.Insert(*r.PortMin)
 			}
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+		case *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp:
+			// icmp rules: do nothing here
 		}
 	}
 
@@ -258,9 +293,9 @@ func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReady
 func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, key crclient.ObjectKey) (string, error) {
 	powerVSMachine := &capibm.IBMPowerVSMachine{}
 
-	// Get the machine address
-	// Unfortunately https://pkg.go.dev/k8s.io/apimachinery/pkg/util/wait#PollUntilContextCancel
-	// can only return a bool.  It would be nice if it could return a pointer.
+	// Get the machine address.
+	// v1beta3: IBMPowerVSMachine.Status.Addresses is []clusterv1.MachineAddress.
+	// The internal-IP type constant is clusterv1.MachineInternalIP, not corev1.NodeInternalIP.
 	if err := wait.PollUntilContextCancel(ctx, time.Second*10,
 		false,
 		func(ctx context.Context) (bool, error) {
@@ -269,7 +304,7 @@ func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, k
 			}
 
 			for _, address := range powerVSMachine.Status.Addresses {
-				if address.Type == corev1.NodeInternalIP {
+				if address.Type == clusterv1.MachineInternalIP {
 					logrus.Debugf("PostProvision: found %s address %s", key.Name, address.Address)
 					return true, nil
 				}
@@ -286,7 +321,7 @@ func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, k
 	}
 
 	for _, address := range powerVSMachine.Status.Addresses {
-		if address.Type == corev1.NodeInternalIP {
+		if address.Type == clusterv1.MachineInternalIP {
 			return address.Address, nil
 		}
 	}
@@ -297,19 +332,18 @@ func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, k
 // PostProvision should be called to add or update PowerVS resources after provisioning has completed.
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	var (
-		client             *powervsconfig.Client
-		vpcRegion          string
-		ipAddr             string
-		refServiceInstance *capibm.IBMPowerVSResourceReference
-		sshKeyName         string
-		err                error
-		instanceID         *string
-		fieldType          string
+		client     *powervsconfig.Client
+		vpcRegion  string
+		ipAddr     string
+		sshKeyName string
+		err        error
+		instanceID string
+		fieldType  string
 	)
 
 	// SAD: client in the Metadata struct is lowercase and therefore private
 	// client = in.InstallConfig.PowerVS.client
-	client, err = powervsconfig.NewClient()
+	client, err = powervsconfig.NewClientWithEndpoints(in.InstallConfig.Config.Platform.PowerVS.ServiceEndpoints)
 	if err != nil {
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}
@@ -322,14 +356,14 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 			return fmt.Errorf("failed to get VPC region (%s) in PostProvision: %w", vpcRegion, err)
 		}
 	}
-	logrus.Debugf("InfraReady: vpcRegion = %s", vpcRegion)
+	logrus.Debugf("PostProvision: vpcRegion = %s", vpcRegion)
 	if err = client.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
 		return fmt.Errorf("failed to set the VPC service region (%s) in PostProvision: %w", vpcRegion, err)
 	}
 
 	// Step 1.
-	// Wait until bootstrap and master nodes have IP addresses.  This will verify
-	// that the Transit Gateway and DHCP server work correctly before continuing on.
+	// Wait until bootstrap and master nodes have IP addresses. This verifies
+	// that the Transit Gateway and network work correctly before continuing on.
 
 	// Get master IP addresses
 	masterCount := int64(1)
@@ -338,39 +372,39 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	}
 	logrus.Debugf("PostProvision: masterCount = %d", masterCount)
 	for i := int64(0); i < masterCount; i++ {
-		key := crclient.ObjectKey{
+		masterKey := crclient.ObjectKey{
 			Name:      fmt.Sprintf("%s-master-%d", in.InfraID, i),
 			Namespace: capiutils.Namespace,
 		}
-		if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
+		if ipAddr, err = findMachineAddress(ctx, in, masterKey); err != nil {
 			return err
 		}
-		logrus.Debugf("PostProvision: %s ipAddr = %v", key.Name, ipAddr)
+		logrus.Debugf("PostProvision: %s ipAddr = %v", masterKey.Name, ipAddr)
 	}
 
 	// Get the bootstrap machine from the provider
-	key := crclient.ObjectKey{
+	bootstrapKey := crclient.ObjectKey{
 		Name:      fmt.Sprintf("%s-bootstrap", in.InfraID),
 		Namespace: capiutils.Namespace,
 	}
-	logrus.Debugf("PostProvision: machine key = %+v", key)
+	logrus.Debugf("PostProvision: machine key = %+v", bootstrapKey)
 
 	// Find its address
-	if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
+	if ipAddr, err = findMachineAddress(ctx, in, bootstrapKey); err != nil {
 		return err
 	}
 	logrus.Debugf("PostProvision: ipAddr = %v", ipAddr)
 
 	// Get information about it
 	powerVSMachine := &capibm.IBMPowerVSMachine{}
-	if err := in.Client.Get(ctx, key, powerVSMachine); err != nil {
+	if err := in.Client.Get(ctx, bootstrapKey, powerVSMachine); err != nil {
 		return fmt.Errorf("failed to get PowerVS bootstrap machine in PostProvision: %w", err)
 	}
 	logrus.Debugf("PostProvision: machine = %+v", powerVSMachine)
 
-	// Specifically the Power Virtual Server (PVS)
-	logrus.Debugf("PostProvision: machine.Spec.ServiceInstance = %+v", powerVSMachine.Spec.ServiceInstance)
-	refServiceInstance = powerVSMachine.Spec.ServiceInstance
+	// v1beta3: IBMPowerVSMachine.Spec.Workspace replaces the old Spec.ServiceInstance.
+	// Workspace is a ResourceIdentifier with plain string ID and Name (no pointers).
+	logrus.Debugf("PostProvision: machine.Spec.Workspace = %+v", powerVSMachine.Spec.Workspace)
 
 	// Step 2.
 	// Create worker ssh key in the PVS
@@ -381,30 +415,30 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	sshKeyName = fmt.Sprintf("%s-key", in.InfraID)
 
 	switch {
-	case refServiceInstance.ID != nil:
+	case powerVSMachine.Spec.Workspace.ID != "":
 		logrus.Debugf("PostProvision: CreateSSHKey: si id = %s, key = %s",
-			*refServiceInstance.ID,
+			powerVSMachine.Spec.Workspace.ID,
 			in.InstallConfig.Config.SSHKey)
-		instanceID = refServiceInstance.ID
+		instanceID = powerVSMachine.Spec.Workspace.ID
 		fieldType = "ID"
-	case refServiceInstance.Name != nil:
+	case powerVSMachine.Spec.Workspace.Name != "":
 		logrus.Debugf("PostProvision: CreateSSHKey: si name = %s, key = %s",
-			*refServiceInstance.Name,
+			powerVSMachine.Spec.Workspace.Name,
 			in.InstallConfig.Config.SSHKey)
-		guid, err := client.ServiceInstanceNameToGUID(ctx, *refServiceInstance.Name)
+		guid, err := client.ServiceInstanceNameToGUID(ctx, powerVSMachine.Spec.Workspace.Name)
 		if err != nil {
 			return fmt.Errorf("failed to find id for ServiceInstance name %s: %w",
-				*refServiceInstance.Name,
+				powerVSMachine.Spec.Workspace.Name,
 				err)
 		}
 		logrus.Debugf("PostProvision: CreateSSHKey: guid = %s", guid)
-		instanceID = ptr.To(guid)
+		instanceID = guid
 		fieldType = "Name"
 	default:
-		return fmt.Errorf("could not handle powerVSMachine.Spec.ServiceInstance")
+		return fmt.Errorf("could not handle powerVSMachine.Spec.Workspace: both ID and Name are empty")
 	}
 
-	logrus.Debugf("InfraReady: Zone = %s", in.InstallConfig.Config.Platform.PowerVS.Zone)
+	logrus.Debugf("PostProvision: Zone = %s", in.InstallConfig.Config.Platform.PowerVS.Zone)
 	backoff := wait.Backoff{
 		Duration: 15 * time.Second,
 		Factor:   1.1,
@@ -413,13 +447,14 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	}
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 		err2 := client.CreateSSHKey(ctx,
-			*instanceID,
+			instanceID,
 			in.InstallConfig.Config.Platform.PowerVS.Zone,
 			sshKeyName,
 			in.InstallConfig.Config.SSHKey)
 		if err2 == nil {
 			return true, nil
 		}
+		logrus.Debugf("PostProvision: CreateSSHKey (fieldType=%s) err = %v", fieldType, err2)
 		return false, err2
 	})
 	if err != nil {
@@ -428,32 +463,32 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 
 	// Step 3.
 	// @TODO Remove once https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/issues/1679 is fixed
-	// Add the bootstrap's IP address to the load balancer pool
-	// Get the cluster from the provider so we can have what load balancers are attached
+	// Add the bootstrap's IP address to the load balancer pool.
+	// Get the cluster from the provider so we can have what load balancers are attached.
 	powerVSCluster := &capibm.IBMPowerVSCluster{}
-	key = crclient.ObjectKey{
+	clusterKey := crclient.ObjectKey{
 		Name:      in.InfraID,
 		Namespace: capiutils.Namespace,
 	}
-	logrus.Debugf("PostProvision: cluster key = %+v", key)
-	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
+	logrus.Debugf("PostProvision: cluster key = %+v", clusterKey)
+	if err = in.Client.Get(ctx, clusterKey, powerVSCluster); err != nil {
 		return fmt.Errorf("failed to get PowerVS cluster in PostProvision: %w", err)
 	}
 
 	lbIntExp := regexp.MustCompile(`\b-loadbalancer-int\b$`)
 
-	// Find the internal load balancer
-	for lbKey, loadBalancerStatus := range powerVSCluster.Status.LoadBalancers {
-		if !lbIntExp.MatchString(lbKey) {
+	// v1beta3: Status.LoadBalancers is []LoadBalancerStatus. Name and ID are plain strings.
+	for _, loadBalancerStatus := range powerVSCluster.Status.LoadBalancers {
+		if !lbIntExp.MatchString(loadBalancerStatus.Name) {
 			continue
 		}
 		logrus.Debugf("PostProvision: Found internal load balancer ID = %s, State = %s, Hostname = %s",
-			*loadBalancerStatus.ID,
+			loadBalancerStatus.ID,
 			loadBalancerStatus.State,
-			*loadBalancerStatus.Hostname)
+			loadBalancerStatus.Hostname)
 
 		if err = client.AddIPToLoadBalancerPool(ctx,
-			*loadBalancerStatus.ID,
+			loadBalancerStatus.ID,
 			"additional-pool-22623",
 			22623,
 			ipAddr); err != nil {
