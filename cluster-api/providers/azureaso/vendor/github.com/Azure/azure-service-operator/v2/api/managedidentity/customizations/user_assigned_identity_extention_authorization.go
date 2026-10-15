@@ -52,6 +52,12 @@ func (ext *UserAssignedIdentityExtension) ExportKubernetesSecrets(
 		collector.AddValue(typedObj.Spec.OperatorSpec.Secrets.ClientId, to.Value(typedObj.Status.ClientId))
 		collector.AddValue(typedObj.Spec.OperatorSpec.Secrets.PrincipalId, to.Value(typedObj.Status.PrincipalId))
 		collector.AddValue(typedObj.Spec.OperatorSpec.Secrets.TenantId, to.Value(typedObj.Status.TenantId))
+
+		id, err := genruntime.GetAndParseResourceID(typedObj)
+		if err != nil {
+			return nil, err
+		}
+		collector.AddValue(typedObj.Spec.OperatorSpec.Secrets.SubscriptionId, id.SubscriptionID)
 	}
 
 	result, err := collector.Values()
@@ -71,7 +77,8 @@ func secretsSpecified(obj *v20230131s.UserAssignedIdentity) bool {
 	specSecrets := obj.Spec.OperatorSpec.Secrets
 	hasSecrets := specSecrets.ClientId != nil ||
 		specSecrets.PrincipalId != nil ||
-		specSecrets.TenantId != nil
+		specSecrets.TenantId != nil ||
+		specSecrets.SubscriptionId != nil
 
 	return hasSecrets
 }

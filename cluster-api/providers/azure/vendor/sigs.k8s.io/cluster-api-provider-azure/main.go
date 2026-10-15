@@ -24,13 +24,10 @@ import (
 	"time"
 
 	// +kubebuilder:scaffold:imports
-	asocontainerservicev1api20210501 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501"
-	asocontainerservicev1api20230201 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201"
-	asocontainerservicev1api20230315preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview"
-	asocontainerservicev1api20231001 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
-	asocontainerservicev1api20231102preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
-	asocontainerservicev1api20240402preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview"
 	asocontainerservicev1api20240901 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901"
+	asocontainerservicev1api20250301 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301"
+	asocontainerservicev1api20250801 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801"
+	asocontainerservicev1api20251002preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v20251002preview"
 	asokubernetesconfigurationv1 "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501"
 	asonetworkv1api20201101 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	asonetworkv1api20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
@@ -43,11 +40,10 @@ import (
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
@@ -64,6 +60,9 @@ import (
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	infrav1controllersexp "sigs.k8s.io/cluster-api-provider-azure/exp/controllers"
 	"sigs.k8s.io/cluster-api-provider-azure/feature"
+	"sigs.k8s.io/cluster-api-provider-azure/internal/asomigration"
+	expwebhooks "sigs.k8s.io/cluster-api-provider-azure/internal/exp/webhooks"
+	"sigs.k8s.io/cluster-api-provider-azure/internal/webhooks"
 	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
 	"sigs.k8s.io/cluster-api-provider-azure/pkg/ot"
 	"sigs.k8s.io/cluster-api-provider-azure/util/components"
@@ -81,17 +80,13 @@ func init() {
 	_ = infrav1.AddToScheme(scheme)
 	_ = infrav1exp.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
-	_ = expv1.AddToScheme(scheme)
-	_ = kubeadmv1.AddToScheme(scheme)
+	_ = bootstrapv1.AddToScheme(scheme)
 	_ = asoresourcesv1.AddToScheme(scheme)
-	_ = asocontainerservicev1api20210501.AddToScheme(scheme)
-	_ = asocontainerservicev1api20230201.AddToScheme(scheme)
-	_ = asocontainerservicev1api20231001.AddToScheme(scheme)
+	_ = asocontainerservicev1api20250801.AddToScheme(scheme)
 	_ = asonetworkv1api20220701.AddToScheme(scheme)
 	_ = asonetworkv1api20201101.AddToScheme(scheme)
-	_ = asocontainerservicev1api20230315preview.AddToScheme(scheme)
-	_ = asocontainerservicev1api20231102preview.AddToScheme(scheme)
-	_ = asocontainerservicev1api20240402preview.AddToScheme(scheme)
+	_ = asocontainerservicev1api20250301.AddToScheme(scheme)
+	_ = asocontainerservicev1api20251002preview.AddToScheme(scheme)
 	_ = asocontainerservicev1api20240901.AddToScheme(scheme)
 	_ = asokubernetesconfigurationv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
@@ -282,6 +277,20 @@ func InitFlags(fs *pflag.FlagSet) {
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 
 func main() {
+	// migrate-aso-crds is a one-off maintenance subcommand run as an init
+	// container in the ASO deployment before the ASO controller applies its
+	// CRDs. It reuses this manager image so the upgrade path needs no separate
+	// image dependency.
+	if len(os.Args) > 1 && os.Args[1] == "migrate-aso-crds" {
+		ctrl.SetLogger(klog.Background())
+		if err := asomigration.MigrateStoredVersions(ctrl.SetupSignalHandler(), ctrl.GetConfigOrDie()); err != nil {
+			setupLog.Error(err, "ASO CRD stored-version migration failed")
+			os.Exit(1)
+		}
+		setupLog.Info("ASO CRD stored-version migration complete")
+		os.Exit(0)
+	}
+
 	InitFlags(pflag.CommandLine)
 	klog.InitFlags(flag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -433,6 +442,17 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		CredentialCache:  credCache,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureJSONTemplate")
+		os.Exit(1)
+	}
+
+	if err := (&controllers.AzureMachineTemplateReconciler{
+		Client:           mgr.GetClient(),
+		Recorder:         mgr.GetEventRecorderFor("azuremachinetemplate-controller"),
+		Timeouts:         timeouts,
+		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency, SkipNameValidation: ptr.To(true)}); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AzureMachineTemplate")
 		os.Exit(1)
 	}
 
@@ -631,85 +651,85 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 }
 
 func registerWebhooks(mgr manager.Manager) {
-	if err := (&infrav1.AzureCluster{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.AzureClusterWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureCluster")
 		os.Exit(1)
 	}
 
-	if err := (&infrav1.AzureClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.AzureClusterTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureClusterTemplate")
 		os.Exit(1)
 	}
 
-	if err := infrav1.SetupAzureMachineWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.AzureMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachine")
 		os.Exit(1)
 	}
 
-	if err := (&infrav1.AzureMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.AzureMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachineTemplate")
 		os.Exit(1)
 	}
 
-	if err := (&infrav1.AzureClusterIdentity{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.AzureClusterIdentityWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureClusterIdentity")
 		os.Exit(1)
 	}
 
 	if feature.Gates.Enabled(capifeature.MachinePool) {
-		if err := infrav1exp.SetupAzureMachinePoolWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.AzureMachinePoolWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePool")
 			os.Exit(1)
 		}
 
-		if err := (&infrav1exp.AzureMachinePoolMachine{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.AzureMachinePoolMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePoolMachine")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureManagedMachinePoolWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedMachinePoolWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePool")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureManagedMachinePoolTemplateWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedMachinePoolTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePoolTemplate")
 			os.Exit(1)
 		}
 
-		if err := (&infrav1.AzureManagedCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedClusterWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedCluster")
 			os.Exit(1)
 		}
 
-		if err := (&infrav1.AzureManagedClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedClusterTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedClusterTemplate")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureManagedControlPlaneWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedControlPlaneWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlane")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureManagedControlPlaneTemplateWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureManagedControlPlaneTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlaneTemplate")
 			os.Exit(1)
 		}
 	}
 
 	if feature.Gates.Enabled(feature.ASOAPI) {
-		if err := infrav1.SetupAzureASOManagedClusterWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureASOManagedClusterWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedCluster")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureASOManagedControlPlaneWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureASOManagedControlPlaneWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedControlPlane")
 			os.Exit(1)
 		}
 
-		if err := infrav1.SetupAzureASOManagedMachinePoolWebhookWithManager(mgr); err != nil {
+		if err := (&webhooks.AzureASOManagedMachinePoolWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedMachinePool")
 			os.Exit(1)
 		}

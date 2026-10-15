@@ -116,7 +116,12 @@ func (rule *ScheduledQueryRule) ValidateUpdate(ctx context.Context, oldResource 
 
 // createValidations validates the creation of the resource
 func (rule *ScheduledQueryRule) createValidations() []func(ctx context.Context, obj *v20220615.ScheduledQueryRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220615.ScheduledQueryRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220615.ScheduledQueryRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

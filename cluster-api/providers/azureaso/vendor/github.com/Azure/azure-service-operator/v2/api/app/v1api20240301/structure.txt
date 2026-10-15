@@ -353,12 +353,12 @@ ContainerApp: Resource
 │   │   │       └── "tcp"
 │   │   ├── MaxInactiveRevisions: *int
 │   │   ├── Registries: Object (4 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── PasswordSecretRef: *string
 │   │   │   ├── Server: *string
 │   │   │   └── Username: *string
 │   │   ├── Secrets: Object (4 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── KeyVaultUrl: *string
 │   │   │   ├── Name: *string
 │   │   │   └── Value: *genruntime.SecretReference
@@ -748,7 +748,7 @@ Job: Resource
 │   │   │   ├── Parallelism: *int
 │   │   │   └── ReplicaCompletionCount: *int
 │   │   ├── Registries: Object (4 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── PasswordSecretRef: *string
 │   │   │   ├── Server: *string
 │   │   │   └── Username: *string
@@ -759,7 +759,7 @@ Job: Resource
 │   │   │   ├── Parallelism: *int
 │   │   │   └── ReplicaCompletionCount: *int
 │   │   ├── Secrets: Object (4 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── KeyVaultUrl: *string
 │   │   │   ├── Name: *string
 │   │   │   └── Value: *genruntime.SecretReference

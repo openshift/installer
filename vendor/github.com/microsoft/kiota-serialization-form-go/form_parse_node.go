@@ -159,12 +159,7 @@ func (n *FormParseNode) GetCollectionOfPrimitiveValues(targetType string) ([]int
 
 	result := make([]interface{}, len(valueList))
 	for i, element := range valueList {
-		parseNode, err := NewFormParseNode([]byte(element))
-		if err != nil {
-			return nil, err
-		}
-
-		val, err := parseNode.getPrimitiveValue(targetType)
+		val, err := getPrimitiveValue(element, targetType)
 		if err != nil {
 			return nil, err
 		}
@@ -173,36 +168,36 @@ func (n *FormParseNode) GetCollectionOfPrimitiveValues(targetType string) ([]int
 	return result, nil
 }
 
-func (n *FormParseNode) getPrimitiveValue(targetType string) (interface{}, error) {
+func getPrimitiveValue(value string, targetType string) (interface{}, error) {
 	switch targetType {
 	case "string":
-		return n.GetStringValue()
+		return getStringValue(value)
 	case "bool":
-		return n.GetBoolValue()
+		return getBoolValue(value)
 	case "uint8":
-		return n.GetInt8Value()
+		return getInt8Value(value)
 	case "byte":
-		return n.GetByteValue()
+		return getByteValue(value)
 	case "float32":
-		return n.GetFloat32Value()
+		return getFloat32Value(value)
 	case "float64":
-		return n.GetFloat64Value()
+		return getFloat64Value(value)
 	case "int32":
-		return n.GetInt32Value()
+		return getInt32Value(value)
 	case "int64":
-		return n.GetInt64Value()
+		return getInt64Value(value)
 	case "time":
-		return n.GetTimeValue()
+		return getTimeValue(value)
 	case "timeonly":
-		return n.GetTimeOnlyValue()
+		return getTimeOnlyValue(value)
 	case "dateonly":
-		return n.GetDateOnlyValue()
+		return getDateOnlyValue(value)
 	case "isoduration":
-		return n.GetISODurationValue()
+		return getISODurationValue(value)
 	case "uuid":
-		return n.GetUUIDValue()
+		return getUUIDValue(value)
 	case "base64":
-		return n.GetByteArrayValue()
+		return getByteArrayValue(value)
 	default:
 		return nil, errors.New("targetType is not supported")
 	}
@@ -236,7 +231,11 @@ func (n *FormParseNode) GetStringValue() (*string, error) {
 	if n == nil || n.value == "" {
 		return nil, nil
 	}
-	res, err := url.QueryUnescape(n.value)
+	return getStringValue(n.value)
+}
+
+func getStringValue(value string) (*string, error) {
+	res, err := url.QueryUnescape(value)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +247,11 @@ func (n *FormParseNode) GetBoolValue() (*bool, error) {
 	if n == nil || n.value == "" {
 		return nil, nil
 	}
-	res, err := strconv.ParseBool(n.value)
+	return getBoolValue(n.value)
+}
+
+func getBoolValue(value string) (*bool, error) {
+	res, err := strconv.ParseBool(value)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +263,11 @@ func (n *FormParseNode) GetInt8Value() (*int8, error) {
 	if n == nil || n.value == "" {
 		return nil, nil
 	}
-	res, err := strconv.ParseInt(n.value, 10, 8)
+	return getInt8Value(n.value)
+}
+
+func getInt8Value(value string) (*int8, error) {
+	res, err := strconv.ParseInt(value, 10, 8)
 	if err != nil {
 		return nil, err
 	}
@@ -268,12 +275,16 @@ func (n *FormParseNode) GetInt8Value() (*int8, error) {
 	return &cast, nil
 }
 
-// GetBoolValue returns a Bool value from the nodes.
+// GetByteValue returns a Byte value from the nodes.
 func (n *FormParseNode) GetByteValue() (*byte, error) {
 	if n == nil || n.value == "" {
 		return nil, nil
 	}
-	res, err := strconv.ParseInt(n.value, 10, 8)
+	return getByteValue(n.value)
+}
+
+func getByteValue(value string) (*byte, error) {
+	res, err := strconv.ParseInt(value, 10, 8)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +294,14 @@ func (n *FormParseNode) GetByteValue() (*byte, error) {
 
 // GetFloat32Value returns a Float32 value from the nodes.
 func (n *FormParseNode) GetFloat32Value() (*float32, error) {
-	v, err := n.GetFloat64Value()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getFloat32Value(n.value)
+}
+
+func getFloat32Value(value string) (*float32, error) {
+	v, err := getFloat64Value(value)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +317,11 @@ func (n *FormParseNode) GetFloat64Value() (*float64, error) {
 	if n == nil || n.value == "" {
 		return nil, nil
 	}
-	res, err := strconv.ParseFloat(n.value, 64)
+	return getFloat64Value(n.value)
+}
+
+func getFloat64Value(value string) (*float64, error) {
+	res, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +330,14 @@ func (n *FormParseNode) GetFloat64Value() (*float64, error) {
 
 // GetInt32Value returns a Int32 value from the nodes.
 func (n *FormParseNode) GetInt32Value() (*int32, error) {
-	v, err := n.GetFloat64Value()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getInt32Value(n.value)
+}
+
+func getInt32Value(value string) (*int32, error) {
+	v, err := getFloat64Value(value)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +350,14 @@ func (n *FormParseNode) GetInt32Value() (*int32, error) {
 
 // GetInt64Value returns a Int64 value from the nodes.
 func (n *FormParseNode) GetInt64Value() (*int64, error) {
-	v, err := n.GetFloat64Value()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getInt64Value(n.value)
+}
+
+func getInt64Value(value string) (*int64, error) {
+	v, err := getFloat64Value(value)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +370,14 @@ func (n *FormParseNode) GetInt64Value() (*int64, error) {
 
 // GetTimeValue returns a Time value from the nodes.
 func (n *FormParseNode) GetTimeValue() (*time.Time, error) {
-	v, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getTimeValue(n.value)
+}
+
+func getTimeValue(value string) (*time.Time, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +390,14 @@ func (n *FormParseNode) GetTimeValue() (*time.Time, error) {
 
 // GetISODurationValue returns a ISODuration value from the nodes.
 func (n *FormParseNode) GetISODurationValue() (*absser.ISODuration, error) {
-	v, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getISODurationValue(n.value)
+}
+
+func getISODurationValue(value string) (*absser.ISODuration, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +409,14 @@ func (n *FormParseNode) GetISODurationValue() (*absser.ISODuration, error) {
 
 // GetTimeOnlyValue returns a TimeOnly value from the nodes.
 func (n *FormParseNode) GetTimeOnlyValue() (*absser.TimeOnly, error) {
-	v, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getTimeOnlyValue(n.value)
+}
+
+func getTimeOnlyValue(value string) (*absser.TimeOnly, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +428,14 @@ func (n *FormParseNode) GetTimeOnlyValue() (*absser.TimeOnly, error) {
 
 // GetDateOnlyValue returns a DateOnly value from the nodes.
 func (n *FormParseNode) GetDateOnlyValue() (*absser.DateOnly, error) {
-	v, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getDateOnlyValue(n.value)
+}
+
+func getDateOnlyValue(value string) (*absser.DateOnly, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +447,14 @@ func (n *FormParseNode) GetDateOnlyValue() (*absser.DateOnly, error) {
 
 // GetUUIDValue returns a UUID value from the nodes.
 func (n *FormParseNode) GetUUIDValue() (*uuid.UUID, error) {
-	v, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getUUIDValue(n.value)
+}
+
+func getUUIDValue(value string) (*uuid.UUID, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
@@ -411,14 +482,21 @@ func (n *FormParseNode) GetEnumValue(parser absser.EnumFactory) (interface{}, er
 
 // GetByteArrayValue returns a ByteArray value from the nodes.
 func (n *FormParseNode) GetByteArrayValue() ([]byte, error) {
-	s, err := n.GetStringValue()
+	if n == nil || n.value == "" {
+		return nil, nil
+	}
+	return getByteArrayValue(n.value)
+}
+
+func getByteArrayValue(value string) ([]byte, error) {
+	v, err := getStringValue(value)
 	if err != nil {
 		return nil, err
 	}
-	if s == nil {
+	if v == nil {
 		return nil, nil
 	}
-	return base64.StdEncoding.DecodeString(*s)
+	return base64.StdEncoding.DecodeString(*v)
 }
 
 // GetRawValue returns a ByteArray value from the nodes.

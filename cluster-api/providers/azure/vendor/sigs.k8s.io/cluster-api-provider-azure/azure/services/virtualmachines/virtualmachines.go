@@ -26,7 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -50,7 +50,7 @@ type VMScope interface {
 	SetProviderID(string)
 	SetAddresses([]corev1.NodeAddress)
 	SetVMState(infrav1.ProvisioningState)
-	SetConditionFalse(clusterv1.ConditionType, string, clusterv1.ConditionSeverity, string)
+	SetConditionFalse(clusterv1beta1.ConditionType, string, clusterv1beta1.ConditionSeverity, string)
 }
 
 // Service provides operations on Azure resources.
@@ -171,9 +171,9 @@ func (s *Service) checkUserAssignedIdentities(specIdentities []infrav1.UserAssig
 
 	// Check if the expected identities are present in the vm.
 	for _, expectedIdentity := range specIdentities {
-		_, exists := actualMap[expectedIdentity.ProviderID]
+		_, exists := actualMap[strings.TrimPrefix(expectedIdentity.ProviderID, azureutil.ProviderIDPrefix)]
 		if !exists {
-			s.Scope.SetConditionFalse(infrav1.VMIdentitiesReadyCondition, infrav1.UserAssignedIdentityMissingReason, clusterv1.ConditionSeverityWarning, vmMissingUAI+expectedIdentity.ProviderID)
+			s.Scope.SetConditionFalse(infrav1.VMIdentitiesReadyCondition, infrav1.UserAssignedIdentityMissingReason, clusterv1beta1.ConditionSeverityWarning, vmMissingUAI+expectedIdentity.ProviderID)
 			return
 		}
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	kusto "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/storage"
+	kusto "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -38,13 +38,12 @@ var clusterTerminalStates = set.Make(
 // new state out of hand; so there's no point in even trying. This is true even if the PUT we're
 // doing will have no effect on the state of the cluster.
 func (ext *ClusterExtension) PreReconcileCheck(
-	_ context.Context,
+	ctx context.Context,
 	obj genruntime.MetaObject,
-	_ genruntime.MetaObject,
-	_ *resolver.Resolver,
-	_ *genericarmclient.GenericClient,
-	_ logr.Logger,
-	_ extensions.PreReconcileCheckFunc,
+	resourceResolver *resolver.Resolver,
+	armClient *genericarmclient.GenericClient,
+	log logr.Logger,
+	next extensions.PreReconcileCheckFunc,
 ) (extensions.PreReconcileCheckResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
@@ -69,7 +68,7 @@ func (ext *ClusterExtension) PreReconcileCheck(
 			nil
 	}
 
-	return extensions.ProceedWithReconcile(), nil
+	return next(ctx, obj, resourceResolver, armClient, log)
 }
 
 func clusterProvisioningStateBlocksReconciliation(provisioningState *string) bool {

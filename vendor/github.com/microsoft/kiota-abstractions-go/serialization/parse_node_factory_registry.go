@@ -32,7 +32,7 @@ func (m *ParseNodeFactoryRegistry) GetValidContentType() (string, error) {
 	return "", errors.New("the registry supports multiple content types. Get the registered factory instead")
 }
 
-var contentTypeVendorCleanupPattern = re.MustCompile("[^/]+\\+")
+var contentTypeVendorCleanupPattern = re.MustCompile(`[^/]+\+`)
 
 // GetRootParseNode returns a new ParseNode instance that is the root of the content
 func (m *ParseNodeFactoryRegistry) GetRootParseNode(contentType string, content []byte) (ParseNode, error) {

@@ -7,3 +7,5 @@ DataConnectionExtension: Object (0 properties)
 
 DatabaseExtension: Object (0 properties)
 
+PrincipalAssignmentExtension: Object (0 properties)
+

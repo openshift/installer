@@ -42,14 +42,14 @@ type ProfileProperties_STATUS struct {
 	MonitorConfig *MonitorConfig_STATUS `json:"monitorConfig,omitempty"`
 
 	// ProfileStatus: The status of the Traffic Manager profile.
-	ProfileStatus *ProfileProperties_ProfileStatus_STATUS `json:"profileStatus,omitempty"`
+	ProfileStatus *ProfileStatus_STATUS `json:"profileStatus,omitempty"`
 
 	// TrafficRoutingMethod: The traffic routing method of the Traffic Manager profile.
-	TrafficRoutingMethod *ProfileProperties_TrafficRoutingMethod_STATUS `json:"trafficRoutingMethod,omitempty"`
+	TrafficRoutingMethod *TrafficRoutingMethod_STATUS `json:"trafficRoutingMethod,omitempty"`
 
 	// TrafficViewEnrollmentStatus: Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile.
 	// Null, indicates 'Disabled'. Enabling this feature will increase the cost of the Traffic Manage profile.
-	TrafficViewEnrollmentStatus *ProfileProperties_TrafficViewEnrollmentStatus_STATUS `json:"trafficViewEnrollmentStatus,omitempty"`
+	TrafficViewEnrollmentStatus *TrafficViewEnrollmentStatus_STATUS `json:"trafficViewEnrollmentStatus,omitempty"`
 }
 
 // The allowed type DNS record types for this profile.
@@ -90,15 +90,24 @@ type Endpoint_STATUS struct {
 	// Id: Fully qualified resource Id for the resource. Ex -
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficManagerProfiles/{resourceName}
 	Id *string `json:"id,omitempty"`
+
+	// Name: The name of the resource
+	Name *string `json:"name,omitempty"`
+
+	// Properties: The properties of the Traffic Manager endpoint.
+	Properties *EndpointProperties_STATUS `json:"properties,omitempty"`
+
+	// Type: The type of the resource. Ex- Microsoft.Network/trafficManagerProfiles.
+	Type *string `json:"type,omitempty"`
 }
 
 // Class containing endpoint monitoring settings in a Traffic Manager profile.
 type MonitorConfig_STATUS struct {
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []MonitorConfig_CustomHeaders_STATUS `json:"customHeaders,omitempty"`
+	CustomHeaders []MonitorConfigCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
 
 	// ExpectedStatusCodeRanges: List of expected status code ranges.
-	ExpectedStatusCodeRanges []MonitorConfig_ExpectedStatusCodeRanges_STATUS `json:"expectedStatusCodeRanges,omitempty"`
+	ExpectedStatusCodeRanges []MonitorConfigExpectedStatusCodeRangesItem_STATUS `json:"expectedStatusCodeRanges,omitempty"`
 
 	// IntervalInSeconds: The monitor interval for endpoints in this profile. This is the interval at which Traffic Manager
 	// will check the health of each endpoint in this profile.
@@ -111,10 +120,10 @@ type MonitorConfig_STATUS struct {
 	Port *int `json:"port,omitempty"`
 
 	// ProfileMonitorStatus: The profile-level monitoring status of the Traffic Manager profile.
-	ProfileMonitorStatus *MonitorConfig_ProfileMonitorStatus_STATUS `json:"profileMonitorStatus,omitempty"`
+	ProfileMonitorStatus *ProfileMonitorStatus_STATUS `json:"profileMonitorStatus,omitempty"`
 
 	// Protocol: The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
-	Protocol *MonitorConfig_Protocol_STATUS `json:"protocol,omitempty"`
+	Protocol *MonitorProtocol_STATUS `json:"protocol,omitempty"`
 
 	// TimeoutInSeconds: The monitor timeout for endpoints in this profile. This is the time that Traffic Manager allows
 	// endpoints in this profile to response to the health check.
@@ -125,54 +134,59 @@ type MonitorConfig_STATUS struct {
 	ToleratedNumberOfFailures *int `json:"toleratedNumberOfFailures,omitempty"`
 }
 
-type ProfileProperties_ProfileStatus_STATUS string
+// The status of the Traffic Manager profile.
+type ProfileStatus_STATUS string
 
 const (
-	ProfileProperties_ProfileStatus_STATUS_Disabled = ProfileProperties_ProfileStatus_STATUS("Disabled")
-	ProfileProperties_ProfileStatus_STATUS_Enabled  = ProfileProperties_ProfileStatus_STATUS("Enabled")
+	ProfileStatus_STATUS_Disabled = ProfileStatus_STATUS("Disabled")
+	ProfileStatus_STATUS_Enabled  = ProfileStatus_STATUS("Enabled")
 )
 
-// Mapping from string to ProfileProperties_ProfileStatus_STATUS
-var profileProperties_ProfileStatus_STATUS_Values = map[string]ProfileProperties_ProfileStatus_STATUS{
-	"disabled": ProfileProperties_ProfileStatus_STATUS_Disabled,
-	"enabled":  ProfileProperties_ProfileStatus_STATUS_Enabled,
+// Mapping from string to ProfileStatus_STATUS
+var profileStatus_STATUS_Values = map[string]ProfileStatus_STATUS{
+	"disabled": ProfileStatus_STATUS_Disabled,
+	"enabled":  ProfileStatus_STATUS_Enabled,
 }
 
-type ProfileProperties_TrafficRoutingMethod_STATUS string
+// The traffic routing method of the Traffic Manager profile.
+type TrafficRoutingMethod_STATUS string
 
 const (
-	ProfileProperties_TrafficRoutingMethod_STATUS_Geographic  = ProfileProperties_TrafficRoutingMethod_STATUS("Geographic")
-	ProfileProperties_TrafficRoutingMethod_STATUS_MultiValue  = ProfileProperties_TrafficRoutingMethod_STATUS("MultiValue")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Performance = ProfileProperties_TrafficRoutingMethod_STATUS("Performance")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Priority    = ProfileProperties_TrafficRoutingMethod_STATUS("Priority")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Subnet      = ProfileProperties_TrafficRoutingMethod_STATUS("Subnet")
-	ProfileProperties_TrafficRoutingMethod_STATUS_Weighted    = ProfileProperties_TrafficRoutingMethod_STATUS("Weighted")
+	TrafficRoutingMethod_STATUS_Geographic  = TrafficRoutingMethod_STATUS("Geographic")
+	TrafficRoutingMethod_STATUS_MultiValue  = TrafficRoutingMethod_STATUS("MultiValue")
+	TrafficRoutingMethod_STATUS_Performance = TrafficRoutingMethod_STATUS("Performance")
+	TrafficRoutingMethod_STATUS_Priority    = TrafficRoutingMethod_STATUS("Priority")
+	TrafficRoutingMethod_STATUS_Subnet      = TrafficRoutingMethod_STATUS("Subnet")
+	TrafficRoutingMethod_STATUS_Weighted    = TrafficRoutingMethod_STATUS("Weighted")
 )
 
-// Mapping from string to ProfileProperties_TrafficRoutingMethod_STATUS
-var profileProperties_TrafficRoutingMethod_STATUS_Values = map[string]ProfileProperties_TrafficRoutingMethod_STATUS{
-	"geographic":  ProfileProperties_TrafficRoutingMethod_STATUS_Geographic,
-	"multivalue":  ProfileProperties_TrafficRoutingMethod_STATUS_MultiValue,
-	"performance": ProfileProperties_TrafficRoutingMethod_STATUS_Performance,
-	"priority":    ProfileProperties_TrafficRoutingMethod_STATUS_Priority,
-	"subnet":      ProfileProperties_TrafficRoutingMethod_STATUS_Subnet,
-	"weighted":    ProfileProperties_TrafficRoutingMethod_STATUS_Weighted,
+// Mapping from string to TrafficRoutingMethod_STATUS
+var trafficRoutingMethod_STATUS_Values = map[string]TrafficRoutingMethod_STATUS{
+	"geographic":  TrafficRoutingMethod_STATUS_Geographic,
+	"multivalue":  TrafficRoutingMethod_STATUS_MultiValue,
+	"performance": TrafficRoutingMethod_STATUS_Performance,
+	"priority":    TrafficRoutingMethod_STATUS_Priority,
+	"subnet":      TrafficRoutingMethod_STATUS_Subnet,
+	"weighted":    TrafficRoutingMethod_STATUS_Weighted,
 }
 
-type ProfileProperties_TrafficViewEnrollmentStatus_STATUS string
+// Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile. Null, indicates 'Disabled'.
+// Enabling this feature will increase the cost of the Traffic Manage profile.
+type TrafficViewEnrollmentStatus_STATUS string
 
 const (
-	ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Disabled = ProfileProperties_TrafficViewEnrollmentStatus_STATUS("Disabled")
-	ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Enabled  = ProfileProperties_TrafficViewEnrollmentStatus_STATUS("Enabled")
+	TrafficViewEnrollmentStatus_STATUS_Disabled = TrafficViewEnrollmentStatus_STATUS("Disabled")
+	TrafficViewEnrollmentStatus_STATUS_Enabled  = TrafficViewEnrollmentStatus_STATUS("Enabled")
 )
 
-// Mapping from string to ProfileProperties_TrafficViewEnrollmentStatus_STATUS
-var profileProperties_TrafficViewEnrollmentStatus_STATUS_Values = map[string]ProfileProperties_TrafficViewEnrollmentStatus_STATUS{
-	"disabled": ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Disabled,
-	"enabled":  ProfileProperties_TrafficViewEnrollmentStatus_STATUS_Enabled,
+// Mapping from string to TrafficViewEnrollmentStatus_STATUS
+var trafficViewEnrollmentStatus_STATUS_Values = map[string]TrafficViewEnrollmentStatus_STATUS{
+	"disabled": TrafficViewEnrollmentStatus_STATUS_Disabled,
+	"enabled":  TrafficViewEnrollmentStatus_STATUS_Enabled,
 }
 
-type MonitorConfig_CustomHeaders_STATUS struct {
+// Custom header name and value.
+type MonitorConfigCustomHeadersItem_STATUS struct {
 	// Name: Header name.
 	Name *string `json:"name,omitempty"`
 
@@ -180,7 +194,8 @@ type MonitorConfig_CustomHeaders_STATUS struct {
 	Value *string `json:"value,omitempty"`
 }
 
-type MonitorConfig_ExpectedStatusCodeRanges_STATUS struct {
+// Min and max value of a status code range.
+type MonitorConfigExpectedStatusCodeRangesItem_STATUS struct {
 	// Max: Max status code.
 	Max *int `json:"max,omitempty"`
 
@@ -188,36 +203,38 @@ type MonitorConfig_ExpectedStatusCodeRanges_STATUS struct {
 	Min *int `json:"min,omitempty"`
 }
 
-type MonitorConfig_ProfileMonitorStatus_STATUS string
+// The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+type MonitorProtocol_STATUS string
 
 const (
-	MonitorConfig_ProfileMonitorStatus_STATUS_CheckingEndpoints = MonitorConfig_ProfileMonitorStatus_STATUS("CheckingEndpoints")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Degraded          = MonitorConfig_ProfileMonitorStatus_STATUS("Degraded")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Disabled          = MonitorConfig_ProfileMonitorStatus_STATUS("Disabled")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Inactive          = MonitorConfig_ProfileMonitorStatus_STATUS("Inactive")
-	MonitorConfig_ProfileMonitorStatus_STATUS_Online            = MonitorConfig_ProfileMonitorStatus_STATUS("Online")
+	MonitorProtocol_STATUS_HTTP  = MonitorProtocol_STATUS("HTTP")
+	MonitorProtocol_STATUS_HTTPS = MonitorProtocol_STATUS("HTTPS")
+	MonitorProtocol_STATUS_TCP   = MonitorProtocol_STATUS("TCP")
 )
 
-// Mapping from string to MonitorConfig_ProfileMonitorStatus_STATUS
-var monitorConfig_ProfileMonitorStatus_STATUS_Values = map[string]MonitorConfig_ProfileMonitorStatus_STATUS{
-	"checkingendpoints": MonitorConfig_ProfileMonitorStatus_STATUS_CheckingEndpoints,
-	"degraded":          MonitorConfig_ProfileMonitorStatus_STATUS_Degraded,
-	"disabled":          MonitorConfig_ProfileMonitorStatus_STATUS_Disabled,
-	"inactive":          MonitorConfig_ProfileMonitorStatus_STATUS_Inactive,
-	"online":            MonitorConfig_ProfileMonitorStatus_STATUS_Online,
+// Mapping from string to MonitorProtocol_STATUS
+var monitorProtocol_STATUS_Values = map[string]MonitorProtocol_STATUS{
+	"http":  MonitorProtocol_STATUS_HTTP,
+	"https": MonitorProtocol_STATUS_HTTPS,
+	"tcp":   MonitorProtocol_STATUS_TCP,
 }
 
-type MonitorConfig_Protocol_STATUS string
+// The profile-level monitoring status of the Traffic Manager profile.
+type ProfileMonitorStatus_STATUS string
 
 const (
-	MonitorConfig_Protocol_STATUS_HTTP  = MonitorConfig_Protocol_STATUS("HTTP")
-	MonitorConfig_Protocol_STATUS_HTTPS = MonitorConfig_Protocol_STATUS("HTTPS")
-	MonitorConfig_Protocol_STATUS_TCP   = MonitorConfig_Protocol_STATUS("TCP")
+	ProfileMonitorStatus_STATUS_CheckingEndpoints = ProfileMonitorStatus_STATUS("CheckingEndpoints")
+	ProfileMonitorStatus_STATUS_Degraded          = ProfileMonitorStatus_STATUS("Degraded")
+	ProfileMonitorStatus_STATUS_Disabled          = ProfileMonitorStatus_STATUS("Disabled")
+	ProfileMonitorStatus_STATUS_Inactive          = ProfileMonitorStatus_STATUS("Inactive")
+	ProfileMonitorStatus_STATUS_Online            = ProfileMonitorStatus_STATUS("Online")
 )
 
-// Mapping from string to MonitorConfig_Protocol_STATUS
-var monitorConfig_Protocol_STATUS_Values = map[string]MonitorConfig_Protocol_STATUS{
-	"http":  MonitorConfig_Protocol_STATUS_HTTP,
-	"https": MonitorConfig_Protocol_STATUS_HTTPS,
-	"tcp":   MonitorConfig_Protocol_STATUS_TCP,
+// Mapping from string to ProfileMonitorStatus_STATUS
+var profileMonitorStatus_STATUS_Values = map[string]ProfileMonitorStatus_STATUS{
+	"checkingendpoints": ProfileMonitorStatus_STATUS_CheckingEndpoints,
+	"degraded":          ProfileMonitorStatus_STATUS_Degraded,
+	"disabled":          ProfileMonitorStatus_STATUS_Disabled,
+	"inactive":          ProfileMonitorStatus_STATUS_Inactive,
+	"online":            ProfileMonitorStatus_STATUS_Online,
 }

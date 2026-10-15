@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -352,7 +353,7 @@ func (extension *VirtualMachinesExtension_Spec) ConvertToARM(resolved genruntime
 		result.Properties.ForceUpdateTag = &forceUpdateTag
 	}
 	if extension.InstanceView != nil {
-		instanceView_ARM, err := (*extension.InstanceView).ConvertToARM(resolved)
+		instanceView_ARM, err := extension.InstanceView.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -369,7 +370,7 @@ func (extension *VirtualMachinesExtension_Spec) ConvertToARM(resolved genruntime
 		result.Properties.ProtectedSettings = temp
 	}
 	if extension.ProtectedSettingsFromKeyVault != nil {
-		protectedSettingsFromKeyVault_ARM, err := (*extension.ProtectedSettingsFromKeyVault).ConvertToARM(resolved)
+		protectedSettingsFromKeyVault_ARM, err := extension.ProtectedSettingsFromKeyVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -691,8 +692,6 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_From_VirtualMac
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -813,8 +812,6 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_To_VirtualMachi
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -906,8 +903,6 @@ func (extension *VirtualMachinesExtension_Spec) Initialize_From_VirtualMachinesE
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -1288,8 +1283,6 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_From_VirtualM
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -1391,8 +1384,6 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_To_VirtualMac
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -1557,8 +1548,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMa
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus
 			err := status.AssignProperties_From_InstanceViewStatus(&statusItem)
 			if err != nil {
@@ -1575,8 +1564,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMa
 	if source.Substatuses != nil {
 		substatusList := make([]InstanceViewStatus, len(source.Substatuses))
 		for substatusIndex, substatusItem := range source.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus InstanceViewStatus
 			err := substatus.AssignProperties_From_InstanceViewStatus(&substatusItem)
 			if err != nil {
@@ -1611,8 +1598,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus
 			err := statusItem.AssignProperties_To_InstanceViewStatus(&status)
 			if err != nil {
@@ -1629,8 +1614,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 	if view.Substatuses != nil {
 		substatusList := make([]storage.InstanceViewStatus, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus storage.InstanceViewStatus
 			err := substatusItem.AssignProperties_To_InstanceViewStatus(&substatus)
 			if err != nil {
@@ -1670,8 +1653,6 @@ func (view *VirtualMachineExtensionInstanceView) Initialize_From_VirtualMachineE
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus
 			err := status.Initialize_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -1688,8 +1669,6 @@ func (view *VirtualMachineExtensionInstanceView) Initialize_From_VirtualMachineE
 	if source.Substatuses != nil {
 		substatusList := make([]InstanceViewStatus, len(source.Substatuses))
 		for substatusIndex, substatusItem := range source.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus InstanceViewStatus
 			err := substatus.Initialize_From_InstanceViewStatus_STATUS(&substatusItem)
 			if err != nil {
@@ -1796,8 +1775,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_Vi
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -1814,8 +1791,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_Vi
 	if source.Substatuses != nil {
 		substatusList := make([]InstanceViewStatus_STATUS, len(source.Substatuses))
 		for substatusIndex, substatusItem := range source.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus InstanceViewStatus_STATUS
 			err := substatus.AssignProperties_From_InstanceViewStatus_STATUS(&substatusItem)
 			if err != nil {
@@ -1850,8 +1825,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -1868,8 +1841,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 	if view.Substatuses != nil {
 		substatusList := make([]storage.InstanceViewStatus_STATUS, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus storage.InstanceViewStatus_STATUS
 			err := substatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&substatus)
 			if err != nil {
@@ -1915,8 +1886,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_From_Virt
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1933,8 +1902,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_From_Virt
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1960,8 +1927,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_To_Virtua
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1978,8 +1943,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_To_Virtua
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

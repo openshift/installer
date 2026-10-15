@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,redhatopenshift}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/openshiftclusters/stable/2023-11-22/redhatopenshift.json
+// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/OpenShiftClusters/stable/2023-11-22/redhatopenshift.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RedHatOpenShift/openShiftClusters/{resourceName}
 type OpenShiftCluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (cluster *OpenShiftCluster) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/openshiftclusters/stable/2023-11-22/redhatopenshift.json
+// - Generated from: /redhatopenshift/resource-manager/Microsoft.RedHatOpenShift/OpenShiftClusters/stable/2023-11-22/redhatopenshift.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.RedHatOpenShift/openShiftClusters/{resourceName}
 type OpenShiftClusterList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -323,7 +324,7 @@ func (cluster *OpenShiftCluster_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties = &arm.OpenShiftClusterProperties{}
 	}
 	if cluster.ApiserverProfile != nil {
-		apiserverProfile_ARM, err := (*cluster.ApiserverProfile).ConvertToARM(resolved)
+		apiserverProfile_ARM, err := cluster.ApiserverProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +332,7 @@ func (cluster *OpenShiftCluster_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.ApiserverProfile = &apiserverProfile
 	}
 	if cluster.ClusterProfile != nil {
-		clusterProfile_ARM, err := (*cluster.ClusterProfile).ConvertToARM(resolved)
+		clusterProfile_ARM, err := cluster.ClusterProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +347,7 @@ func (cluster *OpenShiftCluster_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.IngressProfiles = append(result.Properties.IngressProfiles, *item_ARM.(*arm.IngressProfile))
 	}
 	if cluster.MasterProfile != nil {
-		masterProfile_ARM, err := (*cluster.MasterProfile).ConvertToARM(resolved)
+		masterProfile_ARM, err := cluster.MasterProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func (cluster *OpenShiftCluster_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.MasterProfile = &masterProfile
 	}
 	if cluster.NetworkProfile != nil {
-		networkProfile_ARM, err := (*cluster.NetworkProfile).ConvertToARM(resolved)
+		networkProfile_ARM, err := cluster.NetworkProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +363,7 @@ func (cluster *OpenShiftCluster_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.NetworkProfile = &networkProfile
 	}
 	if cluster.ServicePrincipalProfile != nil {
-		servicePrincipalProfile_ARM, err := (*cluster.ServicePrincipalProfile).ConvertToARM(resolved)
+		servicePrincipalProfile_ARM, err := cluster.ServicePrincipalProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -608,8 +609,6 @@ func (cluster *OpenShiftCluster_Spec) AssignProperties_From_OpenShiftCluster_Spe
 	if source.IngressProfiles != nil {
 		ingressProfileList := make([]IngressProfile, len(source.IngressProfiles))
 		for ingressProfileIndex, ingressProfileItem := range source.IngressProfiles {
-			// Shadow the loop variable to avoid aliasing
-			ingressProfileItem := ingressProfileItem
 			var ingressProfile IngressProfile
 			err := ingressProfile.AssignProperties_From_IngressProfile(&ingressProfileItem)
 			if err != nil {
@@ -688,8 +687,6 @@ func (cluster *OpenShiftCluster_Spec) AssignProperties_From_OpenShiftCluster_Spe
 	if source.WorkerProfiles != nil {
 		workerProfileList := make([]WorkerProfile, len(source.WorkerProfiles))
 		for workerProfileIndex, workerProfileItem := range source.WorkerProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workerProfileItem := workerProfileItem
 			var workerProfile WorkerProfile
 			err := workerProfile.AssignProperties_From_WorkerProfile(&workerProfileItem)
 			if err != nil {
@@ -742,8 +739,6 @@ func (cluster *OpenShiftCluster_Spec) AssignProperties_To_OpenShiftCluster_Spec(
 	if cluster.IngressProfiles != nil {
 		ingressProfileList := make([]storage.IngressProfile, len(cluster.IngressProfiles))
 		for ingressProfileIndex, ingressProfileItem := range cluster.IngressProfiles {
-			// Shadow the loop variable to avoid aliasing
-			ingressProfileItem := ingressProfileItem
 			var ingressProfile storage.IngressProfile
 			err := ingressProfileItem.AssignProperties_To_IngressProfile(&ingressProfile)
 			if err != nil {
@@ -825,8 +820,6 @@ func (cluster *OpenShiftCluster_Spec) AssignProperties_To_OpenShiftCluster_Spec(
 	if cluster.WorkerProfiles != nil {
 		workerProfileList := make([]storage.WorkerProfile, len(cluster.WorkerProfiles))
 		for workerProfileIndex, workerProfileItem := range cluster.WorkerProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workerProfileItem := workerProfileItem
 			var workerProfile storage.WorkerProfile
 			err := workerProfileItem.AssignProperties_To_WorkerProfile(&workerProfile)
 			if err != nil {
@@ -881,8 +874,6 @@ func (cluster *OpenShiftCluster_Spec) Initialize_From_OpenShiftCluster_STATUS(so
 	if source.IngressProfiles != nil {
 		ingressProfileList := make([]IngressProfile, len(source.IngressProfiles))
 		for ingressProfileIndex, ingressProfileItem := range source.IngressProfiles {
-			// Shadow the loop variable to avoid aliasing
-			ingressProfileItem := ingressProfileItem
 			var ingressProfile IngressProfile
 			err := ingressProfile.Initialize_From_IngressProfile_STATUS(&ingressProfileItem)
 			if err != nil {
@@ -941,8 +932,6 @@ func (cluster *OpenShiftCluster_Spec) Initialize_From_OpenShiftCluster_STATUS(so
 	if source.WorkerProfiles != nil {
 		workerProfileList := make([]WorkerProfile, len(source.WorkerProfiles))
 		for workerProfileIndex, workerProfileItem := range source.WorkerProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workerProfileItem := workerProfileItem
 			var workerProfile WorkerProfile
 			err := workerProfile.Initialize_From_WorkerProfile_STATUS(&workerProfileItem)
 			if err != nil {
@@ -1318,8 +1307,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_From_OpenShiftCluster_S
 	if source.IngressProfiles != nil {
 		ingressProfileList := make([]IngressProfile_STATUS, len(source.IngressProfiles))
 		for ingressProfileIndex, ingressProfileItem := range source.IngressProfiles {
-			// Shadow the loop variable to avoid aliasing
-			ingressProfileItem := ingressProfileItem
 			var ingressProfile IngressProfile_STATUS
 			err := ingressProfile.AssignProperties_From_IngressProfile_STATUS(&ingressProfileItem)
 			if err != nil {
@@ -1405,8 +1392,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_From_OpenShiftCluster_S
 	if source.WorkerProfiles != nil {
 		workerProfileList := make([]WorkerProfile_STATUS, len(source.WorkerProfiles))
 		for workerProfileIndex, workerProfileItem := range source.WorkerProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workerProfileItem := workerProfileItem
 			var workerProfile WorkerProfile_STATUS
 			err := workerProfile.AssignProperties_From_WorkerProfile_STATUS(&workerProfileItem)
 			if err != nil {
@@ -1423,8 +1408,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_From_OpenShiftCluster_S
 	if source.WorkerProfilesStatus != nil {
 		workerProfilesStatusList := make([]WorkerProfile_STATUS, len(source.WorkerProfilesStatus))
 		for workerProfilesStatusIndex, workerProfilesStatusItem := range source.WorkerProfilesStatus {
-			// Shadow the loop variable to avoid aliasing
-			workerProfilesStatusItem := workerProfilesStatusItem
 			var workerProfilesStatus WorkerProfile_STATUS
 			err := workerProfilesStatus.AssignProperties_From_WorkerProfile_STATUS(&workerProfilesStatusItem)
 			if err != nil {
@@ -1492,8 +1475,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_To_OpenShiftCluster_STA
 	if cluster.IngressProfiles != nil {
 		ingressProfileList := make([]storage.IngressProfile_STATUS, len(cluster.IngressProfiles))
 		for ingressProfileIndex, ingressProfileItem := range cluster.IngressProfiles {
-			// Shadow the loop variable to avoid aliasing
-			ingressProfileItem := ingressProfileItem
 			var ingressProfile storage.IngressProfile_STATUS
 			err := ingressProfileItem.AssignProperties_To_IngressProfile_STATUS(&ingressProfile)
 			if err != nil {
@@ -1578,8 +1559,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_To_OpenShiftCluster_STA
 	if cluster.WorkerProfiles != nil {
 		workerProfileList := make([]storage.WorkerProfile_STATUS, len(cluster.WorkerProfiles))
 		for workerProfileIndex, workerProfileItem := range cluster.WorkerProfiles {
-			// Shadow the loop variable to avoid aliasing
-			workerProfileItem := workerProfileItem
 			var workerProfile storage.WorkerProfile_STATUS
 			err := workerProfileItem.AssignProperties_To_WorkerProfile_STATUS(&workerProfile)
 			if err != nil {
@@ -1596,8 +1575,6 @@ func (cluster *OpenShiftCluster_STATUS) AssignProperties_To_OpenShiftCluster_STA
 	if cluster.WorkerProfilesStatus != nil {
 		workerProfilesStatusList := make([]storage.WorkerProfile_STATUS, len(cluster.WorkerProfilesStatus))
 		for workerProfilesStatusIndex, workerProfilesStatusItem := range cluster.WorkerProfilesStatus {
-			// Shadow the loop variable to avoid aliasing
-			workerProfilesStatusItem := workerProfilesStatusItem
 			var workerProfilesStatus storage.WorkerProfile_STATUS
 			err := workerProfilesStatusItem.AssignProperties_To_WorkerProfile_STATUS(&workerProfilesStatus)
 			if err != nil {
@@ -2792,7 +2769,7 @@ func (profile *NetworkProfile) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "LoadBalancerProfile":
 	if profile.LoadBalancerProfile != nil {
-		loadBalancerProfile_ARM, err := (*profile.LoadBalancerProfile).ConvertToARM(resolved)
+		loadBalancerProfile_ARM, err := profile.LoadBalancerProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3206,8 +3183,6 @@ func (operator *OpenShiftClusterOperatorSpec) AssignProperties_From_OpenShiftClu
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3224,8 +3199,6 @@ func (operator *OpenShiftClusterOperatorSpec) AssignProperties_From_OpenShiftClu
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3263,8 +3236,6 @@ func (operator *OpenShiftClusterOperatorSpec) AssignProperties_To_OpenShiftClust
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3281,8 +3252,6 @@ func (operator *OpenShiftClusterOperatorSpec) AssignProperties_To_OpenShiftClust
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -4220,7 +4189,7 @@ func (profile *LoadBalancerProfile) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "ManagedOutboundIps":
 	if profile.ManagedOutboundIps != nil {
-		managedOutboundIps_ARM, err := (*profile.ManagedOutboundIps).ConvertToARM(resolved)
+		managedOutboundIps_ARM, err := profile.ManagedOutboundIps.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4378,8 +4347,6 @@ func (profile *LoadBalancerProfile_STATUS) AssignProperties_From_LoadBalancerPro
 	if source.EffectiveOutboundIps != nil {
 		effectiveOutboundIpsIPSList := make([]EffectiveOutboundIP_STATUS, len(source.EffectiveOutboundIps))
 		for effectiveOutboundIpsIPSIndex, effectiveOutboundIpsIPSItem := range source.EffectiveOutboundIps {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIpsIPSItem := effectiveOutboundIpsIPSItem
 			var effectiveOutboundIpsIPS EffectiveOutboundIP_STATUS
 			err := effectiveOutboundIpsIPS.AssignProperties_From_EffectiveOutboundIP_STATUS(&effectiveOutboundIpsIPSItem)
 			if err != nil {
@@ -4417,8 +4384,6 @@ func (profile *LoadBalancerProfile_STATUS) AssignProperties_To_LoadBalancerProfi
 	if profile.EffectiveOutboundIps != nil {
 		effectiveOutboundIpsIPSList := make([]storage.EffectiveOutboundIP_STATUS, len(profile.EffectiveOutboundIps))
 		for effectiveOutboundIpsIPSIndex, effectiveOutboundIpsIPSItem := range profile.EffectiveOutboundIps {
-			// Shadow the loop variable to avoid aliasing
-			effectiveOutboundIpsIPSItem := effectiveOutboundIpsIPSItem
 			var effectiveOutboundIpsIPS storage.EffectiveOutboundIP_STATUS
 			err := effectiveOutboundIpsIPSItem.AssignProperties_To_EffectiveOutboundIP_STATUS(&effectiveOutboundIpsIPS)
 			if err != nil {

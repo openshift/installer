@@ -158,6 +158,7 @@ func NewEnv(resource reflect.Type) (*cel.Env, error) {
 		cel.EagerlyValidateDeclarations(true),
 		cel.OptionalTypes(),
 		cel.CrossTypeNumericComparisons(true),
+		ext.TwoVarComprehensions(ext.TwoVarComprehensionsVersion(0)),
 
 		ext.NativeTypes(typesList...),
 		newJSONProvider(), // This must come after ext.NativeTypes

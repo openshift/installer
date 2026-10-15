@@ -116,7 +116,12 @@ func (farm *ServerFarm) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (farm *ServerFarm) createValidations() []func(ctx context.Context, obj *v20220301.ServerFarm) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220301.ServerFarm) (admission.Warnings, error){farm.validateResourceReferences, farm.validateOwnerReference, farm.validateSecretDestinations, farm.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220301.ServerFarm) (admission.Warnings, error){
+		farm.validateResourceReferences,
+		farm.validateOwnerReference,
+		farm.validateSecretDestinations,
+		farm.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

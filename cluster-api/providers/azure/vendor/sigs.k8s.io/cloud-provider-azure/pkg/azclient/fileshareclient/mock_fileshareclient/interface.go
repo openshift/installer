@@ -100,17 +100,17 @@ func (c *MockInterfaceCreateCall) DoAndReturn(f func(context.Context, string, st
 }
 
 // Delete mocks base method.
-func (m *MockInterface) Delete(ctx context.Context, resourceGroupName, parentResourceName, resourceName string, expand *string) error {
+func (m *MockInterface) Delete(ctx context.Context, resourceGroupName, parentResourceName, resourceName string, option *armstorage.FileSharesClientDeleteOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, resourceGroupName, parentResourceName, resourceName, expand)
+	ret := m.ctrl.Call(m, "Delete", ctx, resourceGroupName, parentResourceName, resourceName, option)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockInterfaceMockRecorder) Delete(ctx, resourceGroupName, parentResourceName, resourceName, expand any) *MockInterfaceDeleteCall {
+func (mr *MockInterfaceMockRecorder) Delete(ctx, resourceGroupName, parentResourceName, resourceName, option any) *MockInterfaceDeleteCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockInterface)(nil).Delete), ctx, resourceGroupName, parentResourceName, resourceName, expand)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockInterface)(nil).Delete), ctx, resourceGroupName, parentResourceName, resourceName, option)
 	return &MockInterfaceDeleteCall{Call: call}
 }
 
@@ -126,13 +126,13 @@ func (c *MockInterfaceDeleteCall) Return(arg0 error) *MockInterfaceDeleteCall {
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockInterfaceDeleteCall) Do(f func(context.Context, string, string, string, *string) error) *MockInterfaceDeleteCall {
+func (c *MockInterfaceDeleteCall) Do(f func(context.Context, string, string, string, *armstorage.FileSharesClientDeleteOptions) error) *MockInterfaceDeleteCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockInterfaceDeleteCall) DoAndReturn(f func(context.Context, string, string, string, *string) error) *MockInterfaceDeleteCall {
+func (c *MockInterfaceDeleteCall) DoAndReturn(f func(context.Context, string, string, string, *armstorage.FileSharesClientDeleteOptions) error) *MockInterfaceDeleteCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -29,7 +30,9 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/util/interval"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
+	"github.com/Azure/azure-service-operator/v2/internal/version"
 	"github.com/Azure/azure-service-operator/v2/pkg/common/annotations"
+	"github.com/Azure/azure-service-operator/v2/pkg/common/labels"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 )
@@ -98,11 +101,10 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	} else {
 		result, err = gr.createOrUpdate(ctx, log, metaObj)
 	}
-
 	if err != nil {
 		err = gr.writeReadyConditionErrorOrDefault(ctx, log, metaObj, err)
 		result, err = gr.RequeueIntervalCalculator.NextInterval(req, result, err)
-		log.V(Verbose).Info("Encountered error, re-queuing...", "result", result)
+		log.V(Verbose).Info("Encountered error, re-queuing...", "result", result, "error", err)
 		return result, err
 	}
 
@@ -234,8 +236,8 @@ func (gr *GenericReconciler) createOrUpdate(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, err
 	}
 
-	// Check the reconcile-policy to ensure we're allowed to issue a CreateOrUpdate
-	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log, gr.Config.DefaultReconcilePolicy)
+	genruntime.AddLabel(metaObj, labels.LastReconciledVersionLabel, version.BuildVersion)
+	reconcilePolicy := gr.mergeReconcilePolicy(ctx, log, metaObj)
 	if !reconcilePolicy.AllowsModify() {
 		return ctrl.Result{}, gr.handleSkipReconcile(ctx, log, metaObj)
 	}
@@ -247,7 +249,7 @@ func (gr *GenericReconciler) createOrUpdate(ctx context.Context, log logr.Logger
 
 func (gr *GenericReconciler) delete(ctx context.Context, log logr.Logger, metaObj genruntime.MetaObject) (ctrl.Result, error) {
 	// Check the reconcile policy to ensure we're allowed to issue a delete
-	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log, gr.Config.DefaultReconcilePolicy)
+	reconcilePolicy := gr.mergeReconcilePolicy(ctx, log, metaObj)
 	if !reconcilePolicy.AllowsDelete() {
 		log.V(Info).Info("Bypassing delete of resource due to policy", "policy", reconcilePolicy)
 		controllerutil.RemoveFinalizer(metaObj, genruntime.ReconcilerFinalizer)
@@ -280,10 +282,10 @@ func (gr *GenericReconciler) delete(ctx context.Context, log logr.Logger, metaOb
 // NewRateLimiter creates a new workqueue.Ratelimiter for use controlling the speed of reconciliation.
 // It throttles individual requests exponentially and also controls for multiple requests.
 func NewRateLimiter(minBackoff time.Duration, maxBackoff time.Duration, additionalLimiters ...workqueue.TypedRateLimiter[reconcile.Request]) workqueue.TypedRateLimiter[reconcile.Request] {
-	limiters := []workqueue.TypedRateLimiter[reconcile.Request]{
-		workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](minBackoff, maxBackoff),
-	}
-
+	limiters := make([]workqueue.TypedRateLimiter[reconcile.Request], 0, len(additionalLimiters)+1)
+	limiters = append(
+		limiters,
+		workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](minBackoff, maxBackoff))
 	limiters = append(limiters, additionalLimiters...)
 	return workqueue.NewTypedMaxOfRateLimiter(limiters...)
 }
@@ -351,7 +353,8 @@ func (gr *GenericReconciler) CommitUpdate(
 }
 
 func (gr *GenericReconciler) handleSkipReconcile(ctx context.Context, log logr.Logger, obj genruntime.MetaObject) error {
-	reconcilePolicy := reconcilers.GetReconcilePolicy(obj, log, gr.Config.DefaultReconcilePolicy) // TODO: Pull this whole method up here
+	reconcilePolicy := gr.mergeReconcilePolicy(ctx, log, obj)
+
 	log.V(Status).Info(
 		"Skipping creation/update of resource due to policy",
 		annotations.ReconcilePolicy, reconcilePolicy)
@@ -381,4 +384,43 @@ func (gr *GenericReconciler) writeReadyConditionErrorOrDefault(ctx context.Conte
 	log.Error(readyErr, "Encountered error impacting Ready condition")
 	err = gr.WriteReadyConditionError(ctx, log, metaObj, readyErr)
 	return err
+}
+
+func (gr *GenericReconciler) mergeReconcilePolicy(ctx context.Context, log logr.Logger, obj genruntime.MetaObject) annotations.ReconcilePolicyValue {
+	// We initially get the reconcile policy from the object itself
+	source := "default" // assume the source is the default policy for now - this source field is used only for logging purposes
+	policyStr := obj.GetAnnotations()[annotations.ReconcilePolicy]
+
+	// If the policy is not defined at object level, then we check if it's defined at namespace level
+	if policyStr == "" {
+		namespaceObject, err := gr.KubeClient.GetObject(ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetNamespace()}, schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespace"})
+		// if we cannot get the namespace, we return default reconcile policy
+		if err != nil {
+			log.V(Verbose).Info("Error while retrieving namespace object", "error", err)
+			return gr.Config.DefaultReconcilePolicy // return default in case of error
+		}
+		policyStr = namespaceObject.GetAnnotations()[annotations.ReconcilePolicy]
+		if policyStr != "" {
+			source = "namespace"
+		}
+	} else {
+		source = "object" // used to track where the policy was taken from for logging purposes
+	}
+
+	// If no configured default policy, we set it to 'manage'
+	defaultReconcilePolicy := gr.Config.DefaultReconcilePolicy
+	if defaultReconcilePolicy == "" {
+		defaultReconcilePolicy = annotations.ReconcilePolicyManage
+	}
+
+	reconcilePolicy, err := reconcilers.ParseReconcilePolicy(policyStr, defaultReconcilePolicy)
+	if err != nil {
+		log.Error(
+			err,
+			"failed to get reconcile policy. Applying default policy instead",
+			"chosenPolicy", reconcilePolicy,
+			"policyAnnotation", policyStr)
+	}
+	log.V(Verbose).Info("Retrieved reconcile policy", "policy", reconcilePolicy, "source", source)
+	return reconcilePolicy
 }

@@ -116,7 +116,12 @@ func (scaleSet *VirtualMachineScaleSet) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (scaleSet *VirtualMachineScaleSet) createValidations() []func(ctx context.Context, obj *v20201201.VirtualMachineScaleSet) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201201.VirtualMachineScaleSet) (admission.Warnings, error){scaleSet.validateResourceReferences, scaleSet.validateOwnerReference, scaleSet.validateSecretDestinations, scaleSet.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201201.VirtualMachineScaleSet) (admission.Warnings, error){
+		scaleSet.validateResourceReferences,
+		scaleSet.validateOwnerReference,
+		scaleSet.validateSecretDestinations,
+		scaleSet.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -219,7 +219,7 @@ func (d *delayedRouteUpdater) updateRoutes(ctx context.Context) {
 		}
 
 		// wait a while for route updates to take effect.
-		time.Sleep(time.Duration(d.az.Config.RouteUpdateWaitingInSeconds) * time.Second)
+		time.Sleep(time.Duration(d.az.RouteUpdateWaitingInSeconds) * time.Second)
 	}
 }
 

@@ -4,8 +4,10 @@
 package customizations
 
 import (
-	v20210401 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401"
-	storage "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401/storage"
+	alertsmanagement_v1api20210401 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401"
+	alertsmanagement_v1api20210401s "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20210401/storage"
+	alertsmanagement_v20210401 "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401"
+	alertsmanagement_v20210401s "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +17,8 @@ type SmartDetectorAlertRuleExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *SmartDetectorAlertRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20210401.SmartDetectorAlertRule{},
-		&storage.SmartDetectorAlertRule{}}
+		&alertsmanagement_v1api20210401.SmartDetectorAlertRule{},
+		&alertsmanagement_v1api20210401s.SmartDetectorAlertRule{},
+		&alertsmanagement_v20210401.SmartDetectorAlertRule{},
+		&alertsmanagement_v20210401s.SmartDetectorAlertRule{}}
 }

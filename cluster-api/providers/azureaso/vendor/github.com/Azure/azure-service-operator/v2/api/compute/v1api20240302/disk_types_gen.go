@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type Disk struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (disk *Disk) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type DiskList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -304,10 +305,10 @@ type Disk_Spec struct {
 	ExtendedLocation *ExtendedLocation `json:"extendedLocation,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *DiskProperties_HyperVGeneration `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration `json:"hyperVGeneration,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// MaxShares: The maximum number of VMs that can attach to the disk at the same time. Value greater than one indicates a
@@ -328,7 +329,7 @@ type Disk_Spec struct {
 	OptimizedForFrequentAttach *bool `json:"optimizedForFrequentAttach,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *DiskProperties_OsType `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes `json:"osType,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -341,13 +342,13 @@ type Disk_Spec struct {
 
 	// PurchasePlan: Purchase plan information for the the image from which the OS disk was created. E.g. - {name:
 	// 2019-Datacenter, publisher: MicrosoftWindowsServer, product: WindowsServer}
-	PurchasePlan *PurchasePlan `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile `json:"securityProfile,omitempty"`
 
 	// Sku: The disks sku name. Can be Standard_LRS, Premium_LRS, StandardSSD_LRS, UltraSSD_LRS, Premium_ZRS, StandardSSD_ZRS,
-	// or  PremiumV2_LRS.
+	// or PremiumV2_LRS.
 	Sku *DiskSku `json:"sku,omitempty"`
 
 	// SupportedCapabilities: List of supported capabilities for the image from which the OS disk was created.
@@ -356,7 +357,7 @@ type Disk_Spec struct {
 	// SupportsHibernation: Indicates the OS on a disk supports hibernation.
 	SupportsHibernation *bool `json:"supportsHibernation,omitempty"`
 
-	// Tags: Resource tags
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// Tier: Performance tier of the disk (e.g, P4, S10) as described here:
@@ -378,7 +379,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "ExtendedLocation":
 	if disk.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*disk.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := disk.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -430,7 +431,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.CompletionPercent = &completionPercent
 	}
 	if disk.CreationData != nil {
-		creationData_ARM, err := (*disk.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := disk.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -472,7 +473,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.DiskSizeGB = &diskSizeGB
 	}
 	if disk.Encryption != nil {
-		encryption_ARM, err := (*disk.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := disk.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -480,7 +481,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.Encryption = &encryption
 	}
 	if disk.EncryptionSettingsCollection != nil {
-		encryptionSettingsCollection_ARM, err := (*disk.EncryptionSettingsCollection).ConvertToARM(resolved)
+		encryptionSettingsCollection_ARM, err := disk.EncryptionSettingsCollection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -490,7 +491,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 	if disk.HyperVGeneration != nil {
 		var temp string
 		temp = string(*disk.HyperVGeneration)
-		hyperVGeneration := arm.DiskProperties_HyperVGeneration(temp)
+		hyperVGeneration := arm.HyperVGeneration(temp)
 		result.Properties.HyperVGeneration = &hyperVGeneration
 	}
 	if disk.MaxShares != nil {
@@ -510,7 +511,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 	if disk.OsType != nil {
 		var temp string
 		temp = string(*disk.OsType)
-		osType := arm.DiskProperties_OsType(temp)
+		osType := arm.OperatingSystemTypes(temp)
 		result.Properties.OsType = &osType
 	}
 	if disk.PublicNetworkAccess != nil {
@@ -520,15 +521,15 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if disk.PurchasePlan != nil {
-		purchasePlan_ARM, err := (*disk.PurchasePlan).ConvertToARM(resolved)
+		purchasePlan_ARM, err := disk.PurchasePlan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		purchasePlan := *purchasePlan_ARM.(*arm.PurchasePlan)
+		purchasePlan := *purchasePlan_ARM.(*arm.DiskPurchasePlan)
 		result.Properties.PurchasePlan = &purchasePlan
 	}
 	if disk.SecurityProfile != nil {
-		securityProfile_ARM, err := (*disk.SecurityProfile).ConvertToARM(resolved)
+		securityProfile_ARM, err := disk.SecurityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -536,7 +537,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.SecurityProfile = &securityProfile
 	}
 	if disk.SupportedCapabilities != nil {
-		supportedCapabilities_ARM, err := (*disk.SupportedCapabilities).ConvertToARM(resolved)
+		supportedCapabilities_ARM, err := disk.SupportedCapabilities.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -554,7 +555,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "Sku":
 	if disk.Sku != nil {
-		sku_ARM, err := (*disk.Sku).ConvertToARM(resolved)
+		sku_ARM, err := disk.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -727,7 +728,7 @@ func (disk *Disk_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 		if typedInput.Properties.HyperVGeneration != nil {
 			var temp string
 			temp = string(*typedInput.Properties.HyperVGeneration)
-			hyperVGeneration := DiskProperties_HyperVGeneration(temp)
+			hyperVGeneration := HyperVGeneration(temp)
 			disk.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -775,7 +776,7 @@ func (disk *Disk_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 		if typedInput.Properties.OsType != nil {
 			var temp string
 			temp = string(*typedInput.Properties.OsType)
-			osType := DiskProperties_OsType(temp)
+			osType := OperatingSystemTypes(temp)
 			disk.OsType = &osType
 		}
 	}
@@ -801,7 +802,7 @@ func (disk *Disk_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PurchasePlan != nil {
-			var purchasePlan1 PurchasePlan
+			var purchasePlan1 DiskPurchasePlan
 			err := purchasePlan1.PopulateFromARM(owner, *typedInput.Properties.PurchasePlan)
 			if err != nil {
 				return err
@@ -1040,7 +1041,7 @@ func (disk *Disk_Spec) AssignProperties_From_Disk_Spec(source *storage.Disk_Spec
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
 		hyperVGeneration := *source.HyperVGeneration
-		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, diskProperties_HyperVGeneration_Values)
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, hyperVGeneration_Values)
 		disk.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		disk.HyperVGeneration = nil
@@ -1084,7 +1085,7 @@ func (disk *Disk_Spec) AssignProperties_From_Disk_Spec(source *storage.Disk_Spec
 	// OsType
 	if source.OsType != nil {
 		osType := *source.OsType
-		osTypeTemp := genruntime.ToEnum(osType, diskProperties_OsType_Values)
+		osTypeTemp := genruntime.ToEnum(osType, operatingSystemTypes_Values)
 		disk.OsType = &osTypeTemp
 	} else {
 		disk.OsType = nil
@@ -1109,10 +1110,10 @@ func (disk *Disk_Spec) AssignProperties_From_Disk_Spec(source *storage.Disk_Spec
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan
-		err := purchasePlan.AssignProperties_From_PurchasePlan(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		disk.PurchasePlan = &purchasePlan
 	} else {
@@ -1350,10 +1351,10 @@ func (disk *Disk_Spec) AssignProperties_To_Disk_Spec(destination *storage.Disk_S
 
 	// PurchasePlan
 	if disk.PurchasePlan != nil {
-		var purchasePlan storage.PurchasePlan
-		err := disk.PurchasePlan.AssignProperties_To_PurchasePlan(&purchasePlan)
+		var purchasePlan storage.DiskPurchasePlan
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -1524,7 +1525,7 @@ func (disk *Disk_Spec) Initialize_From_Disk_STATUS(source *Disk_STATUS) error {
 
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
-		hyperVGeneration := genruntime.ToEnum(string(*source.HyperVGeneration), diskProperties_HyperVGeneration_Values)
+		hyperVGeneration := genruntime.ToEnum(string(*source.HyperVGeneration), hyperVGeneration_Values)
 		disk.HyperVGeneration = &hyperVGeneration
 	} else {
 		disk.HyperVGeneration = nil
@@ -1554,7 +1555,7 @@ func (disk *Disk_Spec) Initialize_From_Disk_STATUS(source *Disk_STATUS) error {
 
 	// OsType
 	if source.OsType != nil {
-		osType := genruntime.ToEnum(string(*source.OsType), diskProperties_OsType_Values)
+		osType := genruntime.ToEnum(string(*source.OsType), operatingSystemTypes_Values)
 		disk.OsType = &osType
 	} else {
 		disk.OsType = nil
@@ -1570,10 +1571,10 @@ func (disk *Disk_Spec) Initialize_From_Disk_STATUS(source *Disk_STATUS) error {
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan
-		err := purchasePlan.Initialize_From_PurchasePlan_STATUS(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan
+		err := purchasePlan.Initialize_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling Initialize_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		disk.PurchasePlan = &purchasePlan
 	} else {
@@ -1707,16 +1708,17 @@ type Disk_STATUS struct {
 	ExtendedLocation *ExtendedLocation_STATUS `json:"extendedLocation,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *DiskProperties_HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
 
-	// Id: Resource Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
 	// LastOwnershipUpdateTime: The UTC time when the ownership state of the disk was last changed i.e., the time the disk was
 	// last attached or detached from a VM or the time when the VM to which the disk was attached was deallocated or started.
 	LastOwnershipUpdateTime *string `json:"LastOwnershipUpdateTime,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// ManagedBy: A relative URI containing the ID of the VM that has the disk attached.
@@ -1730,7 +1732,7 @@ type Disk_STATUS struct {
 	// disk that can be mounted on multiple VMs at the same time.
 	MaxShares *int `json:"maxShares,omitempty"`
 
-	// Name: Resource name
+	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
 	// NetworkAccessPolicy: Policy for accessing the disk via network.
@@ -1743,7 +1745,7 @@ type Disk_STATUS struct {
 	OptimizedForFrequentAttach *bool `json:"optimizedForFrequentAttach,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *DiskProperties_OsType_STATUS `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes_STATUS `json:"osType,omitempty"`
 
 	// PropertyUpdatesInProgress: Properties of the disk for which update is pending.
 	PropertyUpdatesInProgress *PropertyUpdatesInProgress_STATUS `json:"propertyUpdatesInProgress,omitempty"`
@@ -1756,7 +1758,7 @@ type Disk_STATUS struct {
 
 	// PurchasePlan: Purchase plan information for the the image from which the OS disk was created. E.g. - {name:
 	// 2019-Datacenter, publisher: MicrosoftWindowsServer, product: WindowsServer}
-	PurchasePlan *PurchasePlan_STATUS `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan_STATUS `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile_STATUS `json:"securityProfile,omitempty"`
@@ -1766,7 +1768,7 @@ type Disk_STATUS struct {
 	ShareInfo []ShareInfoElement_STATUS `json:"shareInfo,omitempty"`
 
 	// Sku: The disks sku name. Can be Standard_LRS, Premium_LRS, StandardSSD_LRS, UltraSSD_LRS, Premium_ZRS, StandardSSD_ZRS,
-	// or  PremiumV2_LRS.
+	// or PremiumV2_LRS.
 	Sku *DiskSku_STATUS `json:"sku,omitempty"`
 
 	// SupportedCapabilities: List of supported capabilities for the image from which the OS disk was created.
@@ -1775,7 +1777,10 @@ type Disk_STATUS struct {
 	// SupportsHibernation: Indicates the OS on a disk supports hibernation.
 	SupportsHibernation *bool `json:"supportsHibernation,omitempty"`
 
-	// Tags: Resource tags
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// Tier: Performance tier of the disk (e.g, P4, S10) as described here:
@@ -1785,7 +1790,7 @@ type Disk_STATUS struct {
 	// TimeCreated: The time when the disk was created.
 	TimeCreated *string `json:"timeCreated,omitempty"`
 
-	// Type: Resource type
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
 	// UniqueId: Unique Guid identifying the resource.
@@ -2032,7 +2037,7 @@ func (disk *Disk_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 		if typedInput.Properties.HyperVGeneration != nil {
 			var temp string
 			temp = string(*typedInput.Properties.HyperVGeneration)
-			hyperVGeneration := DiskProperties_HyperVGeneration_STATUS(temp)
+			hyperVGeneration := HyperVGeneration_STATUS(temp)
 			disk.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -2110,7 +2115,7 @@ func (disk *Disk_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 		if typedInput.Properties.OsType != nil {
 			var temp string
 			temp = string(*typedInput.Properties.OsType)
-			osType := DiskProperties_OsType_STATUS(temp)
+			osType := OperatingSystemTypes_STATUS(temp)
 			disk.OsType = &osType
 		}
 	}
@@ -2153,7 +2158,7 @@ func (disk *Disk_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PurchasePlan != nil {
-			var purchasePlan1 PurchasePlan_STATUS
+			var purchasePlan1 DiskPurchasePlan_STATUS
 			err := purchasePlan1.PopulateFromARM(owner, *typedInput.Properties.PurchasePlan)
 			if err != nil {
 				return err
@@ -2222,6 +2227,17 @@ func (disk *Disk_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 			supportsHibernation := *typedInput.Properties.SupportsHibernation
 			disk.SupportsHibernation = &supportsHibernation
 		}
+	}
+
+	// Set property "SystemData":
+	if typedInput.SystemData != nil {
+		var systemData1 SystemData_STATUS
+		err := systemData1.PopulateFromARM(owner, *typedInput.SystemData)
+		if err != nil {
+			return err
+		}
+		systemData := systemData1
+		disk.SystemData = &systemData
 	}
 
 	// Set property "Tags":
@@ -2389,7 +2405,7 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
 		hyperVGeneration := *source.HyperVGeneration
-		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, diskProperties_HyperVGeneration_STATUS_Values)
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, hyperVGeneration_STATUS_Values)
 		disk.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		disk.HyperVGeneration = nil
@@ -2436,7 +2452,7 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 	// OsType
 	if source.OsType != nil {
 		osType := *source.OsType
-		osTypeTemp := genruntime.ToEnum(osType, diskProperties_OsType_STATUS_Values)
+		osTypeTemp := genruntime.ToEnum(osType, operatingSystemTypes_STATUS_Values)
 		disk.OsType = &osTypeTemp
 	} else {
 		disk.OsType = nil
@@ -2468,10 +2484,10 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 
 	// PurchasePlan
 	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan_STATUS
-		err := purchasePlan.AssignProperties_From_PurchasePlan_STATUS(source.PurchasePlan)
+		var purchasePlan DiskPurchasePlan_STATUS
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		disk.PurchasePlan = &purchasePlan
 	} else {
@@ -2494,8 +2510,6 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 	if source.ShareInfo != nil {
 		shareInfoList := make([]ShareInfoElement_STATUS, len(source.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range source.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo ShareInfoElement_STATUS
 			err := shareInfo.AssignProperties_From_ShareInfoElement_STATUS(&shareInfoItem)
 			if err != nil {
@@ -2538,6 +2552,18 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 		disk.SupportsHibernation = &supportsHibernation
 	} else {
 		disk.SupportsHibernation = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		disk.SystemData = &systemDatum
+	} else {
+		disk.SystemData = nil
 	}
 
 	// Tags
@@ -2752,10 +2778,10 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Di
 
 	// PurchasePlan
 	if disk.PurchasePlan != nil {
-		var purchasePlan storage.PurchasePlan_STATUS
-		err := disk.PurchasePlan.AssignProperties_To_PurchasePlan_STATUS(&purchasePlan)
+		var purchasePlan storage.DiskPurchasePlan_STATUS
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan_STATUS(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -2778,8 +2804,6 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Di
 	if disk.ShareInfo != nil {
 		shareInfoList := make([]storage.ShareInfoElement_STATUS, len(disk.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range disk.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo storage.ShareInfoElement_STATUS
 			err := shareInfoItem.AssignProperties_To_ShareInfoElement_STATUS(&shareInfo)
 			if err != nil {
@@ -2824,6 +2848,18 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Di
 		destination.SupportsHibernation = nil
 	}
 
+	// SystemData
+	if disk.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := disk.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
 	// Tags
 	destination.Tags = genruntime.CloneMapOfStringToString(disk.Tags)
 
@@ -2857,7 +2893,7 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Di
 type CreationData struct {
 	// +kubebuilder:validation:Required
 	// CreateOption: This enumerates the possible sources of a disk's creation.
-	CreateOption *CreationData_CreateOption `json:"createOption,omitempty"`
+	CreateOption *DiskCreateOption `json:"createOption,omitempty"`
 
 	// ElasticSanResourceReference: Required if createOption is CopyFromSanSnapshot. This is the ARM id of the source elastic
 	// san volume snapshot.
@@ -2879,7 +2915,7 @@ type CreationData struct {
 
 	// ProvisionedBandwidthCopySpeed: If this field is set on a snapshot and createOption is CopyStart, the snapshot will be
 	// copied at a quicker speed.
-	ProvisionedBandwidthCopySpeed *CreationData_ProvisionedBandwidthCopySpeed `json:"provisionedBandwidthCopySpeed,omitempty"`
+	ProvisionedBandwidthCopySpeed *ProvisionedBandwidthCopyOption `json:"provisionedBandwidthCopySpeed,omitempty"`
 
 	// SecurityDataUri: If createOption is ImportSecure, this is the URI of a blob to be imported into VM guest state.
 	SecurityDataUri *string `json:"securityDataUri,omitempty"`
@@ -2913,7 +2949,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 	if data.CreateOption != nil {
 		var temp string
 		temp = string(*data.CreateOption)
-		createOption := arm.CreationData_CreateOption(temp)
+		createOption := arm.DiskCreateOption(temp)
 		result.CreateOption = &createOption
 	}
 
@@ -2929,7 +2965,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "GalleryImageReference":
 	if data.GalleryImageReference != nil {
-		galleryImageReference_ARM, err := (*data.GalleryImageReference).ConvertToARM(resolved)
+		galleryImageReference_ARM, err := data.GalleryImageReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2939,7 +2975,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "ImageReference":
 	if data.ImageReference != nil {
-		imageReference_ARM, err := (*data.ImageReference).ConvertToARM(resolved)
+		imageReference_ARM, err := data.ImageReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2963,7 +2999,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 	if data.ProvisionedBandwidthCopySpeed != nil {
 		var temp string
 		temp = string(*data.ProvisionedBandwidthCopySpeed)
-		provisionedBandwidthCopySpeed := arm.CreationData_ProvisionedBandwidthCopySpeed(temp)
+		provisionedBandwidthCopySpeed := arm.ProvisionedBandwidthCopyOption(temp)
 		result.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeed
 	}
 
@@ -3019,7 +3055,7 @@ func (data *CreationData) PopulateFromARM(owner genruntime.ArbitraryOwnerReferen
 	if typedInput.CreateOption != nil {
 		var temp string
 		temp = string(*typedInput.CreateOption)
-		createOption := CreationData_CreateOption(temp)
+		createOption := DiskCreateOption(temp)
 		data.CreateOption = &createOption
 	}
 
@@ -3063,7 +3099,7 @@ func (data *CreationData) PopulateFromARM(owner genruntime.ArbitraryOwnerReferen
 	if typedInput.ProvisionedBandwidthCopySpeed != nil {
 		var temp string
 		temp = string(*typedInput.ProvisionedBandwidthCopySpeed)
-		provisionedBandwidthCopySpeed := CreationData_ProvisionedBandwidthCopySpeed(temp)
+		provisionedBandwidthCopySpeed := ProvisionedBandwidthCopyOption(temp)
 		data.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeed
 	}
 
@@ -3103,7 +3139,7 @@ func (data *CreationData) AssignProperties_From_CreationData(source *storage.Cre
 	// CreateOption
 	if source.CreateOption != nil {
 		createOption := *source.CreateOption
-		createOptionTemp := genruntime.ToEnum(createOption, creationData_CreateOption_Values)
+		createOptionTemp := genruntime.ToEnum(createOption, diskCreateOption_Values)
 		data.CreateOption = &createOptionTemp
 	} else {
 		data.CreateOption = nil
@@ -3155,7 +3191,7 @@ func (data *CreationData) AssignProperties_From_CreationData(source *storage.Cre
 	// ProvisionedBandwidthCopySpeed
 	if source.ProvisionedBandwidthCopySpeed != nil {
 		provisionedBandwidthCopySpeed := *source.ProvisionedBandwidthCopySpeed
-		provisionedBandwidthCopySpeedTemp := genruntime.ToEnum(provisionedBandwidthCopySpeed, creationData_ProvisionedBandwidthCopySpeed_Values)
+		provisionedBandwidthCopySpeedTemp := genruntime.ToEnum(provisionedBandwidthCopySpeed, provisionedBandwidthCopyOption_Values)
 		data.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeedTemp
 	} else {
 		data.ProvisionedBandwidthCopySpeed = nil
@@ -3285,7 +3321,7 @@ func (data *CreationData) Initialize_From_CreationData_STATUS(source *CreationDa
 
 	// CreateOption
 	if source.CreateOption != nil {
-		createOption := genruntime.ToEnum(string(*source.CreateOption), creationData_CreateOption_Values)
+		createOption := genruntime.ToEnum(string(*source.CreateOption), diskCreateOption_Values)
 		data.CreateOption = &createOption
 	} else {
 		data.CreateOption = nil
@@ -3336,7 +3372,7 @@ func (data *CreationData) Initialize_From_CreationData_STATUS(source *CreationDa
 
 	// ProvisionedBandwidthCopySpeed
 	if source.ProvisionedBandwidthCopySpeed != nil {
-		provisionedBandwidthCopySpeed := genruntime.ToEnum(string(*source.ProvisionedBandwidthCopySpeed), creationData_ProvisionedBandwidthCopySpeed_Values)
+		provisionedBandwidthCopySpeed := genruntime.ToEnum(string(*source.ProvisionedBandwidthCopySpeed), provisionedBandwidthCopyOption_Values)
 		data.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeed
 	} else {
 		data.ProvisionedBandwidthCopySpeed = nil
@@ -3369,7 +3405,7 @@ func (data *CreationData) Initialize_From_CreationData_STATUS(source *CreationDa
 // Data used when creating a disk.
 type CreationData_STATUS struct {
 	// CreateOption: This enumerates the possible sources of a disk's creation.
-	CreateOption *CreationData_CreateOption_STATUS `json:"createOption,omitempty"`
+	CreateOption *DiskCreateOption_STATUS `json:"createOption,omitempty"`
 
 	// ElasticSanResourceId: Required if createOption is CopyFromSanSnapshot. This is the ARM id of the source elastic san
 	// volume snapshot.
@@ -3391,7 +3427,7 @@ type CreationData_STATUS struct {
 
 	// ProvisionedBandwidthCopySpeed: If this field is set on a snapshot and createOption is CopyStart, the snapshot will be
 	// copied at a quicker speed.
-	ProvisionedBandwidthCopySpeed *CreationData_ProvisionedBandwidthCopySpeed_STATUS `json:"provisionedBandwidthCopySpeed,omitempty"`
+	ProvisionedBandwidthCopySpeed *ProvisionedBandwidthCopyOption_STATUS `json:"provisionedBandwidthCopySpeed,omitempty"`
 
 	// SecurityDataUri: If createOption is ImportSecure, this is the URI of a blob to be imported into VM guest state.
 	SecurityDataUri *string `json:"securityDataUri,omitempty"`
@@ -3433,7 +3469,7 @@ func (data *CreationData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	if typedInput.CreateOption != nil {
 		var temp string
 		temp = string(*typedInput.CreateOption)
-		createOption := CreationData_CreateOption_STATUS(temp)
+		createOption := DiskCreateOption_STATUS(temp)
 		data.CreateOption = &createOption
 	}
 
@@ -3481,7 +3517,7 @@ func (data *CreationData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	if typedInput.ProvisionedBandwidthCopySpeed != nil {
 		var temp string
 		temp = string(*typedInput.ProvisionedBandwidthCopySpeed)
-		provisionedBandwidthCopySpeed := CreationData_ProvisionedBandwidthCopySpeed_STATUS(temp)
+		provisionedBandwidthCopySpeed := ProvisionedBandwidthCopyOption_STATUS(temp)
 		data.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeed
 	}
 
@@ -3531,7 +3567,7 @@ func (data *CreationData_STATUS) AssignProperties_From_CreationData_STATUS(sourc
 	// CreateOption
 	if source.CreateOption != nil {
 		createOption := *source.CreateOption
-		createOptionTemp := genruntime.ToEnum(createOption, creationData_CreateOption_STATUS_Values)
+		createOptionTemp := genruntime.ToEnum(createOption, diskCreateOption_STATUS_Values)
 		data.CreateOption = &createOptionTemp
 	} else {
 		data.CreateOption = nil
@@ -3578,7 +3614,7 @@ func (data *CreationData_STATUS) AssignProperties_From_CreationData_STATUS(sourc
 	// ProvisionedBandwidthCopySpeed
 	if source.ProvisionedBandwidthCopySpeed != nil {
 		provisionedBandwidthCopySpeed := *source.ProvisionedBandwidthCopySpeed
-		provisionedBandwidthCopySpeedTemp := genruntime.ToEnum(provisionedBandwidthCopySpeed, creationData_ProvisionedBandwidthCopySpeed_STATUS_Values)
+		provisionedBandwidthCopySpeedTemp := genruntime.ToEnum(provisionedBandwidthCopySpeed, provisionedBandwidthCopyOption_STATUS_Values)
 		data.ProvisionedBandwidthCopySpeed = &provisionedBandwidthCopySpeedTemp
 	} else {
 		data.ProvisionedBandwidthCopySpeed = nil
@@ -3739,8 +3775,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3757,8 +3791,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3784,8 +3816,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3802,8 +3832,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3827,58 +3855,269 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	return nil
 }
 
-// +kubebuilder:validation:Enum={"V1","V2"}
-type DiskProperties_HyperVGeneration string
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan struct {
+	// +kubebuilder:validation:Required
+	// Name: The plan ID.
+	Name *string `json:"name,omitempty"`
 
-const (
-	DiskProperties_HyperVGeneration_V1 = DiskProperties_HyperVGeneration("V1")
-	DiskProperties_HyperVGeneration_V2 = DiskProperties_HyperVGeneration("V2")
-)
+	// +kubebuilder:validation:Required
+	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
+	// imageReference element.
+	Product *string `json:"product,omitempty"`
 
-// Mapping from string to DiskProperties_HyperVGeneration
-var diskProperties_HyperVGeneration_Values = map[string]DiskProperties_HyperVGeneration{
-	"v1": DiskProperties_HyperVGeneration_V1,
-	"v2": DiskProperties_HyperVGeneration_V2,
+	// PromotionCode: The Offer Promotion Code.
+	PromotionCode *string `json:"promotionCode,omitempty"`
+
+	// +kubebuilder:validation:Required
+	// Publisher: The publisher ID.
+	Publisher *string `json:"publisher,omitempty"`
 }
 
-type DiskProperties_HyperVGeneration_STATUS string
+var _ genruntime.ARMTransformer = &DiskPurchasePlan{}
 
-const (
-	DiskProperties_HyperVGeneration_STATUS_V1 = DiskProperties_HyperVGeneration_STATUS("V1")
-	DiskProperties_HyperVGeneration_STATUS_V2 = DiskProperties_HyperVGeneration_STATUS("V2")
-)
+// ConvertToARM converts from a Kubernetes CRD object to an ARM object
+func (plan *DiskPurchasePlan) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+	if plan == nil {
+		return nil, nil
+	}
+	result := &arm.DiskPurchasePlan{}
 
-// Mapping from string to DiskProperties_HyperVGeneration_STATUS
-var diskProperties_HyperVGeneration_STATUS_Values = map[string]DiskProperties_HyperVGeneration_STATUS{
-	"v1": DiskProperties_HyperVGeneration_STATUS_V1,
-	"v2": DiskProperties_HyperVGeneration_STATUS_V2,
+	// Set property "Name":
+	if plan.Name != nil {
+		name := *plan.Name
+		result.Name = &name
+	}
+
+	// Set property "Product":
+	if plan.Product != nil {
+		product := *plan.Product
+		result.Product = &product
+	}
+
+	// Set property "PromotionCode":
+	if plan.PromotionCode != nil {
+		promotionCode := *plan.PromotionCode
+		result.PromotionCode = &promotionCode
+	}
+
+	// Set property "Publisher":
+	if plan.Publisher != nil {
+		publisher := *plan.Publisher
+		result.Publisher = &publisher
+	}
+	return result, nil
 }
 
-// +kubebuilder:validation:Enum={"Linux","Windows"}
-type DiskProperties_OsType string
-
-const (
-	DiskProperties_OsType_Linux   = DiskProperties_OsType("Linux")
-	DiskProperties_OsType_Windows = DiskProperties_OsType("Windows")
-)
-
-// Mapping from string to DiskProperties_OsType
-var diskProperties_OsType_Values = map[string]DiskProperties_OsType{
-	"linux":   DiskProperties_OsType_Linux,
-	"windows": DiskProperties_OsType_Windows,
+// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
+func (plan *DiskPurchasePlan) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.DiskPurchasePlan{}
 }
 
-type DiskProperties_OsType_STATUS string
+// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
+func (plan *DiskPurchasePlan) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.DiskPurchasePlan)
+	if !ok {
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DiskPurchasePlan, got %T", armInput)
+	}
 
-const (
-	DiskProperties_OsType_STATUS_Linux   = DiskProperties_OsType_STATUS("Linux")
-	DiskProperties_OsType_STATUS_Windows = DiskProperties_OsType_STATUS("Windows")
-)
+	// Set property "Name":
+	if typedInput.Name != nil {
+		name := *typedInput.Name
+		plan.Name = &name
+	}
 
-// Mapping from string to DiskProperties_OsType_STATUS
-var diskProperties_OsType_STATUS_Values = map[string]DiskProperties_OsType_STATUS{
-	"linux":   DiskProperties_OsType_STATUS_Linux,
-	"windows": DiskProperties_OsType_STATUS_Windows,
+	// Set property "Product":
+	if typedInput.Product != nil {
+		product := *typedInput.Product
+		plan.Product = &product
+	}
+
+	// Set property "PromotionCode":
+	if typedInput.PromotionCode != nil {
+		promotionCode := *typedInput.PromotionCode
+		plan.PromotionCode = &promotionCode
+	}
+
+	// Set property "Publisher":
+	if typedInput.Publisher != nil {
+		publisher := *typedInput.Publisher
+		plan.Publisher = &publisher
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_From_DiskPurchasePlan populates our DiskPurchasePlan from the provided source DiskPurchasePlan
+func (plan *DiskPurchasePlan) AssignProperties_From_DiskPurchasePlan(source *storage.DiskPurchasePlan) error {
+
+	// Name
+	plan.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Product
+	plan.Product = genruntime.ClonePointerToString(source.Product)
+
+	// PromotionCode
+	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
+
+	// Publisher
+	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskPurchasePlan populates the provided destination DiskPurchasePlan from our DiskPurchasePlan
+func (plan *DiskPurchasePlan) AssignProperties_To_DiskPurchasePlan(destination *storage.DiskPurchasePlan) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(plan.Name)
+
+	// Product
+	destination.Product = genruntime.ClonePointerToString(plan.Product)
+
+	// PromotionCode
+	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
+
+	// Publisher
+	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Initialize_From_DiskPurchasePlan_STATUS populates our DiskPurchasePlan from the provided source DiskPurchasePlan_STATUS
+func (plan *DiskPurchasePlan) Initialize_From_DiskPurchasePlan_STATUS(source *DiskPurchasePlan_STATUS) error {
+
+	// Name
+	plan.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Product
+	plan.Product = genruntime.ClonePointerToString(source.Product)
+
+	// PromotionCode
+	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
+
+	// Publisher
+	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
+
+	// No error
+	return nil
+}
+
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan_STATUS struct {
+	// Name: The plan ID.
+	Name *string `json:"name,omitempty"`
+
+	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
+	// imageReference element.
+	Product *string `json:"product,omitempty"`
+
+	// PromotionCode: The Offer Promotion Code.
+	PromotionCode *string `json:"promotionCode,omitempty"`
+
+	// Publisher: The publisher ID.
+	Publisher *string `json:"publisher,omitempty"`
+}
+
+var _ genruntime.FromARMConverter = &DiskPurchasePlan_STATUS{}
+
+// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
+func (plan *DiskPurchasePlan_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.DiskPurchasePlan_STATUS{}
+}
+
+// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
+func (plan *DiskPurchasePlan_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.DiskPurchasePlan_STATUS)
+	if !ok {
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DiskPurchasePlan_STATUS, got %T", armInput)
+	}
+
+	// Set property "Name":
+	if typedInput.Name != nil {
+		name := *typedInput.Name
+		plan.Name = &name
+	}
+
+	// Set property "Product":
+	if typedInput.Product != nil {
+		product := *typedInput.Product
+		plan.Product = &product
+	}
+
+	// Set property "PromotionCode":
+	if typedInput.PromotionCode != nil {
+		promotionCode := *typedInput.PromotionCode
+		plan.PromotionCode = &promotionCode
+	}
+
+	// Set property "Publisher":
+	if typedInput.Publisher != nil {
+		publisher := *typedInput.Publisher
+		plan.Publisher = &publisher
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_From_DiskPurchasePlan_STATUS populates our DiskPurchasePlan_STATUS from the provided source DiskPurchasePlan_STATUS
+func (plan *DiskPurchasePlan_STATUS) AssignProperties_From_DiskPurchasePlan_STATUS(source *storage.DiskPurchasePlan_STATUS) error {
+
+	// Name
+	plan.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Product
+	plan.Product = genruntime.ClonePointerToString(source.Product)
+
+	// PromotionCode
+	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
+
+	// Publisher
+	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskPurchasePlan_STATUS populates the provided destination DiskPurchasePlan_STATUS from our DiskPurchasePlan_STATUS
+func (plan *DiskPurchasePlan_STATUS) AssignProperties_To_DiskPurchasePlan_STATUS(destination *storage.DiskPurchasePlan_STATUS) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(plan.Name)
+
+	// Product
+	destination.Product = genruntime.ClonePointerToString(plan.Product)
+
+	// PromotionCode
+	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
+
+	// Publisher
+	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
 }
 
 // Contains the security related information for the resource.
@@ -3888,7 +4127,7 @@ type DiskSecurityProfile struct {
 	SecureVMDiskEncryptionSetReference *genruntime.ResourceReference `armReference:"SecureVMDiskEncryptionSetId" json:"secureVMDiskEncryptionSetReference,omitempty"`
 
 	// SecurityType: Specifies the SecurityType of the VM. Applicable for OS disks only.
-	SecurityType *DiskSecurityType `json:"securityType,omitempty"`
+	SecurityType *DiskSecurityTypes `json:"securityType,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &DiskSecurityProfile{}
@@ -3914,7 +4153,7 @@ func (profile *DiskSecurityProfile) ConvertToARM(resolved genruntime.ConvertToAR
 	if profile.SecurityType != nil {
 		var temp string
 		temp = string(*profile.SecurityType)
-		securityType := arm.DiskSecurityType(temp)
+		securityType := arm.DiskSecurityTypes(temp)
 		result.SecurityType = &securityType
 	}
 	return result, nil
@@ -3938,7 +4177,7 @@ func (profile *DiskSecurityProfile) PopulateFromARM(owner genruntime.ArbitraryOw
 	if typedInput.SecurityType != nil {
 		var temp string
 		temp = string(*typedInput.SecurityType)
-		securityType := DiskSecurityType(temp)
+		securityType := DiskSecurityTypes(temp)
 		profile.SecurityType = &securityType
 	}
 
@@ -3960,7 +4199,7 @@ func (profile *DiskSecurityProfile) AssignProperties_From_DiskSecurityProfile(so
 	// SecurityType
 	if source.SecurityType != nil {
 		securityType := *source.SecurityType
-		securityTypeTemp := genruntime.ToEnum(securityType, diskSecurityType_Values)
+		securityTypeTemp := genruntime.ToEnum(securityType, diskSecurityTypes_Values)
 		profile.SecurityType = &securityTypeTemp
 	} else {
 		profile.SecurityType = nil
@@ -4015,7 +4254,7 @@ func (profile *DiskSecurityProfile) Initialize_From_DiskSecurityProfile_STATUS(s
 
 	// SecurityType
 	if source.SecurityType != nil {
-		securityType := genruntime.ToEnum(string(*source.SecurityType), diskSecurityType_Values)
+		securityType := genruntime.ToEnum(string(*source.SecurityType), diskSecurityTypes_Values)
 		profile.SecurityType = &securityType
 	} else {
 		profile.SecurityType = nil
@@ -4032,7 +4271,7 @@ type DiskSecurityProfile_STATUS struct {
 	SecureVMDiskEncryptionSetId *string `json:"secureVMDiskEncryptionSetId,omitempty"`
 
 	// SecurityType: Specifies the SecurityType of the VM. Applicable for OS disks only.
-	SecurityType *DiskSecurityType_STATUS `json:"securityType,omitempty"`
+	SecurityType *DiskSecurityTypes_STATUS `json:"securityType,omitempty"`
 }
 
 var _ genruntime.FromARMConverter = &DiskSecurityProfile_STATUS{}
@@ -4059,7 +4298,7 @@ func (profile *DiskSecurityProfile_STATUS) PopulateFromARM(owner genruntime.Arbi
 	if typedInput.SecurityType != nil {
 		var temp string
 		temp = string(*typedInput.SecurityType)
-		securityType := DiskSecurityType_STATUS(temp)
+		securityType := DiskSecurityTypes_STATUS(temp)
 		profile.SecurityType = &securityType
 	}
 
@@ -4076,7 +4315,7 @@ func (profile *DiskSecurityProfile_STATUS) AssignProperties_From_DiskSecurityPro
 	// SecurityType
 	if source.SecurityType != nil {
 		securityType := *source.SecurityType
-		securityTypeTemp := genruntime.ToEnum(securityType, diskSecurityType_STATUS_Values)
+		securityTypeTemp := genruntime.ToEnum(securityType, diskSecurityTypes_STATUS_Values)
 		profile.SecurityType = &securityTypeTemp
 	} else {
 		profile.SecurityType = nil
@@ -4117,7 +4356,7 @@ func (profile *DiskSecurityProfile_STATUS) AssignProperties_To_DiskSecurityProfi
 // PremiumV2_LRS.
 type DiskSku struct {
 	// Name: The sku name.
-	Name *DiskSku_Name `json:"name,omitempty"`
+	Name *DiskStorageAccountTypes `json:"name,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &DiskSku{}
@@ -4133,7 +4372,7 @@ func (diskSku *DiskSku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDet
 	if diskSku.Name != nil {
 		var temp string
 		temp = string(*diskSku.Name)
-		name := arm.DiskSku_Name(temp)
+		name := arm.DiskStorageAccountTypes(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -4155,7 +4394,7 @@ func (diskSku *DiskSku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference
 	if typedInput.Name != nil {
 		var temp string
 		temp = string(*typedInput.Name)
-		name := DiskSku_Name(temp)
+		name := DiskStorageAccountTypes(temp)
 		diskSku.Name = &name
 	}
 
@@ -4169,7 +4408,7 @@ func (diskSku *DiskSku) AssignProperties_From_DiskSku(source *storage.DiskSku) e
 	// Name
 	if source.Name != nil {
 		name := *source.Name
-		nameTemp := genruntime.ToEnum(name, diskSku_Name_Values)
+		nameTemp := genruntime.ToEnum(name, diskStorageAccountTypes_Values)
 		diskSku.Name = &nameTemp
 	} else {
 		diskSku.Name = nil
@@ -4208,7 +4447,7 @@ func (diskSku *DiskSku) Initialize_From_DiskSku_STATUS(source *DiskSku_STATUS) e
 
 	// Name
 	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), diskSku_Name_Values)
+		name := genruntime.ToEnum(string(*source.Name), diskStorageAccountTypes_Values)
 		diskSku.Name = &name
 	} else {
 		diskSku.Name = nil
@@ -4222,7 +4461,7 @@ func (diskSku *DiskSku) Initialize_From_DiskSku_STATUS(source *DiskSku_STATUS) e
 // PremiumV2_LRS.
 type DiskSku_STATUS struct {
 	// Name: The sku name.
-	Name *DiskSku_Name_STATUS `json:"name,omitempty"`
+	Name *DiskStorageAccountTypes_STATUS `json:"name,omitempty"`
 
 	// Tier: The sku tier.
 	Tier *string `json:"tier,omitempty"`
@@ -4246,7 +4485,7 @@ func (diskSku *DiskSku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	if typedInput.Name != nil {
 		var temp string
 		temp = string(*typedInput.Name)
-		name := DiskSku_Name_STATUS(temp)
+		name := DiskStorageAccountTypes_STATUS(temp)
 		diskSku.Name = &name
 	}
 
@@ -4266,7 +4505,7 @@ func (diskSku *DiskSku_STATUS) AssignProperties_From_DiskSku_STATUS(source *stor
 	// Name
 	if source.Name != nil {
 		name := *source.Name
-		nameTemp := genruntime.ToEnum(name, diskSku_Name_STATUS_Values)
+		nameTemp := genruntime.ToEnum(name, diskStorageAccountTypes_STATUS_Values)
 		diskSku.Name = &nameTemp
 	} else {
 		diskSku.Name = nil
@@ -4663,8 +4902,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_From_Encryption
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement(&encryptionSettingItem)
 			if err != nil {
@@ -4701,8 +4938,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_To_EncryptionSe
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]storage.EncryptionSettingsElement, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting storage.EncryptionSettingsElement
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement(&encryptionSetting)
 			if err != nil {
@@ -4744,8 +4979,6 @@ func (collection *EncryptionSettingsCollection) Initialize_From_EncryptionSettin
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement
 			err := encryptionSetting.Initialize_From_EncryptionSettingsElement_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -4835,8 +5068,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_From_Enc
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement_STATUS, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement_STATUS
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -4873,8 +5104,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_To_Encry
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]storage.EncryptionSettingsElement_STATUS, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting storage.EncryptionSettingsElement_STATUS
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement_STATUS(&encryptionSetting)
 			if err != nil {
@@ -5116,6 +5345,35 @@ func (location *ExtendedLocation_STATUS) AssignProperties_To_ExtendedLocation_ST
 	return nil
 }
 
+// The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
+// +kubebuilder:validation:Enum={"V1","V2"}
+type HyperVGeneration string
+
+const (
+	HyperVGeneration_V1 = HyperVGeneration("V1")
+	HyperVGeneration_V2 = HyperVGeneration("V2")
+)
+
+// Mapping from string to HyperVGeneration
+var hyperVGeneration_Values = map[string]HyperVGeneration{
+	"v1": HyperVGeneration_V1,
+	"v2": HyperVGeneration_V2,
+}
+
+// The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
+type HyperVGeneration_STATUS string
+
+const (
+	HyperVGeneration_STATUS_V1 = HyperVGeneration_STATUS("V1")
+	HyperVGeneration_STATUS_V2 = HyperVGeneration_STATUS("V2")
+)
+
+// Mapping from string to HyperVGeneration_STATUS
+var hyperVGeneration_STATUS_Values = map[string]HyperVGeneration_STATUS{
+	"v1": HyperVGeneration_STATUS_V1,
+	"v2": HyperVGeneration_STATUS_V2,
+}
+
 // Policy for accessing the disk via network.
 // +kubebuilder:validation:Enum={"AllowAll","AllowPrivate","DenyAll"}
 type NetworkAccessPolicy string
@@ -5147,6 +5405,35 @@ var networkAccessPolicy_STATUS_Values = map[string]NetworkAccessPolicy_STATUS{
 	"allowall":     NetworkAccessPolicy_STATUS_AllowAll,
 	"allowprivate": NetworkAccessPolicy_STATUS_AllowPrivate,
 	"denyall":      NetworkAccessPolicy_STATUS_DenyAll,
+}
+
+// The Operating System type.
+// +kubebuilder:validation:Enum={"Linux","Windows"}
+type OperatingSystemTypes string
+
+const (
+	OperatingSystemTypes_Linux   = OperatingSystemTypes("Linux")
+	OperatingSystemTypes_Windows = OperatingSystemTypes("Windows")
+)
+
+// Mapping from string to OperatingSystemTypes
+var operatingSystemTypes_Values = map[string]OperatingSystemTypes{
+	"linux":   OperatingSystemTypes_Linux,
+	"windows": OperatingSystemTypes_Windows,
+}
+
+// The Operating System type.
+type OperatingSystemTypes_STATUS string
+
+const (
+	OperatingSystemTypes_STATUS_Linux   = OperatingSystemTypes_STATUS("Linux")
+	OperatingSystemTypes_STATUS_Windows = OperatingSystemTypes_STATUS("Windows")
+)
+
+// Mapping from string to OperatingSystemTypes_STATUS
+var operatingSystemTypes_STATUS_Values = map[string]OperatingSystemTypes_STATUS{
+	"linux":   OperatingSystemTypes_STATUS_Linux,
+	"windows": OperatingSystemTypes_STATUS_Windows,
 }
 
 // Properties of the disk for which update is pending.
@@ -5237,271 +5524,6 @@ var publicNetworkAccess_STATUS_Values = map[string]PublicNetworkAccess_STATUS{
 	"enabled":  PublicNetworkAccess_STATUS_Enabled,
 }
 
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan struct {
-	// +kubebuilder:validation:Required
-	// Name: The plan ID.
-	Name *string `json:"name,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
-	// imageReference element.
-	Product *string `json:"product,omitempty"`
-
-	// PromotionCode: The Offer Promotion Code.
-	PromotionCode *string `json:"promotionCode,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// Publisher: The publisher ID.
-	Publisher *string `json:"publisher,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &PurchasePlan{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (plan *PurchasePlan) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if plan == nil {
-		return nil, nil
-	}
-	result := &arm.PurchasePlan{}
-
-	// Set property "Name":
-	if plan.Name != nil {
-		name := *plan.Name
-		result.Name = &name
-	}
-
-	// Set property "Product":
-	if plan.Product != nil {
-		product := *plan.Product
-		result.Product = &product
-	}
-
-	// Set property "PromotionCode":
-	if plan.PromotionCode != nil {
-		promotionCode := *plan.PromotionCode
-		result.PromotionCode = &promotionCode
-	}
-
-	// Set property "Publisher":
-	if plan.Publisher != nil {
-		publisher := *plan.Publisher
-		result.Publisher = &publisher
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (plan *PurchasePlan) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.PurchasePlan{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (plan *PurchasePlan) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.PurchasePlan)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PurchasePlan, got %T", armInput)
-	}
-
-	// Set property "Name":
-	if typedInput.Name != nil {
-		name := *typedInput.Name
-		plan.Name = &name
-	}
-
-	// Set property "Product":
-	if typedInput.Product != nil {
-		product := *typedInput.Product
-		plan.Product = &product
-	}
-
-	// Set property "PromotionCode":
-	if typedInput.PromotionCode != nil {
-		promotionCode := *typedInput.PromotionCode
-		plan.PromotionCode = &promotionCode
-	}
-
-	// Set property "Publisher":
-	if typedInput.Publisher != nil {
-		publisher := *typedInput.Publisher
-		plan.Publisher = &publisher
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_PurchasePlan populates our PurchasePlan from the provided source PurchasePlan
-func (plan *PurchasePlan) AssignProperties_From_PurchasePlan(source *storage.PurchasePlan) error {
-
-	// Name
-	plan.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Product
-	plan.Product = genruntime.ClonePointerToString(source.Product)
-
-	// PromotionCode
-	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
-
-	// Publisher
-	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_PurchasePlan populates the provided destination PurchasePlan from our PurchasePlan
-func (plan *PurchasePlan) AssignProperties_To_PurchasePlan(destination *storage.PurchasePlan) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Name
-	destination.Name = genruntime.ClonePointerToString(plan.Name)
-
-	// Product
-	destination.Product = genruntime.ClonePointerToString(plan.Product)
-
-	// PromotionCode
-	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
-
-	// Publisher
-	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PurchasePlan_STATUS populates our PurchasePlan from the provided source PurchasePlan_STATUS
-func (plan *PurchasePlan) Initialize_From_PurchasePlan_STATUS(source *PurchasePlan_STATUS) error {
-
-	// Name
-	plan.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Product
-	plan.Product = genruntime.ClonePointerToString(source.Product)
-
-	// PromotionCode
-	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
-
-	// Publisher
-	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// No error
-	return nil
-}
-
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan_STATUS struct {
-	// Name: The plan ID.
-	Name *string `json:"name,omitempty"`
-
-	// Product: Specifies the product of the image from the marketplace. This is the same value as Offer under the
-	// imageReference element.
-	Product *string `json:"product,omitempty"`
-
-	// PromotionCode: The Offer Promotion Code.
-	PromotionCode *string `json:"promotionCode,omitempty"`
-
-	// Publisher: The publisher ID.
-	Publisher *string `json:"publisher,omitempty"`
-}
-
-var _ genruntime.FromARMConverter = &PurchasePlan_STATUS{}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (plan *PurchasePlan_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.PurchasePlan_STATUS{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (plan *PurchasePlan_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.PurchasePlan_STATUS)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PurchasePlan_STATUS, got %T", armInput)
-	}
-
-	// Set property "Name":
-	if typedInput.Name != nil {
-		name := *typedInput.Name
-		plan.Name = &name
-	}
-
-	// Set property "Product":
-	if typedInput.Product != nil {
-		product := *typedInput.Product
-		plan.Product = &product
-	}
-
-	// Set property "PromotionCode":
-	if typedInput.PromotionCode != nil {
-		promotionCode := *typedInput.PromotionCode
-		plan.PromotionCode = &promotionCode
-	}
-
-	// Set property "Publisher":
-	if typedInput.Publisher != nil {
-		publisher := *typedInput.Publisher
-		plan.Publisher = &publisher
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_PurchasePlan_STATUS populates our PurchasePlan_STATUS from the provided source PurchasePlan_STATUS
-func (plan *PurchasePlan_STATUS) AssignProperties_From_PurchasePlan_STATUS(source *storage.PurchasePlan_STATUS) error {
-
-	// Name
-	plan.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Product
-	plan.Product = genruntime.ClonePointerToString(source.Product)
-
-	// PromotionCode
-	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
-
-	// Publisher
-	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_PurchasePlan_STATUS populates the provided destination PurchasePlan_STATUS from our PurchasePlan_STATUS
-func (plan *PurchasePlan_STATUS) AssignProperties_To_PurchasePlan_STATUS(destination *storage.PurchasePlan_STATUS) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Name
-	destination.Name = genruntime.ClonePointerToString(plan.Name)
-
-	// Product
-	destination.Product = genruntime.ClonePointerToString(plan.Product)
-
-	// PromotionCode
-	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
-
-	// Publisher
-	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
 type ShareInfoElement_STATUS struct {
 	// VmUri: A relative URI containing the ID of the VM that has the disk attached.
 	VmUri *string `json:"vmUri,omitempty"`
@@ -5566,7 +5588,7 @@ type SupportedCapabilities struct {
 	AcceleratedNetwork *bool `json:"acceleratedNetwork,omitempty"`
 
 	// Architecture: CPU architecture supported by an OS disk.
-	Architecture *SupportedCapabilities_Architecture `json:"architecture,omitempty"`
+	Architecture *Architecture `json:"architecture,omitempty"`
 
 	// DiskControllerTypes: The disk controllers that an OS disk supports. If set it can be SCSI or SCSI, NVME or NVME, SCSI.
 	DiskControllerTypes *string `json:"diskControllerTypes,omitempty"`
@@ -5591,7 +5613,7 @@ func (capabilities *SupportedCapabilities) ConvertToARM(resolved genruntime.Conv
 	if capabilities.Architecture != nil {
 		var temp string
 		temp = string(*capabilities.Architecture)
-		architecture := arm.SupportedCapabilities_Architecture(temp)
+		architecture := arm.Architecture(temp)
 		result.Architecture = &architecture
 	}
 
@@ -5625,7 +5647,7 @@ func (capabilities *SupportedCapabilities) PopulateFromARM(owner genruntime.Arbi
 	if typedInput.Architecture != nil {
 		var temp string
 		temp = string(*typedInput.Architecture)
-		architecture := SupportedCapabilities_Architecture(temp)
+		architecture := Architecture(temp)
 		capabilities.Architecture = &architecture
 	}
 
@@ -5653,7 +5675,7 @@ func (capabilities *SupportedCapabilities) AssignProperties_From_SupportedCapabi
 	// Architecture
 	if source.Architecture != nil {
 		architecture := *source.Architecture
-		architectureTemp := genruntime.ToEnum(architecture, supportedCapabilities_Architecture_Values)
+		architectureTemp := genruntime.ToEnum(architecture, architecture_Values)
 		capabilities.Architecture = &architectureTemp
 	} else {
 		capabilities.Architecture = nil
@@ -5714,7 +5736,7 @@ func (capabilities *SupportedCapabilities) Initialize_From_SupportedCapabilities
 
 	// Architecture
 	if source.Architecture != nil {
-		architecture := genruntime.ToEnum(string(*source.Architecture), supportedCapabilities_Architecture_Values)
+		architecture := genruntime.ToEnum(string(*source.Architecture), architecture_Values)
 		capabilities.Architecture = &architecture
 	} else {
 		capabilities.Architecture = nil
@@ -5733,7 +5755,7 @@ type SupportedCapabilities_STATUS struct {
 	AcceleratedNetwork *bool `json:"acceleratedNetwork,omitempty"`
 
 	// Architecture: CPU architecture supported by an OS disk.
-	Architecture *SupportedCapabilities_Architecture_STATUS `json:"architecture,omitempty"`
+	Architecture *Architecture_STATUS `json:"architecture,omitempty"`
 
 	// DiskControllerTypes: The disk controllers that an OS disk supports. If set it can be SCSI or SCSI, NVME or NVME, SCSI.
 	DiskControllerTypes *string `json:"diskControllerTypes,omitempty"`
@@ -5763,7 +5785,7 @@ func (capabilities *SupportedCapabilities_STATUS) PopulateFromARM(owner genrunti
 	if typedInput.Architecture != nil {
 		var temp string
 		temp = string(*typedInput.Architecture)
-		architecture := SupportedCapabilities_Architecture_STATUS(temp)
+		architecture := Architecture_STATUS(temp)
 		capabilities.Architecture = &architecture
 	}
 
@@ -5791,7 +5813,7 @@ func (capabilities *SupportedCapabilities_STATUS) AssignProperties_From_Supporte
 	// Architecture
 	if source.Architecture != nil {
 		architecture := *source.Architecture
-		architectureTemp := genruntime.ToEnum(architecture, supportedCapabilities_Architecture_STATUS_Values)
+		architectureTemp := genruntime.ToEnum(architecture, architecture_STATUS_Values)
 		capabilities.Architecture = &architectureTemp
 	} else {
 		capabilities.Architecture = nil
@@ -5839,182 +5861,348 @@ func (capabilities *SupportedCapabilities_STATUS) AssignProperties_To_SupportedC
 	return nil
 }
 
+// Metadata pertaining to creation and last modification of the resource.
+type SystemData_STATUS struct {
+	// CreatedAt: The timestamp of resource creation (UTC).
+	CreatedAt *string `json:"createdAt,omitempty"`
+
+	// CreatedBy: The identity that created the resource.
+	CreatedBy *string `json:"createdBy,omitempty"`
+
+	// CreatedByType: The type of identity that created the resource.
+	CreatedByType *SystemData_CreatedByType_STATUS `json:"createdByType,omitempty"`
+
+	// LastModifiedAt: The timestamp of resource last modification (UTC)
+	LastModifiedAt *string `json:"lastModifiedAt,omitempty"`
+
+	// LastModifiedBy: The identity that last modified the resource.
+	LastModifiedBy *string `json:"lastModifiedBy,omitempty"`
+
+	// LastModifiedByType: The type of identity that last modified the resource.
+	LastModifiedByType *SystemData_LastModifiedByType_STATUS `json:"lastModifiedByType,omitempty"`
+}
+
+var _ genruntime.FromARMConverter = &SystemData_STATUS{}
+
+// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
+func (data *SystemData_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.SystemData_STATUS{}
+}
+
+// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
+func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.SystemData_STATUS)
+	if !ok {
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData_STATUS, got %T", armInput)
+	}
+
+	// Set property "CreatedAt":
+	if typedInput.CreatedAt != nil {
+		createdAt := *typedInput.CreatedAt
+		data.CreatedAt = &createdAt
+	}
+
+	// Set property "CreatedBy":
+	if typedInput.CreatedBy != nil {
+		createdBy := *typedInput.CreatedBy
+		data.CreatedBy = &createdBy
+	}
+
+	// Set property "CreatedByType":
+	if typedInput.CreatedByType != nil {
+		var temp string
+		temp = string(*typedInput.CreatedByType)
+		createdByType := SystemData_CreatedByType_STATUS(temp)
+		data.CreatedByType = &createdByType
+	}
+
+	// Set property "LastModifiedAt":
+	if typedInput.LastModifiedAt != nil {
+		lastModifiedAt := *typedInput.LastModifiedAt
+		data.LastModifiedAt = &lastModifiedAt
+	}
+
+	// Set property "LastModifiedBy":
+	if typedInput.LastModifiedBy != nil {
+		lastModifiedBy := *typedInput.LastModifiedBy
+		data.LastModifiedBy = &lastModifiedBy
+	}
+
+	// Set property "LastModifiedByType":
+	if typedInput.LastModifiedByType != nil {
+		var temp string
+		temp = string(*typedInput.LastModifiedByType)
+		lastModifiedByType := SystemData_LastModifiedByType_STATUS(temp)
+		data.LastModifiedByType = &lastModifiedByType
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	if source.CreatedByType != nil {
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
+	} else {
+		data.CreatedByType = nil
+	}
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	if source.LastModifiedByType != nil {
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
+	} else {
+		data.LastModifiedByType = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	if data.CreatedByType != nil {
+		createdByType := string(*data.CreatedByType)
+		destination.CreatedByType = &createdByType
+	} else {
+		destination.CreatedByType = nil
+	}
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	if data.LastModifiedByType != nil {
+		lastModifiedByType := string(*data.LastModifiedByType)
+		destination.LastModifiedByType = &lastModifiedByType
+	} else {
+		destination.LastModifiedByType = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// CPU architecture supported by an OS disk.
+// +kubebuilder:validation:Enum={"Arm64","x64"}
+type Architecture string
+
+const (
+	Architecture_Arm64 = Architecture("Arm64")
+	Architecture_X64   = Architecture("x64")
+)
+
+// Mapping from string to Architecture
+var architecture_Values = map[string]Architecture{
+	"arm64": Architecture_Arm64,
+	"x64":   Architecture_X64,
+}
+
+// CPU architecture supported by an OS disk.
+type Architecture_STATUS string
+
+const (
+	Architecture_STATUS_Arm64 = Architecture_STATUS("Arm64")
+	Architecture_STATUS_X64   = Architecture_STATUS("x64")
+)
+
+// Mapping from string to Architecture_STATUS
+var architecture_STATUS_Values = map[string]Architecture_STATUS{
+	"arm64": Architecture_STATUS_Arm64,
+	"x64":   Architecture_STATUS_X64,
+}
+
+// This enumerates the possible sources of a disk's creation.
 // +kubebuilder:validation:Enum={"Attach","Copy","CopyFromSanSnapshot","CopyStart","Empty","FromImage","Import","ImportSecure","Restore","Upload","UploadPreparedSecure"}
-type CreationData_CreateOption string
+type DiskCreateOption string
 
 const (
-	CreationData_CreateOption_Attach               = CreationData_CreateOption("Attach")
-	CreationData_CreateOption_Copy                 = CreationData_CreateOption("Copy")
-	CreationData_CreateOption_CopyFromSanSnapshot  = CreationData_CreateOption("CopyFromSanSnapshot")
-	CreationData_CreateOption_CopyStart            = CreationData_CreateOption("CopyStart")
-	CreationData_CreateOption_Empty                = CreationData_CreateOption("Empty")
-	CreationData_CreateOption_FromImage            = CreationData_CreateOption("FromImage")
-	CreationData_CreateOption_Import               = CreationData_CreateOption("Import")
-	CreationData_CreateOption_ImportSecure         = CreationData_CreateOption("ImportSecure")
-	CreationData_CreateOption_Restore              = CreationData_CreateOption("Restore")
-	CreationData_CreateOption_Upload               = CreationData_CreateOption("Upload")
-	CreationData_CreateOption_UploadPreparedSecure = CreationData_CreateOption("UploadPreparedSecure")
+	DiskCreateOption_Attach               = DiskCreateOption("Attach")
+	DiskCreateOption_Copy                 = DiskCreateOption("Copy")
+	DiskCreateOption_CopyFromSanSnapshot  = DiskCreateOption("CopyFromSanSnapshot")
+	DiskCreateOption_CopyStart            = DiskCreateOption("CopyStart")
+	DiskCreateOption_Empty                = DiskCreateOption("Empty")
+	DiskCreateOption_FromImage            = DiskCreateOption("FromImage")
+	DiskCreateOption_Import               = DiskCreateOption("Import")
+	DiskCreateOption_ImportSecure         = DiskCreateOption("ImportSecure")
+	DiskCreateOption_Restore              = DiskCreateOption("Restore")
+	DiskCreateOption_Upload               = DiskCreateOption("Upload")
+	DiskCreateOption_UploadPreparedSecure = DiskCreateOption("UploadPreparedSecure")
 )
 
-// Mapping from string to CreationData_CreateOption
-var creationData_CreateOption_Values = map[string]CreationData_CreateOption{
-	"attach":               CreationData_CreateOption_Attach,
-	"copy":                 CreationData_CreateOption_Copy,
-	"copyfromsansnapshot":  CreationData_CreateOption_CopyFromSanSnapshot,
-	"copystart":            CreationData_CreateOption_CopyStart,
-	"empty":                CreationData_CreateOption_Empty,
-	"fromimage":            CreationData_CreateOption_FromImage,
-	"import":               CreationData_CreateOption_Import,
-	"importsecure":         CreationData_CreateOption_ImportSecure,
-	"restore":              CreationData_CreateOption_Restore,
-	"upload":               CreationData_CreateOption_Upload,
-	"uploadpreparedsecure": CreationData_CreateOption_UploadPreparedSecure,
+// Mapping from string to DiskCreateOption
+var diskCreateOption_Values = map[string]DiskCreateOption{
+	"attach":               DiskCreateOption_Attach,
+	"copy":                 DiskCreateOption_Copy,
+	"copyfromsansnapshot":  DiskCreateOption_CopyFromSanSnapshot,
+	"copystart":            DiskCreateOption_CopyStart,
+	"empty":                DiskCreateOption_Empty,
+	"fromimage":            DiskCreateOption_FromImage,
+	"import":               DiskCreateOption_Import,
+	"importsecure":         DiskCreateOption_ImportSecure,
+	"restore":              DiskCreateOption_Restore,
+	"upload":               DiskCreateOption_Upload,
+	"uploadpreparedsecure": DiskCreateOption_UploadPreparedSecure,
 }
 
-type CreationData_CreateOption_STATUS string
+// This enumerates the possible sources of a disk's creation.
+type DiskCreateOption_STATUS string
 
 const (
-	CreationData_CreateOption_STATUS_Attach               = CreationData_CreateOption_STATUS("Attach")
-	CreationData_CreateOption_STATUS_Copy                 = CreationData_CreateOption_STATUS("Copy")
-	CreationData_CreateOption_STATUS_CopyFromSanSnapshot  = CreationData_CreateOption_STATUS("CopyFromSanSnapshot")
-	CreationData_CreateOption_STATUS_CopyStart            = CreationData_CreateOption_STATUS("CopyStart")
-	CreationData_CreateOption_STATUS_Empty                = CreationData_CreateOption_STATUS("Empty")
-	CreationData_CreateOption_STATUS_FromImage            = CreationData_CreateOption_STATUS("FromImage")
-	CreationData_CreateOption_STATUS_Import               = CreationData_CreateOption_STATUS("Import")
-	CreationData_CreateOption_STATUS_ImportSecure         = CreationData_CreateOption_STATUS("ImportSecure")
-	CreationData_CreateOption_STATUS_Restore              = CreationData_CreateOption_STATUS("Restore")
-	CreationData_CreateOption_STATUS_Upload               = CreationData_CreateOption_STATUS("Upload")
-	CreationData_CreateOption_STATUS_UploadPreparedSecure = CreationData_CreateOption_STATUS("UploadPreparedSecure")
+	DiskCreateOption_STATUS_Attach               = DiskCreateOption_STATUS("Attach")
+	DiskCreateOption_STATUS_Copy                 = DiskCreateOption_STATUS("Copy")
+	DiskCreateOption_STATUS_CopyFromSanSnapshot  = DiskCreateOption_STATUS("CopyFromSanSnapshot")
+	DiskCreateOption_STATUS_CopyStart            = DiskCreateOption_STATUS("CopyStart")
+	DiskCreateOption_STATUS_Empty                = DiskCreateOption_STATUS("Empty")
+	DiskCreateOption_STATUS_FromImage            = DiskCreateOption_STATUS("FromImage")
+	DiskCreateOption_STATUS_Import               = DiskCreateOption_STATUS("Import")
+	DiskCreateOption_STATUS_ImportSecure         = DiskCreateOption_STATUS("ImportSecure")
+	DiskCreateOption_STATUS_Restore              = DiskCreateOption_STATUS("Restore")
+	DiskCreateOption_STATUS_Upload               = DiskCreateOption_STATUS("Upload")
+	DiskCreateOption_STATUS_UploadPreparedSecure = DiskCreateOption_STATUS("UploadPreparedSecure")
 )
 
-// Mapping from string to CreationData_CreateOption_STATUS
-var creationData_CreateOption_STATUS_Values = map[string]CreationData_CreateOption_STATUS{
-	"attach":               CreationData_CreateOption_STATUS_Attach,
-	"copy":                 CreationData_CreateOption_STATUS_Copy,
-	"copyfromsansnapshot":  CreationData_CreateOption_STATUS_CopyFromSanSnapshot,
-	"copystart":            CreationData_CreateOption_STATUS_CopyStart,
-	"empty":                CreationData_CreateOption_STATUS_Empty,
-	"fromimage":            CreationData_CreateOption_STATUS_FromImage,
-	"import":               CreationData_CreateOption_STATUS_Import,
-	"importsecure":         CreationData_CreateOption_STATUS_ImportSecure,
-	"restore":              CreationData_CreateOption_STATUS_Restore,
-	"upload":               CreationData_CreateOption_STATUS_Upload,
-	"uploadpreparedsecure": CreationData_CreateOption_STATUS_UploadPreparedSecure,
-}
-
-// +kubebuilder:validation:Enum={"Enhanced","None"}
-type CreationData_ProvisionedBandwidthCopySpeed string
-
-const (
-	CreationData_ProvisionedBandwidthCopySpeed_Enhanced = CreationData_ProvisionedBandwidthCopySpeed("Enhanced")
-	CreationData_ProvisionedBandwidthCopySpeed_None     = CreationData_ProvisionedBandwidthCopySpeed("None")
-)
-
-// Mapping from string to CreationData_ProvisionedBandwidthCopySpeed
-var creationData_ProvisionedBandwidthCopySpeed_Values = map[string]CreationData_ProvisionedBandwidthCopySpeed{
-	"enhanced": CreationData_ProvisionedBandwidthCopySpeed_Enhanced,
-	"none":     CreationData_ProvisionedBandwidthCopySpeed_None,
-}
-
-type CreationData_ProvisionedBandwidthCopySpeed_STATUS string
-
-const (
-	CreationData_ProvisionedBandwidthCopySpeed_STATUS_Enhanced = CreationData_ProvisionedBandwidthCopySpeed_STATUS("Enhanced")
-	CreationData_ProvisionedBandwidthCopySpeed_STATUS_None     = CreationData_ProvisionedBandwidthCopySpeed_STATUS("None")
-)
-
-// Mapping from string to CreationData_ProvisionedBandwidthCopySpeed_STATUS
-var creationData_ProvisionedBandwidthCopySpeed_STATUS_Values = map[string]CreationData_ProvisionedBandwidthCopySpeed_STATUS{
-	"enhanced": CreationData_ProvisionedBandwidthCopySpeed_STATUS_Enhanced,
-	"none":     CreationData_ProvisionedBandwidthCopySpeed_STATUS_None,
+// Mapping from string to DiskCreateOption_STATUS
+var diskCreateOption_STATUS_Values = map[string]DiskCreateOption_STATUS{
+	"attach":               DiskCreateOption_STATUS_Attach,
+	"copy":                 DiskCreateOption_STATUS_Copy,
+	"copyfromsansnapshot":  DiskCreateOption_STATUS_CopyFromSanSnapshot,
+	"copystart":            DiskCreateOption_STATUS_CopyStart,
+	"empty":                DiskCreateOption_STATUS_Empty,
+	"fromimage":            DiskCreateOption_STATUS_FromImage,
+	"import":               DiskCreateOption_STATUS_Import,
+	"importsecure":         DiskCreateOption_STATUS_ImportSecure,
+	"restore":              DiskCreateOption_STATUS_Restore,
+	"upload":               DiskCreateOption_STATUS_Upload,
+	"uploadpreparedsecure": DiskCreateOption_STATUS_UploadPreparedSecure,
 }
 
 // Specifies the SecurityType of the VM. Applicable for OS disks only.
 // +kubebuilder:validation:Enum={"ConfidentialVM_DiskEncryptedWithCustomerKey","ConfidentialVM_DiskEncryptedWithPlatformKey","ConfidentialVM_NonPersistedTPM","ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey","TrustedLaunch"}
-type DiskSecurityType string
+type DiskSecurityTypes string
 
 const (
-	DiskSecurityType_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityType("ConfidentialVM_DiskEncryptedWithCustomerKey")
-	DiskSecurityType_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityType("ConfidentialVM_DiskEncryptedWithPlatformKey")
-	DiskSecurityType_ConfidentialVM_NonPersistedTPM                          = DiskSecurityType("ConfidentialVM_NonPersistedTPM")
-	DiskSecurityType_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityType("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
-	DiskSecurityType_TrustedLaunch                                           = DiskSecurityType("TrustedLaunch")
+	DiskSecurityTypes_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityTypes("ConfidentialVM_DiskEncryptedWithCustomerKey")
+	DiskSecurityTypes_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityTypes("ConfidentialVM_DiskEncryptedWithPlatformKey")
+	DiskSecurityTypes_ConfidentialVM_NonPersistedTPM                          = DiskSecurityTypes("ConfidentialVM_NonPersistedTPM")
+	DiskSecurityTypes_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityTypes("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
+	DiskSecurityTypes_TrustedLaunch                                           = DiskSecurityTypes("TrustedLaunch")
 )
 
-// Mapping from string to DiskSecurityType
-var diskSecurityType_Values = map[string]DiskSecurityType{
-	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityType_ConfidentialVM_DiskEncryptedWithCustomerKey,
-	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityType_ConfidentialVM_DiskEncryptedWithPlatformKey,
-	"confidentialvm_nonpersistedtpm":                          DiskSecurityType_ConfidentialVM_NonPersistedTPM,
-	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityType_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
-	"trustedlaunch": DiskSecurityType_TrustedLaunch,
+// Mapping from string to DiskSecurityTypes
+var diskSecurityTypes_Values = map[string]DiskSecurityTypes{
+	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityTypes_ConfidentialVM_DiskEncryptedWithCustomerKey,
+	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityTypes_ConfidentialVM_DiskEncryptedWithPlatformKey,
+	"confidentialvm_nonpersistedtpm":                          DiskSecurityTypes_ConfidentialVM_NonPersistedTPM,
+	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityTypes_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
+	"trustedlaunch": DiskSecurityTypes_TrustedLaunch,
 }
 
 // Specifies the SecurityType of the VM. Applicable for OS disks only.
-type DiskSecurityType_STATUS string
+type DiskSecurityTypes_STATUS string
 
 const (
-	DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityType_STATUS("ConfidentialVM_DiskEncryptedWithCustomerKey")
-	DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityType_STATUS("ConfidentialVM_DiskEncryptedWithPlatformKey")
-	DiskSecurityType_STATUS_ConfidentialVM_NonPersistedTPM                          = DiskSecurityType_STATUS("ConfidentialVM_NonPersistedTPM")
-	DiskSecurityType_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityType_STATUS("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
-	DiskSecurityType_STATUS_TrustedLaunch                                           = DiskSecurityType_STATUS("TrustedLaunch")
+	DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey             = DiskSecurityTypes_STATUS("ConfidentialVM_DiskEncryptedWithCustomerKey")
+	DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey             = DiskSecurityTypes_STATUS("ConfidentialVM_DiskEncryptedWithPlatformKey")
+	DiskSecurityTypes_STATUS_ConfidentialVM_NonPersistedTPM                          = DiskSecurityTypes_STATUS("ConfidentialVM_NonPersistedTPM")
+	DiskSecurityTypes_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey = DiskSecurityTypes_STATUS("ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey")
+	DiskSecurityTypes_STATUS_TrustedLaunch                                           = DiskSecurityTypes_STATUS("TrustedLaunch")
 )
 
-// Mapping from string to DiskSecurityType_STATUS
-var diskSecurityType_STATUS_Values = map[string]DiskSecurityType_STATUS{
-	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey,
-	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityType_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey,
-	"confidentialvm_nonpersistedtpm":                          DiskSecurityType_STATUS_ConfidentialVM_NonPersistedTPM,
-	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityType_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
-	"trustedlaunch": DiskSecurityType_STATUS_TrustedLaunch,
+// Mapping from string to DiskSecurityTypes_STATUS
+var diskSecurityTypes_STATUS_Values = map[string]DiskSecurityTypes_STATUS{
+	"confidentialvm_diskencryptedwithcustomerkey":             DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithCustomerKey,
+	"confidentialvm_diskencryptedwithplatformkey":             DiskSecurityTypes_STATUS_ConfidentialVM_DiskEncryptedWithPlatformKey,
+	"confidentialvm_nonpersistedtpm":                          DiskSecurityTypes_STATUS_ConfidentialVM_NonPersistedTPM,
+	"confidentialvm_vmgueststateonlyencryptedwithplatformkey": DiskSecurityTypes_STATUS_ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey,
+	"trustedlaunch": DiskSecurityTypes_STATUS_TrustedLaunch,
 }
 
+// The sku name.
 // +kubebuilder:validation:Enum={"PremiumV2_LRS","Premium_LRS","Premium_ZRS","StandardSSD_LRS","StandardSSD_ZRS","Standard_LRS","UltraSSD_LRS"}
-type DiskSku_Name string
+type DiskStorageAccountTypes string
 
 const (
-	DiskSku_Name_PremiumV2_LRS   = DiskSku_Name("PremiumV2_LRS")
-	DiskSku_Name_Premium_LRS     = DiskSku_Name("Premium_LRS")
-	DiskSku_Name_Premium_ZRS     = DiskSku_Name("Premium_ZRS")
-	DiskSku_Name_StandardSSD_LRS = DiskSku_Name("StandardSSD_LRS")
-	DiskSku_Name_StandardSSD_ZRS = DiskSku_Name("StandardSSD_ZRS")
-	DiskSku_Name_Standard_LRS    = DiskSku_Name("Standard_LRS")
-	DiskSku_Name_UltraSSD_LRS    = DiskSku_Name("UltraSSD_LRS")
+	DiskStorageAccountTypes_PremiumV2_LRS   = DiskStorageAccountTypes("PremiumV2_LRS")
+	DiskStorageAccountTypes_Premium_LRS     = DiskStorageAccountTypes("Premium_LRS")
+	DiskStorageAccountTypes_Premium_ZRS     = DiskStorageAccountTypes("Premium_ZRS")
+	DiskStorageAccountTypes_StandardSSD_LRS = DiskStorageAccountTypes("StandardSSD_LRS")
+	DiskStorageAccountTypes_StandardSSD_ZRS = DiskStorageAccountTypes("StandardSSD_ZRS")
+	DiskStorageAccountTypes_Standard_LRS    = DiskStorageAccountTypes("Standard_LRS")
+	DiskStorageAccountTypes_UltraSSD_LRS    = DiskStorageAccountTypes("UltraSSD_LRS")
 )
 
-// Mapping from string to DiskSku_Name
-var diskSku_Name_Values = map[string]DiskSku_Name{
-	"premiumv2_lrs":   DiskSku_Name_PremiumV2_LRS,
-	"premium_lrs":     DiskSku_Name_Premium_LRS,
-	"premium_zrs":     DiskSku_Name_Premium_ZRS,
-	"standardssd_lrs": DiskSku_Name_StandardSSD_LRS,
-	"standardssd_zrs": DiskSku_Name_StandardSSD_ZRS,
-	"standard_lrs":    DiskSku_Name_Standard_LRS,
-	"ultrassd_lrs":    DiskSku_Name_UltraSSD_LRS,
+// Mapping from string to DiskStorageAccountTypes
+var diskStorageAccountTypes_Values = map[string]DiskStorageAccountTypes{
+	"premiumv2_lrs":   DiskStorageAccountTypes_PremiumV2_LRS,
+	"premium_lrs":     DiskStorageAccountTypes_Premium_LRS,
+	"premium_zrs":     DiskStorageAccountTypes_Premium_ZRS,
+	"standardssd_lrs": DiskStorageAccountTypes_StandardSSD_LRS,
+	"standardssd_zrs": DiskStorageAccountTypes_StandardSSD_ZRS,
+	"standard_lrs":    DiskStorageAccountTypes_Standard_LRS,
+	"ultrassd_lrs":    DiskStorageAccountTypes_UltraSSD_LRS,
 }
 
-type DiskSku_Name_STATUS string
+// The sku name.
+type DiskStorageAccountTypes_STATUS string
 
 const (
-	DiskSku_Name_STATUS_PremiumV2_LRS   = DiskSku_Name_STATUS("PremiumV2_LRS")
-	DiskSku_Name_STATUS_Premium_LRS     = DiskSku_Name_STATUS("Premium_LRS")
-	DiskSku_Name_STATUS_Premium_ZRS     = DiskSku_Name_STATUS("Premium_ZRS")
-	DiskSku_Name_STATUS_StandardSSD_LRS = DiskSku_Name_STATUS("StandardSSD_LRS")
-	DiskSku_Name_STATUS_StandardSSD_ZRS = DiskSku_Name_STATUS("StandardSSD_ZRS")
-	DiskSku_Name_STATUS_Standard_LRS    = DiskSku_Name_STATUS("Standard_LRS")
-	DiskSku_Name_STATUS_UltraSSD_LRS    = DiskSku_Name_STATUS("UltraSSD_LRS")
+	DiskStorageAccountTypes_STATUS_PremiumV2_LRS   = DiskStorageAccountTypes_STATUS("PremiumV2_LRS")
+	DiskStorageAccountTypes_STATUS_Premium_LRS     = DiskStorageAccountTypes_STATUS("Premium_LRS")
+	DiskStorageAccountTypes_STATUS_Premium_ZRS     = DiskStorageAccountTypes_STATUS("Premium_ZRS")
+	DiskStorageAccountTypes_STATUS_StandardSSD_LRS = DiskStorageAccountTypes_STATUS("StandardSSD_LRS")
+	DiskStorageAccountTypes_STATUS_StandardSSD_ZRS = DiskStorageAccountTypes_STATUS("StandardSSD_ZRS")
+	DiskStorageAccountTypes_STATUS_Standard_LRS    = DiskStorageAccountTypes_STATUS("Standard_LRS")
+	DiskStorageAccountTypes_STATUS_UltraSSD_LRS    = DiskStorageAccountTypes_STATUS("UltraSSD_LRS")
 )
 
-// Mapping from string to DiskSku_Name_STATUS
-var diskSku_Name_STATUS_Values = map[string]DiskSku_Name_STATUS{
-	"premiumv2_lrs":   DiskSku_Name_STATUS_PremiumV2_LRS,
-	"premium_lrs":     DiskSku_Name_STATUS_Premium_LRS,
-	"premium_zrs":     DiskSku_Name_STATUS_Premium_ZRS,
-	"standardssd_lrs": DiskSku_Name_STATUS_StandardSSD_LRS,
-	"standardssd_zrs": DiskSku_Name_STATUS_StandardSSD_ZRS,
-	"standard_lrs":    DiskSku_Name_STATUS_Standard_LRS,
-	"ultrassd_lrs":    DiskSku_Name_STATUS_UltraSSD_LRS,
+// Mapping from string to DiskStorageAccountTypes_STATUS
+var diskStorageAccountTypes_STATUS_Values = map[string]DiskStorageAccountTypes_STATUS{
+	"premiumv2_lrs":   DiskStorageAccountTypes_STATUS_PremiumV2_LRS,
+	"premium_lrs":     DiskStorageAccountTypes_STATUS_Premium_LRS,
+	"premium_zrs":     DiskStorageAccountTypes_STATUS_Premium_ZRS,
+	"standardssd_lrs": DiskStorageAccountTypes_STATUS_StandardSSD_LRS,
+	"standardssd_zrs": DiskStorageAccountTypes_STATUS_StandardSSD_ZRS,
+	"standard_lrs":    DiskStorageAccountTypes_STATUS_Standard_LRS,
+	"ultrassd_lrs":    DiskStorageAccountTypes_STATUS_UltraSSD_LRS,
 }
 
 // Encryption settings for one disk volume.
@@ -6038,7 +6226,7 @@ func (element *EncryptionSettingsElement) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "DiskEncryptionKey":
 	if element.DiskEncryptionKey != nil {
-		diskEncryptionKey_ARM, err := (*element.DiskEncryptionKey).ConvertToARM(resolved)
+		diskEncryptionKey_ARM, err := element.DiskEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6048,7 +6236,7 @@ func (element *EncryptionSettingsElement) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "KeyEncryptionKey":
 	if element.KeyEncryptionKey != nil {
-		keyEncryptionKey_ARM, err := (*element.KeyEncryptionKey).ConvertToARM(resolved)
+		keyEncryptionKey_ARM, err := element.KeyEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6651,31 +6839,67 @@ func (reference *ImageDiskReference_STATUS) AssignProperties_To_ImageDiskReferen
 	return nil
 }
 
-// +kubebuilder:validation:Enum={"Arm64","x64"}
-type SupportedCapabilities_Architecture string
+// If this field is set on a snapshot and createOption is CopyStart, the snapshot will be copied at a quicker speed.
+// +kubebuilder:validation:Enum={"Enhanced","None"}
+type ProvisionedBandwidthCopyOption string
 
 const (
-	SupportedCapabilities_Architecture_Arm64 = SupportedCapabilities_Architecture("Arm64")
-	SupportedCapabilities_Architecture_X64   = SupportedCapabilities_Architecture("x64")
+	ProvisionedBandwidthCopyOption_Enhanced = ProvisionedBandwidthCopyOption("Enhanced")
+	ProvisionedBandwidthCopyOption_None     = ProvisionedBandwidthCopyOption("None")
 )
 
-// Mapping from string to SupportedCapabilities_Architecture
-var supportedCapabilities_Architecture_Values = map[string]SupportedCapabilities_Architecture{
-	"arm64": SupportedCapabilities_Architecture_Arm64,
-	"x64":   SupportedCapabilities_Architecture_X64,
+// Mapping from string to ProvisionedBandwidthCopyOption
+var provisionedBandwidthCopyOption_Values = map[string]ProvisionedBandwidthCopyOption{
+	"enhanced": ProvisionedBandwidthCopyOption_Enhanced,
+	"none":     ProvisionedBandwidthCopyOption_None,
 }
 
-type SupportedCapabilities_Architecture_STATUS string
+// If this field is set on a snapshot and createOption is CopyStart, the snapshot will be copied at a quicker speed.
+type ProvisionedBandwidthCopyOption_STATUS string
 
 const (
-	SupportedCapabilities_Architecture_STATUS_Arm64 = SupportedCapabilities_Architecture_STATUS("Arm64")
-	SupportedCapabilities_Architecture_STATUS_X64   = SupportedCapabilities_Architecture_STATUS("x64")
+	ProvisionedBandwidthCopyOption_STATUS_Enhanced = ProvisionedBandwidthCopyOption_STATUS("Enhanced")
+	ProvisionedBandwidthCopyOption_STATUS_None     = ProvisionedBandwidthCopyOption_STATUS("None")
 )
 
-// Mapping from string to SupportedCapabilities_Architecture_STATUS
-var supportedCapabilities_Architecture_STATUS_Values = map[string]SupportedCapabilities_Architecture_STATUS{
-	"arm64": SupportedCapabilities_Architecture_STATUS_Arm64,
-	"x64":   SupportedCapabilities_Architecture_STATUS_X64,
+// Mapping from string to ProvisionedBandwidthCopyOption_STATUS
+var provisionedBandwidthCopyOption_STATUS_Values = map[string]ProvisionedBandwidthCopyOption_STATUS{
+	"enhanced": ProvisionedBandwidthCopyOption_STATUS_Enhanced,
+	"none":     ProvisionedBandwidthCopyOption_STATUS_None,
+}
+
+type SystemData_CreatedByType_STATUS string
+
+const (
+	SystemData_CreatedByType_STATUS_Application     = SystemData_CreatedByType_STATUS("Application")
+	SystemData_CreatedByType_STATUS_Key             = SystemData_CreatedByType_STATUS("Key")
+	SystemData_CreatedByType_STATUS_ManagedIdentity = SystemData_CreatedByType_STATUS("ManagedIdentity")
+	SystemData_CreatedByType_STATUS_User            = SystemData_CreatedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_CreatedByType_STATUS
+var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType_STATUS{
+	"application":     SystemData_CreatedByType_STATUS_Application,
+	"key":             SystemData_CreatedByType_STATUS_Key,
+	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_CreatedByType_STATUS_User,
+}
+
+type SystemData_LastModifiedByType_STATUS string
+
+const (
+	SystemData_LastModifiedByType_STATUS_Application     = SystemData_LastModifiedByType_STATUS("Application")
+	SystemData_LastModifiedByType_STATUS_Key             = SystemData_LastModifiedByType_STATUS("Key")
+	SystemData_LastModifiedByType_STATUS_ManagedIdentity = SystemData_LastModifiedByType_STATUS("ManagedIdentity")
+	SystemData_LastModifiedByType_STATUS_User            = SystemData_LastModifiedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_LastModifiedByType_STATUS
+var systemData_LastModifiedByType_STATUS_Values = map[string]SystemData_LastModifiedByType_STATUS{
+	"application":     SystemData_LastModifiedByType_STATUS_Application,
+	"key":             SystemData_LastModifiedByType_STATUS_Key,
+	"managedidentity": SystemData_LastModifiedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_STATUS_User,
 }
 
 // Key Vault Key Url and vault id of KeK, KeK is optional and when provided is used to unwrap the encryptionKey
@@ -6706,7 +6930,7 @@ func (reference *KeyVaultAndKeyReference) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6949,7 +7173,7 @@ func (reference *KeyVaultAndSecretReference) ConvertToARM(resolved genruntime.Co
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

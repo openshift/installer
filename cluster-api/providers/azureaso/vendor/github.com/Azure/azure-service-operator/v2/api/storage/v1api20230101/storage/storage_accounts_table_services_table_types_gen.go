@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,14 +13,12 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=storage.azure.com,resources=storageaccountstableservicestables,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=storage.azure.com,resources={storageaccountstableservicestables/status,storageaccountstableservicestables/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,42 @@ func (table *StorageAccountsTableServicesTable) GetConditions() conditions.Condi
 // SetConditions sets the conditions on the resource status
 func (table *StorageAccountsTableServicesTable) SetConditions(conditions conditions.Conditions) {
 	table.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &StorageAccountsTableServicesTable{}
+
+// ConvertFrom populates our StorageAccountsTableServicesTable from the provided hub StorageAccountsTableServicesTable
+func (table *StorageAccountsTableServicesTable) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.StorageAccountsTableServicesTable
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = table.AssignProperties_From_StorageAccountsTableServicesTable(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to table")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub StorageAccountsTableServicesTable from our StorageAccountsTableServicesTable
+func (table *StorageAccountsTableServicesTable) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.StorageAccountsTableServicesTable
+	err := table.AssignProperties_To_StorageAccountsTableServicesTable(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from table")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
 }
 
 var _ configmaps.Exporter = &StorageAccountsTableServicesTable{}
@@ -142,8 +177,75 @@ func (table *StorageAccountsTableServicesTable) SetStatus(status genruntime.Conv
 	return nil
 }
 
-// Hub marks that this StorageAccountsTableServicesTable is the hub type for conversion
-func (table *StorageAccountsTableServicesTable) Hub() {}
+// AssignProperties_From_StorageAccountsTableServicesTable populates our StorageAccountsTableServicesTable from the provided source StorageAccountsTableServicesTable
+func (table *StorageAccountsTableServicesTable) AssignProperties_From_StorageAccountsTableServicesTable(source *storage.StorageAccountsTableServicesTable) error {
+
+	// ObjectMeta
+	table.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec StorageAccountsTableServicesTable_Spec
+	err := spec.AssignProperties_From_StorageAccountsTableServicesTable_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableServicesTable_Spec() to populate field Spec")
+	}
+	table.Spec = spec
+
+	// Status
+	var status StorageAccountsTableServicesTable_STATUS
+	err = status.AssignProperties_From_StorageAccountsTableServicesTable_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableServicesTable_STATUS() to populate field Status")
+	}
+	table.Status = status
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable); ok {
+		err := augmentedTable.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsTableServicesTable populates the provided destination StorageAccountsTableServicesTable from our StorageAccountsTableServicesTable
+func (table *StorageAccountsTableServicesTable) AssignProperties_To_StorageAccountsTableServicesTable(destination *storage.StorageAccountsTableServicesTable) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *table.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.StorageAccountsTableServicesTable_Spec
+	err := table.Spec.AssignProperties_To_StorageAccountsTableServicesTable_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableServicesTable_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.StorageAccountsTableServicesTable_STATUS
+	err = table.Status.AssignProperties_To_StorageAccountsTableServicesTable_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableServicesTable_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable); ok {
+		err := augmentedTable.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (table *StorageAccountsTableServicesTable) OriginalGVK() *schema.GroupVersionKind {
@@ -163,6 +265,11 @@ type StorageAccountsTableServicesTableList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []StorageAccountsTableServicesTable `json:"items"`
+}
+
+type augmentConversionForStorageAccountsTableServicesTable interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsTableServicesTable) error
+	AssignPropertiesTo(dst *storage.StorageAccountsTableServicesTable) error
 }
 
 // Storage version of v1api20230101.StorageAccountsTableServicesTable_Spec
@@ -186,20 +293,184 @@ var _ genruntime.ConvertibleSpec = &StorageAccountsTableServicesTable_Spec{}
 
 // ConvertSpecFrom populates our StorageAccountsTableServicesTable_Spec from the provided source
 func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == table {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.StorageAccountsTableServicesTable_Spec)
+	if ok {
+		// Populate our instance from source
+		return table.AssignProperties_From_StorageAccountsTableServicesTable_Spec(src)
 	}
 
-	return source.ConvertSpecTo(table)
+	// Convert to an intermediate form
+	src = &storage.StorageAccountsTableServicesTable_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = table.AssignProperties_From_StorageAccountsTableServicesTable_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our StorageAccountsTableServicesTable_Spec
 func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == table {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.StorageAccountsTableServicesTable_Spec)
+	if ok {
+		// Populate destination from our instance
+		return table.AssignProperties_To_StorageAccountsTableServicesTable_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(table)
+	// Convert to an intermediate form
+	dst = &storage.StorageAccountsTableServicesTable_Spec{}
+	err := table.AssignProperties_To_StorageAccountsTableServicesTable_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_StorageAccountsTableServicesTable_Spec populates our StorageAccountsTableServicesTable_Spec from the provided source StorageAccountsTableServicesTable_Spec
+func (table *StorageAccountsTableServicesTable_Spec) AssignProperties_From_StorageAccountsTableServicesTable_Spec(source *storage.StorageAccountsTableServicesTable_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	table.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec StorageAccountsTableServicesTableOperatorSpec
+		err := operatorSpec.AssignProperties_From_StorageAccountsTableServicesTableOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableServicesTableOperatorSpec() to populate field OperatorSpec")
+		}
+		table.OperatorSpec = &operatorSpec
+	} else {
+		table.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	table.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		table.Owner = &owner
+	} else {
+		table.Owner = nil
+	}
+
+	// SignedIdentifiers
+	if source.SignedIdentifiers != nil {
+		signedIdentifierList := make([]TableSignedIdentifier, len(source.SignedIdentifiers))
+		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
+			var signedIdentifier TableSignedIdentifier
+			err := signedIdentifier.AssignProperties_From_TableSignedIdentifier(&signedIdentifierItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TableSignedIdentifier() to populate field SignedIdentifiers")
+			}
+			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
+		}
+		table.SignedIdentifiers = signedIdentifierList
+	} else {
+		table.SignedIdentifiers = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		table.PropertyBag = propertyBag
+	} else {
+		table.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable_Spec interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable_Spec); ok {
+		err := augmentedTable.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsTableServicesTable_Spec populates the provided destination StorageAccountsTableServicesTable_Spec from our StorageAccountsTableServicesTable_Spec
+func (table *StorageAccountsTableServicesTable_Spec) AssignProperties_To_StorageAccountsTableServicesTable_Spec(destination *storage.StorageAccountsTableServicesTable_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(table.PropertyBag)
+
+	// AzureName
+	destination.AzureName = table.AzureName
+
+	// OperatorSpec
+	if table.OperatorSpec != nil {
+		var operatorSpec storage.StorageAccountsTableServicesTableOperatorSpec
+		err := table.OperatorSpec.AssignProperties_To_StorageAccountsTableServicesTableOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableServicesTableOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = table.OriginalVersion
+
+	// Owner
+	if table.Owner != nil {
+		owner := table.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// SignedIdentifiers
+	if table.SignedIdentifiers != nil {
+		signedIdentifierList := make([]storage.TableSignedIdentifier, len(table.SignedIdentifiers))
+		for signedIdentifierIndex, signedIdentifierItem := range table.SignedIdentifiers {
+			var signedIdentifier storage.TableSignedIdentifier
+			err := signedIdentifierItem.AssignProperties_To_TableSignedIdentifier(&signedIdentifier)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TableSignedIdentifier() to populate field SignedIdentifiers")
+			}
+			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
+		}
+		destination.SignedIdentifiers = signedIdentifierList
+	} else {
+		destination.SignedIdentifiers = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable_Spec interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable_Spec); ok {
+		err := augmentedTable.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.StorageAccountsTableServicesTable_STATUS
@@ -217,20 +488,172 @@ var _ genruntime.ConvertibleStatus = &StorageAccountsTableServicesTable_STATUS{}
 
 // ConvertStatusFrom populates our StorageAccountsTableServicesTable_STATUS from the provided source
 func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == table {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.StorageAccountsTableServicesTable_STATUS)
+	if ok {
+		// Populate our instance from source
+		return table.AssignProperties_From_StorageAccountsTableServicesTable_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(table)
+	// Convert to an intermediate form
+	src = &storage.StorageAccountsTableServicesTable_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = table.AssignProperties_From_StorageAccountsTableServicesTable_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our StorageAccountsTableServicesTable_STATUS
 func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == table {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.StorageAccountsTableServicesTable_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return table.AssignProperties_To_StorageAccountsTableServicesTable_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(table)
+	// Convert to an intermediate form
+	dst = &storage.StorageAccountsTableServicesTable_STATUS{}
+	err := table.AssignProperties_To_StorageAccountsTableServicesTable_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_StorageAccountsTableServicesTable_STATUS populates our StorageAccountsTableServicesTable_STATUS from the provided source StorageAccountsTableServicesTable_STATUS
+func (table *StorageAccountsTableServicesTable_STATUS) AssignProperties_From_StorageAccountsTableServicesTable_STATUS(source *storage.StorageAccountsTableServicesTable_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	table.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	table.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	table.Name = genruntime.ClonePointerToString(source.Name)
+
+	// SignedIdentifiers
+	if source.SignedIdentifiers != nil {
+		signedIdentifierList := make([]TableSignedIdentifier_STATUS, len(source.SignedIdentifiers))
+		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
+			var signedIdentifier TableSignedIdentifier_STATUS
+			err := signedIdentifier.AssignProperties_From_TableSignedIdentifier_STATUS(&signedIdentifierItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_TableSignedIdentifier_STATUS() to populate field SignedIdentifiers")
+			}
+			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
+		}
+		table.SignedIdentifiers = signedIdentifierList
+	} else {
+		table.SignedIdentifiers = nil
+	}
+
+	// TableName
+	table.TableName = genruntime.ClonePointerToString(source.TableName)
+
+	// Type
+	table.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		table.PropertyBag = propertyBag
+	} else {
+		table.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable_STATUS interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable_STATUS); ok {
+		err := augmentedTable.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsTableServicesTable_STATUS populates the provided destination StorageAccountsTableServicesTable_STATUS from our StorageAccountsTableServicesTable_STATUS
+func (table *StorageAccountsTableServicesTable_STATUS) AssignProperties_To_StorageAccountsTableServicesTable_STATUS(destination *storage.StorageAccountsTableServicesTable_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(table.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(table.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(table.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(table.Name)
+
+	// SignedIdentifiers
+	if table.SignedIdentifiers != nil {
+		signedIdentifierList := make([]storage.TableSignedIdentifier_STATUS, len(table.SignedIdentifiers))
+		for signedIdentifierIndex, signedIdentifierItem := range table.SignedIdentifiers {
+			var signedIdentifier storage.TableSignedIdentifier_STATUS
+			err := signedIdentifierItem.AssignProperties_To_TableSignedIdentifier_STATUS(&signedIdentifier)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_TableSignedIdentifier_STATUS() to populate field SignedIdentifiers")
+			}
+			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
+		}
+		destination.SignedIdentifiers = signedIdentifierList
+	} else {
+		destination.SignedIdentifiers = nil
+	}
+
+	// TableName
+	destination.TableName = genruntime.ClonePointerToString(table.TableName)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(table.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTable_STATUS interface (if implemented) to customize the conversion
+	var tableAsAny any = table
+	if augmentedTable, ok := tableAsAny.(augmentConversionForStorageAccountsTableServicesTable_STATUS); ok {
+		err := augmentedTable.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForStorageAccountsTableServicesTable_Spec interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsTableServicesTable_Spec) error
+	AssignPropertiesTo(dst *storage.StorageAccountsTableServicesTable_Spec) error
+}
+
+type augmentConversionForStorageAccountsTableServicesTable_STATUS interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsTableServicesTable_STATUS) error
+	AssignPropertiesTo(dst *storage.StorageAccountsTableServicesTable_STATUS) error
 }
 
 // Storage version of v1api20230101.StorageAccountsTableServicesTableOperatorSpec
@@ -239,6 +662,120 @@ type StorageAccountsTableServicesTableOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_StorageAccountsTableServicesTableOperatorSpec populates our StorageAccountsTableServicesTableOperatorSpec from the provided source StorageAccountsTableServicesTableOperatorSpec
+func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_From_StorageAccountsTableServicesTableOperatorSpec(source *storage.StorageAccountsTableServicesTableOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTableOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsTableServicesTableOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageAccountsTableServicesTableOperatorSpec populates the provided destination StorageAccountsTableServicesTableOperatorSpec from our StorageAccountsTableServicesTableOperatorSpec
+func (operator *StorageAccountsTableServicesTableOperatorSpec) AssignProperties_To_StorageAccountsTableServicesTableOperatorSpec(destination *storage.StorageAccountsTableServicesTableOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageAccountsTableServicesTableOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForStorageAccountsTableServicesTableOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.TableSignedIdentifier
@@ -252,12 +789,197 @@ type TableSignedIdentifier struct {
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
 }
 
+// AssignProperties_From_TableSignedIdentifier populates our TableSignedIdentifier from the provided source TableSignedIdentifier
+func (identifier *TableSignedIdentifier) AssignProperties_From_TableSignedIdentifier(source *storage.TableSignedIdentifier) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessPolicy
+	if source.AccessPolicy != nil {
+		var accessPolicy TableAccessPolicy
+		err := accessPolicy.AssignProperties_From_TableAccessPolicy(source.AccessPolicy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_TableAccessPolicy() to populate field AccessPolicy")
+		}
+		identifier.AccessPolicy = &accessPolicy
+	} else {
+		identifier.AccessPolicy = nil
+	}
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		identifier.Reference = &reference
+	} else {
+		identifier.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identifier.PropertyBag = propertyBag
+	} else {
+		identifier.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableSignedIdentifier interface (if implemented) to customize the conversion
+	var identifierAsAny any = identifier
+	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForTableSignedIdentifier); ok {
+		err := augmentedIdentifier.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TableSignedIdentifier populates the provided destination TableSignedIdentifier from our TableSignedIdentifier
+func (identifier *TableSignedIdentifier) AssignProperties_To_TableSignedIdentifier(destination *storage.TableSignedIdentifier) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identifier.PropertyBag)
+
+	// AccessPolicy
+	if identifier.AccessPolicy != nil {
+		var accessPolicy storage.TableAccessPolicy
+		err := identifier.AccessPolicy.AssignProperties_To_TableAccessPolicy(&accessPolicy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_TableAccessPolicy() to populate field AccessPolicy")
+		}
+		destination.AccessPolicy = &accessPolicy
+	} else {
+		destination.AccessPolicy = nil
+	}
+
+	// Reference
+	if identifier.Reference != nil {
+		reference := identifier.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableSignedIdentifier interface (if implemented) to customize the conversion
+	var identifierAsAny any = identifier
+	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForTableSignedIdentifier); ok {
+		err := augmentedIdentifier.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.TableSignedIdentifier_STATUS
 // Object to set Table Access Policy.
 type TableSignedIdentifier_STATUS struct {
 	AccessPolicy *TableAccessPolicy_STATUS `json:"accessPolicy,omitempty"`
 	Id           *string                   `json:"id,omitempty"`
 	PropertyBag  genruntime.PropertyBag    `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_TableSignedIdentifier_STATUS populates our TableSignedIdentifier_STATUS from the provided source TableSignedIdentifier_STATUS
+func (identifier *TableSignedIdentifier_STATUS) AssignProperties_From_TableSignedIdentifier_STATUS(source *storage.TableSignedIdentifier_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AccessPolicy
+	if source.AccessPolicy != nil {
+		var accessPolicy TableAccessPolicy_STATUS
+		err := accessPolicy.AssignProperties_From_TableAccessPolicy_STATUS(source.AccessPolicy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_TableAccessPolicy_STATUS() to populate field AccessPolicy")
+		}
+		identifier.AccessPolicy = &accessPolicy
+	} else {
+		identifier.AccessPolicy = nil
+	}
+
+	// Id
+	identifier.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		identifier.PropertyBag = propertyBag
+	} else {
+		identifier.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableSignedIdentifier_STATUS interface (if implemented) to customize the conversion
+	var identifierAsAny any = identifier
+	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForTableSignedIdentifier_STATUS); ok {
+		err := augmentedIdentifier.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TableSignedIdentifier_STATUS populates the provided destination TableSignedIdentifier_STATUS from our TableSignedIdentifier_STATUS
+func (identifier *TableSignedIdentifier_STATUS) AssignProperties_To_TableSignedIdentifier_STATUS(destination *storage.TableSignedIdentifier_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(identifier.PropertyBag)
+
+	// AccessPolicy
+	if identifier.AccessPolicy != nil {
+		var accessPolicy storage.TableAccessPolicy_STATUS
+		err := identifier.AccessPolicy.AssignProperties_To_TableAccessPolicy_STATUS(&accessPolicy)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_TableAccessPolicy_STATUS() to populate field AccessPolicy")
+		}
+		destination.AccessPolicy = &accessPolicy
+	} else {
+		destination.AccessPolicy = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(identifier.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableSignedIdentifier_STATUS interface (if implemented) to customize the conversion
+	var identifierAsAny any = identifier
+	if augmentedIdentifier, ok := identifierAsAny.(augmentConversionForTableSignedIdentifier_STATUS); ok {
+		err := augmentedIdentifier.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForStorageAccountsTableServicesTableOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.StorageAccountsTableServicesTableOperatorSpec) error
+	AssignPropertiesTo(dst *storage.StorageAccountsTableServicesTableOperatorSpec) error
+}
+
+type augmentConversionForTableSignedIdentifier interface {
+	AssignPropertiesFrom(src *storage.TableSignedIdentifier) error
+	AssignPropertiesTo(dst *storage.TableSignedIdentifier) error
+}
+
+type augmentConversionForTableSignedIdentifier_STATUS interface {
+	AssignPropertiesFrom(src *storage.TableSignedIdentifier_STATUS) error
+	AssignPropertiesTo(dst *storage.TableSignedIdentifier_STATUS) error
 }
 
 // Storage version of v1api20230101.TableAccessPolicy
@@ -269,6 +991,74 @@ type TableAccessPolicy struct {
 	StartTime   *string                `json:"startTime,omitempty"`
 }
 
+// AssignProperties_From_TableAccessPolicy populates our TableAccessPolicy from the provided source TableAccessPolicy
+func (policy *TableAccessPolicy) AssignProperties_From_TableAccessPolicy(source *storage.TableAccessPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ExpiryTime
+	policy.ExpiryTime = genruntime.ClonePointerToString(source.ExpiryTime)
+
+	// Permission
+	policy.Permission = genruntime.ClonePointerToString(source.Permission)
+
+	// StartTime
+	policy.StartTime = genruntime.ClonePointerToString(source.StartTime)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableAccessPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForTableAccessPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TableAccessPolicy populates the provided destination TableAccessPolicy from our TableAccessPolicy
+func (policy *TableAccessPolicy) AssignProperties_To_TableAccessPolicy(destination *storage.TableAccessPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// ExpiryTime
+	destination.ExpiryTime = genruntime.ClonePointerToString(policy.ExpiryTime)
+
+	// Permission
+	destination.Permission = genruntime.ClonePointerToString(policy.Permission)
+
+	// StartTime
+	destination.StartTime = genruntime.ClonePointerToString(policy.StartTime)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableAccessPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForTableAccessPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.TableAccessPolicy_STATUS
 // Table Access Policy Properties Object.
 type TableAccessPolicy_STATUS struct {
@@ -276,6 +1066,84 @@ type TableAccessPolicy_STATUS struct {
 	Permission  *string                `json:"permission,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	StartTime   *string                `json:"startTime,omitempty"`
+}
+
+// AssignProperties_From_TableAccessPolicy_STATUS populates our TableAccessPolicy_STATUS from the provided source TableAccessPolicy_STATUS
+func (policy *TableAccessPolicy_STATUS) AssignProperties_From_TableAccessPolicy_STATUS(source *storage.TableAccessPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ExpiryTime
+	policy.ExpiryTime = genruntime.ClonePointerToString(source.ExpiryTime)
+
+	// Permission
+	policy.Permission = genruntime.ClonePointerToString(source.Permission)
+
+	// StartTime
+	policy.StartTime = genruntime.ClonePointerToString(source.StartTime)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableAccessPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForTableAccessPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TableAccessPolicy_STATUS populates the provided destination TableAccessPolicy_STATUS from our TableAccessPolicy_STATUS
+func (policy *TableAccessPolicy_STATUS) AssignProperties_To_TableAccessPolicy_STATUS(destination *storage.TableAccessPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// ExpiryTime
+	destination.ExpiryTime = genruntime.ClonePointerToString(policy.ExpiryTime)
+
+	// Permission
+	destination.Permission = genruntime.ClonePointerToString(policy.Permission)
+
+	// StartTime
+	destination.StartTime = genruntime.ClonePointerToString(policy.StartTime)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTableAccessPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForTableAccessPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForTableAccessPolicy interface {
+	AssignPropertiesFrom(src *storage.TableAccessPolicy) error
+	AssignPropertiesTo(dst *storage.TableAccessPolicy) error
+}
+
+type augmentConversionForTableAccessPolicy_STATUS interface {
+	AssignPropertiesFrom(src *storage.TableAccessPolicy_STATUS) error
+	AssignPropertiesTo(dst *storage.TableAccessPolicy_STATUS) error
 }
 
 func init() {

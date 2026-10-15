@@ -22,6 +22,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -528,9 +529,9 @@ func (disk *Disk_Spec) AssignProperties_From_Disk_Spec(source *v20240302s.Disk_S
 	// PurchasePlan
 	if source.PurchasePlan != nil {
 		var purchasePlan PurchasePlan
-		err := purchasePlan.AssignProperties_From_PurchasePlan(source.PurchasePlan)
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		disk.PurchasePlan = &purchasePlan
 	} else {
@@ -793,10 +794,10 @@ func (disk *Disk_Spec) AssignProperties_To_Disk_Spec(destination *v20240302s.Dis
 
 	// PurchasePlan
 	if disk.PurchasePlan != nil {
-		var purchasePlan v20240302s.PurchasePlan
-		err := disk.PurchasePlan.AssignProperties_To_PurchasePlan(&purchasePlan)
+		var purchasePlan v20240302s.DiskPurchasePlan
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -1157,9 +1158,9 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *v20240302s.Di
 	// PurchasePlan
 	if source.PurchasePlan != nil {
 		var purchasePlan PurchasePlan_STATUS
-		err := purchasePlan.AssignProperties_From_PurchasePlan_STATUS(source.PurchasePlan)
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		disk.PurchasePlan = &purchasePlan
 	} else {
@@ -1177,8 +1178,6 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *v20240302s.Di
 	if source.ShareInfo != nil {
 		shareInfoList := make([]ShareInfoElement_STATUS, len(source.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range source.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo ShareInfoElement_STATUS
 			err := shareInfo.AssignProperties_From_ShareInfoElement_STATUS(&shareInfoItem)
 			if err != nil {
@@ -1215,6 +1214,13 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *v20240302s.Di
 		propertyBag.Add("SupportsHibernation", *source.SupportsHibernation)
 	} else {
 		propertyBag.Remove("SupportsHibernation")
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		propertyBag.Add("SystemData", *source.SystemData)
+	} else {
+		propertyBag.Remove("SystemData")
 	}
 
 	// Tags
@@ -1481,10 +1487,10 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *v20240302s
 
 	// PurchasePlan
 	if disk.PurchasePlan != nil {
-		var purchasePlan v20240302s.PurchasePlan_STATUS
-		err := disk.PurchasePlan.AssignProperties_To_PurchasePlan_STATUS(&purchasePlan)
+		var purchasePlan v20240302s.DiskPurchasePlan_STATUS
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan_STATUS(&purchasePlan)
 		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_PurchasePlan_STATUS() to populate field PurchasePlan")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
 		}
 		destination.PurchasePlan = &purchasePlan
 	} else {
@@ -1508,8 +1514,6 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *v20240302s
 	if disk.ShareInfo != nil {
 		shareInfoList := make([]v20240302s.ShareInfoElement_STATUS, len(disk.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range disk.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo v20240302s.ShareInfoElement_STATUS
 			err := shareInfoItem.AssignProperties_To_ShareInfoElement_STATUS(&shareInfo)
 			if err != nil {
@@ -1558,6 +1562,19 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *v20240302s
 		destination.SupportsHibernation = &supportsHibernation
 	} else {
 		destination.SupportsHibernation = nil
+	}
+
+	// SystemData
+	if propertyBag.Contains("SystemData") {
+		var systemDatum v20240302s.SystemData_STATUS
+		err := propertyBag.Pull("SystemData", &systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'SystemData' from propertyBag")
+		}
+
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
 	}
 
 	// Tags
@@ -2100,8 +2117,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2118,8 +2133,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2161,8 +2174,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2179,8 +2190,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2523,8 +2532,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_From_Encryption
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement(&encryptionSettingItem)
 			if err != nil {
@@ -2577,8 +2584,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_To_EncryptionSe
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]v20240302s.EncryptionSettingsElement, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting v20240302s.EncryptionSettingsElement
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement(&encryptionSetting)
 			if err != nil {
@@ -2640,8 +2645,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_From_Enc
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement_STATUS, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement_STATUS
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -2694,8 +2697,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_To_Encry
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]v20240302s.EncryptionSettingsElement_STATUS, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting v20240302s.EncryptionSettingsElement_STATUS
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement_STATUS(&encryptionSetting)
 			if err != nil {
@@ -2881,8 +2882,8 @@ type PurchasePlan struct {
 	Publisher     *string                `json:"publisher,omitempty"`
 }
 
-// AssignProperties_From_PurchasePlan populates our PurchasePlan from the provided source PurchasePlan
-func (plan *PurchasePlan) AssignProperties_From_PurchasePlan(source *v20240302s.PurchasePlan) error {
+// AssignProperties_From_DiskPurchasePlan populates our PurchasePlan from the provided source DiskPurchasePlan
+func (plan *PurchasePlan) AssignProperties_From_DiskPurchasePlan(source *v20240302s.DiskPurchasePlan) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -2918,8 +2919,8 @@ func (plan *PurchasePlan) AssignProperties_From_PurchasePlan(source *v20240302s.
 	return nil
 }
 
-// AssignProperties_To_PurchasePlan populates the provided destination PurchasePlan from our PurchasePlan
-func (plan *PurchasePlan) AssignProperties_To_PurchasePlan(destination *v20240302s.PurchasePlan) error {
+// AssignProperties_To_DiskPurchasePlan populates the provided destination DiskPurchasePlan from our PurchasePlan
+func (plan *PurchasePlan) AssignProperties_To_DiskPurchasePlan(destination *v20240302s.DiskPurchasePlan) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(plan.PropertyBag)
 
@@ -2965,8 +2966,8 @@ type PurchasePlan_STATUS struct {
 	Publisher     *string                `json:"publisher,omitempty"`
 }
 
-// AssignProperties_From_PurchasePlan_STATUS populates our PurchasePlan_STATUS from the provided source PurchasePlan_STATUS
-func (plan *PurchasePlan_STATUS) AssignProperties_From_PurchasePlan_STATUS(source *v20240302s.PurchasePlan_STATUS) error {
+// AssignProperties_From_DiskPurchasePlan_STATUS populates our PurchasePlan_STATUS from the provided source DiskPurchasePlan_STATUS
+func (plan *PurchasePlan_STATUS) AssignProperties_From_DiskPurchasePlan_STATUS(source *v20240302s.DiskPurchasePlan_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -3002,8 +3003,8 @@ func (plan *PurchasePlan_STATUS) AssignProperties_From_PurchasePlan_STATUS(sourc
 	return nil
 }
 
-// AssignProperties_To_PurchasePlan_STATUS populates the provided destination PurchasePlan_STATUS from our PurchasePlan_STATUS
-func (plan *PurchasePlan_STATUS) AssignProperties_To_PurchasePlan_STATUS(destination *v20240302s.PurchasePlan_STATUS) error {
+// AssignProperties_To_DiskPurchasePlan_STATUS populates the provided destination DiskPurchasePlan_STATUS from our PurchasePlan_STATUS
+func (plan *PurchasePlan_STATUS) AssignProperties_To_DiskPurchasePlan_STATUS(destination *v20240302s.DiskPurchasePlan_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(plan.PropertyBag)
 
@@ -3157,13 +3158,13 @@ type augmentConversionForExtendedLocation_STATUS interface {
 }
 
 type augmentConversionForPurchasePlan interface {
-	AssignPropertiesFrom(src *v20240302s.PurchasePlan) error
-	AssignPropertiesTo(dst *v20240302s.PurchasePlan) error
+	AssignPropertiesFrom(src *v20240302s.DiskPurchasePlan) error
+	AssignPropertiesTo(dst *v20240302s.DiskPurchasePlan) error
 }
 
 type augmentConversionForPurchasePlan_STATUS interface {
-	AssignPropertiesFrom(src *v20240302s.PurchasePlan_STATUS) error
-	AssignPropertiesTo(dst *v20240302s.PurchasePlan_STATUS) error
+	AssignPropertiesFrom(src *v20240302s.DiskPurchasePlan_STATUS) error
+	AssignPropertiesTo(dst *v20240302s.DiskPurchasePlan_STATUS) error
 }
 
 type augmentConversionForShareInfoElement_STATUS interface {

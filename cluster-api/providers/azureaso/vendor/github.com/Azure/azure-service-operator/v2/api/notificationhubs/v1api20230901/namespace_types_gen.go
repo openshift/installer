@@ -23,13 +23,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,notificationhubs}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/stable/2023-09-01/notificationhubs.json
+// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/NotificationHubs/stable/2023-09-01/notificationhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}
 type Namespace struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -260,7 +261,7 @@ func (namespace *Namespace) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/stable/2023-09-01/notificationhubs.json
+// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/NotificationHubs/stable/2023-09-01/notificationhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}
 type NamespaceList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -326,7 +327,7 @@ func (namespace *Namespace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Properties":
 	if namespace.Properties != nil {
-		properties_ARM, err := (*namespace.Properties).ConvertToARM(resolved)
+		properties_ARM, err := namespace.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +337,7 @@ func (namespace *Namespace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Sku":
 	if namespace.Sku != nil {
-		sku_ARM, err := (*namespace.Sku).ConvertToARM(resolved)
+		sku_ARM, err := namespace.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -962,8 +963,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_From_NamespaceOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -992,8 +991,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_From_NamespaceOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1031,8 +1028,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_To_NamespaceOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1061,8 +1056,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_To_NamespaceOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1150,7 +1143,7 @@ func (properties *NamespaceProperties) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "NetworkAcls":
 	if properties.NetworkAcls != nil {
-		networkAcls_ARM, err := (*properties.NetworkAcls).ConvertToARM(resolved)
+		networkAcls_ARM, err := properties.NetworkAcls.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1160,7 +1153,7 @@ func (properties *NamespaceProperties) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "PnsCredentials":
 	if properties.PnsCredentials != nil {
-		pnsCredentials_ARM, err := (*properties.PnsCredentials).ConvertToARM(resolved)
+		pnsCredentials_ARM, err := properties.PnsCredentials.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1800,8 +1793,6 @@ func (properties *NamespaceProperties_STATUS) AssignProperties_From_NamespacePro
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnectionResource_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnectionResource_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnectionResource_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1947,8 +1938,6 @@ func (properties *NamespaceProperties_STATUS) AssignProperties_To_NamespacePrope
 	if properties.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnectionResource_STATUS, len(properties.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range properties.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnectionResource_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnectionResource_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2747,7 +2736,7 @@ func (acls *NetworkAcls) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "PublicNetworkRule":
 	if acls.PublicNetworkRule != nil {
-		publicNetworkRule_ARM, err := (*acls.PublicNetworkRule).ConvertToARM(resolved)
+		publicNetworkRule_ARM, err := acls.PublicNetworkRule.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2801,8 +2790,6 @@ func (acls *NetworkAcls) AssignProperties_From_NetworkAcls(source *storage.Netwo
 	if source.IpRules != nil {
 		ipRuleList := make([]IpRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpRule
 			err := ipRule.AssignProperties_From_IpRule(&ipRuleItem)
 			if err != nil {
@@ -2840,8 +2827,6 @@ func (acls *NetworkAcls) AssignProperties_To_NetworkAcls(destination *storage.Ne
 	if acls.IpRules != nil {
 		ipRuleList := make([]storage.IpRule, len(acls.IpRules))
 		for ipRuleIndex, ipRuleItem := range acls.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IpRule
 			err := ipRuleItem.AssignProperties_To_IpRule(&ipRule)
 			if err != nil {
@@ -2884,8 +2869,6 @@ func (acls *NetworkAcls) Initialize_From_NetworkAcls_STATUS(source *NetworkAcls_
 	if source.IpRules != nil {
 		ipRuleList := make([]IpRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpRule
 			err := ipRule.Initialize_From_IpRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -2970,8 +2953,6 @@ func (acls *NetworkAcls_STATUS) AssignProperties_From_NetworkAcls_STATUS(source 
 	if source.IpRules != nil {
 		ipRuleList := make([]IpRule_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IpRule_STATUS
 			err := ipRule.AssignProperties_From_IpRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -3009,8 +2990,6 @@ func (acls *NetworkAcls_STATUS) AssignProperties_To_NetworkAcls_STATUS(destinati
 	if acls.IpRules != nil {
 		ipRuleList := make([]storage.IpRule_STATUS, len(acls.IpRules))
 		for ipRuleIndex, ipRuleItem := range acls.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IpRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IpRule_STATUS(&ipRule)
 			if err != nil {
@@ -3108,7 +3087,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "AdmCredential":
 	if credentials.AdmCredential != nil {
-		admCredential_ARM, err := (*credentials.AdmCredential).ConvertToARM(resolved)
+		admCredential_ARM, err := credentials.AdmCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3118,7 +3097,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "ApnsCredential":
 	if credentials.ApnsCredential != nil {
-		apnsCredential_ARM, err := (*credentials.ApnsCredential).ConvertToARM(resolved)
+		apnsCredential_ARM, err := credentials.ApnsCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3128,7 +3107,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "BaiduCredential":
 	if credentials.BaiduCredential != nil {
-		baiduCredential_ARM, err := (*credentials.BaiduCredential).ConvertToARM(resolved)
+		baiduCredential_ARM, err := credentials.BaiduCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3138,7 +3117,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "BrowserCredential":
 	if credentials.BrowserCredential != nil {
-		browserCredential_ARM, err := (*credentials.BrowserCredential).ConvertToARM(resolved)
+		browserCredential_ARM, err := credentials.BrowserCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3148,7 +3127,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "GcmCredential":
 	if credentials.GcmCredential != nil {
-		gcmCredential_ARM, err := (*credentials.GcmCredential).ConvertToARM(resolved)
+		gcmCredential_ARM, err := credentials.GcmCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3158,7 +3137,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "MpnsCredential":
 	if credentials.MpnsCredential != nil {
-		mpnsCredential_ARM, err := (*credentials.MpnsCredential).ConvertToARM(resolved)
+		mpnsCredential_ARM, err := credentials.MpnsCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3168,7 +3147,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "WnsCredential":
 	if credentials.WnsCredential != nil {
-		wnsCredential_ARM, err := (*credentials.WnsCredential).ConvertToARM(resolved)
+		wnsCredential_ARM, err := credentials.WnsCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3178,7 +3157,7 @@ func (credentials *PnsCredentials) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "XiaomiCredential":
 	if credentials.XiaomiCredential != nil {
-		xiaomiCredential_ARM, err := (*credentials.XiaomiCredential).ConvertToARM(resolved)
+		xiaomiCredential_ARM, err := credentials.XiaomiCredential.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4271,8 +4250,6 @@ func (rule *IpRule) AssignProperties_From_IpRule(source *storage.IpRule) error {
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_Values)
 		}
 		rule.Rights = rightList
@@ -4296,8 +4273,6 @@ func (rule *IpRule) AssignProperties_To_IpRule(destination *storage.IpRule) erro
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -4326,8 +4301,6 @@ func (rule *IpRule) Initialize_From_IpRule_STATUS(source *IpRule_STATUS) error {
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			right := genruntime.ToEnum(string(rightItem), accessRights_Values)
 			rightList[rightIndex] = right
 		}
@@ -4390,8 +4363,6 @@ func (rule *IpRule_STATUS) AssignProperties_From_IpRule_STATUS(source *storage.I
 	if source.Rights != nil {
 		rightList := make([]AccessRights_STATUS, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_STATUS_Values)
 		}
 		rule.Rights = rightList
@@ -4415,8 +4386,6 @@ func (rule *IpRule_STATUS) AssignProperties_To_IpRule_STATUS(destination *storag
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -4490,8 +4459,6 @@ func (rule *PublicInternetAuthorizationRule) AssignProperties_From_PublicInterne
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_Values)
 		}
 		rule.Rights = rightList
@@ -4512,8 +4479,6 @@ func (rule *PublicInternetAuthorizationRule) AssignProperties_To_PublicInternetA
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -4539,8 +4504,6 @@ func (rule *PublicInternetAuthorizationRule) Initialize_From_PublicInternetAutho
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			right := genruntime.ToEnum(string(rightItem), accessRights_Values)
 			rightList[rightIndex] = right
 		}
@@ -4591,8 +4554,6 @@ func (rule *PublicInternetAuthorizationRule_STATUS) AssignProperties_From_Public
 	if source.Rights != nil {
 		rightList := make([]AccessRights_STATUS, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_STATUS_Values)
 		}
 		rule.Rights = rightList
@@ -4613,8 +4574,6 @@ func (rule *PublicInternetAuthorizationRule_STATUS) AssignProperties_To_PublicIn
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
