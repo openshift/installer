@@ -28,11 +28,12 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	nmStateConfig := getTestNMStateConfig()
 
 	cases := []struct {
-		name              string
-		overrideDeps      []asset.Asset
-		expectedError     string
-		expectedFiles     []string
-		serviceEnabledMap map[string]bool
+		name                string
+		overrideDeps        []asset.Asset
+		expectedError       string
+		expectedFiles       []string
+		expectedFileContent map[string]string
+		serviceEnabledMap   map[string]bool
 	}{
 		{
 			name:          "default-configs-and-no-nmstateconfigs",
@@ -54,6 +55,36 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"pre-network-manager-config.service": true,
 				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true},
+		},
+		{
+			name: "with-additional-ntp-sources",
+			overrideDeps: []asset.Asset{
+				&manifests.InfraEnvFile{
+					Config: &aiv1beta1.InfraEnv{
+						Spec: aiv1beta1.InfraEnvSpec{
+							SSHAuthorizedKey:     "my-ssh-key",
+							AdditionalNTPSources: []string{"0.clock.ntp.org", "1.clock.ntp.org"},
+						},
+					},
+					File: &asset.File{
+						Filename: "infraenv.yaml",
+						Data:     []byte("infraenv"),
+					},
+				},
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/chrony.conf", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			expectedFileContent: map[string]string{
+				"/etc/chrony.conf": `server 0.clock.ntp.org iburst
+server 1.clock.ntp.org iburst
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony`,
+			},
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true,
+				"agent-extract-tui.service":          true},
 		},
 		{
 			name: "valid-agentconfig-with-rendezvousIP",
@@ -142,7 +173,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 
-				assertExpectedFiles(t, unconfiguredIgnitionAsset.Config, tc.expectedFiles, nil)
+				assertExpectedFiles(t, unconfiguredIgnitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
 				assertServiceEnabled(t, unconfiguredIgnitionAsset.Config, tc.serviceEnabledMap)
 			}
