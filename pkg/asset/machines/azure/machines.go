@@ -277,6 +277,8 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				DiskEncryptionSet:  diskEncryptionSet,
 				SecurityProfile:    diskSecurityProfile,
 			},
+			// OCPBUGS-126380: default control plane OS disk host caching to ReadOnly for etcd performance.
+			CachingType: osDiskCachingType(role),
 		},
 		SecurityProfile:       securityProfile,
 		UltraSSDCapability:    ultraSSDCapability,
@@ -308,6 +310,15 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 
 	return spec, nil
+}
+
+// osDiskCachingType returns the OS disk host caching value for a machine role.
+// Control plane disks default to ReadOnly; compute disks leave the field unset so the platform default applies.
+func osDiskCachingType(role string) string {
+	if role == controlPlaneRoleName {
+		return string(machineapi.CachingTypeReadOnly)
+	}
+	return ""
 }
 
 func getBootDiagnosticObject(diag *azure.BootDiagnostics, cloudName string, role string) *machineapi.AzureDiagnostics {
