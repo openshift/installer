@@ -91,7 +91,7 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.30.4
-	golang.org/x/crypto v0.21.0
+	golang.org/x/crypto v0.52.0
 	golang.org/x/oauth2 v0.18.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.30.0
