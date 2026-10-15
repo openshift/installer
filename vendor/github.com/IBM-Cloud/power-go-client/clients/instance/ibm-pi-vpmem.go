@@ -29,10 +29,10 @@ func (f *IBMPIVPMEMClient) CreatePvmVpmemVolumes(pvminstanceID string, body *mod
 		WithBody(body)
 	resp, err := f.session.Power.PCloudvpMemVolumes.PcloudPvminstancesVpmemVolumesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to create a VPMEM volumes for pvminstance %s in %s with %w", pvminstanceID, f.cloudInstanceID, err))
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to create VPMEM volumes for pvminstance %s in %s with %w", pvminstanceID, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("failed to create a VPMEM volumes for pvminstance %s in %s", pvminstanceID, f.cloudInstanceID)
+		return nil, fmt.Errorf("failed to create VPMEM volumes for pvminstance %s in %s", pvminstanceID, f.cloudInstanceID)
 	}
 	return resp.Payload, nil
 }
@@ -74,4 +74,18 @@ func (f *IBMPIVPMEMClient) GetAllPvmVpmemVolumes(pvminstanceID string) (*models.
 		return nil, fmt.Errorf("failed to get VPMEM volumes for pvminstance %s in %s", pvminstanceID, f.cloudInstanceID)
 	}
 	return resp.Payload, nil
+}
+
+// PvmInstance update VPMEM volume
+func (f *IBMPIVPMEMClient) UpdatePvmVpmemVolume(pvminstanceID, vpmemVolumeID string, body *models.VPMemVolumeUpdate) error {
+	params := p_cloud_v_p_mem_volumes.NewPcloudPvminstancesVpmemVolumesPutParams().WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(pvminstanceID).WithVpmemVolumeID(vpmemVolumeID).WithBody(body)
+	resp, err := f.session.Power.PCloudvpMemVolumes.PcloudPvminstancesVpmemVolumesPut(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to update VPMEM volume %s for pvminstance %s in %s with %w", vpmemVolumeID, pvminstanceID, f.cloudInstanceID, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to update VPMEM volume %s for pvminstance %s in %s", vpmemVolumeID, pvminstanceID, f.cloudInstanceID))
+	}
+	return nil
 }

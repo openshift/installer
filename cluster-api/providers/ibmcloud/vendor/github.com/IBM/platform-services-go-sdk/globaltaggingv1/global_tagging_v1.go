@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2025.
+ * (C) Copyright IBM Corp. 2026.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.105.0-3c13b041-20250605-193116
+ * IBM OpenAPI SDK Code Generator Version: 3.111.0-1bfb72c2-20260206-185521
  */
 
 // Package globaltaggingv1 : Operations and models for the GlobalTaggingV1 service
@@ -203,12 +203,12 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 		return
 	}
 
-	for headerName, headerValue := range listTagsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "ListTags")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "ListTags")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listTagsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -307,12 +307,12 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range createTagOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "CreateTag")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "CreateTag")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createTagOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -391,12 +391,12 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 		return
 	}
 
-	for headerName, headerValue := range deleteTagAllOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DeleteTagAll")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DeleteTagAll")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteTagAllOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -476,12 +476,12 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range deleteTagOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DeleteTag")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DeleteTag")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteTagOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -558,12 +558,12 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range attachTagOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "AttachTag")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "AttachTag")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range attachTagOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -662,12 +662,12 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range detachTagOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DetachTag")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_tagging", "V1", "DetachTag")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range detachTagOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1779,6 +1779,9 @@ type TagResultsItem struct {
 
 	// It is `true` if the operation exits with an error.
 	IsError *bool `json:"is_error,omitempty"`
+
+	// Error message returned when the operation fails.
+	Message *string `json:"message,omitempty"`
 }
 
 // UnmarshalTagResultsItem unmarshals an instance of TagResultsItem from the specified map of raw messages.
@@ -1792,6 +1795,11 @@ func UnmarshalTagResultsItem(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "is_error", &obj.IsError)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "is_error-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
