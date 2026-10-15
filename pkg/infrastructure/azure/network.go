@@ -182,8 +182,8 @@ func createAPILoadBalancer(ctx context.Context, pip, pipv6 *armnetwork.PublicIPA
 				},
 			})
 		backendAddressPoolsv6 := []*armnetwork.BackendAddressPool{
-			{Name: to.Ptr(fmt.Sprintf("%s-v6", in.backendAddressPoolName))},
-			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-IPv6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-IPv6", in.backendAddressPoolName))},
 		}
 		loadBalancer.Properties.BackendAddressPools = append(loadBalancer.Properties.BackendAddressPools, backendAddressPoolsv6...)
 		loadBalancerv6Rule := armnetwork.LoadBalancingRule{
@@ -200,7 +200,7 @@ func createAPILoadBalancer(ctx context.Context, pip, pipv6 *armnetwork.PublicIPA
 					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
 				},
 				BackendAddressPool: &armnetwork.SubResource{
-					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-v6", in.backendAddressPoolName))),
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-IPv6", in.backendAddressPoolName))),
 				},
 				Probe: &armnetwork.SubResource{
 					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
@@ -218,7 +218,7 @@ func createAPILoadBalancer(ctx context.Context, pip, pipv6 *armnetwork.PublicIPA
 					},
 				},
 				BackendAddressPool: &armnetwork.SubResource{
-					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))),
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-IPv6", in.backendAddressPoolName))),
 				},
 			},
 		})
@@ -305,8 +305,8 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6
 	if in.isDualstack {
 		frontendIPv6Name := to.Ptr(fmt.Sprintf("%s-v6", in.frontendIPConfigName))
 		backendAddressPoolsv6 := []*armnetwork.BackendAddressPool{
-			{Name: to.Ptr(fmt.Sprintf("%s-v6", in.backendAddressPoolName))},
-			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-IPv6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-IPv6", in.backendAddressPoolName))},
 		}
 		extLB.Properties.BackendAddressPools = append(extLB.Properties.BackendAddressPools,
 			backendAddressPoolsv6...)
@@ -324,7 +324,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6
 					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
 				},
 				BackendAddressPool: &armnetwork.SubResource{
-					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-v6", in.backendAddressPoolName))),
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-IPv6", in.backendAddressPoolName))),
 				},
 				Probe: &armnetwork.SubResource{
 					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
@@ -342,7 +342,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6
 					},
 				},
 				BackendAddressPool: &armnetwork.SubResource{
-					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))),
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-IPv6", in.backendAddressPoolName))),
 				},
 			},
 		})
@@ -444,7 +444,9 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	// and API rule (LBRuleHTTPS-v6) are added later by addIPv6InternalLBFrontend
 	// and addIPv6InternalLBRule, after this function returns.
 	if in.isDualstack {
-		backendPoolV6 := fmt.Sprintf("%s-v6", in.backendAddressPoolName)
+		// The "-ipv6" suffix is a naming contract with machine-api-provider-azure,
+		// which classifies a backend pool as IPv6 by that suffix alone.
+		backendPoolV6 := fmt.Sprintf("%s-IPv6", in.backendAddressPoolName)
 		intLB.Properties.BackendAddressPools = append(intLB.Properties.BackendAddressPools,
 			&armnetwork.BackendAddressPool{
 				Name: to.Ptr(backendPoolV6),
@@ -540,7 +542,7 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 				}
 				for _, pool := range in.backendAddressPools {
 					poolAddressVersion := armnetwork.IPVersionIPv4
-					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-IPv6") {
 						poolAddressVersion = armnetwork.IPVersionIPv6
 					}
 					if ipversion == poolAddressVersion {
