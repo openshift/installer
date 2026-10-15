@@ -50,6 +50,16 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &machineconfigurationv1.ImageRegistryBundleApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageSecretObjectReference"):
 		return &machineconfigurationv1.ImageSecretObjectReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("InternalReleaseImage"):
+		return &machineconfigurationv1.InternalReleaseImageApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("InternalReleaseImageBundleStatus"):
+		return &machineconfigurationv1.InternalReleaseImageBundleStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("InternalReleaseImageRef"):
+		return &machineconfigurationv1.InternalReleaseImageRefApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("InternalReleaseImageSpec"):
+		return &machineconfigurationv1.InternalReleaseImageSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("InternalReleaseImageStatus"):
+		return &machineconfigurationv1.InternalReleaseImageStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("IrreconcilableChangeDiff"):
 		return &machineconfigurationv1.IrreconcilableChangeDiffApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KubeletConfig"):

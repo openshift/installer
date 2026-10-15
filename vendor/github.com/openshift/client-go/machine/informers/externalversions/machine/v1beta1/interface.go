@@ -9,11 +9,11 @@ import (
 // Interface provides access to all the informers in this group version.
 type Interface interface {
 	// Machines returns a MachineInformer.
-	Machines() MachineInformer
+	Machines() TypedMachineInformer
 	// MachineHealthChecks returns a MachineHealthCheckInformer.
-	MachineHealthChecks() MachineHealthCheckInformer
+	MachineHealthChecks() TypedMachineHealthCheckInformer
 	// MachineSets returns a MachineSetInformer.
-	MachineSets() MachineSetInformer
+	MachineSets() TypedMachineSetInformer
 }
 
 type version struct {
@@ -27,17 +27,17 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// Machines returns a MachineInformer.
-func (v *version) Machines() MachineInformer {
+// Machines returns a TypedMachineInformer.
+func (v *version) Machines() TypedMachineInformer {
 	return &machineInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// MachineHealthChecks returns a MachineHealthCheckInformer.
-func (v *version) MachineHealthChecks() MachineHealthCheckInformer {
+// MachineHealthChecks returns a TypedMachineHealthCheckInformer.
+func (v *version) MachineHealthChecks() TypedMachineHealthCheckInformer {
 	return &machineHealthCheckInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
-// MachineSets returns a MachineSetInformer.
-func (v *version) MachineSets() MachineSetInformer {
+// MachineSets returns a TypedMachineSetInformer.
+func (v *version) MachineSets() TypedMachineSetInformer {
 	return &machineSetInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
