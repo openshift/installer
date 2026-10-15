@@ -13,11 +13,14 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 const awsPolicyFilename = "aws-permissions-policy-creds.json"
+const gcpPolicyFilename = "gcp-permissions-policy-creds.json"
 
 // Permissions has the permissions needed for a given cluster configuration.
 type Permissions struct {
@@ -58,7 +61,12 @@ func (o *Permissions) Generate(ctx context.Context, dependencies asset.Parents) 
 			// Include permissions needed by CCO/cluster for mint creds mode
 			reqGroups = append(reqGroups, awsconfig.PermissionMintCreds)
 		}
-		if err := o.writePolicy(reqGroups, awsPolicyFilename); err != nil {
+		if err := o.writeAWSPolicy(reqGroups, awsPolicyFilename); err != nil {
+			return fmt.Errorf("failed to generate credentials permissions: %w", err)
+		}
+	case gcp.Name:
+		reqGroups := gcpconfig.RequiredPermissionGroups(ic.Config)
+		if err := o.writeGCPPolicy(reqGroups, gcpPolicyFilename, ic.Config.ObjectMeta.Name); err != nil {
 			return fmt.Errorf("failed to generate credentials permissions: %w", err)
 		}
 	default:
@@ -68,7 +76,7 @@ func (o *Permissions) Generate(ctx context.Context, dependencies asset.Parents) 
 	return nil
 }
 
-func (o *Permissions) writePolicy(groups []awsconfig.PermissionGroup, filename string) error {
+func (o *Permissions) writeAWSPolicy(groups []awsconfig.PermissionGroup, filename string) error {
 	policy := iamv1.PolicyDocument{
 		Version:   "2012-10-17",
 		Statement: []iamv1.StatementEntry{},
@@ -93,6 +101,35 @@ func (o *Permissions) writePolicy(groups []awsconfig.PermissionGroup, filename s
 	policyBytes, err := json.Marshal(policy)
 	if err != nil {
 		return fmt.Errorf("failed to marshal permissions policy: %w", err)
+	}
+
+	o.FileList = append(o.FileList, &asset.File{
+		Filename: filename,
+		Data:     policyBytes,
+	})
+
+	return nil
+}
+
+func (o *Permissions) writeGCPPolicy(groups []gcpconfig.PermissionGroup, filename, clusterName string) error {
+	role := gcpconfig.CustomIAMRole{
+		Title:               fmt.Sprintf("IAM Role %s", clusterName),
+		Description:         "Custom role providing OpenShift Installer required permissions",
+		Stage:               "GA", // we could get any of the 4 options
+		IncludedPermissions: []string{},
+	}
+
+	for _, group := range groups {
+		groupPerms, err := gcpconfig.Permissions(group)
+		if err != nil {
+			return err
+		}
+		role.IncludedPermissions = append(role.IncludedPermissions, groupPerms...)
+	}
+
+	policyBytes, err := json.MarshalIndent(role, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal gcp IAM role: %w", err)
 	}
 
 	o.FileList = append(o.FileList, &asset.File{
