@@ -380,6 +380,55 @@ func TestValidate(t *testing.T) {
 			instanceTypes: validInstanceTypes(),
 		},
 		{
+			name: "instance type with support for nested virtualization",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("c8i.xlarge", "c8i.xlarge", "c8i.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: ptr.To(aws.NestedVirtualizationEnabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "valid instance type with support for nested virtualization disabled",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("c8i.xlarge", "c8i.xlarge", "c8i.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: ptr.To(aws.NestedVirtualizationDisabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "invalid instance type with support for nested virtualization disabled",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: ptr.To(aws.NestedVirtualizationDisabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "instance type without support for nested virtualization",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: ptr.To(aws.NestedVirtualizationEnabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `^\Qcompute[0].platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support Nested Virtualization\E$`,
+		},
+		{
 			name:          "valid dual-stack with IPv6 supporting instance types",
 			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
 			availRegions:  validAvailRegions(),
@@ -2549,7 +2598,17 @@ func validInstanceTypes() map[string]InstanceType {
 			MemInMiB:     16384,
 			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
-			Features:     []string{"amd-sev-snp"},
+			Features:     []string{string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp)},
+		},
+		"c8i.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Features: []string{
+				string(ec2types.SupportedAdditionalProcessorFeatureNestedVirtualization),
+				string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp),
+			},
 		},
 	}
 }
