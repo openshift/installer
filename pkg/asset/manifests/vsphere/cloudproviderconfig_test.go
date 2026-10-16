@@ -59,9 +59,10 @@ region = "openshift-region"
 zone = "openshift-zone"
 `
 
-	// expectedYamlConfig is used by the basic yaml path test (feature gate
-	// enabled via inDefault, machine network 10.0.0.0/24 → nodes section
-	// populated with that CIDR).
+	// expectedYamlConfig is used by the basic yaml path test. In 4.19
+	// VSphereMultiNetworks is only enabled by DevPreviewNoUpgrade/
+	// TechPreviewNoUpgrade, so with the default feature set the nodes
+	// section is not populated.
 	expectedYamlConfig = `global:
   insecureFlag: true
   secretName: vsphere-creds
@@ -69,9 +70,6 @@ zone = "openshift-zone"
 labels:
   region: openshift-region
   zone: openshift-zone
-nodes:
-  externalNetworkSubnetCidr: 10.0.0.0/24
-  internalNetworkSubnetCidr: 10.0.0.0/24
 vcenter:
   test-vcenter:
     datacenters:
@@ -260,9 +258,9 @@ func TestCloudProviderConfig(t *testing.T) {
 			}(),
 		},
 		{
-			// VSphereMultiNetworks is enabled in inDefault() so the nodes
-			// section is always populated from the machine network CIDR when
-			// nodeNetworking is not explicitly set.
+			// In 4.19 VSphereMultiNetworks is TechPreview-only, so with the
+			// default feature set the nodes section is not populated even
+			// though a machine network is present.
 			name:                "valid out of tree yaml cloud provider config",
 			platform:            validPlatform(),
 			installConfig:       makeInstallConfig(validPlatform(), "", "10.0.0.0/24"),
@@ -270,8 +268,9 @@ func TestCloudProviderConfig(t *testing.T) {
 			expectedCloudConfig: expectedYamlConfig,
 		},
 		{
-			// TechPreviewNoUpgrade also enables VSphereMultiNetworks – same
-			// result as the default case above.
+			// TechPreviewNoUpgrade enables VSphereMultiNetworks, so the nodes
+			// section is populated from the machine network CIDR when
+			// nodeNetworking is not explicitly set.
 			name:                "valid out of tree yaml cloud provider config with node networking from machine network",
 			platform:            validPlatform(),
 			installConfig:       makeInstallConfig(validPlatform(), configv1.TechPreviewNoUpgrade, "10.0.0.0/24"),
@@ -323,12 +322,13 @@ func TestCloudProviderConfig(t *testing.T) {
 		},
 		{
 			// When Port is not set (zero value) the YAML vcenter block must
-			// not contain a port field.
+			// not contain a port field. TechPreviewNoUpgrade is used so the
+			// nodes section is populated as well.
 			name: "outtree yaml cloud provider config omits port when not configured",
 			installConfig: func() *installconfig.InstallConfig {
 				p := validPlatform()
 				p.VCenters[0].Port = 0
-				return makeInstallConfig(p, "", "10.0.0.0/24")
+				return makeInstallConfig(p, configv1.TechPreviewNoUpgrade, "10.0.0.0/24")
 			}(),
 			useYaml:             true,
 			expectedCloudConfig: expectedYamlConfigNoPort,
