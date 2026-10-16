@@ -97,6 +97,14 @@ const (
 
 	// PermissionDynamicHostAllocation is a permission set required when cleaning up dynamic hosts that were allocated during the life of the cluster.
 	PermissionDynamicHostAllocation PermissionGroup = "permission-dynamic-host-allocation"
+
+	// PermissionCreateSTS is a permission set required for fully managed STS provisioning
+	// (S3 OIDC bucket, IAM OIDC provider, and IAM roles).
+	PermissionCreateSTS PermissionGroup = "create-sts"
+
+	// PermissionDeleteSTS is a permission set required for destroying STS resources
+	// (OIDC provider, S3 bucket, and IAM roles).
+	PermissionDeleteSTS PermissionGroup = "delete-sts"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -458,6 +466,34 @@ var permissions = map[PermissionGroup][]string{
 		// This is only used during cluster destroy if during cluster destroy we detect a dedicated host with appropriate tags on it.
 		"ec2:ReleaseHosts",
 	},
+	PermissionCreateSTS: {
+		"iam:CreateOpenIDConnectProvider",
+		"iam:CreateRole",
+		"iam:DeleteRole",
+		"iam:GetOpenIDConnectProvider",
+		"iam:GetRole",
+		"iam:ListOpenIDConnectProviders",
+		"iam:PutRolePolicy",
+		"iam:TagOpenIDConnectProvider",
+		"iam:TagRole",
+		"s3:CreateBucket",
+		"s3:GetBucketTagging",
+		"s3:PutBucketPolicy",
+		"s3:PutBucketTagging",
+		"s3:PutObject",
+		"s3:PutPublicAccessBlock",
+		"sts:GetCallerIdentity",
+	},
+	PermissionDeleteSTS: {
+		"iam:DeleteOpenIDConnectProvider",
+		"iam:DeleteRole",
+		"iam:DeleteRolePolicy",
+		"iam:ListOpenIDConnectProviders",
+		"iam:ListRolePolicies",
+		"s3:DeleteBucket",
+		"s3:DeleteObject",
+		"s3:ListBucket",
+	},
 }
 
 // ValidateCreds will try to create an AWS session, and also verify that the current credentials
@@ -602,6 +638,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 
 	if includesDedicatedHosts(ic) {
 		permissionGroups = append(permissionGroups, PermissionDedicatedHosts)
+	}
+
+	if ic.AWS.IsSTSManaged() {
+		permissionGroups = append(permissionGroups, PermissionCreateSTS, PermissionDeleteSTS)
 	}
 
 	return permissionGroups

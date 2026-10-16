@@ -55,9 +55,17 @@ func (*Provider) Name() string { return awstypes.Name }
 func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.ExternalIP }
 
 // PreProvision creates the IAM roles used by all nodes in the cluster.
+// When STS managed mode is active, it also creates the OIDC S3 bucket,
+// IAM OIDC provider, and per-component IAM roles.
 func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	if err := createIAMRoles(ctx, in.InfraID, in.InstallConfig); err != nil {
 		return fmt.Errorf("failed to create IAM roles: %w", err)
+	}
+
+	if in.InstallConfig.Config.Platform.AWS.IsSTSManaged() {
+		if err := provisionOIDCAndIAMRoles(ctx, in); err != nil {
+			return fmt.Errorf("failed to provision OIDC and IAM roles: %w", err)
+		}
 	}
 
 	// The AWSMachine manifests might already have the AMI ID set from the machine pool which takes into account the

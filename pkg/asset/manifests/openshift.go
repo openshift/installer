@@ -78,6 +78,8 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.AzureCloudProviderSecret{},
 		&OSImageStream{},
 		&ImageRegistryConfig{},
+		&CredentialSecrets{},
+		&Authentication{},
 	}
 }
 
@@ -264,6 +266,8 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	baremetalConfig := &openshift.BaremetalConfig{}
 	rhcosImage := new(rhcos.Image)
 	osImageStream := &OSImageStream{}
+	stsCredSecrets := &CredentialSecrets{}
+	stsAuthCR := &Authentication{}
 
 	dependencies.Get(
 		cloudCredsSecret,
@@ -271,7 +275,9 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 		roleCloudCredsSecretReader,
 		baremetalConfig,
 		rhcosImage,
-		osImageStream)
+		osImageStream,
+		stsCredSecrets,
+		stsAuthCR)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -306,6 +312,8 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	o.FileList = append(o.FileList, featureGate.Files()...)
 	o.FileList = append(o.FileList, osImageStream.Files()...)
 	o.FileList = append(o.FileList, imageRegistryConfig.Files()...)
+	o.FileList = append(o.FileList, stsCredSecrets.Files()...)
+	o.FileList = append(o.FileList, stsAuthCR.Files()...)
 
 	asset.SortFiles(o.FileList)
 

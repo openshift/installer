@@ -178,6 +178,36 @@ func TestSetPlatformDefaults(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "non-nil STS and empty STSmode should default to mode Manual",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS:    &aws.STS{},
+			},
+			expected: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.IPv4,
+				STS: &aws.STS{
+					Mode: aws.STSModeManual,
+				},
+			},
+		},
+		{
+			name: "non-nil STS and non-empty STSmode should not set default",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				STS: &aws.STS{
+					Mode: aws.STSModeManaged,
+				},
+			},
+			expected: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.IPv4,
+				STS: &aws.STS{
+					Mode: aws.STSModeManaged,
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -186,6 +216,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			assert.Equal(t, tc.expected.IPFamily, tc.platform.IPFamily)
 			assert.Equal(t, tc.expected.LBType, tc.platform.LBType)
 			assert.Equal(t, tc.expected.ServiceEndpoints, tc.platform.ServiceEndpoints)
+			assert.Equal(t, tc.expected.STS, tc.platform.STS)
 		})
 	}
 }
