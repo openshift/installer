@@ -3,8 +3,8 @@
 package internal
 
 import (
-	"fmt"
-	"sync"
+	fmt "fmt"
+	sync "sync"
 
 	typed "sigs.k8s.io/structured-merge-diff/v4/typed"
 )
@@ -1542,7 +1542,21 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.openshift.api.operator.v1.IPsecConfig
   map:
     fields:
+    - name: full
+      type:
+        namedType: com.github.openshift.api.operator.v1.IPsecFullModeConfig
     - name: mode
+      type:
+        scalar: string
+    unions:
+    - discriminator: mode
+      fields:
+      - fieldName: full
+        discriminatorValue: Full
+- name: com.github.openshift.api.operator.v1.IPsecFullModeConfig
+  map:
+    fields:
+    - name: encapsulation
       type:
         scalar: string
 - name: com.github.openshift.api.operator.v1.IPv4GatewayConfig
@@ -1775,6 +1789,10 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: httpHeaders
       type:
         namedType: com.github.openshift.api.operator.v1.IngressControllerHTTPHeaders
+    - name: idleConnectionTerminationPolicy
+      type:
+        scalar: string
+      default: Immediate
     - name: logging
       type:
         namedType: com.github.openshift.api.operator.v1.IngressControllerLogging
@@ -3886,6 +3904,39 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         scalar: string
       default: ""
+- name: com.github.openshift.api.operator.v1alpha1.ClusterVersionOperator
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+      default: {}
+    - name: spec
+      type:
+        namedType: com.github.openshift.api.operator.v1alpha1.ClusterVersionOperatorSpec
+      default: {}
+    - name: status
+      type:
+        namedType: com.github.openshift.api.operator.v1alpha1.ClusterVersionOperatorStatus
+      default: {}
+- name: com.github.openshift.api.operator.v1alpha1.ClusterVersionOperatorSpec
+  map:
+    fields:
+    - name: operatorLogLevel
+      type:
+        scalar: string
+- name: com.github.openshift.api.operator.v1alpha1.ClusterVersionOperatorStatus
+  map:
+    fields:
+    - name: observedGeneration
+      type:
+        scalar: numeric
 - name: com.github.openshift.api.operator.v1alpha1.EtcdBackup
   map:
     fields:
