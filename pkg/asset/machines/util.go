@@ -40,19 +40,14 @@ func DiskName(diskSetup types.Disk) (string, error) {
 
 // NodeDiskSetup determines the path per disk type, and per platform and role, runs ForDiskSetup.
 func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, diskSetup types.Disk, dataDisk any) (*v1.MachineConfig, error) {
-	var path string
-
 	ic := installConfig.Config
 
 	label := string(diskSetup.Type)
 
-	switch diskSetup.Type {
-	case types.Etcd:
-		path = "/var/lib/etcd"
-	case types.Swap:
-		path = ""
-	case types.UserDefined:
-		path = diskSetup.UserDefined.MountPath
+	// Etcd disks mount at /var/lib/etcd, user-defined disks at their
+	// configured mount path, and swap disks mount nothing.
+	path, _ := diskSetup.MountPath()
+	if diskSetup.Type == types.UserDefined {
 		label = diskSetup.UserDefined.PlatformDiskID
 	}
 

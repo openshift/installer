@@ -633,12 +633,18 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			switch ic.Platform.Name() {
 			case azuretypes.Name:
 				azureControlPlaneMachinePool := ic.ControlPlane.Platform.Azure
+				if azureControlPlaneMachinePool == nil {
+					return errors.Errorf("control plane has diskSetup entries but no platform.azure stanza to pair them with data disks")
+				}
 
 				if i < len(azureControlPlaneMachinePool.DataDisks) {
 					dataDisk = azureControlPlaneMachinePool.DataDisks[i]
 				}
 			case vspheretypes.Name:
 				vsphereControlPlaneMachinePool := ic.ControlPlane.Platform.VSphere
+				if vsphereControlPlaneMachinePool == nil {
+					return errors.Errorf("control plane has diskSetup entries but no platform.vsphere stanza to pair them with data disks")
+				}
 				for index, disk := range vsphereControlPlaneMachinePool.DataDisks {
 					if disk.Name == diskName {
 						dataDisk = vsphere.DiskInfo{

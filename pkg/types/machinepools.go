@@ -3,6 +3,8 @@ package types
 import (
 	"regexp"
 
+	"github.com/coreos/go-systemd/v22/unit"
+
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -106,6 +108,22 @@ func SanitizeDiskLabel(label string) string {
 	return diskLabelUnsafeChars.ReplaceAllString(label, "")
 }
 
+// MaxUnitNameLength is the longest unit name systemd loads.
+const MaxUnitNameLength = 255
+
+// MountUnitName returns the name of the systemd mount unit for mountPath. A
+// mount unit must be named after the systemd-escaped form of its mount point:
+// systemd refuses to load a unit whose name does not match Where= ("Where=
+// setting doesn't match unit name. Refusing."). Simply replacing "/" with "-"
+// is not that escaping - characters systemd escapes as \xHH, such as "-",
+// would be left as-is, and distinct paths ("-" and "/" are both rendered "-")
+// would collide on one unit name. This is the only definition of the unit
+// name: validation uses it to bound the name's length, and the MachineConfig
+// generator uses it to name the unit, so the two cannot drift.
+func MountUnitName(mountPath string) string {
+	return unit.UnitNamePathEscape(mountPath) + ".mount"
+}
+
 // PlatformDiskID returns the identifier that pairs this disk setup entry with a
 // platform data disk, along with whether the entry carries the configuration
 // block its type calls for.
@@ -122,6 +140,26 @@ func (d *Disk) PlatformDiskID() (string, bool) {
 	case UserDefined:
 		if d.UserDefined != nil {
 			return d.UserDefined.PlatformDiskID, true
+		}
+	}
+	return "", false
+}
+
+// MountPath returns the path this disk setup entry mounts its disk at, along
+// with whether the entry mounts a filesystem at all. Etcd disks always mount
+// at /var/lib/etcd, user-defined disks at their configured mount path, and
+// swap disks mount nothing. This is the only definition of the etcd mount
+// path: validation and the MachineConfig generation both resolve it through
+// here, so the two cannot drift.
+func (d *Disk) MountPath() (string, bool) {
+	switch d.Type {
+	case Etcd:
+		if d.Etcd != nil {
+			return "/var/lib/etcd", true
+		}
+	case UserDefined:
+		if d.UserDefined != nil {
+			return d.UserDefined.MountPath, true
 		}
 	}
 	return "", false

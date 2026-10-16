@@ -4,10 +4,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -302,6 +305,69 @@ func TestSetMachinePoolDefaultsGCPDefaultMachinePlatform(t *testing.T) {
 			config := &types.InstallConfig{}
 			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
 			assert.Equal(t, tc.expected, tc.pool.Platform.GCP)
+		})
+	}
+}
+
+// TestSetMachinePoolDefaultsAzureDataDiskCaching checks that the Azure data disk
+// defaults are applied through the generic machine pool defaulting, after the
+// defaultMachinePlatform has been merged into the pool.
+func TestSetMachinePoolDefaultsAzureDataDiskCaching(t *testing.T) {
+	cases := []struct {
+		name     string
+		pool     *types.MachinePool
+		platform *types.Platform
+		expected []capz.DataDisk
+	}{
+		{
+			name: "omitted cachingType defaults to None",
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{NameSuffix: "etcd", DiskSizeGB: 256, Lun: ptr.To(int32(0))}},
+					},
+				},
+			},
+			platform: &types.Platform{Azure: &azure.Platform{}},
+			expected: []capz.DataDisk{{NameSuffix: "etcd", DiskSizeGB: 256, Lun: ptr.To(int32(0)), CachingType: "None"}},
+		},
+		{
+			name: "explicit cachingType is preserved",
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{NameSuffix: "data", DiskSizeGB: 64, Lun: ptr.To(int32(0)), CachingType: "ReadOnly"}},
+					},
+				},
+			},
+			platform: &types.Platform{Azure: &azure.Platform{}},
+			expected: []capz.DataDisk{{NameSuffix: "data", DiskSizeGB: 64, Lun: ptr.To(int32(0)), CachingType: "ReadOnly"}},
+		},
+		{
+			name: "data disks inherited from defaultMachinePlatform are defaulted",
+			pool: &types.MachinePool{Name: "worker"},
+			platform: &types.Platform{
+				Azure: &azure.Platform{
+					DefaultMachinePlatform: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{NameSuffix: "data", DiskSizeGB: 64, Lun: ptr.To(int32(0))}},
+					},
+				},
+			},
+			expected: []capz.DataDisk{{NameSuffix: "data", DiskSizeGB: 64, Lun: ptr.To(int32(0)), CachingType: "None"}},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &types.InstallConfig{}
+			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
+			assert.Equal(t, tc.expected, tc.pool.Platform.Azure.DataDisks)
+			if dmp := tc.platform.Azure.DefaultMachinePlatform; dmp != nil {
+				for _, dataDisk := range dmp.DataDisks {
+					assert.Empty(t, dataDisk.CachingType, "defaulting must not leak into defaultMachinePlatform")
+				}
+			}
 		})
 	}
 }
