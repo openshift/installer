@@ -248,6 +248,11 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 		return err
 	}
 
+	err = addNTPSources(&config, infraEnv)
+	if err != nil {
+		return err
+	}
+
 	a.Config = &config
 
 	if err := a.generateFile(unconfiguredIgnitionFilename); err != nil {
