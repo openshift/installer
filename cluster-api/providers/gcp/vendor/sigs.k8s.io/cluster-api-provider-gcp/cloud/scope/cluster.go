@@ -36,6 +36,9 @@ const (
 	loadBalanceTrafficExternal = "EXTERNAL"
 	protocolTCP                = "TCP"
 	metadataKeyUserData        = "user-data"
+
+	// defaultNetworkName is the GCP alias for a project's default network.
+	defaultNetworkName = "default"
 )
 
 // ClusterScopeParams defines the input parameters used to create a new Scope.
@@ -141,7 +144,7 @@ func (s *ClusterScope) Namespace() string {
 
 // NetworkName returns the cluster network unique identifier.
 func (s *ClusterScope) NetworkName() string {
-	return ptr.Deref(s.GCPCluster.Spec.Network.Name, "default")
+	return ptr.Deref(s.GCPCluster.Spec.Network.Name, defaultNetworkName)
 }
 
 // NetworkMtu returns the Network MTU of 1440 which is the default, otherwise returns back what is being set.
@@ -297,7 +300,7 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 // ANCHOR: ClusterFirewallSpec
 
 // FirewallRulesSpec returns google compute firewall spec.
-func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
+func (s *ClusterScope) FirewallRulesSpec() ([]*compute.Firewall, error) {
 	return createFirewallRules(
 		s.Name(),
 		s.NetworkLink(),

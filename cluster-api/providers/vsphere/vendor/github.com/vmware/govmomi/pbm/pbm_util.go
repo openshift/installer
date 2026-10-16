@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package pbm
@@ -20,11 +20,12 @@ import (
 
 // A struct to capture pbm create spec details.
 type CapabilityProfileCreateSpec struct {
-	Name           string
-	SubProfileName string
-	Description    string
-	Category       string
-	CapabilityList []Capability
+	Name             string
+	SubProfileName   string
+	Description      string
+	Category         string
+	CapabilityList   []Capability
+	K8sCompliantName string
 }
 
 // A struct to capture pbm capability instance details.
@@ -63,6 +64,7 @@ func CreateCapabilityProfileSpec(pbmCreateSpec CapabilityProfileCreateSpec) (*ty
 				},
 			},
 		},
+		K8sCompliantName: pbmCreateSpec.K8sCompliantName,
 	}
 	return &pbmCapabilityProfileSpec, nil
 }

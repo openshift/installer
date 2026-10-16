@@ -29,6 +29,9 @@ If you're new to the project and want to help, but don't know where to start, we
 
 ## Contributing a Patch
 
+For AI-assisted contributions, follow the project's
+[AI Usage Policy](AI_POLICY.md).
+
 1. If you haven't already done so, sign a Contributor License Agreement (see details above).
 2. Fork the desired repo, develop and test your code changes.
 3. Submit a pull request.

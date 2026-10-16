@@ -38,8 +38,7 @@ type Wrapper interface {
 
 // NewWrapper returns the correct wrapper for the passed in object.
 func NewWrapper(obj client.Object) Wrapper {
-	if obj.GetObjectKind().GroupVersionKind().Kind == "KubeadmControlPlane" {
-		kcp, _ := obj.(*controlplanev1.KubeadmControlPlane)
+	if kcp, ok := obj.(*controlplanev1.KubeadmControlPlane); ok {
 		return kcpWrapper{kcp}
 	}
 	md, _ := obj.(*clusterv1.MachineDeployment)

@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package vim25
@@ -16,7 +16,7 @@ import (
 
 const (
 	Namespace = "vim25"
-	Version   = "9.0.0.0"
+	Version   = "9.1.0.0"
 	Path      = "/sdk"
 )
 

@@ -23,22 +23,14 @@ import (
 
 // Service implements clusters reconciler.
 type Service struct {
-	scope         *scope.ManagedControlPlaneScope
-	emailResolver tokenEmailResolver
+	scope *scope.ManagedControlPlaneScope
 }
 
 var _ cloud.ReconcilerWithResult = &Service{}
 
 // New returns Service from given scope.
 func New(s *scope.ManagedControlPlaneScope) *Service {
-	var resolver tokenEmailResolver
-	if cred := s.GetCredential(); cred != nil {
-		resolver = credentialEmailResolver{email: cred.ClientEmail}
-	} else {
-		resolver = metadataEmailResolver{}
-	}
 	return &Service{
-		scope:         s,
-		emailResolver: resolver,
+		scope: s,
 	}
 }

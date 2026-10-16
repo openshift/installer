@@ -36,6 +36,12 @@ type Reconciler interface {
 	Delete(ctx context.Context) error
 }
 
+// NamedReconciler pairs a Reconciler with the name used to identify it in logs.
+type NamedReconciler struct {
+	Name       string
+	Reconciler Reconciler
+}
+
 // ReconcilerWithResult is a generic interface used by components offering a type of service.
 type ReconcilerWithResult interface {
 	Reconcile(ctx context.Context) (ctrl.Result, error)

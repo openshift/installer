@@ -1,4 +1,5 @@
-// Copyright (c) 2022 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
@@ -9,19 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// VirtualMachineConfigSpec contains additional virtual machine
-// configuration settings including hardware specifications for the
-// VirtualMachine.
-//
-// We only support XML for now, but that may change in the future.
-type VirtualMachineConfigSpec struct {
-	// XML contains a vim.vm.ConfigSpec object that has been serialized to XML
-	// and base64-encoded.
-	//
-	// +optional
-	XML string `json:"xml,omitempty"`
-}
 
 // VGPUDevice contains the configuration corresponding to a vGPU device.
 type VGPUDevice struct {
@@ -91,7 +79,7 @@ type VirtualMachineClassHardware struct {
 // VirtualMachineResourceSpec describes a virtual hardware policy specification.
 type VirtualMachineResourceSpec struct {
 	// +optional
-	Cpu resource.Quantity `json:"cpu,omitempty"` //nolint:stylecheck,revive
+	Cpu resource.Quantity `json:"cpu,omitempty"` //nolint:revive
 
 	// +optional
 	Memory resource.Quantity `json:"memory,omitempty"`
@@ -164,6 +152,20 @@ type VirtualMachineClassSpec struct {
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:pruning:PreserveUnknownFields
 	ConfigSpec json.RawMessage `json:"configSpec,omitempty"`
+
+	// +optional
+
+	// ReservedProfileID describes the reservation profile associated with
+	// the namespace-scoped VirtualMachineClass object.
+	ReservedProfileID string `json:"reservedProfileID,omitempty"`
+
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+
+	// ReservedSlots describes the number of slots reserved for VMs that use
+	// this VirtualMachineClass.
+	// This field is only valid in conjunction with reservedProfileID.
+	ReservedSlots int32 `json:"reservedSlots,omitempty"`
 }
 
 // VirtualMachineClassStatus defines the observed state of VirtualMachineClass.
@@ -172,7 +174,6 @@ type VirtualMachineClassStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,shortName=vmclass
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="CPU",type="string",JSONPath=".spec.hardware.cpus"
 // +kubebuilder:printcolumn:name="Memory",type="string",JSONPath=".spec.hardware.memory"
@@ -199,8 +200,5 @@ type VirtualMachineClassList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(
-		&VirtualMachineClass{},
-		&VirtualMachineClassList{},
-	)
+	objectTypes = append(objectTypes, &VirtualMachineClass{}, &VirtualMachineClassList{})
 }
