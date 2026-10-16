@@ -415,11 +415,17 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				switch ic.Platform.Name() {
 				// Each platform has their unique dataDisk type
 				case azuretypes.Name:
+					if pool.Platform.Azure == nil {
+						return errors.Errorf("compute pool %q has diskSetup entries but no platform.azure stanza to pair them with data disks", pool.Name)
+					}
 					if i < len(pool.Platform.Azure.DataDisks) {
 						dataDisk = pool.Platform.Azure.DataDisks[i]
 					}
 				case vspheretypes.Name:
 					vsphereMachinePool := pool.Platform.VSphere
+					if vsphereMachinePool == nil {
+						return errors.Errorf("compute pool %q has diskSetup entries but no platform.vsphere stanza to pair them with data disks", pool.Name)
+					}
 					for index, disk := range vsphereMachinePool.DataDisks {
 						if disk.Name == diskName {
 							dataDisk = vsphere.DiskInfo{
