@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -125,23 +126,35 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		logrus.Debugf("created resource group: %s", resourceGroupName)
 	}
 
-	// Create a COS Instance and Bucket to host the RHCOS image file.
-	// NOTE(cjschaef): Support to use an existing COS Object (RHCO image file) or VPC Custom Image could be added to skip this step.
-	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
-	logrus.Debugf("checking for existing cos instance: %s", cosInstanceName)
-	var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
-	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
-	if err != nil {
-		if errors.As(err, &cosInstanceNotFoundError) {
-			// Attempt to create the COS Instance, since it was not found.
-			logrus.Debugf("creating cos instance: %s", cosInstanceName)
-			cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
-			if err != nil {
-				return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+	// Create or use existing COS Instance and Bucket to host the RHCOS image file.
+	var cosInstance *resourcecontrollerv2.ResourceInstance
+
+	// Check if user provided an existing COS instance CRN
+	if in.InstallConfig.Config.IBMCloud.COSInstanceCRN != "" {
+		logrus.Debugf("using existing cos instance: %s", in.InstallConfig.Config.IBMCloud.COSInstanceCRN)
+		cosInstance, err = client.GetResourceInstance(ctx, in.InstallConfig.Config.IBMCloud.COSInstanceCRN)
+		if err != nil {
+			return fmt.Errorf("failed to get existing COS instance %s: %w", in.InstallConfig.Config.IBMCloud.COSInstanceCRN, err)
+		}
+		logrus.Debugf("found existing cos instance: %s", *cosInstance.Name)
+	} else {
+		// Create a new COS instance for the cluster
+		cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
+		logrus.Debugf("checking for existing cos instance: %s", cosInstanceName)
+		var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
+		cosInstance, err = client.GetCOSInstanceByName(ctx, cosInstanceName)
+		if err != nil {
+			if errors.As(err, &cosInstanceNotFoundError) {
+				// Attempt to create the COS Instance, since it was not found.
+				logrus.Debugf("creating cos instance: %s", cosInstanceName)
+				cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+				if err != nil {
+					return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+				}
+				logrus.Debugf("created cos instance: %s", cosInstanceName)
+			} else {
+				return fmt.Errorf("failed checking for cos instance %s: %w", cosInstanceName, err)
 			}
-			logrus.Debugf("created cos instance: %s", cosInstanceName)
-		} else {
-			return fmt.Errorf("failed checking for cos instance %s: %w", cosInstanceName, err)
 		}
 	}
 	bucketName := ibmcloudic.VSIImageCOSBucketName(in.InfraID)
@@ -389,33 +402,46 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	}
 	logrus.Debugf("retrieved resource group id: %s", *resourceGroup.ID)
 
-	// Get the COS Instance, possibly created for RHCOS image, or create the COS Instance.
-	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
-	var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
-	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
-	if err != nil {
-		if errors.As(err, &cosInstanceNotFoundError) {
-			// Attempt to create the COS Instance, since it was not found.
-			logrus.Debugf("creating cos instance: %s", cosInstanceName)
-			cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
-			if err != nil {
-				return nil, fmt.Errorf("failed creating ignition COS instance: %w", err)
+	// Get or use existing COS Instance for bootstrap ignition.
+	var cosInstance *resourcecontrollerv2.ResourceInstance
+
+	// Check if user provided an existing COS instance CRN
+	if in.InstallConfig.Config.IBMCloud.COSInstanceCRN != "" {
+		logrus.Debugf("using existing cos instance for ignition: %s", in.InstallConfig.Config.IBMCloud.COSInstanceCRN)
+		cosInstance, err = client.GetResourceInstance(ctx, in.InstallConfig.Config.IBMCloud.COSInstanceCRN)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get existing COS instance for ignition %s: %w", in.InstallConfig.Config.IBMCloud.COSInstanceCRN, err)
+		}
+		logrus.Debugf("found existing cos instance for ignition: %s", *cosInstance.Name)
+	} else {
+		// Get the COS Instance, possibly created for RHCOS image, or create the COS Instance.
+		cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
+		var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
+		cosInstance, err = client.GetCOSInstanceByName(ctx, cosInstanceName)
+		if err != nil {
+			if errors.As(err, &cosInstanceNotFoundError) {
+				// Attempt to create the COS Instance, since it was not found.
+				logrus.Debugf("creating cos instance: %s", cosInstanceName)
+				cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+				if err != nil {
+					return nil, fmt.Errorf("failed creating ignition COS instance: %w", err)
+				}
+				logrus.Debugf("created cos instance: %s", cosInstanceName)
+			} else {
+				return nil, fmt.Errorf("failed retrieving cos instance for ignition: %w", err)
 			}
-			logrus.Debugf("created cos instance: %s", cosInstanceName)
-		} else {
-			return nil, fmt.Errorf("failed retrieving cos instance %s for ignition: %w", cosInstanceName, err)
 		}
 	}
 
 	// Create new bucket for bootstrap's temporary Ignition Config.
-	logrus.Debugf("fetching cos instance for cluster: %s", cosInstanceName)
+	logrus.Debugf("using cos instance for cluster: %s", *cosInstance.Name)
 	bucketName := ibmcloudbootstrap.GetIgnitionBucketName((in.InfraID))
 	logrus.Debugf("creating cos bucket for bootstrap ignition config: %s", bucketName)
 	err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating ignition COS bucket: %w", err)
 	}
-	logrus.Infof("created cos bucket for bootstrap ignition config: %s/%s", cosInstanceName, bucketName)
+	logrus.Infof("created cos bucket for bootstrap ignition config: %s/%s", *cosInstance.Name, bucketName)
 
 	// Default to using the direct regional COS endpoint.
 	cosEndpoint := fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", region)
@@ -431,7 +457,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed uploading ignition data: %w", err)
 	}
-	logrus.Debugf("bootstrap ignition config upload complete to %s/%s/%s", cosInstanceName, bucketName, ignitionFile)
+	logrus.Debugf("bootstrap ignition config upload complete to %s/%s/%s", *cosInstance.Name, bucketName, ignitionFile)
 
 	// Build the URL for the ignition config.
 	cosURL, err := url.Parse(cosEndpoint)
@@ -490,6 +516,9 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	logrus.Debugf("bootstrap destroy cleanup resources for %s", infraID)
 
 	// Cleanup COS Bucket for bootstrap Ignition Config
+	// Check if user provided an existing COS instance - if so, only clean up the bucket, not the instance
+	userProvidedCOS := in.Metadata.IBMCloud.COSInstanceCRN != ""
+
 	cosInstanceName := ibmcloudic.COSInstanceName(infraID)
 	bucketName := ibmcloudbootstrap.GetIgnitionBucketName(infraID)
 	// Get COS Instance ID
@@ -508,26 +537,31 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		logrus.Debugf("no cos instance found for the cluster as %s, skipping ignition bucket cleanup", cosInstanceName)
 	}
 
-	// If there are no additional Buckets within the COS Instance (specifically the Bucket used for the VSI Image), cleanup the COS Instance as well.
-	logrus.Debugf("checking whether cos instance should be cleaned up as well: %s", *cosInstanceDetails.ID)
-	cosBucketsOutput, err := client.ListCOSBuckets(ctx, *cosInstanceDetails.ID, region)
-	switch {
-	case err != nil:
-		return fmt.Errorf("failed listing cos buckets in cos instance %s: %w", *cosInstanceDetails.ID, err)
-	case cosBucketsOutput == nil || len(cosBucketsOutput.Buckets) == 0:
-		logrus.Debugf("no remaining buckets in cos instance %s, attempting to cleanup instance", *cosInstanceDetails.ID)
-		err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
-		if err != nil {
-			return fmt.Errorf("failed to delete empty cos instance %s: %w", *cosInstanceDetails.ID, err)
+	// If user provided an existing COS instance, skip instance deletion
+	if userProvidedCOS {
+		logrus.Infof("skipping cos instance deletion as it was user-provided: %s", in.Metadata.IBMCloud.COSInstanceCRN)
+	} else {
+		// If there are no additional Buckets within the COS Instance (specifically the Bucket used for the VSI Image), cleanup the COS Instance as well.
+		logrus.Debugf("checking whether cos instance should be cleaned up as well: %s", *cosInstanceDetails.ID)
+		cosBucketsOutput, err := client.ListCOSBuckets(ctx, *cosInstanceDetails.ID, region)
+		switch {
+		case err != nil:
+			return fmt.Errorf("failed listing cos buckets in cos instance %s: %w", *cosInstanceDetails.ID, err)
+		case cosBucketsOutput == nil || len(cosBucketsOutput.Buckets) == 0:
+			logrus.Debugf("no remaining buckets in cos instance %s, attempting to cleanup instance", *cosInstanceDetails.ID)
+			err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
+			if err != nil {
+				return fmt.Errorf("failed to delete empty cos instance %s: %w", *cosInstanceDetails.ID, err)
+			}
+		case len(cosBucketsOutput.Buckets) == 1 && cosBucketsOutput.Buckets[0].Name != nil && *cosBucketsOutput.Buckets[0].Name == bucketName:
+			logrus.Debugf("bootstrap ignition cos bucket %s still listed in cos instance, proceeding to cleanup cos instance: %s", bucketName, *cosInstanceDetails.ID)
+			err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
+			if err != nil {
+				return fmt.Errorf("failed to delete cos instance %s, with single bucket %s: %w", *cosInstanceDetails.ID, bucketName, err)
+			}
+		default:
+			logrus.Debugf("cos instance contains additional buckets, skipping cos instance %s cleanup", *cosInstanceDetails.ID)
 		}
-	case len(cosBucketsOutput.Buckets) == 1 && cosBucketsOutput.Buckets[0].Name != nil && *cosBucketsOutput.Buckets[0].Name == bucketName:
-		logrus.Debugf("bootstrap ignition cos bucket %s still listed in cos instance, proceeding to cleanup cos instance: %s", bucketName, *cosInstanceDetails.ID)
-		err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
-		if err != nil {
-			return fmt.Errorf("failed to delete cos instance %s, with single bucket %s: %w", *cosInstanceDetails.ID, bucketName, err)
-		}
-	default:
-		logrus.Debugf("cos instance contains additional buckets, skipping cos instance %s cleanup", *cosInstanceDetails.ID)
 	}
 
 	// Cleanup the Security Group for the Bootstrap node.
