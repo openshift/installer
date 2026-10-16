@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types/agent"
 )
 
@@ -29,17 +28,11 @@ type NodeZeroRestClient struct {
 	ctx        context.Context
 	config     client.Config
 	NodeZeroIP string
-	NodeSSHKey []string
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
-func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, watcherAuthToken string) *NodeZeroRestClient {
+func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, watcherAuthToken string) *NodeZeroRestClient {
 	restClient := &NodeZeroRestClient{}
-
-	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
-	if sshKey != "" {
-		restClient.NodeSSHKey = append(restClient.NodeSSHKey, sshKey)
-	}
 
 	config := client.Config{}
 	config.URL = &url.URL{
@@ -60,16 +53,14 @@ func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, watcherAut
 	return restClient
 }
 
-// FindRendezvousIPAndSSHKeyFromAssetStore returns the rendezvousIP and public ssh key.
-func FindRendezvousIPAndSSHKeyFromAssetStore(assetStore asset.Store) (string, string, error) {
+// FindRendezvousIPFromAssetStore returns the rendezvous IP of the agent cluster.
+func FindRendezvousIPFromAssetStore(assetStore asset.Store) (string, error) {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentManifestsAsset := &manifests.AgentManifests{}
-	installConfigAsset := &installconfig.InstallConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 
 	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
 	agentManifests, manifestError := assetStore.Load(agentManifestsAsset)
-	installConfig, installConfigError := assetStore.Load(installConfigAsset)
 	agentHosts, agentHostsError := assetStore.Load(agentHostsAsset)
 
 	if agentConfigError != nil {
@@ -78,14 +69,11 @@ func FindRendezvousIPAndSSHKeyFromAssetStore(assetStore asset.Store) (string, st
 	if manifestError != nil {
 		logrus.Debug(errors.Wrapf(manifestError, "failed to load %s", agentManifestsAsset.Name()))
 	}
-	if installConfigError != nil {
-		logrus.Debug(errors.Wrapf(installConfigError, "failed to load %s", installConfigAsset.Name()))
-	}
 	if agentHostsError != nil {
-		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentHostsAsset.Name()))
+		logrus.Debug(errors.Wrapf(agentHostsError, "failed to load %s", agentHostsAsset.Name()))
 	}
-	if agentConfigError != nil || manifestError != nil || installConfigError != nil || agentHostsError != nil {
-		return "", "", errors.New("failed to load AgentConfig, NMStateConfig, InstallConfig, or AgentHosts")
+	if agentConfigError != nil || manifestError != nil || agentHostsError != nil {
+		return "", errors.New("failed to load AgentConfig, NMStateConfig, or AgentHosts")
 	}
 
 	var rendezvousIP string
@@ -99,19 +87,13 @@ func FindRendezvousIPAndSSHKeyFromAssetStore(assetStore asset.Store) (string, st
 	} else if agentConfig != nil && agentManifests == nil {
 		rendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, emptyNMStateConfigs)
 	} else {
-		return "", "", errors.New("both AgentConfig and NMStateConfig are empty")
+		return "", errors.New("both AgentConfig and NMStateConfig are empty")
 	}
 	if rendezvousIPError != nil {
-		return "", "", rendezvousIPError
+		return "", rendezvousIPError
 	}
 
-	var sshKey string
-	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
-	if installConfig != nil {
-		sshKey = installConfig.(*installconfig.InstallConfig).Config.SSHKey
-	}
-
-	return rendezvousIP, sshKey, nil
+	return rendezvousIP, nil
 }
 
 // FindAuthTokenFromAssetStore returns the auth token from asset store.
