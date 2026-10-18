@@ -216,6 +216,14 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 		if !config.PublicIngress() {
 			obj = getDefaultIngressController()
 			obj.Spec.EndpointPublishingStrategy.LoadBalancer.Scope = operatorv1.InternalLoadBalancer
+			if config.GCP.ClientAccessGlobal() {
+				obj.Spec.EndpointPublishingStrategy.LoadBalancer.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
+					Type: operatorv1.GCPLoadBalancerProvider,
+					GCP: &operatorv1.GCPLoadBalancerParameters{
+						ClientAccess: operatorv1.GCPGlobalAccess,
+					},
+				}
+			}
 		}
 	}
 
