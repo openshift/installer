@@ -41,7 +41,7 @@ go-mod-tidy-vendor-cluster-api:
 
 bin/$(TARGET_OS_ARCH)/cluster-api: cluster-api/go.mod
 	cd cluster-api; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../bin/$(TARGET_OS_ARCH)/cluster-api ./vendor/sigs.k8s.io/cluster-api
+	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../bin/$(TARGET_OS_ARCH)/cluster-api ./vendor/sigs.k8s.io/cluster-api/core
 
 .PHONY: go-clean
 go-clean: go-clean-providers go-clean-cluster-api
