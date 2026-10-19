@@ -139,27 +139,22 @@ func (a *InstallConfig) finishGCP() error {
 		a.Config.Platform.GCP.Endpoint.ClusterUseOnly = &defaultClusterUseOnly
 	}
 
-	project := a.Config.GCP.ProjectID
-	if a.Config.Platform.GCP.NetworkProjectID != "" {
-		project = a.Config.GCP.NetworkProjectID
-	}
-
 	if a.Config.GCP.FirewallRulesManagement == "" {
-		firewallPermissions, err := icgcp.HasPermission(context.TODO(), project, []string{
-			icgcp.CreateFirewallPermission,
-			icgcp.DeleteFirewallPermission,
-			icgcp.UpdateNetworksPermission,
-		}, a.Config.GCP.Endpoint)
-		if err != nil {
-			return err
-		}
+		if a.Config.GCP.NetworkProjectID != "" {
+			logrus.Debugf("firewall management is unset and a shared vpc install is selected, setting to Unmanaged")
+			a.Config.GCP.FirewallRulesManagement = gcp.UnmanagedFirewallRules
+		} else {
+			firewallPermissions, err := icgcp.HasPermission(context.TODO(), a.Config.GCP.ProjectID, []string{
+				icgcp.CreateFirewallPermission,
+				icgcp.DeleteFirewallPermission,
+				icgcp.UpdateNetworksPermission,
+			}, a.Config.GCP.Endpoint)
+			if err != nil {
+				return err
+			}
 
-		a.Config.GCP.FirewallRulesManagement = gcp.ManagedFirewallRules
-		if !firewallPermissions {
-			if a.Config.GCP.NetworkProjectID != "" {
-				logrus.Debugf("missing firewall permissions, setting rule management to Unmanaged")
-				a.Config.GCP.FirewallRulesManagement = gcp.UnmanagedFirewallRules
-			} else {
+			a.Config.GCP.FirewallRulesManagement = gcp.ManagedFirewallRules
+			if !firewallPermissions && a.Config.GCP.NetworkProjectID == "" {
 				logrus.Warnf("missing firewall permissions, add the permissions or set firewall rules management to Unmanaged and create firewall rules")
 			}
 		}

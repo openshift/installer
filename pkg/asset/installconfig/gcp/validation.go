@@ -577,20 +577,16 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 			"a network must be specified when firewall rules are unmanaged"),
 		)
 	} else if ic.GCP.FirewallRulesManagement == gcp.ManagedFirewallRules {
+		// CORS-4344: An install with shared vpc must have the firewall rules set to unmanaged. There
+		// is no need to check the permissions for that project then. The validation handled in types/gcp.
 		projectID := ic.GCP.ProjectID
-		configField := "projectID"
-		if ic.GCP.NetworkProjectID != "" {
-			projectID = ic.GCP.NetworkProjectID
-			configField = "networkProjectID"
-		}
-
 		hasPermissions, err := HasPermission(context.TODO(), projectID, []string{
 			CreateFirewallPermission,
 			DeleteFirewallPermission,
 			UpdateNetworksPermission,
 		}, ic.GCP.Endpoint)
 		if err != nil {
-			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child(configField), err))
+			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child("projectID"), err))
 		} else if !hasPermissions {
 			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("platform").Child("gcp").Child("firewallRulesManagement"),
