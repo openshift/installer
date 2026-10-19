@@ -452,7 +452,10 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 			Namespace: machineNamespace,
 		},
 	}); err != nil {
-		return fmt.Errorf("failed to delete bootstrap machine: %w", err)
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to delete bootstrap machine: %w", err)
+		}
+		logrus.Debugf("Bootstrap machine already deleted: %s/%s", machineNamespace, machineName)
 	}
 
 	machineDeletionTimeout := 5 * time.Minute

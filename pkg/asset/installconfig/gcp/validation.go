@@ -578,10 +578,8 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		)
 	} else if ic.GCP.FirewallRulesManagement == gcp.ManagedFirewallRules {
 		projectID := ic.GCP.ProjectID
-		configField := "projectID"
 		if ic.GCP.NetworkProjectID != "" {
 			projectID = ic.GCP.NetworkProjectID
-			configField = "networkProjectID"
 		}
 
 		hasPermissions, err := HasPermission(context.TODO(), projectID, []string{
@@ -590,7 +588,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 			UpdateNetworksPermission,
 		}, ic.GCP.Endpoint)
 		if err != nil {
-			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child(configField), err))
+			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child("projectID"), err))
 		} else if !hasPermissions {
 			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("platform").Child("gcp").Child("firewallRulesManagement"),
