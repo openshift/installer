@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/session"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -41,13 +43,38 @@ type TagManager interface {
 var localLogger = logrus.New()
 
 type validationContext struct {
-	AuthManager         AuthManager
-	Finder              Finder
-	Client              *vim25.Client
-	TagManager          TagManager
-	regionTagCategoryID string
-	zoneTagCategoryID   string
-	rhcosStream         *stream.Stream
+	AuthManager AuthManager
+	Finder      Finder
+	Client      *vim25.Client
+	TagManager  TagManager
+	Username    string
+	Component   credentialComponent
+	// componentGroups holds the privilege matrix for the context's component
+	// credentials when it differs from the legacy combined installer matrix in
+	// permissions. It is set for machine-management credentials, whose matrix
+	// is conditional on failure domain topology; a nil map falls back to the
+	// legacy matrix.
+	componentGroups map[permissionGroup]PermissionGroupDefinition
+	// checkVMGroupReconfiguration reports whether the cluster reconfiguration
+	// privilege is validated for HostGroup failure domains. It is only set
+	// when the component-scoped credentials feature gate is enabled, so that
+	// validation of existing global-credential install configs is unchanged.
+	checkVMGroupReconfiguration bool
+	regionTagCategoryID         string
+	zoneTagCategoryID           string
+	rhcosStream                 *stream.Stream
+}
+
+func (c *validationContext) permissionGroup(group permissionGroup) PermissionGroupDefinition {
+	if definition, found := c.componentGroups[group]; found {
+		return definition
+	}
+	if c.Component != "" {
+		if definition, found := componentPermissionGroup(c.Component, group); found {
+			return definition
+		}
+	}
+	return permissions[group]
 }
 
 // Validate executes platform-specific validation.
@@ -76,11 +103,22 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 				return nil, nil, err
 			}
 
+			componentGroups, checkReconfiguration := machineManagementValidation(ic, vcenter.Server)
 			validationCtx := validationContext{
 				TagManager:  vapitags.NewManager(vim25RestClient),
 				AuthManager: newAuthManager(vim25Client),
 				Finder:      find.NewFinder(vim25Client),
 				Client:      vim25Client,
+				// The machine-management credentials are validated against their
+				// own matrix: the combined installer privileges also used for
+				// global credentials, extended with Host.Inventory.EditCluster
+				// when any failure domain on this vCenter uses HostGroup
+				// topology and the component-scoped credentials feature gate is
+				// enabled, because the installer and CAPV must then
+				// reconfigure cluster VM groups.
+				Component:                   componentMachineManagement,
+				componentGroups:             componentGroups,
+				checkVMGroupReconfiguration: checkReconfiguration,
 			}
 			return &validationCtx, cleanup, err
 		}
@@ -88,11 +126,80 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 	return nil, nil, fmt.Errorf("vcenter %s not defined in vcenters", server)
 }
 
+// hostGroupTopologyUsed returns true when any failure domain served by server
+// uses HostGroup zoning, which requires VM-group reconfiguration privileges on
+// the compute cluster.
+func hostGroupTopologyUsed(failureDomains []vsphere.FailureDomain, server string) bool {
+	for _, failureDomain := range failureDomains {
+		if failureDomain.Server == server && failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+			return true
+		}
+	}
+	return false
+}
+
+// machineManagementValidation returns the privilege matrix used to validate
+// the credentials for machine management against server, and whether the
+// cluster reconfiguration privilege must be checked for HostGroup failure
+// domains. HostGroup failure domains require Host.Inventory.EditCluster
+// because the installer and CAPV reconfigure cluster VM groups, but the
+// requirement is enforced only when the component-scoped credentials feature
+// gate is enabled: with the gate disabled, validation of existing
+// global-credential install configs matches the legacy behavior.
+func machineManagementValidation(ic *types.InstallConfig, server string) (map[permissionGroup]PermissionGroupDefinition, bool) {
+	hostGroupTopology := hostGroupTopologyUsed(ic.VSphere.FailureDomains, server) && ic.Enabled(features.FeatureGateVSpherePerComponentScopedCreds)
+	return machineManagementPermissions(hostGroupTopology), hostGroupTopology
+}
+
+func getComponentVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConfig, component credentialComponent) (*validationContext, ClientLogout, error) {
+	for _, vcenter := range ic.VSphere.VCenters {
+		if vcenter.Server != failureDomain.Server {
+			continue
+		}
+		if vcenter.ComponentCredentials == nil {
+			return nil, nil, fmt.Errorf("vcenter %s is missing componentCredentials", vcenter.Server)
+		}
+
+		var credentials vsphere.Credential
+		switch component {
+		case componentStorage:
+			credentials = vcenter.ComponentCredentials.Storage
+		case componentCloudControllerManager:
+			credentials = vcenter.ComponentCredentials.CloudControllerManager
+		case componentVSphereProblemDetector:
+			credentials = vcenter.ComponentCredentials.VSphereProblemDetector
+		default:
+			return nil, nil, fmt.Errorf("unsupported component credential %q", component)
+		}
+
+		client, restClient, cleanup, err := CreateVSphereClients(context.TODO(), vcenter.Server, credentials.User, credentials.Password)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to connect %s credentials to vcenter %s: %w", component, vcenter.Server, err)
+		}
+		user, err := session.NewManager(client).UserSession(context.TODO())
+		if err != nil {
+			cleanup()
+			return nil, nil, err
+		}
+		return &validationContext{
+			AuthManager: newAuthManager(client),
+			Client:      client,
+			Component:   component,
+			Username:    user.UserName,
+			TagManager:  vapitags.NewManager(restClient),
+		}, cleanup, nil
+	}
+	return nil, nil, fmt.Errorf("vcenter %s not defined in vcenters", failureDomain.Server)
+}
+
 // ValidateForProvisioning performs platform validation specifically
 // for multi-zone installer-provisioned infrastructure. In this case,
 // self-hosted networking is a requirement when the installer creates
 // infrastructure for vSphere clusters.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if ic.VSphere.CredentialType == vsphere.CredentialTypeComponentScoped && !ic.Enabled(features.FeatureGateVSpherePerComponentScopedCreds) {
+		return fmt.Errorf("vSphere component-scoped credentials require the %s feature gate", features.FeatureGateVSpherePerComponentScopedCreds)
+	}
 	allErrs := field.ErrorList{}
 
 	// If APIVIPs and IngressVIPs is equal to zero
@@ -138,6 +245,27 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		validationCtx := clients[failureDomain.Server]
 		allErrs = append(allErrs, validateFailureDomain(validationCtx, &ic.VSphere.FailureDomains[i], checkTags)...)
 	}
+
+	// Component-scoped credentials require the feature gate; the early return
+	// above guarantees the gate is enabled for any config reaching this point.
+	if ic.VSphere.CredentialType == vsphere.CredentialTypeComponentScoped {
+		for _, failureDomain := range ic.VSphere.FailureDomains {
+			machineContext := clients[failureDomain.Server]
+			for _, component := range []credentialComponent{
+				componentStorage,
+				componentCloudControllerManager,
+				componentVSphereProblemDetector,
+			} {
+				componentContext, cleanup, err := getComponentVCenterClient(failureDomain, ic, component)
+				if err != nil {
+					return err
+				}
+				componentContext.Finder = machineContext.Finder
+				defer cleanup()
+				allErrs = append(allErrs, validateComponentPrivileges(componentContext, &failureDomain)...)
+			}
+		}
+	}
 	return allErrs.ToAggregate()
 }
 
@@ -182,6 +310,16 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 
 	if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
 		allErrs = append(allErrs, validateHostGroups(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, topologyField.Child("hostGroup"))...)
+		// A custom resource pool moves the VM placement privilege checks to
+		// the pool, but HostGroup failure domains still reconfigure the
+		// compute cluster to create VM groups, so the reconfiguration
+		// privilege must be checked on the cluster as well. The check only
+		// runs when the component-scoped credentials feature gate is enabled
+		// (see machineManagementValidation), keeping validation of existing
+		// global-credential install configs unchanged.
+		if !checkComputeClusterPrivileges && validationCtx.checkVMGroupReconfiguration {
+			allErrs = append(allErrs, validateClusterReconfigurationPrivileges(validationCtx, failureDomain.Topology.ComputeCluster, topologyField.Child("computeCluster"))...)
+		}
 	}
 
 	allErrs = append(allErrs, validateESXiVersion(validationCtx, failureDomain.Topology.ComputeCluster, vsphereField, topologyField.Child("computeCluster"))...)
@@ -199,6 +337,93 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	}
 
 	return allErrs
+}
+
+func validateComponentPrivileges(validationCtx *validationContext, failureDomain *vsphere.FailureDomain) field.ErrorList {
+	allErrs := field.ErrorList{}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+	path := field.NewPath("platform", "vsphere", "failureDomains", failureDomain.Name)
+
+	check := func(ref vim25types.ManagedObjectReference, group permissionGroup, objectPath *field.Path) {
+		definition, found := componentPermissionGroup(validationCtx.Component, group)
+		if !found {
+			return
+		}
+		if err := comparePrivileges(ctx, validationCtx, ref, definition); err != nil {
+			allErrs = append(allErrs, field.InternalError(objectPath, errors.Wrapf(err, "%s credentials", validationCtx.Component)))
+		}
+	}
+
+	rootFolder, err := validationCtx.Finder.Folder(ctx, "/")
+	if err != nil {
+		return append(allErrs, field.InternalError(path.Child("topology", "server"), err))
+	}
+	check(rootFolder.Reference(), permissionVcenter, path.Child("topology", "server"))
+
+	datacenter, err := validationCtx.Finder.Datacenter(ctx, failureDomain.Topology.Datacenter)
+	if err != nil {
+		return append(allErrs, field.InternalError(path.Child("topology", "datacenter"), err))
+	}
+	check(datacenter.Reference(), permissionDatacenter, path.Child("topology", "datacenter"))
+
+	datastores, err := validationCtx.Finder.DatastoreList(ctx, fmt.Sprintf("%s/datastore/...", datacenter.InventoryPath))
+	if err != nil {
+		return append(allErrs, field.InternalError(path.Child("topology", "datastore"), err))
+	}
+	for _, datastore := range datastores {
+		if datastore.InventoryPath == failureDomain.Topology.Datastore || datastore.Name() == failureDomain.Topology.Datastore {
+			check(datastore.Reference(), permissionDatastore, path.Child("topology", "datastore"))
+			break
+		}
+	}
+
+	if failureDomain.Topology.ComputeCluster != "" {
+		cluster, err := validationCtx.Finder.ClusterComputeResource(ctx, failureDomain.Topology.ComputeCluster)
+		if err != nil {
+			return append(allErrs, field.InternalError(path.Child("topology", "computeCluster"), err))
+		}
+		check(cluster.Reference(), permissionCluster, path.Child("topology", "computeCluster"))
+	}
+	if failureDomain.Topology.ResourcePool != "" {
+		resourcePool, err := validationCtx.Finder.ResourcePool(ctx, failureDomain.Topology.ResourcePool)
+		if err != nil {
+			return append(allErrs, field.InternalError(path.Child("topology", "resourcePool"), err))
+		}
+		check(resourcePool.Reference(), permissionResourcePool, path.Child("topology", "resourcePool"))
+	}
+	if failureDomain.Topology.Folder != "" {
+		folder, err := validationCtx.Finder.Folder(ctx, failureDomain.Topology.Folder)
+		if err == nil {
+			check(folder.Reference(), permissionFolder, path.Child("topology", "folder"))
+		}
+	}
+	return allErrs
+}
+
+// vmGroupReconfigurationPrivileges are required on the compute cluster of
+// HostGroup failure domains: the installer and CAPV create and update cluster
+// VM groups by reconfiguring the cluster, even when VM placement uses a custom
+// resource pool whose privileges are checked separately.
+var vmGroupReconfigurationPrivileges = PermissionGroupDefinition{
+	Permissions: []string{"Host.Inventory.EditCluster"},
+	Description: "vSphere vCenter Cluster VM group reconfiguration",
+}
+
+// validateClusterReconfigurationPrivileges checks that the compute cluster can
+// be reconfigured to create VM groups for HostGroup failure domains.
+func validateClusterReconfigurationPrivileges(validationCtx *validationContext, computeCluster string, fldPath *field.Path) field.ErrorList {
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	computeClusterMo, err := validationCtx.Finder.ClusterComputeResource(ctx, computeCluster)
+	if err != nil {
+		return field.ErrorList{field.Invalid(fldPath, computeCluster, err.Error())}
+	}
+	if err := comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), vmGroupReconfigurationPrivileges); err != nil {
+		return field.ErrorList{field.InternalError(fldPath, err)}
+	}
+	return field.ErrorList{}
 }
 
 func validateHostGroups(validationCtx *validationContext, cluster, hostGroup string, fldPath *field.Path) field.ErrorList {
@@ -458,7 +683,7 @@ func validateNetwork(validationCtx *validationContext, datacenterName string, cl
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, networkName, err.Error())}
 	}
-	permissionGroup := permissions[permissionPortgroup]
+	permissionGroup := validationCtx.permissionGroup(permissionPortgroup)
 	err = comparePrivileges(ctx, validationCtx, network.Reference(), permissionGroup)
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
@@ -481,7 +706,7 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 	}
 
 	if checkPrivileges {
-		permissionGroup := permissions[permissionCluster]
+		permissionGroup := validationCtx.permissionGroup(permissionCluster)
 		err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
 
 		if err != nil {
@@ -508,7 +733,7 @@ func resourcePoolExists(validationCtx *validationContext, resourcePool string, f
 	if err != nil {
 		return field.ErrorList{field.Invalid(fldPath, resourcePool, err.Error())}
 	}
-	permissionGroup := permissions[permissionResourcePool]
+	permissionGroup := validationCtx.permissionGroup(permissionResourcePool)
 	err = comparePrivileges(ctx, validationCtx, resourcePoolMo.Reference(), permissionGroup)
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
@@ -530,7 +755,7 @@ func datacenterExists(validationCtx *validationContext, datacenterName string, f
 		return field.ErrorList{field.Invalid(fldPath, datacenterName, err.Error())}
 	}
 	if checkPrivileges {
-		permissionGroup := permissions[permissionDatacenter]
+		permissionGroup := validationCtx.permissionGroup(permissionDatacenter)
 		err = comparePrivileges(ctx, validationCtx, dataCenter.Reference(), permissionGroup)
 		if err != nil {
 			return field.ErrorList{field.InternalError(fldPath, err)}
@@ -572,7 +797,7 @@ func datastoreExists(validationCtx *validationContext, datacenterName string, da
 	if datastoreMo == nil {
 		return field.ErrorList{field.Invalid(fldPath, datastoreName, fmt.Sprintf("could not find datastore %s", datastoreName))}
 	}
-	permissionGroup := permissions[permissionDatastore]
+	permissionGroup := validationCtx.permissionGroup(permissionDatastore)
 	err = comparePrivileges(ctx, validationCtx, datastoreMo.Reference(), permissionGroup)
 
 	if err != nil {
@@ -590,7 +815,7 @@ func validateVcenterPrivileges(validationCtx *validationContext, fldPath *field.
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}
 	}
-	permissionGroup := permissions[permissionVcenter]
+	permissionGroup := validationCtx.permissionGroup(permissionVcenter)
 	err = comparePrivileges(ctx, validationCtx, rootFolder.Reference(), permissionGroup)
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath, err)}

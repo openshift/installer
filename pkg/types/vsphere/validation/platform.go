@@ -13,6 +13,7 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/types/vsphere/conversion"
@@ -34,6 +35,15 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 	allErrs := field.ErrorList{}
 	if p.CredentialType != "" && p.CredentialType != vsphere.CredentialTypeGlobal && p.CredentialType != vsphere.CredentialTypeComponentScoped {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("credentialType"), p.CredentialType, []string{string(vsphere.CredentialTypeGlobal), string(vsphere.CredentialTypeComponentScoped)}))
+	}
+	// The component-scoped checks only apply once the feature gate is enabled;
+	// a disabled gate is reported by the install config feature gate validation.
+	if p.CredentialType == vsphere.CredentialTypeComponentScoped && c.Enabled(features.FeatureGateVSpherePerComponentScopedCreds) {
+		if agentBasedInstallation {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("credentialType"), "component-scoped credentials are not supported for agent-based installations"))
+		} else if c.CredentialsMode != types.ManualCredentialsMode {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("credentialType"), fmt.Sprintf("component-scoped credentials require credentialsMode %q", types.ManualCredentialsMode)))
+		}
 	}
 	// diskType is optional, but if provided should pass validation
 	if len(p.DiskType) != 0 {
@@ -163,7 +173,7 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 					}
 				}
 			}
-			if vCenter.Datacenters == nil || len(vCenter.Datacenters) == 0 {
+			if len(vCenter.Datacenters) == 0 {
 				allErrs = append(allErrs, field.Required(vcenterPath.Child("datacenters"), "must specify at least one datacenter"))
 			}
 			continue
