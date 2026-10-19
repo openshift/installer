@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventhub}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/AuthorizationRules.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/AuthorizationRules.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/authorizationRules/{authorizationRuleName}
 type NamespacesEventhubsAuthorizationRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (rule *NamespacesEventhubsAuthorizationRule) OriginalGVK() *schema.GroupVer
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/AuthorizationRules.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/AuthorizationRules.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/authorizationRules/{authorizationRuleName}
 type NamespacesEventhubsAuthorizationRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -407,8 +408,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_Spec) AssignProperties_From_Nam
 	if source.Rights != nil {
 		rightList := make([]Namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec_Values)
 		}
 		rule.Rights = rightList
@@ -455,8 +454,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_Spec) AssignProperties_To_Names
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -482,8 +479,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_Spec) Initialize_From_Namespace
 	if source.Rights != nil {
 		rightList := make([]Namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			right := genruntime.ToEnum(string(rightItem), namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec_Values)
 			rightList[rightIndex] = right
 		}
@@ -664,8 +659,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_STATUS) AssignProperties_From_N
 	if source.Rights != nil {
 		rightList := make([]Namespaces_Eventhubs_AuthorizationRule_Properties_Rights_STATUS, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, namespaces_Eventhubs_AuthorizationRule_Properties_Rights_STATUS_Values)
 		}
 		rule.Rights = rightList
@@ -713,8 +706,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_STATUS) AssignProperties_To_Nam
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -798,8 +789,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -816,8 +805,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -855,8 +842,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -873,8 +858,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

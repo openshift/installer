@@ -4,8 +4,7 @@
 package storage
 
 import (
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -18,6 +17,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +25,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230501preview.Service
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimdeployment.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimdeployment.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}
 type Service struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +50,36 @@ var _ conversion.Convertible = &Service{}
 
 // ConvertFrom populates our Service from the provided hub Service
 func (service *Service) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Service)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Service but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Service
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return service.AssignProperties_From_Service(source)
+	err = service.AssignProperties_From_Service(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to service")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Service from our Service
 func (service *Service) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Service)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Service but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Service
+	err := service.AssignProperties_To_Service(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from service")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return service.AssignProperties_To_Service(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Service{}
@@ -245,7 +259,7 @@ func (service *Service) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230501preview.Service
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/preview/2023-05-01-preview/apimdeployment.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/preview/2023-05-01-preview/apimdeployment.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}
 type ServiceList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -361,8 +375,6 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	if source.AdditionalLocations != nil {
 		additionalLocationList := make([]AdditionalLocation, len(source.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range source.AdditionalLocations {
-			// Shadow the loop variable to avoid aliasing
-			additionalLocationItem := additionalLocationItem
 			var additionalLocation AdditionalLocation
 			err := additionalLocation.AssignProperties_From_AdditionalLocation(&additionalLocationItem)
 			if err != nil {
@@ -394,8 +406,6 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	if source.Certificates != nil {
 		certificateList := make([]CertificateConfiguration, len(source.Certificates))
 		for certificateIndex, certificateItem := range source.Certificates {
-			// Shadow the loop variable to avoid aliasing
-			certificateItem := certificateItem
 			var certificate CertificateConfiguration
 			err := certificate.AssignProperties_From_CertificateConfiguration(&certificateItem)
 			if err != nil {
@@ -409,13 +419,12 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	}
 
 	// ConfigurationApi
-	if propertyBag.Contains("ConfigurationApi") {
+	if source.ConfigurationApi != nil {
 		var configurationApi ConfigurationApi
-		err := propertyBag.Pull("ConfigurationApi", &configurationApi)
+		err := configurationApi.AssignProperties_From_ConfigurationApi(source.ConfigurationApi)
 		if err != nil {
-			return eris.Wrap(err, "pulling 'ConfigurationApi' from propertyBag")
+			return eris.Wrap(err, "calling AssignProperties_From_ConfigurationApi() to populate field ConfigurationApi")
 		}
-
 		service.ConfigurationApi = &configurationApi
 	} else {
 		service.ConfigurationApi = nil
@@ -425,17 +434,7 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	service.CustomProperties = genruntime.CloneMapOfStringToString(source.CustomProperties)
 
 	// DeveloperPortalStatus
-	if propertyBag.Contains("DeveloperPortalStatus") {
-		var developerPortalStatus string
-		err := propertyBag.Pull("DeveloperPortalStatus", &developerPortalStatus)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DeveloperPortalStatus' from propertyBag")
-		}
-
-		service.DeveloperPortalStatus = &developerPortalStatus
-	} else {
-		service.DeveloperPortalStatus = nil
-	}
+	service.DeveloperPortalStatus = genruntime.ClonePointerToString(source.DeveloperPortalStatus)
 
 	// DisableGateway
 	if source.DisableGateway != nil {
@@ -457,8 +456,6 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	if source.HostnameConfigurations != nil {
 		hostnameConfigurationList := make([]HostnameConfiguration, len(source.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range source.HostnameConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			hostnameConfigurationItem := hostnameConfigurationItem
 			var hostnameConfiguration HostnameConfiguration
 			err := hostnameConfiguration.AssignProperties_From_HostnameConfiguration(&hostnameConfigurationItem)
 			if err != nil {
@@ -484,17 +481,7 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.
 	}
 
 	// LegacyPortalStatus
-	if propertyBag.Contains("LegacyPortalStatus") {
-		var legacyPortalStatus string
-		err := propertyBag.Pull("LegacyPortalStatus", &legacyPortalStatus)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'LegacyPortalStatus' from propertyBag")
-		}
-
-		service.LegacyPortalStatus = &legacyPortalStatus
-	} else {
-		service.LegacyPortalStatus = nil
-	}
+	service.LegacyPortalStatus = genruntime.ClonePointerToString(source.LegacyPortalStatus)
 
 	// Location
 	service.Location = genruntime.ClonePointerToString(source.Location)
@@ -615,8 +602,6 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *stora
 	if service.AdditionalLocations != nil {
 		additionalLocationList := make([]storage.AdditionalLocation, len(service.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range service.AdditionalLocations {
-			// Shadow the loop variable to avoid aliasing
-			additionalLocationItem := additionalLocationItem
 			var additionalLocation storage.AdditionalLocation
 			err := additionalLocationItem.AssignProperties_To_AdditionalLocation(&additionalLocation)
 			if err != nil {
@@ -648,8 +633,6 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *stora
 	if service.Certificates != nil {
 		certificateList := make([]storage.CertificateConfiguration, len(service.Certificates))
 		for certificateIndex, certificateItem := range service.Certificates {
-			// Shadow the loop variable to avoid aliasing
-			certificateItem := certificateItem
 			var certificate storage.CertificateConfiguration
 			err := certificateItem.AssignProperties_To_CertificateConfiguration(&certificate)
 			if err != nil {
@@ -664,20 +647,21 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *stora
 
 	// ConfigurationApi
 	if service.ConfigurationApi != nil {
-		propertyBag.Add("ConfigurationApi", *service.ConfigurationApi)
+		var configurationApi storage.ConfigurationApi
+		err := service.ConfigurationApi.AssignProperties_To_ConfigurationApi(&configurationApi)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ConfigurationApi() to populate field ConfigurationApi")
+		}
+		destination.ConfigurationApi = &configurationApi
 	} else {
-		propertyBag.Remove("ConfigurationApi")
+		destination.ConfigurationApi = nil
 	}
 
 	// CustomProperties
 	destination.CustomProperties = genruntime.CloneMapOfStringToString(service.CustomProperties)
 
 	// DeveloperPortalStatus
-	if service.DeveloperPortalStatus != nil {
-		propertyBag.Add("DeveloperPortalStatus", *service.DeveloperPortalStatus)
-	} else {
-		propertyBag.Remove("DeveloperPortalStatus")
-	}
+	destination.DeveloperPortalStatus = genruntime.ClonePointerToString(service.DeveloperPortalStatus)
 
 	// DisableGateway
 	if service.DisableGateway != nil {
@@ -699,8 +683,6 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *stora
 	if service.HostnameConfigurations != nil {
 		hostnameConfigurationList := make([]storage.HostnameConfiguration, len(service.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range service.HostnameConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			hostnameConfigurationItem := hostnameConfigurationItem
 			var hostnameConfiguration storage.HostnameConfiguration
 			err := hostnameConfigurationItem.AssignProperties_To_HostnameConfiguration(&hostnameConfiguration)
 			if err != nil {
@@ -726,11 +708,7 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *stora
 	}
 
 	// LegacyPortalStatus
-	if service.LegacyPortalStatus != nil {
-		propertyBag.Add("LegacyPortalStatus", *service.LegacyPortalStatus)
-	} else {
-		propertyBag.Remove("LegacyPortalStatus")
-	}
+	destination.LegacyPortalStatus = genruntime.ClonePointerToString(service.LegacyPortalStatus)
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(service.Location)
@@ -950,8 +928,6 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	if source.AdditionalLocations != nil {
 		additionalLocationList := make([]AdditionalLocation_STATUS, len(source.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range source.AdditionalLocations {
-			// Shadow the loop variable to avoid aliasing
-			additionalLocationItem := additionalLocationItem
 			var additionalLocation AdditionalLocation_STATUS
 			err := additionalLocation.AssignProperties_From_AdditionalLocation_STATUS(&additionalLocationItem)
 			if err != nil {
@@ -980,8 +956,6 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	if source.Certificates != nil {
 		certificateList := make([]CertificateConfiguration_STATUS, len(source.Certificates))
 		for certificateIndex, certificateItem := range source.Certificates {
-			// Shadow the loop variable to avoid aliasing
-			certificateItem := certificateItem
 			var certificate CertificateConfiguration_STATUS
 			err := certificate.AssignProperties_From_CertificateConfiguration_STATUS(&certificateItem)
 			if err != nil {
@@ -998,13 +972,12 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	service.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
 	// ConfigurationApi
-	if propertyBag.Contains("ConfigurationApi") {
+	if source.ConfigurationApi != nil {
 		var configurationApi ConfigurationApi_STATUS
-		err := propertyBag.Pull("ConfigurationApi", &configurationApi)
+		err := configurationApi.AssignProperties_From_ConfigurationApi_STATUS(source.ConfigurationApi)
 		if err != nil {
-			return eris.Wrap(err, "pulling 'ConfigurationApi' from propertyBag")
+			return eris.Wrap(err, "calling AssignProperties_From_ConfigurationApi_STATUS() to populate field ConfigurationApi")
 		}
-
 		service.ConfigurationApi = &configurationApi
 	} else {
 		service.ConfigurationApi = nil
@@ -1017,17 +990,7 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	service.CustomProperties = genruntime.CloneMapOfStringToString(source.CustomProperties)
 
 	// DeveloperPortalStatus
-	if propertyBag.Contains("DeveloperPortalStatus") {
-		var developerPortalStatus string
-		err := propertyBag.Pull("DeveloperPortalStatus", &developerPortalStatus)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DeveloperPortalStatus' from propertyBag")
-		}
-
-		service.DeveloperPortalStatus = &developerPortalStatus
-	} else {
-		service.DeveloperPortalStatus = nil
-	}
+	service.DeveloperPortalStatus = genruntime.ClonePointerToString(source.DeveloperPortalStatus)
 
 	// DeveloperPortalUrl
 	service.DeveloperPortalUrl = genruntime.ClonePointerToString(source.DeveloperPortalUrl)
@@ -1061,8 +1024,6 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	if source.HostnameConfigurations != nil {
 		hostnameConfigurationList := make([]HostnameConfiguration_STATUS, len(source.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range source.HostnameConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			hostnameConfigurationItem := hostnameConfigurationItem
 			var hostnameConfiguration HostnameConfiguration_STATUS
 			err := hostnameConfiguration.AssignProperties_From_HostnameConfiguration_STATUS(&hostnameConfigurationItem)
 			if err != nil {
@@ -1091,17 +1052,7 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	}
 
 	// LegacyPortalStatus
-	if propertyBag.Contains("LegacyPortalStatus") {
-		var legacyPortalStatus string
-		err := propertyBag.Pull("LegacyPortalStatus", &legacyPortalStatus)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'LegacyPortalStatus' from propertyBag")
-		}
-
-		service.LegacyPortalStatus = &legacyPortalStatus
-	} else {
-		service.LegacyPortalStatus = nil
-	}
+	service.LegacyPortalStatus = genruntime.ClonePointerToString(source.LegacyPortalStatus)
 
 	// Location
 	service.Location = genruntime.ClonePointerToString(source.Location)
@@ -1131,8 +1082,6 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *stor
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]RemotePrivateEndpointConnectionWrapper_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection RemotePrivateEndpointConnectionWrapper_STATUS
 			err := privateEndpointConnection.AssignProperties_From_RemotePrivateEndpointConnectionWrapper_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1257,8 +1206,6 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	if service.AdditionalLocations != nil {
 		additionalLocationList := make([]storage.AdditionalLocation_STATUS, len(service.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range service.AdditionalLocations {
-			// Shadow the loop variable to avoid aliasing
-			additionalLocationItem := additionalLocationItem
 			var additionalLocation storage.AdditionalLocation_STATUS
 			err := additionalLocationItem.AssignProperties_To_AdditionalLocation_STATUS(&additionalLocation)
 			if err != nil {
@@ -1287,8 +1234,6 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	if service.Certificates != nil {
 		certificateList := make([]storage.CertificateConfiguration_STATUS, len(service.Certificates))
 		for certificateIndex, certificateItem := range service.Certificates {
-			// Shadow the loop variable to avoid aliasing
-			certificateItem := certificateItem
 			var certificate storage.CertificateConfiguration_STATUS
 			err := certificateItem.AssignProperties_To_CertificateConfiguration_STATUS(&certificate)
 			if err != nil {
@@ -1306,9 +1251,14 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 
 	// ConfigurationApi
 	if service.ConfigurationApi != nil {
-		propertyBag.Add("ConfigurationApi", *service.ConfigurationApi)
+		var configurationApi storage.ConfigurationApi_STATUS
+		err := service.ConfigurationApi.AssignProperties_To_ConfigurationApi_STATUS(&configurationApi)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ConfigurationApi_STATUS() to populate field ConfigurationApi")
+		}
+		destination.ConfigurationApi = &configurationApi
 	} else {
-		propertyBag.Remove("ConfigurationApi")
+		destination.ConfigurationApi = nil
 	}
 
 	// CreatedAtUtc
@@ -1318,11 +1268,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	destination.CustomProperties = genruntime.CloneMapOfStringToString(service.CustomProperties)
 
 	// DeveloperPortalStatus
-	if service.DeveloperPortalStatus != nil {
-		propertyBag.Add("DeveloperPortalStatus", *service.DeveloperPortalStatus)
-	} else {
-		propertyBag.Remove("DeveloperPortalStatus")
-	}
+	destination.DeveloperPortalStatus = genruntime.ClonePointerToString(service.DeveloperPortalStatus)
 
 	// DeveloperPortalUrl
 	destination.DeveloperPortalUrl = genruntime.ClonePointerToString(service.DeveloperPortalUrl)
@@ -1356,8 +1302,6 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	if service.HostnameConfigurations != nil {
 		hostnameConfigurationList := make([]storage.HostnameConfiguration_STATUS, len(service.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range service.HostnameConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			hostnameConfigurationItem := hostnameConfigurationItem
 			var hostnameConfiguration storage.HostnameConfiguration_STATUS
 			err := hostnameConfigurationItem.AssignProperties_To_HostnameConfiguration_STATUS(&hostnameConfiguration)
 			if err != nil {
@@ -1386,11 +1330,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	}
 
 	// LegacyPortalStatus
-	if service.LegacyPortalStatus != nil {
-		propertyBag.Add("LegacyPortalStatus", *service.LegacyPortalStatus)
-	} else {
-		propertyBag.Remove("LegacyPortalStatus")
-	}
+	destination.LegacyPortalStatus = genruntime.ClonePointerToString(service.LegacyPortalStatus)
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(service.Location)
@@ -1420,8 +1360,6 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *s
 	if service.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.RemotePrivateEndpointConnectionWrapper_STATUS, len(service.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range service.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.RemotePrivateEndpointConnectionWrapper_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1907,8 +1845,6 @@ func (identity *ApiManagementServiceIdentity) AssignProperties_From_ApiManagemen
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -1953,8 +1889,6 @@ func (identity *ApiManagementServiceIdentity) AssignProperties_To_ApiManagementS
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2015,8 +1949,6 @@ func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_From_ApiMa
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserIdentityProperties_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserIdentityProperties_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserIdentityProperties_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -2067,8 +1999,6 @@ func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_To_ApiMana
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserIdentityProperties_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserIdentityProperties_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentityProperties_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2591,11 +2521,123 @@ type ConfigurationApi struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ConfigurationApi populates our ConfigurationApi from the provided source ConfigurationApi
+func (configurationApi *ConfigurationApi) AssignProperties_From_ConfigurationApi(source *storage.ConfigurationApi) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// LegacyApi
+	configurationApi.LegacyApi = genruntime.ClonePointerToString(source.LegacyApi)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configurationApi.PropertyBag = propertyBag
+	} else {
+		configurationApi.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForConfigurationApi interface (if implemented) to customize the conversion
+	var configurationApiAsAny any = configurationApi
+	if augmentedConfigurationApi, ok := configurationApiAsAny.(augmentConversionForConfigurationApi); ok {
+		err := augmentedConfigurationApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ConfigurationApi populates the provided destination ConfigurationApi from our ConfigurationApi
+func (configurationApi *ConfigurationApi) AssignProperties_To_ConfigurationApi(destination *storage.ConfigurationApi) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configurationApi.PropertyBag)
+
+	// LegacyApi
+	destination.LegacyApi = genruntime.ClonePointerToString(configurationApi.LegacyApi)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForConfigurationApi interface (if implemented) to customize the conversion
+	var configurationApiAsAny any = configurationApi
+	if augmentedConfigurationApi, ok := configurationApiAsAny.(augmentConversionForConfigurationApi); ok {
+		err := augmentedConfigurationApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230501preview.ConfigurationApi_STATUS
 // Information regarding the Configuration API of the API Management service.
 type ConfigurationApi_STATUS struct {
 	LegacyApi   *string                `json:"legacyApi,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ConfigurationApi_STATUS populates our ConfigurationApi_STATUS from the provided source ConfigurationApi_STATUS
+func (configurationApi *ConfigurationApi_STATUS) AssignProperties_From_ConfigurationApi_STATUS(source *storage.ConfigurationApi_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// LegacyApi
+	configurationApi.LegacyApi = genruntime.ClonePointerToString(source.LegacyApi)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configurationApi.PropertyBag = propertyBag
+	} else {
+		configurationApi.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForConfigurationApi_STATUS interface (if implemented) to customize the conversion
+	var configurationApiAsAny any = configurationApi
+	if augmentedConfigurationApi, ok := configurationApiAsAny.(augmentConversionForConfigurationApi_STATUS); ok {
+		err := augmentedConfigurationApi.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ConfigurationApi_STATUS populates the provided destination ConfigurationApi_STATUS from our ConfigurationApi_STATUS
+func (configurationApi *ConfigurationApi_STATUS) AssignProperties_To_ConfigurationApi_STATUS(destination *storage.ConfigurationApi_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configurationApi.PropertyBag)
+
+	// LegacyApi
+	destination.LegacyApi = genruntime.ClonePointerToString(configurationApi.LegacyApi)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForConfigurationApi_STATUS interface (if implemented) to customize the conversion
+	var configurationApiAsAny any = configurationApi
+	if augmentedConfigurationApi, ok := configurationApiAsAny.(augmentConversionForConfigurationApi_STATUS); ok {
+		err := augmentedConfigurationApi.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230501preview.HostnameConfiguration
@@ -3118,8 +3160,6 @@ func (operator *ServiceOperatorSpec) AssignProperties_From_ServiceOperatorSpec(s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3136,8 +3176,6 @@ func (operator *ServiceOperatorSpec) AssignProperties_From_ServiceOperatorSpec(s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3179,8 +3217,6 @@ func (operator *ServiceOperatorSpec) AssignProperties_To_ServiceOperatorSpec(des
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3197,8 +3233,6 @@ func (operator *ServiceOperatorSpec) AssignProperties_To_ServiceOperatorSpec(des
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3592,6 +3626,16 @@ type augmentConversionForCertificateConfiguration interface {
 type augmentConversionForCertificateConfiguration_STATUS interface {
 	AssignPropertiesFrom(src *storage.CertificateConfiguration_STATUS) error
 	AssignPropertiesTo(dst *storage.CertificateConfiguration_STATUS) error
+}
+
+type augmentConversionForConfigurationApi interface {
+	AssignPropertiesFrom(src *storage.ConfigurationApi) error
+	AssignPropertiesTo(dst *storage.ConfigurationApi) error
+}
+
+type augmentConversionForConfigurationApi_STATUS interface {
+	AssignPropertiesFrom(src *storage.ConfigurationApi_STATUS) error
+	AssignPropertiesTo(dst *storage.ConfigurationApi_STATUS) error
 }
 
 type augmentConversionForHostnameConfiguration interface {

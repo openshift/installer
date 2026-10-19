@@ -112,16 +112,17 @@ func (p *AzureIdentityAccessTokenProvider) GetAuthorizationToken(ctx context.Con
 	}
 	span.SetAttributes(attribute.Bool("com.microsoft.kiota.authentication.additional_claims_provided", claims != ""))
 
-	if len(p.scopes) == 0 {
-		p.scopes = append(p.scopes, url.Scheme+"://"+url.Host+"/.default")
+	scopes := p.scopes
+	if len(scopes) == 0 {
+		scopes = append(scopes, url.Scheme+"://"+url.Host+"/.default")
 	}
 
 	options := azpolicy.TokenRequestOptions{
-		Scopes:    p.scopes,
+		Scopes:    scopes,
 		EnableCAE: p.isCaeEnabled,
 		Claims:    claims,
 	}
-	span.SetAttributes(attribute.String("com.microsoft.kiota.authentication.scopes", strings.Join(p.scopes, ",")))
+	span.SetAttributes(attribute.String("com.microsoft.kiota.authentication.scopes", strings.Join(scopes, ",")))
 	token, err := p.credential.GetToken(ctx, options)
 	if err != nil {
 		span.RecordError(err)

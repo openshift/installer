@@ -438,6 +438,8 @@ var encryption_KeySource_Values = map[string]Encryption_KeySource{
 
 // Encryption identity for the storage account.
 type EncryptionIdentity struct {
+	// UserAssignedIdentity: Resource identifier of the UserAssigned identity to be associated with server-side encryption on
+	// the storage account.
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }
 
@@ -462,7 +464,7 @@ type IPRule struct {
 	Action *IPRule_Action `json:"action,omitempty"`
 
 	// Value: Specifies the IP or IP range in CIDR format. Only IPV4 address is allowed.
-	Value *string `json:"value,omitempty"`
+	Value *string `json:"value,omitempty" optionalConfigMapPair:"Value"`
 }
 
 // Properties of key vault.
@@ -493,6 +495,7 @@ var networkRuleSet_DefaultAction_Values = map[string]NetworkRuleSet_DefaultActio
 
 // Resource Access Rule.
 type ResourceAccessRule struct {
+	// ResourceId: Resource Id
 	ResourceId *string `json:"resourceId,omitempty"`
 
 	// TenantId: Tenant Id
@@ -527,7 +530,10 @@ var sasPolicy_ExpirationAction_Values = map[string]SasPolicy_ExpirationAction{
 type VirtualNetworkRule struct {
 	// Action: The action of virtual network rule.
 	Action *VirtualNetworkRule_Action `json:"action,omitempty"`
-	Id     *string                    `json:"id,omitempty"`
+
+	// Id: Resource ID of a subnet, for example:
+	// /subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}.
+	Id *string `json:"id,omitempty"`
 
 	// State: Gets the state of virtual network rule.
 	State *VirtualNetworkRule_State `json:"state,omitempty"`

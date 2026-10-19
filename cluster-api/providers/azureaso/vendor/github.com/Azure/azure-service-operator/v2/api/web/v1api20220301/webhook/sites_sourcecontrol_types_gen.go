@@ -104,7 +104,12 @@ func (sourcecontrol *SitesSourcecontrol) ValidateUpdate(ctx context.Context, old
 
 // createValidations validates the creation of the resource
 func (sourcecontrol *SitesSourcecontrol) createValidations() []func(ctx context.Context, obj *v20220301.SitesSourcecontrol) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220301.SitesSourcecontrol) (admission.Warnings, error){sourcecontrol.validateResourceReferences, sourcecontrol.validateOwnerReference, sourcecontrol.validateSecretDestinations, sourcecontrol.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220301.SitesSourcecontrol) (admission.Warnings, error){
+		sourcecontrol.validateResourceReferences,
+		sourcecontrol.validateOwnerReference,
+		sourcecontrol.validateSecretDestinations,
+		sourcecontrol.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

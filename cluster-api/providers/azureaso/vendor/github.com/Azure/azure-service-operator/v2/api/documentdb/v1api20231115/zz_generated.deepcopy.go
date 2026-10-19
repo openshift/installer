@@ -1560,11 +1560,6 @@ func (in *DatabaseAccount_Spec) DeepCopyInto(out *DatabaseAccount_Spec) {
 		*out = new(CreateMode)
 		**out = **in
 	}
-	if in.CustomerManagedKeyStatus != nil {
-		in, out := &in.CustomerManagedKeyStatus, &out.CustomerManagedKeyStatus
-		*out = new(string)
-		**out = **in
-	}
 	if in.DatabaseAccountOfferType != nil {
 		in, out := &in.DatabaseAccountOfferType, &out.DatabaseAccountOfferType
 		*out = new(DatabaseAccountOfferType)

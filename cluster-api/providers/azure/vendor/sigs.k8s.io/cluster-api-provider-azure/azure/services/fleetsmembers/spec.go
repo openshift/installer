@@ -19,7 +19,7 @@ package fleetsmembers
 import (
 	"context"
 
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250301"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"

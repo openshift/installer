@@ -61,7 +61,8 @@ func getParseNode(contentType string, content []byte, parsableFactory ParsableFa
 	if contentType == "" {
 		return nil, errors.New("the content type is empty")
 	}
-	if content == nil || len(content) == 0 {
+
+	if len(content) == 0 {
 		return nil, errors.New("the content is empty")
 	}
 	if parsableFactory == nil {

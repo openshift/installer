@@ -101,6 +101,7 @@ generatecode: build ## Generate client
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource SecurityGroup --client-name SecurityGroupsClient --verbs get,createorupdate,delete,list --ratelimitkey securityGroupRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource PrivateLinkService --client-name PrivateLinkServicesClient --verbs get,createorupdate,delete,list --expand --ratelimitkey privateLinkServiceRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource IPGroup --client-name IPGroupsClient --verbs get,createorupdate,delete,listbyrg --expand --ratelimitkey ipGroupRateLimit
+	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 --package-alias armnetwork --resource NatGateway --client-name NatGatewaysClient --verbs get,createorupdate,delete,list --expand --ratelimitkey natGatewayRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage --package-alias armstorage --resource Account --client-name AccountsClient --verbs listbyrg --expand --ratelimitkey storageAccountRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns --package-alias armprivatedns --resource PrivateZone --client-name PrivateZonesClient  --verbs get,createorupdate --ratelimitkey privateDNSRateLimit
 	$(TYPESCAFFOLD) --package github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns --package-alias armprivatedns --resource PrivateZone --subresource VirtualNetworkLink --client-name VirtualNetworkLinksClient --verbs get,createorupdate --ratelimitkey virtualNetworkRateLimit
@@ -145,7 +146,7 @@ GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
-	test -s $(LOCALBIN)/golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(LOCALBIN) latest
+	test -s $(LOCALBIN)/golangci-lint || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(LOCALBIN) v1.64.8
 
 GOIMPORTS ?= $(LOCALBIN)/goimports
 .PHONY: goimports

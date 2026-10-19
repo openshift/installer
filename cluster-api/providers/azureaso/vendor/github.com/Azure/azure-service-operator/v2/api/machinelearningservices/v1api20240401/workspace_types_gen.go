@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,machinelearningservices}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -351,7 +352,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Identity":
 	if workspace.Identity != nil {
-		identity_ARM, err := (*workspace.Identity).ConvertToARM(resolved)
+		identity_ARM, err := workspace.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -436,7 +437,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.EnableDataIsolation = &enableDataIsolation
 	}
 	if workspace.Encryption != nil {
-		encryption_ARM, err := (*workspace.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := workspace.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -444,7 +445,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.Encryption = &encryption
 	}
 	if workspace.FeatureStoreSettings != nil {
-		featureStoreSettings_ARM, err := (*workspace.FeatureStoreSettings).ConvertToARM(resolved)
+		featureStoreSettings_ARM, err := workspace.FeatureStoreSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -480,7 +481,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.KeyVault = &keyVault
 	}
 	if workspace.ManagedNetwork != nil {
-		managedNetwork_ARM, err := (*workspace.ManagedNetwork).ConvertToARM(resolved)
+		managedNetwork_ARM, err := workspace.ManagedNetwork.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -502,7 +503,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if workspace.ServerlessComputeSettings != nil {
-		serverlessComputeSettings_ARM, err := (*workspace.ServerlessComputeSettings).ConvertToARM(resolved)
+		serverlessComputeSettings_ARM, err := workspace.ServerlessComputeSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -510,7 +511,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.ServerlessComputeSettings = &serverlessComputeSettings
 	}
 	if workspace.ServiceManagedResourcesSettings != nil {
-		serviceManagedResourcesSettings_ARM, err := (*workspace.ServiceManagedResourcesSettings).ConvertToARM(resolved)
+		serviceManagedResourcesSettings_ARM, err := workspace.ServiceManagedResourcesSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -537,7 +538,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.V1LegacyMode = &v1LegacyMode
 	}
 	if workspace.WorkspaceHubConfig != nil {
-		workspaceHubConfig_ARM, err := (*workspace.WorkspaceHubConfig).ConvertToARM(resolved)
+		workspaceHubConfig_ARM, err := workspace.WorkspaceHubConfig.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -547,7 +548,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Sku":
 	if workspace.Sku != nil {
-		sku_ARM, err := (*workspace.Sku).ConvertToARM(resolved)
+		sku_ARM, err := workspace.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1080,8 +1081,6 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 	if source.SharedPrivateLinkResources != nil {
 		sharedPrivateLinkResourceList := make([]SharedPrivateLinkResource, len(source.SharedPrivateLinkResources))
 		for sharedPrivateLinkResourceIndex, sharedPrivateLinkResourceItem := range source.SharedPrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			sharedPrivateLinkResourceItem := sharedPrivateLinkResourceItem
 			var sharedPrivateLinkResource SharedPrivateLinkResource
 			err := sharedPrivateLinkResource.AssignProperties_From_SharedPrivateLinkResource(&sharedPrivateLinkResourceItem)
 			if err != nil {
@@ -1341,8 +1340,6 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 	if workspace.SharedPrivateLinkResources != nil {
 		sharedPrivateLinkResourceList := make([]storage.SharedPrivateLinkResource, len(workspace.SharedPrivateLinkResources))
 		for sharedPrivateLinkResourceIndex, sharedPrivateLinkResourceItem := range workspace.SharedPrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			sharedPrivateLinkResourceItem := sharedPrivateLinkResourceItem
 			var sharedPrivateLinkResource storage.SharedPrivateLinkResource
 			err := sharedPrivateLinkResourceItem.AssignProperties_To_SharedPrivateLinkResource(&sharedPrivateLinkResource)
 			if err != nil {
@@ -1549,8 +1546,6 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 	if source.SharedPrivateLinkResources != nil {
 		sharedPrivateLinkResourceList := make([]SharedPrivateLinkResource, len(source.SharedPrivateLinkResources))
 		for sharedPrivateLinkResourceIndex, sharedPrivateLinkResourceItem := range source.SharedPrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			sharedPrivateLinkResourceItem := sharedPrivateLinkResourceItem
 			var sharedPrivateLinkResource SharedPrivateLinkResource
 			err := sharedPrivateLinkResource.Initialize_From_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResourceItem)
 			if err != nil {
@@ -2350,8 +2345,6 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -2416,8 +2409,6 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 	if source.SharedPrivateLinkResources != nil {
 		sharedPrivateLinkResourceList := make([]SharedPrivateLinkResource_STATUS, len(source.SharedPrivateLinkResources))
 		for sharedPrivateLinkResourceIndex, sharedPrivateLinkResourceItem := range source.SharedPrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			sharedPrivateLinkResourceItem := sharedPrivateLinkResourceItem
 			var sharedPrivateLinkResource SharedPrivateLinkResource_STATUS
 			err := sharedPrivateLinkResource.AssignProperties_From_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResourceItem)
 			if err != nil {
@@ -2642,8 +2633,6 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 	if workspace.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(workspace.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range workspace.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2706,8 +2695,6 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 	if workspace.SharedPrivateLinkResources != nil {
 		sharedPrivateLinkResourceList := make([]storage.SharedPrivateLinkResource_STATUS, len(workspace.SharedPrivateLinkResources))
 		for sharedPrivateLinkResourceIndex, sharedPrivateLinkResourceItem := range workspace.SharedPrivateLinkResources {
-			// Shadow the loop variable to avoid aliasing
-			sharedPrivateLinkResourceItem := sharedPrivateLinkResourceItem
 			var sharedPrivateLinkResource storage.SharedPrivateLinkResource_STATUS
 			err := sharedPrivateLinkResourceItem.AssignProperties_To_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResource)
 			if err != nil {
@@ -2818,7 +2805,7 @@ func (property *EncryptionProperty) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Identity":
 	if property.Identity != nil {
-		identity_ARM, err := (*property.Identity).ConvertToARM(resolved)
+		identity_ARM, err := property.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2828,7 +2815,7 @@ func (property *EncryptionProperty) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "KeyVaultProperties":
 	if property.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*property.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := property.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3144,7 +3131,7 @@ func (settings *FeatureStoreSettings) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "ComputeRuntime":
 	if settings.ComputeRuntime != nil {
-		computeRuntime_ARM, err := (*settings.ComputeRuntime).ConvertToARM(resolved)
+		computeRuntime_ARM, err := settings.ComputeRuntime.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3438,7 +3425,7 @@ func (settings *ManagedNetworkSettings) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "Status":
 	if settings.Status != nil {
-		status_ARM, err := (*settings.Status).ConvertToARM(resolved)
+		status_ARM, err := settings.Status.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3512,8 +3499,6 @@ func (settings *ManagedNetworkSettings) AssignProperties_From_ManagedNetworkSett
 	if source.OutboundRules != nil {
 		outboundRuleMap := make(map[string]OutboundRule, len(source.OutboundRules))
 		for outboundRuleKey, outboundRuleValue := range source.OutboundRules {
-			// Shadow the loop variable to avoid aliasing
-			outboundRuleValue := outboundRuleValue
 			var outboundRule OutboundRule
 			err := outboundRule.AssignProperties_From_OutboundRule(&outboundRuleValue)
 			if err != nil {
@@ -3559,8 +3544,6 @@ func (settings *ManagedNetworkSettings) AssignProperties_To_ManagedNetworkSettin
 	if settings.OutboundRules != nil {
 		outboundRuleMap := make(map[string]storage.OutboundRule, len(settings.OutboundRules))
 		for outboundRuleKey, outboundRuleValue := range settings.OutboundRules {
-			// Shadow the loop variable to avoid aliasing
-			outboundRuleValue := outboundRuleValue
 			var outboundRule storage.OutboundRule
 			err := outboundRuleValue.AssignProperties_To_OutboundRule(&outboundRule)
 			if err != nil {
@@ -3611,8 +3594,6 @@ func (settings *ManagedNetworkSettings) Initialize_From_ManagedNetworkSettings_S
 	if source.OutboundRules != nil {
 		outboundRuleMap := make(map[string]OutboundRule, len(source.OutboundRules))
 		for outboundRuleKey, outboundRuleValue := range source.OutboundRules {
-			// Shadow the loop variable to avoid aliasing
-			outboundRuleValue := outboundRuleValue
 			var outboundRule OutboundRule
 			err := outboundRule.Initialize_From_OutboundRule_STATUS(&outboundRuleValue)
 			if err != nil {
@@ -3727,8 +3708,6 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_From_ManagedNetw
 	if source.OutboundRules != nil {
 		outboundRuleMap := make(map[string]OutboundRule_STATUS, len(source.OutboundRules))
 		for outboundRuleKey, outboundRuleValue := range source.OutboundRules {
-			// Shadow the loop variable to avoid aliasing
-			outboundRuleValue := outboundRuleValue
 			var outboundRule OutboundRule_STATUS
 			err := outboundRule.AssignProperties_From_OutboundRule_STATUS(&outboundRuleValue)
 			if err != nil {
@@ -3777,8 +3756,6 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_To_ManagedNetwor
 	if settings.OutboundRules != nil {
 		outboundRuleMap := make(map[string]storage.OutboundRule_STATUS, len(settings.OutboundRules))
 		for outboundRuleKey, outboundRuleValue := range settings.OutboundRules {
-			// Shadow the loop variable to avoid aliasing
-			outboundRuleValue := outboundRuleValue
 			var outboundRule storage.OutboundRule_STATUS
 			err := outboundRuleValue.AssignProperties_To_OutboundRule_STATUS(&outboundRule)
 			if err != nil {
@@ -4216,7 +4193,7 @@ func (settings *ServiceManagedResourcesSettings) ConvertToARM(resolved genruntim
 
 	// Set property "CosmosDb":
 	if settings.CosmosDb != nil {
-		cosmosDb_ARM, err := (*settings.CosmosDb).ConvertToARM(resolved)
+		cosmosDb_ARM, err := settings.CosmosDb.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4958,8 +4935,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_From_WorkspaceOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -4976,8 +4951,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_From_WorkspaceOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -5015,8 +4988,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_To_WorkspaceOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -5033,8 +5004,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_To_WorkspaceOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -6194,7 +6163,7 @@ func (rule *OutboundRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "FQDN":
 	if rule.FQDN != nil {
-		fqdn_ARM, err := (*rule.FQDN).ConvertToARM(resolved)
+		fqdn_ARM, err := rule.FQDN.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6204,7 +6173,7 @@ func (rule *OutboundRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "PrivateEndpoint":
 	if rule.PrivateEndpoint != nil {
-		privateEndpoint_ARM, err := (*rule.PrivateEndpoint).ConvertToARM(resolved)
+		privateEndpoint_ARM, err := rule.PrivateEndpoint.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6214,7 +6183,7 @@ func (rule *OutboundRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "ServiceTag":
 	if rule.ServiceTag != nil {
-		serviceTag_ARM, err := (*rule.ServiceTag).ConvertToARM(resolved)
+		serviceTag_ARM, err := rule.ServiceTag.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -7187,7 +7156,7 @@ func (rule *PrivateEndpointOutboundRule) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "Destination":
 	if rule.Destination != nil {
-		destination_ARM, err := (*rule.Destination).ConvertToARM(resolved)
+		destination_ARM, err := rule.Destination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -7602,7 +7571,7 @@ func (rule *ServiceTagOutboundRule) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Destination":
 	if rule.Destination != nil {
-		destination_ARM, err := (*rule.Destination).ConvertToARM(resolved)
+		destination_ARM, err := rule.Destination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

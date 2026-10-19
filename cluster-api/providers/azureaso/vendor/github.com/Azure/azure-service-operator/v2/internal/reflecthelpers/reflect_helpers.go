@@ -16,6 +16,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
 // ValueOfPtr dereferences a pointer and returns the value the pointer points to.
@@ -198,6 +199,65 @@ func FindOptionalConfigMapReferences(obj interface{}) ([]*configmaps.OptionalRef
 
 	// Translate our collector into a simple list
 	var result []*configmaps.OptionalReferencePair
+	for _, values := range collector {
+		result = append(result, values...)
+	}
+
+	return result, nil
+}
+
+// FindOptionalSecretReferences finds all the genruntime.SecretReference's on the provided object
+// that are part of an optional secret pair (tagged with optionalSecretPair).
+func FindOptionalSecretReferences(obj interface{}) ([]*secrets.OptionalReferencePair, error) {
+	untypedResult, err := FindPropertiesWithTag(obj, "optionalSecretPair") // TODO: This is astmodel.OptionalSecretPairTag
+	if err != nil {
+		return nil, err
+	}
+
+	collector := make(map[string][]*secrets.OptionalReferencePair)
+	suffix := "FromSecret" // TODO This is astmodel.OptionalSecretReferenceSuffix
+
+	// Pass 1: Collect all direct string values
+	for key, values := range untypedResult {
+		if strings.HasSuffix(key, suffix) {
+			continue
+		}
+
+		collector[key] = make([]*secrets.OptionalReferencePair, 0, len(values))
+		for _, val := range values {
+			typedValue, ok := val.(*string)
+			if !ok {
+				return nil, eris.Errorf("value of property %s was not a *string like expected", key)
+			}
+			collector[key] = append(collector[key], &secrets.OptionalReferencePair{
+				Name:  key,
+				Value: typedValue,
+			})
+		}
+	}
+
+	// Pass 2: Pair with SecretReferences
+	for key, values := range untypedResult {
+		if !strings.HasSuffix(key, suffix) {
+			continue
+		}
+		idx := strings.TrimSuffix(key, suffix)
+		if len(values) != len(collector[idx]) {
+			return nil, eris.Errorf("number of Ref's didn't match number of Values for %s", idx)
+		}
+
+		for i, val := range values {
+			typedValue, ok := val.(*genruntime.SecretReference)
+			if !ok {
+				return nil, eris.Errorf("value of property %s was not a genruntime.SecretReference like expected", key)
+			}
+			collector[idx][i].RefName = key
+			collector[idx][i].Ref = typedValue
+		}
+	}
+
+	// Translate our collector into a simple list
+	var result []*secrets.OptionalReferencePair
 	for _, values := range collector {
 		result = append(result, values...)
 	}

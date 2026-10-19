@@ -104,7 +104,12 @@ func (setting *SqlDatabaseThroughputSetting) ValidateUpdate(ctx context.Context,
 
 // createValidations validates the creation of the resource
 func (setting *SqlDatabaseThroughputSetting) createValidations() []func(ctx context.Context, obj *v20210515.SqlDatabaseThroughputSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210515.SqlDatabaseThroughputSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210515.SqlDatabaseThroughputSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateOwnerReference,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -116,7 +116,12 @@ func (factory *Factory) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (factory *Factory) createValidations() []func(ctx context.Context, obj *v20180601.Factory) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20180601.Factory) (admission.Warnings, error){factory.validateResourceReferences, factory.validateOwnerReference, factory.validateSecretDestinations, factory.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20180601.Factory) (admission.Warnings, error){
+		factory.validateResourceReferences,
+		factory.validateOwnerReference,
+		factory.validateSecretDestinations,
+		factory.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

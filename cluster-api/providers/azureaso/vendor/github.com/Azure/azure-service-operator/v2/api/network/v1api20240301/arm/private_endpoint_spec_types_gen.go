@@ -62,6 +62,7 @@ type PrivateEndpointProperties struct {
 
 // An application security group in a resource group.
 type ApplicationSecurityGroupSpec_PrivateEndpoint_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -85,6 +86,7 @@ type PrivateLinkServiceConnection struct {
 
 // Subnet in a virtual network resource.
 type Subnet_PrivateEndpoint_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -108,7 +110,9 @@ type PrivateLinkServiceConnectionProperties struct {
 	// PrivateLinkServiceConnectionState: A collection of read-only information about the state of the connection to the remote
 	// resource.
 	PrivateLinkServiceConnectionState *PrivateLinkServiceConnectionState `json:"privateLinkServiceConnectionState,omitempty"`
-	PrivateLinkServiceId              *string                            `json:"privateLinkServiceId,omitempty"`
+
+	// PrivateLinkServiceId: The resource id of private link service.
+	PrivateLinkServiceId *string `json:"privateLinkServiceId,omitempty"`
 
 	// RequestMessage: A message passed to the owner of the remote resource with this connection request. Restricted to 140
 	// chars.

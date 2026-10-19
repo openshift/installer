@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,appconfiguration}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /appconfiguration/resource-manager/Microsoft.AppConfiguration/stable/2022-05-01/appconfiguration.json
+// - Generated from: /appconfiguration/resource-manager/Microsoft.AppConfiguration/AppConfiguration/stable/2022-05-01/appconfiguration.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppConfiguration/configurationStores/{configStoreName}
 type ConfigurationStore struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &ConfigurationStore{}
 
 // ConvertFrom populates our ConfigurationStore from the provided hub ConfigurationStore
 func (store *ConfigurationStore) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.ConfigurationStore)
-	if !ok {
-		return fmt.Errorf("expected appconfiguration/v1api20220501/storage/ConfigurationStore but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.ConfigurationStore
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return store.AssignProperties_From_ConfigurationStore(source)
+	err = store.AssignProperties_From_ConfigurationStore(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to store")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ConfigurationStore from our ConfigurationStore
 func (store *ConfigurationStore) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.ConfigurationStore)
-	if !ok {
-		return fmt.Errorf("expected appconfiguration/v1api20220501/storage/ConfigurationStore but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.ConfigurationStore
+	err := store.AssignProperties_To_ConfigurationStore(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from store")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return store.AssignProperties_To_ConfigurationStore(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &ConfigurationStore{}
@@ -86,17 +101,6 @@ func (store *ConfigurationStore) SecretDestinationExpressions() []*core.Destinat
 		return nil
 	}
 	return store.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &ConfigurationStore{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (store *ConfigurationStore) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ConfigurationStore_STATUS); ok {
-		return store.Spec.Initialize_From_ConfigurationStore_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ConfigurationStore_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ConfigurationStore{}
@@ -237,7 +241,7 @@ func (store *ConfigurationStore) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /appconfiguration/resource-manager/Microsoft.AppConfiguration/stable/2022-05-01/appconfiguration.json
+// - Generated from: /appconfiguration/resource-manager/Microsoft.AppConfiguration/AppConfiguration/stable/2022-05-01/appconfiguration.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppConfiguration/configurationStores/{configStoreName}
 type ConfigurationStoreList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -299,9 +303,6 @@ type ConfigurationStore_Spec struct {
 	// deleted.
 	SoftDeleteRetentionInDays *int `json:"softDeleteRetentionInDays,omitempty"`
 
-	// SystemData: Resource system metadata.
-	SystemData *SystemData `json:"systemData,omitempty"`
-
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 }
@@ -317,7 +318,7 @@ func (store *ConfigurationStore_Spec) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Identity":
 	if store.Identity != nil {
-		identity_ARM, err := (*store.Identity).ConvertToARM(resolved)
+		identity_ARM, err := store.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +359,7 @@ func (store *ConfigurationStore_Spec) ConvertToARM(resolved genruntime.ConvertTo
 		result.Properties.EnablePurgeProtection = &enablePurgeProtection
 	}
 	if store.Encryption != nil {
-		encryption_ARM, err := (*store.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := store.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -378,22 +379,12 @@ func (store *ConfigurationStore_Spec) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Sku":
 	if store.Sku != nil {
-		sku_ARM, err := (*store.Sku).ConvertToARM(resolved)
+		sku_ARM, err := store.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
 		sku := *sku_ARM.(*arm.Sku)
 		result.Sku = &sku
-	}
-
-	// Set property "SystemData":
-	if store.SystemData != nil {
-		systemData_ARM, err := (*store.SystemData).ConvertToARM(resolved)
-		if err != nil {
-			return nil, err
-		}
-		systemData := *systemData_ARM.(*arm.SystemData)
-		result.SystemData = &systemData
 	}
 
 	// Set property "Tags":
@@ -518,17 +509,6 @@ func (store *ConfigurationStore_Spec) PopulateFromARM(owner genruntime.Arbitrary
 			softDeleteRetentionInDays := *typedInput.Properties.SoftDeleteRetentionInDays
 			store.SoftDeleteRetentionInDays = &softDeleteRetentionInDays
 		}
-	}
-
-	// Set property "SystemData":
-	if typedInput.SystemData != nil {
-		var systemData1 SystemData
-		err := systemData1.PopulateFromARM(owner, *typedInput.SystemData)
-		if err != nil {
-			return err
-		}
-		systemData := systemData1
-		store.SystemData = &systemData
 	}
 
 	// Set property "Tags":
@@ -695,18 +675,6 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 	// SoftDeleteRetentionInDays
 	store.SoftDeleteRetentionInDays = genruntime.ClonePointerToInt(source.SoftDeleteRetentionInDays)
 
-	// SystemData
-	if source.SystemData != nil {
-		var systemDatum SystemData
-		err := systemDatum.AssignProperties_From_SystemData(source.SystemData)
-		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_From_SystemData() to populate field SystemData")
-		}
-		store.SystemData = &systemDatum
-	} else {
-		store.SystemData = nil
-	}
-
 	// Tags
 	store.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
@@ -819,18 +787,6 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 	// SoftDeleteRetentionInDays
 	destination.SoftDeleteRetentionInDays = genruntime.ClonePointerToInt(store.SoftDeleteRetentionInDays)
 
-	// SystemData
-	if store.SystemData != nil {
-		var systemDatum storage.SystemData
-		err := store.SystemData.AssignProperties_To_SystemData(&systemDatum)
-		if err != nil {
-			return eris.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
-		}
-		destination.SystemData = &systemDatum
-	} else {
-		destination.SystemData = nil
-	}
-
 	// Tags
 	destination.Tags = genruntime.CloneMapOfStringToString(store.Tags)
 
@@ -840,102 +796,6 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ConfigurationStore_STATUS populates our ConfigurationStore_Spec from the provided source ConfigurationStore_STATUS
-func (store *ConfigurationStore_Spec) Initialize_From_ConfigurationStore_STATUS(source *ConfigurationStore_STATUS) error {
-
-	// CreateMode
-	if source.CreateMode != nil {
-		createMode := genruntime.ToEnum(string(*source.CreateMode), configurationStoreProperties_CreateMode_Values)
-		store.CreateMode = &createMode
-	} else {
-		store.CreateMode = nil
-	}
-
-	// DisableLocalAuth
-	if source.DisableLocalAuth != nil {
-		disableLocalAuth := *source.DisableLocalAuth
-		store.DisableLocalAuth = &disableLocalAuth
-	} else {
-		store.DisableLocalAuth = nil
-	}
-
-	// EnablePurgeProtection
-	if source.EnablePurgeProtection != nil {
-		enablePurgeProtection := *source.EnablePurgeProtection
-		store.EnablePurgeProtection = &enablePurgeProtection
-	} else {
-		store.EnablePurgeProtection = nil
-	}
-
-	// Encryption
-	if source.Encryption != nil {
-		var encryption EncryptionProperties
-		err := encryption.Initialize_From_EncryptionProperties_STATUS(source.Encryption)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field Encryption")
-		}
-		store.Encryption = &encryption
-	} else {
-		store.Encryption = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity ResourceIdentity
-		err := identity.Initialize_From_ResourceIdentity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ResourceIdentity_STATUS() to populate field Identity")
-		}
-		store.Identity = &identity
-	} else {
-		store.Identity = nil
-	}
-
-	// Location
-	store.Location = genruntime.ClonePointerToString(source.Location)
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), configurationStoreProperties_PublicNetworkAccess_Values)
-		store.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		store.PublicNetworkAccess = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku Sku
-		err := sku.Initialize_From_Sku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
-		}
-		store.Sku = &sku
-	} else {
-		store.Sku = nil
-	}
-
-	// SoftDeleteRetentionInDays
-	store.SoftDeleteRetentionInDays = genruntime.ClonePointerToInt(source.SoftDeleteRetentionInDays)
-
-	// SystemData
-	if source.SystemData != nil {
-		var systemDatum SystemData
-		err := systemDatum.Initialize_From_SystemData_STATUS(source.SystemData)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SystemData_STATUS() to populate field SystemData")
-		}
-		store.SystemData = &systemDatum
-	} else {
-		store.SystemData = nil
-	}
-
-	// Tags
-	store.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1327,8 +1187,6 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnectionReference_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnectionReference_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnectionReference_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1471,8 +1329,6 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 	if store.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnectionReference_STATUS, len(store.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range store.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnectionReference_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnectionReference_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1564,8 +1420,6 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_From_Configurat
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1582,8 +1436,6 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_From_Configurat
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1621,8 +1473,6 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_To_Configuratio
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1639,8 +1489,6 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_To_Configuratio
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1768,7 +1616,7 @@ func (properties *EncryptionProperties) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "KeyVaultProperties":
 	if properties.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*properties.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := properties.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1846,25 +1694,6 @@ func (properties *EncryptionProperties) AssignProperties_To_EncryptionProperties
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EncryptionProperties_STATUS populates our EncryptionProperties from the provided source EncryptionProperties_STATUS
-func (properties *EncryptionProperties) Initialize_From_EncryptionProperties_STATUS(source *EncryptionProperties_STATUS) error {
-
-	// KeyVaultProperties
-	if source.KeyVaultProperties != nil {
-		var keyVaultProperty KeyVaultProperties
-		err := keyVaultProperty.Initialize_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
-		}
-		properties.KeyVaultProperties = &keyVaultProperty
-	} else {
-		properties.KeyVaultProperties = nil
 	}
 
 	// No error
@@ -2096,8 +1925,6 @@ func (identity *ResourceIdentity) AssignProperties_From_ResourceIdentity(source 
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2131,8 +1958,6 @@ func (identity *ResourceIdentity) AssignProperties_To_ResourceIdentity(destinati
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2150,33 +1975,6 @@ func (identity *ResourceIdentity) AssignProperties_To_ResourceIdentity(destinati
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ResourceIdentity_STATUS populates our ResourceIdentity from the provided source ResourceIdentity_STATUS
-func (identity *ResourceIdentity) Initialize_From_ResourceIdentity_STATUS(source *ResourceIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), resourceIdentity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -2275,8 +2073,6 @@ func (identity *ResourceIdentity_STATUS) AssignProperties_From_ResourceIdentity_
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -2316,8 +2112,6 @@ func (identity *ResourceIdentity_STATUS) AssignProperties_To_ResourceIdentity_ST
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2416,16 +2210,6 @@ func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	return nil
 }
 
-// Initialize_From_Sku_STATUS populates our Sku from the provided source Sku_STATUS
-func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
-
-	// Name
-	sku.Name = genruntime.ClonePointerToString(source.Name)
-
-	// No error
-	return nil
-}
-
 // Describes a configuration store SKU.
 type Sku_STATUS struct {
 	// Name: The SKU name of the configuration store.
@@ -2479,250 +2263,6 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Metadata pertaining to creation and last modification of the resource.
-type SystemData struct {
-	// CreatedAt: The timestamp of resource creation (UTC).
-	CreatedAt *string `json:"createdAt,omitempty"`
-
-	// CreatedBy: The identity that created the resource.
-	CreatedBy *string `json:"createdBy,omitempty"`
-
-	// CreatedByType: The type of identity that created the resource.
-	CreatedByType *SystemData_CreatedByType `json:"createdByType,omitempty"`
-
-	// LastModifiedAt: The timestamp of resource last modification (UTC)
-	LastModifiedAt *string `json:"lastModifiedAt,omitempty"`
-
-	// LastModifiedBy: The identity that last modified the resource.
-	LastModifiedBy *string `json:"lastModifiedBy,omitempty"`
-
-	// LastModifiedByType: The type of identity that last modified the resource.
-	LastModifiedByType *SystemData_LastModifiedByType `json:"lastModifiedByType,omitempty"`
-}
-
-var _ genruntime.ARMTransformer = &SystemData{}
-
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (data *SystemData) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if data == nil {
-		return nil, nil
-	}
-	result := &arm.SystemData{}
-
-	// Set property "CreatedAt":
-	if data.CreatedAt != nil {
-		createdAt := *data.CreatedAt
-		result.CreatedAt = &createdAt
-	}
-
-	// Set property "CreatedBy":
-	if data.CreatedBy != nil {
-		createdBy := *data.CreatedBy
-		result.CreatedBy = &createdBy
-	}
-
-	// Set property "CreatedByType":
-	if data.CreatedByType != nil {
-		var temp string
-		temp = string(*data.CreatedByType)
-		createdByType := arm.SystemData_CreatedByType(temp)
-		result.CreatedByType = &createdByType
-	}
-
-	// Set property "LastModifiedAt":
-	if data.LastModifiedAt != nil {
-		lastModifiedAt := *data.LastModifiedAt
-		result.LastModifiedAt = &lastModifiedAt
-	}
-
-	// Set property "LastModifiedBy":
-	if data.LastModifiedBy != nil {
-		lastModifiedBy := *data.LastModifiedBy
-		result.LastModifiedBy = &lastModifiedBy
-	}
-
-	// Set property "LastModifiedByType":
-	if data.LastModifiedByType != nil {
-		var temp string
-		temp = string(*data.LastModifiedByType)
-		lastModifiedByType := arm.SystemData_LastModifiedByType(temp)
-		result.LastModifiedByType = &lastModifiedByType
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (data *SystemData) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &arm.SystemData{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (data *SystemData) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(arm.SystemData)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData, got %T", armInput)
-	}
-
-	// Set property "CreatedAt":
-	if typedInput.CreatedAt != nil {
-		createdAt := *typedInput.CreatedAt
-		data.CreatedAt = &createdAt
-	}
-
-	// Set property "CreatedBy":
-	if typedInput.CreatedBy != nil {
-		createdBy := *typedInput.CreatedBy
-		data.CreatedBy = &createdBy
-	}
-
-	// Set property "CreatedByType":
-	if typedInput.CreatedByType != nil {
-		var temp string
-		temp = string(*typedInput.CreatedByType)
-		createdByType := SystemData_CreatedByType(temp)
-		data.CreatedByType = &createdByType
-	}
-
-	// Set property "LastModifiedAt":
-	if typedInput.LastModifiedAt != nil {
-		lastModifiedAt := *typedInput.LastModifiedAt
-		data.LastModifiedAt = &lastModifiedAt
-	}
-
-	// Set property "LastModifiedBy":
-	if typedInput.LastModifiedBy != nil {
-		lastModifiedBy := *typedInput.LastModifiedBy
-		data.LastModifiedBy = &lastModifiedBy
-	}
-
-	// Set property "LastModifiedByType":
-	if typedInput.LastModifiedByType != nil {
-		var temp string
-		temp = string(*typedInput.LastModifiedByType)
-		lastModifiedByType := SystemData_LastModifiedByType(temp)
-		data.LastModifiedByType = &lastModifiedByType
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_SystemData populates our SystemData from the provided source SystemData
-func (data *SystemData) AssignProperties_From_SystemData(source *storage.SystemData) error {
-
-	// CreatedAt
-	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
-
-	// CreatedBy
-	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
-
-	// CreatedByType
-	if source.CreatedByType != nil {
-		createdByType := *source.CreatedByType
-		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_Values)
-		data.CreatedByType = &createdByTypeTemp
-	} else {
-		data.CreatedByType = nil
-	}
-
-	// LastModifiedAt
-	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
-
-	// LastModifiedBy
-	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
-
-	// LastModifiedByType
-	if source.LastModifiedByType != nil {
-		lastModifiedByType := *source.LastModifiedByType
-		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_Values)
-		data.LastModifiedByType = &lastModifiedByTypeTemp
-	} else {
-		data.LastModifiedByType = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_SystemData populates the provided destination SystemData from our SystemData
-func (data *SystemData) AssignProperties_To_SystemData(destination *storage.SystemData) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// CreatedAt
-	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
-
-	// CreatedBy
-	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
-
-	// CreatedByType
-	if data.CreatedByType != nil {
-		createdByType := string(*data.CreatedByType)
-		destination.CreatedByType = &createdByType
-	} else {
-		destination.CreatedByType = nil
-	}
-
-	// LastModifiedAt
-	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
-
-	// LastModifiedBy
-	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
-
-	// LastModifiedByType
-	if data.LastModifiedByType != nil {
-		lastModifiedByType := string(*data.LastModifiedByType)
-		destination.LastModifiedByType = &lastModifiedByType
-	} else {
-		destination.LastModifiedByType = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SystemData_STATUS populates our SystemData from the provided source SystemData_STATUS
-func (data *SystemData) Initialize_From_SystemData_STATUS(source *SystemData_STATUS) error {
-
-	// CreatedAt
-	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
-
-	// CreatedBy
-	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
-
-	// CreatedByType
-	if source.CreatedByType != nil {
-		createdByType := genruntime.ToEnum(string(*source.CreatedByType), systemData_CreatedByType_Values)
-		data.CreatedByType = &createdByType
-	} else {
-		data.CreatedByType = nil
-	}
-
-	// LastModifiedAt
-	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
-
-	// LastModifiedBy
-	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
-
-	// LastModifiedByType
-	if source.LastModifiedByType != nil {
-		lastModifiedByType := genruntime.ToEnum(string(*source.LastModifiedByType), systemData_LastModifiedByType_Values)
-		data.LastModifiedByType = &lastModifiedByType
-	} else {
-		data.LastModifiedByType = nil
 	}
 
 	// No error
@@ -3249,19 +2789,6 @@ func (properties *KeyVaultProperties) AssignProperties_To_KeyVaultProperties(des
 	return nil
 }
 
-// Initialize_From_KeyVaultProperties_STATUS populates our KeyVaultProperties from the provided source KeyVaultProperties_STATUS
-func (properties *KeyVaultProperties) Initialize_From_KeyVaultProperties_STATUS(source *KeyVaultProperties_STATUS) error {
-
-	// IdentityClientId
-	properties.IdentityClientId = genruntime.ClonePointerToString(source.IdentityClientId)
-
-	// KeyIdentifier
-	properties.KeyIdentifier = genruntime.ClonePointerToString(source.KeyIdentifier)
-
-	// No error
-	return nil
-}
-
 // Settings concerning key vault encryption for a configuration store.
 type KeyVaultProperties_STATUS struct {
 	// IdentityClientId: The client id of the identity which will be used to access key vault.
@@ -3371,24 +2898,6 @@ var resourceIdentity_Type_STATUS_Values = map[string]ResourceIdentity_Type_STATU
 	"userassigned":                 ResourceIdentity_Type_STATUS_UserAssigned,
 }
 
-// +kubebuilder:validation:Enum={"Application","Key","ManagedIdentity","User"}
-type SystemData_CreatedByType string
-
-const (
-	SystemData_CreatedByType_Application     = SystemData_CreatedByType("Application")
-	SystemData_CreatedByType_Key             = SystemData_CreatedByType("Key")
-	SystemData_CreatedByType_ManagedIdentity = SystemData_CreatedByType("ManagedIdentity")
-	SystemData_CreatedByType_User            = SystemData_CreatedByType("User")
-)
-
-// Mapping from string to SystemData_CreatedByType
-var systemData_CreatedByType_Values = map[string]SystemData_CreatedByType{
-	"application":     SystemData_CreatedByType_Application,
-	"key":             SystemData_CreatedByType_Key,
-	"managedidentity": SystemData_CreatedByType_ManagedIdentity,
-	"user":            SystemData_CreatedByType_User,
-}
-
 type SystemData_CreatedByType_STATUS string
 
 const (
@@ -3404,24 +2913,6 @@ var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType
 	"key":             SystemData_CreatedByType_STATUS_Key,
 	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
 	"user":            SystemData_CreatedByType_STATUS_User,
-}
-
-// +kubebuilder:validation:Enum={"Application","Key","ManagedIdentity","User"}
-type SystemData_LastModifiedByType string
-
-const (
-	SystemData_LastModifiedByType_Application     = SystemData_LastModifiedByType("Application")
-	SystemData_LastModifiedByType_Key             = SystemData_LastModifiedByType("Key")
-	SystemData_LastModifiedByType_ManagedIdentity = SystemData_LastModifiedByType("ManagedIdentity")
-	SystemData_LastModifiedByType_User            = SystemData_LastModifiedByType("User")
-)
-
-// Mapping from string to SystemData_LastModifiedByType
-var systemData_LastModifiedByType_Values = map[string]SystemData_LastModifiedByType{
-	"application":     SystemData_LastModifiedByType_Application,
-	"key":             SystemData_LastModifiedByType_Key,
-	"managedidentity": SystemData_LastModifiedByType_ManagedIdentity,
-	"user":            SystemData_LastModifiedByType_User,
 }
 
 type SystemData_LastModifiedByType_STATUS string

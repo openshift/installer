@@ -116,7 +116,12 @@ func (redis *Redis) ValidateUpdate(ctx context.Context, oldResource runtime.Obje
 
 // createValidations validates the creation of the resource
 func (redis *Redis) createValidations() []func(ctx context.Context, obj *v20201201.Redis) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201201.Redis) (admission.Warnings, error){redis.validateResourceReferences, redis.validateOwnerReference, redis.validateSecretDestinations, redis.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201201.Redis) (admission.Warnings, error){
+		redis.validateResourceReferences,
+		redis.validateOwnerReference,
+		redis.validateSecretDestinations,
+		redis.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

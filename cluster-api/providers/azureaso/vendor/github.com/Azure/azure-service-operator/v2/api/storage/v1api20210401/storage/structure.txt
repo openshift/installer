@@ -80,10 +80,11 @@ StorageAccount: Resource
 │   ├── NetworkAcls: *Object (6 properties)
 │   │   ├── Bypass: *string
 │   │   ├── DefaultAction: *string
-│   │   ├── IpRules: Object (3 properties)[]
+│   │   ├── IpRules: Object (4 properties)[]
 │   │   │   ├── Action: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   │   └── Value: *string
+│   │   │   ├── Value: *string
+│   │   │   └── ValueFromConfig: *genruntime.ConfigMapReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── ResourceAccessRules: Object (3 properties)[]
 │   │   │   ├── PropertyBag: genruntime.PropertyBag

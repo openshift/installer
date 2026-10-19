@@ -168,7 +168,7 @@ Disk: Resource
 
 Snapshot: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (20 properties)
+├── Spec: Object (19 properties)
 │   ├── AzureName: string
 │   ├── CreationData: *Object (9 properties)
 │   │   ├── CreateOption: *string
@@ -188,7 +188,6 @@ Snapshot: Resource
 │   │   └── UploadSizeBytes: *int
 │   ├── DiskAccessReference: *genruntime.ResourceReference
 │   ├── DiskSizeGB: *int
-│   ├── DiskState: *string
 │   ├── Encryption: *Object (3 properties)
 │   │   ├── DiskEncryptionSetReference: *genruntime.ResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag

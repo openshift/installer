@@ -94,9 +94,6 @@ type AutomationRunbookReceiver_STATUS struct {
 	// RunbookName: The name for this runbook.
 	RunbookName *string `json:"runbookName,omitempty"`
 
-	// ServiceUri: The URI where webhooks should be sent.
-	ServiceUri *string `json:"serviceUri,omitempty"`
-
 	// UseCommonAlertSchema: Indicates whether to use common alert schema.
 	UseCommonAlertSchema *bool `json:"useCommonAlertSchema,omitempty"`
 
@@ -239,9 +236,6 @@ type WebhookReceiver_STATUS struct {
 
 	// ObjectId: Indicates the webhook app object Id for aad auth.
 	ObjectId *string `json:"objectId,omitempty"`
-
-	// ServiceUri: The URI where webhooks should be sent.
-	ServiceUri *string `json:"serviceUri,omitempty"`
 
 	// TenantId: Indicates the tenant id for aad auth.
 	TenantId *string `json:"tenantId,omitempty"`

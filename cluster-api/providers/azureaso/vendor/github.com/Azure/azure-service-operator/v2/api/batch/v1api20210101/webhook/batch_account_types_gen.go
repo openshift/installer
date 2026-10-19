@@ -116,7 +116,12 @@ func (account *BatchAccount) ValidateUpdate(ctx context.Context, oldResource run
 
 // createValidations validates the creation of the resource
 func (account *BatchAccount) createValidations() []func(ctx context.Context, obj *v20210101.BatchAccount) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210101.BatchAccount) (admission.Warnings, error){account.validateResourceReferences, account.validateOwnerReference, account.validateSecretDestinations, account.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210101.BatchAccount) (admission.Warnings, error){
+		account.validateResourceReferences,
+		account.validateOwnerReference,
+		account.validateSecretDestinations,
+		account.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

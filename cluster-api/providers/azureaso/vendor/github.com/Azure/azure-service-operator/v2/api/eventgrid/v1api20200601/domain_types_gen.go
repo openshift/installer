@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}
 type Domain struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (domain *Domain) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}
 type DomainList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -327,7 +328,7 @@ func (domain *Domain_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 		result.Properties.InputSchema = &inputSchema
 	}
 	if domain.InputSchemaMapping != nil {
-		inputSchemaMapping_ARM, err := (*domain.InputSchemaMapping).ConvertToARM(resolved)
+		inputSchemaMapping_ARM, err := domain.InputSchemaMapping.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -501,8 +502,6 @@ func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Dom
 	if source.InboundIpRules != nil {
 		inboundIpRuleList := make([]InboundIpRule, len(source.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule InboundIpRule
 			err := inboundIpRule.AssignProperties_From_InboundIpRule(&inboundIpRuleItem)
 			if err != nil {
@@ -587,8 +586,6 @@ func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.
 	if domain.InboundIpRules != nil {
 		inboundIpRuleList := make([]storage.InboundIpRule, len(domain.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule storage.InboundIpRule
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
 			if err != nil {
@@ -676,8 +673,6 @@ func (domain *Domain_Spec) Initialize_From_Domain_STATUS(source *Domain_STATUS) 
 	if source.InboundIpRules != nil {
 		inboundIpRuleList := make([]InboundIpRule, len(source.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule InboundIpRule
 			err := inboundIpRule.Initialize_From_InboundIpRule_STATUS(&inboundIpRuleItem)
 			if err != nil {
@@ -1007,8 +1002,6 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 	if source.InboundIpRules != nil {
 		inboundIpRuleList := make([]InboundIpRule_STATUS, len(source.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule InboundIpRule_STATUS
 			err := inboundIpRule.AssignProperties_From_InboundIpRule_STATUS(&inboundIpRuleItem)
 			if err != nil {
@@ -1055,8 +1048,6 @@ func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1127,8 +1118,6 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 	if domain.InboundIpRules != nil {
 		inboundIpRuleList := make([]storage.InboundIpRule_STATUS, len(domain.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule storage.InboundIpRule_STATUS
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
 			if err != nil {
@@ -1174,8 +1163,6 @@ func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *stor
 	if domain.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(domain.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range domain.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
@@ -1249,8 +1236,6 @@ func (operator *DomainOperatorSpec) AssignProperties_From_DomainOperatorSpec(sou
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1267,8 +1252,6 @@ func (operator *DomainOperatorSpec) AssignProperties_From_DomainOperatorSpec(sou
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1294,8 +1277,6 @@ func (operator *DomainOperatorSpec) AssignProperties_To_DomainOperatorSpec(desti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1312,8 +1293,6 @@ func (operator *DomainOperatorSpec) AssignProperties_To_DomainOperatorSpec(desti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1645,7 +1624,7 @@ func (mapping *InputSchemaMapping) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "Json":
 	if mapping.Json != nil {
-		json_ARM, err := (*mapping.Json).ConvertToARM(resolved)
+		json_ARM, err := mapping.Json.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2118,7 +2097,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties = &arm.JsonInputSchemaMappingProperties{}
 	}
 	if mapping.DataVersion != nil {
-		dataVersion_ARM, err := (*mapping.DataVersion).ConvertToARM(resolved)
+		dataVersion_ARM, err := mapping.DataVersion.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2126,7 +2105,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.DataVersion = &dataVersion
 	}
 	if mapping.EventTime != nil {
-		eventTime_ARM, err := (*mapping.EventTime).ConvertToARM(resolved)
+		eventTime_ARM, err := mapping.EventTime.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2134,7 +2113,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.EventTime = &eventTime
 	}
 	if mapping.EventType != nil {
-		eventType_ARM, err := (*mapping.EventType).ConvertToARM(resolved)
+		eventType_ARM, err := mapping.EventType.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2142,7 +2121,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.EventType = &eventType
 	}
 	if mapping.Id != nil {
-		id_ARM, err := (*mapping.Id).ConvertToARM(resolved)
+		id_ARM, err := mapping.Id.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2150,7 +2129,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.Id = &id
 	}
 	if mapping.Subject != nil {
-		subject_ARM, err := (*mapping.Subject).ConvertToARM(resolved)
+		subject_ARM, err := mapping.Subject.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2158,7 +2137,7 @@ func (mapping *JsonInputSchemaMapping) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.Subject = &subject
 	}
 	if mapping.Topic != nil {
-		topic_ARM, err := (*mapping.Topic).ConvertToARM(resolved)
+		topic_ARM, err := mapping.Topic.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
