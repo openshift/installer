@@ -9,6 +9,7 @@ Follow along with the steps and links below to prepare your vCenter and provisio
 1. [Privileges](privileges.md)
 1. [Candidate component-scoped privilege matrix](component-privileges.md)
 1. [Cluster Installation](install.md)
+1. [Converting an existing cluster to component-scoped credentials](converting-to-component-credentials.md)
 
 ## Reporting Issues
 

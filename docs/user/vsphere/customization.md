@@ -131,3 +131,5 @@ The installer creates these five Secrets for component-scoped manual installatio
 | Problem Detector | `vsphere-cloud-credentials` | `openshift-cluster-storage-operator` |
 
 Each Secret contains `<vcenter-server>.username` and `<vcenter-server>.password` keys for every configured vCenter, with the credentials selected for that component. These Secrets are created only for `credentialsMode: Manual`; the Cloud Credential Operator does not reconcile them in that mode.
+
+For converting an existing cluster to component-scoped credentials as a day-2 operation, see [Converting a vSphere cluster to component-scoped credentials](converting-to-component-credentials.md). For UPI installations with component-scoped credentials, see [Installing with component-scoped credentials](install_upi.md#installing-with-component-scoped-credentials).
