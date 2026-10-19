@@ -50,7 +50,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				&nmStateConfig,
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
-				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+				"/etc/assisted/network/host0/mac_interface.ini", "/etc/assisted/manifests/nmstateconfig.yaml", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": true,
 				"oci-eval-user-data.service":         true,
