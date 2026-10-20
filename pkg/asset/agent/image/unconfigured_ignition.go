@@ -239,6 +239,12 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
+	if nmStateConfigFile.File != nil {
+		nmStateManifest := ignition.FileFromBytes(path.Join(manifestPath, filepath.Base(nmStateConfigFile.File.Filename)),
+			"root", 0600, nmStateConfigFile.File.Data)
+		config.Storage.Files = append(config.Storage.Files, nmStateManifest)
+	}
+
 	// the agent-check-config-image.service added only to the unconfigured ignition
 	enabledServices = append(enabledServices, "agent-check-config-image.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
