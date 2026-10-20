@@ -12,6 +12,7 @@ unconfiguredIgnContains /etc/assisted/manifests/pull-secret.yaml
 unconfiguredIgnContains /etc/assisted/rendezvous-host.env
 unconfiguredIgnContains /etc/assisted/network/host0/eth0.nmconnection
 unconfiguredIgnContains /etc/assisted/network/host0/mac_interface.ini
+unconfiguredIgnContains /etc/assisted/manifests/nmstateconfig.yaml
 ! unconfiguredIgnContains /etc/assisted/manifests/agent-cluster-install.yaml
 ! unconfiguredIgnContains /etc/assisted/manifests/cluster-deployment.yaml
 
