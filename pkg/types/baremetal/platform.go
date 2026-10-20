@@ -49,19 +49,55 @@ type BGPPeerConfig struct {
 	// Port is the TCP port for the BGP session. Defaults to 179.
 	Port int32 `json:"port,omitempty"`
 
-	// BFDEnabled configures Bi-directional Forwarding Detection.
-	// Valid values are "true" and "false".
-	BFDEnabled string `json:"bfdEnabled,omitempty"`
+	// FailureDetection determines how a failed peer is detected. When set
+	// to "BFD", a BFD session is established with the peer and BGP reacts
+	// to BFD failure detection. When set to "HoldTimer", failure detection
+	// relies on the BGP hold timer alone. When omitted, failure detection
+	// relies on the BGP hold timer.
+	FailureDetection BGPFailureDetection `json:"failureDetection,omitempty"`
 
-	// EBGPMultiHop enables multi-hop eBGP when the peer is not directly connected.
-	EBGPMultiHop string `json:"ebgpMultiHop,omitempty"`
+	// PeerReachability describes how the peer is reached. When set to
+	// "MultiHop", the session may be established with a peer several
+	// router hops away. When set to "DirectlyConnected", the peer must be
+	// on a directly connected network. When omitted, the peer must be
+	// directly connected.
+	PeerReachability BGPPeerReachability `json:"peerReachability,omitempty"`
 
-	// HoldTime is the BGP hold time for this peer (e.g., "90s").
-	HoldTime string `json:"holdTime,omitempty"`
+	// HoldTimeSeconds is the BGP hold time in seconds, between 3 (the RFC
+	// 4271 minimum for a non-zero hold time) and 65535. When omitted, no
+	// hold time is configured and the FRR default (180 seconds) applies.
+	// When both HoldTimeSeconds and KeepaliveTimeSeconds are set,
+	// HoldTimeSeconds must be at least 3 times KeepaliveTimeSeconds.
+	HoldTimeSeconds int32 `json:"holdTimeSeconds,omitempty"`
 
-	// KeepaliveTime is the BGP keepalive interval for this peer (e.g., "30s").
-	KeepaliveTime string `json:"keepaliveTime,omitempty"`
+	// KeepaliveTimeSeconds is the BGP keepalive interval in seconds,
+	// between 1 and 65535. When omitted, no keepalive interval is
+	// configured and the FRR default (60 seconds) applies.
+	KeepaliveTimeSeconds int32 `json:"keepaliveTimeSeconds,omitempty"`
 }
+
+// BGPFailureDetection describes what detects a failed BGP peer.
+type BGPFailureDetection string
+
+const (
+	// BGPFailureDetectionBFD backs the session with a BFD session for
+	// fast failure detection.
+	BGPFailureDetectionBFD BGPFailureDetection = "BFD"
+	// BGPFailureDetectionHoldTimer relies on the BGP hold timer alone.
+	BGPFailureDetectionHoldTimer BGPFailureDetection = "HoldTimer"
+)
+
+// BGPPeerReachability describes how the BGP peer is reached.
+type BGPPeerReachability string
+
+const (
+	// BGPPeerReachabilityDirectlyConnected requires the peer to be on a
+	// directly connected network.
+	BGPPeerReachabilityDirectlyConnected BGPPeerReachability = "DirectlyConnected"
+	// BGPPeerReachabilityMultiHop allows the session to cross multiple
+	// router hops.
+	BGPPeerReachabilityMultiHop BGPPeerReachability = "MultiHop"
+)
 
 // BGPVIPConfig configures BGP-based VIP advertisement for API and Ingress VIPs.
 type BGPVIPConfig struct {

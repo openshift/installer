@@ -1219,38 +1219,53 @@ func TestValidateBGPVIP(t *testing.T) {
 			expected: `BGP-based VIP management requires the OVNKubernetes network type`,
 		},
 		{
-			name: "invalid holdTime",
+			name: "hold time below the RFC 4271 minimum",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
-				p.BGPVIPConfig.Peers[0].HoldTime = "ninety"
+				p.BGPVIPConfig.Peers[0].HoldTimeSeconds = 2
 			}),
 			network:  ovnNetwork(),
-			expected: `must be a valid duration`,
+			expected: `must be between 3 and 65535`,
 		},
 		{
-			name: "holdTime without keepaliveTime",
+			name: "hold time above the BGP 16-bit ceiling",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
-				p.BGPVIPConfig.Peers[0].HoldTime = "90s"
+				p.BGPVIPConfig.Peers[0].HoldTimeSeconds = 65536
 			}),
 			network:  ovnNetwork(),
-			expected: `holdTime and keepaliveTime must be set together`,
+			expected: `must be between 3 and 65535`,
 		},
 		{
-			name: "fractional-second holdTime",
+			name: "hold time shorter than 3x keepalive",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
-				p.BGPVIPConfig.Peers[0].HoldTime = "1500ms"
-				p.BGPVIPConfig.Peers[0].KeepaliveTime = "500ms"
+				p.BGPVIPConfig.Peers[0].HoldTimeSeconds = 14
+				p.BGPVIPConfig.Peers[0].KeepaliveTimeSeconds = 5
 			}),
 			network:  ovnNetwork(),
-			expected: `must be a whole number of seconds`,
+			expected: `must be at least 3 times keepaliveTimeSeconds`,
 		},
 		{
-			name: "holdTime above the BGP 16-bit ceiling",
+			name: "invalid failureDetection",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
-				p.BGPVIPConfig.Peers[0].HoldTime = "65536s"
-				p.BGPVIPConfig.Peers[0].KeepaliveTime = "30s"
+				p.BGPVIPConfig.Peers[0].FailureDetection = "maybe"
 			}),
 			network:  ovnNetwork(),
-			expected: `must be a whole number of seconds between 0 and 65535`,
+			expected: `supported values: "BFD", "HoldTimer"`,
+		},
+		{
+			name: "invalid peerReachability",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].PeerReachability = "sometimes"
+			}),
+			network:  ovnNetwork(),
+			expected: `supported values: "DirectlyConnected", "MultiHop"`,
+		},
+		{
+			name: "non-canonical IPv6 peer address",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].PeerAddress = "fd00:0::1"
+			}),
+			network:  ovnNetwork(),
+			expected: `must be in canonical form`,
 		},
 		{
 			name: "invalid community",
