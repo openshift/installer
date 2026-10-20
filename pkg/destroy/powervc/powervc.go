@@ -71,7 +71,8 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// PowerVC's Swift has no bulk delete, so that fails and the OpenStack
 	// destroyer exits fatally. Delete those containers first, one object at a
 	// time, so the OpenStack destroyer finds no containers left to delete.
-	if err := deleteClusterContainers(context.TODO(), openstackMetadata.Cloud, openstackMetadata.Identifier, o.Logger); err != nil {
+	c := &clients{cloud: openstackMetadata.Cloud}
+	if err := deleteClusterContainers(context.TODO(), c, openstackMetadata.Identifier, o.Logger); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +87,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// name, deleting its objects one at a time: PowerVC's Swift has no bulk
 	// delete, which the OpenStack destroyer relies on. It does not depend on
 	// the servers, so do it before waiting for them.
-	if err := deleteIgnitionContainer(context.TODO(), openstackMetadata.Cloud, o.Metadata.InfraID, o.Logger); err != nil {
+	if err := deleteIgnitionContainer(context.TODO(), c, o.Metadata.InfraID, o.Logger); err != nil {
 		return quota, err
 	}
 
@@ -96,7 +97,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// rejects a non-admin user's delete of a volume-backed server). Wait for
 	// the servers to be gone so destroy does not report success while they
 	// still exist.
-	if err := waitForServersDeleted(context.TODO(), openstackMetadata.Cloud, openstackMetadata.Identifier, o.Logger); err != nil {
+	if err := waitForServersDeleted(context.TODO(), c, openstackMetadata.Identifier, o.Logger); err != nil {
 		return quota, err
 	}
 
@@ -105,11 +106,65 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	// destroyer's tag-based port cleanup. Remove them by name instead. This
 	// runs after the servers are gone so that the ports are no longer
 	// attached.
-	if err := deleteUntaggedPorts(context.TODO(), openstackMetadata.Cloud, o.Metadata.InfraID, o.Logger); err != nil {
+	if err := deleteUntaggedPorts(context.TODO(), c, o.Metadata.InfraID, o.Logger); err != nil {
 		return quota, err
 	}
 
 	return quota, nil
+}
+
+// clients lazily creates the OpenStack service clients used by destroy and
+// reuses them, so each service is only authenticated against once.
+type clients struct {
+	cloud string
+
+	objectStore     *gophercloud.ServiceClient
+	objectStoreDone bool
+	compute         *gophercloud.ServiceClient
+	network         *gophercloud.ServiceClient
+}
+
+// objectStoreClient returns an object-store client, or nil and no error when
+// the cloud has no Swift endpoint.
+func (c *clients) objectStoreClient(ctx context.Context) (*gophercloud.ServiceClient, error) {
+	if c.objectStoreDone {
+		return c.objectStore, nil
+	}
+	conn, err := openstackdefaults.NewServiceClient(ctx, "object-store", openstackdefaults.DefaultClientOpts(c.cloud))
+	if err != nil {
+		var endpointErr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &endpointErr) {
+			c.objectStoreDone = true
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to create object-store client: %w", err)
+	}
+	c.objectStore, c.objectStoreDone = conn, true
+	return conn, nil
+}
+
+// computeClient returns the compute client.
+func (c *clients) computeClient(ctx context.Context) (*gophercloud.ServiceClient, error) {
+	if c.compute == nil {
+		conn, err := openstackdefaults.NewServiceClient(ctx, "compute", openstackdefaults.DefaultClientOpts(c.cloud))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create compute client: %w", err)
+		}
+		c.compute = conn
+	}
+	return c.compute, nil
+}
+
+// networkClient returns the network client.
+func (c *clients) networkClient(ctx context.Context) (*gophercloud.ServiceClient, error) {
+	if c.network == nil {
+		conn, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(c.cloud))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create network client: %w", err)
+		}
+		c.network = conn
+	}
+	return c.network, nil
 }
 
 // ignitionContainerName returns the name of the Swift container holding the
@@ -123,7 +178,7 @@ func ignitionContainerName(infraID string) string {
 
 // deleteIgnitionContainer deletes the bootstrap Ignition container and its
 // objects. A missing container or Swift endpoint is not an error.
-func deleteIgnitionContainer(ctx context.Context, cloud, infraID string, logger logrus.FieldLogger) error {
+func deleteIgnitionContainer(ctx context.Context, c *clients, infraID string, logger logrus.FieldLogger) error {
 	name := ignitionContainerName(infraID)
 	if name == "" {
 		return nil
@@ -131,7 +186,7 @@ func deleteIgnitionContainer(ctx context.Context, cloud, infraID string, logger 
 	logger.Debugf("Deleting PowerVC bootstrap Ignition container %q", name)
 	defer logger.Debug("Exiting deleting PowerVC bootstrap Ignition container")
 
-	conn, err := newObjectStoreClient(ctx, cloud)
+	conn, err := c.objectStoreClient(ctx)
 	if err != nil || conn == nil {
 		return err
 	}
@@ -141,14 +196,14 @@ func deleteIgnitionContainer(ctx context.Context, cloud, infraID string, logger 
 // deleteClusterContainers deletes the Swift containers whose metadata matches
 // the cluster filter, and their objects. A missing Swift endpoint, or a user
 // who may not list containers, is not an error.
-func deleteClusterContainers(ctx context.Context, cloud string, filter map[string]string, logger logrus.FieldLogger) error {
+func deleteClusterContainers(ctx context.Context, c *clients, filter map[string]string, logger logrus.FieldLogger) error {
 	if len(filter) == 0 {
 		return nil
 	}
 	logger.Debug("Deleting PowerVC cluster containers")
 	defer logger.Debug("Exiting deleting PowerVC cluster containers")
 
-	conn, err := newObjectStoreClient(ctx, cloud)
+	conn, err := c.objectStoreClient(ctx)
 	if err != nil || conn == nil {
 		return err
 	}
@@ -206,20 +261,6 @@ func containerMatchesFilter(metadata, filter map[string]string) bool {
 		}
 	}
 	return true
-}
-
-// newObjectStoreClient returns an object-store client, or nil and no error when
-// the cloud has no Swift endpoint.
-func newObjectStoreClient(ctx context.Context, cloud string) (*gophercloud.ServiceClient, error) {
-	conn, err := openstackdefaults.NewServiceClient(ctx, "object-store", openstackdefaults.DefaultClientOpts(cloud))
-	if err != nil {
-		var endpointErr *gophercloud.ErrEndpointNotFound
-		if errors.As(err, &endpointErr) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to create object-store client: %w", err)
-	}
-	return conn, nil
 }
 
 // objectURL returns the URL of an object. Each "/"-separated segment of the
@@ -292,13 +333,13 @@ func deleteContainer(ctx context.Context, conn *gophercloud.ServiceClient, name 
 // waitForServersDeleted waits until no server matching the cluster filter is
 // left. It returns an error naming the servers that ended up in ERROR, or that
 // were still present when the timeout expired.
-func waitForServersDeleted(ctx context.Context, cloud string, filter map[string]string, logger logrus.FieldLogger) error {
+func waitForServersDeleted(ctx context.Context, c *clients, filter map[string]string, logger logrus.FieldLogger) error {
 	logger.Debug("Waiting for PowerVC servers to be deleted")
 	defer logger.Debug("Exiting waiting for PowerVC servers to be deleted")
 
-	conn, err := openstackdefaults.NewServiceClient(ctx, "compute", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := c.computeClient(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create compute client: %w", err)
+		return err
 	}
 
 	var pending, failed []servers.Server
@@ -407,13 +448,13 @@ const bootstrapRole = "bootstrap"
 
 // deleteUntaggedPorts deletes the cluster machines' ports that are not
 // attached to a server.
-func deleteUntaggedPorts(ctx context.Context, cloud, infraID string, logger logrus.FieldLogger) error {
+func deleteUntaggedPorts(ctx context.Context, c *clients, infraID string, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting PowerVC cluster ports by name")
 	defer logger.Debug("Exiting deleting PowerVC cluster ports by name")
 
-	conn, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := c.networkClient(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create network client: %w", err)
+		return err
 	}
 
 	allPages, err := ports.List(conn, ports.ListOpts{}).AllPages(ctx)
