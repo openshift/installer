@@ -8,12 +8,11 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
-	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta1"
-	capi "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
+	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	capi "sigs.k8s.io/cluster-api/api/core/v1beta2" //nolint:staticcheck //CORS-3563
 
 	machinev1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
@@ -105,7 +104,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			}
 			deviceSpec := capv.NetworkDeviceSpec{
 				NetworkName: networkName,
-				DHCP4:       true,
+				DHCP4:       ptr.To(true),
 			}
 
 			// Static IP configured.  Add kargs.
@@ -141,7 +140,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					Datacenter:        providerSpec.Workspace.Datacenter,
 					Server:            providerSpec.Workspace.Server,
 					NumCPUs:           providerSpec.NumCPUs,
-					NumCoresPerSocket: providerSpec.NumCoresPerSocket,
+					NumCoresPerSocket: ptr.To(providerSpec.NumCoresPerSocket),
 					MemoryMiB:         providerSpec.MemoryMiB,
 					DiskGiB:           providerSpec.DiskGiB,
 					Datastore:         providerSpec.Workspace.Datastore,
@@ -150,16 +149,6 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 		utils.SetMachineOSStreamLabels(vsphereMachine, config)
-
-		// only set failureDomainName if VMGroup is defined as vm-host group
-		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
-		if providerSpec.Workspace.VMGroup != "" {
-			if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
-				vsphereMachine.Spec.FailureDomain = &failureDomainName
-			} else {
-				return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
-			}
-		}
 
 		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
 		if len(providerSpec.DataDisks) > 0 {
@@ -194,7 +183,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 		}
 
 		// Create capi machine for vspheremachine
-		machine := &capi.Machine{
+		capiMachine := &capi.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: capiutils.Namespace,
 				Name:      vsphereMachine.Name,
@@ -207,19 +196,30 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				Bootstrap: capi.Bootstrap{
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: capv.GroupVersion.String(),
-					Kind:       "VSphereMachine",
-					Name:       vsphereMachine.Name,
+				InfrastructureRef: capi.ContractVersionedObjectReference{
+					APIGroup: capv.GroupVersion.Group,
+					Kind:     "VSphereMachine",
+					Name:     vsphereMachine.Name,
 				},
 			},
 		}
-		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
-		utils.SetMachineOSStreamLabels(machine, config)
+
+		// only set failureDomain on the CAPI machine if VMGroup is defined as vm-host group
+		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
+		if providerSpec.Workspace.VMGroup != "" {
+			if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
+				capiMachine.Spec.FailureDomain = failureDomainName
+			} else {
+				return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
+			}
+		}
+
+		capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
+		utils.SetMachineOSStreamLabels(capiMachine, config)
 
 		result = append(result, &asset.RuntimeFile{
-			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},
-			Object: machine,
+			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", capiMachine.Name)},
+			Object: capiMachine,
 		})
 	}
 
@@ -276,10 +276,10 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				Bootstrap: capi.Bootstrap{
 					DataSecretName: ptr.To(fmt.Sprintf("%s-bootstrap", clusterID)),
 				},
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: capv.GroupVersion.String(),
-					Kind:       "VSphereMachine",
-					Name:       bootstrapVSphereMachine.Name,
+				InfrastructureRef: capi.ContractVersionedObjectReference{
+					APIGroup: capv.GroupVersion.Group,
+					Kind:     "VSphereMachine",
+					Name:     bootstrapVSphereMachine.Name,
 				},
 			},
 		}
