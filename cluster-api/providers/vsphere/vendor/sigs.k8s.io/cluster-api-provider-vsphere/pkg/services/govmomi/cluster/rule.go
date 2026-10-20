@@ -19,7 +19,7 @@ package cluster
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/vmware/govmomi/vim25/types"
 	"k8s.io/utils/ptr"
 )
@@ -54,7 +54,7 @@ func negate(input bool) bool {
 func VerifyAffinityRule(ctx context.Context, computeClusterCtx computeClusterContext, clusterName, hostGroupName, vmGroupName string) (Rule, error) {
 	rules, err := listRules(ctx, computeClusterCtx, clusterName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to list rules for compute cluster %s", clusterName)
+		return nil, pkgerrors.Wrapf(err, "unable to list rules for compute cluster %s", clusterName)
 	}
 
 	for _, rule := range rules {
@@ -65,7 +65,7 @@ func VerifyAffinityRule(ctx context.Context, computeClusterCtx computeClusterCon
 			}
 		}
 	}
-	return nil, errors.New("no matching affinity rule found/exists")
+	return nil, pkgerrors.New("no matching affinity rule found/exists")
 }
 
 func listRules(ctx context.Context, computeClusterCtx computeClusterContext, clusterName string) ([]types.BaseClusterRuleInfo, error) {

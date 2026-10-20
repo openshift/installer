@@ -46,11 +46,11 @@ type GCPManagedMachinePoolTemplateList struct {
 	Items           []GCPManagedMachinePoolTemplate `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&GCPManagedMachinePoolTemplate{}, &GCPManagedMachinePoolTemplateList{})
-}
-
 // GCPManagedMachinePoolTemplateResource describes the data needed to create an GCPManagedCluster from a template.
 type GCPManagedMachinePoolTemplateResource struct {
 	Spec GCPManagedMachinePoolTemplateResourceSpec `json:"spec"`
+}
+
+func init() {
+	objectTypes = append(objectTypes, &GCPManagedMachinePoolTemplate{}, &GCPManagedMachinePoolTemplateList{})
 }

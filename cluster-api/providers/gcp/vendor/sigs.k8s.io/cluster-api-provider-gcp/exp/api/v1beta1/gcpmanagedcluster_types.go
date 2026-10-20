@@ -84,7 +84,7 @@ type GCPManagedClusterStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this GCPCluster belongs"
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Cluster infrastructure is ready for GCE instances"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Cluster infrastructure is ready for GCE instances"
 // +kubebuilder:printcolumn:name="Network",type="string",JSONPath=".spec.network.name",description="GCP network the cluster is using"
 // +kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=".status.apiEndpoints[0]",description="API Endpoint",priority=1
 
@@ -107,5 +107,5 @@ type GCPManagedClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GCPManagedCluster{}, &GCPManagedClusterList{})
+	objectTypes = append(objectTypes, &GCPManagedCluster{}, &GCPManagedClusterList{})
 }

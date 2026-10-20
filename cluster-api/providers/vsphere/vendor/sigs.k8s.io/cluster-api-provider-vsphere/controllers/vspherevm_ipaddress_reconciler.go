@@ -20,23 +20,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
+	pkgerrors "github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	ipamv1beta1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
@@ -52,16 +50,16 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 	log := ctrl.LoggerFrom(ctx)
 
 	var (
-		claims        []v1beta1conditions.Getter
-		v1beta2Claims []v1beta2conditions.Getter
-		errList       []error
+		deprecatedV1beta1Claims []deprecatedv1beta1conditions.Getter
+		claims                  []conditions.Getter
+		errList                 []error
 	)
 
 	for devIdx, device := range vmCtx.VSphereVM.Spec.Network.Devices {
 		for poolRefIdx, poolRef := range device.AddressesFromPools {
 			totalClaims++
 			ipAddrClaimName := util.IPAddressClaimName(vmCtx.VSphereVM.Name, devIdx, poolRefIdx)
-			ipAddrClaim := &ipamv1beta1.IPAddressClaim{}
+			ipAddrClaim := &ipamv1.IPAddressClaim{}
 			ipAddrClaimKey := client.ObjectKey{
 				Namespace: vmCtx.VSphereVM.Namespace,
 				Name:      ipAddrClaimName,
@@ -73,7 +71,7 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 
 			err := vmCtx.Client.Get(ctx, ipAddrClaimKey, ipAddrClaim)
 			if err != nil && !apierrors.IsNotFound(err) {
-				return errors.Wrapf(err, "failed to get IPAddressClaim %s", klog.KRef(ipAddrClaimKey.Namespace, ipAddrClaimKey.Name))
+				return pkgerrors.Wrapf(err, "failed to get IPAddressClaim %s", klog.KRef(ipAddrClaimKey.Namespace, ipAddrClaimKey.Name))
 			}
 			ipAddrClaim, created, err := createOrPatchIPAddressClaim(ctx, vmCtx, ipAddrClaimName, poolRef)
 			if err != nil {
@@ -89,50 +87,50 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 
 			// Since this is eventually used to calculate the status of the
 			// IPAddressClaimed condition for the VSphereVM object.
-			if v1beta1conditions.Has(ipAddrClaim, clusterv1beta1.ReadyCondition) {
+			if conditions.Has(ipAddrClaim, clusterv1.ReadyCondition) {
+				deprecatedV1beta1Claims = append(deprecatedV1beta1Claims, ipAddrClaim)
 				claims = append(claims, ipAddrClaim)
-				v1beta2Claims = append(v1beta2Claims, ipAddrClaim)
 			}
 		}
 	}
 
 	if len(errList) > 0 {
 		aggregatedErr := kerrors.NewAggregate(errList)
-		v1beta1conditions.MarkFalse(vmCtx.VSphereVM,
-			infrav1.IPAddressClaimedCondition,
-			infrav1.IPAddressClaimNotFoundReason,
-			clusterv1beta1.ConditionSeverityError,
+		deprecatedv1beta1conditions.MarkFalse(vmCtx.VSphereVM,
+			infrav1.IPAddressClaimedV1Beta1Condition,
+			infrav1.IPAddressClaimNotFoundV1Beta1Reason,
+			clusterv1.ConditionSeverityError,
 			"%v",
 			aggregatedErr)
-		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
-			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+		conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereVMIPAddressClaimsNotFulfilledV1Beta2Reason,
+			Reason:  infrav1.VSphereVMIPAddressClaimsNotFulfilledReason,
 			Message: aggregatedErr.Error(),
 		})
 		return aggregatedErr
 	}
 
-	// Calculating the IPAddressClaimedCondition from the Ready Condition of the individual IPAddressClaims.
+	// Calculating the VSphereVMIPAddressClaimsFulfilledCondition from the Ready Condition of the individual IPAddressClaims.
 	// This will not work if the IPAM provider does not set the Ready condition on the IPAddressClaim.
 	// To correctly calculate the status of the condition, we would want all the IPAddressClaim objects
 	// to report the Ready Condition.
 	if len(claims) == totalClaims {
-		v1beta1conditions.SetAggregate(vmCtx.VSphereVM,
-			infrav1.IPAddressClaimedCondition,
-			claims,
-			v1beta1conditions.AddSourceRef(),
-			v1beta1conditions.WithStepCounter())
+		deprecatedv1beta1conditions.SetAggregate(vmCtx.VSphereVM,
+			infrav1.IPAddressClaimedV1Beta1Condition,
+			deprecatedV1beta1Claims,
+			deprecatedv1beta1conditions.AddSourceRef(),
+			deprecatedv1beta1conditions.WithStepCounter())
 
-		if len(v1beta2Claims) > 0 {
-			if err := v1beta2conditions.SetAggregateCondition(v1beta2Claims, vmCtx.VSphereVM, clusterv1beta1.ReadyV1Beta2Condition, v1beta2conditions.TargetConditionType(infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition)); err != nil {
-				return errors.Wrap(err, "failed to aggregate Ready condition from IPAddressClaims")
+		if len(claims) > 0 {
+			if err := conditions.SetAggregateCondition(claims, vmCtx.VSphereVM, clusterv1.ReadyCondition, conditions.TargetConditionType(infrav1.VSphereVMIPAddressClaimsFulfilledCondition)); err != nil {
+				return pkgerrors.Wrap(err, "failed to aggregate Ready condition from IPAddressClaims")
 			}
 		} else {
-			v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
-				Type:   infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+			conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+				Type:   infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
 				Status: metav1.ConditionTrue,
-				Reason: infrav1.VSphereVMIPAddressClaimsNotFulfilledV1Beta2Reason,
+				Reason: infrav1.VSphereVMIPAddressClaimsNotFulfilledReason,
 			})
 		}
 		return nil
@@ -141,30 +139,30 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 	// Fallback logic to calculate the state of the IPAddressClaimed condition
 	switch {
 	case totalClaims == claimsFulfilled:
-		v1beta1conditions.MarkTrue(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition)
-		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
-			Type:   infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkTrue(vmCtx.VSphereVM, infrav1.IPAddressClaimedV1Beta1Condition)
+		conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:   infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
 			Status: metav1.ConditionTrue,
-			Reason: infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Reason,
+			Reason: infrav1.VSphereVMIPAddressClaimsFulfilledReason,
 		})
 	case claimsFulfilled < totalClaims && claimsCreated > 0:
-		v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition,
-			infrav1.IPAddressClaimsBeingCreatedReason, clusterv1beta1.ConditionSeverityInfo,
+		deprecatedv1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedV1Beta1Condition,
+			infrav1.IPAddressClaimsBeingCreatedV1Beta1Reason, clusterv1.ConditionSeverityInfo,
 			"%d/%d claims being created", claimsCreated, totalClaims)
-		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
-			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+		conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereVMIPAddressClaimsBeingCreatedV1Beta2Reason,
+			Reason:  infrav1.VSphereVMIPAddressClaimsBeingCreatedReason,
 			Message: fmt.Sprintf("%d/%d claims being created", claimsCreated, totalClaims),
 		})
 	case claimsFulfilled < totalClaims && claimsCreated == 0:
-		v1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedCondition,
-			infrav1.WaitingForIPAddressReason, clusterv1beta1.ConditionSeverityInfo,
+		deprecatedv1beta1conditions.MarkFalse(vmCtx.VSphereVM, infrav1.IPAddressClaimedV1Beta1Condition,
+			infrav1.WaitingForIPAddressV1Beta1Reason, clusterv1.ConditionSeverityInfo,
 			"%d/%d claims being processed", totalClaims-claimsFulfilled, totalClaims)
-		v1beta2conditions.Set(vmCtx.VSphereVM, metav1.Condition{
-			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
+		conditions.Set(vmCtx.VSphereVM, metav1.Condition{
+			Type:    infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereVMIPAddressClaimsWaitingForIPAddressV1Beta2Reason,
+			Reason:  infrav1.VSphereVMIPAddressClaimsWaitingForIPAddressReason,
 			Message: fmt.Sprintf("%d/%d claims being processed", totalClaims-claimsFulfilled, totalClaims),
 		})
 	}
@@ -175,8 +173,8 @@ func (r vmReconciler) reconcileIPAddressClaims(ctx context.Context, vmCtx *capvc
 // from an externally managed IPPool. Ensures that the claim has a reference to the cluster of the VM to
 // support pausing reconciliation.
 // The responsibility of the IP address resolution is handled by an external IPAM provider.
-func createOrPatchIPAddressClaim(ctx context.Context, vmCtx *capvcontext.VMContext, name string, poolRef corev1.TypedLocalObjectReference) (*ipamv1beta1.IPAddressClaim, bool, error) {
-	claim := &ipamv1beta1.IPAddressClaim{
+func createOrPatchIPAddressClaim(ctx context.Context, vmCtx *capvcontext.VMContext, name string, poolRef infrav1.IPPoolReference) (*ipamv1.IPAddressClaim, bool, error) {
+	claim := &ipamv1.IPAddressClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: vmCtx.VSphereVM.Namespace,
@@ -208,7 +206,7 @@ func createOrPatchIPAddressClaim(ctx context.Context, vmCtx *capvcontext.VMConte
 
 	result, err := ctrlutil.CreateOrPatch(ctx, vmCtx.Client, claim, mutateFn)
 	if err != nil {
-		return nil, false, errors.Wrap(err, "failed to CreateOrPatch IPAddressClaim")
+		return nil, false, pkgerrors.Wrap(err, "failed to CreateOrPatch IPAddressClaim")
 	}
 	switch result {
 	case ctrlutil.OperationResultCreated:
@@ -229,7 +227,7 @@ func (r vmReconciler) deleteIPAddressClaims(ctx context.Context, vmCtx *capvcont
 	for devIdx, device := range vmCtx.VSphereVM.Spec.Network.Devices {
 		for poolRefIdx := range device.AddressesFromPools {
 			// check if claim exists
-			ipAddrClaim := &ipamv1beta1.IPAddressClaim{}
+			ipAddrClaim := &ipamv1.IPAddressClaim{}
 			ipAddrClaimName := util.IPAddressClaimName(vmCtx.VSphereVM.Name, devIdx, poolRefIdx)
 			ipAddrClaimKey := client.ObjectKey{
 				Namespace: vmCtx.VSphereVM.Namespace,
@@ -239,13 +237,13 @@ func (r vmReconciler) deleteIPAddressClaims(ctx context.Context, vmCtx *capvcont
 				if apierrors.IsNotFound(err) {
 					continue
 				}
-				return errors.Wrapf(err, "failed to get IPAddressClaim %q to remove the finalizer", ipAddrClaimName)
+				return pkgerrors.Wrapf(err, "failed to get IPAddressClaim %q to remove the finalizer", ipAddrClaimName)
 			}
 
 			if ctrlutil.RemoveFinalizer(ipAddrClaim, infrav1.IPAddressClaimFinalizer) {
 				log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.IPAddressClaimFinalizer), "IPAddressClaim", klog.KObj(ipAddrClaim))
 				if err := vmCtx.Client.Update(ctx, ipAddrClaim); err != nil {
-					return errors.Wrapf(err, "failed to update IPAddressClaim %s", klog.KObj(ipAddrClaim))
+					return pkgerrors.Wrapf(err, "failed to update IPAddressClaim %s", klog.KObj(ipAddrClaim))
 				}
 			}
 		}

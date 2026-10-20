@@ -24,6 +24,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
+	firewallutil "sigs.k8s.io/cluster-api-provider-gcp/util/firewall"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -46,7 +47,18 @@ type GCPManagedCluster struct{}
 
 var _ admission.Defaulter[*expinfrav1.GCPManagedCluster] = &GCPManagedCluster{}
 
-func (*GCPManagedCluster) Default(_ context.Context, _ *expinfrav1.GCPManagedCluster) error {
+func (*GCPManagedCluster) Default(_ context.Context, r *expinfrav1.GCPManagedCluster) error {
+	gcpmanagedclusterlog.Info("default", "name", r.Name)
+
+	if firewallutil.SkipRuleNameDefaulting(r) {
+		return nil
+	}
+
+	if err := firewallutil.DefaultRuleNames(r.Spec.Network.Firewall.FirewallRules, firewallutil.RuleNamePrefix(r)); err != nil {
+		gcpmanagedclusterlog.Error(err, "failed to generate firewall rule names")
+		return err
+	}
+
 	return nil
 }
 
@@ -85,6 +97,17 @@ func (w *GCPManagedCluster) ValidateUpdate(_ context.Context, old, r *expinfrav1
 		)
 	}
 
+	// Rules that were admitted before this validation existed are grandfathered in: a
+	// cluster whose stored rules cannot be told apart stays updatable as long as the
+	// rules are left alone, so an unrelated change is not rejected over a field it does
+	// not touch. Modifying the rules at all opts the whole list back into validation.
+	if !cmp.Equal(r.Spec.Network.Firewall.FirewallRules, old.Spec.Network.Firewall.FirewallRules) {
+		rulesPath := field.NewPath("spec", "Network", "Firewall", "FirewallRules")
+		allErrs = append(allErrs, firewallutil.ValidateRules(r.Spec.Network.Firewall.FirewallRules, rulesPath)...)
+		allErrs = append(allErrs, firewallutil.ValidateRuleUpdates(old.Spec.Network.Firewall.FirewallRules,
+			r.Spec.Network.Firewall.FirewallRules, rulesPath)...)
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -99,6 +122,7 @@ func (*GCPManagedCluster) ValidateDelete(_ context.Context, _ *expinfrav1.GCPMan
 func (w *GCPManagedCluster) validate(r *expinfrav1.GCPManagedCluster) (admission.Warnings, error) {
 	validators := []func() error{
 		func() error { return w.validateCustomSubnet(r) },
+		func() error { return w.validateFirewallRules(r) },
 	}
 
 	var errs []error
@@ -109,6 +133,16 @@ func (w *GCPManagedCluster) validate(r *expinfrav1.GCPManagedCluster) (admission
 	}
 
 	return nil, kerrors.NewAggregate(errs)
+}
+
+func (*GCPManagedCluster) validateFirewallRules(r *expinfrav1.GCPManagedCluster) error {
+	allErrs := firewallutil.ValidateRules(r.Spec.Network.Firewall.FirewallRules,
+		field.NewPath("spec", "Network", "Firewall", "FirewallRules"))
+	if len(allErrs) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(expinfrav1.GroupVersion.WithKind("GCPManagedCluster").GroupKind(), r.Name, allErrs)
 }
 
 func (w *GCPManagedCluster) validateCustomSubnet(r *expinfrav1.GCPManagedCluster) error {

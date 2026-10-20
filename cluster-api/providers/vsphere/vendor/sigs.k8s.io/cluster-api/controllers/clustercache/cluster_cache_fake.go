@@ -32,8 +32,9 @@ func NewFakeClusterCache(workloadClient client.Client, clusterKey client.ObjectK
 	testCacheTracker.clusterAccessors[clusterKey] = &clusterAccessor{
 		lockedState: clusterAccessorLockedState{
 			connection: &clusterAccessorLockedConnectionState{
-				cachedClient: workloadClient,
-				watches:      sets.Set[string]{}.Insert(watchObjects...),
+				cachedClient:   workloadClient,
+				uncachedClient: workloadClient,
+				watches:        sets.Set[string]{}.Insert(watchObjects...),
 			},
 			healthChecking: clusterAccessorLockedHealthCheckingState{
 				lastProbeTime:        time.Now(),
@@ -43,4 +44,9 @@ func NewFakeClusterCache(workloadClient client.Client, clusterKey client.ObjectK
 		},
 	}
 	return testCacheTracker
+}
+
+// NewFakeEmptyClusterCache creates a new empty ClusterCache that can be used by unit tests.
+func NewFakeEmptyClusterCache() ClusterCache {
+	return &clusterCache{}
 }
