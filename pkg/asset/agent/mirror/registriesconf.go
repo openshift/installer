@@ -147,43 +147,30 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// Mutual-exclusivity of ICSP and IDMS is an authoring constraint for
+		// user-written install-config.
 		if installConfig.Supplied {
 			imageDigestSources = installConfig.Config.ImageDigestSources
 			deprecatedImageContentSources = installConfig.Config.DeprecatedImageContentSources
+			if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
+				return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
+			}
 		}
 		image = releaseImage.PullSpec
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		// Sources come from the live cluster, where ICSP and IDMS may coexist
+		// during migration. Convert and merge, letting MergedMirrorSets handle
+		// deduplication.
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
+		if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
+			imageDigestSources, deprecatedImageContentSources = mergeICSPIntoIDMS(imageDigestSources, deprecatedImageContentSources)
+		}
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
-	}
-
-	// The mutual-exclusivity of ICSP and IDMS is an authoring constraint for
-	// user-written install-config; reject it only on the install path. In
-	// add-nodes the sources come from the live cluster, where ICSP and IDMS
-	// coexist during migration. Convert and merge, letting MergedMirrorSets
-	// handle deduplication.
-	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
-		if agentWorkflow.Workflow == workflow.AgentWorkflowTypeInstall {
-			return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
-		}
-		logrus.Warnf("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; merging with IDMS taking precedence")
-		idmsPolicy := make(map[string]configv1.MirrorSourcePolicy, len(imageDigestSources))
-		for _, ids := range imageDigestSources {
-			idmsPolicy[ids.Source] = ids.SourcePolicy
-		}
-		convertedICSP := bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
-		for i := range convertedICSP {
-			if policy, ok := idmsPolicy[convertedICSP[i].Source]; ok {
-				convertedICSP[i].SourcePolicy = policy
-			}
-		}
-		imageDigestSources = append(imageDigestSources, convertedICSP...)
-		deprecatedImageContentSources = nil
 	}
 
 	if len(deprecatedImageContentSources) == 0 && len(imageDigestSources) == 0 {
@@ -210,6 +197,25 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	}
 
 	return nil
+}
+
+// mergeICSPIntoIDMS converts ICSP entries to digest mirrors, appends them after
+// IDMS (so IDMS takes precedence for overlapping sources), and clears ICSP.
+// SourcePolicy from matching IDMS entries is preserved on the converted ICSP
+// rows. MergedMirrorSets later handles deduplication and mirror unioning.
+func mergeICSPIntoIDMS(idms []types.ImageDigestSource, icsp []types.ImageContentSource) ([]types.ImageDigestSource, []types.ImageContentSource) {
+	logrus.Warnf("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; merging with IDMS taking precedence")
+	idmsPolicy := make(map[string]configv1.MirrorSourcePolicy, len(idms))
+	for _, ids := range idms {
+		idmsPolicy[ids.Source] = ids.SourcePolicy
+	}
+	convertedICSP := bootstrap.ContentSourceToDigestMirror(icsp)
+	for i := range convertedICSP {
+		if policy, ok := idmsPolicy[convertedICSP[i].Source]; ok {
+			convertedICSP[i].SourcePolicy = policy
+		}
+	}
+	return append(idms, convertedICSP...), nil
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
