@@ -29,7 +29,7 @@ func HasPermission(ctx context.Context, projectID string, permissions []string, 
 
 	foundPermissions, err := client.GetProjectPermissions(ctx, projectID, permissions)
 	if err != nil {
-		return false, fmt.Errorf("failed to find project permissions: %w", err)
+		return false, fmt.Errorf("failed to find project permissions, for test purposes: %w", err)
 	}
 
 	permissionsValid := true
