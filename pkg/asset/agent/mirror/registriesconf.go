@@ -183,7 +183,7 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	}
 
 	if !i.releaseImageIsSameInRegistriesConf(image) {
-		logrus.Warnf("The imageDigestSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec)
+		logrus.Warnf("The imageDigestSources configuration should have at least one source field matching the releaseImage value %s", image)
 	}
 
 	registriesData, err := toml.Marshal(i.Config)
