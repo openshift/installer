@@ -217,13 +217,15 @@ type MachinePool struct {
 	// +optional
 	DiskSetup []Disk `json:"diskSetup,omitempty"`
 
-	// Management is the API that will be used for machine management in the cluster.
-	// Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
-	// Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
-	// Supported platforms: aws
-	// Default is ClusterAPI.
+	// Management specifies the API used to provision and manage the machines
+	// in this pool: Cluster API or Machine API.
 	//
-	// +kubebuilder:default=ClusterAPI
+	// ClusterAPI is supported on AWS compute pools ("worker" and "edge") when
+	// the ClusterAPIMachineManagementAWS feature gate is enabled.
+	//
+	// When unset and the platform is AWS, ClusterAPI is the default for these
+	// pools if the ClusterAPIMachineManagementAWS feature gate is enabled.
+	//
 	// +kubebuilder:validation:Enum=ClusterAPI;MachineAPI
 	// +optional
 	Management MachineManagementAPI `json:"management,omitempty"`
