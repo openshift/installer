@@ -800,8 +800,13 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 			continue
 		}
 		apps := resp.GetValue()
-		if len(apps) != 1 || apps[0] == nil || apps[0].GetId() == nil {
-			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
+		if len(apps) != 1 {
+			err = fmt.Errorf("expected one matching AppID, got %d", len(apps))
+			errorList = append(errorList, err)
+			continue
+		}
+		if apps[0] == nil || apps[0].GetId() == nil {
+			err = fmt.Errorf("matching app entry is nil or has no ID")
 			errorList = append(errorList, err)
 			continue
 		}

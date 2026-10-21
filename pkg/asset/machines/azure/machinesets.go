@@ -165,6 +165,7 @@ func getMultiZoneMachineSets(in multiZoneMachineSetInput) ([]*clusterapi.Machine
 		if len(value) == 0 || !slices.Contains(in.azs, key) {
 			continue
 		}
+		// Count each subnet name once. A repeated name is still one subnet.
 		zoneSubnetmap[key] = sets.NewString(value...).List()
 		subnetCount += len(zoneSubnetmap[key])
 	}
