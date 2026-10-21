@@ -136,6 +136,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.ConsoleSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ConsoleStatus"):
 		return &configv1.ConsoleStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("CRIOCredentialProviderConfig"):
+		return &configv1.CRIOCredentialProviderConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("CRIOCredentialProviderConfigSpec"):
+		return &configv1.CRIOCredentialProviderConfigSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("CRIOCredentialProviderConfigStatus"):
+		return &configv1.CRIOCredentialProviderConfigStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("Custom"):
 		return &configv1.CustomApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("CustomFeatureGates"):
@@ -280,6 +286,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.KeystoneIdentityProviderApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KMSPluginConfig"):
 		return &configv1.KMSPluginConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("KMSPluginConfigReference"):
+		return &configv1.KMSPluginConfigReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KubevirtPlatformStatus"):
 		return &configv1.KubevirtPlatformStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("LDAPAttributeMapping"):
@@ -470,18 +478,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.UsernameClaimMappingApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("UsernamePrefix"):
 		return &configv1.UsernamePrefixApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultAppRoleAuthentication"):
-		return &configv1.VaultAppRoleAuthenticationApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultAuthentication"):
-		return &configv1.VaultAuthenticationApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultConfigMapReference"):
-		return &configv1.VaultConfigMapReferenceApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultKMSPluginConfig"):
-		return &configv1.VaultKMSPluginConfigApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultSecretReference"):
-		return &configv1.VaultSecretReferenceApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("VaultTLSConfig"):
-		return &configv1.VaultTLSConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VSphereFailureDomainHostGroup"):
 		return &configv1.VSphereFailureDomainHostGroupApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VSphereFailureDomainRegionAffinity"):
@@ -560,6 +556,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.KeepEqualActionConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("KeyConfig"):
 		return &configv1alpha1.KeyConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("KubeStateMetricsConfig"):
+		return &configv1alpha1.KubeStateMetricsConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("KubeStateMetricsResourceLabels"):
+		return &configv1alpha1.KubeStateMetricsResourceLabelsApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Label"):
 		return &configv1alpha1.LabelApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("LabelMapActionConfig"):
@@ -580,8 +580,14 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.NodeExporterCollectorConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorCpufreqConfig"):
 		return &configv1alpha1.NodeExporterCollectorCpufreqConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorDeviceMapperMultipathConfig"):
+		return &configv1alpha1.NodeExporterCollectorDeviceMapperMultipathConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorEthtoolConfig"):
 		return &configv1alpha1.NodeExporterCollectorEthtoolConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorInterruptsCollectConfig"):
+		return &configv1alpha1.NodeExporterCollectorInterruptsCollectConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorInterruptsConfig"):
+		return &configv1alpha1.NodeExporterCollectorInterruptsConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorKSMDConfig"):
 		return &configv1alpha1.NodeExporterCollectorKSMDConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorMountStatsConfig"):
@@ -592,6 +598,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.NodeExporterCollectorNetClassConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorNetDevConfig"):
 		return &configv1alpha1.NodeExporterCollectorNetDevConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorNVMExpressSubsystemConfig"):
+		return &configv1alpha1.NodeExporterCollectorNVMExpressSubsystemConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorProcessesConfig"):
 		return &configv1alpha1.NodeExporterCollectorProcessesConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorSoftirqsConfig"):
@@ -602,6 +610,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.NodeExporterCollectorSystemdConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorTcpStatConfig"):
 		return &configv1alpha1.NodeExporterCollectorTcpStatConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterCollectorZoneinfoConfig"):
+		return &configv1alpha1.NodeExporterCollectorZoneinfoConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("NodeExporterConfig"):
 		return &configv1alpha1.NodeExporterConfigApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("OAuth2"):

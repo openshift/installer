@@ -10,7 +10,7 @@ import (
 // EtcdSpecApplyConfiguration represents a declarative configuration of the EtcdSpec type for use
 // with apply.
 type EtcdSpecApplyConfiguration struct {
-	StaticPodOperatorSpecApplyConfiguration `json:",inline"`
+	StaticPodOperatorSpecApplyConfiguration `json:""`
 	// HardwareSpeed allows user to change the etcd tuning profile which configures
 	// the latency parameters for heartbeat interval and leader election timeouts
 	// allowing the cluster to tolerate longer round-trip-times between etcd members.
@@ -19,7 +19,7 @@ type EtcdSpecApplyConfiguration struct {
 	// which is subject to change without notice.
 	HardwareSpeed *operatorv1.ControlPlaneHardwareSpeed `json:"controlPlaneHardwareSpeed,omitempty"`
 	// backendQuotaGiB sets the etcd backend storage size limit in gibibytes.
-	// The value should be an integer not less than 8 and not more than 32.
+	// The value should be an integer not less than 8 and not more than 16.
 	// When not specified, the default value is 8.
 	BackendQuotaGiB *int32 `json:"backendQuotaGiB,omitempty"`
 }

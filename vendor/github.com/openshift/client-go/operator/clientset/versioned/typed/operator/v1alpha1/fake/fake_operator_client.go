@@ -28,6 +28,10 @@ func (c *FakeOperatorV1alpha1) ImageContentSourcePolicies() v1alpha1.ImageConten
 	return newFakeImageContentSourcePolicies(c)
 }
 
+func (c *FakeOperatorV1alpha1) Ingresses() v1alpha1.IngressInterface {
+	return newFakeIngresses(c)
+}
+
 func (c *FakeOperatorV1alpha1) OLMs() v1alpha1.OLMInterface {
 	return newFakeOLMs(c)
 }
