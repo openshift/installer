@@ -21,15 +21,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	deprecatedv1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -40,7 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/clustermodule"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
@@ -69,12 +69,12 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 	log := ctrl.LoggerFrom(ctx)
 
 	if !clustermodule.IsClusterCompatible(clusterCtx) {
-		v1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition, infrav1.VCenterVersionIncompatibleReason, clusterv1beta1.ConditionSeverityInfo,
+		deprecatedv1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableV1Beta1Condition, infrav1.VCenterVersionIncompatibleV1Beta1Reason, clusterv1.ConditionSeverityInfo,
 			"vCenter version %s does not support cluster modules", clusterCtx.VSphereCluster.Status.VCenterVersion)
-		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-			Type:    infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+		conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    infrav1.VSphereClusterClusterModulesReadyCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereClusterModulesInvalidVCenterVersionV1Beta2Reason,
+			Reason:  infrav1.VSphereClusterModulesInvalidVCenterVersionReason,
 			Message: fmt.Sprintf("vCenter version %s does not support cluster modules", clusterCtx.VSphereCluster.Status.VCenterVersion),
 		})
 		log.V(5).Info(fmt.Sprintf("vCenter version %s does not support cluster modules to implement anti affinity (vCenter >= 7 required)", clusterCtx.VSphereCluster.Status.VCenterVersion))
@@ -83,7 +83,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 
 	objectMap, err := r.fetchMachineOwnerObjects(ctx, clusterCtx)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrapf(err, "failed to get Machine owner objects")
+		return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to get Machine owner objects")
 	}
 
 	modErrs := []clusterModError{}
@@ -94,7 +94,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 		log := log
 		// It is safe to infer KubeadmControlPlane or MachineDeployment from .ControlPlane as modules
 		// are only implemented for these types.
-		if mod.ControlPlane {
+		if ptr.Deref(mod.ControlPlane, false) {
 			log = log.WithValues("KubeadmControlPlane", klog.KRef(clusterCtx.VSphereCluster.Namespace, mod.TargetObjectName), "moduleUUID", mod.ModuleUUID)
 		} else {
 			log = log.WithValues("MachineDeployment", klog.KRef(clusterCtx.VSphereCluster.Namespace, mod.TargetObjectName), "moduleUUID", mod.ModuleUUID)
@@ -102,7 +102,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 		ctx := ctrl.LoggerInto(ctx, log)
 
 		curr := mod.TargetObjectName
-		if mod.ControlPlane {
+		if ptr.Deref(mod.ControlPlane, false) {
 			curr = appendKCPKey(curr)
 		}
 		if obj, ok := objectMap[curr]; !ok {
@@ -115,11 +115,11 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 			// Verify the cluster module
 			exists, err := r.ClusterModuleService.DoesExist(ctx, clusterCtx, obj, mod.ModuleUUID)
 			if err != nil {
-				modErrs = append(modErrs, clusterModError{obj.GetName(), errors.Wrapf(err, "failed to check if cluster module %q exists", mod.ModuleUUID)})
+				modErrs = append(modErrs, clusterModError{obj.GetName(), pkgerrors.Wrapf(err, "failed to check if cluster module %q exists", mod.ModuleUUID)})
 				log.Error(err, "Failed to check if cluster module for object exists")
 				// Append the module and remove it from objectMap to not create new ones instead.
 				clusterModuleSpecs = append(clusterModuleSpecs, infrav1.ClusterModule{
-					ControlPlane:     obj.IsControlPlane(),
+					ControlPlane:     ptr.To(obj.IsControlPlane()),
 					TargetObjectName: obj.GetName(),
 					ModuleUUID:       mod.ModuleUUID,
 				})
@@ -132,7 +132,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 			// needs to be created.
 			if exists {
 				clusterModuleSpecs = append(clusterModuleSpecs, infrav1.ClusterModule{
-					ControlPlane:     obj.IsControlPlane(),
+					ControlPlane:     ptr.To(obj.IsControlPlane()),
 					TargetObjectName: obj.GetName(),
 					ModuleUUID:       mod.ModuleUUID,
 				})
@@ -150,7 +150,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 
 		moduleUUID, err := r.ClusterModuleService.Create(ctx, clusterCtx, obj)
 		if err != nil {
-			modErrs = append(modErrs, clusterModError{obj.GetName(), errors.Wrapf(err, "failed to create cluster module")})
+			modErrs = append(modErrs, clusterModError{obj.GetName(), pkgerrors.Wrapf(err, "failed to create cluster module")})
 			log.Error(err, "Failed to create cluster module for object")
 			continue
 		}
@@ -159,7 +159,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 			continue
 		}
 		clusterModuleSpecs = append(clusterModuleSpecs, infrav1.ClusterModule{
-			ControlPlane:     obj.IsControlPlane(),
+			ControlPlane:     ptr.To(obj.IsControlPlane()),
 			TargetObjectName: obj.GetName(),
 			ModuleUUID:       moduleUUID,
 		})
@@ -174,26 +174,26 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 		if len(incompatibleOwnerErrs) > 0 && len(incompatibleOwnerErrs) == len(modErrs) {
 			err = nil
 		} else {
-			err = errors.New(generateClusterModuleErrorMessage(modErrs))
+			err = pkgerrors.New(generateClusterModuleErrorMessage(modErrs))
 		}
-		v1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition, infrav1.ClusterModuleSetupFailedReason,
-			clusterv1beta1.ConditionSeverityWarning, "%s", generateClusterModuleErrorMessage(modErrs))
-		v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-			Type:    infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+		deprecatedv1beta1conditions.MarkFalse(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableV1Beta1Condition, infrav1.ClusterModuleSetupFailedV1Beta1Reason,
+			clusterv1.ConditionSeverityWarning, "%s", generateClusterModuleErrorMessage(modErrs))
+		conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+			Type:    infrav1.VSphereClusterClusterModulesReadyCondition,
 			Status:  metav1.ConditionFalse,
-			Reason:  infrav1.VSphereClusterClusterModulesNotReadyV1Beta2Reason,
+			Reason:  infrav1.VSphereClusterClusterModulesNotReadyReason,
 			Message: generateClusterModuleErrorMessage(modErrs),
 		})
 		return reconcile.Result{}, err
 	case len(modErrs) == 0 && len(clusterModuleSpecs) > 0:
-		v1beta1conditions.MarkTrue(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition)
+		deprecatedv1beta1conditions.MarkTrue(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableV1Beta1Condition)
 	default:
-		v1beta1conditions.Delete(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableCondition)
+		deprecatedv1beta1conditions.Delete(clusterCtx.VSphereCluster, infrav1.ClusterModulesAvailableV1Beta1Condition)
 	}
-	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-		Type:   infrav1.VSphereClusterClusterModulesReadyV1Beta2Condition,
+	conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   infrav1.VSphereClusterClusterModulesReadyCondition,
 		Status: metav1.ConditionTrue,
-		Reason: infrav1.VSphereClusterClusterModulesReadyV1Beta2Reason,
+		Reason: infrav1.VSphereClusterClusterModulesReadyReason,
 	})
 	return reconcile.Result{}, err
 }
@@ -279,7 +279,7 @@ func (r Reconciler) fetchMachineOwnerObjects(ctx context.Context, clusterCtx *ca
 
 	name, ok := clusterCtx.VSphereCluster.GetLabels()[clusterv1.ClusterNameLabel]
 	if !ok {
-		return nil, errors.Errorf("failed to get Cluster name from VSphereCluster: missing cluster name label")
+		return nil, pkgerrors.Errorf("failed to get Cluster name from VSphereCluster: missing cluster name label")
 	}
 
 	labels := map[string]string{clusterv1.ClusterNameLabel: name}
@@ -288,10 +288,10 @@ func (r Reconciler) fetchMachineOwnerObjects(ctx context.Context, clusterCtx *ca
 		ctx, kcpList,
 		client.InNamespace(clusterCtx.VSphereCluster.GetNamespace()),
 		client.MatchingLabels(labels)); err != nil {
-		return nil, errors.Wrapf(err, "failed to list KubeadmControlPlane objects")
+		return nil, pkgerrors.Wrapf(err, "failed to list KubeadmControlPlane objects")
 	}
 	if len(kcpList.Items) > 1 {
-		return nil, errors.Errorf("multiple KubeadmControlPlane objects found, expected 1, found %d", len(kcpList.Items))
+		return nil, pkgerrors.Errorf("multiple KubeadmControlPlane objects found, expected 1, found %d", len(kcpList.Items))
 	}
 
 	if len(kcpList.Items) != 0 {
@@ -305,7 +305,7 @@ func (r Reconciler) fetchMachineOwnerObjects(ctx context.Context, clusterCtx *ca
 		ctx, mdList,
 		client.InNamespace(clusterCtx.VSphereCluster.GetNamespace()),
 		client.MatchingLabels(labels)); err != nil {
-		return nil, errors.Wrapf(err, "failed to list MachineDeployment objects")
+		return nil, pkgerrors.Wrapf(err, "failed to list MachineDeployment objects")
 	}
 	for _, md := range mdList.Items {
 		if md.DeletionTimestamp.IsZero() {
@@ -342,7 +342,7 @@ func generateClusterModuleErrorMessage(errList []clusterModError) string {
 	sb.WriteString("Failed to create cluster modules for: ")
 
 	for _, e := range errList {
-		sb.WriteString(fmt.Sprintf("%s %s, ", e.name, e.err.Error()))
+		fmt.Fprintf(&sb, "%s %s, ", e.name, e.err.Error())
 	}
 	msg := sb.String()
 	return msg[:len(msg)-2]

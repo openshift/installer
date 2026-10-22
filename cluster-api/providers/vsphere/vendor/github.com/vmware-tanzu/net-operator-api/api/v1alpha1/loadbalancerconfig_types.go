@@ -1,5 +1,6 @@
-// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2020-2024 Broadcom. All Rights Reserved.
+// Broadcom Confidential. The term "Broadcom" refers to Broadcom Inc.
+// and/or its subsidiaries.
 
 package v1alpha1
 
@@ -13,8 +14,7 @@ import (
 type ClientSecretReference struct {
 	// Name is the name of resource being referenced.
 	Name string `json:"name"`
-	// Namespace of the resource being referenced. If empty, cluster scoped
-	// resource is assumed.
+	// Namespace of the resource being referenced. If empty, cluster scoped resource is assumed.
 	// +kubebuilder:default:=default
 	Namespace string `json:"namespace,omitempty"`
 }
@@ -77,7 +77,7 @@ const (
 
 // LoadBalancerConfigSpec defines the desired state of LoadBalancerConfig
 type LoadBalancerConfigSpec struct {
-	// Type describes type of load balancer. Supported value is haproxy
+	// Type describes type of load balancer.
 	// +kubebuilder:validation:Enum=haproxy;avi;foundation
 	Type LoadBalancerConfigType `json:"type"`
 	// ProviderRef is reference to a load balancer provider object that provides the details for this type of load balancer

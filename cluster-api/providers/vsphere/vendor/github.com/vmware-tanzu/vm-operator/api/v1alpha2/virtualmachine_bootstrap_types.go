@@ -1,12 +1,13 @@
-// Copyright (c) 2023 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
 
 import (
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/cloudinit"
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/sysprep"
+	vmopv1a2cloudinit "github.com/vmware-tanzu/vm-operator/api/v1alpha2/cloudinit"
+	vmopv1a2common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
+	vmopv1a2sysprep "github.com/vmware-tanzu/vm-operator/api/v1alpha2/sysprep"
 )
 
 // VirtualMachineBootstrapSpec defines the desired state of a VM's bootstrap
@@ -91,7 +92,7 @@ type VirtualMachineBootstrapCloudInitSpec struct {
 	// Please note this field and RawCloudConfig are mutually exclusive.
 	//
 	// +optional
-	CloudConfig *cloudinit.CloudConfig `json:"cloudConfig,omitempty"`
+	CloudConfig *vmopv1a2cloudinit.CloudConfig `json:"cloudConfig,omitempty"`
 
 	// RawCloudConfig describes a key in a Secret resource that contains the
 	// CloudConfig data used to bootstrap the VM.
@@ -102,13 +103,33 @@ type VirtualMachineBootstrapCloudInitSpec struct {
 	// Please note this field and CloudConfig are mutually exclusive.
 	//
 	// +optional
-	RawCloudConfig *common.SecretKeySelector `json:"rawCloudConfig,omitempty"`
+	RawCloudConfig *vmopv1a2common.SecretKeySelector `json:"rawCloudConfig,omitempty"`
 
 	// SSHAuthorizedKeys is a list of public keys that CloudInit will apply to
 	// the guest's default user.
 	//
 	// +optional
 	SSHAuthorizedKeys []string `json:"sshAuthorizedKeys,omitempty"`
+
+	// UseGlobalNameserversAsDefault will use the global nameservers specified in
+	// the NetworkSpec as the per-interface nameservers when the per-interface
+	// nameservers is not provided.
+	//
+	// Defaults to true if omitted.
+	//
+	// +optional
+	// +kubebuilder:default:true
+	UseGlobalNameserversAsDefault *bool `json:"useGlobalNameserversAsDefault,omitempty"`
+
+	// UseGlobalSearchDomainsAsDefault will use the global search domains specified
+	// in the NetworkSpec as the per-interface search domains when the per-interface
+	// search domains is not provided.
+	//
+	// Defaults to true if omitted.
+	//
+	// +optional
+	// +kubebuilder:default:true
+	UseGlobalSearchDomainsAsDefault *bool `json:"useGlobalSearchDomainsAsDefault,omitempty"`
 }
 
 // VirtualMachineBootstrapLinuxPrepSpec describes the LinuxPrep configuration
@@ -118,7 +139,7 @@ type VirtualMachineBootstrapLinuxPrepSpec struct {
 	// local time.
 	//
 	// +optional
-	HardwareClockIsUTC bool `json:"hardwareClockIsUTC,omitempty"`
+	HardwareClockIsUTC *bool `json:"hardwareClockIsUTC,omitempty"`
 
 	// TimeZone is a case-sensitive timezone, such as Europe/Sofia.
 	//
@@ -147,7 +168,7 @@ type VirtualMachineBootstrapSysprepSpec struct {
 	// Please note this field and RawSysprep are mutually exclusive.
 	//
 	// +optional
-	Sysprep *sysprep.Sysprep `json:"sysprep,omitempty"`
+	Sysprep *vmopv1a2sysprep.Sysprep `json:"sysprep,omitempty"`
 
 	// RawSysprep describes a key in a Secret resource that contains an XML
 	// string of the Sysprep text used to bootstrap the VM.
@@ -158,7 +179,7 @@ type VirtualMachineBootstrapSysprepSpec struct {
 	// Please note this field and Sysprep are mutually exclusive.
 	//
 	// +optional
-	RawSysprep *common.SecretKeySelector `json:"rawSysprep,omitempty"`
+	RawSysprep *vmopv1a2common.SecretKeySelector `json:"rawSysprep,omitempty"`
 }
 
 // VirtualMachineBootstrapVAppConfigSpec describes the vApp configuration
@@ -171,7 +192,7 @@ type VirtualMachineBootstrapVAppConfigSpec struct {
 	// +optional
 	// +listType=map
 	// +listMapKey=key
-	Properties []common.KeyValueOrSecretKeySelectorPair `json:"properties,omitempty"`
+	Properties []vmopv1a2common.KeyValueOrSecretKeySelectorPair `json:"properties,omitempty"`
 
 	// RawProperties is the name of a Secret resource in the same Namespace as
 	// this VM where each key/value pair from the Secret is used as a vApp

@@ -20,21 +20,24 @@ package vcenter
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/vmware/govmomi/crypto"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/extra"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/template"
@@ -97,7 +100,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			log.Info("Searching for current snapshot")
 			var vm mo.VirtualMachine
 			if err := tpl.Properties(ctx, tpl.Reference(), []string{"snapshot"}, &vm); err != nil {
-				return errors.Wrapf(err, "error getting snapshot information for template %s", vmCtx.VSphereVM.Spec.Template)
+				return pkgerrors.Wrapf(err, "error getting snapshot information for template %s", vmCtx.VSphereVM.Spec.Template)
 			}
 			if vm.Snapshot != nil {
 				snapshotRef = vm.Snapshot.CurrentSnapshot
@@ -126,17 +129,17 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 
 	folder, err := vmCtx.Session.Finder.FolderOrDefault(ctx, vmCtx.VSphereVM.Spec.Folder)
 	if err != nil {
-		return errors.Wrapf(err, "unable to get folder for %q", vmCtx)
+		return pkgerrors.Wrapf(err, "unable to get folder for %q", vmCtx)
 	}
 
 	pool, err := vmCtx.Session.Finder.ResourcePoolOrDefault(ctx, vmCtx.VSphereVM.Spec.ResourcePool)
 	if err != nil {
-		return errors.Wrapf(err, "unable to get resource pool for %q", vmCtx)
+		return pkgerrors.Wrapf(err, "unable to get resource pool for %q", vmCtx)
 	}
 
 	devices, err := tpl.Device(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "error getting devices for %q", vmCtx)
+		return pkgerrors.Wrapf(err, "error getting devices for %q", vmCtx)
 	}
 
 	// Create a new list of device specs for cloning the VM.
@@ -146,7 +149,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	if snapshotRef == nil {
 		diskSpecs, err := getDiskSpec(vmCtx, devices)
 		if err != nil {
-			return errors.Wrapf(err, "error getting disk spec for %q", vmCtx)
+			return pkgerrors.Wrapf(err, "error getting disk spec for %q", vmCtx)
 		}
 		deviceSpecs = append(deviceSpecs, diskSpecs...)
 	}
@@ -155,7 +158,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	if len(vmCtx.VSphereVM.Spec.DataDisks) > 0 {
 		dataDisks, err := createDataDisks(ctx, vmCtx.VSphereVM.Spec.DataDisks, devices)
 		if err != nil {
-			return errors.Wrapf(err, "error getting data disks")
+			return pkgerrors.Wrapf(err, "error getting data disks")
 		}
 		log.V(4).Info("Adding the following data disks", "disks", dataDisks)
 		deviceSpecs = append(deviceSpecs, dataDisks...)
@@ -163,7 +166,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 
 	networkSpecs, err := getNetworkSpecs(ctx, vmCtx, devices)
 	if err != nil {
-		return errors.Wrapf(err, "error getting network specs for %q", vmCtx)
+		return pkgerrors.Wrapf(err, "error getting network specs for %q", vmCtx)
 	}
 
 	deviceSpecs = append(deviceSpecs, networkSpecs...)
@@ -173,9 +176,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		numCPUs = 2
 	}
 	numCoresPerSocket := vmCtx.VSphereVM.Spec.NumCoresPerSocket
-	if numCoresPerSocket == 0 {
-		numCoresPerSocket = numCPUs
-	}
+
 	memMiB := vmCtx.VSphereVM.Spec.MemoryMiB
 	if memMiB == 0 {
 		memMiB = 2048
@@ -212,6 +213,48 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		Snapshot: snapshotRef,
 	}
 
+	// Set CPU reservations, limits and shares if specified
+	if !vmCtx.VSphereVM.Spec.Resources.Requests.CPU.IsZero() || !vmCtx.VSphereVM.Spec.Resources.Limits.CPU.IsZero() || vmCtx.VSphereVM.Spec.Resources.Shares.CPU > 0 {
+		cpuAllocation := types.ResourceAllocationInfo{}
+		if !vmCtx.VSphereVM.Spec.Resources.Requests.CPU.IsZero() {
+			cpuReservationMhz := convertQuantityToMhz(vmCtx.VSphereVM.Spec.Resources.Requests.CPU)
+			cpuAllocation.Reservation = ptr.To(cpuReservationMhz)
+		}
+		if !vmCtx.VSphereVM.Spec.Resources.Limits.CPU.IsZero() {
+			cpuLimitMhz := convertQuantityToMhz(vmCtx.VSphereVM.Spec.Resources.Limits.CPU)
+			cpuAllocation.Limit = ptr.To(cpuLimitMhz)
+		}
+		if vmCtx.VSphereVM.Spec.Resources.Shares.CPU > 0 {
+			cpuShares := types.SharesInfo{
+				Shares: vmCtx.VSphereVM.Spec.Resources.Shares.CPU,
+				Level:  types.SharesLevelCustom,
+			}
+			cpuAllocation.Shares = ptr.To(cpuShares)
+		}
+		spec.Config.CpuAllocation = ptr.To(cpuAllocation)
+	}
+
+	// Set memory reservations, limits and shares if specified
+	if !vmCtx.VSphereVM.Spec.Resources.Requests.Memory.IsZero() || !vmCtx.VSphereVM.Spec.Resources.Limits.Memory.IsZero() || vmCtx.VSphereVM.Spec.Resources.Shares.Memory > 0 {
+		memoryAllocation := types.ResourceAllocationInfo{}
+		if !vmCtx.VSphereVM.Spec.Resources.Requests.Memory.IsZero() {
+			memoryReservationMiB := convertQuantityToMiB(vmCtx.VSphereVM.Spec.Resources.Requests.Memory)
+			memoryAllocation.Reservation = ptr.To(memoryReservationMiB)
+		}
+		if !vmCtx.VSphereVM.Spec.Resources.Limits.Memory.IsZero() {
+			memoryLimitMiB := convertQuantityToMiB(vmCtx.VSphereVM.Spec.Resources.Limits.Memory)
+			memoryAllocation.Limit = ptr.To(memoryLimitMiB)
+		}
+		if vmCtx.VSphereVM.Spec.Resources.Shares.Memory > 0 {
+			memoryShares := types.SharesInfo{
+				Shares: vmCtx.VSphereVM.Spec.Resources.Shares.Memory,
+				Level:  types.SharesLevelCustom,
+			}
+			memoryAllocation.Shares = ptr.To(memoryShares)
+		}
+		spec.Config.MemoryAllocation = ptr.To(memoryAllocation)
+	}
+
 	// For PCI devices, the memory for the VM needs to be reserved
 	// We can replace this once we have another way of reserving memory option
 	// exposed via the API types.
@@ -223,7 +266,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	if vmCtx.VSphereVM.Spec.Datastore != "" {
 		datastore, err := vmCtx.Session.Finder.Datastore(ctx, vmCtx.VSphereVM.Spec.Datastore)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get datastore %s for %q", vmCtx.VSphereVM.Spec.Datastore, vmCtx)
+			return pkgerrors.Wrapf(err, "unable to get datastore %s for %q", vmCtx.VSphereVM.Spec.Datastore, vmCtx)
 		}
 		datastoreRef = types.NewReference(datastore.Reference())
 		spec.Location.Datastore = datastoreRef
@@ -233,12 +276,12 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	if vmCtx.VSphereVM.Spec.StoragePolicyName != "" {
 		pbmClient, err := pbm.NewClient(ctx, vmCtx.Session.Client.Client)
 		if err != nil {
-			return errors.Wrapf(err, "unable to create pbm client for %q", vmCtx)
+			return pkgerrors.Wrapf(err, "unable to create pbm client for %q", vmCtx)
 		}
 
 		storageProfileID, err = pbmClient.ProfileIDByName(ctx, vmCtx.VSphereVM.Spec.StoragePolicyName)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get storageProfileID from name %s for %q", vmCtx.VSphereVM.Spec.StoragePolicyName, vmCtx)
+			return pkgerrors.Wrapf(err, "unable to get storageProfileID from name %s for %q", vmCtx.VSphereVM.Spec.StoragePolicyName, vmCtx)
 		}
 
 		var hubs []pbmTypes.PbmPlacementHub
@@ -253,12 +296,12 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			// Otherwise we should get just the Datastores connected to our pool
 			cluster, err := pool.Owner(ctx)
 			if err != nil {
-				return errors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
+				return pkgerrors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
 			}
 
 			dsList, err := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference()).Datastores(ctx)
 			if err != nil {
-				return errors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
+				return pkgerrors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
 			}
 
 			var refs []types.ManagedObjectReference
@@ -268,7 +311,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 
 			var datastores []mo.Datastore
 			if err := property.DefaultCollector(vmCtx.Session.Client.Client).Retrieve(ctx, refs, []string{"summary"}, &datastores); err != nil {
-				return errors.Wrapf(err, "unable to collect datastore properties to validate maintenance mode")
+				return pkgerrors.Wrapf(err, "unable to collect datastore properties to validate maintenance mode")
 			}
 
 			for _, ds := range datastores {
@@ -284,11 +327,11 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 			}
 		}
 
-		var constraints []pbmTypes.BasePbmPlacementRequirement
+		var constraints []pbmTypes.BasePbmPlacementRequirement //nolint:prealloc
 		constraints = append(constraints, &pbmTypes.PbmPlacementCapabilityProfileRequirement{ProfileId: pbmTypes.PbmProfileId{UniqueId: storageProfileID}})
 		result, err := pbmClient.CheckRequirements(ctx, hubs, nil, constraints)
 		if err != nil {
-			return errors.Wrapf(err, "unable to check requirements for storage policy")
+			return pkgerrors.Wrapf(err, "unable to check requirements for storage policy")
 		}
 
 		if len(result.CompatibleDatastores()) == 0 {
@@ -311,7 +354,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		// if no datastore defined through VM spec or storage policy, use default
 		datastore, err := vmCtx.Session.Finder.DefaultDatastore(ctx)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get default datastore for %q", vmCtx)
+			return pkgerrors.Wrapf(err, "unable to get default datastore for %q", vmCtx)
 		}
 		datastoreRef = types.NewReference(datastore.Reference())
 	}
@@ -321,10 +364,49 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	spec.Location.Disk = getDiskLocators(disks, *datastoreRef, isLinkedClone)
 	spec.Location.Datastore = datastoreRef
 
+	spec.Config.NestedHVEnabled = vmCtx.VSphereVM.Spec.NestedHV
+	if vmCtx.VSphereVM.Spec.FtEncryptionMode == infrav1.FtEncryptionDisabled || vmCtx.VSphereVM.Spec.FtEncryptionMode == infrav1.FtEncryptionOpportunistic || vmCtx.VSphereVM.Spec.FtEncryptionMode == infrav1.FtEncryptionRequired {
+		spec.Config.FtEncryptionMode = string(vmCtx.VSphereVM.Spec.FtEncryptionMode)
+	}
+	if vmCtx.VSphereVM.Spec.MigrateEncryption == infrav1.DisabledMigrateEncryption || vmCtx.VSphereVM.Spec.MigrateEncryption == infrav1.OpportunisticMigrateEncryption || vmCtx.VSphereVM.Spec.MigrateEncryption == infrav1.RequiredMigrateEncryption {
+		spec.Config.MigrateEncryption = string(vmCtx.VSphereVM.Spec.MigrateEncryption)
+	}
+	if vmCtx.VSphereVM.Spec.CryptoProfile != "" {
+		pbmClient, err := pbm.NewClient(ctx, vmCtx.Session.Client.Client)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "unable to create pbm client for %q", vmCtx)
+		}
+
+		spbmStoragePolicyID, err := pbmClient.ProfileIDByName(ctx, vmCtx.VSphereVM.Spec.CryptoProfile)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "unable to get storageProfileID from name %s for %q", vmCtx.VSphereVM.Spec.CryptoProfile, vmCtx)
+		}
+		profileSpec := types.VirtualMachineDefinedProfileSpec{
+			ProfileId: spbmStoragePolicyID,
+		}
+		spec.Config.VmProfile = append(spec.Config.VmProfile, &profileSpec)
+	}
+	if vmCtx.VSphereVM.Spec.CryptoKeyID != "" {
+		kmip, err := crypto.GetManagerKmip(vmCtx.Session.Client.Client)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "unable to create kmip client for %q", vmCtx)
+		}
+		keyID, err := kmip.GenerateKey(ctx, vmCtx.VSphereVM.Spec.CryptoKeyID)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "unable to generate a key for %q", vmCtx)
+		}
+		cryptoSpec := types.CryptoSpecEncrypt{
+			CryptoKeyId: types.CryptoKeyId{
+				KeyId: keyID,
+			},
+		}
+		spec.Config.Crypto = &cryptoSpec
+	}
+
 	log.Info(fmt.Sprintf("Cloning Machine with clone mode %s", vmCtx.VSphereVM.Status.CloneMode))
 	task, err := tpl.Clone(ctx, folder, vmCtx.VSphereVM.Name, spec)
 	if err != nil {
-		return errors.Wrapf(err, "error trigging clone op for machine %s", vmCtx)
+		return pkgerrors.Wrapf(err, "error trigging clone op for machine %s", vmCtx)
 	}
 
 	vmCtx.VSphereVM.Status.TaskRef = task.Reference().Value
@@ -369,7 +451,7 @@ func getDiskLocators(disks object.VirtualDeviceList, datastoreRef types.ManagedO
 func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	disks := devices.SelectByType((*types.VirtualDisk)(nil))
 	if len(disks) == 0 {
-		return nil, errors.Errorf("Invalid disk count: %d", len(disks))
+		return nil, pkgerrors.Errorf("Invalid disk count: %d", len(disks))
 	}
 
 	// There is at least one disk
@@ -378,7 +460,7 @@ func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList)
 	primaryCloneCapacityKB := int64(vmCtx.VSphereVM.Spec.DiskGiB) * 1024 * 1024
 	primaryDiskConfigSpec, err := getDiskConfigSpec(primaryDisk, primaryCloneCapacityKB)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error getting disk config spec for primary disk")
+		return nil, pkgerrors.Wrap(err, "Error getting disk config spec for primary disk")
 	}
 	diskSpecs = append(diskSpecs, primaryDiskConfigSpec)
 
@@ -396,7 +478,7 @@ func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList)
 			}
 			additionalDiskConfigSpec, err := getDiskConfigSpec(disk.(*types.VirtualDisk), diskCloneCapacityKB)
 			if err != nil {
-				return nil, errors.Wrap(err, "Error getting disk config spec for additional disk")
+				return nil, pkgerrors.Wrap(err, "Error getting disk config spec for additional disk")
 			}
 			diskSpecs = append(diskSpecs, additionalDiskConfigSpec)
 		}
@@ -411,7 +493,7 @@ func getDiskConfigSpec(disk *types.VirtualDisk, diskCloneCapacityKB int64) (type
 	case diskCloneCapacityKB > 0 && diskCloneCapacityKB >= disk.CapacityInKB:
 		disk.CapacityInKB = diskCloneCapacityKB
 	case diskCloneCapacityKB > 0 && diskCloneCapacityKB < disk.CapacityInKB:
-		return nil, errors.Errorf(
+		return nil, pkgerrors.Errorf(
 			"can't resize template disk down, initial capacity is larger: %dKiB > %dKiB",
 			disk.CapacityInKB, diskCloneCapacityKB)
 	}
@@ -429,7 +511,7 @@ func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, de
 
 	disks := devices.SelectByType((*types.VirtualDisk)(nil))
 	if len(disks) == 0 {
-		return nil, errors.Errorf("Invalid disk count: %d", len(disks))
+		return nil, pkgerrors.Errorf("Invalid disk count: %d", len(disks))
 	}
 
 	// There is at least one disk
@@ -438,7 +520,7 @@ func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, de
 	// Get the controller of the primary disk.
 	controller, ok := devices.FindByKey(primaryDisk.ControllerKey).(types.BaseVirtualController)
 	if !ok {
-		return nil, errors.Errorf("unable to find controller with key=%v", primaryDisk.ControllerKey)
+		return nil, pkgerrors.Errorf("unable to find controller with key=%v", primaryDisk.ControllerKey)
 	}
 
 	controllerKey := controller.GetVirtualController().Key
@@ -503,6 +585,16 @@ func createDataDisks(ctx context.Context, dataDiskDefs []infrav1.VSphereDisk, de
 	return additionalDisks, nil
 }
 
+// convertQuantityToMhz converts a quantity to MHz, rounding up to the nearest MHz.
+func convertQuantityToMhz(quantity resource.Quantity) int64 {
+	return int64(math.Ceil(float64(quantity.Value()) / float64(1000000)))
+}
+
+// convertQuantityToMiB converts a quantity to MiB, rounding up to the nearest MiB.
+func convertQuantityToMiB(quantity resource.Quantity) int64 {
+	return int64(math.Ceil(float64(quantity.Value()) / float64(1024) / float64(1024)))
+}
+
 type unitNumberAssigner struct {
 	used   []bool
 	offset int32
@@ -510,7 +602,7 @@ type unitNumberAssigner struct {
 
 func newUnitNumberAssigner(controller types.BaseVirtualController, existingDevices object.VirtualDeviceList) (*unitNumberAssigner, error) {
 	if controller == nil {
-		return nil, errors.New("controller parameter cannot be nil")
+		return nil, pkgerrors.New("controller parameter cannot be nil")
 	}
 	used := make([]bool, maxUnitNumber)
 
@@ -568,15 +660,15 @@ func getNetworkSpecs(ctx context.Context, vmCtx *capvcontext.VMContext, devices 
 		netSpec := &vmCtx.VSphereVM.Spec.Network.Devices[i]
 		ref, err := vmCtx.Session.Finder.Network(ctx, netSpec.NetworkName)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to find network %q", netSpec.NetworkName)
+			return nil, pkgerrors.Wrapf(err, "unable to find network %q", netSpec.NetworkName)
 		}
 		backing, err := ref.EthernetCardBackingInfo(ctx)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to create new ethernet card backing info for network %q on %q", netSpec.NetworkName, vmCtx)
+			return nil, pkgerrors.Wrapf(err, "unable to create new ethernet card backing info for network %q on %q", netSpec.NetworkName, vmCtx)
 		}
 		dev, err := object.EthernetCardTypes().CreateEthernetCard(ethCardType, backing)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to create new ethernet card %q for network %q on %q", ethCardType, netSpec.NetworkName, vmCtx)
+			return nil, pkgerrors.Wrapf(err, "unable to create new ethernet card %q for network %q on %q", ethCardType, netSpec.NetworkName, vmCtx)
 		}
 
 		// Get the actual NIC object. This is safe to assert without a check

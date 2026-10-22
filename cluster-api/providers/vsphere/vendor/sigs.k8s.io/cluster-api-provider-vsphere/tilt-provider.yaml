@@ -1,7 +1,7 @@
 ---
 - name: vsphere
   config:
-    version: v1.14.99
+    version: v1.17.99
     image: gcr.io/k8s-staging-capi-vsphere/cluster-api-vsphere-controller
     live_reload_deps:
       - main.go
@@ -15,7 +15,7 @@
     label: CAPV
 - name: vsphere-supervisor
   config:
-    version: v1.14.99
+    version: v1.17.99
     image: gcr.io/k8s-staging-capi-vsphere/cluster-api-vsphere-controller
     live_reload_deps:
       - main.go
@@ -27,13 +27,50 @@
       - internal
       - pkg
     label: CAPV
-    kustomize_folder: "/config/supervisor"
+    kustomize_folder: "/config/supervisor-tilt"
 
-# IMPORTANT: run "make vm-operator-manifest-build" before using this "provider" with tilt
-- name: vm-operator
+# IMPORTANT: run "VM_OPERATOR_VERSION=8.0 VM_OPERATOR_COMMIT_DESCRIBE=v1.8.6-0-gde75746a VM_OPERATOR_COMMIT=de75746a9505ef3161172d99b735d6593c54f0c5 make generate-manifests-vm-operator" before using this "provider" with tilt
+- name: vm-operator-8.0
   config:
-    version: v1.8.6
+    version: "8.0"
     label: VMOP
-    kustomize_folder: "/test/infrastructure/vm-operator/config"
+    kustomize_folder: "/test/infrastructure/vm-operator/config/8.0"
     kustomize_options:
       - "--load-restrictor=LoadRestrictionsNone"
+    resource_deps:
+    # in some cases deploying vm-operator fails because the provider crd is not yet ready. this dependency acts as additional wait.
+    - capi_controller
+
+# IMPORTANT: run "VM_OPERATOR_VERSION=9.1 VM_OPERATOR_COMMIT_DESCRIBE=release-vc-9.1.0-0-g77005588 VM_OPERATOR_COMMIT=v1.10.0 make generate-manifests-vm-operator" before using this "provider" with tilt
+- name: vm-operator-9.1
+  config:
+    version: "9.1"
+    label: VMOP
+    kustomize_folder: "/test/infrastructure/vm-operator/config/9.1"
+    kustomize_options:
+      - "--load-restrictor=LoadRestrictionsNone"
+    resource_deps:
+    # in some cases deploying vm-operator fails because the provider crd is not yet ready. this dependency acts as additional wait.
+    - capi_controller
+    additional_uncategorized_resources:
+    # vm-operator 9.1 requires a config map with the list of supervisor capabilities to exist before the controller starts.
+    # NOTE: Because this config map goes in kube-system, it is not possible to add it to vm-operator-9.1.yaml that is
+    # used by clusterctl init (init requires all the objects to be in the same namespace).
+    - /test/framework/vmoperator/vmoperator-capabilities-9.1.yaml
+
+# IMPORTANT: run "VM_OPERATOR_VERSION=9.2 VM_OPERATOR_COMMIT_DESCRIBE=v1.9.0-987-g46e3104c VM_OPERATOR_COMMIT=46e3104c57d1af6b113e841ea9a7aca56eed8fbc make generate-manifests-vm-operator" before using this "provider" with tilt
+- name: vm-operator-9.2
+  config:
+    version: "9.2"
+    label: VMOP
+    kustomize_folder: "/test/infrastructure/vm-operator/config/9.2"
+    kustomize_options:
+      - "--load-restrictor=LoadRestrictionsNone"
+    resource_deps:
+    # in some cases deploying vm-operator fails because the provider crd is not yet ready. this dependency acts as additional wait.
+    - capi_controller
+    additional_uncategorized_resources:
+    # vm-operator 9.2 requires a config map with the list of supervisor capabilities to exist before the controller starts.
+    # NOTE: Because this config map goes in kube-system, it is not possible to add it to vm-operator-9.2.yaml that is
+    # used by clusterctl init (init requires all the objects to be in the same namespace).
+    - /test/framework/vmoperator/vmoperator-capabilities-9.2.yaml
