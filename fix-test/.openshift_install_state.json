@@ -1,0 +1,505 @@
+{
+    "*agent.OptionalInstallConfig": {
+        "config": {
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "additionalTrustBundlePolicy": "Proxyonly",
+            "baseDomain": "example.com",
+            "networking": {
+                "networkType": "OVNKubernetes",
+                "machineNetwork": [
+                    {
+                        "cidr": "10.0.0.0/16"
+                    }
+                ],
+                "clusterNetwork": [
+                    {
+                        "cidr": "10.128.0.0/14",
+                        "hostPrefix": 23
+                    }
+                ],
+                "serviceNetwork": [
+                    "172.30.0.0/16"
+                ]
+            },
+            "controlPlane": {
+                "name": "master",
+                "replicas": 3,
+                "platform": {},
+                "hyperthreading": "Enabled",
+                "architecture": "amd64"
+            },
+            "compute": [
+                {
+                    "name": "worker",
+                    "replicas": 3,
+                    "platform": {},
+                    "hyperthreading": "Enabled",
+                    "architecture": "amd64"
+                }
+            ],
+            "platform": {
+                "baremetal": {
+                    "libvirtURI": "qemu:///system",
+                    "clusterProvisioningIP": "172.22.0.3",
+                    "bootstrapProvisioningIP": "172.22.0.2",
+                    "externalBridge": "baremetal",
+                    "externalMACAddress": "52:54:00:ae:5b:51",
+                    "provisioningNetwork": "Managed",
+                    "provisioningBridge": "provisioning",
+                    "provisioningMACAddress": "52:54:00:4e:19:28",
+                    "provisioningNetworkInterface": "",
+                    "provisioningNetworkCIDR": "172.22.0.0/24",
+                    "provisioningDHCPRange": "172.22.0.10,172.22.0.254",
+                    "hosts": null,
+                    "apiVIPs": [
+                        "10.0.0.5"
+                    ],
+                    "ingressVIPs": [
+                        "10.0.0.5"
+                    ],
+                    "loadBalancer": {
+                        "type": "UserManaged"
+                    }
+                }
+            },
+            "pullSecret": "{\"auths\":{\"fake\":{\"auth\":\"aG9nZTo=\"}}}",
+            "publish": "External"
+        },
+        "file": {
+            "Filename": "install-config.yaml",
+            "Data": "YWRkaXRpb25hbFRydXN0QnVuZGxlUG9saWN5OiBQcm94eW9ubHkKYXBpVmVyc2lvbjogdjEKYmFzZURvbWFpbjogZXhhbXBsZS5jb20KY29tcHV0ZToKLSBhcmNoaXRlY3R1cmU6IGFtZDY0CiAgaHlwZXJ0aHJlYWRpbmc6IEVuYWJsZWQKICBuYW1lOiB3b3JrZXIKICBwbGF0Zm9ybToge30KICByZXBsaWNhczogMwpjb250cm9sUGxhbmU6CiAgYXJjaGl0ZWN0dXJlOiBhbWQ2NAogIGh5cGVydGhyZWFkaW5nOiBFbmFibGVkCiAgbmFtZTogbWFzdGVyCiAgcGxhdGZvcm06IHt9CiAgcmVwbGljYXM6IDMKbWV0YWRhdGE6CiAgY3JlYXRpb25UaW1lc3RhbXA6IG51bGwKICBuYW1lOiB0ZXN0LWNsdXN0ZXIKbmV0d29ya2luZzoKICBjbHVzdGVyTmV0d29yazoKICAtIGNpZHI6IDEwLjEyOC4wLjAvMTQKICAgIGhvc3RQcmVmaXg6IDIzCiAgbWFjaGluZU5ldHdvcms6CiAgLSBjaWRyOiAxMC4wLjAuMC8xNgogIG5ldHdvcmtUeXBlOiBPVk5LdWJlcm5ldGVzCiAgc2VydmljZU5ldHdvcms6CiAgLSAxNzIuMzAuMC4wLzE2CnBsYXRmb3JtOgogIGJhcmVtZXRhbDoKICAgIGFwaVZJUHM6CiAgICAtIDEwLjAuMC41CiAgICBib290c3RyYXBQcm92aXNpb25pbmdJUDogMTcyLjIyLjAuMgogICAgY2x1c3RlclByb3Zpc2lvbmluZ0lQOiAxNzIuMjIuMC4zCiAgICBleHRlcm5hbEJyaWRnZTogYmFyZW1ldGFsCiAgICBleHRlcm5hbE1BQ0FkZHJlc3M6IDUyOjU0OjAwOmFlOjViOjUxCiAgICBob3N0czogbnVsbAogICAgaW5ncmVzc1ZJUHM6CiAgICAtIDEwLjAuMC41CiAgICBsaWJ2aXJ0VVJJOiBxZW11Oi8vL3N5c3RlbQogICAgbG9hZEJhbGFuY2VyOgogICAgICB0eXBlOiBVc2VyTWFuYWdlZAogICAgcHJvdmlzaW9uaW5nQnJpZGdlOiBwcm92aXNpb25pbmcKICAgIHByb3Zpc2lvbmluZ0RIQ1BSYW5nZTogMTcyLjIyLjAuMTAsMTcyLjIyLjAuMjU0CiAgICBwcm92aXNpb25pbmdNQUNBZGRyZXNzOiA1Mjo1NDowMDo0ZToxOToyOAogICAgcHJvdmlzaW9uaW5nTmV0d29yazogTWFuYWdlZAogICAgcHJvdmlzaW9uaW5nTmV0d29ya0NJRFI6IDE3Mi4yMi4wLjAvMjQKICAgIHByb3Zpc2lvbmluZ05ldHdvcmtJbnRlcmZhY2U6ICIiCnB1Ymxpc2g6IEV4dGVybmFsCnB1bGxTZWNyZXQ6ICd7ImF1dGhzIjp7ImZha2UiOnsiYXV0aCI6ImFHOW5aVG89In19fScK"
+        },
+        "Supplied": true
+    },
+    "*agentconfig.AgentConfig": {
+        "File": {
+            "Filename": "agent-config.yaml",
+            "Data": "IwojIE5vdGU6IFRoaXMgaXMgYSBzYW1wbGUgQWdlbnRDb25maWcgZmlsZSBzaG93aW5nCiMgd2hpY2ggZmllbGRzIGFyZSBhdmFpbGFibGUgdG8gYWlkIHlvdSBpbiBjcmVhdGluZyB5b3VyCiMgb3duIGFnZW50LWNvbmZpZy55YW1sIGZpbGUuCiMKYXBpVmVyc2lvbjogdjFiZXRhMQpraW5kOiBBZ2VudENvbmZpZwptZXRhZGF0YToKICBuYW1lOiBleGFtcGxlLWFnZW50LWNvbmZpZwogIG5hbWVzcGFjZTogY2x1c3RlcjAKIyBBbGwgZmllbGRzIGFyZSBvcHRpb25hbApyZW5kZXp2b3VzSVA6IHlvdXItbm9kZTAtaXAKYm9vdEFydGlmYWN0c0Jhc2VVUkw6IGh0dHA6Ly91c2VyLXNwZWNpZmllZC1pbmZyYS5jb20KbWluaW1hbElTTzogZmFsc2UKYWRkaXRpb25hbE5UUFNvdXJjZXM6Ci0gMC5yaGVsLnBvb2wubnRwLm9yZwotIDEucmhlbC5wb29sLm50cC5vcmcKaG9zdHM6CiMgSWYgYSBob3N0IGlzIGxpc3RlZCwgdGhlbiBhdCBsZWFzdCBvbmUgaW50ZXJmYWNlCiMgbmVlZHMgdG8gYmUgc3BlY2lmaWVkLgotIGhvc3RuYW1lOiBjaGFuZ2UtdG8taG9zdG5hbWUKICByb2xlOiBtYXN0ZXIKICAjIEZvciBtb3JlIGluZm9ybWF0aW9uIGFib3V0IHJvb3REZXZpY2VIaW50czoKICAjIGh0dHBzOi8vZG9jcy5vcGVuc2hpZnQuY29tL2NvbnRhaW5lci1wbGF0Zm9ybS80LjEwL2luc3RhbGxpbmcvaW5zdGFsbGluZ19iYXJlX21ldGFsX2lwaS9pcGktaW5zdGFsbC1pbnN0YWxsYXRpb24td29ya2Zsb3cuaHRtbCNyb290LWRldmljZS1oaW50c19pcGktaW5zdGFsbC1pbnN0YWxsYXRpb24td29ya2Zsb3cKICByb290RGV2aWNlSGludHM6CiAgICBkZXZpY2VOYW1lOiAvZGV2L3NkYQogICMgaW50ZXJmYWNlcyBhcmUgdXNlZCB0byBpZGVudGlmeSB0aGUgaG9zdCB0byBhcHBseSB0aGlzIGNvbmZpZ3VyYXRpb24gdG8KICBpbnRlcmZhY2VzOgogICAgLSBtYWNBZGRyZXNzOiAwMDowMDowMDowMDowMDowMAogICAgICBuYW1lOiBob3N0LW5ldHdvcmstaW50ZXJmYWNlLW5hbWUKICAjIG5ldHdvcmtDb25maWcgY29udGFpbnMgdGhlIG5ldHdvcmsgY29uZmlndXJhdGlvbiBmb3IgdGhlIGhvc3QgaW4gTk1TdGF0ZSBmb3JtYXQuCiAgIyBTZWUgaHR0cHM6Ly9ubXN0YXRlLmlvL2V4YW1wbGVzLmh0bWwgZm9yIGV4YW1wbGVzLgogIG5ldHdvcmtDb25maWc6CiAgICBpbnRlcmZhY2VzOgogICAgICAtIG5hbWU6IGV0aDAKICAgICAgICB0eXBlOiBldGhlcm5ldAogICAgICAgIHN0YXRlOiB1cAogICAgICAgIG1hYy1hZGRyZXNzOiAwMDowMDowMDowMDowMDowMAogICAgICAgIGlwdjQ6CiAgICAgICAgICBlbmFibGVkOiB0cnVlCiAgICAgICAgICBhZGRyZXNzOgogICAgICAgICAgICAtIGlwOiAxOTIuMTY4LjEyMi4yCiAgICAgICAgICAgICAgcHJlZml4LWxlbmd0aDogMjMKICAgICAgICAgIGRoY3A6IGZhbHNlCg=="
+        },
+        "Config": null,
+        "Template": "#\n# Note: This is a sample AgentConfig file showing\n# which fields are available to aid you in creating your\n# own agent-config.yaml file.\n#\napiVersion: v1beta1\nkind: AgentConfig\nmetadata:\n  name: example-agent-config\n  namespace: cluster0\n# All fields are optional\nrendezvousIP: your-node0-ip\nbootArtifactsBaseURL: http://user-specified-infra.com\nminimalISO: false\nadditionalNTPSources:\n- 0.rhel.pool.ntp.org\n- 1.rhel.pool.ntp.org\nhosts:\n# If a host is listed, then at least one interface\n# needs to be specified.\n- hostname: change-to-hostname\n  role: master\n  # For more information about rootDeviceHints:\n  # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow\n  rootDeviceHints:\n    deviceName: /dev/sda\n  # interfaces are used to identify the host to apply this configuration to\n  interfaces:\n    - macAddress: 00:00:00:00:00:00\n      name: host-network-interface-name\n  # networkConfig contains the network configuration for the host in NMState format.\n  # See https://nmstate.io/examples.html for examples.\n  networkConfig:\n    interfaces:\n      - name: eth0\n        type: ethernet\n        state: up\n        mac-address: 00:00:00:00:00:00\n        ipv4:\n          enabled: true\n          address:\n            - ip: 192.168.122.2\n              prefix-length: 23\n          dhcp: false\n"
+    },
+    "*agentconfig.AgentHosts": {
+        "Hosts": null
+    },
+    "*joiner.AddNodesConfig": {
+        "Params": {},
+        "Config": {
+            "metadata": {
+                "creationTimestamp": null
+            }
+        }
+    },
+    "*joiner.ClusterInfo": {
+        "Client": null,
+        "OpenshiftClient": null,
+        "OpenshiftMachineConfigClient": null,
+        "ClusterID": "",
+        "ClusterName": "",
+        "Version": "",
+        "ReleaseImage": "",
+        "APIDNSName": "",
+        "PullSecret": "",
+        "Namespace": "",
+        "UserCaBundle": "",
+        "Proxy": null,
+        "Architecture": "",
+        "ImageDigestSources": null,
+        "DeprecatedImageContentSources": null,
+        "PlatformType": "",
+        "SSHKey": "",
+        "OSImage": null,
+        "OSImageLocation": "",
+        "IgnitionEndpointWorker": null,
+        "FIPS": false,
+        "Nodes": null,
+        "ChronyConf": null,
+        "BootArtifactsBaseURL": ""
+    },
+    "*manifests.AgentClusterInstall": {
+        "File": {
+            "Filename": "cluster-manifests/agent-cluster-install.yaml",
+            "Data": "YXBpVmVyc2lvbjogZXh0ZW5zaW9ucy5oaXZlLm9wZW5zaGlmdC5pby92MWJldGExCmtpbmQ6IEFnZW50Q2x1c3Rlckluc3RhbGwKbWV0YWRhdGE6CiAgY3JlYXRpb25UaW1lc3RhbXA6IG51bGwKICBuYW1lOiB0ZXN0LWNsdXN0ZXIKc3BlYzoKICBhcGlWSVA6IDEwLjAuMC41CiAgYXBpVklQczoKICAtIDEwLjAuMC41CiAgY2x1c3RlckRlcGxveW1lbnRSZWY6CiAgICBuYW1lOiB0ZXN0LWNsdXN0ZXIKICBpbWFnZVNldFJlZjoKICAgIG5hbWU6IG9wZW5zaGlmdC0xZjAyNmJjNWJlMTI4YWZjNGY0MDk1YzcxNTI2NGYwODlmMThmMjhiLWRpcnR5CiAgaW5ncmVzc1ZJUDogMTAuMC4wLjUKICBpbmdyZXNzVklQczoKICAtIDEwLjAuMC41CiAgbG9hZEJhbGFuY2VyOgogICAgdHlwZTogVXNlck1hbmFnZWQKICBuZXR3b3JraW5nOgogICAgY2x1c3Rlck5ldHdvcms6CiAgICAtIGNpZHI6IDEwLjEyOC4wLjAvMTQKICAgICAgaG9zdFByZWZpeDogMjMKICAgIG1hY2hpbmVOZXR3b3JrOgogICAgLSBjaWRyOiAxMC4wLjAuMC8xNgogICAgbmV0d29ya1R5cGU6IE9WTkt1YmVybmV0ZXMKICAgIHNlcnZpY2VOZXR3b3JrOgogICAgLSAxNzIuMzAuMC4wLzE2CiAgICB1c2VyTWFuYWdlZE5ldHdvcmtpbmc6IGZhbHNlCiAgcGxhdGZvcm1UeXBlOiBCYXJlTWV0YWwKICBwcm92aXNpb25SZXF1aXJlbWVudHM6CiAgICBjb250cm9sUGxhbmVBZ2VudHM6IDMKICAgIHdvcmtlckFnZW50czogMwpzdGF0dXM6CiAgZGVidWdJbmZvOgogICAgZXZlbnRzVVJMOiAiIgogICAgbG9nc1VSTDogIiIKICBwcm9ncmVzczoKICAgIHRvdGFsUGVyY2VudGFnZTogMAo="
+        },
+        "Config": {
+            "kind": "AgentClusterInstall",
+            "apiVersion": "extensions.hive.openshift.io/v1beta1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "imageSetRef": {
+                    "name": "openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty"
+                },
+                "clusterDeploymentRef": {
+                    "name": "test-cluster"
+                },
+                "networking": {
+                    "machineNetwork": [
+                        {
+                            "cidr": "10.0.0.0/16"
+                        }
+                    ],
+                    "clusterNetwork": [
+                        {
+                            "cidr": "10.128.0.0/14",
+                            "hostPrefix": 23
+                        }
+                    ],
+                    "serviceNetwork": [
+                        "172.30.0.0/16"
+                    ],
+                    "networkType": "OVNKubernetes",
+                    "userManagedNetworking": false
+                },
+                "provisionRequirements": {
+                    "controlPlaneAgents": 3,
+                    "workerAgents": 3
+                },
+                "apiVIP": "10.0.0.5",
+                "apiVIPs": [
+                    "10.0.0.5"
+                ],
+                "ingressVIP": "10.0.0.5",
+                "ingressVIPs": [
+                    "10.0.0.5"
+                ],
+                "platformType": "BareMetal",
+                "loadBalancer": {
+                    "type": "UserManaged"
+                }
+            },
+            "status": {
+                "progress": {
+                    "totalPercentage": 0
+                },
+                "debugInfo": {
+                    "eventsURL": "",
+                    "logsURL": ""
+                }
+            }
+        }
+    },
+    "*manifests.AgentManifests": {
+        "FileList": [
+            {
+                "Filename": "cluster-manifests/agent-cluster-install.yaml",
+                "Data": "YXBpVmVyc2lvbjogZXh0ZW5zaW9ucy5oaXZlLm9wZW5zaGlmdC5pby92MWJldGExCmtpbmQ6IEFnZW50Q2x1c3Rlckluc3RhbGwKbWV0YWRhdGE6CiAgY3JlYXRpb25UaW1lc3RhbXA6IG51bGwKICBuYW1lOiB0ZXN0LWNsdXN0ZXIKc3BlYzoKICBhcGlWSVA6IDEwLjAuMC41CiAgYXBpVklQczoKICAtIDEwLjAuMC41CiAgY2x1c3RlckRlcGxveW1lbnRSZWY6CiAgICBuYW1lOiB0ZXN0LWNsdXN0ZXIKICBpbWFnZVNldFJlZjoKICAgIG5hbWU6IG9wZW5zaGlmdC0xZjAyNmJjNWJlMTI4YWZjNGY0MDk1YzcxNTI2NGYwODlmMThmMjhiLWRpcnR5CiAgaW5ncmVzc1ZJUDogMTAuMC4wLjUKICBpbmdyZXNzVklQczoKICAtIDEwLjAuMC41CiAgbG9hZEJhbGFuY2VyOgogICAgdHlwZTogVXNlck1hbmFnZWQKICBuZXR3b3JraW5nOgogICAgY2x1c3Rlck5ldHdvcms6CiAgICAtIGNpZHI6IDEwLjEyOC4wLjAvMTQKICAgICAgaG9zdFByZWZpeDogMjMKICAgIG1hY2hpbmVOZXR3b3JrOgogICAgLSBjaWRyOiAxMC4wLjAuMC8xNgogICAgbmV0d29ya1R5cGU6IE9WTkt1YmVybmV0ZXMKICAgIHNlcnZpY2VOZXR3b3JrOgogICAgLSAxNzIuMzAuMC4wLzE2CiAgICB1c2VyTWFuYWdlZE5ldHdvcmtpbmc6IGZhbHNlCiAgcGxhdGZvcm1UeXBlOiBCYXJlTWV0YWwKICBwcm92aXNpb25SZXF1aXJlbWVudHM6CiAgICBjb250cm9sUGxhbmVBZ2VudHM6IDMKICAgIHdvcmtlckFnZW50czogMwpzdGF0dXM6CiAgZGVidWdJbmZvOgogICAgZXZlbnRzVVJMOiAiIgogICAgbG9nc1VSTDogIiIKICBwcm9ncmVzczoKICAgIHRvdGFsUGVyY2VudGFnZTogMAo="
+            },
+            {
+                "Filename": "cluster-manifests/cluster-deployment.yaml",
+                "Data": "YXBpVmVyc2lvbjogaGl2ZS5vcGVuc2hpZnQuaW8vdjEKa2luZDogQ2x1c3RlckRlcGxveW1lbnQKbWV0YWRhdGE6CiAgY3JlYXRpb25UaW1lc3RhbXA6IG51bGwKICBuYW1lOiB0ZXN0LWNsdXN0ZXIKc3BlYzoKICBiYXNlRG9tYWluOiBleGFtcGxlLmNvbQogIGNsdXN0ZXJJbnN0YWxsUmVmOgogICAgZ3JvdXA6IGV4dGVuc2lvbnMuaGl2ZS5vcGVuc2hpZnQuaW8KICAgIGtpbmQ6IEFnZW50Q2x1c3Rlckluc3RhbGwKICAgIG5hbWU6IHRlc3QtY2x1c3RlcgogICAgdmVyc2lvbjogdjFiZXRhMQogIGNsdXN0ZXJOYW1lOiB0ZXN0LWNsdXN0ZXIKICBjb250cm9sUGxhbmVDb25maWc6CiAgICBzZXJ2aW5nQ2VydGlmaWNhdGVzOiB7fQogIGluc3RhbGxlZDogZmFsc2UKICBwbGF0Zm9ybToge30KICBwdWxsU2VjcmV0UmVmOgogICAgbmFtZTogdGVzdC1jbHVzdGVyLXB1bGwtc2VjcmV0CnN0YXR1czoge30K"
+            },
+            {
+                "Filename": "cluster-manifests/cluster-image-set.yaml",
+                "Data": "YXBpVmVyc2lvbjogaGl2ZS5vcGVuc2hpZnQuaW8vdjEKa2luZDogQ2x1c3RlckltYWdlU2V0Cm1ldGFkYXRhOgogIGNyZWF0aW9uVGltZXN0YW1wOiBudWxsCiAgbmFtZTogb3BlbnNoaWZ0LTFmMDI2YmM1YmUxMjhhZmM0ZjQwOTVjNzE1MjY0ZjA4OWYxOGYyOGItZGlydHkKc3BlYzoKICByZWxlYXNlSW1hZ2U6IHJlZ2lzdHJ5LmNpLm9wZW5zaGlmdC5vcmcvb3JpZ2luL3JlbGVhc2U6NC4yMApzdGF0dXM6IHt9Cg=="
+            },
+            {
+                "Filename": "cluster-manifests/infraenv.yaml",
+                "Data": "YXBpVmVyc2lvbjogYWdlbnQtaW5zdGFsbC5vcGVuc2hpZnQuaW8vdjFiZXRhMQpraW5kOiBJbmZyYUVudgptZXRhZGF0YToKICBjcmVhdGlvblRpbWVzdGFtcDogbnVsbAogIG5hbWU6IHRlc3QtY2x1c3RlcgpzcGVjOgogIGNsdXN0ZXJSZWY6CiAgICBuYW1lOiB0ZXN0LWNsdXN0ZXIKICBjcHVBcmNoaXRlY3R1cmU6IHg4Nl82NAogIGlweGVTY3JpcHRUeXBlOiAiIgogIG5tU3RhdGVDb25maWdMYWJlbFNlbGVjdG9yOgogICAgbWF0Y2hMYWJlbHM6CiAgICAgIGluZnJhZW52cy5hZ2VudC1pbnN0YWxsLm9wZW5zaGlmdC5pbzogdGVzdC1jbHVzdGVyCiAgcHVsbFNlY3JldFJlZjoKICAgIG5hbWU6IHRlc3QtY2x1c3Rlci1wdWxsLXNlY3JldApzdGF0dXM6CiAgYWdlbnRMYWJlbFNlbGVjdG9yOiB7fQogIGJvb3RBcnRpZmFjdHM6CiAgICBkaXNjb3ZlcnlJZ25pdGlvblVSTDogIiIKICAgIGluaXRyZDogIiIKICAgIGlweGVTY3JpcHQ6ICIiCiAgICBrZXJuZWw6ICIiCiAgICByb290ZnM6ICIiCiAgZGVidWdJbmZvOgogICAgZXZlbnRzVVJMOiAiIgo="
+            },
+            {
+                "Filename": "cluster-manifests/pull-secret.yaml",
+                "Data": "YXBpVmVyc2lvbjogdjEKa2luZDogU2VjcmV0Cm1ldGFkYXRhOgogIGNyZWF0aW9uVGltZXN0YW1wOiBudWxsCiAgbmFtZTogdGVzdC1jbHVzdGVyLXB1bGwtc2VjcmV0CnN0cmluZ0RhdGE6CiAgLmRvY2tlcmNvbmZpZ2pzb246IHwtCiAgICB7CiAgICAgICJhdXRocyI6IHsKICAgICAgICAiZmFrZSI6IHsKICAgICAgICAgICJhdXRoIjogImFHOW5aVG89IgogICAgICAgIH0KICAgICAgfQogICAgfQo="
+            }
+        ],
+        "PullSecret": {
+            "kind": "Secret",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "test-cluster-pull-secret",
+                "creationTimestamp": null
+            },
+            "stringData": {
+                ".dockerconfigjson": "{\n  \"auths\": {\n    \"fake\": {\n      \"auth\": \"aG9nZTo=\"\n    }\n  }\n}"
+            }
+        },
+        "InfraEnv": {
+            "kind": "InfraEnv",
+            "apiVersion": "agent-install.openshift.io/v1beta1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "pullSecretRef": {
+                    "name": "test-cluster-pull-secret"
+                },
+                "nmStateConfigLabelSelector": {
+                    "matchLabels": {
+                        "infraenvs.agent-install.openshift.io": "test-cluster"
+                    }
+                },
+                "clusterRef": {
+                    "name": "test-cluster"
+                },
+                "cpuArchitecture": "x86_64",
+                "ipxeScriptType": ""
+            },
+            "status": {
+                "agentLabelSelector": {},
+                "debugInfo": {
+                    "eventsURL": ""
+                },
+                "bootArtifacts": {
+                    "initrd": "",
+                    "rootfs": "",
+                    "kernel": "",
+                    "ipxeScript": "",
+                    "discoveryIgnitionURL": ""
+                }
+            }
+        },
+        "StaticNetworkConfigs": null,
+        "NMStateConfigs": null,
+        "AgentClusterInstall": {
+            "kind": "AgentClusterInstall",
+            "apiVersion": "extensions.hive.openshift.io/v1beta1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "imageSetRef": {
+                    "name": "openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty"
+                },
+                "clusterDeploymentRef": {
+                    "name": "test-cluster"
+                },
+                "networking": {
+                    "machineNetwork": [
+                        {
+                            "cidr": "10.0.0.0/16"
+                        }
+                    ],
+                    "clusterNetwork": [
+                        {
+                            "cidr": "10.128.0.0/14",
+                            "hostPrefix": 23
+                        }
+                    ],
+                    "serviceNetwork": [
+                        "172.30.0.0/16"
+                    ],
+                    "networkType": "OVNKubernetes",
+                    "userManagedNetworking": false
+                },
+                "provisionRequirements": {
+                    "controlPlaneAgents": 3,
+                    "workerAgents": 3
+                },
+                "apiVIP": "10.0.0.5",
+                "apiVIPs": [
+                    "10.0.0.5"
+                ],
+                "ingressVIP": "10.0.0.5",
+                "ingressVIPs": [
+                    "10.0.0.5"
+                ],
+                "platformType": "BareMetal",
+                "loadBalancer": {
+                    "type": "UserManaged"
+                }
+            },
+            "status": {
+                "progress": {
+                    "totalPercentage": 0
+                },
+                "debugInfo": {
+                    "eventsURL": "",
+                    "logsURL": ""
+                }
+            }
+        },
+        "ClusterDeployment": {
+            "kind": "ClusterDeployment",
+            "apiVersion": "hive.openshift.io/v1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "clusterName": "test-cluster",
+                "baseDomain": "example.com",
+                "platform": {},
+                "pullSecretRef": {
+                    "name": "test-cluster-pull-secret"
+                },
+                "controlPlaneConfig": {
+                    "servingCertificates": {}
+                },
+                "installed": false,
+                "clusterInstallRef": {
+                    "group": "extensions.hive.openshift.io",
+                    "version": "v1beta1",
+                    "kind": "AgentClusterInstall",
+                    "name": "test-cluster"
+                }
+            },
+            "status": {}
+        },
+        "ClusterImageSet": {
+            "kind": "ClusterImageSet",
+            "apiVersion": "hive.openshift.io/v1",
+            "metadata": {
+                "name": "openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "releaseImage": "registry.ci.openshift.org/origin/release:4.20"
+            },
+            "status": {}
+        }
+    },
+    "*manifests.AgentPullSecret": {
+        "File": {
+            "Filename": "cluster-manifests/pull-secret.yaml",
+            "Data": "YXBpVmVyc2lvbjogdjEKa2luZDogU2VjcmV0Cm1ldGFkYXRhOgogIGNyZWF0aW9uVGltZXN0YW1wOiBudWxsCiAgbmFtZTogdGVzdC1jbHVzdGVyLXB1bGwtc2VjcmV0CnN0cmluZ0RhdGE6CiAgLmRvY2tlcmNvbmZpZ2pzb246IHwtCiAgICB7CiAgICAgICJhdXRocyI6IHsKICAgICAgICAiZmFrZSI6IHsKICAgICAgICAgICJhdXRoIjogImFHOW5aVG89IgogICAgICAgIH0KICAgICAgfQogICAgfQo="
+        },
+        "Config": {
+            "kind": "Secret",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "test-cluster-pull-secret",
+                "creationTimestamp": null
+            },
+            "stringData": {
+                ".dockerconfigjson": "{\n  \"auths\": {\n    \"fake\": {\n      \"auth\": \"aG9nZTo=\"\n    }\n  }\n}"
+            }
+        }
+    },
+    "*manifests.ClusterDeployment": {
+        "File": {
+            "Filename": "cluster-manifests/cluster-deployment.yaml",
+            "Data": "YXBpVmVyc2lvbjogaGl2ZS5vcGVuc2hpZnQuaW8vdjEKa2luZDogQ2x1c3RlckRlcGxveW1lbnQKbWV0YWRhdGE6CiAgY3JlYXRpb25UaW1lc3RhbXA6IG51bGwKICBuYW1lOiB0ZXN0LWNsdXN0ZXIKc3BlYzoKICBiYXNlRG9tYWluOiBleGFtcGxlLmNvbQogIGNsdXN0ZXJJbnN0YWxsUmVmOgogICAgZ3JvdXA6IGV4dGVuc2lvbnMuaGl2ZS5vcGVuc2hpZnQuaW8KICAgIGtpbmQ6IEFnZW50Q2x1c3Rlckluc3RhbGwKICAgIG5hbWU6IHRlc3QtY2x1c3RlcgogICAgdmVyc2lvbjogdjFiZXRhMQogIGNsdXN0ZXJOYW1lOiB0ZXN0LWNsdXN0ZXIKICBjb250cm9sUGxhbmVDb25maWc6CiAgICBzZXJ2aW5nQ2VydGlmaWNhdGVzOiB7fQogIGluc3RhbGxlZDogZmFsc2UKICBwbGF0Zm9ybToge30KICBwdWxsU2VjcmV0UmVmOgogICAgbmFtZTogdGVzdC1jbHVzdGVyLXB1bGwtc2VjcmV0CnN0YXR1czoge30K"
+        },
+        "Config": {
+            "kind": "ClusterDeployment",
+            "apiVersion": "hive.openshift.io/v1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "clusterName": "test-cluster",
+                "baseDomain": "example.com",
+                "platform": {},
+                "pullSecretRef": {
+                    "name": "test-cluster-pull-secret"
+                },
+                "controlPlaneConfig": {
+                    "servingCertificates": {}
+                },
+                "installed": false,
+                "clusterInstallRef": {
+                    "group": "extensions.hive.openshift.io",
+                    "version": "v1beta1",
+                    "kind": "AgentClusterInstall",
+                    "name": "test-cluster"
+                }
+            },
+            "status": {}
+        }
+    },
+    "*manifests.ClusterImageSet": {
+        "File": {
+            "Filename": "cluster-manifests/cluster-image-set.yaml",
+            "Data": "YXBpVmVyc2lvbjogaGl2ZS5vcGVuc2hpZnQuaW8vdjEKa2luZDogQ2x1c3RlckltYWdlU2V0Cm1ldGFkYXRhOgogIGNyZWF0aW9uVGltZXN0YW1wOiBudWxsCiAgbmFtZTogb3BlbnNoaWZ0LTFmMDI2YmM1YmUxMjhhZmM0ZjQwOTVjNzE1MjY0ZjA4OWYxOGYyOGItZGlydHkKc3BlYzoKICByZWxlYXNlSW1hZ2U6IHJlZ2lzdHJ5LmNpLm9wZW5zaGlmdC5vcmcvb3JpZ2luL3JlbGVhc2U6NC4yMApzdGF0dXM6IHt9Cg=="
+        },
+        "Config": {
+            "kind": "ClusterImageSet",
+            "apiVersion": "hive.openshift.io/v1",
+            "metadata": {
+                "name": "openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "releaseImage": "registry.ci.openshift.org/origin/release:4.20"
+            },
+            "status": {}
+        }
+    },
+    "*manifests.InfraEnv": {
+        "File": {
+            "Filename": "cluster-manifests/infraenv.yaml",
+            "Data": "YXBpVmVyc2lvbjogYWdlbnQtaW5zdGFsbC5vcGVuc2hpZnQuaW8vdjFiZXRhMQpraW5kOiBJbmZyYUVudgptZXRhZGF0YToKICBjcmVhdGlvblRpbWVzdGFtcDogbnVsbAogIG5hbWU6IHRlc3QtY2x1c3RlcgpzcGVjOgogIGNsdXN0ZXJSZWY6CiAgICBuYW1lOiB0ZXN0LWNsdXN0ZXIKICBjcHVBcmNoaXRlY3R1cmU6IHg4Nl82NAogIGlweGVTY3JpcHRUeXBlOiAiIgogIG5tU3RhdGVDb25maWdMYWJlbFNlbGVjdG9yOgogICAgbWF0Y2hMYWJlbHM6CiAgICAgIGluZnJhZW52cy5hZ2VudC1pbnN0YWxsLm9wZW5zaGlmdC5pbzogdGVzdC1jbHVzdGVyCiAgcHVsbFNlY3JldFJlZjoKICAgIG5hbWU6IHRlc3QtY2x1c3Rlci1wdWxsLXNlY3JldApzdGF0dXM6CiAgYWdlbnRMYWJlbFNlbGVjdG9yOiB7fQogIGJvb3RBcnRpZmFjdHM6CiAgICBkaXNjb3ZlcnlJZ25pdGlvblVSTDogIiIKICAgIGluaXRyZDogIiIKICAgIGlweGVTY3JpcHQ6ICIiCiAgICBrZXJuZWw6ICIiCiAgICByb290ZnM6ICIiCiAgZGVidWdJbmZvOgogICAgZXZlbnRzVVJMOiAiIgo="
+        },
+        "Config": {
+            "kind": "InfraEnv",
+            "apiVersion": "agent-install.openshift.io/v1beta1",
+            "metadata": {
+                "name": "test-cluster",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "pullSecretRef": {
+                    "name": "test-cluster-pull-secret"
+                },
+                "nmStateConfigLabelSelector": {
+                    "matchLabels": {
+                        "infraenvs.agent-install.openshift.io": "test-cluster"
+                    }
+                },
+                "clusterRef": {
+                    "name": "test-cluster"
+                },
+                "cpuArchitecture": "x86_64",
+                "ipxeScriptType": ""
+            },
+            "status": {
+                "agentLabelSelector": {},
+                "debugInfo": {
+                    "eventsURL": ""
+                },
+                "bootArtifacts": {
+                    "initrd": "",
+                    "rootfs": "",
+                    "kernel": "",
+                    "ipxeScript": "",
+                    "discoveryIgnitionURL": ""
+                }
+            }
+        }
+    },
+    "*manifests.NMStateConfig": {
+        "File": null,
+        "StaticNetworkConfig": null,
+        "Config": null
+    },
+    "*mirror.CaBundle": {
+        "File": {
+            "Filename": "mirror/ca-bundle.crt",
+            "Data": ""
+        }
+    },
+    "*mirror.RegistriesConf": {
+        "File": {
+            "Filename": "mirror/registries.conf",
+            "Data": "CiMgTk9URTogUklTSyBPRiBVU0lORyBVTlFVQUxJRklFRCBJTUFHRSBOQU1FUwojIFdlIHJlY29tbWVuZCBhbHdheXMgdXNpbmcgZnVsbHkgcXVhbGlmaWVkIGltYWdlIG5hbWVzIGluY2x1ZGluZyB0aGUgcmVnaXN0cnkKIyBzZXJ2ZXIgKGZ1bGwgZG5zIG5hbWUpLCBuYW1lc3BhY2UsIGltYWdlIG5hbWUsIGFuZCB0YWcKIyAoZS5nLiwgcmVnaXN0cnkucmVkaGF0LmlvL3ViaTgvdWJpOmxhdGVzdCkuIFB1bGxpbmcgYnkgZGlnZXN0IChpLmUuLAojIHF1YXkuaW8vcmVwb3NpdG9yeS9uYW1lQGRpZ2VzdCkgZnVydGhlciBlbGltaW5hdGVzIHRoZSBhbWJpZ3VpdHkgb2YgdGFncy4KIyBXaGVuIHVzaW5nIHNob3J0IG5hbWVzLCB0aGVyZSBpcyBhbHdheXMgYW4gaW5oZXJlbnQgcmlzayB0aGF0IHRoZSBpbWFnZSBiZWluZwojIHB1bGxlZCBjb3VsZCBiZSBzcG9vZmVkLiBGb3IgZXhhbXBsZSwgYSB1c2VyIHdhbnRzIHRvIHB1bGwgYW4gaW1hZ2UgbmFtZWQKIyAnZm9vYmFyJyBmcm9tIGEgcmVnaXN0cnkgYW5kIGV4cGVjdHMgaXQgdG8gY29tZSBmcm9tIG15cmVnaXN0cnkuY29tLiBJZgojIG15cmVnaXN0cnkuY29tIGlzIG5vdCBmaXJzdCBpbiB0aGUgc2VhcmNoIGxpc3QsIGFuIGF0dGFja2VyIGNvdWxkIHBsYWNlIGEKIyBkaWZmZXJlbnQgJ2Zvb2JhcicgaW1hZ2UgYXQgYSByZWdpc3RyeSBlYXJsaWVyIGluIHRoZSBzZWFyY2ggbGlzdC4gVGhlIHVzZXIKIyB3b3VsZCBhY2NpZGVudGFsbHkgcHVsbCBhbmQgcnVuIHRoZSBhdHRhY2tlcidzIGltYWdlIGFuZCBjb2RlIHJhdGhlciB0aGFuIHRoZQojIGludGVuZGVkIGNvbnRlbnQuIFdlIHJlY29tbWVuZCBvbmx5IGFkZGluZyByZWdpc3RyaWVzIHdoaWNoIGFyZSBjb21wbGV0ZWx5CiMgdHJ1c3RlZCAoaS5lLiwgcmVnaXN0cmllcyB3aGljaCBkb24ndCBhbGxvdyB1bmtub3duIG9yIGFub255bW91cyB1c2VycyB0bwojIGNyZWF0ZSBhY2NvdW50cyB3aXRoIGFyYml0cmFyeSBuYW1lcykuIFRoaXMgd2lsbCBwcmV2ZW50IGFuIGltYWdlIGZyb20gYmVpbmcKIyBzcG9vZmVkLCBzcXVhdHRlZCBvciBvdGhlcndpc2UgbWFkZSBpbnNlY3VyZS4gIElmIGl0IGlzIG5lY2Vzc2FyeSB0byB1c2Ugb25lCiMgb2YgdGhlc2UgcmVnaXN0cmllcywgaXQgc2hvdWxkIGJlIGFkZGVkIGF0IHRoZSBlbmQgb2YgdGhlIGxpc3QuCiMKIyAjIEFuIGFycmF5IG9mIGhvc3RbOnBvcnRdIHJlZ2lzdHJpZXMgdG8gdHJ5IHdoZW4gcHVsbGluZyBhbiB1bnF1YWxpZmllZCBpbWFnZSwgaW4gb3JkZXIuCgp1bnF1YWxpZmllZC1zZWFyY2gtcmVnaXN0cmllcyA9IFtdCgojIFtbcmVnaXN0cnldXQojICMgVGhlICJwcmVmaXgiIGZpZWxkIGlzIHVzZWQgdG8gY2hvb3NlIHRoZSByZWxldmFudCBbW3JlZ2lzdHJ5XV0gVE9NTCB0YWJsZTsKIyAjIChvbmx5KSB0aGUgVE9NTCB0YWJsZSB3aXRoIHRoZSBsb25nZXN0IG1hdGNoIGZvciB0aGUgaW5wdXQgaW1hZ2UgbmFtZQojICMgKHRha2luZyBpbnRvIGFjY291bnQgbmFtZXNwYWNlL3JlcG8vdGFnL2RpZ2VzdCBzZXBhcmF0b3JzKSBpcyB1c2VkLgojICMgCiMgIyBUaGUgcHJlZml4IGNhbiBhbHNvIGJlIG9mIHRoZSBmb3JtOiAqLmV4YW1wbGUuY29tIGZvciB3aWxkY2FyZCBzdWJkb21haW4KIyAjIG1hdGNoaW5nLgojICMKIyAjIElmIHRoZSBwcmVmaXggZmllbGQgaXMgbWlzc2luZywgaXQgZGVmYXVsdHMgdG8gYmUgdGhlIHNhbWUgYXMgdGhlICJsb2NhdGlvbiIgZmllbGQuCiMgcHJlZml4ID0gImV4YW1wbGUuY29tL2ZvbyIKIwojICMgSWYgdHJ1ZSwgdW5lbmNyeXB0ZWQgSFRUUCBhcyB3ZWxsIGFzIFRMUyBjb25uZWN0aW9ucyB3aXRoIHVudHJ1c3RlZAojICMgY2VydGlmaWNhdGVzIGFyZSBhbGxvd2VkLgojIGluc2VjdXJlID0gZmFsc2UKIwojICMgSWYgdHJ1ZSwgcHVsbGluZyBpbWFnZXMgd2l0aCBtYXRjaGluZyBuYW1lcyBpcyBmb3JiaWRkZW4uCiMgYmxvY2tlZCA9IGZhbHNlCiMKIyAjIFRoZSBwaHlzaWNhbCBsb2NhdGlvbiBvZiB0aGUgInByZWZpeCItcm9vdGVkIG5hbWVzcGFjZS4KIyAjCiMgIyBCeSBkZWZhdWx0LCB0aGlzIGlzIGVxdWFsIHRvICJwcmVmaXgiIChpbiB3aGljaCBjYXNlICJwcmVmaXgiIGNhbiBiZSBvbWl0dGVkCiMgIyBhbmQgdGhlIFtbcmVnaXN0cnldXSBUT01MIHRhYmxlIGNhbiBvbmx5IHNwZWNpZnkgImxvY2F0aW9uIikuCiMgIwojICMgRXhhbXBsZTogR2l2ZW4KIyAjICAgcHJlZml4ID0gImV4YW1wbGUuY29tL2ZvbyIKIyAjICAgbG9jYXRpb24gPSAiaW50ZXJuYWwtcmVnaXN0cnktZm9yLWV4YW1wbGUubmV0L2JhciIKIyAjIHJlcXVlc3RzIGZvciB0aGUgaW1hZ2UgZXhhbXBsZS5jb20vZm9vL215aW1hZ2U6bGF0ZXN0IHdpbGwgYWN0dWFsbHkgd29yayB3aXRoIHRoZQojICMgaW50ZXJuYWwtcmVnaXN0cnktZm9yLWV4YW1wbGUubmV0L2Jhci9teWltYWdlOmxhdGVzdCBpbWFnZS4KIwojICMgVGhlIGxvY2F0aW9uIGNhbiBiZSBlbXB0eSBpZmYgcHJlZml4IGlzIGluIGEKIyAjIHdpbGRjYXJkZWQgZm9ybWF0OiAiKi5leGFtcGxlLmNvbSIuIEluIHRoaXMgY2FzZSwgdGhlIGlucHV0IHJlZmVyZW5jZSB3aWxsCiMgIyBiZSB1c2VkIGFzLWlzIHdpdGhvdXQgYW55IHJld3JpdGUuCiMgbG9jYXRpb24gPSBpbnRlcm5hbC1yZWdpc3RyeS1mb3ItZXhhbXBsZS5jb20vYmFyIgojCiMgIyAoUG9zc2libHktcGFydGlhbCkgbWlycm9ycyBmb3IgdGhlICJwcmVmaXgiLXJvb3RlZCBuYW1lc3BhY2UuCiMgIwojICMgVGhlIG1pcnJvcnMgYXJlIGF0dGVtcHRlZCBpbiB0aGUgc3BlY2lmaWVkIG9yZGVyOyB0aGUgZmlyc3Qgb25lIHRoYXQgY2FuIGJlCiMgIyBjb250YWN0ZWQgYW5kIGNvbnRhaW5zIHRoZSBpbWFnZSB3aWxsIGJlIHVzZWQgKGFuZCBpZiBub25lIG9mIHRoZSBtaXJyb3JzIGNvbnRhaW5zIHRoZSBpbWFnZSwKIyAjIHRoZSBwcmltYXJ5IGxvY2F0aW9uIHNwZWNpZmllZCBieSB0aGUgInJlZ2lzdHJ5LmxvY2F0aW9uIiBmaWVsZCwgb3IgdXNpbmcgdGhlIHVubW9kaWZpZWQKIyAjIHVzZXItc3BlY2lmaWVkIHJlZmVyZW5jZSwgaXMgdHJpZWQgbGFzdCkuCiMgIwojICMgRWFjaCBUT01MIHRhYmxlIGluIHRoZSAibWlycm9yIiBhcnJheSBjYW4gY29udGFpbiB0aGUgZm9sbG93aW5nIGZpZWxkcywgd2l0aCB0aGUgc2FtZSBzZW1hbnRpY3MKIyAjIGFzIGlmIHNwZWNpZmllZCBpbiB0aGUgW1tyZWdpc3RyeV1dIFRPTUwgdGFibGUgZGlyZWN0bHk6CiMgIyAtIGxvY2F0aW9uCiMgIyAtIGluc2VjdXJlCiMgW1tyZWdpc3RyeS5taXJyb3JdXQojIGxvY2F0aW9uID0gImV4YW1wbGUtbWlycm9yLTAubG9jYWwvbWlycm9yLWZvci1mb28iCiMgW1tyZWdpc3RyeS5taXJyb3JdXQojIGxvY2F0aW9uID0gImV4YW1wbGUtbWlycm9yLTEubG9jYWwvbWlycm9ycy9mb28iCiMgaW5zZWN1cmUgPSB0cnVlCiMgIyBHaXZlbiB0aGUgYWJvdmUsIGEgcHVsbCBvZiBleGFtcGxlLmNvbS9mb28vaW1hZ2U6bGF0ZXN0IHdpbGwgdHJ5OgojICMgMS4gZXhhbXBsZS1taXJyb3ItMC5sb2NhbC9taXJyb3ItZm9yLWZvby9pbWFnZTpsYXRlc3QKIyAjIDIuIGV4YW1wbGUtbWlycm9yLTEubG9jYWwvbWlycm9ycy9mb28vaW1hZ2U6bGF0ZXN0CiMgIyAzLiBpbnRlcm5hbC1yZWdpc3RyeS1mb3ItZXhhbXBsZS5uZXQvYmFyL2ltYWdlOmxhdGVzdAojICMgaW4gb3JkZXIsIGFuZCB1c2UgdGhlIGZpcnN0IG9uZSB0aGF0IGV4aXN0cy4K"
+        },
+        "Config": {
+            "Registries": null,
+            "UnqualifiedSearchRegistries": [],
+            "CredentialHelpers": null,
+            "ShortNameMode": "",
+            "Aliases": null
+        },
+        "MirrorConfig": null
+    },
+    "*releaseimage.Image": {
+        "PullSpec": "registry.ci.openshift.org/origin/release:4.20",
+        "Repository": "registry.ci.openshift.org/origin/release"
+    },
+    "*workflow.AgentWorkflow": {
+        "File": {
+            "Filename": ".agentworkflow",
+            "Data": "aW5zdGFsbA=="
+        },
+        "Workflow": "install"
+    }
+}
