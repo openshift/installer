@@ -41,7 +41,7 @@ type API interface {
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
 	GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName string, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error)
 	GetCapacityReservationGroup(ctx context.Context, subscriptionID, groupName, capacityReservationGroupName string) (*azenc.CapacityReservationGroup, error)
-	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (azenc.VirtualMachineImage, error)
+	GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (armcompute.VirtualMachineImage, error)
 	AreMarketplaceImageTermsAccepted(ctx context.Context, publisher, offer, sku string) (bool, error)
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
