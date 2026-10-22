@@ -149,7 +149,8 @@ func validateCapacityReservationGroup(group *azure.CapacityReservationGroup, clo
 	}
 
 	allErrs := field.ErrorList{}
-	if !RxSubscriptionID.MatchString(group.SubscriptionID) {
+	// SubscriptionID is optional: when omitted it defaults to the cluster subscription.
+	if group.SubscriptionID != "" && !RxSubscriptionID.MatchString(group.SubscriptionID) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("subscriptionId"), group.SubscriptionID, "invalid subscription ID format"))
 	}
 	if !RxResourceGroup.MatchString(group.ResourceGroup) {

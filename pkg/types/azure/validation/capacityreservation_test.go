@@ -46,6 +46,15 @@ func TestValidateCapacityReservationGroup(t *testing.T) {
 			cloudName: azure.PublicCloud,
 		},
 		{
+			name: "valid omitted subscription",
+			group: func() *azure.CapacityReservationGroup {
+				group := valid()
+				group.SubscriptionID = ""
+				return group
+			}(),
+			cloudName: azure.PublicCloud,
+		},
+		{
 			name:      "unsupported on Azure Stack",
 			group:     valid(),
 			cloudName: azure.StackCloud,
