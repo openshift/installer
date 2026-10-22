@@ -829,6 +829,137 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	}
 }
 
+func TestValidateInstanceTypeRestrictions(t *testing.T) {
+	unrestrictedSku := &azenc.ResourceSku{Name: to.StringPtr("Standard_D8s_v3")}
+
+	regionRestrictedSku := &azenc.ResourceSku{
+		Name: to.StringPtr("Standard_L8s_v3"),
+		Restrictions: &[]azenc.ResourceSkuRestrictions{{
+			Type:       azenc.Location,
+			ReasonCode: azenc.NotAvailableForSubscription,
+			Values:     &[]string{validRegion},
+		}},
+	}
+
+	zoneRestrictedSku := &azenc.ResourceSku{
+		Name: to.StringPtr("Standard_L16s_v3"),
+		Restrictions: &[]azenc.ResourceSkuRestrictions{{
+			Type:            azenc.Zone,
+			ReasonCode:      azenc.NotAvailableForSubscription,
+			RestrictionInfo: &azenc.ResourceSkuRestrictionInfo{Zones: &[]string{"2", "3"}},
+		}},
+	}
+
+	quotaOnlyRestrictedSku := &azenc.ResourceSku{
+		Name: to.StringPtr("Standard_L32s_v3"),
+		Restrictions: &[]azenc.ResourceSkuRestrictions{{
+			Type:            azenc.Zone,
+			ReasonCode:      azenc.QuotaID,
+			RestrictionInfo: &azenc.ResourceSkuRestrictionInfo{Zones: &[]string{"1"}},
+		}},
+	}
+
+	otherRegionRestrictedSku := &azenc.ResourceSku{
+		Name: to.StringPtr("Standard_L48s_v3"),
+		Restrictions: &[]azenc.ResourceSkuRestrictions{{
+			Type:       azenc.Location,
+			ReasonCode: azenc.NotAvailableForSubscription,
+			Values:     &[]string{"westus2"},
+		}},
+	}
+
+	zoneRestrictedSkuForZoneLookupFailure := &azenc.ResourceSku{
+		Name: to.StringPtr("Standard_L64s_v3"),
+		Restrictions: &[]azenc.ResourceSkuRestrictions{{
+			Type:            azenc.Zone,
+			ReasonCode:      azenc.NotAvailableForSubscription,
+			RestrictionInfo: &azenc.ResourceSkuRestrictionInfo{Zones: &[]string{"2"}},
+		}},
+	}
+
+	cases := []struct {
+		name                 string
+		sku                  *azenc.ResourceSku
+		instanceType         string
+		icZones              []string
+		availabilityZones    []string
+		availabilityZonesErr error
+		expectedError        bool
+		expectedErrMsg       string
+	}{
+		{
+			name:          "no restrictions is a no-op",
+			sku:           unrestrictedSku,
+			instanceType:  "Standard_D8s_v3",
+			icZones:       []string{"1", "2"},
+			expectedError: false,
+		},
+		{
+			name:           "location restriction fails regardless of requested zones",
+			sku:            regionRestrictedSku,
+			instanceType:   "Standard_L8s_v3",
+			icZones:        []string{"1"},
+			expectedError:  true,
+			expectedErrMsg: `instance type Standard_L8s_v3 is not available for this subscription in region centralus`,
+		},
+		{
+			name:           "zone restriction intersects requested zones",
+			sku:            zoneRestrictedSku,
+			instanceType:   "Standard_L16s_v3",
+			icZones:        []string{"2"},
+			expectedError:  true,
+			expectedErrMsg: `instance type Standard_L16s_v3 is not available for this subscription in zones: \[2\]`,
+		},
+		{
+			name:          "zone restriction does not intersect requested zones",
+			sku:           zoneRestrictedSku,
+			instanceType:  "Standard_L16s_v3",
+			icZones:       []string{"1"},
+			expectedError: false,
+		},
+		{
+			name:          "quota-only restriction is not a hard failure",
+			sku:           quotaOnlyRestrictedSku,
+			instanceType:  "Standard_L32s_v3",
+			icZones:       []string{"1"},
+			expectedError: false,
+		},
+		{
+			name:          "location restriction naming a different region does not fail this region",
+			sku:           otherRegionRestrictedSku,
+			instanceType:  "Standard_L48s_v3",
+			icZones:       []string{"1"},
+			expectedError: false,
+		},
+		{
+			name:                 "zone availability lookup failure is a hard failure, not a silent pass",
+			sku:                  zoneRestrictedSkuForZoneLookupFailure,
+			instanceType:         "Standard_L64s_v3",
+			icZones:              []string{},
+			availabilityZonesErr: fmt.Errorf("could not reach Azure"),
+			expectedError:        true,
+			expectedErrMsg:       `could not determine Availability Zones support in the centralus region: could not reach Azure`,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			azureClient := mock.NewMockAPI(mockCtrl)
+			azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), test.instanceType, validRegion).Return(test.sku, nil).AnyTimes()
+			azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), validRegion, test.instanceType).Return(test.availabilityZones, test.availabilityZonesErr).AnyTimes()
+
+			errs := validateInstanceTypeRestrictions(azureClient, field.NewPath("test"), validRegion, test.instanceType, test.icZones)
+			if test.expectedError {
+				assert.Regexp(t, test.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
 func TestValidateDualStackSubnets(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1390,6 +1521,8 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Standard_D8s_v3", gomock.Any()).Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Standard_D2s_v3", gomock.Any()).Return(vmCapabilities["Standard_D2s_v3"], nil).AnyTimes()
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	azureClient.EXPECT().GetVirtualMachineSku(gomock.Any(), gomock.Any(), gomock.Any()).Return(&azenc.ResourceSku{}, nil).AnyTimes()
 
 	azureClient.EXPECT().GetLocationInfo(gomock.Any(), "centralus", "Standard_D8s_v3").Return(locationInfoFull, nil).AnyTimes()
 	azureClient.EXPECT().GetLocationInfo(gomock.Any(), "centralus", "Standard_D2s_v3").Return(locationInfoNoSSD, nil).AnyTimes()
