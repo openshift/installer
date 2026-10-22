@@ -16,7 +16,7 @@ func FuzzSetBaseDomain(f *testing.F) {
 		platform := &Platform{BaseDomainResourceGroupName: "unchanged"}
 		err := platform.SetBaseDomain(zoneID)
 		parts := strings.Split(zoneID, "/")
-		if len(parts) < 5 {
+		if len(parts) < 5 || parts[4] == "" {
 			if err == nil || platform.BaseDomainResourceGroupName != "unchanged" {
 				t.Fatalf("SetBaseDomain(%q) = %v, group %q", zoneID, err, platform.BaseDomainResourceGroupName)
 			}

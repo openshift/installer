@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -366,7 +367,10 @@ func expectedSecurityProfileError(cloud, securityType, encryptionType, vtpm, sec
 }
 
 func clampCount(n int) int {
-	if n < 0 {
+	// Negating math.MinInt overflows and stays negative, which panics in make.
+	if n < -math.MaxInt {
+		n = math.MaxInt
+	} else if n < 0 {
 		n = -n
 	}
 	return n % 3
