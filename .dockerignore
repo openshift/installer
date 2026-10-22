@@ -1,0 +1,6 @@
+# Local build output; each build stage generates its own binary
+bin
+
+# Pre-built CAPI provider binaries from local development; the Dockerfile
+# replaces these from the kas-artifacts and etcd-artifacts stages
+cluster-api/bin
