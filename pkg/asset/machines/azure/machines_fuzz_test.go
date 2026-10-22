@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	machineapi "github.com/openshift/api/machine/v1beta1"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 

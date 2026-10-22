@@ -247,6 +247,9 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6
 	if err != nil {
 		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
 	}
+	if extLB.Properties == nil {
+		return nil, fmt.Errorf("external load balancer %s has no properties", in.loadBalancerName)
+	}
 
 	// Get the existing frontend configuration and backend address pool and
 	// create an additional frontend configuration and backend address
@@ -548,6 +551,9 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 					ipversion = *ipconfig.Properties.PrivateIPAddressVersion
 				}
 				for _, pool := range in.backendAddressPools {
+					if pool == nil {
+						continue
+					}
 					poolAddressVersion := armnetwork.IPVersionIPv4
 					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
 						poolAddressVersion = armnetwork.IPVersionIPv6

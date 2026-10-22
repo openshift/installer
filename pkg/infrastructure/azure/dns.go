@@ -76,7 +76,10 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
 		// Get the internal LB's IPv6 address from Azure (dynamically assigned)
 		ipIlbV6, err := getInternalLBIPv6(ctx, in, resourceGroup, opts)
-		if err == nil && ipIlbV6 != "" {
+		if err != nil {
+			return fmt.Errorf("failed to get internal load balancer IPv6 address: %w", err)
+		}
+		if ipIlbV6 != "" {
 			privateRecords = append(privateRecords, createPrivateRecordSet("api-int", azureTags, ttl, aaaarecord, ipIlbV6, ""))
 			privateRecords = append(privateRecords, createPrivateRecordSet("api", azureTags, ttl, aaaarecord, ipIlbV6, ""))
 		}
