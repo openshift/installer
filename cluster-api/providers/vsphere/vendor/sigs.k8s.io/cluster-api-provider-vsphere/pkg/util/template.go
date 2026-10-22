@@ -22,7 +22,7 @@ import (
 	"text/template"
 
 	sprig "github.com/go-task/slim-sprig/v3"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 const (
@@ -38,12 +38,12 @@ var nameTpl = template.New("name generator").Funcs(nameTemplateFuncs).Option("mi
 
 // GenerateMachineNameFromTemplate generate a name from machine name and a naming strategy template.
 // the template supports only `trimSuffix` and `trunc` functions.
-func GenerateMachineNameFromTemplate(machineName string, nameTemplate *string) (string, error) {
+func GenerateMachineNameFromTemplate(machineName string, nameTemplate string) (string, error) {
 	if machineName == "" {
 		return "", fmt.Errorf("machine name can not be emmpty")
 	}
 
-	if nameTemplate == nil {
+	if nameTemplate == "" {
 		return machineName, nil
 	}
 
@@ -53,9 +53,9 @@ func GenerateMachineNameFromTemplate(machineName string, nameTemplate *string) (
 		},
 	}
 
-	tpl, err := nameTpl.Parse(*nameTemplate)
+	tpl, err := nameTpl.Parse(nameTemplate)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to parse template %q", *nameTemplate)
+		return "", pkgerrors.Wrapf(err, "unable to parse template %q", nameTemplate)
 	}
 
 	var buf bytes.Buffer
