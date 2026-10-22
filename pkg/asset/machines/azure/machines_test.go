@@ -1,16 +1,258 @@
 package azure
 
 import (
+	"encoding/json"
 	"testing"
 
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 )
+
+func TestGenerateSecurityProfile(t *testing.T) {
+	enabled := "Enabled"
+	disabled := "Disabled"
+	encryptionAtHost := true
+
+	testCases := []struct {
+		name     string
+		mpool    *aztypes.MachinePool
+		expected *machineapi.SecurityProfile
+	}{
+		{
+			name:     "no security features",
+			mpool:    &aztypes.MachinePool{},
+			expected: nil,
+		},
+		{
+			name: "encryption at host only",
+			mpool: &aztypes.MachinePool{
+				EncryptionAtHost: true,
+			},
+			expected: &machineapi.SecurityProfile{
+				EncryptionAtHost: &encryptionAtHost,
+			},
+		},
+		{
+			name: "trusted launch",
+			mpool: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &aztypes.TrustedLaunch{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &enabled,
+							VirtualizedTrustedPlatformModule: &disabled,
+						},
+					},
+				},
+			},
+			expected: &machineapi.SecurityProfile{
+				Settings: machineapi.SecuritySettings{
+					SecurityType: machineapi.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &machineapi.TrustedLaunch{
+						UEFISettings: machineapi.UEFISettings{
+							SecureBoot:                       machineapi.SecureBootPolicyEnabled,
+							VirtualizedTrustedPlatformModule: machineapi.VirtualizedTrustedPlatformModulePolicyDisabled,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "confidential VM",
+			mpool: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesConfidentialVM,
+					ConfidentialVM: &aztypes.ConfidentialVM{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &disabled,
+							VirtualizedTrustedPlatformModule: &enabled,
+						},
+					},
+				},
+			},
+			expected: &machineapi.SecurityProfile{
+				Settings: machineapi.SecuritySettings{
+					SecurityType: machineapi.SecurityTypesConfidentialVM,
+					ConfidentialVM: &machineapi.ConfidentialVM{
+						UEFISettings: machineapi.UEFISettings{
+							SecureBoot:                       machineapi.SecureBootPolicyDisabled,
+							VirtualizedTrustedPlatformModule: machineapi.VirtualizedTrustedPlatformModulePolicyEnabled,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, generateSecurityProfile(tc.mpool))
+		})
+	}
+}
+
+func TestEmptySecurityProfileIsOmittedFromProvider(t *testing.T) {
+	azIdx := 0
+	spec, err := provider(
+		&aztypes.Platform{Region: "eastus"},
+		&aztypes.MachinePool{
+			InstanceType: "Standard_D2s_v3",
+			Zones:        []string{"1"},
+			Identity:     &aztypes.VMIdentity{},
+		},
+		"",
+		"user-data",
+		"test-cluster",
+		"master",
+		&azIdx,
+		map[string]string{"HyperVGenerations": "V1,V2"},
+		&icazure.Session{
+			Credentials: icazure.Credentials{SubscriptionID: "test-subscription"},
+			Environment: azureenv.PublicCloud,
+		},
+		"test-network-resource-group",
+		"test-vnet",
+		"test-subnet",
+	)
+	assert.NoError(t, err)
+	assert.Nil(t, spec.SecurityProfile)
+
+	serialized, err := json.Marshal(spec)
+	assert.NoError(t, err)
+
+	var serializedSpec map[string]json.RawMessage
+	err = json.Unmarshal(serialized, &serializedSpec)
+	assert.NoError(t, err)
+	_, securityProfilePresent := serializedSpec["securityProfile"]
+	assert.False(t, securityProfilePresent)
+}
+
+func TestGenerateMachinesSecurityProfile(t *testing.T) {
+	enabled := "Enabled"
+	disabled := "Disabled"
+
+	testCases := []struct {
+		name     string
+		settings *aztypes.MachinePool
+		expected *capz.SecurityProfile
+	}{
+		{
+			name:     "no security features",
+			settings: &aztypes.MachinePool{},
+			expected: nil,
+		},
+		{
+			name: "encryption at host only",
+			settings: &aztypes.MachinePool{
+				EncryptionAtHost: true,
+			},
+			expected: &capz.SecurityProfile{
+				EncryptionAtHost: ptr.To(true),
+			},
+		},
+		{
+			name: "trusted launch",
+			settings: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesTrustedLaunch,
+					TrustedLaunch: &aztypes.TrustedLaunch{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &enabled,
+							VirtualizedTrustedPlatformModule: &disabled,
+						},
+					},
+				},
+			},
+			expected: &capz.SecurityProfile{
+				SecurityType: capz.SecurityTypesTrustedLaunch,
+				UefiSettings: &capz.UefiSettings{
+					SecureBootEnabled: ptr.To(true),
+					VTpmEnabled:       ptr.To(false),
+				},
+			},
+		},
+		{
+			name: "confidential VM",
+			settings: &aztypes.MachinePool{
+				Settings: &aztypes.SecuritySettings{
+					SecurityType: aztypes.SecurityTypesConfidentialVM,
+					ConfidentialVM: &aztypes.ConfidentialVM{
+						UEFISettings: &aztypes.UEFISettings{
+							SecureBoot:                       &disabled,
+							VirtualizedTrustedPlatformModule: &enabled,
+						},
+					},
+				},
+			},
+			expected: &capz.SecurityProfile{
+				SecurityType: capz.SecurityTypesConfidentialVM,
+				UefiSettings: &capz.UefiSettings{
+					SecureBootEnabled: ptr.To(false),
+					VTpmEnabled:       ptr.To(true),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			machinePool := &types.MachinePool{
+				Name:     "master",
+				Replicas: ptr.To[int64](1),
+				Platform: types.MachinePoolPlatform{
+					Azure: tc.settings,
+				},
+			}
+			machinePool.Platform.Azure.Identity = &aztypes.VMIdentity{}
+
+			files, err := GenerateMachines(
+				"test-cluster",
+				"test-resource-group",
+				"test-subscription",
+				&icazure.Session{Environment: azureenv.PublicCloud},
+				&MachineInput{
+					Environment: aztypes.PublicCloud,
+					Platform:    &aztypes.Platform{},
+					Pool:        machinePool,
+				},
+			)
+			assert.NoError(t, err)
+
+			azureMachineCount := 0
+			for _, file := range files {
+				azureMachine, ok := file.Object.(*capz.AzureMachine)
+				if !ok {
+					continue
+				}
+				azureMachineCount++
+				assert.Equal(t, tc.expected, azureMachine.Spec.SecurityProfile)
+
+				if tc.expected == nil {
+					serialized, err := json.Marshal(azureMachine)
+					assert.NoError(t, err)
+
+					var serializedMachine struct {
+						Spec map[string]json.RawMessage `json:"spec"`
+					}
+					err = json.Unmarshal(serialized, &serializedMachine)
+					assert.NoError(t, err)
+					_, securityProfilePresent := serializedMachine.Spec["securityProfile"]
+					assert.False(t, securityProfilePresent)
+				}
+			}
+			assert.Equal(t, 2, azureMachineCount)
+		})
+	}
+}
 
 func TestCapzImage(t *testing.T) {
 	testCases := []struct {
@@ -537,4 +779,87 @@ func TestProviderDataDiskEncryptionSet(t *testing.T) {
 // strPtr returns a pointer to the given string.
 func strPtr(s string) *string {
 	return &s
+}
+
+// TestDefaultedDataDiskCachingReachesMachineSpecs checks that a data disk whose
+// cachingType was omitted in the install config reaches both provisioning
+// paths with the explicit None default: the CAPZ AzureMachines that create the
+// control plane at install time, and the Machine API provider spec shared by
+// the compute MachineSets and the ControlPlaneMachineSet. Without an explicit
+// value, the CAPZ webhook would default the control plane disks to ReadWrite
+// while the Machine API effectively applies None.
+func TestDefaultedDataDiskCachingReachesMachineSpecs(t *testing.T) {
+	newPool := func() *aztypes.MachinePool {
+		mpool := &aztypes.MachinePool{
+			InstanceType: "Standard_D8s_v3",
+			OSDisk: aztypes.OSDisk{
+				DiskSizeGB: 1024,
+				DiskType:   "Premium_LRS",
+			},
+			Zones:    []string{"1"},
+			Identity: &aztypes.VMIdentity{},
+			DataDisks: []capz.DataDisk{{
+				NameSuffix: "etcd",
+				DiskSizeGB: 256,
+				Lun:        ptr.To(int32(0)),
+			}},
+		}
+		azuredefaults.SetMachinePoolDefaults(mpool)
+		return mpool
+	}
+	platform := &aztypes.Platform{Region: "eastus"}
+	session := &icazure.Session{
+		Credentials: icazure.Credentials{SubscriptionID: "test-sub"},
+		Environment: azureenv.Environment{StorageEndpointSuffix: "core.windows.net"},
+	}
+
+	t.Run("CAPZ AzureMachines", func(t *testing.T) {
+		files, err := GenerateMachines("test-cluster", "test-rg", "test-sub", session, &MachineInput{
+			Role:        "master",
+			Environment: aztypes.PublicCloud,
+			Platform:    platform,
+			Pool: &types.MachinePool{
+				Name:     "master",
+				Replicas: ptr.To(int64(3)),
+				Platform: types.MachinePoolPlatform{Azure: newPool()},
+			},
+		})
+		require.NoError(t, err)
+
+		controlPlaneMachines := 0
+		for _, file := range files {
+			azureMachine, ok := file.Object.(*capz.AzureMachine)
+			if !ok {
+				continue
+			}
+			if _, bootstrap := azureMachine.Labels["install.openshift.io/bootstrap"]; bootstrap {
+				assert.Empty(t, azureMachine.Spec.DataDisks, "the bootstrap machine carries no data disks")
+				continue
+			}
+			controlPlaneMachines++
+			require.Len(t, azureMachine.Spec.DataDisks, 1, azureMachine.Name)
+			assert.Equal(t, "None", azureMachine.Spec.DataDisks[0].CachingType, azureMachine.Name)
+		}
+		assert.Equal(t, 3, controlPlaneMachines)
+	})
+
+	t.Run("Machine API provider spec", func(t *testing.T) {
+		spec, err := provider(
+			platform,
+			newPool(),
+			"",             // osImage
+			"user-data",    // userDataSecret
+			"test-cluster", // clusterID
+			"master",       // role
+			ptr.To(0),      // azIdx
+			map[string]string{"HyperVGenerations": "V1,V2"},
+			session,
+			"test-nrg",    // networkResourceGroup
+			"test-vnet",   // virtualNetwork
+			"test-subnet", // subnet
+		)
+		require.NoError(t, err)
+		require.Len(t, spec.DataDisks, 1)
+		assert.Equal(t, machineapi.CachingTypeNone, spec.DataDisks[0].CachingType)
+	})
 }

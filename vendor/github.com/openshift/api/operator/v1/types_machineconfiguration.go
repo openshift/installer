@@ -17,10 +17,14 @@ import (
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=BootImageSkewEnforcement,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? self.?spec.managedBootImages.hasValue() || self.?status.managedBootImagesStatus.hasValue() : true",message="when skew enforcement is in Automatic mode, a boot image configuration is required"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=BootImageSkewEnforcement,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || size(self.spec.managedBootImages.machineManagers) > 0 : true",message="when skew enforcement is in Automatic mode, managedBootImages.machineManagers must not be an empty list"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=BootImageSkewEnforcement,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || !self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io') || self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io' && m.selection.mode == 'All') : true",message="when skew enforcement is in Automatic mode, any MachineAPI MachineSet MachineManager must use selection mode 'All'"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=BootImageSkewEnforcement,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?status.managedBootImagesStatus.machineManagers.hasValue()) || self.status.managedBootImagesStatus.machineManagers.exists(m, m.selection.mode == 'All' && m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io'): true",message="when skew enforcement is in Automatic mode, managedBootImagesStatus must contain a MachineManager opting in all MachineAPI MachineSets"
+// +kubebuilder:validation:XValidation:rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? self.?spec.managedBootImages.hasValue() || self.?status.managedBootImagesStatus.hasValue() : true",message="when skew enforcement is in Automatic mode, a boot image configuration is required"
+// +kubebuilder:validation:XValidation:rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || size(self.spec.managedBootImages.machineManagers) > 0 : true",message="when skew enforcement is in Automatic mode, managedBootImages.machineManagers must not be an empty list"
+// +kubebuilder:validation:XValidation:rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || !self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io') || self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io' && m.selection.mode == 'All') : true",message="when skew enforcement is in Automatic mode, any MachineAPI MachineSet MachineManager must use selection mode 'All'"
+// +kubebuilder:validation:XValidation:rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?status.managedBootImagesStatus.machineManagers.hasValue()) || self.status.managedBootImagesStatus.machineManagers.exists(m, m.selection.mode == 'All' && m.resource == 'machinesets' && m.apiGroup == 'machine.openshift.io'): true",message="when skew enforcement is in Automatic mode, managedBootImagesStatus must contain a MachineManager opting in all MachineAPI MachineSets"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ManagedBootImagesAWSCAPI,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || !self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'cluster.x-k8s.io') || self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'cluster.x-k8s.io' && m.selection.mode == 'All') : true",message="when skew enforcement is in Automatic mode, any CAPI MachineSet MachineManager must use selection mode 'All'"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ManagedBootImagesAWSCAPI,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?status.managedBootImagesStatus.machineManagers.hasValue()) || !self.status.managedBootImagesStatus.machineManagers.exists(m, m.resource == 'machinesets' && m.apiGroup == 'cluster.x-k8s.io') || self.status.managedBootImagesStatus.machineManagers.exists(m, m.selection.mode == 'All' && m.resource == 'machinesets' && m.apiGroup == 'cluster.x-k8s.io'): true",message="when skew enforcement is in Automatic mode, any CAPI MachineSet MachineManager in managedBootImagesStatus must use selection mode 'All'"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ManagedBootImagesAWSCAPI,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?spec.managedBootImages.machineManagers.hasValue()) || !self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinedeployments' && m.apiGroup == 'cluster.x-k8s.io') || self.spec.managedBootImages.machineManagers.exists(m, m.resource == 'machinedeployments' && m.selection.mode == 'All') : true",message="when skew enforcement is in Automatic mode, any CAPI MachineDeployment MachineManager must use selection mode 'All'"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=ManagedBootImagesAWSCAPI,rule="self.?status.bootImageSkewEnforcementStatus.mode.orValue(\"\") == 'Automatic' ? !(self.?status.managedBootImagesStatus.machineManagers.hasValue()) || !self.status.managedBootImagesStatus.machineManagers.exists(m, m.resource == 'machinedeployments') || self.status.managedBootImagesStatus.machineManagers.exists(m, m.selection.mode == 'All' && m.resource == 'machinedeployments'): true",message="when skew enforcement is in Automatic mode, any CAPI MachineDeployment MachineManager in managedBootImagesStatus must use selection mode 'All'"
 type MachineConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -74,7 +78,6 @@ type MachineConfigurationSpec struct {
 	// a skew enforcement mode has been specified.
 	// When version skew is being enforced, cluster upgrades will be disabled until the version skew is deemed
 	// acceptable for the current release payload.
-	// +openshift:enable:FeatureGate=BootImageSkewEnforcement
 	// +optional
 	BootImageSkewEnforcement BootImageSkewEnforcementConfig `json:"bootImageSkewEnforcement,omitempty,omitzero"`
 }
@@ -296,7 +299,6 @@ type MachineConfigurationStatus struct {
 	// boot image skew should be enforced, cluster upgrades will be blocked until it can either automatically
 	// determine skew enforcement or there is an explicit skew enforcement configuration provided in the
 	// spec.bootImageSkewEnforcement field.
-	// +openshift:enable:FeatureGate=BootImageSkewEnforcement
 	// +optional
 	BootImageSkewEnforcementStatus BootImageSkewEnforcementStatus `json:"bootImageSkewEnforcementStatus,omitempty,omitzero"`
 }
@@ -398,6 +400,8 @@ type MachineManagerSelector struct {
 	// Partial requires specified selector(s) and allows customisation of which resources matched by the machine manager will be updated.
 	// Partial is not permitted for the controlplanemachinesets resource type as they are a singleton within the cluster.
 	// None means that every resource matched by the machine manager will not be updated.
+	// When boot image skew enforcement is in Automatic mode, only All is permitted for the
+	// machinesets and machinedeployments resource types, in any API group.
 	// +unionDiscriminator
 	// +required
 	Mode MachineManagerSelectorMode `json:"mode"`

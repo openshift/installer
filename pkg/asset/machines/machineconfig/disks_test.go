@@ -2,7 +2,6 @@ package machineconfig
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -18,14 +17,15 @@ import (
 
 func TestForDiskSetup(t *testing.T) {
 	cases := []struct {
-		name           string
-		role           string
-		device         string
-		label          string
-		path           string
-		diskType       types.DiskType
-		expectedError  string
-		expectedConfig *mcfgv1.MachineConfig
+		name             string
+		role             string
+		device           string
+		label            string
+		path             string
+		diskType         types.DiskType
+		expectedError    string
+		expectedUnitName string
+		expectedConfig   *mcfgv1.MachineConfig
 	}{
 		{
 			name:     "etcd disk setup",
@@ -34,6 +34,8 @@ func TestForDiskSetup(t *testing.T) {
 			label:    "etcd",
 			path:     "/var/lib/etcd",
 			diskType: types.Etcd,
+			// Matches `systemd-escape -p --suffix=mount /var/lib/etcd`.
+			expectedUnitName: "var-lib-etcd.mount",
 			expectedConfig: &mcfgv1.MachineConfig{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: mcfgv1.SchemeGroupVersion.String(),
@@ -57,6 +59,8 @@ func TestForDiskSetup(t *testing.T) {
 			label:    "userdata",
 			path:     "/var/lib/userdata",
 			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount /var/lib/userdata`.
+			expectedUnitName: "var-lib-userdata.mount",
 			expectedConfig: &mcfgv1.MachineConfig{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: mcfgv1.SchemeGroupVersion.String(),
@@ -103,6 +107,8 @@ func TestForDiskSetup(t *testing.T) {
 			label:    "etcd-data[123]",
 			path:     "/var/lib/etcd",
 			diskType: types.Etcd,
+			// Matches `systemd-escape -p --suffix=mount /var/lib/etcd`.
+			expectedUnitName: "var-lib-etcd.mount",
 			expectedConfig: &mcfgv1.MachineConfig{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: mcfgv1.SchemeGroupVersion.String(),
@@ -126,6 +132,8 @@ func TestForDiskSetup(t *testing.T) {
 			label:    "data",
 			path:     "/var/lib/openshift/data",
 			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount /var/lib/openshift/data`.
+			expectedUnitName: "var-lib-openshift-data.mount",
 			expectedConfig: &mcfgv1.MachineConfig{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: mcfgv1.SchemeGroupVersion.String(),
@@ -141,6 +149,53 @@ func TestForDiskSetup(t *testing.T) {
 					Config: runtime.RawExtension{},
 				},
 			},
+		},
+		{
+			// "-" is one of the characters systemd escapes as \xHH. A mount
+			// unit named for the unescaped path would not match its Where= and
+			// systemd would refuse to load it.
+			name:     "user-defined disk with hyphen in path",
+			role:     "worker",
+			device:   "/dev/sdg",
+			label:    "data1",
+			path:     "/data-disk",
+			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount /data-disk`.
+			expectedUnitName: "data\\x2ddisk.mount",
+		},
+		{
+			name:     "user-defined disk with nested path that naively collides with a hyphenated path",
+			role:     "worker",
+			device:   "/dev/sdh",
+			label:    "data2",
+			path:     "/data/disk",
+			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount /data/disk`. Distinct
+			// from data\x2ddisk.mount above: replacing "/" with "-" without
+			// escaping would render both paths as data-disk.mount.
+			expectedUnitName: "data-disk.mount",
+		},
+		{
+			// A leading "." is escaped by systemd, so it does not disappear
+			// into the unit name.
+			name:     "user-defined disk with leading dot in path",
+			role:     "worker",
+			device:   "/dev/sdi",
+			label:    "hidden",
+			path:     "/.hidden",
+			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount /.hidden`.
+			expectedUnitName: "\\x2ehidden.mount",
+		},
+		{
+			name:     "user-defined disk with space in path",
+			role:     "worker",
+			device:   "/dev/sdj",
+			label:    "spaced",
+			path:     "/data disk",
+			diskType: types.UserDefined,
+			// Matches `systemd-escape -p --suffix=mount "/data disk"`.
+			expectedUnitName: "data\\x20disk.mount",
 		},
 	}
 
@@ -158,33 +213,22 @@ func TestForDiskSetup(t *testing.T) {
 			assert.NotNil(t, machineConfig)
 
 			// Verify basic structure
-			assert.Equal(t, tc.expectedConfig.TypeMeta, machineConfig.TypeMeta)
-			assert.Equal(t, tc.expectedConfig.ObjectMeta.Name, machineConfig.ObjectMeta.Name)
-			assert.Equal(t, tc.expectedConfig.ObjectMeta.Labels, machineConfig.ObjectMeta.Labels)
+			if tc.expectedConfig != nil {
+				assert.Equal(t, tc.expectedConfig.TypeMeta, machineConfig.TypeMeta)
+				assert.Equal(t, tc.expectedConfig.ObjectMeta.Name, machineConfig.ObjectMeta.Name)
+				assert.Equal(t, tc.expectedConfig.ObjectMeta.Labels, machineConfig.ObjectMeta.Labels)
+			}
 
 			// Verify the config is not empty
 			assert.NotNil(t, machineConfig.Spec.Config)
 			assert.NotEmpty(t, machineConfig.Spec.Config.Raw)
 
-			// For label checks, use the sanitized label as produced by the code
-			sanitizedLabel := ""
-			switch tc.name {
-			case "label with special characters":
-				sanitizedLabel = "etcddata123"
-			case "user-defined disk setup":
-				sanitizedLabel = "userdata"
-			case "etcd disk setup":
-				sanitizedLabel = "etcd"
-			case "complex path with slashes":
-				sanitizedLabel = "data"
-			case "swap disk setup":
-				sanitizedLabel = "swap"
-			}
+			sanitizedLabel := types.SanitizeDiskLabel(tc.label)
 
 			// Verify specific disk type behavior
 			switch tc.diskType {
 			case types.Etcd, types.UserDefined:
-				assertEtcdUserDefinedConfig(t, machineConfig, tc.device, sanitizedLabel, tc.path)
+				assertEtcdUserDefinedConfig(t, machineConfig, tc.device, sanitizedLabel, tc.path, tc.expectedUnitName)
 			case types.Swap:
 				assertSwapConfig(t, machineConfig, tc.device, sanitizedLabel)
 			}
@@ -192,7 +236,7 @@ func TestForDiskSetup(t *testing.T) {
 	}
 }
 
-func assertEtcdUserDefinedConfig(t *testing.T, mc *mcfgv1.MachineConfig, device, label, path string) {
+func assertEtcdUserDefinedConfig(t *testing.T, mc *mcfgv1.MachineConfig, device, label, path, expectedUnitName string) {
 	t.Helper()
 
 	// Parse the ignition config to verify disk and filesystem configuration
@@ -225,16 +269,34 @@ func assertEtcdUserDefinedConfig(t *testing.T, mc *mcfgv1.MachineConfig, device,
 	assert.Contains(t, mountOpts, "defaults")
 	assert.Contains(t, mountOpts, "prjquota")
 
-	// Verify systemd unit
+	// Verify systemd unit. The expected name is hardcoded per test case to the
+	// output of `systemd-escape -p --suffix=mount <path>` rather than
+	// recomputed from the path, so a change in the escaping logic fails the
+	// test instead of being reproduced by it.
 	assert.Len(t, ignConfig.Systemd.Units, 1)
 	unit := ignConfig.Systemd.Units[0]
-	expectedUnitName := path
-	expectedUnitName = strings.Trim(expectedUnitName, "/")
-	expectedUnitName = strings.ReplaceAll(expectedUnitName, "/", "-")
-	expectedUnitName += ".mount"
 	assert.Equal(t, expectedUnitName, unit.Name)
 	assert.True(t, *unit.Enabled)
 	assert.NotNil(t, unit.Contents)
+}
+
+// TestMountUnitNamesDistinguishedByEscaping guards against the collision that
+// motivated proper systemd escaping: /data-disk and /data/disk are distinct
+// mount paths that a naive "/"→"-" replacement renders as the same unit name,
+// leaving one of the two disks unmounted.
+func TestMountUnitNamesDistinguishedByEscaping(t *testing.T) {
+	names := make(map[string]string, 2)
+	for _, path := range []string{"/data-disk", "/data/disk"} {
+		machineConfig, err := ForDiskSetup("worker", "/dev/sdb", "data", path, types.UserDefined)
+		assert.NoError(t, err)
+
+		ignConfig, err := parseIgnitionConfig(machineConfig.Spec.Config.Raw)
+		assert.NoError(t, err)
+
+		assert.Len(t, ignConfig.Systemd.Units, 1)
+		names[path] = ignConfig.Systemd.Units[0].Name
+	}
+	assert.NotEqual(t, names["/data-disk"], names["/data/disk"])
 }
 
 func assertSwapConfig(t *testing.T, mc *mcfgv1.MachineConfig, device, label string) {
