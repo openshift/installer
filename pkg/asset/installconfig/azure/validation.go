@@ -397,7 +397,7 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	var securityType aztypes.SecurityTypes
+	var defaultSecurityType aztypes.SecurityTypes
 
 	defaultDiskType := aztypes.DefaultDiskType
 	defaultInstanceType := ""
@@ -423,7 +423,7 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 			defaultZones = ic.Platform.Azure.DefaultMachinePlatform.Zones
 		}
 		if ic.Platform.Azure.DefaultMachinePlatform.Settings != nil {
-			securityType = ic.Platform.Azure.DefaultMachinePlatform.Settings.SecurityType
+			defaultSecurityType = ic.Platform.Azure.DefaultMachinePlatform.Settings.SecurityType
 		}
 	}
 
@@ -436,6 +436,7 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 		zones := ic.ControlPlane.Platform.Azure.Zones
 		architecture := ic.ControlPlane.Architecture
 
+		securityType := defaultSecurityType
 		if ic.ControlPlane.Platform.Azure.Settings != nil {
 			securityType = ic.ControlPlane.Platform.Azure.Settings.SecurityType
 		}
@@ -472,6 +473,7 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 			zones := compute.Platform.Azure.Zones
 			architecture := compute.Architecture
 
+			securityType := defaultSecurityType
 			if compute.Platform.Azure.Settings != nil {
 				securityType = compute.Platform.Azure.Settings.SecurityType
 			}
@@ -515,7 +517,7 @@ func validateInstanceTypes(client API, meta *Metadata, ic *types.InstallConfig) 
 		fieldPath := field.NewPath("platform", "azure", "defaultMachinePlatform")
 		ultraSSDEnabled := strings.EqualFold(defaultUltraSSDCapability, "Enabled")
 		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath,
-			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture, securityType, nil)...)
+			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture, defaultSecurityType, nil)...)
 	}
 	return allErrs
 }
