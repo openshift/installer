@@ -31,8 +31,8 @@ import (
 
 // client wraps go-sdk.
 type client interface {
-	Get(context.Context, azure.ResourceSpecGetter) (interface{}, error)
-	CreateOrUpdateAsync(context.Context, azure.ResourceSpecGetter, string, interface{}) (interface{}, *runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], error)
+	Get(context.Context, azure.ResourceSpecGetter) (any, error)
+	CreateOrUpdateAsync(context.Context, azure.ResourceSpecGetter, string, any) (any, *runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], error)
 	DeleteAsync(context.Context, azure.ResourceSpecGetter, string) (*runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientDeleteResponse], error)
 }
 
@@ -50,6 +50,9 @@ func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scalesetvms client options")
 	}
+	if auth.CloudEnvironment() == azure.USSecCloudName {
+		opts.Cloud = auth.CloudConfiguration()
+	}
 	factory, err := armcompute.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armcompute client factory")
@@ -58,7 +61,7 @@ func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 }
 
 // Get retrieves the Virtual Machine Scale Set Virtual Machine.
-func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (interface{}, error) {
+func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (any, error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "scalesetvms.azureClient.Get")
 	defer done()
 
@@ -70,7 +73,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 }
 
 // CreateOrUpdateAsync is a dummy implementation to fulfill the async.Reconciler interface.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, _ azure.ResourceSpecGetter, _ string, _ interface{}) (result interface{}, poller *runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], err error) {
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, _ azure.ResourceSpecGetter, _ string, _ any) (result any, poller *runtime.Poller[armcompute.VirtualMachineScaleSetVMsClientUpdateResponse], err error) {
 	_, _, done := tele.StartSpanWithLogger(ctx, "scalesets.AzureClient.CreateOrUpdateAsync")
 	defer done()
 

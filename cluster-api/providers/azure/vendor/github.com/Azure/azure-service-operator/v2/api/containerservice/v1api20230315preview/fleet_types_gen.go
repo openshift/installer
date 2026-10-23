@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &Fleet{}
 
 // ConvertFrom populates our Fleet from the provided hub Fleet
 func (fleet *Fleet) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Fleet)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/Fleet but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Fleet
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return fleet.AssignProperties_From_Fleet(source)
+	err = fleet.AssignProperties_From_Fleet(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to fleet")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Fleet from our Fleet
 func (fleet *Fleet) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Fleet)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/Fleet but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Fleet
+	err := fleet.AssignProperties_To_Fleet(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from fleet")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return fleet.AssignProperties_To_Fleet(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Fleet{}
@@ -86,17 +101,6 @@ func (fleet *Fleet) SecretDestinationExpressions() []*core.DestinationExpression
 		return nil
 	}
 	return fleet.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Fleet{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (fleet *Fleet) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Fleet_STATUS); ok {
-		return fleet.Spec.Initialize_From_Fleet_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Fleet_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Fleet{}
@@ -302,7 +306,7 @@ func (fleet *Fleet_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties = &arm.FleetProperties{}
 	}
 	if fleet.HubProfile != nil {
-		hubProfile_ARM, err := (*fleet.HubProfile).ConvertToARM(resolved)
+		hubProfile_ARM, err := fleet.HubProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -528,31 +532,6 @@ func (fleet *Fleet_Spec) AssignProperties_To_Fleet_Spec(destination *storage.Fle
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Fleet_STATUS populates our Fleet_Spec from the provided source Fleet_STATUS
-func (fleet *Fleet_Spec) Initialize_From_Fleet_STATUS(source *Fleet_STATUS) error {
-
-	// HubProfile
-	if source.HubProfile != nil {
-		var hubProfile FleetHubProfile
-		err := hubProfile.Initialize_From_FleetHubProfile_STATUS(source.HubProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_FleetHubProfile_STATUS() to populate field HubProfile")
-		}
-		fleet.HubProfile = &hubProfile
-	} else {
-		fleet.HubProfile = nil
-	}
-
-	// Location
-	fleet.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Tags
-	fleet.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -954,16 +933,6 @@ func (profile *FleetHubProfile) AssignProperties_To_FleetHubProfile(destination 
 	return nil
 }
 
-// Initialize_From_FleetHubProfile_STATUS populates our FleetHubProfile from the provided source FleetHubProfile_STATUS
-func (profile *FleetHubProfile) Initialize_From_FleetHubProfile_STATUS(source *FleetHubProfile_STATUS) error {
-
-	// DnsPrefix
-	profile.DnsPrefix = genruntime.ClonePointerToString(source.DnsPrefix)
-
-	// No error
-	return nil
-}
-
 // The FleetHubProfile configures the fleet hub.
 type FleetHubProfile_STATUS struct {
 	// DnsPrefix: DNS prefix used to create the FQDN for the Fleet hub.
@@ -1072,8 +1041,6 @@ func (operator *FleetOperatorSpec) AssignProperties_From_FleetOperatorSpec(sourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1090,8 +1057,6 @@ func (operator *FleetOperatorSpec) AssignProperties_From_FleetOperatorSpec(sourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1129,8 +1094,6 @@ func (operator *FleetOperatorSpec) AssignProperties_To_FleetOperatorSpec(destina
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1147,8 +1110,6 @@ func (operator *FleetOperatorSpec) AssignProperties_To_FleetOperatorSpec(destina
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

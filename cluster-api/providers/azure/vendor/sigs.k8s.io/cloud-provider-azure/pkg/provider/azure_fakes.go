@@ -158,7 +158,7 @@ func GetTestCloud(ctrl *gomock.Controller) (az *Cloud) {
 	az.VMSet, _ = newAvailabilitySet(az)
 	az.vmCache, _ = az.newVMCache()
 	az.lbCache, _ = az.newLBCache()
-	az.nsgRepo, _ = securitygroup.NewSecurityGroupRepo(az.SecurityGroupResourceGroup, az.SecurityGroupName, az.NsgCacheTTLInSeconds, az.Config.DisableAPICallCache, securtyGrouptrack2Client)
+	az.nsgRepo, _ = securitygroup.NewSecurityGroupRepo(az.SecurityGroupResourceGroup, az.SecurityGroupName, az.NsgCacheTTLInSeconds, az.DisableAPICallCache, securtyGrouptrack2Client)
 	az.subnetRepo = subnet.NewMockRepository(ctrl)
 	az.pipCache, _ = az.newPIPCache()
 	az.LoadBalancerBackendPool = NewMockBackendPool(ctrl)
@@ -172,6 +172,7 @@ func GetTestCloud(ctrl *gomock.Controller) (az *Cloud) {
 		kubeClient := fake.NewSimpleClientset() // FIXME: inject kubeClient
 		informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 		az.serviceLister = informerFactory.Core().V1().Services().Lister()
+		az.nodeLister = informerFactory.Core().V1().Nodes().Lister()
 		informerFactory.Start(wait.NeverStop)
 		informerFactory.WaitForCacheSync(wait.NeverStop)
 	}
@@ -181,7 +182,7 @@ func GetTestCloud(ctrl *gomock.Controller) (az *Cloud) {
 // GetTestCloudWithExtendedLocation returns a fake azure cloud for unit tests in Azure related CSI drivers with extended location.
 func GetTestCloudWithExtendedLocation(ctrl *gomock.Controller) (az *Cloud) {
 	az = GetTestCloud(ctrl)
-	az.Config.ExtendedLocationName = "microsoftlosangeles1"
-	az.Config.ExtendedLocationType = "EdgeZone"
+	az.ExtendedLocationName = "microsoftlosangeles1"
+	az.ExtendedLocationType = "EdgeZone"
 	return az
 }
