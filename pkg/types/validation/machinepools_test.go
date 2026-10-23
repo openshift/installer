@@ -707,6 +707,127 @@ func TestValidateMachinePool(t *testing.T) {
 			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/": a data disk cannot be mounted at the root filesystem$`,
 		},
 		{
+			name:     "invalid user-defined disk mounted at /var",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/var"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/var": a data disk cannot be mounted at /var itself: /var is created by the operating system, so data disks must be mounted at a path below it \(e\.g\. /var/lib/etcd\)$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted at /usr",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/usr"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/usr": a data disk cannot be mounted at or below the operating system path "/usr"$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted below /usr",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/usr/local"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/usr/local": a data disk cannot be mounted at or below the operating system path "/usr"$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted below /boot",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/boot/efi"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/boot/efi": a data disk cannot be mounted at or below the operating system path "/boot"$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted at /etc",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/etc"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/etc": a data disk cannot be mounted at or below the operating system path "/etc"$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted at /sysroot",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/sysroot"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/sysroot": a data disk cannot be mounted at or below the operating system path "/sysroot"$`,
+		},
+		{
+			name:     "invalid user-defined disk mounted at /ostree",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/ostree"},
+				})
+				return p
+			}(),
+			expectedError: `^test-path\.diskSetup\[0\]\.userDefined\.mountPath: Invalid value: "/ostree": a data disk cannot be mounted at or below the operating system path "/ostree"$`,
+		},
+		{
+			// /etcetera shares its leading characters with /etc but is not at
+			// or below it, so the prefix denial must not catch it.
+			name:     "valid user-defined disk with mount path starting with an OS path name",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "data1", MountPath: "/etcetera"},
+				})
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			// /var itself is denied, but subpaths below it are the feature's
+			// intended use: containers storage on a dedicated disk.
+			name:     "valid user-defined disk mounted at /var/lib/containers",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.DiskSetup = append(p.DiskSetup, types.Disk{
+					Type:        "user-defined",
+					UserDefined: &types.DiskUserDefined{PlatformDiskID: "containers", MountPath: "/var/lib/containers"},
+				})
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name:     "invalid user-defined disk with non-normalized trailing slash",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
