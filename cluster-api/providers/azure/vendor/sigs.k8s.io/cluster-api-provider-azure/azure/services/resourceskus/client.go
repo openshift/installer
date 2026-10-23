@@ -44,6 +44,9 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourceskus client options")
 	}
+	if auth.CloudEnvironment() == azure.USSecCloudName {
+		opts.Cloud = auth.CloudConfiguration()
+	}
 	factory, err := armcompute.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armcompute client factory")

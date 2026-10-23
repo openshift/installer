@@ -46,13 +46,13 @@ func newRecordSetsClient(auth azure.Authorizer) (*azureRecordsClient, error) {
 }
 
 // Get gets the specified record set. Noop for records.
-func (arc *azureRecordsClient) Get(_ context.Context, _ azure.ResourceSpecGetter) (result interface{}, err error) {
+func (arc *azureRecordsClient) Get(_ context.Context, _ azure.ResourceSpecGetter) (result any, err error) {
 	return nil, nil
 }
 
 // CreateOrUpdateAsync creates or updates a record asynchronously.
 // Creating a record set is not a long-running operation, so we don't ever return a future.
-func (arc *azureRecordsClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, _ string, parameters interface{}) (result interface{}, poller *runtime.Poller[armprivatedns.RecordSetsClientCreateOrUpdateResponse], err error) {
+func (arc *azureRecordsClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, _ string, parameters any) (result any, poller *runtime.Poller[armprivatedns.RecordSetsClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.azureRecordsClient.CreateOrUpdateAsync")
 	defer done()
 

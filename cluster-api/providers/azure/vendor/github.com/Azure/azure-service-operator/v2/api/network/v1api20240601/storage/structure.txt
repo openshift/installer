@@ -18,7 +18,7 @@ PrivateDnsZone: Resource
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
 │   └── Tags: map[string]string
-└── Status: Object (16 properties)
+└── Status: Object (17 properties)
     ├── Conditions: conditions.Condition[]
     ├── Etag: *string
     ├── Id: *string
@@ -33,6 +33,14 @@ PrivateDnsZone: Resource
     ├── NumberOfVirtualNetworkLinksWithRegistration: *int
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
 
@@ -84,7 +92,7 @@ PrivateDnsZonesAAAARecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -124,6 +132,14 @@ PrivateDnsZonesAAAARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -178,7 +194,7 @@ PrivateDnsZonesARecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -218,6 +234,14 @@ PrivateDnsZonesARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -272,7 +296,7 @@ PrivateDnsZonesCNAMERecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -312,6 +336,14 @@ PrivateDnsZonesCNAMERecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -366,7 +398,7 @@ PrivateDnsZonesMXRecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -406,6 +438,14 @@ PrivateDnsZonesMXRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -460,7 +500,7 @@ PrivateDnsZonesPTRRecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -500,6 +540,14 @@ PrivateDnsZonesPTRRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -554,7 +602,7 @@ PrivateDnsZonesSRVRecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -594,6 +642,14 @@ PrivateDnsZonesSRVRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -648,7 +704,7 @@ PrivateDnsZonesTXTRecord: Resource
 │   └── TxtRecords: Object (2 properties)[]
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Value: string[]
-└── Status: Object (18 properties)
+└── Status: Object (19 properties)
     ├── ARecords: Object (2 properties)[]
     │   ├── Ipv4Address: *string
     │   └── PropertyBag: genruntime.PropertyBag
@@ -688,6 +744,14 @@ PrivateDnsZonesTXTRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── Target: *string
     │   └── Weight: *int
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Ttl: *int
     ├── TxtRecords: Object (2 properties)[]
     │   ├── PropertyBag: genruntime.PropertyBag
@@ -713,7 +777,7 @@ PrivateDnsZonesVirtualNetworkLink: Resource
 │   └── VirtualNetwork: *Object (2 properties)
 │       ├── PropertyBag: genruntime.PropertyBag
 │       └── Reference: *genruntime.ResourceReference
-└── Status: Object (13 properties)
+└── Status: Object (14 properties)
     ├── Conditions: conditions.Condition[]
     ├── Etag: *string
     ├── Id: *string
@@ -723,6 +787,14 @@ PrivateDnsZonesVirtualNetworkLink: Resource
     ├── ProvisioningState: *string
     ├── RegistrationEnabled: *bool
     ├── ResolutionPolicy: *string
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     ├── Type: *string
     ├── VirtualNetwork: *Object (2 properties)

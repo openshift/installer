@@ -195,9 +195,11 @@ ManagedCluster: Resource
 │   │   └── UserAssignedIdentities: Object (2 properties)[]
 │   │       ├── PropertyBag: genruntime.PropertyBag
 │   │       └── Reference: genruntime.ResourceReference
-│   ├── IdentityProfile: map[string]Object (4 properties)
+│   ├── IdentityProfile: map[string]Object (6 properties)
 │   │   ├── ClientId: *string
+│   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   ├── ObjectId: *string
+│   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── ResourceReference: *genruntime.ResourceReference
 │   ├── KubernetesVersion: *string
@@ -281,9 +283,11 @@ ManagedCluster: Resource
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── UserAssignedIdentities: Object (5 properties)[]
 │   │   │   ├── BindingSelector: *string
-│   │   │   ├── Identity: *Object (4 properties)
+│   │   │   ├── Identity: *Object (6 properties)
 │   │   │   │   ├── ClientId: *string
+│   │   │   │   ├── ClientIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   ├── ObjectId: *string
+│   │   │   │   ├── ObjectIdFromConfig: *genruntime.ConfigMapReference
 │   │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   │   └── ResourceReference: *genruntime.ResourceReference
 │   │   │   ├── Name: *string
