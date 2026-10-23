@@ -271,12 +271,15 @@ func validateOSImage(p *azure.MachinePool, fldPath *field.Path) field.ErrorList 
 func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironment, fieldPath *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
-	if p.Settings == nil && p.OSDisk.SecurityProfile == nil {
+	if p.Settings == nil {
+		// A security profile with no encryption type does not enable confidential
+		// disk encryption, so there is nothing further to validate. Dereferencing
+		// settings in that case panics.
+		if p.OSDisk.SecurityProfile != nil && p.OSDisk.SecurityProfile.SecurityEncryptionType != "" {
+			return append(errs, field.Required(fieldPath.Child("settings"),
+				"settings should be set when osDisk.securityProfile.securityEncryptionType is defined."))
+		}
 		return errs
-	}
-	if p.Settings == nil && p.OSDisk.SecurityProfile.SecurityEncryptionType != "" {
-		return append(errs, field.Required(fieldPath.Child("settings"),
-			"settings should be set when osDisk.securityProfile.securityEncryptionType is defined."))
 	}
 
 	if cloudName == azure.StackCloud {

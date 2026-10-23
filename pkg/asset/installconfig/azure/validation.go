@@ -805,7 +805,7 @@ func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSIma
 	var allErrs field.ErrorList
 	imageParsedURL, err := url.Parse(ClusterOSImage)
 	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, fmt.Errorf("clusterOSImage URL is invalid: %w", err).Error()))
+		return append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, fmt.Errorf("clusterOSImage URL is invalid: %w", err).Error()))
 	}
 	// If the URL for the image isn't in the Azure Stack environment we can't use it.
 	if !strings.HasSuffix(imageParsedURL.Host, StorageEndpointSuffix) {

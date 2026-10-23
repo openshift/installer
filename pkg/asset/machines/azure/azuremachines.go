@@ -43,10 +43,19 @@ type MachineInput struct {
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
 func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *icazure.Session, in *MachineInput) ([]*asset.RuntimeFile, error) {
+	if in == nil || in.Pool == nil {
+		return nil, fmt.Errorf("missing machine pool")
+	}
+	if in.Platform == nil {
+		return nil, fmt.Errorf("missing Azure platform configuration")
+	}
 	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != aztypes.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
 	mpool := in.Pool.Platform.Azure
+	if mpool == nil {
+		return nil, fmt.Errorf("missing Azure machine pool configuration")
+	}
 
 	total := int64(1)
 	if in.Pool.Replicas != nil {
@@ -118,14 +127,20 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		}
 	}
 
-	userAssignedIdentities := make([]capz.UserAssignedIdentity, len(mpool.Identity.UserAssignedIdentities))
-	for i, id := range mpool.Identity.UserAssignedIdentities {
+	var identityType capz.VMIdentity
+	var configuredIdentities []aztypes.UserAssignedIdentity
+	if mpool.Identity != nil {
+		identityType = mpool.Identity.Type
+		configuredIdentities = mpool.Identity.UserAssignedIdentities
+	}
+	userAssignedIdentities := make([]capz.UserAssignedIdentity, len(configuredIdentities))
+	for i, id := range configuredIdentities {
 		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
 	}
 
 	// If identity type is UserAssigned, but no identities are provided, the installer
 	// will create one. Populate the manifest with a reference to that identity.
-	if mpool.Identity.Type == capz.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
+	if identityType == capz.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
 		userAssignedIdentities = []capz.UserAssignedIdentity{
 			{
 				ProviderID: fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID),
@@ -141,9 +156,13 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		},
 	}
 
-	if in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
+	storageEndpointSuffix := ""
+	if session != nil {
+		storageEndpointSuffix = session.Environment.StorageEndpointSuffix
+	}
+	if in.Platform != nil && in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
 		defaultDiag.Boot.StorageAccountType = in.Platform.DefaultMachinePlatform.BootDiagnostics.Type
-		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
+		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, storageEndpointSuffix); saURI != "" {
 			defaultDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
 			}
@@ -158,7 +177,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			},
 		}
 		controlPlaneDiag.Boot.StorageAccountType = mpool.BootDiagnostics.Type
-		if saURI := bootDiagStorageURIBuilder(mpool.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
+		if saURI := bootDiagStorageURIBuilder(mpool.BootDiagnostics, storageEndpointSuffix); saURI != "" {
 			controlPlaneDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
 			}
@@ -170,7 +189,12 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		// An empty zone list is valid (availability set). Indexing it, or
+		// taking idx modulo zero, panics.
+		zone := ""
+		if n := len(mpool.Zones); n > 0 {
+			zone = mpool.Zones[int(idx)%n]
+		}
 		azureMachine := &capz.AzureMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx),
@@ -196,7 +220,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity:               mpool.Identity.Type,
+				Identity:               identityType,
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
 				DataDisks:              mpool.DataDisks,
@@ -269,24 +293,19 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		Spec: capz.AzureMachineSpec{
 			VMSize:                     mpool.InstanceType,
 			Image:                      image,
-			FailureDomain:              ptr.To(mpool.Zones[0]),
+			FailureDomain:              bootstrapFailureDomain(mpool.Zones),
 			OSDisk:                     osDisk,
 			AdditionalTags:             tags,
 			DisableExtensionOperations: ptr.To(true),
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
-			Identity:                   mpool.Identity.Type,
+			Identity:                   identityType,
 			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities:     userAssignedIdentities,
 		},
 	}
 	utils.SetMachineOSStreamLabels(bootstrapAzureMachine, in.Config)
-
-	if len(mpool.Zones[0]) == 0 {
-		// FailureDomain must be nil (not empty) to trigger availability set.
-		bootstrapAzureMachine.Spec.FailureDomain = nil
-	}
 
 	if in.Platform.CloudName == aztypes.StackCloud {
 		// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
@@ -418,4 +437,14 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confiden
 		}
 		return &capz.Image{ID: &imageID}
 	}
+}
+
+// bootstrapFailureDomain returns the first zone, or nil when zones are
+// absent or blank. An empty FailureDomain must be nil so CAPZ creates an
+// availability set. Indexing an empty zone list panics.
+func bootstrapFailureDomain(zones []string) *string {
+	if len(zones) == 0 || zones[0] == "" {
+		return nil
+	}
+	return ptr.To(zones[0])
 }
