@@ -1528,6 +1528,75 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 	return kpclient.New(clientConfig, kpclient.DefaultTransport())
 }
 
+// ListFloatingIPs lists all floating IPs in the region.
+func (c *Client) ListFloatingIPs(ctx context.Context, region string) ([]vpcv1.FloatingIP, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	pager, err := c.vpcAPI.NewFloatingIpsPager(c.vpcAPI.NewListFloatingIpsOptions())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create floating ips pager: %w", err)
+	}
+	return pager.GetAllWithContext(localContext)
+}
+
+// ListSecurityGroups lists security groups in the region.
+// If vpcID is non-empty, results are scoped to that VPC.
+func (c *Client) ListSecurityGroups(ctx context.Context, region string, vpcID string) ([]vpcv1.SecurityGroup, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	options := c.vpcAPI.NewListSecurityGroupsOptions()
+	if vpcID != "" {
+		options.SetVPCID(vpcID)
+	}
+	pager, err := c.vpcAPI.NewSecurityGroupsPager(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create security groups pager: %w", err)
+	}
+	return pager.GetAllWithContext(localContext)
+}
+
+// ListLoadBalancers lists all load balancers in the region.
+func (c *Client) ListLoadBalancers(ctx context.Context, region string) ([]vpcv1.LoadBalancer, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	pager, err := c.vpcAPI.NewLoadBalancersPager(c.vpcAPI.NewListLoadBalancersOptions())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create load balancers pager: %w", err)
+	}
+	return pager.GetAllWithContext(localContext)
+}
+
+// ListInstances lists all instances in the region.
+func (c *Client) ListInstances(ctx context.Context, region string) ([]vpcv1.Instance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	pager, err := c.vpcAPI.NewInstancesPager(c.vpcAPI.NewListInstancesOptions())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create instances pager: %w", err)
+	}
+	return pager.GetAllWithContext(localContext)
+}
+
 // ListCOSBuckets lists Buckets in the specified COS Instance.
 func (c *Client) ListCOSBuckets(ctx context.Context, cosInstanceID string, region string) (*ibms3.ListBucketsOutput, error) {
 	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
