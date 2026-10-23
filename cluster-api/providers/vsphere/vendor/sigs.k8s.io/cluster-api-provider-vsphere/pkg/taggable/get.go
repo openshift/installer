@@ -20,9 +20,9 @@ package taggable
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/find"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
@@ -39,7 +39,7 @@ func GetObjects(ctx context.Context, taggableCtx taggableContext, failureDomain 
 		return nil, err
 	}
 	if len(objRefs) == 0 {
-		return nil, errors.New("unable to find taggable object")
+		return nil, pkgerrors.New("unable to find taggable object")
 	}
 
 	objects := make(Objects, len(objRefs))

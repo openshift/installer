@@ -19,12 +19,12 @@ package vmware
 import (
 	"context"
 
-	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+	pkgerrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	capicontrollerutil "sigs.k8s.io/cluster-api/util/controller"
+	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,13 +33,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	vmoprvhub "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub"
+	conversionclient "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/client"
 )
 
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=virtualmachineclasses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=clustervirtualmachineimages,verbs=get;list;watch
 
 // AddVSphereMachineTemplateControllerToManager adds the machine template controller to the provided
 // manager.
@@ -49,15 +52,21 @@ func AddVSphereMachineTemplateControllerToManager(ctx context.Context, controlle
 	}
 	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vspheremachinetemplate")
 
-	return ctrl.NewControllerManagedBy(mgr).
+	// NOTE: use vm-operator native types for watches (the reconciler uses the internal hub version).
+	vmClass, err := conversionclient.WatchObject(r.Client, &vmoprvhub.VirtualMachineClass{})
+	if err != nil {
+		return pkgerrors.Wrap(err, "failed to create watch object for VirtualMachineClass")
+	}
+
+	return capicontrollerutil.NewControllerManagedBy(mgr, predicateLog).
 		For(&vmwarev1.VSphereMachineTemplate{}).
 		WithOptions(options).
 		Watches(
-			&vmoprv1.VirtualMachineClass{},
+			vmClass,
 			handler.EnqueueRequestsFromMapFunc(r.enqueueVirtualMachineClassToVSphereMachineTemplateRequests),
 		).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerContext.WatchFilterValue)).
-		Complete(r)
+		Complete(ctx, r)
 }
 
 type vSphereMachineTemplateReconciler struct {
@@ -80,9 +89,9 @@ func (r *vSphereMachineTemplateReconciler) Reconcile(ctx context.Context, req ct
 	}
 
 	// Fetch the VirtualMachineClass
-	vmClass := &vmoprv1.VirtualMachineClass{}
+	vmClass := &vmoprvhub.VirtualMachineClass{}
 	if err := r.Client.Get(ctx, client.ObjectKey{Namespace: req.Namespace, Name: vSphereMachineTemplate.Spec.Template.Spec.ClassName}, vmClass); err != nil {
-		return reconcile.Result{}, errors.Wrapf(err, "failed to get VirtualMachineClass %q for VSphereMachineTemplate", vSphereMachineTemplate.Spec.Template.Spec.ClassName)
+		return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to get VirtualMachineClass %q for VSphereMachineTemplate", vSphereMachineTemplate.Spec.Template.Spec.ClassName)
 	}
 
 	patchHelper, err := patch.NewHelper(vSphereMachineTemplate, r.Client)
@@ -100,7 +109,77 @@ func (r *vSphereMachineTemplateReconciler) Reconcile(ctx context.Context, req ct
 		vSphereMachineTemplate.Status.Capacity[vmwarev1.VSphereResourceMemory] = vmClass.Spec.Hardware.Memory
 	}
 
+	// retrieve the os and arch info from the ClusterVirtualMachineImage
+	os, arch, err := getOSAndArchFromClusterVirtualMachineImage(ctx, r.Client, vSphereMachineTemplate.Spec.Template.Spec.ImageName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	if validOS := normalizeOperatingSystem(os); validOS != "" {
+		vSphereMachineTemplate.Status.NodeInfo.OperatingSystem = validOS
+	}
+	if validArch := normalizeArchitecture(arch); validArch != "" {
+		vSphereMachineTemplate.Status.NodeInfo.Architecture = validArch
+	}
+
 	return reconcile.Result{}, patchHelper.Patch(ctx, vSphereMachineTemplate)
+}
+
+// normalizeOperatingSystem converts the OS string from CVMI to a valid OperatingSystem constant.
+// Returns empty string if the value is not recognized.
+func normalizeOperatingSystem(os string) vmwarev1.OperatingSystem {
+	switch os {
+	case "linux":
+		return vmwarev1.OperatingSystemLinux
+	case "windows":
+		return vmwarev1.OperatingSystemWindows
+	default:
+		return ""
+	}
+}
+
+// normalizeArchitecture converts the architecture string from CVMI to a valid Architecture constant.
+// Returns empty string if the value is not recognized.
+func normalizeArchitecture(arch string) vmwarev1.Architecture {
+	switch arch {
+	case "amd64":
+		return vmwarev1.ArchitectureAmd64
+	case "arm64":
+		return vmwarev1.ArchitectureArm64
+	case "s390x":
+		return vmwarev1.ArchitectureS390x
+	case "ppc64le":
+		return vmwarev1.ArchitecturePpc64le
+	default:
+		return ""
+	}
+}
+
+func getOSAndArchFromClusterVirtualMachineImage(ctx context.Context, c client.Client, imageName string) (string, string, error) {
+	if imageName == "" {
+		return "", "", nil
+	}
+	// Try to fetch the ClusterVirtualMachineImage with the given name
+	cvmi := &vmoprvhub.ClusterVirtualMachineImage{}
+	if err := c.Get(ctx, client.ObjectKey{Name: imageName}, cvmi); err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", "", nil
+		}
+		return "", "", pkgerrors.Wrapf(err, "failed to get ClusterVirtualMachineImage %q", imageName)
+	}
+
+	// Extract OS type and architecture from vmwareSystemProperties
+	var osType, osArch string
+	for _, prop := range cvmi.Status.VMwareSystemProperties {
+		switch prop.Key {
+		case vmwarev1.VMwareSystemOSTypePropertyKey:
+			osType = prop.Value
+		case vmwarev1.VMwareSystemOSArchPropertyKey:
+			osArch = prop.Value
+		}
+	}
+
+	return osType, osArch, nil
 }
 
 // enqueueVirtualMachineClassToVSphereMachineTemplateRequests returns a list of VSphereMachineTemplate reconcile requests

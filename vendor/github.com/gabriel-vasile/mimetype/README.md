@@ -13,8 +13,8 @@
   <a href="https://pkg.go.dev/github.com/gabriel-vasile/mimetype">
     <img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/gabriel-vasile/mimetype.svg">
   </a>
-  <a href="https://goreportcard.com/report/github.com/gabriel-vasile/mimetype">
-    <img alt="Go report card" src="https://goreportcard.com/badge/github.com/gabriel-vasile/mimetype">
+  <a href="https://codecov.io/gh/gabriel-vasile/mimetype">
+    <img alt="Code coverage" src="https://codecov.io/gh/gabriel-vasile/mimetype/graph/badge.svg">
   </a>
   <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/badge/License-MIT-green.svg">
@@ -70,13 +70,13 @@ If increasing the limit does not help, please
 ## Tests
 In addition to unit tests,
 [mimetype_tests](https://github.com/gabriel-vasile/mimetype_tests) compares the
-library with the [Unix file utility](https://en.wikipedia.org/wiki/File_(command))
+library with [libmagic](https://en.wikipedia.org/wiki/File_(command))
 for around 50 000 sample files. Check the latest comparison results
 [here](https://github.com/gabriel-vasile/mimetype_tests/actions).
 
 ## Benchmarks
-Benchmarks for each file format are performed when a PR is open. The results can
-be seen on the [workflows page](https://github.com/gabriel-vasile/mimetype/actions/workflows/benchmark.yml).
+Benchmarks are performed when a PR is open. The results can be seen on the
+[workflows page](https://github.com/gabriel-vasile/mimetype/actions/workflows/benchmark.yml).
 Performance improvements are welcome but correctness is prioritized.
 
 ## Structure
@@ -103,3 +103,10 @@ shows which file formats are most often misidentified and can help prioritise.
 When submitting a PR for detection of a new file format, please make sure to
 add a record to the list of testcases in [mimetype_test.go](mimetype_test.go).
 For complex files a record can be added in the [testdata](testdata) directory.
+Code contributions must respect following rules:
+ - code must be test covered
+ - code must be formatted using the `gofmt` tool
+ - exported names must be documented
+
+**Important**: By submitting a pull request, you agree to allow the project
+owner to license your work under the same license as that used by the project.

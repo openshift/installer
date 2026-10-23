@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package webhooks contains webhooks for the infrastructure v1beta1 API group.
+// Package webhooks contains webhooks for the infrastructure API group.
 package webhooks

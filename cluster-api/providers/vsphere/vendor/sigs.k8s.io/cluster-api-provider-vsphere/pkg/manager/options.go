@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion"
 )
 
 // AddToManagerFunc is a function that can be optionally specified with
@@ -58,6 +59,10 @@ type Options struct {
 	// Password is the password for the account used to access remote vSphere
 	// endpoints.
 	Password string
+
+	// Converter is the API resource converter to use when reading and writing supervisor resources,
+	// e.g. the VirtualMachine resource in the vmoperator.vmware.com group.
+	Converter *conversion.Converter
 
 	// CredentialsFile is the file that contains credentials of CAPV
 	CredentialsFile string

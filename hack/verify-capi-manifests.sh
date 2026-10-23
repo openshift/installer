@@ -9,7 +9,7 @@ generate_capi_manifest() {
 	pushd "$1"
 	# Parse provider module URL and revision
 	# Workaround the import path for azure-service-operator & openstackorc being different from the module path
-	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed -En 's/"//g;s#/cmd/(controller|manager)$##; p')"
+	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed -En 's/"//g;s#/cmd(/(controller|manager))?$##; p')"
 	mod_info="$(go mod download -json "${provider_go_module}")"
 	popd
 	version="$(echo "${mod_info}" | jq '.Version' | sed 's|"||g')"

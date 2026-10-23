@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package types
@@ -82,6 +82,18 @@ type BasePbmLineOfServiceInfo interface {
 
 func init() {
 	types.Add("BasePbmLineOfServiceInfo", reflect.TypeOf((*PbmLineOfServiceInfo)(nil)).Elem())
+}
+
+func (b *PbmPlacementCapabilityProfileRequirement) GetPbmPlacementCapabilityProfileRequirement() *PbmPlacementCapabilityProfileRequirement {
+	return b
+}
+
+type BasePbmPlacementCapabilityProfileRequirement interface {
+	GetPbmPlacementCapabilityProfileRequirement() *PbmPlacementCapabilityProfileRequirement
+}
+
+func init() {
+	types.Add("BasePbmPlacementCapabilityProfileRequirement", reflect.TypeOf((*PbmPlacementCapabilityProfileRequirement)(nil)).Elem())
 }
 
 func (b *PbmPlacementMatchingResources) GetPbmPlacementMatchingResources() *PbmPlacementMatchingResources {

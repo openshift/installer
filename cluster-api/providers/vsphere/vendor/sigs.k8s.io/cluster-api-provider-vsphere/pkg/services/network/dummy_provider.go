@@ -19,13 +19,13 @@ package network
 import (
 	"context"
 
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
+	"sigs.k8s.io/cluster-api/util/conditions"
 
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
+	vmoprvhub "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 )
 
@@ -37,6 +37,10 @@ func DummyNetworkProvider() services.NetworkProvider {
 	return &dummyNetworkProvider{}
 }
 
+func (np *dummyNetworkProvider) SupportsIPv6DualStack() bool {
+	return false
+}
+
 func (np *dummyNetworkProvider) HasLoadBalancer() bool {
 	return false
 }
@@ -46,10 +50,10 @@ func (np *dummyNetworkProvider) SupportsVMReadinessProbe() bool {
 }
 
 func (np *dummyNetworkProvider) ProvisionClusterNetwork(_ context.Context, clusterCtx *vmware.ClusterContext) error {
-	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
-		Type:   vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+	conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterNetworkReadyCondition,
 		Status: metav1.ConditionTrue,
-		Reason: vmwarev1.VSphereClusterNetworkReadyV1Beta2Reason,
+		Reason: vmwarev1.VSphereClusterNetworkReadyReason,
 	})
 	return nil
 }
@@ -58,7 +62,7 @@ func (np *dummyNetworkProvider) GetClusterNetworkName(_ context.Context, _ *vmwa
 	return "", nil
 }
 
-func (np *dummyNetworkProvider) ConfigureVirtualMachine(_ context.Context, _ *vmware.ClusterContext, _ *vmwarev1.VSphereMachine, _ *vmoprv1.VirtualMachine) error {
+func (np *dummyNetworkProvider) ConfigureVirtualMachine(_ context.Context, _ *vmware.ClusterContext, _ *vmwarev1.VSphereMachine, _ *vmoprvhub.VirtualMachine) error {
 	return nil
 }
 

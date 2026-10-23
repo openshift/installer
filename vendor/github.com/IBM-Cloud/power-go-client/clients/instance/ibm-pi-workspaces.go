@@ -11,6 +11,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+	"github.com/go-openapi/runtime"
 )
 
 // IBMPIWorkspacesClient
@@ -41,11 +42,14 @@ func NewIBMPIWorkspacesClient(ctx context.Context, sess *ibmpisession.IBMPISessi
 
 // Get a workspace
 func (f *IBMPIWorkspacesClient) Get(cloudInstanceID string) (*models.Workspace, error) {
-	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf(helpers.NotOnPremSupported)
-	}
 	params := workspaces.NewV1WorkspacesGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithWorkspaceID(cloudInstanceID)
-	resp, err := f.session.Power.Workspaces.V1WorkspacesGet(params, f.session.AuthInfoV2())
+	var authInfo runtime.ClientAuthInfoWriter
+	if f.session.IsOnPrem() {
+		authInfo = f.session.AuthInfo(f.cloudInstanceID)
+	} else {
+		authInfo = f.session.AuthInfoV2()
+	}
+	resp, err := f.session.Power.Workspaces.V1WorkspacesGet(params, authInfo)
 	if err != nil {
 		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetWorkspaceOperationFailed, f.cloudInstanceID, err))
 	}
