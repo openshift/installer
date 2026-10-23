@@ -1475,6 +1475,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		powervc.Name:   {types.PassthroughCredentialsMode},
 		powervs.Name:   {types.ManualCredentialsMode},
 		nutanix.Name:   {types.ManualCredentialsMode},
+		vsphere.Name:   {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()
@@ -1705,11 +1706,40 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	})
 
 	fg := c.EnabledFeatureGates()
-	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+
+	// featureSetsForGate describes the feature sets through which the gate can
+	// be enabled. Gates enabled by TechPreviewNoUpgrade keep the standard
+	// message; gates that TechPreviewNoUpgrade does not enable (currently
+	// DevPreviewNoUpgrade-only gates) must name the feature sets that do
+	// enable them, or the instruction in the error would not work.
+	featureSetsForGate := func(gate configv1.FeatureGateName) string {
+		standardSets := "either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+		featureSets, err := types.FeatureSetsForProfile()
+		if err != nil {
+			return standardSets
+		}
+		var sets []string
+		for name, set := range featureSets {
+			if name == configv1.Default {
+				continue
+			}
+			for _, enabled := range set.Enabled {
+				if enabled.FeatureGateAttributes.Name == gate {
+					sets = append(sets, string(name))
+					break
+				}
+			}
+		}
+		if len(sets) == 0 || slices.Contains(sets, string(configv1.TechPreviewNoUpgrade)) {
+			return standardSets
+		}
+		sort.Strings(sets)
+		return fmt.Sprintf("either the %s or CustomNoUpgrade feature set", strings.Join(sets, " or "))
+	}
 
 	fgCheck := func(c featuregates.GatedInstallConfigFeature) {
 		if !fg.Enabled(c.FeatureGateName) && c.Condition {
-			errMsg := fmt.Sprintf(errMsgTemplate, c.FeatureGateName)
+			errMsg := fmt.Sprintf("this field is protected by the %s feature gate which must be enabled through %s", c.FeatureGateName, featureSetsForGate(c.FeatureGateName))
 			allErrs = append(allErrs, field.Forbidden(c.Field, errMsg))
 		}
 	}
