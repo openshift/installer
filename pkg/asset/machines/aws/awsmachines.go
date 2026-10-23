@@ -26,6 +26,11 @@ import (
 	"github.com/openshift/installer/pkg/utils"
 )
 
+const (
+	subnetScopePrivate = "private"
+	subnetScopePublic  = "public"
+)
+
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
 	Role           string

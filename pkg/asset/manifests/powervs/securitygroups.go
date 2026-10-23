@@ -3,8 +3,7 @@ package powervs
 import (
 	"fmt"
 
-	"k8s.io/utils/ptr"
-	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 )
 
 const (
@@ -13,178 +12,89 @@ const (
 	kubeAPILBSGNameSuffix    = "sg-kube-api-lb"
 )
 
-func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNameSuffix))
-	return capibmcloud.VPCSecurityGroup{
-		Name: kubeAPILBSGNamePtr,
-		Rules: []*capibmcloud.VPCSecurityGroupRule{
-			{
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 10258,
-						MinimumPort: 10258,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
+func sgInboundTCP(minPort, maxPort int64) capibm.VPCSecurityGroupRule {
+	return capibm.VPCSecurityGroupRule{
+		Direction: capibm.VPCSecurityGroupRuleDirectionInbound,
+		Source: capibm.VPCSecurityGroupRulePrototype{
+			Protocol: capibm.VPCSecurityGroupRuleProtocolTCP,
+			PortRange: capibm.VPCSecurityGroupPortRange{
+				MinimumPort: minPort,
+				MaximumPort: maxPort,
 			},
-			{
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 22623,
-						MinimumPort: 22623,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
+			Remotes: []capibm.VPCSecurityGroupRuleRemote{
+				{RemoteType: capibm.VPCSecurityGroupRuleRemoteTypeAny},
 			},
-			{
+		},
+	}
+}
+
+func buildControlPlaneSecurityGroup(infraID string) capibm.VPCSecurityGroupSource {
+	return capibm.VPCSecurityGroupSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.VPCSecurityGroupProvision{
+			Name: fmt.Sprintf("%s-%s", infraID, controlPlaneSGNameSuffix),
+			Rules: []capibm.VPCSecurityGroupRule{
+				sgInboundTCP(10258, 10258),
+				sgInboundTCP(22623, 22623),
 				// Konnectivity
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 8091,
-						MinimumPort: 8091,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
-			},
-			{
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 443,
-						MinimumPort: 443,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
+				sgInboundTCP(8091, 8091),
+				sgInboundTCP(443, 443),
 			},
 		},
 	}
 }
 
-func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix))
-	return capibmcloud.VPCSecurityGroup{
-		Name: kubeAPILBSGNamePtr,
-		Rules: []*capibmcloud.VPCSecurityGroupRule{
-			{
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 6443,
-						MinimumPort: 6443,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
+func buildKubeAPILBSecurityGroup(infraID string) capibm.VPCSecurityGroupSource {
+	return capibm.VPCSecurityGroupSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.VPCSecurityGroupProvision{
+			Name: fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix),
+			Rules: []capibm.VPCSecurityGroupRule{
+				sgInboundTCP(6443, 6443),
 			},
 		},
 	}
 }
 
-func buildClusterWideSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
-	return capibmcloud.VPCSecurityGroup{
-		Name: kubeAPILBSGNamePtr,
-		Rules: []*capibmcloud.VPCSecurityGroupRule{
-			{
+func buildClusterWideSecurityGroup(infraID string) capibm.VPCSecurityGroupSource {
+	return capibm.VPCSecurityGroupSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.VPCSecurityGroupProvision{
+			Name: fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix),
+			Rules: []capibm.VPCSecurityGroupRule{
 				// SSH inbound
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 22,
-						MinimumPort: 22,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
+				sgInboundTCP(22, 22),
+				// Image registry
+				sgInboundTCP(5000, 5000),
+				// ping (ICMP inbound)
+				{
+					Direction: capibm.VPCSecurityGroupRuleDirectionInbound,
+					Source: capibm.VPCSecurityGroupRulePrototype{
+						Protocol: capibm.VPCSecurityGroupRuleProtocolIcmp,
+						Remotes: []capibm.VPCSecurityGroupRuleRemote{
+							{RemoteType: capibm.VPCSecurityGroupRuleRemoteTypeAny},
 						},
 					},
 				},
-			},
-			{
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
-						MaximumPort: 5000,
-						MinimumPort: 5000,
-					},
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
+				// Outbound — all protocols
+				{
+					Direction: capibm.VPCSecurityGroupRuleDirectionOutbound,
+					Destination: capibm.VPCSecurityGroupRulePrototype{
+						Protocol: capibm.VPCSecurityGroupRuleProtocolAll,
+						Remotes: []capibm.VPCSecurityGroupRuleRemote{
+							{RemoteType: capibm.VPCSecurityGroupRuleRemoteTypeAny},
 						},
 					},
 				},
-			},
-			{
-				// ping
-				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolIcmp,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
-			},
-			{
-				// Outbound for cluster-wide
-				Action: capibmcloud.VPCSecurityGroupRuleActionAllow,
-				Destination: &capibmcloud.VPCSecurityGroupRulePrototype{
-					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolAll,
-					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
-						{
-							RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
-						},
-					},
-				},
-				Direction: capibmcloud.VPCSecurityGroupRuleDirectionOutbound,
 			},
 		},
 	}
 }
 
-func getVPCSecurityGroups(infraID string) []capibmcloud.VPCSecurityGroup {
-	// IBM Power VS will rely on 3 SecurityGroups to manage traffic.
-	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 3)
-	securityGroups = append(securityGroups, buildClusterWideSecurityGroup(infraID))
-	securityGroups = append(securityGroups, buildControlPlaneSecurityGroup(infraID))
-	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID))
-	return securityGroups
+func getVPCSecurityGroups(infraID string) []capibm.VPCSecurityGroupSource {
+	return []capibm.VPCSecurityGroupSource{
+		buildClusterWideSecurityGroup(infraID),
+		buildControlPlaneSecurityGroup(infraID),
+		buildKubeAPILBSecurityGroup(infraID),
+	}
 }
