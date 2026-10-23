@@ -43,7 +43,7 @@ type Platform struct {
 	// ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
 
-	// ClusterOSImage is the url of a storage blob in the Azure Stack environment containing an RHCOS VHD. This field is required for Azure Stack and not applicable to Azure.
+	// ClusterOSImage is the url of a storage blob in the Azure environment containing an RHCOS VHD.
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
 	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
@@ -172,7 +172,7 @@ type CustomerManagedKey struct {
 }
 
 // CloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud;AzureUSSecCloud
 type CloudEnvironment string
 
 const (
@@ -190,6 +190,9 @@ const (
 
 	// StackCloud is the Azure cloud environment used at the edge and on premises.
 	StackCloud CloudEnvironment = "AzureStackCloud"
+
+	// AzureUSSecCloud is the Azure cloud environment for US Government Secret (IL6) workloads.
+	USSecCloud CloudEnvironment = "AzureUSSecCloud"
 )
 
 // Name returns name that Azure uses for the cloud environment.
