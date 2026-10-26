@@ -500,7 +500,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
 			publicIPv6, err = createPublicIP(ctx, &pipInput{
-				name:          fmt.Sprintf("%s-pip-v6", in.InfraID),
+				name:          fmt.Sprintf("%s-pip-IPv6", in.InfraID),
 				infraID:       v6InfraID,
 				region:        in.InstallConfig.Config.Azure.Region,
 				resourceGroup: resourceGroupName,
@@ -667,7 +667,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		// For dual-stack, create IPv6 inbound rule for SSH access to bootstrap.
 		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
-			frontendIPv6ConfigName := "public-lb-ip-v6"
+			frontendIPv6ConfigName := "public-lb-ip-IPv6"
 			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
 			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
 				subscriptionID,
@@ -719,7 +719,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 					}
 				}
 				for _, pool := range p.lbBackendAddressPools {
-					if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") && pool.ID != nil && !existing[*pool.ID] {
+					if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") && pool.ID != nil && !existing[*pool.ID] {
 						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
 							ipconfig.Properties.LoadBalancerBackendAddressPools,
 							pool,
@@ -1176,7 +1176,7 @@ func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, n
 
 	// Check if the IPv6 rules already exist
 	for _, rule := range lb.Properties.LoadBalancingRules {
-		if rule.Name != nil && *rule.Name == "LBRuleHTTPS-v6" {
+		if rule.Name != nil && *rule.Name == "LBRuleHTTPS-IPv6" {
 			logrus.Infof("IPv6 load balancing rules already exist")
 			return nil
 		}
@@ -1199,7 +1199,7 @@ func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, n
 	// Find the IPv6 backend pool
 	var ipv6BackendPoolID string
 	for _, pool := range lb.Properties.BackendAddressPools {
-		if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+		if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
 			ipv6BackendPoolID = *pool.ID
 			break
 		}
@@ -1229,7 +1229,7 @@ func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, n
 
 	// Add the IPv6 API server load balancing rule (port 6443)
 	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, &armnetwork.LoadBalancingRule{
-		Name: to.Ptr("LBRuleHTTPS-v6"),
+		Name: to.Ptr("LBRuleHTTPS-IPv6"),
 		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
 			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
 			FrontendPort:         to.Ptr(int32(6443)),
@@ -1251,7 +1251,7 @@ func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, n
 
 	// Add the IPv6 MCS load balancing rule (port 22623)
 	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, &armnetwork.LoadBalancingRule{
-		Name: to.Ptr("sint-v6"),
+		Name: to.Ptr("sint-IPv6"),
 		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
 			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
 			FrontendPort:         to.Ptr(int32(22623)),
