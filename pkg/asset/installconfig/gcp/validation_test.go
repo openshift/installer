@@ -179,6 +179,8 @@ var (
 		"n2-standard-2":     {GuestCpus: 2, MemoryMb: 16384},
 		"n2-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
 		"n4-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"n4a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"a4x-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
 		"t2a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
 		"n4-custom-4-16384": {GuestCpus: 4, MemoryMb: 16384}, // custom machine type
 		"custom-4-16384":    {GuestCpus: 4, MemoryMb: 16384}, // custom machine type - default type
@@ -1120,6 +1122,28 @@ func TestValidateInstanceType(t *testing.T) {
 			confidentialCompute: "Disabled",
 			expectedError:       true,
 			expectedErrMsg:      `^\[<nil>: Internal error: 404\]$`,
+		},
+		{
+			name:                "Valid arm64 instance architecture n4a",
+			zones:               []string{"a", "b"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			arch:                "arm64",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid arm64 instance architecture a4x",
+			zones:               []string{"a", "b"},
+			instanceType:        "a4x-standard-4",
+			diskType:            "hyperdisk-balanced",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			arch:                "arm64",
+			expectedError:       false,
+			expectedErrMsg:      "",
 		},
 		{
 			name:                "Invalid instance architecture",
