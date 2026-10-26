@@ -37,6 +37,12 @@ const (
 	// destroy retries deleting a container that is not empty yet.
 	containerDeletePollInterval = 5 * time.Second
 	containerDeleteTimeout      = 2 * time.Minute
+
+	// swiftRequestTimeout bounds each single request to Swift, including
+	// reading the response body. The OpenStack HTTP client has no timeout of
+	// its own, so without it a Swift request that never completes would block
+	// destroy forever.
+	swiftRequestTimeout = time.Minute
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -139,8 +145,16 @@ func (c *clients) objectStoreClient(ctx context.Context) (*gophercloud.ServiceCl
 		}
 		return nil, fmt.Errorf("failed to create object-store client: %w", err)
 	}
+	setRequestTimeout(conn, swiftRequestTimeout)
 	c.objectStore, c.objectStoreDone = conn, true
 	return conn, nil
+}
+
+// setRequestTimeout bounds each request made with conn, including reading the
+// response body. Each service client has its own provider client and HTTP
+// client, so this does not affect the other clients.
+func setRequestTimeout(conn *gophercloud.ServiceClient, timeout time.Duration) {
+	conn.HTTPClient.Timeout = timeout
 }
 
 // computeClient returns the compute client.
@@ -284,48 +298,80 @@ func deleteObject(ctx context.Context, conn *gophercloud.ServiceClient, containe
 	return nil
 }
 
-// deleteContainer deletes a container's objects one at a time, then the
-// container. Swift bulk delete is not used because PowerVC's Swift does not
-// support it. If objects are added while it runs (Swift returns 409 Conflict
-// for the container delete), it retries until containerDeleteTimeout. A missing
+// deleteContainerObjects deletes every object in a container, one at a time.
+// Swift bulk delete is not used because PowerVC's Swift does not support it.
+// It reports false when the container does not exist.
+func deleteContainerObjects(ctx context.Context, conn *gophercloud.ServiceClient, name string, logger logrus.FieldLogger) (bool, error) {
+	allPages, err := objects.List(conn, name, nil).AllPages(ctx)
+	if err != nil {
+		if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to list objects in container %q: %w", name, err)
+	}
+	objectNames, err := objects.ExtractNames(allPages)
+	if err != nil {
+		return false, fmt.Errorf("failed to extract objects in container %q: %w", name, err)
+	}
+	logger.Debugf("Deleting %d object(s) in container %q", len(objectNames), name)
+	for _, object := range objectNames {
+		if err := deleteObject(ctx, conn, name, object); err != nil {
+			return false, fmt.Errorf("failed to delete object %q in container %q: %w", object, name, err)
+		}
+	}
+	return true, nil
+}
+
+// deleteContainer deletes a container's objects, then the container. The first
+// pass over the objects can take long for a large container, so it runs before
+// and outside containerDeleteTimeout, using the caller's context. If objects
+// are added meanwhile (Swift returns 409 Conflict for the container delete),
+// the objects are deleted again and the container delete is retried until
+// containerDeleteTimeout. The requests made while retrying use the poll's
+// context, so a stalled request cannot outlast the timeout. A missing
 // container is not an error.
 func deleteContainer(ctx context.Context, conn *gophercloud.ServiceClient, name string, logger logrus.FieldLogger) error {
+	found, err := deleteContainerObjects(ctx, conn, name, logger)
+	if err != nil {
+		return err
+	}
+	if !found {
+		logger.Debugf("Container %q not found, nothing to delete", name)
+		return nil
+	}
+
 	var lastErr error
-	err := wait.PollUntilContextTimeout(ctx, containerDeletePollInterval, containerDeleteTimeout, true, func(ctx context.Context) (bool, error) {
-		allPages, err := objects.List(conn, name, nil).AllPages(ctx)
-		if err != nil {
-			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
-				logger.Debugf("Container %q not found, nothing to delete", name)
-				return true, nil
-			}
-			return false, fmt.Errorf("failed to list objects in container %q: %w", name, err)
-		}
-		objectNames, err := objects.ExtractNames(allPages)
-		if err != nil {
-			return false, fmt.Errorf("failed to extract objects in container %q: %w", name, err)
-		}
-		logger.Debugf("Deleting %d object(s) in container %q", len(objectNames), name)
-		for _, object := range objectNames {
-			if err := deleteObject(ctx, conn, name, object); err != nil {
-				return false, fmt.Errorf("failed to delete object %q in container %q: %w", object, name, err)
-			}
-		}
-		if _, err := containers.Delete(ctx, conn, name).Extract(); err != nil {
+	err = wait.PollUntilContextTimeout(ctx, containerDeletePollInterval, containerDeleteTimeout, true, func(pollCtx context.Context) (bool, error) {
+		if _, err := containers.Delete(pollCtx, conn, name).Extract(); err != nil {
 			if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 				return true, nil
 			}
-			if gophercloud.ResponseCodeIs(err, http.StatusConflict) {
-				lastErr = err
-				logger.Debugf("Container %q is not empty yet, retrying", name)
+			if pollCtx.Err() != nil {
+				// The timeout cut the request short: report it as a timeout.
 				return false, nil
 			}
-			return false, fmt.Errorf("failed to delete container %q: %w", name, err)
+			if !gophercloud.ResponseCodeIs(err, http.StatusConflict) {
+				return false, fmt.Errorf("failed to delete container %q: %w", name, err)
+			}
+			lastErr = err
+			logger.Debugf("Container %q is not empty yet, retrying", name)
+			found, err := deleteContainerObjects(pollCtx, conn, name, logger)
+			if pollCtx.Err() != nil {
+				return false, nil
+			}
+			if err != nil {
+				return false, err
+			}
+			return !found, nil
 		}
 		logger.Infof("Deleted container %q", name)
 		return true, nil
 	})
-	if err != nil && lastErr != nil && wait.Interrupted(err) {
-		return fmt.Errorf("failed to delete container %q: %w", name, lastErr)
+	if err != nil && wait.Interrupted(err) {
+		if lastErr != nil {
+			return fmt.Errorf("failed to delete container %q: %w", name, lastErr)
+		}
+		return fmt.Errorf("stopped deleting container %q: %w", name, err)
 	}
 	return err
 }

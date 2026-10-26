@@ -1,13 +1,20 @@
 package powervc
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -147,6 +154,269 @@ func TestContainerMatchesFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, containerMatchesFilter(tt.metadata, tt.filter))
+		})
+	}
+}
+
+// fakeSwift serves a single container and records the requests it receives.
+type fakeSwift struct {
+	// t is used to report failures to write a response. It is set by the
+	// subtest that uses the fake.
+	t            *testing.T
+	mu           sync.Mutex
+	objects      []string
+	deleteStatus int
+	missing      bool
+	// emptyNoContent makes the listing of an empty container answer 204 No
+	// Content with no body, as Swift does.
+	emptyNoContent bool
+	// goneAfterConflict makes the container disappear once its delete is
+	// answered with 409 Conflict.
+	goneAfterConflict bool
+	requests          []string
+}
+
+func (f *fakeSwift) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.requests = append(f.requests, r.Method+" "+r.URL.Path)
+	if f.missing {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	switch {
+	case r.Method == http.MethodGet && r.URL.Path == "/v1/AUTH_p/c":
+		if f.emptyNoContent && len(f.objects) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		list := []map[string]string{}
+		if r.URL.Query().Get("marker") == "" {
+			for _, o := range f.objects {
+				list = append(list, map[string]string{"name": o})
+			}
+		}
+		assert.NoError(f.t, json.NewEncoder(w).Encode(list))
+	case r.Method == http.MethodDelete && r.URL.Path == "/v1/AUTH_p/c":
+		w.WriteHeader(f.deleteStatus)
+		f.missing = f.goneAfterConflict && f.deleteStatus == http.StatusConflict
+	case r.Method == http.MethodDelete:
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func TestDeleteContainer(t *testing.T) {
+	tests := []struct {
+		name      string
+		swift     *fakeSwift
+		expectErr bool
+		expected  []string
+	}{
+		{
+			name:  "deletes the objects and then the container",
+			swift: &fakeSwift{objects: []string{"a", "docker/b"}, deleteStatus: http.StatusNoContent},
+			expected: []string{
+				"GET /v1/AUTH_p/c",
+				"GET /v1/AUTH_p/c",
+				"DELETE /v1/AUTH_p/c/a",
+				"DELETE /v1/AUTH_p/c/docker/b",
+				"DELETE /v1/AUTH_p/c",
+			},
+		},
+		{
+			name:     "a missing container is not an error",
+			swift:    &fakeSwift{missing: true},
+			expected: []string{"GET /v1/AUTH_p/c"},
+		},
+		{
+			name:  "an empty container answered with 204 No Content is deleted",
+			swift: &fakeSwift{emptyNoContent: true, deleteStatus: http.StatusNoContent},
+			expected: []string{
+				"GET /v1/AUTH_p/c",
+				"DELETE /v1/AUTH_p/c",
+			},
+		},
+		{
+			name:  "a conflict deletes the objects again before retrying",
+			swift: &fakeSwift{objects: []string{"a"}, deleteStatus: http.StatusConflict, goneAfterConflict: true},
+			expected: []string{
+				"GET /v1/AUTH_p/c",
+				"GET /v1/AUTH_p/c",
+				"DELETE /v1/AUTH_p/c/a",
+				"DELETE /v1/AUTH_p/c",
+				"GET /v1/AUTH_p/c",
+			},
+		},
+		{
+			name:  "an unexpected container delete failure is returned without retrying",
+			swift: &fakeSwift{deleteStatus: http.StatusInternalServerError},
+			expected: []string{
+				"GET /v1/AUTH_p/c",
+				"DELETE /v1/AUTH_p/c",
+			},
+			expectErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.swift.t = t
+			server := httptest.NewServer(tt.swift)
+			defer server.Close()
+			conn := &gophercloud.ServiceClient{
+				ProviderClient: &gophercloud.ProviderClient{HTTPClient: *server.Client()},
+				Endpoint:       server.URL + "/v1/AUTH_p/",
+			}
+
+			err := deleteContainer(t.Context(), conn, "c", logrus.New())
+
+			if tt.expectErr {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, `failed to delete container "c"`)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expected, tt.swift.requests)
+		})
+	}
+}
+
+// TestDeleteContainerStalledRetry checks that a Swift request that stalls while
+// the container delete is being retried is cut short by the poll's context
+// instead of hanging, and that the conflict is reported.
+func TestDeleteContainerStalledRetry(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	var mu sync.Mutex
+	listings := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case r.Method == http.MethodGet:
+			listings++
+			if listings > 2 {
+				// Stall every listing after the first pass (two requests
+				// because of pagination) until the client gives up. Cancel
+				// here rather than on a timer: this request is only sent
+				// after the client has handled the conflict and recorded it,
+				// so the cancellation cannot race with the 409 response.
+				cancel()
+				mu.Unlock()
+				<-r.Context().Done()
+				mu.Lock()
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Query().Get("marker") == "" {
+				assert.NoError(t, json.NewEncoder(w).Encode([]map[string]string{{"name": "a"}}))
+			} else {
+				_, err := w.Write([]byte("[]"))
+				assert.NoError(t, err)
+			}
+		case r.URL.Path == "/v1/AUTH_p/c":
+			w.WriteHeader(http.StatusConflict)
+		default:
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	defer server.Close()
+	conn := &gophercloud.ServiceClient{
+		ProviderClient: &gophercloud.ProviderClient{HTTPClient: *server.Client()},
+		Endpoint:       server.URL + "/v1/AUTH_p/",
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- deleteContainer(ctx, conn, "c", logrus.New()) }()
+
+	select {
+	case err := <-done:
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, `failed to delete container "c"`)
+		assert.True(t, gophercloud.ResponseCodeIs(err, http.StatusConflict))
+	case <-time.After(10 * time.Second):
+		t.Fatal("deleteContainer did not return after the context was cancelled")
+	}
+}
+
+// TestSwiftRequestTimeout checks that a Swift request that never completes, or
+// whose response body never completes, fails instead of blocking, for the
+// first pass over the objects of a container.
+func TestSwiftRequestTimeout(t *testing.T) {
+	// Each handler blocks until the client gives up or release is closed.
+	// Closing release when the subtest ends makes a regression fail the test
+	// instead of hanging the closing of the server, which waits for the
+	// handlers.
+	tests := []struct {
+		name    string
+		handler func(w http.ResponseWriter, r *http.Request, block func())
+	}{
+		{
+			name: "the listing never answers",
+			handler: func(_ http.ResponseWriter, _ *http.Request, block func()) {
+				block()
+			},
+		},
+		{
+			name: "the listing body never completes",
+			handler: func(w http.ResponseWriter, _ *http.Request, block func()) {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Length", "1000")
+				w.WriteHeader(http.StatusOK)
+				_, err := w.Write([]byte("["))
+				assert.NoError(t, err)
+				w.(http.Flusher).Flush()
+				block()
+			},
+		},
+		{
+			name: "an object delete never answers",
+			handler: func(w http.ResponseWriter, r *http.Request, block func()) {
+				if r.Method == http.MethodDelete {
+					block()
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("marker") == "" {
+					assert.NoError(t, json.NewEncoder(w).Encode([]map[string]string{{"name": "a"}}))
+				} else {
+					_, err := w.Write([]byte("[]"))
+					assert.NoError(t, err)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			release := make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				tt.handler(w, r, func() {
+					select {
+					case <-r.Context().Done():
+					case <-release:
+					}
+				})
+			}))
+			defer server.Close()
+			defer close(release)
+			conn := &gophercloud.ServiceClient{
+				ProviderClient: &gophercloud.ProviderClient{HTTPClient: *server.Client()},
+				Endpoint:       server.URL + "/v1/AUTH_p/",
+			}
+			setRequestTimeout(conn, 200*time.Millisecond)
+
+			done := make(chan error, 1)
+			go func() { done <- deleteContainer(t.Context(), conn, "c", logrus.New()) }()
+
+			select {
+			case err := <-done:
+				assert.Error(t, err)
+			case <-time.After(10 * time.Second):
+				t.Fatal("deleteContainer did not return although the request timeout expired")
+			}
 		})
 	}
 }
