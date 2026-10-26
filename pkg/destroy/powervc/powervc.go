@@ -351,7 +351,7 @@ func waitForServersDeleted(ctx context.Context, c *clients, filter map[string]st
 			if pollCtx.Err() == nil {
 				lastServerErr = err
 			}
-			logger.Debugf("Failed to list servers, retrying: %v", err)
+			logger.Debugf("Failed to list servers, retrying: %s", describeRetryError(err))
 			return false, nil
 		}
 		allServers, err := servers.ExtractServers(allPages)
@@ -359,7 +359,7 @@ func waitForServersDeleted(ctx context.Context, c *clients, filter map[string]st
 			if pollCtx.Err() == nil {
 				lastServerErr = err
 			}
-			logger.Debugf("Failed to extract servers, retrying: %v", err)
+			logger.Debugf("Failed to extract servers, retrying: %s", describeRetryError(err))
 			return false, nil
 		}
 		lastServerErr = nil
@@ -382,6 +382,33 @@ func waitForServersDeleted(ctx context.Context, c *clients, filter map[string]st
 			serverStatusError, describeServers(failed, true))
 	}
 	return nil
+}
+
+// describeRetryError returns a short description of err for retry logs. For
+// an unexpected HTTP response it reports only the status code, because
+// gophercloud's error text includes the request URL and the response body.
+//
+// In the vendored gophercloud (v2.10), the provider client returns every
+// unexpected HTTP status as the single type ErrUnexpectedResponseCode. There
+// are no status-specific types such as ErrDefault404 or ErrDefault500 and no
+// StatusCodeError interface, so matching the concrete type is sufficient. The
+// only other errors that carry such a response are the re-authentication
+// errors; they embed it without implementing Unwrap, so they are looked at
+// explicitly.
+func describeRetryError(err error) string {
+	var codeErr gophercloud.ErrUnexpectedResponseCode
+	if errors.As(err, &codeErr) {
+		return fmt.Sprintf("unexpected HTTP status %d", codeErr.GetStatusCode())
+	}
+	var afterReauth *gophercloud.ErrErrorAfterReauthentication
+	if errors.As(err, &afterReauth) && afterReauth.ErrOriginal != nil {
+		return "after re-authenticating: " + describeRetryError(afterReauth.ErrOriginal)
+	}
+	var unableToReauth *gophercloud.ErrUnableToReauthenticate
+	if errors.As(err, &unableToReauth) {
+		return "unable to re-authenticate"
+	}
+	return err.Error()
 }
 
 // remainingServers returns the cluster's servers that are still being deleted

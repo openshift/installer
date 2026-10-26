@@ -2,6 +2,7 @@ package powervc
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/gophercloud/gophercloud/v2"
@@ -191,6 +192,58 @@ func TestIgnitionContainerName(t *testing.T) {
 	assert.Equal(t, "infra-abcde-ignition", ignitionContainerName("infra-abcde"))
 	assert.Equal(t, "", ignitionContainerName(""))
 }
+
+func TestDescribeRetryError(t *testing.T) {
+	respErr := gophercloud.ErrUnexpectedResponseCode{
+		URL:    "https://powervc.example.com:8774/v2.1/servers/detail",
+		Method: "GET",
+		Actual: 500,
+		Body:   []byte("secret-body"),
+	}
+
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+	}{
+		{
+			name:     "unexpected response",
+			err:      respErr,
+			expected: "unexpected HTTP status 500",
+		},
+		{
+			name:     "wrapped unexpected response",
+			err:      fmt.Errorf("wrapped: %w", respErr),
+			expected: "unexpected HTTP status 500",
+		},
+		// gophercloud's re-authentication errors embed the response error
+		// without implementing Unwrap, so errors.As does not reach it.
+		{
+			name:     "error after re-authentication",
+			err:      &gophercloud.ErrErrorAfterReauthentication{ErrOriginal: respErr},
+			expected: "after re-authenticating: unexpected HTTP status 500",
+		},
+		{
+			name:     "failed re-authentication",
+			err:      &gophercloud.ErrUnableToReauthenticate{ErrOriginal: respErr, ErrReauth: respErr},
+			expected: "unable to re-authenticate",
+		},
+		{
+			name:     "other error",
+			err:      errors.New("connection refused"),
+			expected: "connection refused",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := describeRetryError(tt.err)
+			assert.Equal(t, tt.expected, got)
+			assert.NotContains(t, got, respErr.URL)
+			assert.NotContains(t, got, "secret-body")
+		})
+	}
+}
+
 func serverIDs(list []servers.Server) []string {
 	var ids []string
 	for _, server := range list {
