@@ -84,7 +84,22 @@ var (
 	// Restricting it to the characters common in paths keeps Where= and the
 	// unit name in agreement.
 	mountPathRegexp = regexp.MustCompile(`^[A-Za-z0-9/._-]+$`)
+
+	// osManagedMountPrefixes lists the system managed mount points at or
+	// below which a data disk must not be mounted.
+	osManagedMountPrefixes = []string{"/boot", "/etc", "/ostree", "/sysroot", "/usr"}
 )
+
+// osManagedMountPath returns the operating system mount point that mountPath
+// is at or below, or "" when it is below none of them.
+func osManagedMountPath(mountPath string) string {
+	for _, prefix := range osManagedMountPrefixes {
+		if mountPath == prefix || strings.HasPrefix(mountPath, prefix+"/") {
+			return prefix
+		}
+	}
+	return ""
+}
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
@@ -179,6 +194,14 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 				continue
 			case mountPath == "/":
 				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath, "a data disk cannot be mounted at the root filesystem"))
+				continue
+			case mountPath == "/var":
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					"a data disk cannot be mounted at /var itself: /var is created by the operating system, so data disks must be mounted at a path below it (e.g. /var/lib/etcd)"))
+				continue
+			case osManagedMountPath(mountPath) != "":
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					fmt.Sprintf("a data disk cannot be mounted at or below the operating system path %q", osManagedMountPath(mountPath))))
 				continue
 			case len(types.MountUnitName(mountPath)) > types.MaxUnitNameLength:
 				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
