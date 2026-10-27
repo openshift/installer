@@ -161,16 +161,20 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		},
 	}
 
-	storageEndpointSuffix := ""
-	if session != nil {
+	storageEndpointSuffix := in.StorageSuffix
+	if session != nil && session.Environment.StorageEndpointSuffix != "" {
 		storageEndpointSuffix = session.Environment.StorageEndpointSuffix
 	}
 	needsUserManagedDiagnosticsURI := func(diag *aztypes.BootDiagnostics) bool {
 		return diag != nil && diag.Type == capz.UserManagedDiagnosticsStorage && diag.StorageAccountName != ""
 	}
+	effectiveBootDiagnostics := mpool.BootDiagnostics
+	if effectiveBootDiagnostics == nil && in.Platform.DefaultMachinePlatform != nil {
+		effectiveBootDiagnostics = in.Platform.DefaultMachinePlatform.BootDiagnostics
+	}
+	usesAzureStackFallbackDiagnostics := in.Platform.CloudName == aztypes.StackCloud && mpool.BootDiagnostics == nil
 	if storageEndpointSuffix == "" &&
-		((in.Platform.DefaultMachinePlatform != nil && needsUserManagedDiagnosticsURI(in.Platform.DefaultMachinePlatform.BootDiagnostics)) ||
-			needsUserManagedDiagnosticsURI(mpool.BootDiagnostics)) {
+		(needsUserManagedDiagnosticsURI(effectiveBootDiagnostics) || usesAzureStackFallbackDiagnostics) {
 		return nil, fmt.Errorf("missing Azure storage endpoint suffix for user-managed boot diagnostics")
 	}
 	if in.Platform != nil && in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
@@ -254,7 +258,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 					Boot: &capz.BootDiagnostics{
 						StorageAccountType: capz.UserManagedDiagnosticsStorage,
 						UserManaged: &capz.UserManagedBootDiagnostics{
-							StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+							StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, storageEndpointSuffix),
 						},
 					},
 				}
@@ -329,7 +333,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				Boot: &capz.BootDiagnostics{
 					StorageAccountType: capz.UserManagedDiagnosticsStorage,
 					UserManaged: &capz.UserManagedBootDiagnostics{
-						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, storageEndpointSuffix),
 					},
 				},
 			}
