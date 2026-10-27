@@ -359,9 +359,16 @@ NodeIPFamilies=ipv4
 				// each of the endpoint.
 				// @TODO the provider should export a function which gives us
 				// an array
+				// DHCPSubnet networking provisions subnets named <infraID>-subnet-<zone>
+				// (see manifests/powervs/cluster.go), while the legacy DHCPServer
+				// networking uses the CAPI generated <infraID>-vpcsubnet-<zone> names.
+				subnetFmt := "%s-subnet-%s"
+				if installConfig.Config.PowerVS.NetworkType == powervstypes.NetworkTypeDHCPServer {
+					subnetFmt = "%s-vpcsubnet-%s"
+				}
 				for _, zone := range vpcZones {
 					vpcSubnets = append(vpcSubnets,
-						fmt.Sprintf("%s-vpcsubnet-%s", clusterID.InfraID, zone))
+						fmt.Sprintf(subnetFmt, clusterID.InfraID, zone))
 				}
 			} else {
 				vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))

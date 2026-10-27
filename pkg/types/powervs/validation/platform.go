@@ -61,6 +61,18 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 	}
 
+	// validate NetworkType
+	switch p.NetworkType {
+	case "", powervs.NetworkTypeDHCPSubnet, powervs.NetworkTypeDHCPServer:
+		// valid values (empty string treated as DHCPSubnet)
+	default:
+		allErrs = append(allErrs, field.NotSupported(
+			fldPath.Child("networkType"),
+			p.NetworkType,
+			[]string{string(powervs.NetworkTypeDHCPSubnet), string(powervs.NetworkTypeDHCPServer)},
+		))
+	}
+
 	return allErrs
 }
 
