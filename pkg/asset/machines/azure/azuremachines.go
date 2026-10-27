@@ -225,18 +225,11 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-<<<<<<< HEAD
-				Identity:               identityType,
-				UserAssignedIdentities: userAssignedIdentities,
-				Diagnostics:            controlPlaneDiag,
-				DataDisks:              mpool.DataDisks,
-=======
-				Identity:                   mpool.Identity.Type,
+				Identity:                   identityType,
 				UserAssignedIdentities:     userAssignedIdentities,
 				Diagnostics:                controlPlaneDiag,
 				DataDisks:                  mpool.DataDisks,
 				CapacityReservationGroupID: capacityReservationGroupID,
->>>>>>> origin/main
 			},
 		}
 		utils.SetMachineOSStreamLabels(azureMachine, in.Config)

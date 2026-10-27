@@ -490,13 +490,8 @@ func addIPv6InternalLBFrontend(ctx context.Context, in *lbInput) error {
 		subnetID = *existingFrontEndIPConfig[0].Properties.Subnet.ID
 	}
 
-<<<<<<< HEAD
 	existingFrontEndIPConfigName := *existingFrontEndIPConfig[0].Name
-	frontendIPv6Name := fmt.Sprintf("%s-v6", existingFrontEndIPConfigName)
-=======
-	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
 	frontendIPv6Name := fmt.Sprintf("%s-IPv6", existingFrontEndIPConfigName)
->>>>>>> origin/main
 	frontendIPv6 := &armnetwork.FrontendIPConfiguration{
 		Name: to.Ptr(frontendIPv6Name),
 		Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{

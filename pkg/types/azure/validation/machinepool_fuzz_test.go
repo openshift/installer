@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 func FuzzValidateDataDisk(f *testing.F) {
@@ -19,6 +20,7 @@ func FuzzValidateDataDisk(f *testing.F) {
 	f.Add("worker", "disk", "disk2", int32(0), int32(1), int32(1), int32(1), true, true, "", "UltraSSD_LRS", "", "Enabled")
 	f.Add("edge", "disk", "disk2", int32(0), int32(1), int32(1), int32(1), true, true, "", "", "", "")
 	f.Add("", "a", "b", int32(0), int32(0), int32(0), int32(0), false, false, "", "", "", "")
+	f.Add("worker", "a", "b", int32(1), int32(1), int32(1), int32(1), true, true, "", "", "", "")
 
 	f.Fuzz(func(t *testing.T, poolName, suffix1, suffix2 string, lun1, lun2, size1, size2 int32, hasLun1, hasLun2 bool, capability, storageType, caching, defaultCapability string) {
 		pool := &azure.MachinePool{
@@ -233,7 +235,7 @@ func assertDataDiskErrors(t *testing.T, poolName string, pool *azure.MachinePool
 			if resolvedCapability != enabled {
 				ultraCapability++
 			}
-			if disk.CachingType != "" && disk.CachingType != cachingTypeNone {
+			if disk.CachingType != "" && disk.CachingType != defaults.CachingTypeNone {
 				ultraCache++
 			}
 		}
@@ -263,10 +265,10 @@ func countDataDiskKinds(errs field.ErrorList) dataDiskKindCounts {
 	var got dataDiskKindCounts
 	for _, err := range errs {
 		switch {
+		case err.Type == field.ErrorTypeDuplicate && strings.HasSuffix(err.Field, ".lun"):
+			got.duplicateLun++
 		case err.Type == field.ErrorTypeDuplicate:
 			got.duplicateName++
-		case err.Detail == "dataDisk must have a unique lun number":
-			got.duplicateLun++
 		case strings.Contains(err.Detail, "must have lun id between 0 and 63"):
 			got.lunRange++
 		case strings.Contains(err.Detail, "must have lun id"):
