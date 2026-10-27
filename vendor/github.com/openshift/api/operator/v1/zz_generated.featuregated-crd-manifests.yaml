@@ -172,6 +172,29 @@ etcds.operator.openshift.io:
   TopLevelFeatureGates: []
   Version: v1
 
+ingresses.operator.openshift.io:
+  Annotations: {}
+  ApprovedPRNumber: https://github.com/openshift/api/pull/2890
+  CRDName: ingresses.operator.openshift.io
+  Capability: Ingress
+  Category: ""
+  FeatureGates:
+  - GatewayAPIManagementMode
+  FilenameOperatorName: ingress
+  FilenameOperatorOrdering: "02"
+  FilenameRunLevel: "0000_50"
+  GroupName: operator.openshift.io
+  HasStatus: true
+  KindName: Ingress
+  Labels: {}
+  PluralName: ingresses
+  PrinterColumns: []
+  Scope: Cluster
+  ShortNames: null
+  TopLevelFeatureGates:
+  - GatewayAPIManagementMode
+  Version: v1
+
 ingresscontrollers.operator.openshift.io:
   Annotations: {}
   ApprovedPRNumber: https://github.com/openshift/api/pull/616
@@ -311,9 +334,10 @@ machineconfigurations.operator.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
-  - BootImageSkewEnforcement
   - IrreconcilableMachineConfig
+  - ManagedBootImagesAWSCAPI
   - ManagedBootImagesCPMS
+  - ManagedBootImagesCPMS+ManagedBootImagesAWSCAPI
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"
@@ -336,6 +360,7 @@ networks.operator.openshift.io:
   Category: ""
   FeatureGates:
   - NoOverlayMode
+  - OVNKubernetesUplinkMode
   FilenameOperatorName: network
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_70"

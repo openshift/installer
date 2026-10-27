@@ -265,6 +265,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		dataDisks = append(dataDisks, dataDisk)
 	}
 
+	capacityReservationGroupID := ""
+	if mpool.CapacityReservationGroup != nil {
+		capacityReservationGroupID = mpool.CapacityReservationGroup.ToID()
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -284,18 +289,19 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				SecurityProfile:    diskSecurityProfile,
 			},
 		},
-		SecurityProfile:       securityProfile,
-		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
-		Subnet:                subnet,
-		ManagedIdentity:       managedIdentity,
-		Vnet:                  virtualNetwork,
-		ResourceGroup:         rg,
-		NetworkResourceGroup:  networkResourceGroup,
-		PublicLoadBalancer:    publicLB,
-		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
-		Tags:                  platform.UserTags,
-		DataDisks:             dataDisks,
+		SecurityProfile:            securityProfile,
+		UltraSSDCapability:         ultraSSDCapability,
+		Zone:                       az,
+		Subnet:                     subnet,
+		ManagedIdentity:            managedIdentity,
+		Vnet:                       virtualNetwork,
+		ResourceGroup:              rg,
+		NetworkResourceGroup:       networkResourceGroup,
+		PublicLoadBalancer:         publicLB,
+		AcceleratedNetworking:      getVMNetworkingType(mpool.VMNetworkingType),
+		Tags:                       platform.UserTags,
+		DataDisks:                  dataDisks,
+		CapacityReservationGroupID: capacityReservationGroupID,
 	}
 	var bootDiagnostics *machineapi.AzureDiagnostics
 	if platform.DefaultMachinePlatform != nil {
@@ -402,6 +408,10 @@ func getVMNetworkingType(value string) bool {
 }
 
 func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfile {
+	if !mpool.EncryptionAtHost && (mpool.Settings == nil || mpool.Settings.SecurityType == "") {
+		return nil
+	}
+
 	securityProfile := &machineapi.SecurityProfile{}
 
 	if mpool.EncryptionAtHost {

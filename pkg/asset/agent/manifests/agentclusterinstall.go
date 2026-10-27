@@ -393,6 +393,21 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if networkOverridden {
 			icOverridden = true
 			icOverrides.Networking = installConfig.Config.Networking
+		} else if installConfig.Config.Networking != nil &&
+			installConfig.Config.Networking.OVNKubernetesConfig != nil &&
+			installConfig.Config.Networking.OVNKubernetesConfig.IPv4 != nil &&
+			installConfig.Config.Networking.OVNKubernetesConfig.IPv4.InternalJoinSubnet != nil {
+			// The ovn-kubernetes config is not part of the AgentClusterInstall spec, so it
+			// must be passed to Assisted Service as an install config override. Send only
+			// the ovnKubernetesConfig stanza rather than the whole networking section:
+			// Assisted Service merges the override onto an already-populated install
+			// config, and it rejects unknown fields, so sending siblings it does not
+			// define (clusterNetworkMTU, networkObservability, the deprecated CIDR
+			// aliases) would fail the merge.
+			icOverridden = true
+			icOverrides.Networking = &types.Networking{
+				OVNKubernetesConfig: installConfig.Config.Networking.OVNKubernetesConfig,
+			}
 		}
 
 		if installConfig.Config.Capabilities != nil {

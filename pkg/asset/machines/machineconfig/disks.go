@@ -152,9 +152,6 @@ func ForDiskSetup(role, device, label, path string, diskType types.DiskType) (*m
 //
 // Returns the ignition configuration as a runtime.RawExtension for use in MachineConfig.
 func getDiskIgnition(ignConfig igntypes.Config, device, label, path, units string) (runtime.RawExtension, error) {
-	unitName := strings.Trim(path, "/")
-	unitName = strings.ReplaceAll(unitName, "/", "-")
-
 	ignConfig.Storage.Disks = append(ignConfig.Storage.Disks, igntypes.Disk{
 		Device: device,
 		Partitions: []igntypes.Partition{{
@@ -174,7 +171,7 @@ func getDiskIgnition(ignConfig igntypes.Config, device, label, path, units strin
 		WipeFilesystem: ptr.To(true),
 	})
 	ignConfig.Systemd.Units = append(ignConfig.Systemd.Units, igntypes.Unit{
-		Name:     fmt.Sprintf("%s.mount", unitName),
+		Name:     types.MountUnitName(path),
 		Enabled:  ptr.To(true),
 		Contents: &units,
 	})

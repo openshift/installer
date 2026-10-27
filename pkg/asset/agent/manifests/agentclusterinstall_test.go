@@ -84,6 +84,31 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.96.0/20","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
 	})
 
+	installConfigWithInternalJoinSubnet := getValidOptionalInstallConfig()
+	installConfigWithInternalJoinSubnet.Config.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{
+		IPv4: &types.IPv4OVNKubernetesConfig{
+			InternalJoinSubnet: ipnet.MustParseCIDR("100.65.0.0/16"),
+		},
+	}
+
+	goodInternalJoinSubnetACI := getGoodACI()
+	goodInternalJoinSubnetACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"networking":{"ovnKubernetesConfig":{"ipv4":{"internalJoinSubnet":"100.65.0.0/16"}}}}`,
+	})
+
+	installConfigWithNetworkOverrideAndInternalJoinSubnet := getValidOptionalInstallConfig()
+	installConfigWithNetworkOverrideAndInternalJoinSubnet.Config.Networking.NetworkType = "CustomNetworkType"
+	installConfigWithNetworkOverrideAndInternalJoinSubnet.Config.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{
+		IPv4: &types.IPv4OVNKubernetesConfig{
+			InternalJoinSubnet: ipnet.MustParseCIDR("100.65.0.0/16"),
+		},
+	}
+
+	goodNetworkOverrideAndInternalJoinSubnetACI := getGoodACI()
+	goodNetworkOverrideAndInternalJoinSubnetACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.96.0/20","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"],"ovnKubernetesConfig":{"ipv4":{"internalJoinSubnet":"100.65.0.0/16"}}}}`,
+	})
+
 	installConfigWithCPUPartitioning := getValidOptionalInstallConfig()
 	installConfigWithCPUPartitioning.Config.CPUPartitioning = types.CPUPartitioningAllNodes
 
@@ -296,6 +321,26 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodNetworkOverrideACI,
+		},
+		{
+			name: "valid configuration with ovn-kubernetes internalJoinSubnet",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithInternalJoinSubnet,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodInternalJoinSubnetACI,
+		},
+		{
+			name: "valid configuration with custom network type and ovn-kubernetes internalJoinSubnet",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithNetworkOverrideAndInternalJoinSubnet,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodNetworkOverrideAndInternalJoinSubnetACI,
 		},
 		{
 			name: "valid configuration with CPU Partitioning",

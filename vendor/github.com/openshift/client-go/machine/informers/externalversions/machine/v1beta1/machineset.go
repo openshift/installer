@@ -12,16 +12,45 @@ import (
 	machinev1beta1 "github.com/openshift/client-go/machine/listers/machine/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
 
 // MachineSetInformer provides access to a shared informer and lister for
-// MachineSets.
+// MachineSets. Prefer using the type-safe variant (see [TypedMachineSetInformer]).
 type MachineSetInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() machinev1beta1.MachineSetLister
 }
+
+// TypedMachineSetInformer provides access to a shared informer and lister for
+// MachineSets, including the type-safe TypedInformer variant.
+// It is a superset of MachineSetInformer.
+type TypedMachineSetInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() MachineSetIndexInformer
+	Lister() machinev1beta1.MachineSetLister
+}
+
+// MachineSetIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type MachineSetIndexInformer cache.TypedSharedIndexInformer[*apimachinev1beta1.MachineSet]
+
+// MachineSetHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for MachineSet.
+type MachineSetHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*apimachinev1beta1.MachineSet]
+
+// MachineSetDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for MachineSet.
+type MachineSetDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*apimachinev1beta1.MachineSet]
+
+// MachineSetFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for MachineSet.
+type MachineSetFilteringHandler = cache.TypedFilteringResourceEventHandler[*apimachinev1beta1.MachineSet]
+
+// MachineSetIndexers is a specialization of [cache.TypedIndexers] for MachineSet.
+type MachineSetIndexers = cache.TypedIndexers[*apimachinev1beta1.MachineSet]
+
+// DeletedMachineSet is a specialization of [cache.DeletedObject] for MachineSet.
+type DeletedMachineSet = cache.DeletedObject[*apimachinev1beta1.MachineSet]
 
 type machineSetInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -32,55 +61,132 @@ type machineSetInformer struct {
 // NewMachineSetInformer constructs a new informer for MachineSet type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMachineSetInformer]).
 func NewMachineSetInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredMachineSetInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewMachineSetInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedMachineSetInformer constructs a new informer for MachineSet type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMachineSetInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MachineSetIndexers) MachineSetIndexInformer {
+	return NewTypedMachineSetInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredMachineSetInformer constructs a new informer for MachineSet type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredMachineSetInformer]).
 func NewFilteredMachineSetInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
+	return NewTypedMachineSetInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredMachineSetInformer constructs a new informer for MachineSet type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredMachineSetInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MachineSetIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) MachineSetIndexInformer {
+	return NewTypedMachineSetInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
+}
+
+// NewMachineSetInformerWithOptions constructs a new informer for MachineSet type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMachineSetInformerWithOptions]).
+func NewMachineSetInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedMachineSetInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedMachineSetInformerWithOptions constructs a new informer for MachineSet type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMachineSetInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) MachineSetIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "machine.openshift.io", Version: "v1beta1", Resource: "machinesets"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineSet](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineSets(namespace).List(context.Background(), options)
+				return client.MachineV1beta1().MachineSets(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineSets(namespace).Watch(context.Background(), options)
+				return client.MachineV1beta1().MachineSets(namespace).Watch(context.Background(), opts)
 			},
-			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineSets(namespace).List(ctx, options)
+				return client.MachineV1beta1().MachineSets(namespace).List(ctx, opts)
 			},
-			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineSets(namespace).Watch(ctx, options)
+				return client.MachineV1beta1().MachineSets(namespace).Watch(ctx, opts)
 			},
 		}, client),
 		&apimachinev1beta1.MachineSet{},
-		resyncPeriod,
-		indexers,
-	)
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
+		},
+	))
 }
 
 func (f *machineSetInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredMachineSetInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTypedMachineSetInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *machineSetInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apimachinev1beta1.MachineSet{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *machineSetInformer) TypedInformer() MachineSetIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineSet](f.factory.InformerFor(&apimachinev1beta1.MachineSet{}, f.defaultInformer))
 }
 
 func (f *machineSetInformer) Lister() machinev1beta1.MachineSetLister {
 	return machinev1beta1.NewMachineSetLister(f.Informer().GetIndexer())
+}
+
+// ToTypedMachineSetInformer converts an untyped informer into a TypedMachineSetInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *MachineSet. If that is not the case, calling type-safe methods of the returned
+// TypedMachineSetInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedMachineSetInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedMachineSetInformer(informer MachineSetInformer) TypedMachineSetInformer {
+	if informer, ok := informer.(TypedMachineSetInformer); ok {
+		return informer
+	}
+	return &machineSetTypedInformerAdapter{informer}
+}
+
+type machineSetTypedInformerAdapter struct {
+	MachineSetInformer
+}
+
+func (a *machineSetTypedInformerAdapter) TypedInformer() MachineSetIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineSet](a.Informer())
+}
+
+// ToMachineSetIndexInformer converts an untyped informer into a MachineSetIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *MachineSet. If that is not the case, calling type-safe methods of the returned
+// MachineSetIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a MachineSetIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToMachineSetIndexInformer(informer cache.SharedIndexInformer) MachineSetIndexInformer {
+	if informer, ok := informer.(MachineSetIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineSet](informer)
 }

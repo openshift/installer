@@ -12,6 +12,15 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// validDiskSetup returns a minimal diskSetup entry, enough to trip the feature
+// gate that protects the field.
+func validDiskSetup() []types.Disk {
+	return []types.Disk{{
+		Type:        types.UserDefined,
+		UserDefined: &types.DiskUserDefined{PlatformDiskID: "data", MountPath: "/mnt/data"},
+	}}
+}
+
 func TestFeatureGates(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -196,6 +205,43 @@ func TestFeatureGates(t *testing.T) {
 				}
 				return c
 			}(),
+		},
+		{
+			name: "Azure diskSetup is gated on AzureMultiDisk, not MultiDiskSetup",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = validAzurePlatform()
+				c.ControlPlane.DiskSetup = validDiskSetup()
+				return c
+			}(),
+			expected: `^controlPlane.diskSetup: Forbidden: this field is protected by the AzureMultiDisk feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "Azure diskSetup is allowed with AzureMultiDisk alone",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = validAzurePlatform()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureMultiDisk=true"}
+				c.ControlPlane.DiskSetup = validDiskSetup()
+				c.Compute[0].DiskSetup = validDiskSetup()
+				return c
+			}(),
+		},
+		{
+			name: "vSphere diskSetup is still gated on MultiDiskSetup",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.VSphere = validVSpherePlatform()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureMultiDisk=true"}
+				c.ControlPlane.DiskSetup = validDiskSetup()
+				return c
+			}(),
+			expected: `^controlPlane.diskSetup: Forbidden: this field is protected by the MultiDiskSetup feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "FencingCredentials is allowed in Default Feature Set",

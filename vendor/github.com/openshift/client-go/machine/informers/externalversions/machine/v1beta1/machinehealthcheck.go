@@ -12,16 +12,45 @@ import (
 	machinev1beta1 "github.com/openshift/client-go/machine/listers/machine/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
 )
 
 // MachineHealthCheckInformer provides access to a shared informer and lister for
-// MachineHealthChecks.
+// MachineHealthChecks. Prefer using the type-safe variant (see [TypedMachineHealthCheckInformer]).
 type MachineHealthCheckInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() machinev1beta1.MachineHealthCheckLister
 }
+
+// TypedMachineHealthCheckInformer provides access to a shared informer and lister for
+// MachineHealthChecks, including the type-safe TypedInformer variant.
+// It is a superset of MachineHealthCheckInformer.
+type TypedMachineHealthCheckInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() MachineHealthCheckIndexInformer
+	Lister() machinev1beta1.MachineHealthCheckLister
+}
+
+// MachineHealthCheckIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type MachineHealthCheckIndexInformer cache.TypedSharedIndexInformer[*apimachinev1beta1.MachineHealthCheck]
+
+// MachineHealthCheckHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for MachineHealthCheck.
+type MachineHealthCheckHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*apimachinev1beta1.MachineHealthCheck]
+
+// MachineHealthCheckDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for MachineHealthCheck.
+type MachineHealthCheckDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*apimachinev1beta1.MachineHealthCheck]
+
+// MachineHealthCheckFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for MachineHealthCheck.
+type MachineHealthCheckFilteringHandler = cache.TypedFilteringResourceEventHandler[*apimachinev1beta1.MachineHealthCheck]
+
+// MachineHealthCheckIndexers is a specialization of [cache.TypedIndexers] for MachineHealthCheck.
+type MachineHealthCheckIndexers = cache.TypedIndexers[*apimachinev1beta1.MachineHealthCheck]
+
+// DeletedMachineHealthCheck is a specialization of [cache.DeletedObject] for MachineHealthCheck.
+type DeletedMachineHealthCheck = cache.DeletedObject[*apimachinev1beta1.MachineHealthCheck]
 
 type machineHealthCheckInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -32,55 +61,132 @@ type machineHealthCheckInformer struct {
 // NewMachineHealthCheckInformer constructs a new informer for MachineHealthCheck type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMachineHealthCheckInformer]).
 func NewMachineHealthCheckInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredMachineHealthCheckInformer(client, namespace, resyncPeriod, indexers, nil)
+	return NewMachineHealthCheckInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedMachineHealthCheckInformer constructs a new informer for MachineHealthCheck type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMachineHealthCheckInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MachineHealthCheckIndexers) MachineHealthCheckIndexInformer {
+	return NewTypedMachineHealthCheckInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredMachineHealthCheckInformer constructs a new informer for MachineHealthCheck type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredMachineHealthCheckInformer]).
 func NewFilteredMachineHealthCheckInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return cache.NewSharedIndexInformer(
+	return NewTypedMachineHealthCheckInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredMachineHealthCheckInformer constructs a new informer for MachineHealthCheck type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredMachineHealthCheckInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers MachineHealthCheckIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) MachineHealthCheckIndexInformer {
+	return NewTypedMachineHealthCheckInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
+}
+
+// NewMachineHealthCheckInformerWithOptions constructs a new informer for MachineHealthCheck type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedMachineHealthCheckInformerWithOptions]).
+func NewMachineHealthCheckInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedMachineHealthCheckInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedMachineHealthCheckInformerWithOptions constructs a new informer for MachineHealthCheck type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedMachineHealthCheckInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) MachineHealthCheckIndexInformer {
+	gvr := schema.GroupVersionResource{Group: "machine.openshift.io", Version: "v1beta1", Resource: "machinehealthchecks"}
+	identifier := options.InformerName.WithResource(gvr)
+	tweakListOptions := options.TweakListOptions
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineHealthCheck](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
-			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).List(context.Background(), options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).List(context.Background(), opts)
 			},
-			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(context.Background(), options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(context.Background(), opts)
 			},
-			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+			ListWithContextFunc: func(ctx context.Context, opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).List(ctx, options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).List(ctx, opts)
 			},
-			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+			WatchFuncWithContext: func(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
-					tweakListOptions(&options)
+					tweakListOptions(&opts)
 				}
-				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(ctx, options)
+				return client.MachineV1beta1().MachineHealthChecks(namespace).Watch(ctx, opts)
 			},
 		}, client),
 		&apimachinev1beta1.MachineHealthCheck{},
-		resyncPeriod,
-		indexers,
-	)
+		cache.SharedIndexInformerOptions{
+			ResyncPeriod: options.ResyncPeriod,
+			Indexers:     options.Indexers,
+			Identifier:   identifier,
+		},
+	))
 }
 
 func (f *machineHealthCheckInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredMachineHealthCheckInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewTypedMachineHealthCheckInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *machineHealthCheckInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apimachinev1beta1.MachineHealthCheck{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *machineHealthCheckInformer) TypedInformer() MachineHealthCheckIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineHealthCheck](f.factory.InformerFor(&apimachinev1beta1.MachineHealthCheck{}, f.defaultInformer))
 }
 
 func (f *machineHealthCheckInformer) Lister() machinev1beta1.MachineHealthCheckLister {
 	return machinev1beta1.NewMachineHealthCheckLister(f.Informer().GetIndexer())
+}
+
+// ToTypedMachineHealthCheckInformer converts an untyped informer into a TypedMachineHealthCheckInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *MachineHealthCheck. If that is not the case, calling type-safe methods of the returned
+// TypedMachineHealthCheckInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedMachineHealthCheckInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedMachineHealthCheckInformer(informer MachineHealthCheckInformer) TypedMachineHealthCheckInformer {
+	if informer, ok := informer.(TypedMachineHealthCheckInformer); ok {
+		return informer
+	}
+	return &machineHealthCheckTypedInformerAdapter{informer}
+}
+
+type machineHealthCheckTypedInformerAdapter struct {
+	MachineHealthCheckInformer
+}
+
+func (a *machineHealthCheckTypedInformerAdapter) TypedInformer() MachineHealthCheckIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineHealthCheck](a.Informer())
+}
+
+// ToMachineHealthCheckIndexInformer converts an untyped informer into a MachineHealthCheckIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *MachineHealthCheck. If that is not the case, calling type-safe methods of the returned
+// MachineHealthCheckIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a MachineHealthCheckIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToMachineHealthCheckIndexInformer(informer cache.SharedIndexInformer) MachineHealthCheckIndexInformer {
+	if informer, ok := informer.(MachineHealthCheckIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*apimachinev1beta1.MachineHealthCheck](informer)
 }

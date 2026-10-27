@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 func TestValidateMachinePool(t *testing.T) {
@@ -106,7 +107,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix:  "etcd",
-							DiskSizeGB:  1,
+							DiskSizeGB:  32,
 							ManagedDisk: nil,
 							Lun:         nil,
 							CachingType: "",
@@ -114,7 +115,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id$`,
+			expected: `^test-path\.dataDisks\[0\]\.lun: Required value: \"etcd\" must have lun id$`,
 		},
 		{
 			name:          "lun id must be below 64",
@@ -132,7 +133,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix:  "etcd",
-							DiskSizeGB:  1,
+							DiskSizeGB:  32,
 							ManagedDisk: nil,
 							Lun:         ptr.To(int32(64)),
 							CachingType: "",
@@ -140,7 +141,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
+			expected: `^test-path\.dataDisks\[0\]\.lun: Invalid value: 64: \"etcd\" must have lun id between 0 and 63$`,
 		},
 		{
 			name:          "multiple disk and setup PlatformDiskID does not match",
@@ -157,7 +158,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix:  "foo",
-							DiskSizeGB:  1,
+							DiskSizeGB:  32,
 							ManagedDisk: nil,
 							Lun:         pointer.Int32(0),
 						},
@@ -165,7 +166,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.NameSuffix: Invalid value: \"foo\": does not match etcd PlatformDiskID \"etcd\"$`,
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Invalid value: \"foo\": does not match etcd platformDiskID \"etcd\"$`,
 		},
 		{
 			name:          "lun id must be above 0",
@@ -182,7 +183,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix:  "etcd",
-							DiskSizeGB:  1,
+							DiskSizeGB:  32,
 							ManagedDisk: nil,
 							Lun:         ptr.To(int32(-1)),
 							CachingType: "",
@@ -190,7 +191,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: \"etcd\" must have lun id between 0 and 63$`,
+			expected: `^test-path\.dataDisks\[0\]\.lun: Invalid value: -1: \"etcd\" must have lun id between 0 and 63$`,
 		},
 		{
 			name:          "multiple disk size must be greater than zero",
@@ -215,7 +216,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.DiskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
+			expected: `^test-path\.dataDisks\[0\]\.diskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
 		},
 		{
 			name:          "datadisks in default machine pool is invalid",
@@ -262,14 +263,14 @@ func TestValidateMachinePool(t *testing.T) {
 						DataDisks: []capz.DataDisk{
 							{
 								NameSuffix:  "etcd",
-								DiskSizeGB:  1,
+								DiskSizeGB:  32,
 								ManagedDisk: nil,
 								Lun:         pointer.Int32(0),
 								CachingType: "",
 							},
 							{
 								NameSuffix:  "containers",
-								DiskSizeGB:  1,
+								DiskSizeGB:  32,
 								ManagedDisk: nil,
 								Lun:         pointer.Int32(0),
 								CachingType: "",
@@ -278,7 +279,174 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Invalid value: \"containers\": dataDisk must have a unique lun number$`,
+			expected: `^test-path\.dataDisks\[1\]\.lun: Duplicate value: 0$`,
+		},
+		{
+			name:          "empty nameSuffix is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Required value: nameSuffix is required$`,
+		},
+		{
+			name:          "nameSuffix with characters Azure rejects in disk names is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "bad/name",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Invalid value: "bad/name": may only contain alphanumerics, '_', '\.' and '-', and must end with an alphanumeric or '_'$`,
+		},
+		{
+			name:          "nameSuffix ending in a period is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "data.",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Invalid value: "data\.": may only contain alphanumerics, '_', '\.' and '-', and must end with an alphanumeric or '_'$`,
+		},
+		{
+			name:          "nameSuffix longer than the Azure disk name limit is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "aaaaaaaaaaaaaaaa",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Too long: may not be more than 15 bytes$`,
+		},
+		{
+			// A diskSetup entry carries its data disk's nameSuffix as the
+			// platformDiskID, so an over-length ID surfaces through the
+			// nameSuffix bound the entry is required to match.
+			name:          "etcd diskSetup platformDiskID longer than the Azure disk name limit is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				DiskSetup: []types.Disk{{
+					Type: types.Etcd,
+					Etcd: &types.DiskEtcd{PlatformDiskID: "etcddisketcddisk1"},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "etcddisketcddisk1",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Too long: may not be more than 15 bytes$`,
+		},
+		{
+			name:          "swap diskSetup platformDiskID longer than the Azure disk name limit is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				DiskSetup: []types.Disk{{
+					Type: types.Swap,
+					Swap: &types.DiskSwap{PlatformDiskID: "swapdiskswapdisk1"},
+				}},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "swapdiskswapdisk1",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.nameSuffix: Too long: may not be more than 15 bytes$`,
+		},
+		{
+			name:          "nameSuffix at the maximum length is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "aaaaaaaaaaaaaaa",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "nameSuffix with the full Azure-allowed character set is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name:      "master",
+				DiskSetup: []types.Disk{},
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix:  "my_disk-1",
+							DiskSizeGB:  32,
+							ManagedDisk: nil,
+							Lun:         pointer.Int32(0),
+							CachingType: "",
+						}},
+					},
+				},
+			},
 		},
 		{
 			name:          "unsupported disk master",
@@ -1070,7 +1238,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix: "etcd",
-							DiskSizeGB: 1,
+							DiskSizeGB: 32,
 							Lun:        ptr.To(int32(0)),
 						}},
 					},
@@ -1101,12 +1269,12 @@ func TestValidateMachinePool(t *testing.T) {
 					Azure: &azure.MachinePool{
 						DataDisks: []capz.DataDisk{{
 							NameSuffix: "containers",
-							DiskSizeGB: 1,
+							DiskSizeGB: 32,
 						}},
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.Lun: Required value: \"containers\" must have lun id$`,
+			expected: `^test-path\.dataDisks\[0\]\.lun: Required value: \"containers\" must have lun id$`,
 		},
 		{
 			name:          "dataDisks without diskSetup are still checked for size",
@@ -1123,7 +1291,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.dataDisks\.DiskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
+			expected: `^test-path\.dataDisks\[0\]\.diskSizeGB: Invalid value: 0: diskSizeGB must be greater than zero$`,
 		},
 		{
 			name:          "duplicate dataDisk name suffix",
@@ -1337,8 +1505,8 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 		},
 		{
-			// CAPZ defaults an unset caching type to None for this SKU, so an
-			// empty value must not be reported as a conflict.
+			// An unset caching type is defaulted to None, so an empty value
+			// must not be reported as a conflict.
 			name:          "ultra ssd dataDisk with caching left unset",
 			azurePlatform: azure.PublicCloud,
 			pool: &types.MachinePool{
@@ -1374,6 +1542,108 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 		},
+		{
+			// CAPZ creates the control plane machines and rejects sizes outside 4-32767,
+			// only after infrastructure provisioning has started.
+			name:          "control plane dataDisk below the CAPZ minimum size is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 3,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.diskSizeGB: Invalid value: 3: must be between 4 and 32767 for control plane data disks$`,
+		},
+		{
+			name:          "control plane dataDisk above the CAPZ maximum size is invalid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 32768,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+			expected: `^test-path\.dataDisks\[0\]\.diskSizeGB: Invalid value: 32768: must be between 4 and 32767 for control plane data disks$`,
+		},
+		{
+			name:          "control plane dataDisk at the CAPZ minimum size is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 4,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "control plane dataDisk at the CAPZ maximum size is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 32767,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
+			// Compute machines are created by the Machine API, not CAPZ, so the CAPZ
+			// bounds do not apply.
+			name:          "compute dataDisk below the CAPZ minimum size is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 1,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
+		{
+			name:          "compute dataDisk above the CAPZ maximum size is valid",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						DataDisks: []capz.DataDisk{{
+							NameSuffix: "data",
+							DiskSizeGB: 65536,
+							Lun:        ptr.To(int32(0)),
+						}},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1386,4 +1656,26 @@ func TestValidateMachinePool(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestDefaultedDataDiskCachingPassesUltraSSDValidation pins the invariant
+// between defaulting and validation: an omitted cachingType is defaulted to
+// the one caching mode UltraSSD_LRS admits, so a defaulted pool must pass
+// the UltraSSD check. Defaulting and the check live in different packages
+// and share the constant through defaults.CachingTypeNone; if either side
+// ever moves to a different value this test fails.
+func TestDefaultedDataDiskCachingPassesUltraSSDValidation(t *testing.T) {
+	azurePool := &azure.MachinePool{
+		UltraSSDCapability: enabled,
+		DataDisks: []capz.DataDisk{{
+			NameSuffix:  "etcd",
+			DiskSizeGB:  32,
+			Lun:         ptr.To(int32(0)),
+			ManagedDisk: &capz.ManagedDiskParameters{StorageAccountType: "UltraSSD_LRS"},
+		}},
+	}
+	defaults.SetMachinePoolDefaults(azurePool)
+
+	err := ValidateMachinePool(azurePool, "master", &azure.Platform{CloudName: azure.PublicCloud}, nil, field.NewPath("test-path")).ToAggregate()
+	assert.NoError(t, err, "the defaulted caching type must pass the UltraSSD validation")
 }

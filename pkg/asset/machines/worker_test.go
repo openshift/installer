@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -15,6 +16,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func TestWorkerGenerate(t *testing.T) {
@@ -286,6 +289,77 @@ func TestDefaultAWSMachinePoolPlatform(t *testing.T) {
 		tc := cases[i]
 		t.Run(tc.name, func(t *testing.T) {
 			tc.assert(&tc)
+		})
+	}
+}
+
+// TestWorkerDiskSetupWithoutPlatformStanza checks that a compute pool with
+// diskSetup entries but no platform stanza to pair them with fails with an
+// error instead of dereferencing the nil stanza. Install config validation
+// rejects the configuration up front; the guard keeps generation from
+// crashing if it is handed one anyway.
+func TestWorkerDiskSetupWithoutPlatformStanza(t *testing.T) {
+	cases := []struct {
+		name     string
+		platform types.Platform
+		expected string
+	}{
+		{
+			name:     "azure",
+			platform: types.Platform{Azure: &azuretypes.Platform{Region: "eastus"}},
+			expected: `compute pool "worker" has diskSetup entries but no platform.azure stanza to pair them with data disks`,
+		},
+		{
+			name:     "vsphere",
+			platform: types.Platform{VSphere: &vspheretypes.Platform{}},
+			expected: `compute pool "worker" has diskSetup entries but no platform.vsphere stanza to pair them with data disks`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			parents := asset.Parents{}
+			cfg := &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				// TechPreviewNoUpgrade carries the feature gates that admit
+				// the diskSetup field (AzureMultiDisk on Azure, MultiDiskSetup
+				// everywhere else).
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform:   tc.platform,
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: ptr.To(int64(1)),
+						DiskSetup: []types.Disk{
+							{
+								Type:        types.UserDefined,
+								UserDefined: &types.DiskUserDefined{PlatformDiskID: "data", MountPath: "/mnt/data"},
+							},
+						},
+					},
+				},
+			}
+			parents.Add(
+				&installconfig.ClusterID{
+					UUID:    "test-uuid",
+					InfraID: "test-infra-id",
+				},
+				installconfig.MakeAsset(cfg),
+				rhcos.MakeAsset("test-image"),
+				(*rhcos.Release)(ptr.To("412.86.202208101040-0")),
+				&machine.Worker{
+					File: &asset.File{
+						Filename: "worker-ignition",
+						Data:     []byte("test-ignition"),
+					},
+				},
+			)
+			worker := &Worker{}
+			err := worker.Generate(context.Background(), parents)
+			if assert.Error(t, err, "generation must fail instead of panicking on the nil platform stanza") {
+				assert.Contains(t, err.Error(), tc.expected)
+			}
 		})
 	}
 }

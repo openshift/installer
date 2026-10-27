@@ -2,6 +2,8 @@ package validation
 
 import (
 	"fmt"
+	"path"
+	"regexp"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -74,7 +76,30 @@ var (
 		types.Swap:        "swap",
 		types.UserDefined: "userDefined",
 	}
+
+	// mountPathRegexp matches the characters allowed in a user-defined disk's
+	// mount path. The path is written verbatim into the Where= setting of the
+	// generated mount unit, where systemd expands "%" specifiers and a line
+	// break would start a new directive, and its escaped form names the unit.
+	// Restricting it to the characters common in paths keeps Where= and the
+	// unit name in agreement.
+	mountPathRegexp = regexp.MustCompile(`^[A-Za-z0-9/._-]+$`)
+
+	// osManagedMountPrefixes lists the system managed mount points at or
+	// below which a data disk must not be mounted.
+	osManagedMountPrefixes = []string{"/boot", "/etc", "/ostree", "/sysroot", "/usr"}
 )
+
+// osManagedMountPath returns the operating system mount point that mountPath
+// is at or below, or "" when it is below none of them.
+func osManagedMountPath(mountPath string) string {
+	for _, prefix := range osManagedMountPrefixes {
+		if mountPath == prefix || strings.HasPrefix(mountPath, prefix+"/") {
+			return prefix
+		}
+	}
+	return ""
+}
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
@@ -113,7 +138,13 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 	// The resolved label names the generated MachineConfig. Colliding names
 	// silently overwrite each other and one disk is never configured.
 	seenLabels := sets.New[string]()
+	// The mount path names the generated systemd mount unit. Two entries
+	// mounting at the same path ship conflicting units on different devices.
+	seenMountPaths := sets.New[string]()
 	for i, ds := range p.DiskSetup {
+		// Errors about a single entry point at its index, so that the user can
+		// tell which of several entries of the same type is at fault.
+		entryPath := fldPath.Index(i)
 		// outputting the yaml to make recognizing the issue easier for the user
 		dsBytes, err := yaml.Marshal(ds)
 		if err != nil {
@@ -123,10 +154,10 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 		switch ds.Type {
 		case types.UserDefined:
 			if ds.UserDefined == nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("userDefined"), dsYaml, "userDefined configuration must be created"))
+				allErrs = append(allErrs, field.Invalid(entryPath.Child("userDefined"), dsYaml, "userDefined configuration must be created"))
 				continue
 			}
-			userDefinedPath := fldPath.Child("userDefined")
+			userDefinedPath := entryPath.Child("userDefined")
 			if len(ds.UserDefined.PlatformDiskID) > 12 {
 				allErrs = append(allErrs, field.Invalid(userDefinedPath.Child("platformDiskID"), dsYaml, "cannot be longer than 12 characters"))
 				continue
@@ -140,37 +171,91 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 					"must contain at least one alphanumeric character"))
 				continue
 			}
+			// The mount path must be absolute and normalized: it names the
+			// mount point in the generated MachineConfig, and both the systemd
+			// unit name and the comparisons against installer-managed paths
+			// (e.g. /var) are derived from it verbatim. The unit name derived
+			// from it must also be one systemd can load.
+			mountPath := ds.UserDefined.MountPath
+			mountPathFld := userDefinedPath.Child("mountPath")
+			switch {
+			case mountPath == "":
+				allErrs = append(allErrs, field.Required(mountPathFld, "a mount path is required for user-defined disks"))
+				continue
+			case !path.IsAbs(mountPath):
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath, "must be an absolute path"))
+				continue
+			case !mountPathRegexp.MatchString(mountPath):
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath, "may only contain alphanumerics, '/', '.', '_' and '-'"))
+				continue
+			case path.Clean(mountPath) != mountPath:
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					fmt.Sprintf("must be a normalized path without trailing '/', '.', '..' or repeated '/' (did you mean %q?)", path.Clean(mountPath))))
+				continue
+			case mountPath == "/":
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath, "a data disk cannot be mounted at the root filesystem"))
+				continue
+			case mountPath == "/var":
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					"a data disk cannot be mounted at /var itself: /var is created by the operating system, so data disks must be mounted at a path below it (e.g. /var/lib/etcd)"))
+				continue
+			case osManagedMountPath(mountPath) != "":
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					fmt.Sprintf("a data disk cannot be mounted at or below the operating system path %q", osManagedMountPath(mountPath))))
+				continue
+			case len(types.MountUnitName(mountPath)) > types.MaxUnitNameLength:
+				allErrs = append(allErrs, field.Invalid(mountPathFld, mountPath,
+					fmt.Sprintf("is too long: the name of its systemd mount unit, %q, exceeds the %d characters systemd allows",
+						types.MountUnitName(mountPath), types.MaxUnitNameLength)))
+				continue
+			}
 		case types.Etcd:
 			if foundEtcd {
-				allErrs = append(allErrs, field.TooMany(fldPath.Child("etcd"), 2, 1))
+				allErrs = append(allErrs, field.TooMany(entryPath.Child("etcd"), 2, 1))
 				continue
 			}
 			if ds.Etcd == nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("etcd"), dsYaml, "etcd configuration must be created"))
+				allErrs = append(allErrs, field.Invalid(entryPath.Child("etcd"), dsYaml, "etcd configuration must be created"))
 				continue
 			}
 			// etcd should only be setup on control plane, not any other machine type.
 			if p.Name != "master" {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("etcd"), dsYaml, "cannot specify etcd on worker machine pools"))
+				allErrs = append(allErrs, field.Invalid(entryPath.Child("etcd"), dsYaml, "cannot specify etcd on worker machine pools"))
 				continue
 			}
 			foundEtcd = true
+			// The etcd platformDiskID names the platform data disk the entry
+			// is paired with, so an empty ID leaves the entry unpaired. Length
+			// limits are left to the platform validations, which know the
+			// naming rules of the disks the ID refers to.
+			if ds.Etcd.PlatformDiskID == "" {
+				allErrs = append(allErrs, field.Required(entryPath.Child("etcd", "platformDiskID"), "a platform disk ID is required"))
+				continue
+			}
 		case types.Swap:
 			if p.Name == "master" {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("swap"), dsYaml, "swap is unsupported on control plane nodes"))
+				allErrs = append(allErrs, field.Invalid(entryPath.Child("swap"), dsYaml, "swap is unsupported on control plane nodes"))
 				continue
 			}
 			if foundSwap {
-				allErrs = append(allErrs, field.TooMany(fldPath.Child("swap"), 2, 1))
+				allErrs = append(allErrs, field.TooMany(entryPath.Child("swap"), 2, 1))
 				continue
 			}
 			if ds.Swap == nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("swap"), dsYaml, "swap configuration must be created"))
+				allErrs = append(allErrs, field.Invalid(entryPath.Child("swap"), dsYaml, "swap configuration must be created"))
 				continue
 			}
 			foundSwap = true
+			// The swap platformDiskID names the platform data disk the entry
+			// is paired with, so an empty ID leaves the entry unpaired. Length
+			// limits are left to the platform validations, which know the
+			// naming rules of the disks the ID refers to.
+			if ds.Swap.PlatformDiskID == "" {
+				allErrs = append(allErrs, field.Required(entryPath.Child("swap", "platformDiskID"), "a platform disk ID is required"))
+				continue
+			}
 		default:
-			allErrs = append(allErrs, field.NotSupported(fldPath.Index(i).Child("type"), ds.Type, validDiskTypeValues))
+			allErrs = append(allErrs, field.NotSupported(entryPath.Child("type"), ds.Type, validDiskTypeValues))
 			continue
 		}
 
@@ -181,7 +266,7 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 			continue
 		}
 		if seenDiskIDs.Has(diskID) {
-			allErrs = append(allErrs, field.Duplicate(fldPath.Index(i).Child(diskSetupFieldNames[ds.Type], "platformDiskID"), diskID))
+			allErrs = append(allErrs, field.Duplicate(entryPath.Child(diskSetupFieldNames[ds.Type], "platformDiskID"), diskID))
 		} else {
 			seenDiskIDs.Insert(diskID)
 		}
@@ -190,11 +275,28 @@ func validateDiskSetup(p *types.MachinePool, fldPath *field.Path) field.ErrorLis
 		// lower-cased, so "Data" and "data" name the same object.
 		label := strings.ToLower(ds.MachineConfigLabel())
 		if seenLabels.Has(label) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), dsYaml,
+			allErrs = append(allErrs, field.Invalid(entryPath, dsYaml,
 				fmt.Sprintf("resolves to disk label %q, which is already used by an earlier diskSetup entry in this pool; "+
 					"etcd and swap disks are labelled after their type, user-defined disks after their platformDiskID stripped of non-alphanumeric characters", label)))
 		} else {
 			seenLabels.Insert(label)
+		}
+
+		// Mount paths are compared verbatim: they are already normalized by
+		// the per-entry checks, so entries that reach this point resolve to
+		// the exact path their mount unit will be named after. The etcd entry
+		// participates too, so a user-defined disk cannot claim /var/lib/etcd.
+		if mountPath, ok := ds.MountPath(); ok && mountPath != "" {
+			if seenMountPaths.Has(mountPath) {
+				// The etcd entry has no mountPath field: its type implies the path.
+				mountPathFld := entryPath.Child("userDefined", "mountPath")
+				if ds.Type == types.Etcd {
+					mountPathFld = entryPath.Child("etcd")
+				}
+				allErrs = append(allErrs, field.Duplicate(mountPathFld, mountPath))
+			} else {
+				seenMountPaths.Insert(mountPath)
+			}
 		}
 	}
 
@@ -256,6 +358,31 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {
 			return openstackvalidation.ValidateMachinePool(platform.OpenStack, p.OpenStack, pool.Name, f)
 		})
+	}
+
+	// A diskSetup entry is paired with a data disk from the pool's platform
+	// stanza, and with no stanza there is no data disk anywhere for the
+	// entries to pair with. Catching that here fails create install-config
+	// instead of deferring the problem to machine generation during create
+	// manifests. Defaulting runs before validation and materializes the
+	// stanza from platform.<plat>.defaultMachinePlatform where the platform
+	// supports that (Azure does, vSphere does not), and Azure rejects
+	// dataDisks on defaultMachinePlatform outright, so a stanza still absent
+	// at this point leaves the entries with nothing to pair with on either
+	// platform.
+	if len(pool.DiskSetup) > 0 {
+		switch platformName {
+		case azure.Name:
+			if p.Azure == nil {
+				allErrs = append(allErrs, field.Required(fldPath.Child(azure.Name, "dataDisks"),
+					"diskSetup entries must be paired with data disks: set dataDisks on this machine pool's platform.azure stanza"))
+			}
+		case vsphere.Name:
+			if p.VSphere == nil {
+				allErrs = append(allErrs, field.Required(fldPath.Child(vsphere.Name, "dataDisks"),
+					"diskSetup entries must be paired with data disks: set dataDisks on this machine pool's platform.vsphere stanza"))
+			}
+		}
 	}
 	return allErrs
 }

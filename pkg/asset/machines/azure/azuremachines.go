@@ -107,20 +107,28 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		UltraSSDEnabled: &ultrassd,
 	}
 
-	machineProfile := generateSecurityProfile(mpool)
-	securityProfile := &capz.SecurityProfile{
-		EncryptionAtHost: machineProfile.EncryptionAtHost,
-		SecurityType:     capz.SecurityTypes(machineProfile.Settings.SecurityType),
+	var capacityReservationGroupID *string
+	if mpool.CapacityReservationGroup != nil {
+		capacityReservationGroupID = ptr.To(mpool.CapacityReservationGroup.ToID())
 	}
-	if machineProfile.Settings.ConfidentialVM != nil {
-		securityProfile.UefiSettings = &capz.UefiSettings{
-			VTpmEnabled:       ptr.To[bool](machineProfile.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule == v1beta1.VirtualizedTrustedPlatformModulePolicyEnabled),
-			SecureBootEnabled: ptr.To[bool](machineProfile.Settings.ConfidentialVM.UEFISettings.SecureBoot == v1beta1.SecureBootPolicyEnabled),
+
+	machineProfile := generateSecurityProfile(mpool)
+	var securityProfile *capz.SecurityProfile
+	if machineProfile != nil {
+		securityProfile = &capz.SecurityProfile{
+			EncryptionAtHost: machineProfile.EncryptionAtHost,
+			SecurityType:     capz.SecurityTypes(machineProfile.Settings.SecurityType),
 		}
-	} else if machineProfile.Settings.TrustedLaunch != nil {
-		securityProfile.UefiSettings = &capz.UefiSettings{
-			VTpmEnabled:       ptr.To(machineProfile.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule == v1beta1.VirtualizedTrustedPlatformModulePolicyEnabled),
-			SecureBootEnabled: ptr.To(machineProfile.Settings.TrustedLaunch.UEFISettings.SecureBoot == v1beta1.SecureBootPolicyEnabled),
+		if machineProfile.Settings.ConfidentialVM != nil {
+			securityProfile.UefiSettings = &capz.UefiSettings{
+				VTpmEnabled:       ptr.To[bool](machineProfile.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule == v1beta1.VirtualizedTrustedPlatformModulePolicyEnabled),
+				SecureBootEnabled: ptr.To[bool](machineProfile.Settings.ConfidentialVM.UEFISettings.SecureBoot == v1beta1.SecureBootPolicyEnabled),
+			}
+		} else if machineProfile.Settings.TrustedLaunch != nil {
+			securityProfile.UefiSettings = &capz.UefiSettings{
+				VTpmEnabled:       ptr.To(machineProfile.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule == v1beta1.VirtualizedTrustedPlatformModulePolicyEnabled),
+				SecureBootEnabled: ptr.To(machineProfile.Settings.TrustedLaunch.UEFISettings.SecureBoot == v1beta1.SecureBootPolicyEnabled),
+			}
 		}
 	}
 
@@ -217,10 +225,18 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
+<<<<<<< HEAD
 				Identity:               identityType,
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
 				DataDisks:              mpool.DataDisks,
+=======
+				Identity:                   mpool.Identity.Type,
+				UserAssignedIdentities:     userAssignedIdentities,
+				Diagnostics:                controlPlaneDiag,
+				DataDisks:                  mpool.DataDisks,
+				CapacityReservationGroupID: capacityReservationGroupID,
+>>>>>>> origin/main
 			},
 		}
 		utils.SetMachineOSStreamLabels(azureMachine, in.Config)
@@ -300,6 +316,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			Identity:                   identityType,
 			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities:     userAssignedIdentities,
+			CapacityReservationGroupID: capacityReservationGroupID,
 		},
 	}
 	utils.SetMachineOSStreamLabels(bootstrapAzureMachine, in.Config)

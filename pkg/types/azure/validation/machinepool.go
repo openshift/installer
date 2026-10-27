@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -22,10 +23,6 @@ const (
 	// ultraSSDStorageAccountType is the data disk SKU that Azure will only
 	// attach to a VM created with the UltraSSD capability.
 	ultraSSDStorageAccountType = "UltraSSD_LRS"
-
-	// cachingTypeNone is the only caching mode Azure allows on an UltraSSD_LRS
-	// data disk.
-	cachingTypeNone = "None"
 )
 
 var (
@@ -66,6 +63,31 @@ var (
 		}
 		return v
 	}()
+
+	// dataDiskNameSuffixRegexp matches the characters Azure allows in the
+	// suffix of a managed data disk name: the disk is named
+	// <machineName>_<nameSuffix>, and Azure admits alphanumerics, '_', '.'
+	// and '-' there, ending with an alphanumeric or '_'.
+	dataDiskNameSuffixRegexp = regexp.MustCompile(`^[A-Za-z0-9_.-]*[A-Za-z0-9_]$`)
+)
+
+// maxDataDiskNameSuffixLength bounds a data disk's nameSuffix so that the disk
+// resource names built from it stay within Azure's limits. Azure names a
+// managed data disk <machineName>_<nameSuffix>: disk names are at most 80
+// characters and VM names at most 64, leaving at most 80 - 1 - 64 = 15
+// characters for the suffix. The bound also covers the platformDiskID of the
+// diskSetup entries paired with a data disk: each entry must carry its disk's
+// nameSuffix as the ID, so an over-length ID is rejected through the suffix
+// it has to match.
+const maxDataDiskNameSuffixLength = 15
+
+// The size bounds Cluster API Provider Azure admits for a data disk. CAPZ
+// creates the control plane machines at install time and rejects other sizes
+// only then, after infrastructure provisioning has started. Compute machines
+// are created by the Machine API, which defers to Azure's per-SKU limits.
+const (
+	minControlPlaneDataDiskSizeGB = 4
+	maxControlPlaneDataDiskSizeGB = 32767
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -173,7 +195,30 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
+	allErrs = append(allErrs, validateCapacityReservationGroup(p.CapacityReservationGroup, platform.CloudName, fldPath.Child("capacityReservationGroup"))...)
 
+	return allErrs
+}
+
+func validateCapacityReservationGroup(group *azure.CapacityReservationGroup, cloudName azure.CloudEnvironment, fldPath *field.Path) field.ErrorList {
+	if group == nil {
+		return nil
+	}
+	if cloudName == azure.StackCloud {
+		return field.ErrorList{field.Forbidden(fldPath, "capacity reservation groups are not supported on Azure Stack")}
+	}
+
+	allErrs := field.ErrorList{}
+	// SubscriptionID is optional: when omitted it defaults to the cluster subscription.
+	if group.SubscriptionID != "" && !RxSubscriptionID.MatchString(group.SubscriptionID) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("subscriptionId"), group.SubscriptionID, "invalid subscription ID format"))
+	}
+	if !RxResourceGroup.MatchString(group.ResourceGroup) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("resourceGroup"), group.ResourceGroup, "invalid resource group format"))
+	}
+	if !RxCapacityReservationGroupName.MatchString(group.Name) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("name"), group.Name, "invalid capacity reservation group name format"))
+	}
 	return allErrs
 }
 
@@ -197,15 +242,15 @@ func validateDataDiskSetup(azurePool *azure.MachinePool, pool *types.MachinePool
 		switch setup.Type {
 		case types.Etcd:
 			if setup.Etcd != nil && setup.Etcd.PlatformDiskID != d.NameSuffix {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd PlatformDiskID %q", setup.Etcd.PlatformDiskID)))
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("nameSuffix"), d.NameSuffix, fmt.Sprintf("does not match etcd platformDiskID %q", setup.Etcd.PlatformDiskID)))
 			}
 		case types.Swap:
 			if setup.Swap != nil && setup.Swap.PlatformDiskID != d.NameSuffix {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap PlatformDiskID %q", setup.Swap.PlatformDiskID)))
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("nameSuffix"), d.NameSuffix, fmt.Sprintf("does not match swap platformDiskID %q", setup.Swap.PlatformDiskID)))
 			}
 		case types.UserDefined:
 			if setup.UserDefined != nil && setup.UserDefined.PlatformDiskID != d.NameSuffix {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("NameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined PlatformDiskID %q", setup.UserDefined.PlatformDiskID)))
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("nameSuffix"), d.NameSuffix, fmt.Sprintf("does not match user defined platformDiskID %q", setup.UserDefined.PlatformDiskID)))
 			}
 		}
 	}
@@ -393,6 +438,20 @@ func validateDataDisk(p *azure.MachinePool, poolName string, platform *azure.Pla
 		lunNumbers := sets.New[int32]()
 
 		for i, dataDisk := range p.DataDisks {
+			// The suffix becomes part of the Azure managed-disk name
+			// <machineName>_<nameSuffix>. An empty or Azure-invalid value is
+			// only rejected when the machine is created, long after the
+			// install config could have named the offending field.
+			switch {
+			case dataDisk.NameSuffix == "":
+				allErrs = append(allErrs, field.Required(fldPath.Index(i).Child("nameSuffix"), "nameSuffix is required"))
+			case !dataDiskNameSuffixRegexp.MatchString(dataDisk.NameSuffix):
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("nameSuffix"), dataDisk.NameSuffix,
+					"may only contain alphanumerics, '_', '.' and '-', and must end with an alphanumeric or '_'"))
+			case len(dataDisk.NameSuffix) > maxDataDiskNameSuffixLength:
+				allErrs = append(allErrs, field.TooLong(fldPath.Index(i).Child("nameSuffix"), dataDisk.NameSuffix, maxDataDiskNameSuffixLength))
+			}
+
 			if seenNameSuffixes.Has(dataDisk.NameSuffix) {
 				allErrs = append(allErrs, field.Duplicate(fldPath.Index(i).Child("nameSuffix"), dataDisk.NameSuffix))
 			} else {
@@ -400,25 +459,31 @@ func validateDataDisk(p *azure.MachinePool, poolName string, platform *azure.Pla
 			}
 
 			if dataDisk.Lun == nil {
-				allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id", dataDisk.NameSuffix)))
+				allErrs = append(allErrs, field.Required(fldPath.Index(i).Child("lun"), fmt.Sprintf("%q must have lun id", dataDisk.NameSuffix)))
 			} else {
 				if *(dataDisk.Lun) < 0 || *(dataDisk.Lun) > 63 {
-					allErrs = append(allErrs, field.Required(fldPath.Child("Lun"), fmt.Sprintf("%q must have lun id between 0 and 63", dataDisk.NameSuffix)))
+					allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("lun"), *(dataDisk.Lun), fmt.Sprintf("%q must have lun id between 0 and 63", dataDisk.NameSuffix)))
 				}
 				if lunNumbers.Has(*dataDisk.Lun) {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("Lun"), dataDisk.NameSuffix, "dataDisk must have a unique lun number"))
+					allErrs = append(allErrs, field.Duplicate(fldPath.Index(i).Child("lun"), *(dataDisk.Lun)))
 				} else {
 					lunNumbers.Insert(*dataDisk.Lun)
 				}
 			}
 
-			if dataDisk.DiskSizeGB <= 0 {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("DiskSizeGB"), dataDisk.DiskSizeGB, "diskSizeGB must be greater than zero"))
+			switch {
+			case dataDisk.DiskSizeGB <= 0:
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("diskSizeGB"), dataDisk.DiskSizeGB, "diskSizeGB must be greater than zero"))
+			case poolName == types.MachinePoolControlPlaneRoleName &&
+				(dataDisk.DiskSizeGB < minControlPlaneDataDiskSizeGB || dataDisk.DiskSizeGB > maxControlPlaneDataDiskSizeGB):
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("diskSizeGB"), dataDisk.DiskSizeGB,
+					fmt.Sprintf("must be between %d and %d for control plane data disks", minControlPlaneDataDiskSizeGB, maxControlPlaneDataDiskSizeGB)))
 			}
 
 			// Reject unknown caching modes before proceeding.
 			// Otherwise, Azure rejects the disk configuration when the machine is created.
-			// An unset mode is defaulted per SKU, so only an explicit value can be wrong.
+			// An unset mode is defaulted to None, which every SKU accepts, so only an
+			// explicit value can be wrong.
 			if dataDisk.CachingType != "" && !validDataDiskCachingTypes.Has(dataDisk.CachingType) {
 				allErrs = append(allErrs, field.NotSupported(
 					fldPath.Index(i).Child("cachingType"),
@@ -442,13 +507,13 @@ func validateDataDisk(p *azure.MachinePool, poolName string, platform *azure.Pla
 					))
 				}
 				// UltraSSD_LRS cannot be cached by Azure.
-				// CAPZ defaults the mode to None for this SKU, so only an explicit value conflicts.
+				// An unset mode is defaulted to None, so only an explicit value conflicts.
 				if dataDisk.ManagedDisk.StorageAccountType == ultraSSDStorageAccountType &&
-					dataDisk.CachingType != "" && dataDisk.CachingType != cachingTypeNone {
+					dataDisk.CachingType != "" && dataDisk.CachingType != defaults.CachingTypeNone {
 					allErrs = append(allErrs, field.Invalid(
 						fldPath.Index(i).Child("cachingType"),
 						dataDisk.CachingType,
-						fmt.Sprintf("cachingType must be %q or left unset for an %s data disk", cachingTypeNone, ultraSSDStorageAccountType),
+						fmt.Sprintf("cachingType must be %q or left unset for an %s data disk", defaults.CachingTypeNone, ultraSSDStorageAccountType),
 					))
 				}
 				// UltraSSD_LRS requires additionalCapabilities.ultraSSDEnabled.
