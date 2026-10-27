@@ -165,6 +165,14 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	if session != nil {
 		storageEndpointSuffix = session.Environment.StorageEndpointSuffix
 	}
+	needsUserManagedDiagnosticsURI := func(diag *aztypes.BootDiagnostics) bool {
+		return diag != nil && diag.Type == capz.UserManagedDiagnosticsStorage && diag.StorageAccountName != ""
+	}
+	if storageEndpointSuffix == "" &&
+		((in.Platform.DefaultMachinePlatform != nil && needsUserManagedDiagnosticsURI(in.Platform.DefaultMachinePlatform.BootDiagnostics)) ||
+			needsUserManagedDiagnosticsURI(mpool.BootDiagnostics)) {
+		return nil, fmt.Errorf("missing Azure storage endpoint suffix for user-managed boot diagnostics")
+	}
 	if in.Platform != nil && in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
 		defaultDiag.Boot.StorageAccountType = in.Platform.DefaultMachinePlatform.BootDiagnostics.Type
 		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, storageEndpointSuffix); saURI != "" {
