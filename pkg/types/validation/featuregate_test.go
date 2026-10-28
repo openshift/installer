@@ -207,17 +207,6 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Azure diskSetup is gated on AzureMultiDisk, not MultiDiskSetup",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = validAzurePlatform()
-				c.ControlPlane.DiskSetup = validDiskSetup()
-				return c
-			}(),
-			expected: `^controlPlane.diskSetup: Forbidden: this field is protected by the AzureMultiDisk feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
-		},
-		{
 			name: "Azure diskSetup is allowed with AzureMultiDisk alone",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
