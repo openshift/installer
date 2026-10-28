@@ -1,7 +1,7 @@
 {
   "stream": "rhcos-4.20",
   "metadata": {
-    "last-modified": "2026-10-27T23:12:12Z",
+    "last-modified": "2026-10-28T20:56:06Z",
     "generator": "plume cosa2stream 84f9c22"
   },
   "architectures": {
