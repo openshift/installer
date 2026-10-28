@@ -126,8 +126,8 @@ require (
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.14.2
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.12.1
-	sigs.k8s.io/cluster-api-provider-azure v1.24.2
 	sigs.k8s.io/cluster-api-provider-gcp v1.13.1-0.20261007182012-ab974db591c8
+	sigs.k8s.io/cluster-api-provider-azure v1.27.1-0.20261027185733-b40aeba7879b
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.15.2
 	sigs.k8s.io/cluster-api-provider-openstack v0.14.6
 	sigs.k8s.io/cluster-api-provider-vsphere v1.17.0
