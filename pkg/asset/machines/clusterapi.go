@@ -57,6 +57,11 @@ var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
 
 var machineManifestDir = filepath.Join(capiutils.ManifestDir, "machines")
 
+const (
+	vsphereDNSLookupTimeout = 30 * time.Second
+	vsphereNetworksTimeout  = 60 * time.Second
+)
+
 // ClusterAPI is the asset for CAPI control-plane manifests.
 type ClusterAPI struct {
 	FileList []*asset.RuntimeFile
@@ -375,36 +380,10 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 
 		for _, v := range platform.VCenters {
-			// Defense against potential issues with assisted installer
-			// If the installer is unable to resolve vCenter there is a good possibility
-			// that the installer's install-config has been provided with bogus values.
-
-			// Timeout context for Lookup
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			defer cancel()
-
-			_, err := resolver.LookupHost(ctx, v.Server)
-			if err != nil {
-				logrus.Warnf("unable to resolve vSphere server %s", v.Server)
-				return nil
-			}
-
-			// Timeout context for Networks
-			// vCenter APIs can be unreliable in performance, extended this context
-			// timeout to 60 seconds.
-			ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
-			defer cancel()
-
-			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
-			if err != nil {
-				// If we are receiving an error as a Soap Fault this is caused by
-				// incorrect credentials and in the scenario of assisted installer
-				// the credentials are never valid. Since vCenter hostname is
-				// incorrect as well we shouldn't get this far.
-				if soap.IsSoapFault(err) {
-					logrus.Warn("authentication failure to vCenter, Cluster API machine manifests not created, cluster may not install")
-					return nil
-				}
+			vcenter := v
+			if err := vsphereCAPIPreflight(ctx, resolver, vcenter.Server, func(nctx context.Context) error {
+				return installConfig.VSphere.Networks(nctx, vcenter, platform.FailureDomains)
+			}); err != nil {
 				return err
 			}
 		}
@@ -543,6 +522,35 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		m.Filename = filepath.Join(machineManifestDir, m.Filename)
 	}
 	asset.SortManifestFiles(c.FileList)
+	return nil
+}
+
+type hostLookup interface {
+	LookupHost(ctx context.Context, host string) ([]string, error)
+}
+
+// vsphereCAPIPreflight resolves vCenter and loads network metadata needed to
+// generate Cluster API machines. DNS and SOAP authentication failures are
+// returned as errors so IPI cannot succeed with zero CAPI machines.
+func vsphereCAPIPreflight(ctx context.Context, lookup hostLookup, server string, loadNetworks func(context.Context) error) error {
+	lookupCtx, cancel := context.WithTimeout(ctx, vsphereDNSLookupTimeout)
+	_, err := lookup.LookupHost(lookupCtx, server)
+	cancel()
+	if err != nil {
+		return fmt.Errorf("unable to resolve vSphere server %s: %w", server, err)
+	}
+
+	// Derive the Networks timeout from the parent context so a slow LookupHost
+	// cannot shrink the documented 60s vCenter budget to the DNS leftover.
+	netCtx, cancel := context.WithTimeout(ctx, vsphereNetworksTimeout)
+	err = loadNetworks(netCtx)
+	cancel()
+	if err != nil {
+		if soap.IsSoapFault(err) {
+			return fmt.Errorf("authentication failure to vCenter %s: %w", server, err)
+		}
+		return err
+	}
 	return nil
 }
 
