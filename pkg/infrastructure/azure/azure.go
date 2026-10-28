@@ -238,7 +238,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		if err != nil {
 			return fmt.Errorf("failed to create network security group: %w", err)
 		}
-		logrus.Infof("nsg=%s", *nsg.ID)
+		if nsg.ID != nil {
+			logrus.Infof("nsg=%s", *nsg.ID)
+		}
 	}
 
 	var architecture armcompute.Architecture
@@ -250,7 +252,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	// Get information regarding the RHCOS Image Stream
 	imageInfo, err := getRHCOSImageInfo(ctx, installConfig, in.InfraID)
-	if err != nil {
+	if err != nil && platform.CloudName != aztypes.USSecCloud {
 		return err
 	}
 	resourceGroupName := p.ResourceGroupName
