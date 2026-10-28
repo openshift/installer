@@ -29,18 +29,19 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 		total = *pool.Replicas
 	}
 
+	// When osImage is specified in the install-config, the image is imported by the
+	// IBMPowerVSImage resource; otherwise a stock catalog image derived from osImageStream is used.
+	image := ImageName(clusterID, ic)
+	usingOSImage := ic.PowerVS.OSImage != ""
+
 	var (
 		result         []*asset.RuntimeFile
-		image          string
 		service        capibm.ResourceIdentifier
 		name           string
 		powerVSMachine *capibm.IBMPowerVSMachine
 		dataSecret     string
 		machine        *capi.Machine
 	)
-
-	// Note: This will be created later
-	image = fmt.Sprintf("rhcos-%s", clusterID)
 
 	if ic.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
@@ -57,7 +58,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	for idx := int64(0); idx < total; idx++ {
 		name = fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
 
-		powerVSMachine = GenerateMachine(ic, service, mpool, name, image)
+		powerVSMachine = GenerateMachine(ic, service, mpool, name, image, usingOSImage)
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", powerVSMachine.Name)},
@@ -74,7 +75,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	}
 
 	name = fmt.Sprintf("%s-bootstrap", clusterID)
-	powerVSMachine = GenerateMachine(ic, service, mpool, name, image)
+	powerVSMachine = GenerateMachine(ic, service, mpool, name, image, usingOSImage)
 	powerVSMachine.Labels["install.openshift.io/bootstrap"] = ""
 
 	result = append(result, &asset.RuntimeFile{
@@ -95,7 +96,26 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 }
 
 // GenerateMachine creates a capibm.IBMPowerVSMachine struct.
-func GenerateMachine(ic *types.InstallConfig, service capibm.ResourceIdentifier, mpool *powervs.MachinePool, name string, image string) *capibm.IBMPowerVSMachine {
+// When imageIsImport is true (i.e. platform.powervs.osImage is set), the image is the
+// IBMPowerVSImage resource of that name, which imports the image from COS; otherwise the
+// catalog stock-image path is used.
+func GenerateMachine(ic *types.InstallConfig, service capibm.ResourceIdentifier, mpool *powervs.MachinePool, name string, image string, imageIsImport bool) *capibm.IBMPowerVSMachine {
+	var machineImage capibm.IBMPowerVSMachineImage
+	if imageIsImport {
+		machineImage = capibm.IBMPowerVSMachineImage{
+			Type: capibm.ImageSourceTypeImport,
+			Import: capibm.ImageReference{
+				Name: image,
+			},
+		}
+	} else {
+		machineImage = capibm.IBMPowerVSMachineImage{
+			Type: capibm.ImageSourceTypeStockImage,
+			StockImage: capibm.ResourceIdentifier{
+				Name: image,
+			},
+		}
+	}
 	machine := &capibm.IBMPowerVSMachine{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: capibm.GroupVersion.String(),
@@ -109,14 +129,9 @@ func GenerateMachine(ic *types.InstallConfig, service capibm.ResourceIdentifier,
 			},
 		},
 		Spec: capibm.IBMPowerVSMachineSpec{
-			Workspace: service,
-			SSHKey:    "",
-			Image: capibm.IBMPowerVSMachineImage{
-				Type: capibm.ImageSourceTypeImport,
-				Import: capibm.ImageReference{
-					Name: image,
-				},
-			},
+			Workspace:     service,
+			SSHKey:        "",
+			Image:         machineImage,
 			SystemType:    mpool.SysType,
 			ProcessorType: capibm.PowerVSProcessorType(mpool.ProcType),
 			Processors:    mpool.Processors,

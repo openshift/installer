@@ -8479,6 +8479,13 @@ spec:
                           type: string
                         type: array
                     type: object
+                  osImage:
+                    description: |-
+                      OSImage is the IBM Cloud Object Storage URL of a Power VS image to import into the
+                      Power VS Workspace and use for cluster nodes, of the form
+                      https://s3.<region>.cloud-object-storage.appdomain.cloud/<bucket>/<object>.
+                      When unset, the stock catalog image matching osImageStream is used.
+                    type: string
                   powervsResourceGroup:
                     description: PowerVSResourceGroup is the resource group in which
                       Power VS resources will be created.

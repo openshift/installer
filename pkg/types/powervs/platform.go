@@ -52,6 +52,14 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
+	// OSImage is the IBM Cloud Object Storage URL of a Power VS image to import into the
+	// Power VS Workspace and use for cluster nodes, of the form
+	// https://s3.<region>.cloud-object-storage.appdomain.cloud/<bucket>/<object>.
+	// When unset, the stock catalog image matching osImageStream is used.
+	//
+	// +optional
+	OSImage string `json:"osImage,omitempty"`
+
 	// ServiceInstanceGUID is the GUID of the Power IAAS instance created from the IBM Cloud Catalog
 	// before the cluster is completed.  Leave unset to allow the installer to create a service
 	// instance during cluster creation.
