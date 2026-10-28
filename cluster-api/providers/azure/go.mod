@@ -4,7 +4,7 @@ go 1.24.0
 
 toolchain go1.24.9
 
-require sigs.k8s.io/cluster-api-provider-azure v1.21.1-0.20250929163617-2c4eaa611a39
+require sigs.k8s.io/cluster-api-provider-azure v1.27.1-0.20261027185733-b40aeba7879b
 
 require (
 	cel.dev/expr v0.24.0 // indirect
