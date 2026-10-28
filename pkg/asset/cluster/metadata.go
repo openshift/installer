@@ -98,7 +98,10 @@ func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error
 	case ovirttypes.Name:
 		metadata.ClusterPlatformMetadata.Ovirt = ovirt.Metadata(installConfig.Config)
 	case vspheretypes.Name:
-		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
+		metadata.ClusterPlatformMetadata.VSphere, err = vsphere.Metadata(installConfig.Config)
+		if err != nil {
+			return fmt.Errorf("failed to initialize vSphere metadata: %w", err)
+		}
 	case powervctypes.Name:
 		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.InfraID, installConfig.Config)
 		metadata.ClusterPlatformMetadata.PowerVC = powervc.Metadata(clusterID.InfraID, installConfig.Config)
