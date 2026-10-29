@@ -191,6 +191,13 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
+	if c.Enabled(features.FeatureGateClusterAPIOperator) && c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) {
+		enabledCaps := c.GetEnabledCapabilities()
+		if enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the ClusterAPI capability requires the CompatibilityRequirements capability"))
+		}
+	}
 	if c.Capabilities != nil {
 		allErrs = append(allErrs, validateCapabilities(c.Capabilities, field.NewPath("capabilities"))...)
 	}
