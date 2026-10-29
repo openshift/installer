@@ -1,12 +1,13 @@
 package azure
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/Azure/go-autorest/autorest/azure"
@@ -68,9 +69,9 @@ type Suffixes struct {
 	AttestationEndpoint                 string `json:"attestationEndpoint"`
 }
 
-// fetchEndpoints retrieves the metadata endpoints from the specified endPoint URL.
-func fetchEndpoints(armEndpoint, apiVersion, accessToken string) ([]byte, error) {
-	endpointsURL, err := url.Parse(fmt.Sprintf("%s/metadata/endpoints", strings.TrimSuffix(armEndpoint, "/")))
+// fetchEndpoints retrieves the metadata endpoints document for armEndpoint.
+func fetchEndpoints(armEndpoint, apiVersion string) ([]byte, error) {
+	endpointsURL, err := url.Parse(fmt.Sprintf("%s/metadata/endpoints", armEndpoint))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing resource URL: %w", err)
 	}
@@ -83,12 +84,9 @@ func fetchEndpoints(armEndpoint, apiVersion, accessToken string) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}
-	if accessToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req) //nolint:gosec // the ARM endpoint is a user-provided install-config value, not attacker-controlled input
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error performing HTTP request: %w", err)
 	}
@@ -134,9 +132,6 @@ func (r Response) toEnvironment() azure.Environment {
 		SynapseEndpointSuffix:       r.Suffixes.SynapseAnalytics,
 		DatalakeSuffix:              r.Suffixes.AzureDataLakeStoreFileSystem,
 
-		// Token audience matches the ARM endpoint (as in PublicCloud).
-		TokenAudience: r.ResourceManager,
-
 		// Per-service resource identifiers.
 		ResourceIdentifiers: azure.ResourceIdentifier{
 			Graph:               r.GraphAudience,
@@ -149,52 +144,89 @@ func (r Response) toEnvironment() azure.Environment {
 		},
 	}
 
-	// Audiences[0] is the classic service-management audience
-	// (https://management.core.windows.net/); guard the slice.
+	// Audiences[0] is the classic service-management audience for the cloud.
 	if len(r.Authentication.Audiences) > 0 {
 		env.ServiceManagementEndpoint = r.Authentication.Audiences[0]
+		env.TokenAudience = r.Authentication.Audiences[0]
 	}
 
 	// The metadata doc only provides DNS suffixes for Key Vault / HSM,
 	// so synthesize the endpoints from them.
 	if r.Suffixes.KeyVaultDNS != "" {
-		env.KeyVaultEndpoint = fmt.Sprintf("https://%s/", strings.TrimPrefix(r.Suffixes.KeyVaultDNS, "."))
+		env.KeyVaultEndpoint = fmt.Sprintf("https://%s/", r.Suffixes.KeyVaultDNS)
 	}
 	if r.Suffixes.MHSMDNS != "" {
-		env.ManagedHSMEndpoint = fmt.Sprintf("https://%s/", strings.TrimPrefix(r.Suffixes.MHSMDNS, "."))
+		env.ManagedHSMEndpoint = fmt.Sprintf("https://%s/", r.Suffixes.MHSMDNS)
 	}
+
+	bytes, _ := json.MarshalIndent(env, "", " ")
+	fmt.Println(string(bytes))
 
 	return env
 }
 
-// EnvironmentFromURL gets endpoints from a mangement URL.
-// This allows the installer to use a non-global management URL for endpoints.
-func EnvironmentFromURL(cloudName aztypes.CloudEnvironment, armEndpoint string, credentials *Credentials) (environment azure.Environment, err error) {
-	body, err := fetchEndpoints(armEndpoint, "invalid", "")
+// EnvironmentFromURL builds an azure.Environment from the metadata endpoints
+// document published by armEndpoint. This allows the installer to use a
+// non-global management URL for endpoints.
+//
+// The document may describe several clouds. The entry named USSecCloud is
+// preferred. When no such entry exists, override allows falling back to the
+// first entry in the document; otherwise it is an error.
+func EnvironmentFromURL(armEndpoint, apiVersion string, override bool) (environment azure.Environment, err error) {
+	if armEndpoint == "" {
+		return environment, fmt.Errorf("armEndpoint is empty")
+	}
+	if apiVersion == "" {
+		apiVersion = "2022-09-01"
+	}
+
+	body, err := fetchEndpoints(armEndpoint, apiVersion)
 	if err != nil {
 		return environment, fmt.Errorf("error getting endpoints: %w", err)
 	}
 
-	var response Response
-	if err := json.Unmarshal(body, &response); err != nil {
+	trimmed := bytes.TrimSpace(body)
+	if len(trimmed) == 0 {
+		return environment, fmt.Errorf("no endpoints returned")
+	}
+
+	var responses []Response
+	switch trimmed[0] {
+	case '{':
+		// A single cloud is returned as a bare object rather than an array.
+		var single Response
+		if err := json.Unmarshal(trimmed, &single); err != nil {
+			return environment, fmt.Errorf("error unmarshalling endpoint response: %w", err)
+		}
+		responses = []Response{single}
+	case '[':
+		if err := json.Unmarshal(trimmed, &responses); err != nil {
+			return environment, fmt.Errorf("error unmarshalling endpoint response: %w", err)
+		}
+	default:
+		err = errors.New("unexpected type")
+	}
+
+	if err != nil {
 		return environment, fmt.Errorf("error unmarshalling endpoint response: %w", err)
 	}
 
-	env := response.toEnvironment()
-	if env.ResourceManagerEndpoint == "" {
-		env.ResourceManagerEndpoint = armEndpoint
+	if len(responses) == 0 {
+		return environment, fmt.Errorf("no endpoints returned")
 	}
-	// For sovereign Azure clouds (Public, Government, USSec) the ARM token
-	// audience is the Resource Manager endpoint, as in the built-in SDK
-	// environments. authentication.audiences[0] is the classic
-	// service-management audience (https://management.core.windows.net/), so
-	// it must not be used as the ARM token audience. Fall back to the resolved
-	// Resource Manager endpoint when the metadata document omits
-	// resourceManager.
-	if env.TokenAudience == "" {
-		env.TokenAudience = env.ResourceManagerEndpoint
-	}
-	env.Name = string(cloudName)
 
-	return env, nil
+	for _, r := range responses {
+		if r.Name == string(aztypes.USSecCloud) {
+			return r.toEnvironment(), nil
+		}
+	}
+
+	if !override {
+		return environment, fmt.Errorf("no %s entry in endpoints document from %s", aztypes.USSecCloud, armEndpoint)
+	}
+
+	// Override: the cloud does not identify itself as USSecCloud, so take the
+	// first entry and stamp the name onto it.
+	responses[0].Name = aztypes.USSecCloud.Name()
+	return responses[0].toEnvironment(), nil
 }
