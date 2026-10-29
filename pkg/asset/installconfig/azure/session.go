@@ -75,25 +75,21 @@ type CloudEndpoints struct {
 // endpoint, token audiences, gallery, and graph endpoints for the environment.
 // It returns both the legacy go-autorest Environment and a modern
 // cloud.Configuration suitable for azure-sdk-for-go clients.
-func DiscoverEndpointsFromURL(cloudName azure.CloudEnvironment, armEndpoint string, credentials *Credentials) (*CloudEndpoints, error) {
+func DiscoverEndpointsFromURL(armEndpoint string) (*CloudEndpoints, error) {
 	if armEndpoint == "" {
 		return nil, fmt.Errorf("ARM endpoint URL must not be empty for endpoint discovery")
 	}
 
 	var err error
 	var env azureenv.Environment
-	// Azure Stack Hub publishes the legacy /metadata/endpoints schema
-	// (portalEndpoint/graphEndpoint/galleryEndpoint, no suffixes, api-version=1.0),
-	// which the sovereign-cloud Response/toEnvironment mapping does not understand.
-	// Let go-autorest's ASH-aware parser handle it.
-	if credentials != nil && cloudName != azure.StackCloud {
-		env, err = EnvironmentFromURL(cloudName, armEndpoint, credentials)
-	} else {
-		env, err = azureenv.EnvironmentFromURL(armEndpoint)
-	}
+	env, err = EnvironmentFromURL(armEndpoint, "", true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover endpoints from %q: %w", armEndpoint, err)
 	}
+
+	logrus.Debugf("Discovered Azure endpoints from %s: ActiveDirectory=%s ResourceManager=%s TokenAudience=%s",
+		armEndpoint, env.ActiveDirectoryEndpoint, env.ResourceManagerEndpoint, env.TokenAudience)
+	logrus.Debugf("StorageEndpointSuffix=%s", env.StorageEndpointSuffix)
 
 	cloudConfig := cloud.Configuration{
 		ActiveDirectoryAuthorityHost: env.ActiveDirectoryEndpoint,
@@ -115,10 +111,10 @@ func DiscoverEndpointsFromURL(cloudName azure.CloudEnvironment, armEndpoint stri
 // clouds with well-known endpoints (Public, Government, China) it uses the
 // built-in SDK definitions. For clouds that require dynamic discovery (Stack,
 // USSec) it calls DiscoverEndpointsFromURL with the provided ARM endpoint.
-func ResolveCloudEndpoints(cloudName azure.CloudEnvironment, armEndpoint string, credentials *Credentials) (*CloudEndpoints, error) {
+func ResolveCloudEndpoints(cloudName azure.CloudEnvironment, armEndpoint string) (*CloudEndpoints, error) {
 	switch cloudName {
 	case azure.StackCloud, azure.USSecCloud:
-		return DiscoverEndpointsFromURL(cloudName, armEndpoint, credentials)
+		return DiscoverEndpointsFromURL(armEndpoint)
 	default:
 		return resolveWellKnownEndpoints(cloudName)
 	}
@@ -147,7 +143,7 @@ func resolveWellKnownEndpoints(cloudName azure.CloudEnvironment) (*CloudEndpoint
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
-// and, if no creds are found, asks for them and stores them on disk in a config file.
+// and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession(cloudName azure.CloudEnvironment, armEndpoint string) (*Session, error) {
 	return GetSessionWithCredentials(cloudName, armEndpoint, nil)
 }
@@ -164,7 +160,7 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		}
 	}
 
-	endpoints, err := ResolveCloudEndpoints(cloudName, armEndpoint, credentials)
+	endpoints, err := ResolveCloudEndpoints(cloudName, armEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve Azure endpoints for the %q cloud: %w", cloudName, err)
 	}
@@ -195,17 +191,6 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	session.AuthType = authType
 	return session, nil
 }
-
-// GetCloudConfiguration gets a cloud configuration from the cloud name and endpoint.
-/*
-func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint, loginEndpoint string) (*cloud.Configuration, error) {
-	endpoints, err := ResolveCloudEndpoints(cloudName, armEndpoint, loginEndpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &endpoints.CloudConfig, nil
-}
-*/
 
 // credentialsFromFileOrUser returns credentials found
 // in ~/.azure/osServicePrincipal.json and, if no creds are found,
