@@ -208,7 +208,8 @@ func NewSubscriptionMismatchError(expectedSub string, actualSub string) *Subscri
 	err := eris.Errorf(
 		"resource subscription %q does not match parent subscription %q",
 		actualSub,
-		expectedSub)
+		expectedSub,
+	)
 
 	return &SubscriptionMismatch{
 		ExpectedSubscription: expectedSub,

@@ -38,6 +38,24 @@ resources:
   - group: infrastructure
     version: v1beta1
     kind: AzureManagedMachinePoolTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedCluster
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedClusterTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedControlPlane
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedControlPlaneTemplate
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedMachinePool
+  - group: infrastructure
+    version: v1beta1
+    kind: AzureASOManagedMachinePoolTemplate
 # -----------------
 # experimental v1beta1 types
 # -----------------
