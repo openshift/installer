@@ -3541,6 +3541,35 @@ func TestValidateReleaseArchitecture(t *testing.T) {
 	})
 }
 
+func TestValidateTNFInstallConfig(t *testing.T) {
+	baremetalPlatform := validBareMetalPlatform()
+	for _, host := range baremetalPlatform.Hosts {
+		host.Role = "master"
+	}
+
+	platforms := []types.Platform{
+		{BareMetal: baremetalPlatform},
+		{External: &external.Platform{PlatformName: "test"}},
+		{None: &none.Platform{}},
+	}
+	for _, platform := range platforms {
+		for _, featureSet := range []configv1.FeatureSet{configv1.Default, configv1.CustomNoUpgrade} {
+			t.Run(fmt.Sprintf("%s/%s", platform.Name(), featureSet), func(t *testing.T) {
+				c := validInstallConfig()
+				c.Platform = platform
+				c.FeatureSet = featureSet
+				c.ControlPlane.Replicas = pointer.Int64(2)
+				c.ControlPlane.Fencing = &types.Fencing{
+					Credentials: []*types.Credential{c1().build(), c2().build()},
+				}
+				c.Compute = nil
+
+				assert.NoError(t, ValidateInstallConfig(c, false).ToAggregate())
+			})
+		}
+	}
+}
+
 func TestValidateTNF(t *testing.T) {
 	cases := []struct {
 		name         string

@@ -14,11 +14,6 @@ import (
 func validateMachinePoolFeatureGates(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: features.FeatureGateDualReplica,
-			Condition:       c.ControlPlane != nil && c.ControlPlane.Fencing != nil,
-			Field:           field.NewPath("platform", "none", "fencingCredentials"),
-		},
-		{
 			FeatureGateName: c.DiskSetupFeatureGate(),
 			Condition:       c.ControlPlane != nil && len(c.ControlPlane.DiskSetup) != 0,
 			Field:           field.NewPath("controlPlane", "diskSetup"),
