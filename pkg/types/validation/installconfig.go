@@ -191,11 +191,26 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
-	if c.Enabled(features.FeatureGateClusterAPIOperator) && c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) {
+	featureSetErrs := ValidateFeatureSet(c)
+	if len(featureSetErrs) == 0 {
+		// The ClusterVersion CRD is published per feature set, not per feature
+		// gate, and the CustomNoUpgrade variant carries every feature gated
+		// validation whichever gates the cluster actually enables. Mirror that
+		// here, otherwise a CustomNoUpgrade install config passes validation and
+		// then fails when the bootstrap ClusterVersion is created.
+		customNoUpgrade := c.FeatureSet == configv1.CustomNoUpgrade
+		machineAPIRuleApplies := customNoUpgrade || c.Enabled(features.FeatureGateClusterAPIOperator)
+		clusterAPIRuleApplies := customNoUpgrade ||
+			(c.Enabled(features.FeatureGateClusterAPIOperator) && c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator))
+
 		enabledCaps := c.GetEnabledCapabilities()
-		if enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
+		if machineAPIRuleApplies && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
-				"the ClusterAPI capability requires the CompatibilityRequirements capability"))
+				"the MachineAPI capability requires the ClusterAPI capability: add ClusterAPI to capabilities.additionalEnabledCapabilities"))
+		}
+		if clusterAPIRuleApplies && enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the ClusterAPI capability requires the CompatibilityRequirements capability: add CompatibilityRequirements to capabilities.additionalEnabledCapabilities"))
 		}
 	}
 	if c.Capabilities != nil {
@@ -296,7 +311,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, pkivalidation.ValidatePKIConfig(c.PKI, field.NewPath("pki"))...)
 	}
 
-	allErrs = append(allErrs, ValidateFeatureSet(c)...)
+	allErrs = append(allErrs, featureSetErrs...)
 	allErrs = append(allErrs, validateOSImageStream(c)...)
 
 	return allErrs
