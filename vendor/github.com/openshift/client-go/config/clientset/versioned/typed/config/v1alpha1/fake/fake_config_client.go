@@ -16,12 +16,12 @@ func (c *FakeConfigV1alpha1) Backups() v1alpha1.BackupInterface {
 	return newFakeBackups(c)
 }
 
-func (c *FakeConfigV1alpha1) CRIOCredentialProviderConfigs() v1alpha1.CRIOCredentialProviderConfigInterface {
-	return newFakeCRIOCredentialProviderConfigs(c)
-}
-
 func (c *FakeConfigV1alpha1) ClusterMonitorings() v1alpha1.ClusterMonitoringInterface {
 	return newFakeClusterMonitorings(c)
+}
+
+func (c *FakeConfigV1alpha1) ControllerManagers() v1alpha1.ControllerManagerInterface {
+	return newFakeControllerManagers(c)
 }
 
 func (c *FakeConfigV1alpha1) InsightsDataGathers() v1alpha1.InsightsDataGatherInterface {
