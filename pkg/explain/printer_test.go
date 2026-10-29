@@ -333,13 +333,13 @@ Needs the permission "Storage Blob Data Contributor" in azure.
       BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
 
     cloudName <string>
-      Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud"
+      Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud","AzureUSSecCloud"
       cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
 with the appropriate Azure API endpoints.
 If empty, the value is equal to "AzurePublicCloud".
 
     clusterOSImage <string>
-      ClusterOSImage is the url of a storage blob in the Azure Stack environment containing an RHCOS VHD. This field is required for Azure Stack and not applicable to Azure.
+      ClusterOSImage is the url of a storage blob in the Azure environment containing an RHCOS VHD.
 
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
