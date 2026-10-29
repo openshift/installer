@@ -191,9 +191,14 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
-	if c.Enabled(features.FeatureGateClusterAPIOperator) && c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) {
+	featureSetErrs := ValidateFeatureSet(c)
+	if len(featureSetErrs) == 0 && c.Enabled(features.FeatureGateClusterAPIOperator) {
 		enabledCaps := c.GetEnabledCapabilities()
-		if enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
+		if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the MachineAPI capability requires the ClusterAPI capability"))
+		}
+		if c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) && enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
 				"the ClusterAPI capability requires the CompatibilityRequirements capability"))
 		}
@@ -296,7 +301,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, pkivalidation.ValidatePKIConfig(c.PKI, field.NewPath("pki"))...)
 	}
 
-	allErrs = append(allErrs, ValidateFeatureSet(c)...)
+	allErrs = append(allErrs, featureSetErrs...)
 	allErrs = append(allErrs, validateOSImageStream(c)...)
 
 	return allErrs
