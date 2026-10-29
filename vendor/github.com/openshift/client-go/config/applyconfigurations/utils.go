@@ -420,6 +420,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.ClusterImagePolicySpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ClusterImagePolicyStatus"):
 		return &configv1alpha1.ClusterImagePolicyStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterMonitoring"):
+		return &configv1alpha1.ClusterMonitoringApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterMonitoringSpec"):
+		return &configv1alpha1.ClusterMonitoringSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("EtcdBackupSpec"):
 		return &configv1alpha1.EtcdBackupSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("FulcioCAWithRekor"):
@@ -456,6 +460,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1alpha1.RetentionPolicyApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("RetentionSizeConfig"):
 		return &configv1alpha1.RetentionSizeConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("UserDefinedMonitoring"):
+		return &configv1alpha1.UserDefinedMonitoringApplyConfiguration{}
 
 	}
 	return nil

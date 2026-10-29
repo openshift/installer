@@ -13,19 +13,19 @@ type FakeMachineconfigurationV1alpha1 struct {
 }
 
 func (c *FakeMachineconfigurationV1alpha1) MachineConfigNodes() v1alpha1.MachineConfigNodeInterface {
-	return &FakeMachineConfigNodes{c}
+	return newFakeMachineConfigNodes(c)
 }
 
 func (c *FakeMachineconfigurationV1alpha1) MachineOSBuilds() v1alpha1.MachineOSBuildInterface {
-	return &FakeMachineOSBuilds{c}
+	return newFakeMachineOSBuilds(c)
 }
 
 func (c *FakeMachineconfigurationV1alpha1) MachineOSConfigs() v1alpha1.MachineOSConfigInterface {
-	return &FakeMachineOSConfigs{c}
+	return newFakeMachineOSConfigs(c)
 }
 
 func (c *FakeMachineconfigurationV1alpha1) PinnedImageSets() v1alpha1.PinnedImageSetInterface {
-	return &FakePinnedImageSets{c}
+	return newFakePinnedImageSets(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
