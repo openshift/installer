@@ -19,21 +19,20 @@ package vmware
 
 import (
 	"context"
-	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
+	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/vmware/conversion"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 )
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-vmware-infrastructure-cluster-x-k8s-io-v1beta1-vspherecluster,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters,versions=v1beta1,name=validation.vspherecluster.vmware.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-vmware-infrastructure-cluster-x-k8s-io-v1beta2-vspherecluster,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters,versions=v1beta2,name=validation.vspherecluster.vmware.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // VSphereCluster implements a validation and defaulting webhook for VSphereCluster.
 type VSphereCluster struct {
@@ -41,49 +40,99 @@ type VSphereCluster struct {
 	NetworkProvider string
 }
 
-var _ webhook.CustomValidator = &VSphereCluster{}
+var _ admission.Validator[*vmwarev1.VSphereCluster] = &VSphereCluster{}
 
 func (webhook *VSphereCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&vmwarev1.VSphereCluster{}).
+	return ctrl.NewWebhookManagedBy(mgr, &vmwarev1.VSphereCluster{}).
 		WithValidator(webhook).
+		WithConverter(conversion.VSphereCluster).
 		Complete()
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereCluster) ValidateCreate(_ context.Context, objRaw runtime.Object) (admission.Warnings, error) {
-	obj, ok := objRaw.(*vmwarev1.VSphereCluster)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereCluster but got a %T", objRaw))
-	}
-	return webhook.validateClusterNetwork(obj)
+func (webhook *VSphereCluster) ValidateCreate(_ context.Context, obj *vmwarev1.VSphereCluster) (admission.Warnings, error) {
+	return webhook.validate(obj)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereCluster) ValidateUpdate(_ context.Context, _ runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
-	newTyped, ok := newRaw.(*vmwarev1.VSphereCluster)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereCluster but got a %T", newRaw))
-	}
-
-	return webhook.validateClusterNetwork(newTyped)
+func (webhook *VSphereCluster) ValidateUpdate(_ context.Context, _, newTyped *vmwarev1.VSphereCluster) (admission.Warnings, error) {
+	return webhook.validate(newTyped)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereCluster) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereCluster) ValidateDelete(_ context.Context, _ *vmwarev1.VSphereCluster) (admission.Warnings, error) {
 	return nil, nil
 }
 
-func (webhook *VSphereCluster) validateClusterNetwork(cluster *vmwarev1.VSphereCluster) (admission.Warnings, error) {
+// validateClusterNetwork validates the network configuration of the VSphereCluster.
+func (webhook *VSphereCluster) validateClusterNetwork(cluster *vmwarev1.VSphereCluster) field.ErrorList {
+	var allErrs field.ErrorList
+
 	if !feature.Gates.Enabled(feature.MultiNetworks) && cluster.Spec.Network.NSXVPC.CreateSubnetSet != nil {
-		return nil, apierrors.NewInvalid(cluster.GroupVersionKind().GroupKind(), cluster.Name, field.ErrorList{
-			field.Forbidden(field.NewPath("spec", "network", "nsxVPC", "createSubnetSet"), "createSubnetSet can only be set when MultiNetworks feature gate is enabled"),
-		})
+		allErrs = append(allErrs, field.Forbidden(
+			field.NewPath("spec", "network", "nsxVPC", "createSubnetSet"),
+			"createSubnetSet can only be set when MultiNetworks feature gate is enabled",
+		))
 	}
 	if cluster.Spec.Network.NSXVPC.IsDefined() && webhook.NetworkProvider != manager.NSXVPCNetworkProvider {
-		return nil, apierrors.NewInvalid(cluster.GroupVersionKind().GroupKind(), cluster.Name, field.ErrorList{
-			field.Forbidden(field.NewPath("spec", "network", "nsxVPC"), "nsxVPC can only be set when network provider is NSX-VPC"),
-		})
+		allErrs = append(allErrs, field.Forbidden(
+			field.NewPath("spec", "network", "nsxVPC"),
+			"nsxVPC can only be set when network provider is NSX-VPC",
+		))
 	}
+
+	return allErrs
+}
+
+// validate aggregates all shared validations for the VSphereCluster.
+func (webhook *VSphereCluster) validate(cluster *vmwarev1.VSphereCluster) (admission.Warnings, error) {
+	allErrs := webhook.validateClusterNetwork(cluster)
+	allErrs = append(allErrs, validateFailureDomainsControlPlaneSelector(
+		cluster.Spec.FailureDomains.ControlPlane.Selector,
+		field.NewPath("spec", "failureDomains", "controlPlane", "selector"),
+	)...)
+
+	if len(allErrs) > 0 {
+		return nil, apierrors.NewInvalid(cluster.GroupVersionKind().GroupKind(), cluster.Name, allErrs)
+	}
+
 	return nil, nil
+}
+
+// validateFailureDomainsControlPlaneSelector validates the control plane failure domain selector.
+func validateFailureDomainsControlPlaneSelector(selector *metav1.LabelSelector, fldPath *field.Path) field.ErrorList {
+	if selector == nil {
+		return nil
+	}
+
+	var allErrs field.ErrorList
+
+	// Validate Feature Gate is enabled.
+	if !feature.Gates.Enabled(feature.NamespaceScopedZones) {
+		allErrs = append(allErrs, field.Forbidden(
+			fldPath,
+			"control plane zone selector can only be set when feature gate NamespaceScopedZones is enabled",
+		))
+		return allErrs
+	}
+
+	// Validate the selector syntax is valid.
+	parsedSelector, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(fldPath, selector, err.Error()),
+		)
+		return allErrs
+	}
+
+	// Validate the selector is not empty.
+	if parsedSelector.Empty() {
+		allErrs = append(
+			allErrs,
+			field.Invalid(fldPath, selector, "selector must not be empty"),
+		)
+	}
+
+	return allErrs
 }

@@ -22,12 +22,28 @@ import (
 	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks"
 )
 
+// VSphereCluster implements a converter for VSphereCluster.
+type VSphereCluster struct{}
+
+// SetupWebhookWithManager sets up VSphereCluster webhooks.
+func (webhook *VSphereCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&webhooks.VSphereCluster{}).SetupWebhookWithManager(mgr)
+}
+
 // VSphereClusterTemplate implements a validation webhook for VSphereClusterTemplate.
 type VSphereClusterTemplate struct{}
 
 // SetupWebhookWithManager sets up VSphereClusterTemplate webhooks.
 func (webhook *VSphereClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return (&webhooks.VSphereClusterTemplate{}).SetupWebhookWithManager(mgr)
+}
+
+// VSphereClusterIdentity implements a converter for VSphereClusterIdentity.
+type VSphereClusterIdentity struct{}
+
+// SetupWebhookWithManager sets up VSphereClusterIdentity webhooks.
+func (webhook *VSphereClusterIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&webhooks.VSphereClusterIdentity{}).SetupWebhookWithManager(mgr)
 }
 
 // VSphereDeploymentZone implements a defaulting webhook for VSphereDeploymentZone.

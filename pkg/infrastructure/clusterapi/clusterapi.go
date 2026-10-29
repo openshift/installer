@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -327,9 +328,18 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		}
 		i.appliedManifests = append(i.appliedManifests, m)
 
-		if machine, ok := m.(*clusterv1.Machine); ok {
-			machineNames = append(machineNames, machine.Name)
-			capiMachines = append(capiMachines, machine)
+		if isCAPIMachine(m) {
+			machineNames = append(machineNames, m.GetName())
+			// Track every machine as v1beta1, whichever version the platform
+			// generated. The local control plane serves both versions and the
+			// CAPI conversion webhook translates between them, so the readiness
+			// checks below can keep working with a single type.
+			capiMachines = append(capiMachines, &clusterv1.Machine{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      m.GetName(),
+					Namespace: m.GetNamespace(),
+				},
+			})
 		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
@@ -640,6 +650,17 @@ func (i *InfraProvider) collectManifests(ctx context.Context, cl client.Client) 
 		})
 	}
 	return fileList, errorList
+}
+
+// isCAPIMachine reports whether the object is a core CAPI Machine, in either of
+// the API versions a platform may generate.
+func isCAPIMachine(obj client.Object) bool {
+	switch obj.(type) {
+	case *clusterv1.Machine, *clusterv1beta2.Machine:
+		return true
+	default:
+		return false
+	}
 }
 
 func checkMachineReady(machine *clusterv1.Machine, requirePublicIP bool) (bool, error) {

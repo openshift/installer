@@ -23,15 +23,15 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	ipamv1beta1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
@@ -40,7 +40,7 @@ import (
 // of parsing IPAM addresses for a given device.
 type ipamDeviceConfig struct {
 	DeviceIndex         int
-	IPAMAddresses       []*ipamv1beta1.IPAddress
+	IPAMAddresses       []*ipamv1.IPAddress
 	MACAddress          string
 	NetworkSpecGateway4 string
 	IPAMConfigGateway4  string
@@ -67,7 +67,7 @@ func BuildState(ctx context.Context, vmCtx capvcontext.VMContext, networkStatus 
 				continue
 			}
 
-			if slices.Contains(addressWithPrefixes, addressWithPrefix) {
+			if slices.Contains(addressWithPrefixes, addressWithPrefix) { //nolint:govet // govet complains both if the type parameters are explicitly specified or not.
 				errs = append(errs,
 					fmt.Errorf("IPAddress %s/%s is a duplicate of another address: %q",
 						ipamAddress.Namespace,
@@ -108,7 +108,7 @@ func BuildState(ctx context.Context, vmCtx capvcontext.VMContext, networkStatus 
 			msgs = append(msgs, err.Error())
 		}
 		msg := strings.Join(msgs, "\n")
-		return state, errors.New(msg)
+		return state, pkgerrors.New(msg)
 	}
 	return state, nil
 }
@@ -127,11 +127,11 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 		if len(networkStatus) == 0 ||
 			len(networkStatus) <= devIdx ||
 			networkStatus[devIdx].MACAddr == "" {
-			return ipamDeviceConfigs, errors.New("waiting for devices to have MAC address set")
+			return ipamDeviceConfigs, pkgerrors.New("waiting for devices to have MAC address set")
 		}
 
 		ipamDeviceConfig := ipamDeviceConfig{
-			IPAMAddresses:       []*ipamv1beta1.IPAddress{},
+			IPAMAddresses:       []*ipamv1.IPAddress{},
 			MACAddress:          networkStatus[devIdx].MACAddr,
 			NetworkSpecGateway4: networkSpecDevice.Gateway4,
 			NetworkSpecGateway6: networkSpecDevice.Gateway6,
@@ -151,7 +151,7 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 					// it would be odd for this to occur, a findorcreate just happened in a previous step
 					continue
 				}
-				return nil, errors.Wrapf(err, "failed to get IPAddressClaim %s", klog.KRef(vmCtx.VSphereVM.Namespace, ipAddrClaimName))
+				return nil, pkgerrors.Wrapf(err, "failed to get IPAddressClaim %s", klog.KRef(vmCtx.VSphereVM.Namespace, ipAddrClaimName))
 			}
 
 			log.V(5).Info("Fetched IPAddressClaim")
@@ -161,7 +161,7 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 				continue
 			}
 
-			ipAddr := &ipamv1beta1.IPAddress{}
+			ipAddr := &ipamv1.IPAddress{}
 			ipAddrKey := apitypes.NamespacedName{
 				Namespace: vmCtx.VSphereVM.Namespace,
 				Name:      ipAddrName,
@@ -185,10 +185,10 @@ func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, ne
 }
 
 // getIPAddrClaim fetches an IPAddressClaim from the api with the given name.
-func getIPAddrClaim(ctx context.Context, vmCtx capvcontext.VMContext, ipAddrClaimName string) (*ipamv1beta1.IPAddressClaim, error) {
+func getIPAddrClaim(ctx context.Context, vmCtx capvcontext.VMContext, ipAddrClaimName string) (*ipamv1.IPAddressClaim, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	ipAddrClaim := &ipamv1beta1.IPAddressClaim{}
+	ipAddrClaim := &ipamv1.IPAddressClaim{}
 	ipAddrClaimKey := apitypes.NamespacedName{
 		Namespace: vmCtx.VSphereVM.Namespace,
 		Name:      ipAddrClaimName,

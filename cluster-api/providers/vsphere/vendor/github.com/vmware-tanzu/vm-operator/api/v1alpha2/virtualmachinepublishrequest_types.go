@@ -1,4 +1,5 @@
-// Copyright (c) 2023 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
@@ -334,7 +335,6 @@ type VirtualMachinePublishRequestStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,shortName=vmpub
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
 // VirtualMachinePublishRequest defines the information necessary to publish a
@@ -366,8 +366,5 @@ type VirtualMachinePublishRequestList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(
-		&VirtualMachinePublishRequest{},
-		&VirtualMachinePublishRequestList{},
-	)
+	objectTypes = append(objectTypes, &VirtualMachinePublishRequest{}, &VirtualMachinePublishRequestList{})
 }

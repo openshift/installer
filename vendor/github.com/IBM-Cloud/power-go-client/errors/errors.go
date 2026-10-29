@@ -169,7 +169,7 @@ func ToError(err error) error {
 
 	// check if its ours
 	kind := reflect.TypeOf(err).Kind()
-	if kind != reflect.Ptr {
+	if kind != reflect.Pointer {
 		return err
 	}
 

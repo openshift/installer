@@ -302,7 +302,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPoliciesWithContext(ctx co
 // their support of authorization policies. To create an authorization policy, use **`"type": "authorization"`** in the
 // body. The subject attributes must match the supported authorization subjects of the resource. Multiple subject
 // attributes might be provided. The following attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
+//	serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
 // supported by the service or platform roles. For more information, see [IAM roles and
 // actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
 // greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
@@ -430,7 +432,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyWithContext(ctx co
 // To update an authorization policy, use **`"type": "authorization"`** in the body. The subject attributes must match
 // the supported authorization subjects of the resource. Multiple subject attributes might be provided. The following
 // attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
+//	serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
 // supported by the service or platform roles. For more information, see [IAM roles and
 // actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
 // greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
@@ -1286,28 +1290,32 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 // Monday-Friday work week). For example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following
 // rule:
 // ```json
-//   "rule": {
-//     "operator": "and",
-//     "conditions": [{
-//       "key": "{{environment.attributes.day_of_week}}",
-//       "operator": "dayOfWeekAnyOf",
-//       "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
-//     },
-//       "key": "{{environment.attributes.current_time}}",
-//       "operator": "timeGreaterThanOrEquals",
-//       "value": "09:00:00+00:00"
-//     },
-//       "key": "{{environment.attributes.current_time}}",
-//       "operator": "timeLessThanOrEquals",
-//       "value": "17:00:00+00:00"
-//     }]
-//   }
+//
+//	"rule": {
+//	  "operator": "and",
+//	  "conditions": [{
+//	    "key": "{{environment.attributes.day_of_week}}",
+//	    "operator": "dayOfWeekAnyOf",
+//	    "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
+//	  },
+//	    "key": "{{environment.attributes.current_time}}",
+//	    "operator": "timeGreaterThanOrEquals",
+//	    "value": "09:00:00+00:00"
+//	  },
+//	    "key": "{{environment.attributes.current_time}}",
+//	    "operator": "timeLessThanOrEquals",
+//	    "value": "17:00:00+00:00"
+//	  }]
+//	}
+//
 // ``` You can use the following operators in the **`key`** and **`value`** pair:
 // ```
-//   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
-//   'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
-//   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
-//   'dayOfWeekEquals', 'dayOfWeekAnyOf'
+//
+//	'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//	'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
+//	'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
+//	'dayOfWeekEquals', 'dayOfWeekAnyOf'
+//
 // ```
 //
 // The pattern field that matches the rule is required when rule is provided. For the business hour rule example above,
@@ -1322,32 +1330,34 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 //
 // For example, a policy can grant access based on multiple conditions applied on the resource attributes below:
 // ```json
-//   "pattern": "attribute-based-condition:resource:literal-and-wildcard"
-//   "rule": {
-//       "operator": "or",
-//       "conditions": [
-//         {
-//           "operator": "and",
-//           "conditions": [
-//             {
-//               "key": "{{resource.attributes.prefix}}",
-//               "operator": "stringEquals",
-//               "value": "home/test"
-//             },
-//             {
-//               "key": "{{environment.attributes.delimiter}}",
-//               "operator": "stringEquals",
-//               "value": "/"
-//             }
-//           ]
-//         },
-//         {
-//           "key": "{{resource.attributes.path}}",
-//           "operator": "stringMatch",
-//           "value": "home/David/_*"
-//         }
-//       ]
-//   }
+//
+//	"pattern": "attribute-based-condition:resource:literal-and-wildcard"
+//	"rule": {
+//	    "operator": "or",
+//	    "conditions": [
+//	      {
+//	        "operator": "and",
+//	        "conditions": [
+//	          {
+//	            "key": "{{resource.attributes.prefix}}",
+//	            "operator": "stringEquals",
+//	            "value": "home/test"
+//	          },
+//	          {
+//	            "key": "{{environment.attributes.delimiter}}",
+//	            "operator": "stringEquals",
+//	            "value": "/"
+//	          }
+//	        ]
+//	      },
+//	      {
+//	        "key": "{{resource.attributes.path}}",
+//	        "operator": "stringMatch",
+//	        "value": "home/David/_*"
+//	      }
+//	    ]
+//	}
+//
 // ```
 //
 // In addition to satisfying the `resources` section, the policy grants permission only if either the `path` begins with
@@ -1362,7 +1372,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 // their support of authorization policies. To create an authorization policy, use **`"type": "authorization"`** in the
 // body. The subject attributes must match the supported authorization subjects of the resource. Multiple subject
 // attributes might be provided. The following attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
+//	serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
 // supported by the service or platform roles. For more information, see [IAM roles and
 // actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
 // greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
@@ -1500,28 +1512,32 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 // Monday-Friday work week). For example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following
 // rule:
 // ```json
-//   "rule": {
-//     "operator": "and",
-//     "conditions": [{
-//       "key": "{{environment.attributes.day_of_week}}",
-//       "operator": "dayOfWeekAnyOf",
-//       "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
-//     },
-//       "key": "{{environment.attributes.current_time}}",
-//       "operator": "timeGreaterThanOrEquals",
-//       "value": "09:00:00+00:00"
-//     },
-//       "key": "{{environment.attributes.current_time}}",
-//       "operator": "timeLessThanOrEquals",
-//       "value": "17:00:00+00:00"
-//     }]
-//   }
+//
+//	"rule": {
+//	  "operator": "and",
+//	  "conditions": [{
+//	    "key": "{{environment.attributes.day_of_week}}",
+//	    "operator": "dayOfWeekAnyOf",
+//	    "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
+//	  },
+//	    "key": "{{environment.attributes.current_time}}",
+//	    "operator": "timeGreaterThanOrEquals",
+//	    "value": "09:00:00+00:00"
+//	  },
+//	    "key": "{{environment.attributes.current_time}}",
+//	    "operator": "timeLessThanOrEquals",
+//	    "value": "17:00:00+00:00"
+//	  }]
+//	}
+//
 // ``` You can use the following operators in the **`key`** and **`value`** pair:
 // ```
-//   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
-//   'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
-//   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
-//   'dayOfWeekEquals', 'dayOfWeekAnyOf'
+//
+//	'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//	'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
+//	'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
+//	'dayOfWeekEquals', 'dayOfWeekAnyOf'
+//
 // ``` The pattern field that matches the rule is required when rule is provided. For the business hour rule example
 // above, the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
 // operators](/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties) and
@@ -1534,32 +1550,34 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 //
 // For example, a policy can grant access based on multiple conditions applied on the resource attributes below:
 // ```json
-//   "pattern": "attribute-based-condition:resource:literal-and-wildcard"
-//   "rule": {
-//       "operator": "or",
-//       "conditions": [
-//         {
-//           "operator": "and",
-//           "conditions": [
-//             {
-//               "key": "{{resource.attributes.prefix}}",
-//               "operator": "stringEquals",
-//               "value": "home/test"
-//             },
-//             {
-//               "key": "{{environment.attributes.delimiter}}",
-//               "operator": "stringEquals",
-//               "value": "/"
-//             }
-//           ]
-//         },
-//         {
-//           "key": "{{resource.attributes.path}}",
-//           "operator": "stringMatch",
-//           "value": "home/David/_*"
-//         }
-//       ]
-//   }
+//
+//	"pattern": "attribute-based-condition:resource:literal-and-wildcard"
+//	"rule": {
+//	    "operator": "or",
+//	    "conditions": [
+//	      {
+//	        "operator": "and",
+//	        "conditions": [
+//	          {
+//	            "key": "{{resource.attributes.prefix}}",
+//	            "operator": "stringEquals",
+//	            "value": "home/test"
+//	          },
+//	          {
+//	            "key": "{{environment.attributes.delimiter}}",
+//	            "operator": "stringEquals",
+//	            "value": "/"
+//	          }
+//	        ]
+//	      },
+//	      {
+//	        "key": "{{resource.attributes.path}}",
+//	        "operator": "stringMatch",
+//	        "value": "home/David/_*"
+//	      }
+//	    ]
+//	}
+//
 // ```
 //
 // In addition to satisfying the `resources` section, the policy grants permission only if either the `path` begins with
@@ -1573,7 +1591,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 // To update an authorization policy, use **`"type": "authorization"`** in the body. The subject attributes must match
 // the supported authorization subjects of the resource. Multiple subject attributes might be provided. The following
 // attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
+//	serviceName, serviceInstance, region, resourceType, resource, accountId, resourceGroupId Assign roles that are
+//
 // supported by the service or platform roles. For more information, see [IAM roles and
 // actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
 // greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
@@ -2340,7 +2360,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplacePolicyTemplateWithConte
 
 	pathParamsMap := map[string]string{
 		"policy_template_id": *replacePolicyTemplateOptions.PolicyTemplateID,
-		"version": *replacePolicyTemplateOptions.Version,
+		"version":            *replacePolicyTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -2435,7 +2455,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyTemplateVersionWit
 
 	pathParamsMap := map[string]string{
 		"policy_template_id": *deletePolicyTemplateVersionOptions.PolicyTemplateID,
-		"version": *deletePolicyTemplateVersionOptions.Version,
+		"version":            *deletePolicyTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2495,7 +2515,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyTemplateVersionWithCo
 
 	pathParamsMap := map[string]string{
 		"policy_template_id": *getPolicyTemplateVersionOptions.PolicyTemplateID,
-		"version": *getPolicyTemplateVersionOptions.Version,
+		"version":            *getPolicyTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2566,7 +2586,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) CommitPolicyTemplateWithContex
 
 	pathParamsMap := map[string]string{
 		"policy_template_id": *commitPolicyTemplateOptions.PolicyTemplateID,
-		"version": *commitPolicyTemplateOptions.Version,
+		"version":            *commitPolicyTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3673,7 +3693,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplaceActionControlTemplateWi
 
 	pathParamsMap := map[string]string{
 		"action_control_template_id": *replaceActionControlTemplateOptions.ActionControlTemplateID,
-		"version": *replaceActionControlTemplateOptions.Version,
+		"version":                    *replaceActionControlTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -3768,7 +3788,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteActionControlTemplateVer
 
 	pathParamsMap := map[string]string{
 		"action_control_template_id": *deleteActionControlTemplateVersionOptions.ActionControlTemplateID,
-		"version": *deleteActionControlTemplateVersionOptions.Version,
+		"version":                    *deleteActionControlTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -3828,7 +3848,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetActionControlTemplateVersio
 
 	pathParamsMap := map[string]string{
 		"action_control_template_id": *getActionControlTemplateVersionOptions.ActionControlTemplateID,
-		"version": *getActionControlTemplateVersionOptions.Version,
+		"version":                    *getActionControlTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3899,7 +3919,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) CommitActionControlTemplateWit
 
 	pathParamsMap := map[string]string{
 		"action_control_template_id": *commitActionControlTemplateOptions.ActionControlTemplateID,
-		"version": *commitActionControlTemplateOptions.Version,
+		"version":                    *commitActionControlTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -4825,7 +4845,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRoleTemplateWithContext
 
 	pathParamsMap := map[string]string{
 		"role_template_id": *replaceRoleTemplateOptions.RoleTemplateID,
-		"version": *replaceRoleTemplateOptions.Version,
+		"version":          *replaceRoleTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -4919,7 +4939,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleTemplateVersionWithC
 
 	pathParamsMap := map[string]string{
 		"role_template_id": *deleteRoleTemplateVersionOptions.RoleTemplateID,
-		"version": *deleteRoleTemplateVersionOptions.Version,
+		"version":          *deleteRoleTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -4979,7 +4999,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetRoleTemplateVersionWithCont
 
 	pathParamsMap := map[string]string{
 		"role_template_id": *getRoleTemplateVersionOptions.RoleTemplateID,
-		"version": *getRoleTemplateVersionOptions.Version,
+		"version":          *getRoleTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5050,7 +5070,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) CommitRoleTemplateWithContext(
 
 	pathParamsMap := map[string]string{
 		"role_template_id": *commitRoleTemplateOptions.RoleTemplateID,
-		"version": *commitRoleTemplateOptions.Version,
+		"version":          *commitRoleTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -5531,7 +5551,7 @@ type ActionControlAssignment struct {
 // Constants associated with the ActionControlAssignment.Operation property.
 // The current operation of the action control assignment.
 const (
-	ActionControlAssignmentOperationApplyConst = "apply"
+	ActionControlAssignmentOperationApplyConst  = "apply"
 	ActionControlAssignmentOperationCreateConst = "create"
 	ActionControlAssignmentOperationRemoveConst = "remove"
 	ActionControlAssignmentOperationUpdateConst = "update"
@@ -5540,8 +5560,8 @@ const (
 // Constants associated with the ActionControlAssignment.Status property.
 // The action control assignment status.
 const (
-	ActionControlAssignmentStatusAcceptedConst = "accepted"
-	ActionControlAssignmentStatusFailureConst = "failure"
+	ActionControlAssignmentStatusAcceptedConst   = "accepted"
+	ActionControlAssignmentStatusFailureConst    = "failure"
 	ActionControlAssignmentStatusInProgressConst = "in_progress"
 	ActionControlAssignmentStatusSupersededConst = "superseded"
 )
@@ -5753,7 +5773,7 @@ type ActionControlAssignmentTemplate struct {
 // NewActionControlAssignmentTemplate : Instantiate ActionControlAssignmentTemplate (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewActionControlAssignmentTemplate(id string, version string) (_model *ActionControlAssignmentTemplate, err error) {
 	_model = &ActionControlAssignmentTemplate{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		Version: core.StringPtr(version),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -5827,7 +5847,7 @@ type ActionControlTemplate struct {
 // Constants associated with the ActionControlTemplate.State property.
 // State of action control template.
 const (
-	ActionControlTemplateStateActiveConst = "active"
+	ActionControlTemplateStateActiveConst  = "active"
 	ActionControlTemplateStateDeletedConst = "deleted"
 )
 
@@ -6106,7 +6126,7 @@ const (
 func (*IamPolicyManagementV1) NewAssignmentTargetDetails(typeVar string, id string) (_model *AssignmentTargetDetails, err error) {
 	_model = &AssignmentTargetDetails{
 		Type: core.StringPtr(typeVar),
-		ID: core.StringPtr(id),
+		ID:   core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -6174,7 +6194,7 @@ type CommitActionControlTemplateOptions struct {
 func (*IamPolicyManagementV1) NewCommitActionControlTemplateOptions(actionControlTemplateID string, version string) *CommitActionControlTemplateOptions {
 	return &CommitActionControlTemplateOptions{
 		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
-		Version: core.StringPtr(version),
+		Version:                 core.StringPtr(version),
 	}
 }
 
@@ -6212,7 +6232,7 @@ type CommitPolicyTemplateOptions struct {
 func (*IamPolicyManagementV1) NewCommitPolicyTemplateOptions(policyTemplateID string, version string) *CommitPolicyTemplateOptions {
 	return &CommitPolicyTemplateOptions{
 		PolicyTemplateID: core.StringPtr(policyTemplateID),
-		Version: core.StringPtr(version),
+		Version:          core.StringPtr(version),
 	}
 }
 
@@ -6250,7 +6270,7 @@ type CommitRoleTemplateOptions struct {
 func (*IamPolicyManagementV1) NewCommitRoleTemplateOptions(roleTemplateID string, version string) *CommitRoleTemplateOptions {
 	return &CommitRoleTemplateOptions{
 		RoleTemplateID: core.StringPtr(roleTemplateID),
-		Version: core.StringPtr(version),
+		Version:        core.StringPtr(version),
 	}
 }
 
@@ -6344,6 +6364,7 @@ type ControlResponse struct {
 	// Permission is granted by the policy.
 	Grant *Grant `json:"grant,omitempty"`
 }
+
 func (*ControlResponse) isaControlResponse() bool {
 	return true
 }
@@ -6393,7 +6414,7 @@ type CreateActionControlTemplateAssignmentOptions struct {
 // NewCreateActionControlTemplateAssignmentOptions : Instantiate CreateActionControlTemplateAssignmentOptions
 func (*IamPolicyManagementV1) NewCreateActionControlTemplateAssignmentOptions(target *AssignmentTargetDetails, templates []ActionControlAssignmentTemplate) *CreateActionControlTemplateAssignmentOptions {
 	return &CreateActionControlTemplateAssignmentOptions{
-		Target: target,
+		Target:    target,
 		Templates: templates,
 	}
 }
@@ -6462,7 +6483,7 @@ type CreateActionControlTemplateOptions struct {
 // NewCreateActionControlTemplateOptions : Instantiate CreateActionControlTemplateOptions
 func (*IamPolicyManagementV1) NewCreateActionControlTemplateOptions(name string, accountID string) *CreateActionControlTemplateOptions {
 	return &CreateActionControlTemplateOptions{
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -6614,9 +6635,9 @@ type CreatePolicyOptions struct {
 // NewCreatePolicyOptions : Instantiate CreatePolicyOptions
 func (*IamPolicyManagementV1) NewCreatePolicyOptions(typeVar string, subjects []PolicySubject, roles []PolicyRole, resources []PolicyResource) *CreatePolicyOptions {
 	return &CreatePolicyOptions{
-		Type: core.StringPtr(typeVar),
-		Subjects: subjects,
-		Roles: roles,
+		Type:      core.StringPtr(typeVar),
+		Subjects:  subjects,
+		Roles:     roles,
 		Resources: resources,
 	}
 }
@@ -6695,8 +6716,8 @@ type CreatePolicyTemplateAssignmentOptions struct {
 // NewCreatePolicyTemplateAssignmentOptions : Instantiate CreatePolicyTemplateAssignmentOptions
 func (*IamPolicyManagementV1) NewCreatePolicyTemplateAssignmentOptions(version string, target *AssignmentTargetDetails, templates []AssignmentTemplateDetails) *CreatePolicyTemplateAssignmentOptions {
 	return &CreatePolicyTemplateAssignmentOptions{
-		Version: core.StringPtr(version),
-		Target: target,
+		Version:   core.StringPtr(version),
+		Target:    target,
 		Templates: templates,
 	}
 }
@@ -6771,9 +6792,9 @@ type CreatePolicyTemplateOptions struct {
 // NewCreatePolicyTemplateOptions : Instantiate CreatePolicyTemplateOptions
 func (*IamPolicyManagementV1) NewCreatePolicyTemplateOptions(name string, accountID string, policy *TemplatePolicy) *CreatePolicyTemplateOptions {
 	return &CreatePolicyTemplateOptions{
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 		AccountID: core.StringPtr(accountID),
-		Policy: policy,
+		Policy:    policy,
 	}
 }
 
@@ -6846,7 +6867,7 @@ type CreatePolicyTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewCreatePolicyTemplateVersionOptions(policyTemplateID string, policy *TemplatePolicy) *CreatePolicyTemplateVersionOptions {
 	return &CreatePolicyTemplateVersionOptions{
 		PolicyTemplateID: core.StringPtr(policyTemplateID),
-		Policy: policy,
+		Policy:           policy,
 	}
 }
 
@@ -6929,9 +6950,9 @@ type CreateRoleOptions struct {
 func (*IamPolicyManagementV1) NewCreateRoleOptions(displayName string, actions []string, name string, accountID string, serviceName string) *CreateRoleOptions {
 	return &CreateRoleOptions{
 		DisplayName: core.StringPtr(displayName),
-		Actions: actions,
-		Name: core.StringPtr(name),
-		AccountID: core.StringPtr(accountID),
+		Actions:     actions,
+		Name:        core.StringPtr(name),
+		AccountID:   core.StringPtr(accountID),
 		ServiceName: core.StringPtr(serviceName),
 	}
 }
@@ -7013,7 +7034,7 @@ type CreateRoleTemplateAssignmentOptions struct {
 // NewCreateRoleTemplateAssignmentOptions : Instantiate CreateRoleTemplateAssignmentOptions
 func (*IamPolicyManagementV1) NewCreateRoleTemplateAssignmentOptions(target *AssignmentTargetDetails, templates []RoleAssignmentTemplate) *CreateRoleTemplateAssignmentOptions {
 	return &CreateRoleTemplateAssignmentOptions{
-		Target: target,
+		Target:    target,
 		Templates: templates,
 	}
 }
@@ -7082,7 +7103,7 @@ type CreateRoleTemplateOptions struct {
 // NewCreateRoleTemplateOptions : Instantiate CreateRoleTemplateOptions
 func (*IamPolicyManagementV1) NewCreateRoleTemplateOptions(name string, accountID string) *CreateRoleTemplateOptions {
 	return &CreateRoleTemplateOptions{
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -7241,7 +7262,7 @@ type CreateV2PolicyOptions struct {
 // Constants associated with the CreateV2PolicyOptions.Type property.
 // The policy type; either 'access' or 'authorization'.
 const (
-	CreateV2PolicyOptionsTypeAccessConst = "access"
+	CreateV2PolicyOptionsTypeAccessConst        = "access"
 	CreateV2PolicyOptionsTypeAuthorizationConst = "authorization"
 )
 
@@ -7249,7 +7270,7 @@ const (
 func (*IamPolicyManagementV1) NewCreateV2PolicyOptions(control *Control, typeVar string) *CreateV2PolicyOptions {
 	return &CreateV2PolicyOptions{
 		Control: control,
-		Type: core.StringPtr(typeVar),
+		Type:    core.StringPtr(typeVar),
 	}
 }
 
@@ -7495,7 +7516,7 @@ type DeleteActionControlTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewDeleteActionControlTemplateVersionOptions(actionControlTemplateID string, version string) *DeleteActionControlTemplateVersionOptions {
 	return &DeleteActionControlTemplateVersionOptions{
 		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
-		Version: core.StringPtr(version),
+		Version:                 core.StringPtr(version),
 	}
 }
 
@@ -7617,7 +7638,7 @@ type DeletePolicyTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewDeletePolicyTemplateVersionOptions(policyTemplateID string, version string) *DeletePolicyTemplateVersionOptions {
 	return &DeletePolicyTemplateVersionOptions{
 		PolicyTemplateID: core.StringPtr(policyTemplateID),
-		Version: core.StringPtr(version),
+		Version:          core.StringPtr(version),
 	}
 }
 
@@ -7739,7 +7760,7 @@ type DeleteRoleTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewDeleteRoleTemplateVersionOptions(roleTemplateID string, version string) *DeleteRoleTemplateVersionOptions {
 	return &DeleteRoleTemplateVersionOptions{
 		RoleTemplateID: core.StringPtr(roleTemplateID),
-		Version: core.StringPtr(version),
+		Version:        core.StringPtr(version),
 	}
 }
 
@@ -7870,28 +7891,28 @@ type ErrorObject struct {
 // The API error code for the error.
 const (
 	ErrorObjectCodeActionControlAssignmentNotFoundConst = "action_control_assignment_not_found"
-	ErrorObjectCodeActionControlTemplateNotFoundConst = "action_control_template_not_found"
-	ErrorObjectCodeInsufficentPermissionsConst = "insufficent_permissions"
-	ErrorObjectCodeInvalidBodyConst = "invalid_body"
-	ErrorObjectCodeInvalidTokenConst = "invalid_token"
-	ErrorObjectCodeMissingRequiredQueryParameterConst = "missing_required_query_parameter"
-	ErrorObjectCodeNotFoundConst = "not_found"
-	ErrorObjectCodePolicyAssignmentConflictErrorConst = "policy_assignment_conflict_error"
-	ErrorObjectCodePolicyAssignmentNotFoundConst = "policy_assignment_not_found"
-	ErrorObjectCodePolicyConflictErrorConst = "policy_conflict_error"
-	ErrorObjectCodePolicyNotFoundConst = "policy_not_found"
-	ErrorObjectCodePolicyTemplateConflictErrorConst = "policy_template_conflict_error"
-	ErrorObjectCodePolicyTemplateNotFoundConst = "policy_template_not_found"
-	ErrorObjectCodeRequestNotProcessedConst = "request_not_processed"
-	ErrorObjectCodeResourceNotFoundConst = "resource_not_found"
-	ErrorObjectCodeRoleAssignmentNotFoundConst = "role_assignment_not_found"
-	ErrorObjectCodeRoleConflictErrorConst = "role_conflict_error"
-	ErrorObjectCodeRoleNotFoundConst = "role_not_found"
-	ErrorObjectCodeRoleTemplateConflictErrorConst = "role_template_conflict_error"
-	ErrorObjectCodeRoleTemplateNotFoundConst = "role_template_not_found"
-	ErrorObjectCodeTooManyRequestsConst = "too_many_requests"
-	ErrorObjectCodeUnableToProcessConst = "unable_to_process"
-	ErrorObjectCodeUnsupportedContentTypeConst = "unsupported_content_type"
+	ErrorObjectCodeActionControlTemplateNotFoundConst   = "action_control_template_not_found"
+	ErrorObjectCodeInsufficentPermissionsConst          = "insufficent_permissions"
+	ErrorObjectCodeInvalidBodyConst                     = "invalid_body"
+	ErrorObjectCodeInvalidTokenConst                    = "invalid_token"
+	ErrorObjectCodeMissingRequiredQueryParameterConst   = "missing_required_query_parameter"
+	ErrorObjectCodeNotFoundConst                        = "not_found"
+	ErrorObjectCodePolicyAssignmentConflictErrorConst   = "policy_assignment_conflict_error"
+	ErrorObjectCodePolicyAssignmentNotFoundConst        = "policy_assignment_not_found"
+	ErrorObjectCodePolicyConflictErrorConst             = "policy_conflict_error"
+	ErrorObjectCodePolicyNotFoundConst                  = "policy_not_found"
+	ErrorObjectCodePolicyTemplateConflictErrorConst     = "policy_template_conflict_error"
+	ErrorObjectCodePolicyTemplateNotFoundConst          = "policy_template_not_found"
+	ErrorObjectCodeRequestNotProcessedConst             = "request_not_processed"
+	ErrorObjectCodeResourceNotFoundConst                = "resource_not_found"
+	ErrorObjectCodeRoleAssignmentNotFoundConst          = "role_assignment_not_found"
+	ErrorObjectCodeRoleConflictErrorConst               = "role_conflict_error"
+	ErrorObjectCodeRoleNotFoundConst                    = "role_not_found"
+	ErrorObjectCodeRoleTemplateConflictErrorConst       = "role_template_conflict_error"
+	ErrorObjectCodeRoleTemplateNotFoundConst            = "role_template_not_found"
+	ErrorObjectCodeTooManyRequestsConst                 = "too_many_requests"
+	ErrorObjectCodeUnableToProcessConst                 = "unable_to_process"
+	ErrorObjectCodeUnsupportedContentTypeConst          = "unsupported_content_type"
 )
 
 // UnmarshalErrorObject unmarshals an instance of ErrorObject from the specified map of raw messages.
@@ -8018,7 +8039,7 @@ type GetActionControlTemplateOptions struct {
 // Constants associated with the GetActionControlTemplateOptions.State property.
 // The action control template state.
 const (
-	GetActionControlTemplateOptionsStateActiveConst = "active"
+	GetActionControlTemplateOptionsStateActiveConst  = "active"
 	GetActionControlTemplateOptionsStateDeletedConst = "deleted"
 )
 
@@ -8063,7 +8084,7 @@ type GetActionControlTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewGetActionControlTemplateVersionOptions(actionControlTemplateID string, version string) *GetActionControlTemplateVersionOptions {
 	return &GetActionControlTemplateVersionOptions{
 		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
-		Version: core.StringPtr(version),
+		Version:                 core.StringPtr(version),
 	}
 }
 
@@ -8101,7 +8122,7 @@ type GetPolicyAssignmentOptions struct {
 func (*IamPolicyManagementV1) NewGetPolicyAssignmentOptions(assignmentID string, version string) *GetPolicyAssignmentOptions {
 	return &GetPolicyAssignmentOptions{
 		AssignmentID: core.StringPtr(assignmentID),
-		Version: core.StringPtr(version),
+		Version:      core.StringPtr(version),
 	}
 }
 
@@ -8166,7 +8187,7 @@ type GetPolicyTemplateOptions struct {
 // Constants associated with the GetPolicyTemplateOptions.State property.
 // The policy template state.
 const (
-	GetPolicyTemplateOptionsStateActiveConst = "active"
+	GetPolicyTemplateOptionsStateActiveConst  = "active"
 	GetPolicyTemplateOptionsStateDeletedConst = "deleted"
 )
 
@@ -8211,7 +8232,7 @@ type GetPolicyTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewGetPolicyTemplateVersionOptions(policyTemplateID string, version string) *GetPolicyTemplateVersionOptions {
 	return &GetPolicyTemplateVersionOptions{
 		PolicyTemplateID: core.StringPtr(policyTemplateID),
-		Version: core.StringPtr(version),
+		Version:          core.StringPtr(version),
 	}
 }
 
@@ -8304,7 +8325,7 @@ type GetRoleTemplateOptions struct {
 // Constants associated with the GetRoleTemplateOptions.State property.
 // The role template state.
 const (
-	GetRoleTemplateOptionsStateActiveConst = "active"
+	GetRoleTemplateOptionsStateActiveConst  = "active"
 	GetRoleTemplateOptionsStateDeletedConst = "deleted"
 )
 
@@ -8349,7 +8370,7 @@ type GetRoleTemplateVersionOptions struct {
 func (*IamPolicyManagementV1) NewGetRoleTemplateVersionOptions(roleTemplateID string, version string) *GetRoleTemplateVersionOptions {
 	return &GetRoleTemplateVersionOptions{
 		RoleTemplateID: core.StringPtr(roleTemplateID),
-		Version: core.StringPtr(version),
+		Version:        core.StringPtr(version),
 	}
 }
 
@@ -8442,7 +8463,7 @@ type GetV2PolicyOptions struct {
 // * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
 // fields.
 const (
-	GetV2PolicyOptionsFormatDisplayConst = "display"
+	GetV2PolicyOptionsFormatDisplayConst           = "display"
 	GetV2PolicyOptionsFormatIncludeLastPermitConst = "include_last_permit"
 )
 
@@ -8573,7 +8594,7 @@ const (
 // NewIdentityTypesBase : Instantiate IdentityTypesBase (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewIdentityTypesBase(state string, externalAllowedAccounts []string) (_model *IdentityTypesBase, err error) {
 	_model = &IdentityTypesBase{
-		State: core.StringPtr(state),
+		State:                   core.StringPtr(state),
 		ExternalAllowedAccounts: externalAllowedAccounts,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -8765,7 +8786,7 @@ type ListActionControlTemplateVersionsOptions struct {
 // Constants associated with the ListActionControlTemplateVersionsOptions.State property.
 // Action control template state.
 const (
-	ListActionControlTemplateVersionsOptionsStateActiveConst = "active"
+	ListActionControlTemplateVersionsOptionsStateActiveConst  = "active"
 	ListActionControlTemplateVersionsOptionsStateDeletedConst = "deleted"
 )
 
@@ -8937,7 +8958,7 @@ type ListPoliciesOptions struct {
 // Constants associated with the ListPoliciesOptions.Type property.
 // Optional type of policy.
 const (
-	ListPoliciesOptionsTypeAccessConst = "access"
+	ListPoliciesOptionsTypeAccessConst        = "access"
 	ListPoliciesOptionsTypeAuthorizationConst = "authorization"
 )
 
@@ -8945,21 +8966,21 @@ const (
 // Optional type of service.
 const (
 	ListPoliciesOptionsServiceTypePlatformServiceConst = "platform_service"
-	ListPoliciesOptionsServiceTypeServiceConst = "service"
+	ListPoliciesOptionsServiceTypeServiceConst         = "service"
 )
 
 // Constants associated with the ListPoliciesOptions.Sort property.
 // Optional top level policy field to sort results. Ascending sort is default. Descending sort available by prepending
 // '-' to field. Example '-last_modified_at'.
 const (
-	ListPoliciesOptionsSortCreatedAtConst = "created_at"
-	ListPoliciesOptionsSortCreatedByIDConst = "created_by_id"
-	ListPoliciesOptionsSortHrefConst = "href"
-	ListPoliciesOptionsSortIDConst = "id"
-	ListPoliciesOptionsSortLastModifiedAtConst = "last_modified_at"
+	ListPoliciesOptionsSortCreatedAtConst        = "created_at"
+	ListPoliciesOptionsSortCreatedByIDConst      = "created_by_id"
+	ListPoliciesOptionsSortHrefConst             = "href"
+	ListPoliciesOptionsSortIDConst               = "id"
+	ListPoliciesOptionsSortLastModifiedAtConst   = "last_modified_at"
 	ListPoliciesOptionsSortLastModifiedByIDConst = "last_modified_by_id"
-	ListPoliciesOptionsSortStateConst = "state"
-	ListPoliciesOptionsSortTypeConst = "type"
+	ListPoliciesOptionsSortStateConst            = "state"
+	ListPoliciesOptionsSortTypeConst             = "type"
 )
 
 // Constants associated with the ListPoliciesOptions.Format property.
@@ -8968,7 +8989,7 @@ const (
 // it has done so
 // * `display` - returns the list of all actions included in each of the policy roles.
 const (
-	ListPoliciesOptionsFormatDisplayConst = "display"
+	ListPoliciesOptionsFormatDisplayConst           = "display"
 	ListPoliciesOptionsFormatIncludeLastPermitConst = "include_last_permit"
 )
 
@@ -8977,7 +8998,7 @@ const (
 // * `active` - returns active policies
 // * `deleted` - returns non-active policies.
 const (
-	ListPoliciesOptionsStateActiveConst = "active"
+	ListPoliciesOptionsStateActiveConst  = "active"
 	ListPoliciesOptionsStateDeletedConst = "deleted"
 )
 
@@ -9113,7 +9134,7 @@ type ListPolicyAssignmentsOptions struct {
 // NewListPolicyAssignmentsOptions : Instantiate ListPolicyAssignmentsOptions
 func (*IamPolicyManagementV1) NewListPolicyAssignmentsOptions(version string, accountID string) *ListPolicyAssignmentsOptions {
 	return &ListPolicyAssignmentsOptions{
-		Version: core.StringPtr(version),
+		Version:   core.StringPtr(version),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -9187,7 +9208,7 @@ type ListPolicyTemplateVersionsOptions struct {
 // Constants associated with the ListPolicyTemplateVersionsOptions.State property.
 // The policy template state.
 const (
-	ListPolicyTemplateVersionsOptionsStateActiveConst = "active"
+	ListPolicyTemplateVersionsOptionsStateActiveConst  = "active"
 	ListPolicyTemplateVersionsOptionsStateDeletedConst = "deleted"
 )
 
@@ -9278,7 +9299,7 @@ type ListPolicyTemplatesOptions struct {
 // Constants associated with the ListPolicyTemplatesOptions.State property.
 // The policy template state.
 const (
-	ListPolicyTemplatesOptionsStateActiveConst = "active"
+	ListPolicyTemplatesOptionsStateActiveConst  = "active"
 	ListPolicyTemplatesOptionsStateDeletedConst = "deleted"
 )
 
@@ -9286,13 +9307,13 @@ const (
 // Service type, Optional.
 const (
 	ListPolicyTemplatesOptionsPolicyServiceTypePlatformServiceConst = "platform_service"
-	ListPolicyTemplatesOptionsPolicyServiceTypeServiceConst = "service"
+	ListPolicyTemplatesOptionsPolicyServiceTypeServiceConst         = "service"
 )
 
 // Constants associated with the ListPolicyTemplatesOptions.PolicyType property.
 // Policy type, Optional.
 const (
-	ListPolicyTemplatesOptionsPolicyTypeAccessConst = "access"
+	ListPolicyTemplatesOptionsPolicyTypeAccessConst        = "access"
 	ListPolicyTemplatesOptionsPolicyTypeAuthorizationConst = "authorization"
 )
 
@@ -9474,7 +9495,7 @@ type ListRoleTemplateVersionsOptions struct {
 // Constants associated with the ListRoleTemplateVersionsOptions.State property.
 // Role template state.
 const (
-	ListRoleTemplateVersionsOptionsStateActiveConst = "active"
+	ListRoleTemplateVersionsOptionsStateActiveConst  = "active"
 	ListRoleTemplateVersionsOptionsStateDeletedConst = "deleted"
 )
 
@@ -9559,7 +9580,7 @@ type ListRoleTemplatesOptions struct {
 // Constants associated with the ListRoleTemplatesOptions.State property.
 // The role template state.
 const (
-	ListRoleTemplatesOptionsStateActiveConst = "active"
+	ListRoleTemplatesOptionsStateActiveConst  = "active"
 	ListRoleTemplatesOptionsStateDeletedConst = "deleted"
 )
 
@@ -9784,7 +9805,7 @@ type ListV2PoliciesOptions struct {
 // Constants associated with the ListV2PoliciesOptions.Type property.
 // Optional type of policy.
 const (
-	ListV2PoliciesOptionsTypeAccessConst = "access"
+	ListV2PoliciesOptionsTypeAccessConst        = "access"
 	ListV2PoliciesOptionsTypeAuthorizationConst = "authorization"
 )
 
@@ -9792,7 +9813,7 @@ const (
 // Optional type of service.
 const (
 	ListV2PoliciesOptionsServiceTypePlatformServiceConst = "platform_service"
-	ListV2PoliciesOptionsServiceTypeServiceConst = "service"
+	ListV2PoliciesOptionsServiceTypeServiceConst         = "service"
 )
 
 // Constants associated with the ListV2PoliciesOptions.Format property.
@@ -9802,7 +9823,7 @@ const (
 // * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
 // fields.
 const (
-	ListV2PoliciesOptionsFormatDisplayConst = "display"
+	ListV2PoliciesOptionsFormatDisplayConst           = "display"
 	ListV2PoliciesOptionsFormatIncludeLastPermitConst = "include_last_permit"
 )
 
@@ -9811,7 +9832,7 @@ const (
 // * `active` - returns active policies
 // * `deleted` - returns non-active policies.
 const (
-	ListV2PoliciesOptionsStateActiveConst = "active"
+	ListV2PoliciesOptionsStateActiveConst  = "active"
 	ListV2PoliciesOptionsStateDeletedConst = "deleted"
 )
 
@@ -9929,26 +9950,27 @@ type NestedCondition struct {
 // Constants associated with the NestedCondition.Operator property.
 // The operator of an attribute.
 const (
-	NestedConditionOperatorDategreaterthanConst = "dateGreaterThan"
-	NestedConditionOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
-	NestedConditionOperatorDatelessthanConst = "dateLessThan"
-	NestedConditionOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
-	NestedConditionOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	NestedConditionOperatorDategreaterthanConst             = "dateGreaterThan"
+	NestedConditionOperatorDategreaterthanorequalsConst     = "dateGreaterThanOrEquals"
+	NestedConditionOperatorDatelessthanConst                = "dateLessThan"
+	NestedConditionOperatorDatelessthanorequalsConst        = "dateLessThanOrEquals"
+	NestedConditionOperatorDatetimegreaterthanConst         = "dateTimeGreaterThan"
 	NestedConditionOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	NestedConditionOperatorDatetimelessthanConst = "dateTimeLessThan"
-	NestedConditionOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	NestedConditionOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	NestedConditionOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	NestedConditionOperatorStringequalsConst = "stringEquals"
-	NestedConditionOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	NestedConditionOperatorStringexistsConst = "stringExists"
-	NestedConditionOperatorStringmatchConst = "stringMatch"
-	NestedConditionOperatorStringmatchanyofConst = "stringMatchAnyOf"
-	NestedConditionOperatorTimegreaterthanConst = "timeGreaterThan"
-	NestedConditionOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	NestedConditionOperatorTimelessthanConst = "timeLessThan"
-	NestedConditionOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+	NestedConditionOperatorDatetimelessthanConst            = "dateTimeLessThan"
+	NestedConditionOperatorDatetimelessthanorequalsConst    = "dateTimeLessThanOrEquals"
+	NestedConditionOperatorDayofweekanyofConst              = "dayOfWeekAnyOf"
+	NestedConditionOperatorDayofweekequalsConst             = "dayOfWeekEquals"
+	NestedConditionOperatorStringequalsConst                = "stringEquals"
+	NestedConditionOperatorStringequalsanyofConst           = "stringEqualsAnyOf"
+	NestedConditionOperatorStringexistsConst                = "stringExists"
+	NestedConditionOperatorStringmatchConst                 = "stringMatch"
+	NestedConditionOperatorStringmatchanyofConst            = "stringMatchAnyOf"
+	NestedConditionOperatorTimegreaterthanConst             = "timeGreaterThan"
+	NestedConditionOperatorTimegreaterthanorequalsConst     = "timeGreaterThanOrEquals"
+	NestedConditionOperatorTimelessthanConst                = "timeLessThan"
+	NestedConditionOperatorTimelessthanorequalsConst        = "timeLessThanOrEquals"
 )
+
 func (*NestedCondition) isaNestedCondition() bool {
 	return true
 }
@@ -10052,7 +10074,7 @@ type Policy struct {
 // Constants associated with the Policy.State property.
 // The policy state.
 const (
-	PolicyStateActiveConst = "active"
+	PolicyStateActiveConst  = "active"
 	PolicyStateDeletedConst = "deleted"
 )
 
@@ -10225,10 +10247,10 @@ type PolicyAssignmentV1 struct {
 // Constants associated with the PolicyAssignmentV1.Status property.
 // The policy assignment status.
 const (
-	PolicyAssignmentV1StatusFailedConst = "failed"
-	PolicyAssignmentV1StatusInProgressConst = "in_progress"
+	PolicyAssignmentV1StatusFailedConst            = "failed"
+	PolicyAssignmentV1StatusInProgressConst        = "in_progress"
 	PolicyAssignmentV1StatusSucceedWithErrorsConst = "succeed_with_errors"
-	PolicyAssignmentV1StatusSucceededConst = "succeeded"
+	PolicyAssignmentV1StatusSucceededConst         = "succeeded"
 )
 
 // UnmarshalPolicyAssignmentV1 unmarshals an instance of PolicyAssignmentV1 from the specified map of raw messages.
@@ -10387,7 +10409,7 @@ type PolicyAssignmentV1Subject struct {
 // The identity type of the subject of the assignment.
 const (
 	PolicyAssignmentV1SubjectTypeAccessGroupIDConst = "access_group_id"
-	PolicyAssignmentV1SubjectTypeIamIDConst = "iam_id"
+	PolicyAssignmentV1SubjectTypeIamIDConst         = "iam_id"
 )
 
 // UnmarshalPolicyAssignmentV1Subject unmarshals an instance of PolicyAssignmentV1Subject from the specified map of raw messages.
@@ -10626,7 +10648,7 @@ type PolicyTemplate struct {
 // Constants associated with the PolicyTemplate.State property.
 // State of policy template.
 const (
-	PolicyTemplateStateActiveConst = "active"
+	PolicyTemplateStateActiveConst  = "active"
 	PolicyTemplateStateDeletedConst = "deleted"
 )
 
@@ -10817,19 +10839,20 @@ type PolicyTemplateAssignmentItems struct {
 // Constants associated with the PolicyTemplateAssignmentItems.Status property.
 // The policy assignment status.
 const (
-	PolicyTemplateAssignmentItemsStatusFailedConst = "failed"
-	PolicyTemplateAssignmentItemsStatusInProgressConst = "in_progress"
+	PolicyTemplateAssignmentItemsStatusFailedConst            = "failed"
+	PolicyTemplateAssignmentItemsStatusInProgressConst        = "in_progress"
 	PolicyTemplateAssignmentItemsStatusSucceedWithErrorsConst = "succeed_with_errors"
-	PolicyTemplateAssignmentItemsStatusSucceededConst = "succeeded"
+	PolicyTemplateAssignmentItemsStatusSucceededConst         = "succeeded"
 )
 
 // Constants associated with the PolicyTemplateAssignmentItems.TargetType property.
 // Assignment target type.
 const (
-	PolicyTemplateAssignmentItemsTargetTypeAccountConst = "Account"
+	PolicyTemplateAssignmentItemsTargetTypeAccountConst      = "Account"
 	PolicyTemplateAssignmentItemsTargetTypeAccountgroupConst = "AccountGroup"
-	PolicyTemplateAssignmentItemsTargetTypeEnterpriseConst = "Enterprise"
+	PolicyTemplateAssignmentItemsTargetTypeEnterpriseConst   = "Enterprise"
 )
+
 func (*PolicyTemplateAssignmentItems) isaPolicyTemplateAssignmentItems() bool {
 	return true
 }
@@ -11033,7 +11056,7 @@ type PolicyTemplateLimitData struct {
 // Constants associated with the PolicyTemplateLimitData.State property.
 // State of policy template.
 const (
-	PolicyTemplateLimitDataStateActiveConst = "active"
+	PolicyTemplateLimitDataStateActiveConst  = "active"
 	PolicyTemplateLimitDataStateDeletedConst = "deleted"
 )
 
@@ -11160,7 +11183,7 @@ type PolicyTemplateMetaData struct {
 // Constants associated with the PolicyTemplateMetaData.State property.
 // The policy state.
 const (
-	PolicyTemplateMetaDataStateActiveConst = "active"
+	PolicyTemplateMetaDataStateActiveConst  = "active"
 	PolicyTemplateMetaDataStateDeletedConst = "deleted"
 )
 
@@ -11356,8 +11379,8 @@ type ReplaceActionControlTemplateOptions struct {
 func (*IamPolicyManagementV1) NewReplaceActionControlTemplateOptions(actionControlTemplateID string, version string, ifMatch string) *ReplaceActionControlTemplateOptions {
 	return &ReplaceActionControlTemplateOptions{
 		ActionControlTemplateID: core.StringPtr(actionControlTemplateID),
-		Version: core.StringPtr(version),
-		IfMatch: core.StringPtr(ifMatch),
+		Version:                 core.StringPtr(version),
+		IfMatch:                 core.StringPtr(ifMatch),
 	}
 }
 
@@ -11440,11 +11463,11 @@ type ReplacePolicyOptions struct {
 // NewReplacePolicyOptions : Instantiate ReplacePolicyOptions
 func (*IamPolicyManagementV1) NewReplacePolicyOptions(policyID string, ifMatch string, typeVar string, subjects []PolicySubject, roles []PolicyRole, resources []PolicyResource) *ReplacePolicyOptions {
 	return &ReplacePolicyOptions{
-		PolicyID: core.StringPtr(policyID),
-		IfMatch: core.StringPtr(ifMatch),
-		Type: core.StringPtr(typeVar),
-		Subjects: subjects,
-		Roles: roles,
+		PolicyID:  core.StringPtr(policyID),
+		IfMatch:   core.StringPtr(ifMatch),
+		Type:      core.StringPtr(typeVar),
+		Subjects:  subjects,
+		Roles:     roles,
 		Resources: resources,
 	}
 }
@@ -11532,9 +11555,9 @@ type ReplacePolicyTemplateOptions struct {
 func (*IamPolicyManagementV1) NewReplacePolicyTemplateOptions(policyTemplateID string, version string, ifMatch string, policy *TemplatePolicy) *ReplacePolicyTemplateOptions {
 	return &ReplacePolicyTemplateOptions{
 		PolicyTemplateID: core.StringPtr(policyTemplateID),
-		Version: core.StringPtr(version),
-		IfMatch: core.StringPtr(ifMatch),
-		Policy: policy,
+		Version:          core.StringPtr(version),
+		IfMatch:          core.StringPtr(ifMatch),
+		Policy:           policy,
 	}
 }
 
@@ -11612,10 +11635,10 @@ type ReplaceRoleOptions struct {
 // NewReplaceRoleOptions : Instantiate ReplaceRoleOptions
 func (*IamPolicyManagementV1) NewReplaceRoleOptions(roleID string, ifMatch string, displayName string, actions []string) *ReplaceRoleOptions {
 	return &ReplaceRoleOptions{
-		RoleID: core.StringPtr(roleID),
-		IfMatch: core.StringPtr(ifMatch),
+		RoleID:      core.StringPtr(roleID),
+		IfMatch:     core.StringPtr(ifMatch),
 		DisplayName: core.StringPtr(displayName),
-		Actions: actions,
+		Actions:     actions,
 	}
 }
 
@@ -11691,8 +11714,8 @@ type ReplaceRoleTemplateOptions struct {
 func (*IamPolicyManagementV1) NewReplaceRoleTemplateOptions(roleTemplateID string, version string, ifMatch string) *ReplaceRoleTemplateOptions {
 	return &ReplaceRoleTemplateOptions{
 		RoleTemplateID: core.StringPtr(roleTemplateID),
-		Version: core.StringPtr(version),
-		IfMatch: core.StringPtr(ifMatch),
+		Version:        core.StringPtr(version),
+		IfMatch:        core.StringPtr(ifMatch),
 	}
 }
 
@@ -11782,17 +11805,17 @@ type ReplaceV2PolicyOptions struct {
 // Constants associated with the ReplaceV2PolicyOptions.Type property.
 // The policy type; either 'access' or 'authorization'.
 const (
-	ReplaceV2PolicyOptionsTypeAccessConst = "access"
+	ReplaceV2PolicyOptionsTypeAccessConst        = "access"
 	ReplaceV2PolicyOptionsTypeAuthorizationConst = "authorization"
 )
 
 // NewReplaceV2PolicyOptions : Instantiate ReplaceV2PolicyOptions
 func (*IamPolicyManagementV1) NewReplaceV2PolicyOptions(id string, ifMatch string, control *Control, typeVar string) *ReplaceV2PolicyOptions {
 	return &ReplaceV2PolicyOptions{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		IfMatch: core.StringPtr(ifMatch),
 		Control: control,
-		Type: core.StringPtr(typeVar),
+		Type:    core.StringPtr(typeVar),
 	}
 }
 
@@ -11871,7 +11894,7 @@ type ResourceAttribute struct {
 // NewResourceAttribute : Instantiate ResourceAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewResourceAttribute(name string, value string) (_model *ResourceAttribute, err error) {
 	_model = &ResourceAttribute{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Value: core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -11918,7 +11941,7 @@ type ResourceTag struct {
 // NewResourceTag : Instantiate ResourceTag (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewResourceTag(name string, value string) (_model *ResourceTag, err error) {
 	_model = &ResourceTag{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Value: core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -11971,7 +11994,7 @@ type Role struct {
 func (*IamPolicyManagementV1) NewRole(displayName string, actions []string) (_model *Role, err error) {
 	_model = &Role{
 		DisplayName: core.StringPtr(displayName),
-		Actions: actions,
+		Actions:     actions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12083,7 +12106,7 @@ type RoleAssignment struct {
 // Constants associated with the RoleAssignment.Operation property.
 // The current operation of the role assignment.
 const (
-	RoleAssignmentOperationApplyConst = "apply"
+	RoleAssignmentOperationApplyConst  = "apply"
 	RoleAssignmentOperationCreateConst = "create"
 	RoleAssignmentOperationRemoveConst = "remove"
 	RoleAssignmentOperationUpdateConst = "update"
@@ -12092,8 +12115,8 @@ const (
 // Constants associated with the RoleAssignment.Status property.
 // The role assignment status.
 const (
-	RoleAssignmentStatusAcceptedConst = "accepted"
-	RoleAssignmentStatusFailureConst = "failure"
+	RoleAssignmentStatusAcceptedConst   = "accepted"
+	RoleAssignmentStatusFailureConst    = "failure"
 	RoleAssignmentStatusInProgressConst = "in_progress"
 	RoleAssignmentStatusSupersededConst = "superseded"
 )
@@ -12305,7 +12328,7 @@ type RoleAssignmentTemplate struct {
 // NewRoleAssignmentTemplate : Instantiate RoleAssignmentTemplate (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewRoleAssignmentTemplate(id string, version string) (_model *RoleAssignmentTemplate, err error) {
 	_model = &RoleAssignmentTemplate{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		Version: core.StringPtr(version),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -12413,7 +12436,7 @@ type RoleTemplate struct {
 // Constants associated with the RoleTemplate.State property.
 // State of role template.
 const (
-	RoleTemplateStateActiveConst = "active"
+	RoleTemplateStateActiveConst  = "active"
 	RoleTemplateStateDeletedConst = "deleted"
 )
 
@@ -12568,9 +12591,9 @@ type RoleTemplatePrototypeRole struct {
 // NewRoleTemplatePrototypeRole : Instantiate RoleTemplatePrototypeRole (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewRoleTemplatePrototypeRole(name string, displayName string, actions []string) (_model *RoleTemplatePrototypeRole, err error) {
 	_model = &RoleTemplatePrototypeRole{
-		Name: core.StringPtr(name),
+		Name:        core.StringPtr(name),
 		DisplayName: core.StringPtr(displayName),
-		Actions: actions,
+		Actions:     actions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12623,7 +12646,7 @@ type RoleTemplateReferencesItem struct {
 // NewRoleTemplateReferencesItem : Instantiate RoleTemplateReferencesItem (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewRoleTemplateReferencesItem(id string, version string) (_model *RoleTemplateReferencesItem, err error) {
 	_model = &RoleTemplateReferencesItem{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		Version: core.StringPtr(version),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -12754,33 +12777,33 @@ type RuleAttribute struct {
 // Constants associated with the RuleAttribute.Operator property.
 // The operator of an attribute.
 const (
-	RuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
-	RuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
-	RuleAttributeOperatorDatelessthanConst = "dateLessThan"
-	RuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
-	RuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	RuleAttributeOperatorDategreaterthanConst             = "dateGreaterThan"
+	RuleAttributeOperatorDategreaterthanorequalsConst     = "dateGreaterThanOrEquals"
+	RuleAttributeOperatorDatelessthanConst                = "dateLessThan"
+	RuleAttributeOperatorDatelessthanorequalsConst        = "dateLessThanOrEquals"
+	RuleAttributeOperatorDatetimegreaterthanConst         = "dateTimeGreaterThan"
 	RuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	RuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
-	RuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	RuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	RuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	RuleAttributeOperatorStringequalsConst = "stringEquals"
-	RuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	RuleAttributeOperatorStringexistsConst = "stringExists"
-	RuleAttributeOperatorStringmatchConst = "stringMatch"
-	RuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
-	RuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
-	RuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	RuleAttributeOperatorTimelessthanConst = "timeLessThan"
-	RuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+	RuleAttributeOperatorDatetimelessthanConst            = "dateTimeLessThan"
+	RuleAttributeOperatorDatetimelessthanorequalsConst    = "dateTimeLessThanOrEquals"
+	RuleAttributeOperatorDayofweekanyofConst              = "dayOfWeekAnyOf"
+	RuleAttributeOperatorDayofweekequalsConst             = "dayOfWeekEquals"
+	RuleAttributeOperatorStringequalsConst                = "stringEquals"
+	RuleAttributeOperatorStringequalsanyofConst           = "stringEqualsAnyOf"
+	RuleAttributeOperatorStringexistsConst                = "stringExists"
+	RuleAttributeOperatorStringmatchConst                 = "stringMatch"
+	RuleAttributeOperatorStringmatchanyofConst            = "stringMatchAnyOf"
+	RuleAttributeOperatorTimegreaterthanConst             = "timeGreaterThan"
+	RuleAttributeOperatorTimegreaterthanorequalsConst     = "timeGreaterThanOrEquals"
+	RuleAttributeOperatorTimelessthanConst                = "timeLessThan"
+	RuleAttributeOperatorTimelessthanorequalsConst        = "timeLessThanOrEquals"
 )
 
 // NewRuleAttribute : Instantiate RuleAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewRuleAttribute(key string, operator string, value interface{}) (_model *RuleAttribute, err error) {
 	_model = &RuleAttribute{
-		Key: core.StringPtr(key),
+		Key:      core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: value,
+		Value:    value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12823,7 +12846,7 @@ type SubjectAttribute struct {
 // NewSubjectAttribute : Instantiate SubjectAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewSubjectAttribute(name string, value string) (_model *SubjectAttribute, err error) {
 	_model = &SubjectAttribute{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Value: core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -12866,7 +12889,7 @@ type TemplateActionControl struct {
 func (*IamPolicyManagementV1) NewTemplateActionControl(serviceName string, actions []string) (_model *TemplateActionControl, err error) {
 	_model = &TemplateActionControl{
 		ServiceName: core.StringPtr(serviceName),
-		Actions: actions,
+		Actions:     actions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12964,6 +12987,7 @@ type TemplateGrant struct {
 	// A set of role template reference IDs granted by the policy.
 	RoleTemplateReferences []RoleTemplateReferencesItem `json:"role_template_references,omitempty"`
 }
+
 func (*TemplateGrant) isaTemplateGrant() bool {
 	return true
 }
@@ -13069,7 +13093,7 @@ type TemplatePolicy struct {
 // Constants associated with the TemplatePolicy.Type property.
 // The policy type; either 'access' or 'authorization'.
 const (
-	TemplatePolicyTypeAccessConst = "access"
+	TemplatePolicyTypeAccessConst        = "access"
 	TemplatePolicyTypeAuthorizationConst = "authorization"
 )
 
@@ -13146,7 +13170,7 @@ type TemplateRole struct {
 func (*IamPolicyManagementV1) NewTemplateRole(displayName string, actions []string) (_model *TemplateRole, err error) {
 	_model = &TemplateRole{
 		DisplayName: core.StringPtr(displayName),
-		Actions: actions,
+		Actions:     actions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -13202,8 +13226,8 @@ type UpdateActionControlAssignmentOptions struct {
 // NewUpdateActionControlAssignmentOptions : Instantiate UpdateActionControlAssignmentOptions
 func (*IamPolicyManagementV1) NewUpdateActionControlAssignmentOptions(assignmentID string, ifMatch string, templateVersion string) *UpdateActionControlAssignmentOptions {
 	return &UpdateActionControlAssignmentOptions{
-		AssignmentID: core.StringPtr(assignmentID),
-		IfMatch: core.StringPtr(ifMatch),
+		AssignmentID:    core.StringPtr(assignmentID),
+		IfMatch:         core.StringPtr(ifMatch),
 		TemplateVersion: core.StringPtr(templateVersion),
 	}
 }
@@ -13255,9 +13279,9 @@ type UpdatePolicyAssignmentOptions struct {
 // NewUpdatePolicyAssignmentOptions : Instantiate UpdatePolicyAssignmentOptions
 func (*IamPolicyManagementV1) NewUpdatePolicyAssignmentOptions(assignmentID string, version string, ifMatch string, templateVersion string) *UpdatePolicyAssignmentOptions {
 	return &UpdatePolicyAssignmentOptions{
-		AssignmentID: core.StringPtr(assignmentID),
-		Version: core.StringPtr(version),
-		IfMatch: core.StringPtr(ifMatch),
+		AssignmentID:    core.StringPtr(assignmentID),
+		Version:         core.StringPtr(version),
+		IfMatch:         core.StringPtr(ifMatch),
 		TemplateVersion: core.StringPtr(templateVersion),
 	}
 }
@@ -13311,7 +13335,7 @@ type UpdatePolicyStateOptions struct {
 // Constants associated with the UpdatePolicyStateOptions.State property.
 // The policy state.
 const (
-	UpdatePolicyStateOptionsStateActiveConst = "active"
+	UpdatePolicyStateOptionsStateActiveConst  = "active"
 	UpdatePolicyStateOptionsStateDeletedConst = "deleted"
 )
 
@@ -13319,7 +13343,7 @@ const (
 func (*IamPolicyManagementV1) NewUpdatePolicyStateOptions(policyID string, ifMatch string) *UpdatePolicyStateOptions {
 	return &UpdatePolicyStateOptions{
 		PolicyID: core.StringPtr(policyID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:  core.StringPtr(ifMatch),
 	}
 }
 
@@ -13367,8 +13391,8 @@ type UpdateRoleAssignmentOptions struct {
 // NewUpdateRoleAssignmentOptions : Instantiate UpdateRoleAssignmentOptions
 func (*IamPolicyManagementV1) NewUpdateRoleAssignmentOptions(assignmentID string, ifMatch string, templateVersion string) *UpdateRoleAssignmentOptions {
 	return &UpdateRoleAssignmentOptions{
-		AssignmentID: core.StringPtr(assignmentID),
-		IfMatch: core.StringPtr(ifMatch),
+		AssignmentID:    core.StringPtr(assignmentID),
+		IfMatch:         core.StringPtr(ifMatch),
 		TemplateVersion: core.StringPtr(templateVersion),
 	}
 }
@@ -13432,7 +13456,7 @@ type UpdateSettingsOptions struct {
 func (*IamPolicyManagementV1) NewUpdateSettingsOptions(accountID string, ifMatch string) *UpdateSettingsOptions {
 	return &UpdateSettingsOptions{
 		AccountID: core.StringPtr(accountID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -13521,14 +13545,14 @@ type V2Policy struct {
 // Constants associated with the V2Policy.Type property.
 // The policy type; either 'access' or 'authorization'.
 const (
-	V2PolicyTypeAccessConst = "access"
+	V2PolicyTypeAccessConst        = "access"
 	V2PolicyTypeAuthorizationConst = "authorization"
 )
 
 // Constants associated with the V2Policy.State property.
 // The policy state, either 'deleted' or 'active'.
 const (
-	V2PolicyStateActiveConst = "active"
+	V2PolicyStateActiveConst  = "active"
 	V2PolicyStateDeletedConst = "deleted"
 )
 
@@ -13731,19 +13755,19 @@ type V2PolicyResourceAttribute struct {
 // Constants associated with the V2PolicyResourceAttribute.Operator property.
 // The operator of an attribute.
 const (
-	V2PolicyResourceAttributeOperatorStringequalsConst = "stringEquals"
+	V2PolicyResourceAttributeOperatorStringequalsConst      = "stringEquals"
 	V2PolicyResourceAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	V2PolicyResourceAttributeOperatorStringexistsConst = "stringExists"
-	V2PolicyResourceAttributeOperatorStringmatchConst = "stringMatch"
-	V2PolicyResourceAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
+	V2PolicyResourceAttributeOperatorStringexistsConst      = "stringExists"
+	V2PolicyResourceAttributeOperatorStringmatchConst       = "stringMatch"
+	V2PolicyResourceAttributeOperatorStringmatchanyofConst  = "stringMatchAnyOf"
 )
 
 // NewV2PolicyResourceAttribute : Instantiate V2PolicyResourceAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewV2PolicyResourceAttribute(key string, operator string, value interface{}) (_model *V2PolicyResourceAttribute, err error) {
 	_model = &V2PolicyResourceAttribute{
-		Key: core.StringPtr(key),
+		Key:      core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: value,
+		Value:    value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -13790,14 +13814,14 @@ type V2PolicyResourceTag struct {
 // The operator of an access management tag.
 const (
 	V2PolicyResourceTagOperatorStringequalsConst = "stringEquals"
-	V2PolicyResourceTagOperatorStringmatchConst = "stringMatch"
+	V2PolicyResourceTagOperatorStringmatchConst  = "stringMatch"
 )
 
 // NewV2PolicyResourceTag : Instantiate V2PolicyResourceTag (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewV2PolicyResourceTag(key string, value string, operator string) (_model *V2PolicyResourceTag, err error) {
 	_model = &V2PolicyResourceTag{
-		Key: core.StringPtr(key),
-		Value: core.StringPtr(value),
+		Key:      core.StringPtr(key),
+		Value:    core.StringPtr(value),
 		Operator: core.StringPtr(operator),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -13852,26 +13876,27 @@ type V2PolicyRule struct {
 // Constants associated with the V2PolicyRule.Operator property.
 // The operator of an attribute.
 const (
-	V2PolicyRuleOperatorDategreaterthanConst = "dateGreaterThan"
-	V2PolicyRuleOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
-	V2PolicyRuleOperatorDatelessthanConst = "dateLessThan"
-	V2PolicyRuleOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
-	V2PolicyRuleOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	V2PolicyRuleOperatorDategreaterthanConst             = "dateGreaterThan"
+	V2PolicyRuleOperatorDategreaterthanorequalsConst     = "dateGreaterThanOrEquals"
+	V2PolicyRuleOperatorDatelessthanConst                = "dateLessThan"
+	V2PolicyRuleOperatorDatelessthanorequalsConst        = "dateLessThanOrEquals"
+	V2PolicyRuleOperatorDatetimegreaterthanConst         = "dateTimeGreaterThan"
 	V2PolicyRuleOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	V2PolicyRuleOperatorDatetimelessthanConst = "dateTimeLessThan"
-	V2PolicyRuleOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	V2PolicyRuleOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	V2PolicyRuleOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	V2PolicyRuleOperatorStringequalsConst = "stringEquals"
-	V2PolicyRuleOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	V2PolicyRuleOperatorStringexistsConst = "stringExists"
-	V2PolicyRuleOperatorStringmatchConst = "stringMatch"
-	V2PolicyRuleOperatorStringmatchanyofConst = "stringMatchAnyOf"
-	V2PolicyRuleOperatorTimegreaterthanConst = "timeGreaterThan"
-	V2PolicyRuleOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	V2PolicyRuleOperatorTimelessthanConst = "timeLessThan"
-	V2PolicyRuleOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+	V2PolicyRuleOperatorDatetimelessthanConst            = "dateTimeLessThan"
+	V2PolicyRuleOperatorDatetimelessthanorequalsConst    = "dateTimeLessThanOrEquals"
+	V2PolicyRuleOperatorDayofweekanyofConst              = "dayOfWeekAnyOf"
+	V2PolicyRuleOperatorDayofweekequalsConst             = "dayOfWeekEquals"
+	V2PolicyRuleOperatorStringequalsConst                = "stringEquals"
+	V2PolicyRuleOperatorStringequalsanyofConst           = "stringEqualsAnyOf"
+	V2PolicyRuleOperatorStringexistsConst                = "stringExists"
+	V2PolicyRuleOperatorStringmatchConst                 = "stringMatch"
+	V2PolicyRuleOperatorStringmatchanyofConst            = "stringMatchAnyOf"
+	V2PolicyRuleOperatorTimegreaterthanConst             = "timeGreaterThan"
+	V2PolicyRuleOperatorTimegreaterthanorequalsConst     = "timeGreaterThanOrEquals"
+	V2PolicyRuleOperatorTimelessthanConst                = "timeLessThan"
+	V2PolicyRuleOperatorTimelessthanorequalsConst        = "timeLessThanOrEquals"
 )
+
 func (*V2PolicyRule) isaV2PolicyRule() bool {
 	return true
 }
@@ -13960,9 +13985,9 @@ const (
 // NewV2PolicySubjectAttribute : Instantiate V2PolicySubjectAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewV2PolicySubjectAttribute(key string, operator string, value interface{}) (_model *V2PolicySubjectAttribute, err error) {
 	_model = &V2PolicySubjectAttribute{
-		Key: core.StringPtr(key),
+		Key:      core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: value,
+		Value:    value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -14052,14 +14077,14 @@ type V2PolicyTemplateMetaData struct {
 // Constants associated with the V2PolicyTemplateMetaData.Type property.
 // The policy type; either 'access' or 'authorization'.
 const (
-	V2PolicyTemplateMetaDataTypeAccessConst = "access"
+	V2PolicyTemplateMetaDataTypeAccessConst        = "access"
 	V2PolicyTemplateMetaDataTypeAuthorizationConst = "authorization"
 )
 
 // Constants associated with the V2PolicyTemplateMetaData.State property.
 // The policy state, either 'deleted' or 'active'.
 const (
-	V2PolicyTemplateMetaDataStateActiveConst = "active"
+	V2PolicyTemplateMetaDataStateActiveConst  = "active"
 	V2PolicyTemplateMetaDataStateDeletedConst = "deleted"
 )
 
@@ -14218,33 +14243,33 @@ type NestedConditionRuleAttribute struct {
 // Constants associated with the NestedConditionRuleAttribute.Operator property.
 // The operator of an attribute.
 const (
-	NestedConditionRuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
-	NestedConditionRuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
-	NestedConditionRuleAttributeOperatorDatelessthanConst = "dateLessThan"
-	NestedConditionRuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
-	NestedConditionRuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	NestedConditionRuleAttributeOperatorDategreaterthanConst             = "dateGreaterThan"
+	NestedConditionRuleAttributeOperatorDategreaterthanorequalsConst     = "dateGreaterThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatelessthanConst                = "dateLessThan"
+	NestedConditionRuleAttributeOperatorDatelessthanorequalsConst        = "dateLessThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatetimegreaterthanConst         = "dateTimeGreaterThan"
 	NestedConditionRuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	NestedConditionRuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
-	NestedConditionRuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	NestedConditionRuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	NestedConditionRuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	NestedConditionRuleAttributeOperatorStringequalsConst = "stringEquals"
-	NestedConditionRuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	NestedConditionRuleAttributeOperatorStringexistsConst = "stringExists"
-	NestedConditionRuleAttributeOperatorStringmatchConst = "stringMatch"
-	NestedConditionRuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
-	NestedConditionRuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
-	NestedConditionRuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	NestedConditionRuleAttributeOperatorTimelessthanConst = "timeLessThan"
-	NestedConditionRuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatetimelessthanConst            = "dateTimeLessThan"
+	NestedConditionRuleAttributeOperatorDatetimelessthanorequalsConst    = "dateTimeLessThanOrEquals"
+	NestedConditionRuleAttributeOperatorDayofweekanyofConst              = "dayOfWeekAnyOf"
+	NestedConditionRuleAttributeOperatorDayofweekequalsConst             = "dayOfWeekEquals"
+	NestedConditionRuleAttributeOperatorStringequalsConst                = "stringEquals"
+	NestedConditionRuleAttributeOperatorStringequalsanyofConst           = "stringEqualsAnyOf"
+	NestedConditionRuleAttributeOperatorStringexistsConst                = "stringExists"
+	NestedConditionRuleAttributeOperatorStringmatchConst                 = "stringMatch"
+	NestedConditionRuleAttributeOperatorStringmatchanyofConst            = "stringMatchAnyOf"
+	NestedConditionRuleAttributeOperatorTimegreaterthanConst             = "timeGreaterThan"
+	NestedConditionRuleAttributeOperatorTimegreaterthanorequalsConst     = "timeGreaterThanOrEquals"
+	NestedConditionRuleAttributeOperatorTimelessthanConst                = "timeLessThan"
+	NestedConditionRuleAttributeOperatorTimelessthanorequalsConst        = "timeLessThanOrEquals"
 )
 
 // NewNestedConditionRuleAttribute : Instantiate NestedConditionRuleAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewNestedConditionRuleAttribute(key string, operator string, value interface{}) (_model *NestedConditionRuleAttribute, err error) {
 	_model = &NestedConditionRuleAttribute{
-		Key: core.StringPtr(key),
+		Key:      core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: value,
+		Value:    value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -14295,13 +14320,13 @@ type NestedConditionRuleWithConditions struct {
 // Operator to evaluate conditions.
 const (
 	NestedConditionRuleWithConditionsOperatorAndConst = "and"
-	NestedConditionRuleWithConditionsOperatorOrConst = "or"
+	NestedConditionRuleWithConditionsOperatorOrConst  = "or"
 )
 
 // NewNestedConditionRuleWithConditions : Instantiate NestedConditionRuleWithConditions (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewNestedConditionRuleWithConditions(operator string, conditions []RuleAttribute) (_model *NestedConditionRuleWithConditions, err error) {
 	_model = &NestedConditionRuleWithConditions{
-		Operator: core.StringPtr(operator),
+		Operator:   core.StringPtr(operator),
 		Conditions: conditions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -14381,18 +14406,18 @@ type PolicyTemplateAssignmentItemsPolicyAssignment struct {
 // Constants associated with the PolicyTemplateAssignmentItemsPolicyAssignment.TargetType property.
 // Assignment target type.
 const (
-	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeAccountConst = "Account"
+	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeAccountConst      = "Account"
 	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeAccountgroupConst = "AccountGroup"
-	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeEnterpriseConst = "Enterprise"
+	PolicyTemplateAssignmentItemsPolicyAssignmentTargetTypeEnterpriseConst   = "Enterprise"
 )
 
 // Constants associated with the PolicyTemplateAssignmentItemsPolicyAssignment.Status property.
 // The policy assignment status.
 const (
-	PolicyTemplateAssignmentItemsPolicyAssignmentStatusFailedConst = "failed"
-	PolicyTemplateAssignmentItemsPolicyAssignmentStatusInProgressConst = "in_progress"
+	PolicyTemplateAssignmentItemsPolicyAssignmentStatusFailedConst            = "failed"
+	PolicyTemplateAssignmentItemsPolicyAssignmentStatusInProgressConst        = "in_progress"
 	PolicyTemplateAssignmentItemsPolicyAssignmentStatusSucceedWithErrorsConst = "succeed_with_errors"
-	PolicyTemplateAssignmentItemsPolicyAssignmentStatusSucceededConst = "succeeded"
+	PolicyTemplateAssignmentItemsPolicyAssignmentStatusSucceededConst         = "succeeded"
 )
 
 func (*PolicyTemplateAssignmentItemsPolicyAssignment) isaPolicyTemplateAssignmentItems() bool {
@@ -14519,10 +14544,10 @@ type PolicyTemplateAssignmentItemsPolicyAssignmentV1 struct {
 // Constants associated with the PolicyTemplateAssignmentItemsPolicyAssignmentV1.Status property.
 // The policy assignment status.
 const (
-	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusFailedConst = "failed"
-	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusInProgressConst = "in_progress"
+	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusFailedConst            = "failed"
+	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusInProgressConst        = "in_progress"
 	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusSucceedWithErrorsConst = "succeed_with_errors"
-	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusSucceededConst = "succeeded"
+	PolicyTemplateAssignmentItemsPolicyAssignmentV1StatusSucceededConst         = "succeeded"
 )
 
 func (*PolicyTemplateAssignmentItemsPolicyAssignmentV1) isaPolicyTemplateAssignmentItems() bool {
@@ -14683,33 +14708,33 @@ type V2PolicyRuleRuleAttribute struct {
 // Constants associated with the V2PolicyRuleRuleAttribute.Operator property.
 // The operator of an attribute.
 const (
-	V2PolicyRuleRuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
-	V2PolicyRuleRuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
-	V2PolicyRuleRuleAttributeOperatorDatelessthanConst = "dateLessThan"
-	V2PolicyRuleRuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
-	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorDategreaterthanConst             = "dateGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorDategreaterthanorequalsConst     = "dateGreaterThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDatelessthanConst                = "dateLessThan"
+	V2PolicyRuleRuleAttributeOperatorDatelessthanorequalsConst        = "dateLessThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanConst         = "dateTimeGreaterThan"
 	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	V2PolicyRuleRuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
-	V2PolicyRuleRuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	V2PolicyRuleRuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	V2PolicyRuleRuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	V2PolicyRuleRuleAttributeOperatorStringequalsConst = "stringEquals"
-	V2PolicyRuleRuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
-	V2PolicyRuleRuleAttributeOperatorStringexistsConst = "stringExists"
-	V2PolicyRuleRuleAttributeOperatorStringmatchConst = "stringMatch"
-	V2PolicyRuleRuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
-	V2PolicyRuleRuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
-	V2PolicyRuleRuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	V2PolicyRuleRuleAttributeOperatorTimelessthanConst = "timeLessThan"
-	V2PolicyRuleRuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDatetimelessthanConst            = "dateTimeLessThan"
+	V2PolicyRuleRuleAttributeOperatorDatetimelessthanorequalsConst    = "dateTimeLessThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDayofweekanyofConst              = "dayOfWeekAnyOf"
+	V2PolicyRuleRuleAttributeOperatorDayofweekequalsConst             = "dayOfWeekEquals"
+	V2PolicyRuleRuleAttributeOperatorStringequalsConst                = "stringEquals"
+	V2PolicyRuleRuleAttributeOperatorStringequalsanyofConst           = "stringEqualsAnyOf"
+	V2PolicyRuleRuleAttributeOperatorStringexistsConst                = "stringExists"
+	V2PolicyRuleRuleAttributeOperatorStringmatchConst                 = "stringMatch"
+	V2PolicyRuleRuleAttributeOperatorStringmatchanyofConst            = "stringMatchAnyOf"
+	V2PolicyRuleRuleAttributeOperatorTimegreaterthanConst             = "timeGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorTimegreaterthanorequalsConst     = "timeGreaterThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorTimelessthanConst                = "timeLessThan"
+	V2PolicyRuleRuleAttributeOperatorTimelessthanorequalsConst        = "timeLessThanOrEquals"
 )
 
 // NewV2PolicyRuleRuleAttribute : Instantiate V2PolicyRuleRuleAttribute (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewV2PolicyRuleRuleAttribute(key string, operator string, value interface{}) (_model *V2PolicyRuleRuleAttribute, err error) {
 	_model = &V2PolicyRuleRuleAttribute{
-		Key: core.StringPtr(key),
+		Key:      core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: value,
+		Value:    value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -14760,13 +14785,13 @@ type V2PolicyRuleRuleWithNestedConditions struct {
 // Operator to evaluate conditions.
 const (
 	V2PolicyRuleRuleWithNestedConditionsOperatorAndConst = "and"
-	V2PolicyRuleRuleWithNestedConditionsOperatorOrConst = "or"
+	V2PolicyRuleRuleWithNestedConditionsOperatorOrConst  = "or"
 )
 
 // NewV2PolicyRuleRuleWithNestedConditions : Instantiate V2PolicyRuleRuleWithNestedConditions (Generic Model Constructor)
 func (*IamPolicyManagementV1) NewV2PolicyRuleRuleWithNestedConditions(operator string, conditions []NestedConditionIntf) (_model *V2PolicyRuleRuleWithNestedConditions, err error) {
 	_model = &V2PolicyRuleRuleWithNestedConditions{
-		Operator: core.StringPtr(operator),
+		Operator:   core.StringPtr(operator),
 		Conditions: conditions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -14797,13 +14822,11 @@ func UnmarshalV2PolicyRuleRuleWithNestedConditions(m map[string]json.RawMessage,
 	return
 }
 
-//
 // PoliciesPager can be used to simplify the use of the "ListPolicies" method.
-//
 type PoliciesPager struct {
-	hasNext bool
-	options *ListPoliciesOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListPoliciesOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -14884,13 +14907,11 @@ func (pager *PoliciesPager) GetAll() (allItems []PolicyTemplateMetaData, err err
 	return
 }
 
-//
 // V2PoliciesPager can be used to simplify the use of the "ListV2Policies" method.
-//
 type V2PoliciesPager struct {
-	hasNext bool
-	options *ListV2PoliciesOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListV2PoliciesOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -14971,13 +14992,11 @@ func (pager *V2PoliciesPager) GetAll() (allItems []V2PolicyTemplateMetaData, err
 	return
 }
 
-//
 // PolicyTemplatesPager can be used to simplify the use of the "ListPolicyTemplates" method.
-//
 type PolicyTemplatesPager struct {
-	hasNext bool
-	options *ListPolicyTemplatesOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListPolicyTemplatesOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15058,13 +15077,11 @@ func (pager *PolicyTemplatesPager) GetAll() (allItems []PolicyTemplate, err erro
 	return
 }
 
-//
 // PolicyTemplateVersionsPager can be used to simplify the use of the "ListPolicyTemplateVersions" method.
-//
 type PolicyTemplateVersionsPager struct {
-	hasNext bool
-	options *ListPolicyTemplateVersionsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListPolicyTemplateVersionsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15145,13 +15162,11 @@ func (pager *PolicyTemplateVersionsPager) GetAll() (allItems []PolicyTemplate, e
 	return
 }
 
-//
 // PolicyAssignmentsPager can be used to simplify the use of the "ListPolicyAssignments" method.
-//
 type PolicyAssignmentsPager struct {
-	hasNext bool
-	options *ListPolicyAssignmentsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListPolicyAssignmentsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15232,13 +15247,11 @@ func (pager *PolicyAssignmentsPager) GetAll() (allItems []PolicyTemplateAssignme
 	return
 }
 
-//
 // ActionControlTemplatesPager can be used to simplify the use of the "ListActionControlTemplates" method.
-//
 type ActionControlTemplatesPager struct {
-	hasNext bool
-	options *ListActionControlTemplatesOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListActionControlTemplatesOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15319,13 +15332,11 @@ func (pager *ActionControlTemplatesPager) GetAll() (allItems []ActionControlTemp
 	return
 }
 
-//
 // ActionControlTemplateVersionsPager can be used to simplify the use of the "ListActionControlTemplateVersions" method.
-//
 type ActionControlTemplateVersionsPager struct {
-	hasNext bool
-	options *ListActionControlTemplateVersionsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListActionControlTemplateVersionsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15406,13 +15417,11 @@ func (pager *ActionControlTemplateVersionsPager) GetAll() (allItems []ActionCont
 	return
 }
 
-//
 // ActionControlAssignmentsPager can be used to simplify the use of the "ListActionControlAssignments" method.
-//
 type ActionControlAssignmentsPager struct {
-	hasNext bool
-	options *ListActionControlAssignmentsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListActionControlAssignmentsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15493,13 +15502,11 @@ func (pager *ActionControlAssignmentsPager) GetAll() (allItems []ActionControlAs
 	return
 }
 
-//
 // RoleTemplatesPager can be used to simplify the use of the "ListRoleTemplates" method.
-//
 type RoleTemplatesPager struct {
-	hasNext bool
-	options *ListRoleTemplatesOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListRoleTemplatesOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15580,13 +15587,11 @@ func (pager *RoleTemplatesPager) GetAll() (allItems []RoleTemplate, err error) {
 	return
 }
 
-//
 // RoleTemplateVersionsPager can be used to simplify the use of the "ListRoleTemplateVersions" method.
-//
 type RoleTemplateVersionsPager struct {
-	hasNext bool
-	options *ListRoleTemplateVersionsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListRoleTemplateVersionsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -15667,13 +15672,11 @@ func (pager *RoleTemplateVersionsPager) GetAll() (allItems []RoleTemplate, err e
 	return
 }
 
-//
 // RoleAssignmentsPager can be used to simplify the use of the "ListRoleAssignments" method.
-//
 type RoleAssignmentsPager struct {
-	hasNext bool
-	options *ListRoleAssignmentsOptions
-	client  *IamPolicyManagementV1
+	hasNext     bool
+	options     *ListRoleAssignmentsOptions
+	client      *IamPolicyManagementV1
 	pageContext struct {
 		next *string
 	}
