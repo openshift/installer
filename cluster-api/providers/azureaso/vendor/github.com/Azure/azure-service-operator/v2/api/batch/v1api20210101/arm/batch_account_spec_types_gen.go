@@ -68,6 +68,7 @@ type BatchAccountIdentity struct {
 
 // The properties related to the auto-storage account.
 type AutoStorageBaseProperties struct {
+	// StorageAccountId: The resource ID of the storage account to be used for auto-storage account.
 	StorageAccountId *string `json:"storageAccountId,omitempty"`
 }
 
@@ -99,6 +100,7 @@ type EncryptionProperties struct {
 
 // Identifies the Azure key vault associated with a Batch account.
 type KeyVaultReference struct {
+	// Id: The resource ID of the Azure key vault associated with the Batch account.
 	Id *string `json:"id,omitempty"`
 
 	// Url: The URL of the Azure key vault associated with the Batch account.

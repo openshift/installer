@@ -22,7 +22,7 @@ RoleAssignment: Resource
 │   ├── PrincipalIdFromConfig: *genruntime.ConfigMapReference
 │   ├── PrincipalType: *string
 │   ├── PropertyBag: genruntime.PropertyBag
-│   └── RoleDefinitionReference: *genruntime.ResourceReference
+│   └── RoleDefinitionReference: *genruntime.WellKnownResourceReference
 └── Status: Object (17 properties)
     ├── Condition: *string
     ├── ConditionVersion: *string

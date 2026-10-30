@@ -503,3 +503,165 @@ Topic: Resource
     ├── Tags: map[string]string
     └── Type: *string
 
+augmentConversionForAdvancedFilter: Interface
+
+augmentConversionForAdvancedFilter_STATUS: Interface
+
+augmentConversionForAzureFunctionEventSubscriptionDestination: Interface
+
+augmentConversionForAzureFunctionEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForBoolEqualsAdvancedFilter: Interface
+
+augmentConversionForBoolEqualsAdvancedFilter_STATUS: Interface
+
+augmentConversionForDeadLetterDestination: Interface
+
+augmentConversionForDeadLetterDestination_STATUS: Interface
+
+augmentConversionForDomain: Interface
+
+augmentConversionForDomainOperatorSpec: Interface
+
+augmentConversionForDomain_STATUS: Interface
+
+augmentConversionForDomain_Spec: Interface
+
+augmentConversionForDomainsTopic: Interface
+
+augmentConversionForDomainsTopicOperatorSpec: Interface
+
+augmentConversionForDomainsTopic_STATUS: Interface
+
+augmentConversionForDomainsTopic_Spec: Interface
+
+augmentConversionForEventHubEventSubscriptionDestination: Interface
+
+augmentConversionForEventHubEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForEventSubscription: Interface
+
+augmentConversionForEventSubscriptionDestination: Interface
+
+augmentConversionForEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForEventSubscriptionFilter: Interface
+
+augmentConversionForEventSubscriptionFilter_STATUS: Interface
+
+augmentConversionForEventSubscriptionOperatorSpec: Interface
+
+augmentConversionForEventSubscription_STATUS: Interface
+
+augmentConversionForEventSubscription_Spec: Interface
+
+augmentConversionForHybridConnectionEventSubscriptionDestination: Interface
+
+augmentConversionForHybridConnectionEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForInboundIpRule: Interface
+
+augmentConversionForInboundIpRule_STATUS: Interface
+
+augmentConversionForInputSchemaMapping: Interface
+
+augmentConversionForInputSchemaMapping_STATUS: Interface
+
+augmentConversionForJsonField: Interface
+
+augmentConversionForJsonFieldWithDefault: Interface
+
+augmentConversionForJsonFieldWithDefault_STATUS: Interface
+
+augmentConversionForJsonField_STATUS: Interface
+
+augmentConversionForJsonInputSchemaMapping: Interface
+
+augmentConversionForJsonInputSchemaMapping_STATUS: Interface
+
+augmentConversionForNumberGreaterThanAdvancedFilter: Interface
+
+augmentConversionForNumberGreaterThanAdvancedFilter_STATUS: Interface
+
+augmentConversionForNumberGreaterThanOrEqualsAdvancedFilter: Interface
+
+augmentConversionForNumberGreaterThanOrEqualsAdvancedFilter_STATUS: Interface
+
+augmentConversionForNumberInAdvancedFilter: Interface
+
+augmentConversionForNumberInAdvancedFilter_STATUS: Interface
+
+augmentConversionForNumberLessThanAdvancedFilter: Interface
+
+augmentConversionForNumberLessThanAdvancedFilter_STATUS: Interface
+
+augmentConversionForNumberLessThanOrEqualsAdvancedFilter: Interface
+
+augmentConversionForNumberLessThanOrEqualsAdvancedFilter_STATUS: Interface
+
+augmentConversionForNumberNotInAdvancedFilter: Interface
+
+augmentConversionForNumberNotInAdvancedFilter_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded: Interface
+
+augmentConversionForRetryPolicy: Interface
+
+augmentConversionForRetryPolicy_STATUS: Interface
+
+augmentConversionForServiceBusQueueEventSubscriptionDestination: Interface
+
+augmentConversionForServiceBusQueueEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForServiceBusTopicEventSubscriptionDestination: Interface
+
+augmentConversionForServiceBusTopicEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForStorageBlobDeadLetterDestination: Interface
+
+augmentConversionForStorageBlobDeadLetterDestination_STATUS: Interface
+
+augmentConversionForStorageQueueEventSubscriptionDestination: Interface
+
+augmentConversionForStorageQueueEventSubscriptionDestination_STATUS: Interface
+
+augmentConversionForStringBeginsWithAdvancedFilter: Interface
+
+augmentConversionForStringBeginsWithAdvancedFilter_STATUS: Interface
+
+augmentConversionForStringContainsAdvancedFilter: Interface
+
+augmentConversionForStringContainsAdvancedFilter_STATUS: Interface
+
+augmentConversionForStringEndsWithAdvancedFilter: Interface
+
+augmentConversionForStringEndsWithAdvancedFilter_STATUS: Interface
+
+augmentConversionForStringInAdvancedFilter: Interface
+
+augmentConversionForStringInAdvancedFilter_STATUS: Interface
+
+augmentConversionForStringNotInAdvancedFilter: Interface
+
+augmentConversionForStringNotInAdvancedFilter_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForTopic: Interface
+
+augmentConversionForTopicOperatorConfigMaps: Interface
+
+augmentConversionForTopicOperatorSecrets: Interface
+
+augmentConversionForTopicOperatorSpec: Interface
+
+augmentConversionForTopic_STATUS: Interface
+
+augmentConversionForTopic_Spec: Interface
+
+augmentConversionForWebHookEventSubscriptionDestination: Interface
+
+augmentConversionForWebHookEventSubscriptionDestination_STATUS: Interface
+

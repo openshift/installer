@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20230301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=alertsmanagement.azure.com,resources=prometheusrulegroups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=alertsmanagement.azure.com,resources={prometheusrulegroups/status,prometheusrulegroups/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,alertsmanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230301.PrometheusRuleGroup
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2023-03-01/PrometheusRuleGroups.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/PrometheusRuleGroups/stable/2023-03-01/PrometheusRuleGroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AlertsManagement/prometheusRuleGroups/{ruleGroupName}
 type PrometheusRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (group *PrometheusRuleGroup) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (group *PrometheusRuleGroup) SetConditions(conditions conditions.Conditions) {
 	group.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &PrometheusRuleGroup{}
+
+// ConvertFrom populates our PrometheusRuleGroup from the provided hub PrometheusRuleGroup
+func (group *PrometheusRuleGroup) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.PrometheusRuleGroup)
+	if !ok {
+		return fmt.Errorf("expected alertsmanagement/v20230301/storage/PrometheusRuleGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_From_PrometheusRuleGroup(source)
+}
+
+// ConvertTo populates the provided hub PrometheusRuleGroup from our PrometheusRuleGroup
+func (group *PrometheusRuleGroup) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.PrometheusRuleGroup)
+	if !ok {
+		return fmt.Errorf("expected alertsmanagement/v20230301/storage/PrometheusRuleGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_To_PrometheusRuleGroup(destination)
 }
 
 var _ configmaps.Exporter = &PrometheusRuleGroup{}
@@ -142,8 +164,75 @@ func (group *PrometheusRuleGroup) SetStatus(status genruntime.ConvertibleStatus)
 	return nil
 }
 
-// Hub marks that this PrometheusRuleGroup is the hub type for conversion
-func (group *PrometheusRuleGroup) Hub() {}
+// AssignProperties_From_PrometheusRuleGroup populates our PrometheusRuleGroup from the provided source PrometheusRuleGroup
+func (group *PrometheusRuleGroup) AssignProperties_From_PrometheusRuleGroup(source *storage.PrometheusRuleGroup) error {
+
+	// ObjectMeta
+	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec PrometheusRuleGroup_Spec
+	err := spec.AssignProperties_From_PrometheusRuleGroup_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleGroup_Spec() to populate field Spec")
+	}
+	group.Spec = spec
+
+	// Status
+	var status PrometheusRuleGroup_STATUS
+	err = status.AssignProperties_From_PrometheusRuleGroup_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleGroup_STATUS() to populate field Status")
+	}
+	group.Status = status
+
+	// Invoke the augmentConversionForPrometheusRuleGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroup populates the provided destination PrometheusRuleGroup from our PrometheusRuleGroup
+func (group *PrometheusRuleGroup) AssignProperties_To_PrometheusRuleGroup(destination *storage.PrometheusRuleGroup) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.PrometheusRuleGroup_Spec
+	err := group.Spec.AssignProperties_To_PrometheusRuleGroup_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleGroup_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.PrometheusRuleGroup_STATUS
+	err = group.Status.AssignProperties_To_PrometheusRuleGroup_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleGroup_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForPrometheusRuleGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (group *PrometheusRuleGroup) OriginalGVK() *schema.GroupVersionKind {
@@ -157,7 +246,7 @@ func (group *PrometheusRuleGroup) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20230301.PrometheusRuleGroup
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2023-03-01/PrometheusRuleGroups.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/PrometheusRuleGroups/stable/2023-03-01/PrometheusRuleGroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AlertsManagement/prometheusRuleGroups/{ruleGroupName}
 type PrometheusRuleGroupList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -170,6 +259,11 @@ type PrometheusRuleGroupList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2023-03-01")
+
+type augmentConversionForPrometheusRuleGroup interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroup) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroup) error
+}
 
 // Storage version of v1api20230301.PrometheusRuleGroup_Spec
 type PrometheusRuleGroup_Spec struct {
@@ -199,20 +293,252 @@ var _ genruntime.ConvertibleSpec = &PrometheusRuleGroup_Spec{}
 
 // ConvertSpecFrom populates our PrometheusRuleGroup_Spec from the provided source
 func (group *PrometheusRuleGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.PrometheusRuleGroup_Spec)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_PrometheusRuleGroup_Spec(src)
 	}
 
-	return source.ConvertSpecTo(group)
+	// Convert to an intermediate form
+	src = &storage.PrometheusRuleGroup_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_PrometheusRuleGroup_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our PrometheusRuleGroup_Spec
 func (group *PrometheusRuleGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.PrometheusRuleGroup_Spec)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_PrometheusRuleGroup_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.PrometheusRuleGroup_Spec{}
+	err := group.AssignProperties_To_PrometheusRuleGroup_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrometheusRuleGroup_Spec populates our PrometheusRuleGroup_Spec from the provided source PrometheusRuleGroup_Spec
+func (group *PrometheusRuleGroup_Spec) AssignProperties_From_PrometheusRuleGroup_Spec(source *storage.PrometheusRuleGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	group.AzureName = source.AzureName
+
+	// ClusterName
+	group.ClusterName = genruntime.ClonePointerToString(source.ClusterName)
+
+	// Description
+	group.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		group.Enabled = &enabled
+	} else {
+		group.Enabled = nil
+	}
+
+	// Interval
+	group.Interval = genruntime.ClonePointerToString(source.Interval)
+
+	// Location
+	group.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PrometheusRuleGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_PrometheusRuleGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	group.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		group.Owner = &owner
+	} else {
+		group.Owner = nil
+	}
+
+	// Rules
+	if source.Rules != nil {
+		ruleList := make([]PrometheusRule, len(source.Rules))
+		for ruleIndex, ruleItem := range source.Rules {
+			var rule PrometheusRule
+			err := rule.AssignProperties_From_PrometheusRule(&ruleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrometheusRule() to populate field Rules")
+			}
+			ruleList[ruleIndex] = rule
+		}
+		group.Rules = ruleList
+	} else {
+		group.Rules = nil
+	}
+
+	// ScopesReferences
+	if source.ScopesReferences != nil {
+		scopesReferenceList := make([]genruntime.ResourceReference, len(source.ScopesReferences))
+		for scopesReferenceIndex, scopesReferenceItem := range source.ScopesReferences {
+			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
+		}
+		group.ScopesReferences = scopesReferenceList
+	} else {
+		group.ScopesReferences = nil
+	}
+
+	// Tags
+	group.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroup_Spec populates the provided destination PrometheusRuleGroup_Spec from our PrometheusRuleGroup_Spec
+func (group *PrometheusRuleGroup_Spec) AssignProperties_To_PrometheusRuleGroup_Spec(destination *storage.PrometheusRuleGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// AzureName
+	destination.AzureName = group.AzureName
+
+	// ClusterName
+	destination.ClusterName = genruntime.ClonePointerToString(group.ClusterName)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(group.Description)
+
+	// Enabled
+	if group.Enabled != nil {
+		enabled := *group.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Interval
+	destination.Interval = genruntime.ClonePointerToString(group.Interval)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(group.Location)
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.PrometheusRuleGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_PrometheusRuleGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = group.OriginalVersion
+
+	// Owner
+	if group.Owner != nil {
+		owner := group.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Rules
+	if group.Rules != nil {
+		ruleList := make([]storage.PrometheusRule, len(group.Rules))
+		for ruleIndex, ruleItem := range group.Rules {
+			var rule storage.PrometheusRule
+			err := ruleItem.AssignProperties_To_PrometheusRule(&rule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrometheusRule() to populate field Rules")
+			}
+			ruleList[ruleIndex] = rule
+		}
+		destination.Rules = ruleList
+	} else {
+		destination.Rules = nil
+	}
+
+	// ScopesReferences
+	if group.ScopesReferences != nil {
+		scopesReferenceList := make([]genruntime.ResourceReference, len(group.ScopesReferences))
+		for scopesReferenceIndex, scopesReferenceItem := range group.ScopesReferences {
+			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
+		}
+		destination.ScopesReferences = scopesReferenceList
+	} else {
+		destination.ScopesReferences = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(group.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230301.PrometheusRuleGroup_STATUS
@@ -237,20 +563,242 @@ var _ genruntime.ConvertibleStatus = &PrometheusRuleGroup_STATUS{}
 
 // ConvertStatusFrom populates our PrometheusRuleGroup_STATUS from the provided source
 func (group *PrometheusRuleGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.PrometheusRuleGroup_STATUS)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_PrometheusRuleGroup_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(group)
+	// Convert to an intermediate form
+	src = &storage.PrometheusRuleGroup_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_PrometheusRuleGroup_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our PrometheusRuleGroup_STATUS
 func (group *PrometheusRuleGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.PrometheusRuleGroup_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_PrometheusRuleGroup_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.PrometheusRuleGroup_STATUS{}
+	err := group.AssignProperties_To_PrometheusRuleGroup_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PrometheusRuleGroup_STATUS populates our PrometheusRuleGroup_STATUS from the provided source PrometheusRuleGroup_STATUS
+func (group *PrometheusRuleGroup_STATUS) AssignProperties_From_PrometheusRuleGroup_STATUS(source *storage.PrometheusRuleGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ClusterName
+	group.ClusterName = genruntime.ClonePointerToString(source.ClusterName)
+
+	// Conditions
+	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Description
+	group.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		group.Enabled = &enabled
+	} else {
+		group.Enabled = nil
+	}
+
+	// Id
+	group.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Interval
+	group.Interval = genruntime.ClonePointerToString(source.Interval)
+
+	// Location
+	group.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Rules
+	if source.Rules != nil {
+		ruleList := make([]PrometheusRule_STATUS, len(source.Rules))
+		for ruleIndex, ruleItem := range source.Rules {
+			var rule PrometheusRule_STATUS
+			err := rule.AssignProperties_From_PrometheusRule_STATUS(&ruleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrometheusRule_STATUS() to populate field Rules")
+			}
+			ruleList[ruleIndex] = rule
+		}
+		group.Rules = ruleList
+	} else {
+		group.Rules = nil
+	}
+
+	// Scopes
+	group.Scopes = genruntime.CloneSliceOfString(source.Scopes)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		group.SystemData = &systemDatum
+	} else {
+		group.SystemData = nil
+	}
+
+	// Tags
+	group.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	group.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroup_STATUS populates the provided destination PrometheusRuleGroup_STATUS from our PrometheusRuleGroup_STATUS
+func (group *PrometheusRuleGroup_STATUS) AssignProperties_To_PrometheusRuleGroup_STATUS(destination *storage.PrometheusRuleGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// ClusterName
+	destination.ClusterName = genruntime.ClonePointerToString(group.ClusterName)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(group.Conditions)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(group.Description)
+
+	// Enabled
+	if group.Enabled != nil {
+		enabled := *group.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(group.Id)
+
+	// Interval
+	destination.Interval = genruntime.ClonePointerToString(group.Interval)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(group.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// Rules
+	if group.Rules != nil {
+		ruleList := make([]storage.PrometheusRule_STATUS, len(group.Rules))
+		for ruleIndex, ruleItem := range group.Rules {
+			var rule storage.PrometheusRule_STATUS
+			err := ruleItem.AssignProperties_To_PrometheusRule_STATUS(&rule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrometheusRule_STATUS() to populate field Rules")
+			}
+			ruleList[ruleIndex] = rule
+		}
+		destination.Rules = ruleList
+	} else {
+		destination.Rules = nil
+	}
+
+	// Scopes
+	destination.Scopes = genruntime.CloneSliceOfString(group.Scopes)
+
+	// SystemData
+	if group.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := group.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(group.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(group.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForPrometheusRuleGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrometheusRuleGroup_Spec interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroup_Spec) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroup_Spec) error
+}
+
+type augmentConversionForPrometheusRuleGroup_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroup_STATUS) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroup_STATUS) error
 }
 
 // Storage version of v1api20230301.PrometheusRule
@@ -269,6 +817,170 @@ type PrometheusRule struct {
 	Severity             *int                                `json:"severity,omitempty"`
 }
 
+// AssignProperties_From_PrometheusRule populates our PrometheusRule from the provided source PrometheusRule
+func (rule *PrometheusRule) AssignProperties_From_PrometheusRule(source *storage.PrometheusRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Actions
+	if source.Actions != nil {
+		actionList := make([]PrometheusRuleGroupAction, len(source.Actions))
+		for actionIndex, actionItem := range source.Actions {
+			var action PrometheusRuleGroupAction
+			err := action.AssignProperties_From_PrometheusRuleGroupAction(&actionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleGroupAction() to populate field Actions")
+			}
+			actionList[actionIndex] = action
+		}
+		rule.Actions = actionList
+	} else {
+		rule.Actions = nil
+	}
+
+	// Alert
+	rule.Alert = genruntime.ClonePointerToString(source.Alert)
+
+	// Annotations
+	rule.Annotations = genruntime.CloneMapOfStringToString(source.Annotations)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		rule.Enabled = &enabled
+	} else {
+		rule.Enabled = nil
+	}
+
+	// Expression
+	rule.Expression = genruntime.ClonePointerToString(source.Expression)
+
+	// For
+	rule.For = genruntime.ClonePointerToString(source.For)
+
+	// Labels
+	rule.Labels = genruntime.CloneMapOfStringToString(source.Labels)
+
+	// Record
+	rule.Record = genruntime.ClonePointerToString(source.Record)
+
+	// ResolveConfiguration
+	if source.ResolveConfiguration != nil {
+		var resolveConfiguration PrometheusRuleResolveConfiguration
+		err := resolveConfiguration.AssignProperties_From_PrometheusRuleResolveConfiguration(source.ResolveConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleResolveConfiguration() to populate field ResolveConfiguration")
+		}
+		rule.ResolveConfiguration = &resolveConfiguration
+	} else {
+		rule.ResolveConfiguration = nil
+	}
+
+	// Severity
+	rule.Severity = genruntime.ClonePointerToInt(source.Severity)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForPrometheusRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRule populates the provided destination PrometheusRule from our PrometheusRule
+func (rule *PrometheusRule) AssignProperties_To_PrometheusRule(destination *storage.PrometheusRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Actions
+	if rule.Actions != nil {
+		actionList := make([]storage.PrometheusRuleGroupAction, len(rule.Actions))
+		for actionIndex, actionItem := range rule.Actions {
+			var action storage.PrometheusRuleGroupAction
+			err := actionItem.AssignProperties_To_PrometheusRuleGroupAction(&action)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleGroupAction() to populate field Actions")
+			}
+			actionList[actionIndex] = action
+		}
+		destination.Actions = actionList
+	} else {
+		destination.Actions = nil
+	}
+
+	// Alert
+	destination.Alert = genruntime.ClonePointerToString(rule.Alert)
+
+	// Annotations
+	destination.Annotations = genruntime.CloneMapOfStringToString(rule.Annotations)
+
+	// Enabled
+	if rule.Enabled != nil {
+		enabled := *rule.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Expression
+	destination.Expression = genruntime.ClonePointerToString(rule.Expression)
+
+	// For
+	destination.For = genruntime.ClonePointerToString(rule.For)
+
+	// Labels
+	destination.Labels = genruntime.CloneMapOfStringToString(rule.Labels)
+
+	// Record
+	destination.Record = genruntime.ClonePointerToString(rule.Record)
+
+	// ResolveConfiguration
+	if rule.ResolveConfiguration != nil {
+		var resolveConfiguration storage.PrometheusRuleResolveConfiguration
+		err := rule.ResolveConfiguration.AssignProperties_To_PrometheusRuleResolveConfiguration(&resolveConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleResolveConfiguration() to populate field ResolveConfiguration")
+		}
+		destination.ResolveConfiguration = &resolveConfiguration
+	} else {
+		destination.ResolveConfiguration = nil
+	}
+
+	// Severity
+	destination.Severity = genruntime.ClonePointerToInt(rule.Severity)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForPrometheusRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230301.PrometheusRule_STATUS
 // An Azure Prometheus alerting or recording rule.
 type PrometheusRule_STATUS struct {
@@ -285,12 +997,290 @@ type PrometheusRule_STATUS struct {
 	Severity             *int                                       `json:"severity,omitempty"`
 }
 
+// AssignProperties_From_PrometheusRule_STATUS populates our PrometheusRule_STATUS from the provided source PrometheusRule_STATUS
+func (rule *PrometheusRule_STATUS) AssignProperties_From_PrometheusRule_STATUS(source *storage.PrometheusRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Actions
+	if source.Actions != nil {
+		actionList := make([]PrometheusRuleGroupAction_STATUS, len(source.Actions))
+		for actionIndex, actionItem := range source.Actions {
+			var action PrometheusRuleGroupAction_STATUS
+			err := action.AssignProperties_From_PrometheusRuleGroupAction_STATUS(&actionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleGroupAction_STATUS() to populate field Actions")
+			}
+			actionList[actionIndex] = action
+		}
+		rule.Actions = actionList
+	} else {
+		rule.Actions = nil
+	}
+
+	// Alert
+	rule.Alert = genruntime.ClonePointerToString(source.Alert)
+
+	// Annotations
+	rule.Annotations = genruntime.CloneMapOfStringToString(source.Annotations)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		rule.Enabled = &enabled
+	} else {
+		rule.Enabled = nil
+	}
+
+	// Expression
+	rule.Expression = genruntime.ClonePointerToString(source.Expression)
+
+	// For
+	rule.For = genruntime.ClonePointerToString(source.For)
+
+	// Labels
+	rule.Labels = genruntime.CloneMapOfStringToString(source.Labels)
+
+	// Record
+	rule.Record = genruntime.ClonePointerToString(source.Record)
+
+	// ResolveConfiguration
+	if source.ResolveConfiguration != nil {
+		var resolveConfiguration PrometheusRuleResolveConfiguration_STATUS
+		err := resolveConfiguration.AssignProperties_From_PrometheusRuleResolveConfiguration_STATUS(source.ResolveConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PrometheusRuleResolveConfiguration_STATUS() to populate field ResolveConfiguration")
+		}
+		rule.ResolveConfiguration = &resolveConfiguration
+	} else {
+		rule.ResolveConfiguration = nil
+	}
+
+	// Severity
+	rule.Severity = genruntime.ClonePointerToInt(source.Severity)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForPrometheusRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRule_STATUS populates the provided destination PrometheusRule_STATUS from our PrometheusRule_STATUS
+func (rule *PrometheusRule_STATUS) AssignProperties_To_PrometheusRule_STATUS(destination *storage.PrometheusRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Actions
+	if rule.Actions != nil {
+		actionList := make([]storage.PrometheusRuleGroupAction_STATUS, len(rule.Actions))
+		for actionIndex, actionItem := range rule.Actions {
+			var action storage.PrometheusRuleGroupAction_STATUS
+			err := actionItem.AssignProperties_To_PrometheusRuleGroupAction_STATUS(&action)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleGroupAction_STATUS() to populate field Actions")
+			}
+			actionList[actionIndex] = action
+		}
+		destination.Actions = actionList
+	} else {
+		destination.Actions = nil
+	}
+
+	// Alert
+	destination.Alert = genruntime.ClonePointerToString(rule.Alert)
+
+	// Annotations
+	destination.Annotations = genruntime.CloneMapOfStringToString(rule.Annotations)
+
+	// Enabled
+	if rule.Enabled != nil {
+		enabled := *rule.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// Expression
+	destination.Expression = genruntime.ClonePointerToString(rule.Expression)
+
+	// For
+	destination.For = genruntime.ClonePointerToString(rule.For)
+
+	// Labels
+	destination.Labels = genruntime.CloneMapOfStringToString(rule.Labels)
+
+	// Record
+	destination.Record = genruntime.ClonePointerToString(rule.Record)
+
+	// ResolveConfiguration
+	if rule.ResolveConfiguration != nil {
+		var resolveConfiguration storage.PrometheusRuleResolveConfiguration_STATUS
+		err := rule.ResolveConfiguration.AssignProperties_To_PrometheusRuleResolveConfiguration_STATUS(&resolveConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PrometheusRuleResolveConfiguration_STATUS() to populate field ResolveConfiguration")
+		}
+		destination.ResolveConfiguration = &resolveConfiguration
+	} else {
+		destination.ResolveConfiguration = nil
+	}
+
+	// Severity
+	destination.Severity = genruntime.ClonePointerToInt(rule.Severity)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForPrometheusRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230301.PrometheusRuleGroupOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type PrometheusRuleGroupOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_PrometheusRuleGroupOperatorSpec populates our PrometheusRuleGroupOperatorSpec from the provided source PrometheusRuleGroupOperatorSpec
+func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_From_PrometheusRuleGroupOperatorSpec(source *storage.PrometheusRuleGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrometheusRuleGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroupOperatorSpec populates the provided destination PrometheusRuleGroupOperatorSpec from our PrometheusRuleGroupOperatorSpec
+func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_To_PrometheusRuleGroupOperatorSpec(destination *storage.PrometheusRuleGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPrometheusRuleGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230301.SystemData_STATUS
@@ -305,6 +1295,112 @@ type SystemData_STATUS struct {
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrometheusRule interface {
+	AssignPropertiesFrom(src *storage.PrometheusRule) error
+	AssignPropertiesTo(dst *storage.PrometheusRule) error
+}
+
+type augmentConversionForPrometheusRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrometheusRule_STATUS) error
+	AssignPropertiesTo(dst *storage.PrometheusRule_STATUS) error
+}
+
+type augmentConversionForPrometheusRuleGroupOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroupOperatorSpec) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroupOperatorSpec) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
+}
+
 // Storage version of v1api20230301.PrometheusRuleGroupAction
 // An alert action. Only relevant for alerts.
 type PrometheusRuleGroupAction struct {
@@ -312,6 +1408,78 @@ type PrometheusRuleGroupAction struct {
 	ActionGroupReference *genruntime.ResourceReference `armReference:"ActionGroupId" json:"actionGroupReference,omitempty"`
 	ActionProperties     map[string]string             `json:"actionProperties,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrometheusRuleGroupAction populates our PrometheusRuleGroupAction from the provided source PrometheusRuleGroupAction
+func (action *PrometheusRuleGroupAction) AssignProperties_From_PrometheusRuleGroupAction(source *storage.PrometheusRuleGroupAction) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActionGroupReference
+	if source.ActionGroupReference != nil {
+		actionGroupReference := source.ActionGroupReference.Copy()
+		action.ActionGroupReference = &actionGroupReference
+	} else {
+		action.ActionGroupReference = nil
+	}
+
+	// ActionProperties
+	action.ActionProperties = genruntime.CloneMapOfStringToString(source.ActionProperties)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		action.PropertyBag = propertyBag
+	} else {
+		action.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupAction interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForPrometheusRuleGroupAction); ok {
+		err := augmentedAction.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroupAction populates the provided destination PrometheusRuleGroupAction from our PrometheusRuleGroupAction
+func (action *PrometheusRuleGroupAction) AssignProperties_To_PrometheusRuleGroupAction(destination *storage.PrometheusRuleGroupAction) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(action.PropertyBag)
+
+	// ActionGroupReference
+	if action.ActionGroupReference != nil {
+		actionGroupReference := action.ActionGroupReference.Copy()
+		destination.ActionGroupReference = &actionGroupReference
+	} else {
+		destination.ActionGroupReference = nil
+	}
+
+	// ActionProperties
+	destination.ActionProperties = genruntime.CloneMapOfStringToString(action.ActionProperties)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupAction interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForPrometheusRuleGroupAction); ok {
+		err := augmentedAction.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230301.PrometheusRuleGroupAction_STATUS
@@ -322,6 +1490,68 @@ type PrometheusRuleGroupAction_STATUS struct {
 	PropertyBag      genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_PrometheusRuleGroupAction_STATUS populates our PrometheusRuleGroupAction_STATUS from the provided source PrometheusRuleGroupAction_STATUS
+func (action *PrometheusRuleGroupAction_STATUS) AssignProperties_From_PrometheusRuleGroupAction_STATUS(source *storage.PrometheusRuleGroupAction_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActionGroupId
+	action.ActionGroupId = genruntime.ClonePointerToString(source.ActionGroupId)
+
+	// ActionProperties
+	action.ActionProperties = genruntime.CloneMapOfStringToString(source.ActionProperties)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		action.PropertyBag = propertyBag
+	} else {
+		action.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupAction_STATUS interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForPrometheusRuleGroupAction_STATUS); ok {
+		err := augmentedAction.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleGroupAction_STATUS populates the provided destination PrometheusRuleGroupAction_STATUS from our PrometheusRuleGroupAction_STATUS
+func (action *PrometheusRuleGroupAction_STATUS) AssignProperties_To_PrometheusRuleGroupAction_STATUS(destination *storage.PrometheusRuleGroupAction_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(action.PropertyBag)
+
+	// ActionGroupId
+	destination.ActionGroupId = genruntime.ClonePointerToString(action.ActionGroupId)
+
+	// ActionProperties
+	destination.ActionProperties = genruntime.CloneMapOfStringToString(action.ActionProperties)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleGroupAction_STATUS interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForPrometheusRuleGroupAction_STATUS); ok {
+		err := augmentedAction.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230301.PrometheusRuleResolveConfiguration
 // Specifies the Prometheus alert rule configuration.
 type PrometheusRuleResolveConfiguration struct {
@@ -330,12 +1560,176 @@ type PrometheusRuleResolveConfiguration struct {
 	TimeToResolve *string                `json:"timeToResolve,omitempty"`
 }
 
+// AssignProperties_From_PrometheusRuleResolveConfiguration populates our PrometheusRuleResolveConfiguration from the provided source PrometheusRuleResolveConfiguration
+func (configuration *PrometheusRuleResolveConfiguration) AssignProperties_From_PrometheusRuleResolveConfiguration(source *storage.PrometheusRuleResolveConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoResolved
+	if source.AutoResolved != nil {
+		autoResolved := *source.AutoResolved
+		configuration.AutoResolved = &autoResolved
+	} else {
+		configuration.AutoResolved = nil
+	}
+
+	// TimeToResolve
+	configuration.TimeToResolve = genruntime.ClonePointerToString(source.TimeToResolve)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleResolveConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrometheusRuleResolveConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleResolveConfiguration populates the provided destination PrometheusRuleResolveConfiguration from our PrometheusRuleResolveConfiguration
+func (configuration *PrometheusRuleResolveConfiguration) AssignProperties_To_PrometheusRuleResolveConfiguration(destination *storage.PrometheusRuleResolveConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// AutoResolved
+	if configuration.AutoResolved != nil {
+		autoResolved := *configuration.AutoResolved
+		destination.AutoResolved = &autoResolved
+	} else {
+		destination.AutoResolved = nil
+	}
+
+	// TimeToResolve
+	destination.TimeToResolve = genruntime.ClonePointerToString(configuration.TimeToResolve)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleResolveConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrometheusRuleResolveConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230301.PrometheusRuleResolveConfiguration_STATUS
 // Specifies the Prometheus alert rule configuration.
 type PrometheusRuleResolveConfiguration_STATUS struct {
 	AutoResolved  *bool                  `json:"autoResolved,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TimeToResolve *string                `json:"timeToResolve,omitempty"`
+}
+
+// AssignProperties_From_PrometheusRuleResolveConfiguration_STATUS populates our PrometheusRuleResolveConfiguration_STATUS from the provided source PrometheusRuleResolveConfiguration_STATUS
+func (configuration *PrometheusRuleResolveConfiguration_STATUS) AssignProperties_From_PrometheusRuleResolveConfiguration_STATUS(source *storage.PrometheusRuleResolveConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoResolved
+	if source.AutoResolved != nil {
+		autoResolved := *source.AutoResolved
+		configuration.AutoResolved = &autoResolved
+	} else {
+		configuration.AutoResolved = nil
+	}
+
+	// TimeToResolve
+	configuration.TimeToResolve = genruntime.ClonePointerToString(source.TimeToResolve)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleResolveConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrometheusRuleResolveConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrometheusRuleResolveConfiguration_STATUS populates the provided destination PrometheusRuleResolveConfiguration_STATUS from our PrometheusRuleResolveConfiguration_STATUS
+func (configuration *PrometheusRuleResolveConfiguration_STATUS) AssignProperties_To_PrometheusRuleResolveConfiguration_STATUS(destination *storage.PrometheusRuleResolveConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// AutoResolved
+	if configuration.AutoResolved != nil {
+		autoResolved := *configuration.AutoResolved
+		destination.AutoResolved = &autoResolved
+	} else {
+		destination.AutoResolved = nil
+	}
+
+	// TimeToResolve
+	destination.TimeToResolve = genruntime.ClonePointerToString(configuration.TimeToResolve)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrometheusRuleResolveConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForPrometheusRuleResolveConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrometheusRuleGroupAction interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroupAction) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroupAction) error
+}
+
+type augmentConversionForPrometheusRuleGroupAction_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleGroupAction_STATUS) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleGroupAction_STATUS) error
+}
+
+type augmentConversionForPrometheusRuleResolveConfiguration interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleResolveConfiguration) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleResolveConfiguration) error
+}
+
+type augmentConversionForPrometheusRuleResolveConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrometheusRuleResolveConfiguration_STATUS) error
+	AssignPropertiesTo(dst *storage.PrometheusRuleResolveConfiguration_STATUS) error
 }
 
 func init() {

@@ -20,9 +20,12 @@ Workspace: Resource
 │   │   └── ImmediatePurgeDataOn30Days: *bool
 │   ├── ForceCmkForQuery: *bool
 │   ├── Location: *string
-│   ├── OperatorSpec: *Object (2 properties)
+│   ├── OperatorSpec: *Object (3 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
-│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
+│   │   └── Secrets: *Object (2 properties)
+│   │       ├── PrimarySharedKey: *genruntime.SecretDestination
+│   │       └── SecondarySharedKey: *genruntime.SecretDestination
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── ProvisioningState: *Enum (7 values)
 │   │   ├── "Canceled"

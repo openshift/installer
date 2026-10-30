@@ -104,7 +104,12 @@ func (policy *StorageAccountsManagementPolicy) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (policy *StorageAccountsManagementPolicy) createValidations() []func(ctx context.Context, obj *v20220901.StorageAccountsManagementPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220901.StorageAccountsManagementPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220901.StorageAccountsManagementPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

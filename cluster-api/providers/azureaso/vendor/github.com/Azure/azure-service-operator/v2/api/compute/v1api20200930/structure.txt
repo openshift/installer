@@ -187,7 +187,7 @@ Disk: Resource
 
 Snapshot: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (18 properties)
+├── Spec: Object (17 properties)
 │   ├── AzureName: string
 │   ├── CreationData: *Object (8 properties)
 │   │   ├── CreateOption: *Enum (7 values)
@@ -211,13 +211,6 @@ Snapshot: Resource
 │   │   └── UploadSizeBytes: *int
 │   ├── DiskAccessReference: *genruntime.ResourceReference
 │   ├── DiskSizeGB: *int
-│   ├── DiskState: *Enum (6 values)
-│   │   ├── "ActiveSAS"
-│   │   ├── "ActiveUpload"
-│   │   ├── "Attached"
-│   │   ├── "ReadyToUpload"
-│   │   ├── "Reserved"
-│   │   └── "Unattached"
 │   ├── Encryption: *Object (2 properties)
 │   │   ├── DiskEncryptionSetReference: *genruntime.ResourceReference
 │   │   └── Type: *Enum (3 values)

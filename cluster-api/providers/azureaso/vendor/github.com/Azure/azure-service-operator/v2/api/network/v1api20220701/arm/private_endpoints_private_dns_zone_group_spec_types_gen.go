@@ -47,5 +47,6 @@ type PrivateDnsZoneConfig struct {
 
 // Properties of the private dns zone configuration resource.
 type PrivateDnsZonePropertiesFormat struct {
+	// PrivateDnsZoneId: The resource id of the private dns zone.
 	PrivateDnsZoneId *string `json:"privateDnsZoneId,omitempty"`
 }

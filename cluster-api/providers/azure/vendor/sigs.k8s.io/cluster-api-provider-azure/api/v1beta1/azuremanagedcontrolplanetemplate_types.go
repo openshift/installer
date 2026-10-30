@@ -48,7 +48,7 @@ type AzureManagedControlPlaneTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureManagedControlPlaneTemplate{}, &AzureManagedControlPlaneTemplateList{})
+	objectTypes = append(objectTypes, &AzureManagedControlPlaneTemplate{}, &AzureManagedControlPlaneTemplateList{})
 }
 
 // AzureManagedControlPlaneTemplateResource describes the data needed to create an AzureManagedCluster from a template.

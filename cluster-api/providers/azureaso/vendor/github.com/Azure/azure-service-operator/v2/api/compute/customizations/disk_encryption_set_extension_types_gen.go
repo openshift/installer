@@ -4,10 +4,14 @@
 package customizations
 
 import (
-	v20220702 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702"
-	v20220702s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702/storage"
-	v20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302"
-	v20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
+	compute_v1api20220702 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702"
+	compute_v1api20220702s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702/storage"
+	compute_v1api20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302"
+	compute_v1api20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
+	compute_v20220702 "github.com/Azure/azure-service-operator/v2/api/compute/v20220702"
+	compute_v20220702s "github.com/Azure/azure-service-operator/v2/api/compute/v20220702/storage"
+	compute_v20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v20240302"
+	compute_v20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -17,8 +21,12 @@ type DiskEncryptionSetExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *DiskEncryptionSetExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220702.DiskEncryptionSet{},
-		&v20220702s.DiskEncryptionSet{},
-		&v20240302.DiskEncryptionSet{},
-		&v20240302s.DiskEncryptionSet{}}
+		&compute_v1api20220702.DiskEncryptionSet{},
+		&compute_v1api20220702s.DiskEncryptionSet{},
+		&compute_v1api20240302.DiskEncryptionSet{},
+		&compute_v1api20240302s.DiskEncryptionSet{},
+		&compute_v20220702.DiskEncryptionSet{},
+		&compute_v20220702s.DiskEncryptionSet{},
+		&compute_v20240302.DiskEncryptionSet{},
+		&compute_v20240302s.DiskEncryptionSet{}}
 }

@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbforpostgresql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &FlexibleServersConfiguration{}
 
 // ConvertFrom populates our FlexibleServersConfiguration from the provided hub FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersConfiguration
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return configuration.AssignProperties_From_FlexibleServersConfiguration(source)
+	err = configuration.AssignProperties_From_FlexibleServersConfiguration(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to configuration")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersConfiguration from our FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20240801/storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersConfiguration
+	err := configuration.AssignProperties_To_FlexibleServersConfiguration(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from configuration")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return configuration.AssignProperties_To_FlexibleServersConfiguration(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersConfiguration{}
@@ -86,17 +101,6 @@ func (configuration *FlexibleServersConfiguration) SecretDestinationExpressions(
 		return nil
 	}
 	return configuration.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &FlexibleServersConfiguration{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (configuration *FlexibleServersConfiguration) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServersConfiguration_STATUS); ok {
-		return configuration.Spec.Initialize_From_FlexibleServersConfiguration_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServersConfiguration_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FlexibleServersConfiguration{}
@@ -261,10 +265,12 @@ type FlexibleServersConfiguration_Spec struct {
 	// reference to a dbforpostgresql.azure.com/FlexibleServer resource
 	Owner *genruntime.KnownResourceReference `group:"dbforpostgresql.azure.com" json:"owner,omitempty" kind:"FlexibleServer"`
 
-	// Source: Source of the configuration. Required to update the configuration.
+	// Source: Source of the value assigned to the server parameter. Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Source *string `json:"source,omitempty"`
 
-	// Value: Value of the configuration. Required to update the configuration.
+	// Value: Value of the server parameter (also known as configuration). Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -474,19 +480,6 @@ func (configuration *FlexibleServersConfiguration_Spec) AssignProperties_To_Flex
 	return nil
 }
 
-// Initialize_From_FlexibleServersConfiguration_STATUS populates our FlexibleServersConfiguration_Spec from the provided source FlexibleServersConfiguration_STATUS
-func (configuration *FlexibleServersConfiguration_Spec) Initialize_From_FlexibleServersConfiguration_STATUS(source *FlexibleServersConfiguration_STATUS) error {
-
-	// Source
-	configuration.Source = genruntime.ClonePointerToString(source.Source)
-
-	// Value
-	configuration.Value = genruntime.ClonePointerToString(source.Value)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (configuration *FlexibleServersConfiguration_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -498,41 +491,45 @@ func (configuration *FlexibleServersConfiguration_Spec) SetAzureName(azureName s
 }
 
 type FlexibleServersConfiguration_STATUS struct {
-	// AllowedValues: Allowed values of the configuration.
+	// AllowedValues: Allowed values of the server parameter.
 	AllowedValues *string `json:"allowedValues,omitempty"`
 
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
-	// DataType: Data type of the configuration.
+	// DataType: Data type of the server parameter.
 	DataType *ConfigurationProperties_DataType_STATUS `json:"dataType,omitempty"`
 
-	// DefaultValue: Default value of the configuration.
+	// DefaultValue: Value assigned by default to the server parameter.
 	DefaultValue *string `json:"defaultValue,omitempty"`
 
-	// Description: Description of the configuration.
+	// Description: Description of the server parameter.
 	Description *string `json:"description,omitempty"`
 
-	// DocumentationLink: Configuration documentation link.
+	// DocumentationLink: Link pointing to the documentation of the server parameter.
 	DocumentationLink *string `json:"documentationLink,omitempty"`
 
 	// Id: Fully qualified resource ID for the resource. E.g.
 	// "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}"
 	Id *string `json:"id,omitempty"`
 
-	// IsConfigPendingRestart: Configuration is pending restart or not.
+	// IsConfigPendingRestart: Indicates if the value assigned to the server parameter is pending a server restart for the
+	// value to take effect.
 	IsConfigPendingRestart *bool `json:"isConfigPendingRestart,omitempty"`
 
-	// IsDynamicConfig: Configuration dynamic or static.
+	// IsDynamicConfig: Indicates if it's a dynamic (true) or static (false) server parameter. Static server parameters require
+	// a server restart after changing the value assigned to it, for the change to take effect. Dynamic server parameters do
+	// not require a server restart after changing the value assigned to it, for the change to take effect.
 	IsDynamicConfig *bool `json:"isDynamicConfig,omitempty"`
 
-	// IsReadOnly: Configuration read-only or not.
+	// IsReadOnly: Indicates if it's a read-only (true) or modifiable (false) server parameter.
 	IsReadOnly *bool `json:"isReadOnly,omitempty"`
 
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Source: Source of the configuration. Required to update the configuration.
+	// Source: Source of the value assigned to the server parameter. Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Source *string `json:"source,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -541,10 +538,11 @@ type FlexibleServersConfiguration_STATUS struct {
 	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
-	// Unit: Configuration unit.
+	// Unit: Units in which the server parameter value is expressed.
 	Unit *string `json:"unit,omitempty"`
 
-	// Value: Value of the configuration. Required to update the configuration.
+	// Value: Value of the server parameter (also known as configuration). Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Value *string `json:"value,omitempty"`
 }
 
@@ -959,8 +957,6 @@ func (operator *FlexibleServersConfigurationOperatorSpec) AssignProperties_From_
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -977,8 +973,6 @@ func (operator *FlexibleServersConfigurationOperatorSpec) AssignProperties_From_
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1004,8 +998,6 @@ func (operator *FlexibleServersConfigurationOperatorSpec) AssignProperties_To_Fl
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1022,8 +1014,6 @@ func (operator *FlexibleServersConfigurationOperatorSpec) AssignProperties_To_Fl
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

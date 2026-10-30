@@ -364,7 +364,7 @@ func (in *ContainerGroupOperatorSpec) DeepCopyInto(out *ContainerGroupOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -375,7 +375,7 @@ func (in *ContainerGroupOperatorSpec) DeepCopyInto(out *ContainerGroupOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

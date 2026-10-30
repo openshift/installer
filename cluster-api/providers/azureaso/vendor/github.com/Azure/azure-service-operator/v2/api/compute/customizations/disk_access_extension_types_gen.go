@@ -4,8 +4,10 @@
 package customizations
 
 import (
-	v20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302"
-	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
+	compute_v1api20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302"
+	compute_v1api20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
+	compute_v20240302 "github.com/Azure/azure-service-operator/v2/api/compute/v20240302"
+	compute_v20240302s "github.com/Azure/azure-service-operator/v2/api/compute/v20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +17,8 @@ type DiskAccessExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *DiskAccessExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20240302.DiskAccess{},
-		&storage.DiskAccess{}}
+		&compute_v1api20240302.DiskAccess{},
+		&compute_v1api20240302s.DiskAccess{},
+		&compute_v20240302.DiskAccess{},
+		&compute_v20240302s.DiskAccess{}}
 }

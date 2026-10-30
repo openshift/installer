@@ -558,7 +558,9 @@ type RoutingEventHubProperties struct {
 
 	// EntityPath: Event hub name on the event hub namespace
 	EntityPath *string `json:"entityPath,omitempty"`
-	Id         *string `json:"id,omitempty"`
+
+	// Id: Id of the event hub endpoint
+	Id *string `json:"id,omitempty"`
 
 	// Identity: Managed identity properties of routing event hub endpoint.
 	Identity *ManagedIdentity `json:"identity,omitempty"`
@@ -588,7 +590,9 @@ type RoutingServiceBusQueueEndpointProperties struct {
 
 	// EntityPath: Queue name on the service bus namespace
 	EntityPath *string `json:"entityPath,omitempty"`
-	Id         *string `json:"id,omitempty"`
+
+	// Id: Id of the service bus queue endpoint
+	Id *string `json:"id,omitempty"`
 
 	// Identity: Managed identity properties of routing service bus queue endpoint.
 	Identity *ManagedIdentity `json:"identity,omitempty"`
@@ -618,7 +622,9 @@ type RoutingServiceBusTopicEndpointProperties struct {
 
 	// EntityPath: Queue name on the service bus topic
 	EntityPath *string `json:"entityPath,omitempty"`
-	Id         *string `json:"id,omitempty"`
+
+	// Id: Id of the service bus topic endpoint
+	Id *string `json:"id,omitempty"`
 
 	// Identity: Managed identity properties of routing service bus topic endpoint.
 	Identity *ManagedIdentity `json:"identity,omitempty"`
@@ -660,7 +666,9 @@ type RoutingStorageContainerProperties struct {
 	// FileNameFormat: File name format for the blob. Default format is {iothub}/{partition}/{YYYY}/{MM}/{DD}/{HH}/{mm}. All
 	// parameters are mandatory but can be reordered.
 	FileNameFormat *string `json:"fileNameFormat,omitempty"`
-	Id             *string `json:"id,omitempty"`
+
+	// Id: Id of the storage container endpoint
+	Id *string `json:"id,omitempty"`
 
 	// Identity: Managed identity properties of routing storage endpoint.
 	Identity *ManagedIdentity `json:"identity,omitempty"`

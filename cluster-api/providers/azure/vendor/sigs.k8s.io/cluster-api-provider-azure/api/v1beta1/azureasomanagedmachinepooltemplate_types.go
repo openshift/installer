@@ -63,5 +63,5 @@ type AzureASOManagedMachinePoolTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureASOManagedMachinePoolTemplate{}, &AzureASOManagedMachinePoolTemplateList{})
+	objectTypes = append(objectTypes, &AzureASOManagedMachinePoolTemplate{}, &AzureASOManagedMachinePoolTemplateList{})
 }

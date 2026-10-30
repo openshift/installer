@@ -16,8 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	"github.com/Azure/azure-service-operator/v2/internal/set"
 )
 
 // KnownResourceReference is a resource reference to a known type.
@@ -233,6 +231,10 @@ func (ref *ResourceReference) GroupKind() schema.GroupKind {
 // ResourceReference
 func LookupOwnerGroupKind(v interface{}) (string, string) {
 	t := reflect.TypeOf(v)
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+
 	field, _ := t.FieldByName("Owner")
 
 	group, ok := field.Tag.Lookup("group")
@@ -268,10 +270,10 @@ func (ref *KubernetesOwnerReference) Copy() KubernetesOwnerReference {
 }
 
 // ValidateResourceReferences calls Validate on each ResourceReference
-func ValidateResourceReferences(refs set.Set[ResourceReference]) (admission.Warnings, error) {
+func ValidateResourceReferences(refs []ResourceReference) (admission.Warnings, error) {
 	errs := make([]error, 0, len(refs))
 	var warnings admission.Warnings
-	for ref := range refs {
+	for _, ref := range refs {
 		warning, err := ref.Validate()
 		if warning != nil {
 			warnings = append(warnings, warning...)
@@ -310,21 +312,24 @@ func VerifyResourceOwnerARMID(resource ARMMetaObject) error {
 			return eris.Errorf(
 				"expected owner ARM ID to be from provider %q, but was %q",
 				provider,
-				armID.ResourceType.Namespace)
+				armID.ResourceType.Namespace,
+			)
 		}
 		expectedARMIDType := strings.Join(expectedResourceTypesIncludedInARMID, "/")
 		if !strings.EqualFold(armID.ResourceType.Type, expectedARMIDType) {
 			return eris.Errorf(
 				"expected owner ARM ID to be of type %q, but was %q",
 				fmt.Sprintf("%s/%s", provider, expectedARMIDType),
-				armID.ResourceType.String())
+				armID.ResourceType.String(),
+			)
 		}
 	} else if len(expectedResourceTypesIncludedInARMID) == 0 {
 		scope := resource.GetResourceScope()
 		if scope == ResourceScopeResourceGroup && armID.ResourceType.String() != "Microsoft.Resources/resourceGroups" {
 			return eris.Errorf(
 				"expected owner ARM ID to be for a resource group, but was %q",
-				armID.ResourceType.String())
+				armID.ResourceType.String(),
+			)
 		}
 	}
 
@@ -338,20 +343,17 @@ func ValidateOwner(obj ARMMetaObject) (admission.Warnings, error) {
 		return nil, nil
 	}
 
-	var warningsResult admission.Warnings
-
 	warnings, err := owner.Validate()
-	warningsResult = append(warningsResult, warnings...)
 	if err != nil {
-		return warningsResult, err
+		return warnings, err
 	}
 
 	err = VerifyResourceOwnerARMID(obj)
 	if err != nil {
-		return warningsResult, err
+		return warnings, err
 	}
 
-	return warningsResult, nil
+	return warnings, nil
 }
 
 // NamespacedResourceReference is a resource reference with namespace information included

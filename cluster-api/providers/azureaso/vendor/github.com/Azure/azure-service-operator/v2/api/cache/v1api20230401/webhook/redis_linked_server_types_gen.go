@@ -116,7 +116,12 @@ func (server *RedisLinkedServer) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (server *RedisLinkedServer) createValidations() []func(ctx context.Context, obj *v20230401.RedisLinkedServer) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230401.RedisLinkedServer) (admission.Warnings, error){server.validateResourceReferences, server.validateOwnerReference, server.validateSecretDestinations, server.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230401.RedisLinkedServer) (admission.Warnings, error){
+		server.validateResourceReferences,
+		server.validateOwnerReference,
+		server.validateSecretDestinations,
+		server.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

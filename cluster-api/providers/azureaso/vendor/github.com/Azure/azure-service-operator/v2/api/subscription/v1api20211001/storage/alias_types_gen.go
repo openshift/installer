@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=subscription.azure.com,resources={aliases/status,aliases/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,subscription}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20211001.Alias
 // Generator information:
-// - Generated from: /subscription/resource-manager/Microsoft.Subscription/stable/2021-10-01/subscriptions.json
+// - Generated from: /subscription/resource-manager/Microsoft.Subscription/Subscription/stable/2021-10-01/subscriptions.json
 // - ARM URI: /providers/Microsoft.Subscription/aliases/{aliasName}
 type Alias struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -152,7 +153,7 @@ func (alias *Alias) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20211001.Alias
 // Generator information:
-// - Generated from: /subscription/resource-manager/Microsoft.Subscription/stable/2021-10-01/subscriptions.json
+// - Generated from: /subscription/resource-manager/Microsoft.Subscription/Subscription/stable/2021-10-01/subscriptions.json
 // - ARM URI: /providers/Microsoft.Subscription/aliases/{aliasName}
 type AliasList struct {
 	metav1.TypeMeta `json:",inline"`

@@ -6,7 +6,7 @@ APIVersion: Enum (1 value)
 
 DatabaseAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (40 properties)
+├── Spec: Object (39 properties)
 │   ├── AnalyticalStorageConfiguration: *Object (2 properties)
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── SchemaType: *string
@@ -60,7 +60,6 @@ DatabaseAccount: Resource
 │   │   ├── MaxAgeInSeconds: *int
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── CreateMode: *string
-│   ├── CustomerManagedKeyStatus: *string
 │   ├── DatabaseAccountOfferType: *string
 │   ├── DefaultIdentity: *string
 │   ├── DisableKeyBasedMetadataWriteAccess: *bool
@@ -532,6 +531,51 @@ MongodbDatabaseThroughputSetting: Resource
     │   ├── Throughput: *int
     │   └── Ts: *float64
     ├── Tags: map[string]string
+    └── Type: *string
+
+MongodbRoleDefinition: Resource
+├── Owner: documentdb/v1api20240815.DatabaseAccount
+├── Spec: Object (10 properties)
+│   ├── AzureName: string
+│   ├── DatabaseName: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── Privileges: Object (3 properties)[]
+│   │   ├── Actions: string[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Resource: *Object (3 properties)
+│   │       ├── Collection: *string
+│   │       ├── Db: *string
+│   │       └── PropertyBag: genruntime.PropertyBag
+│   ├── PropertyBag: genruntime.PropertyBag
+│   ├── RoleName: *string
+│   ├── Roles: Object (3 properties)[]
+│   │   ├── Db: *string
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── Role: *string
+│   └── Type: *string
+└── Status: Object (9 properties)
+    ├── Conditions: conditions.Condition[]
+    ├── DatabaseName: *string
+    ├── Id: *string
+    ├── Name: *string
+    ├── Privileges: Object (3 properties)[]
+    │   ├── Actions: string[]
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── Resource: *Object (3 properties)
+    │       ├── Collection: *string
+    │       ├── Db: *string
+    │       └── PropertyBag: genruntime.PropertyBag
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── RoleName: *string
+    ├── Roles: Object (3 properties)[]
+    │   ├── Db: *string
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   └── Role: *string
     └── Type: *string
 
 MongodbUserDefinition: Resource

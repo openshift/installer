@@ -44,8 +44,11 @@ type BackendContractProperties struct {
 	Protocol *BackendContractProperties_Protocol `json:"protocol,omitempty"`
 
 	// Proxy: Backend gateway Contract Properties
-	Proxy      *BackendProxyContract `json:"proxy,omitempty"`
-	ResourceId *string               `json:"resourceId,omitempty"`
+	Proxy *BackendProxyContract `json:"proxy,omitempty"`
+
+	// ResourceId: Management Uri of the Resource in External System. This URL can be the Arm Resource Id of Logic Apps,
+	// Function Apps or API Apps.
+	ResourceId *string `json:"resourceId,omitempty"`
 
 	// Title: Backend Title.
 	Title *string `json:"title,omitempty"`

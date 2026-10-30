@@ -56,7 +56,8 @@ func (r *kubeSecretResolver) ResolveSecretReference(ctx context.Context, ref gen
 				"couldn't resolve secret reference %s/%s.%s",
 				ref.Namespace,
 				ref.Name,
-				ref.Key)
+				ref.Key,
+			)
 		}
 	}
 

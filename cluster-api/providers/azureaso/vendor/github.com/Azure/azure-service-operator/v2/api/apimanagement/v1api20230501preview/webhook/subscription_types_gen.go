@@ -116,7 +116,12 @@ func (subscription *Subscription) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (subscription *Subscription) createValidations() []func(ctx context.Context, obj *v20230501p.Subscription) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.Subscription) (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateOwnerReference, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230501p.Subscription) (admission.Warnings, error){
+		subscription.validateResourceReferences,
+		subscription.validateOwnerReference,
+		subscription.validateSecretDestinations,
+		subscription.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

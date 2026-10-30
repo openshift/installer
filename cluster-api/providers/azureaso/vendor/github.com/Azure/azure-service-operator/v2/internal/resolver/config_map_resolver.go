@@ -59,7 +59,8 @@ func (r *kubeConfigMapResolver) ResolveConfigMapReference(
 				"couldn't resolve config map reference %s/%s.%s",
 				ref.Namespace,
 				ref.Name,
-				ref.Key)
+				ref.Key,
+			)
 		}
 
 		return "", eris.Wrapf(err, "couldn't resolve config map reference %s", ref.String())
