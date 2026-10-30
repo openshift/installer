@@ -62,6 +62,8 @@ func (webhook *RoleAssignment) defaultAzureName(_ context.Context, assignment *v
 				assignment.Owner(),
 				gk,
 				assignment.Namespace,
-				assignment.Name))
+				assignment.Name,
+			),
+		)
 	}
 }

@@ -31,6 +31,10 @@ func ValidateDestinations(
 	destinationExpressions []*core.DestinationExpression,
 ) (admission.Warnings, error) {
 	locations := set.Make[keyPair]()
+	// Map of configmap name -> annotation keys seen so far
+	annotationKeys := make(map[string]*set.Set[string])
+	// Map of configmap name -> label keys seen so far
+	labelKeys := make(map[string]*set.Set[string])
 
 	for _, dest := range destinations {
 		if dest == nil {
@@ -41,11 +45,19 @@ func ValidateDestinations(
 			name: dest.Name,
 			key:  dest.Key,
 		}
+		// Check if the same configmap/key has been used before
 		if locations.Contains(pair) {
 			return nil, eris.Errorf("cannot write more than one configmap value to destination %s", dest.String())
 		}
 
 		locations.Add(pair)
+
+		if err := validateMapKeyCollisions(dest.Name, dest.Annotations, annotationKeys); err != nil {
+			return nil, eris.Wrapf(err, "collision for annotation on configmap %q", dest.Name)
+		}
+		if err := validateMapKeyCollisions(dest.Name, dest.Labels, labelKeys); err != nil {
+			return nil, eris.Wrapf(err, "collision for label on configmap %q", dest.Name)
+		}
 	}
 
 	celEvaluator := expressionEvaluator()
@@ -70,6 +82,14 @@ func ValidateDestinations(
 			if outputType.IsExactType(asocel.MapType) && dest.Key != "" {
 				return nil, eris.Errorf("CEL expression with output type map[string]string must not specify destination 'key', %s", dest.String())
 			}
+
+			// Validate annotation/label value expressions type-check to string
+			if err := validateExpressionMapValues(celEvaluator, dest.Annotations, self); err != nil {
+				return nil, eris.Wrapf(err, "annotation expression on %s", dest.String())
+			}
+			if err := validateExpressionMapValues(celEvaluator, dest.Labels, self); err != nil {
+				return nil, eris.Wrapf(err, "label expression on %s", dest.String())
+			}
 		}
 
 		if dest.Key == "" {
@@ -88,9 +108,59 @@ func ValidateDestinations(
 		}
 
 		locations.Add(pair)
+
+		if err := validateMapKeyCollisions(dest.Name, dest.Annotations, annotationKeys); err != nil {
+			return nil, eris.Wrapf(err, "collision for annotation on configmap %q", dest.Name)
+		}
+		if err := validateMapKeyCollisions(dest.Name, dest.Labels, labelKeys); err != nil {
+			return nil, eris.Wrapf(err, "collision for label on configmap %q", dest.Name)
+		}
 	}
 
 	return nil, nil
+}
+
+// validateMapKeyCollisions checks that no two destinations targeting the same resource attempt to set the same
+// map key (used for both annotations and labels).
+func validateMapKeyCollisions(
+	resourceName string,
+	entries map[string]string,
+	seen map[string]*set.Set[string],
+) error {
+	if len(entries) == 0 {
+		return nil
+	}
+	keys, ok := seen[resourceName]
+	if !ok {
+		s := set.Make[string]()
+		keys = &s
+		seen[resourceName] = keys
+	}
+	for k := range entries {
+		if keys.Contains(k) {
+			return eris.Errorf("key %q is set by multiple destinations", k)
+		}
+		keys.Add(k)
+	}
+	return nil
+}
+
+// validateExpressionMapValues checks that each value in the map is a valid CEL expression that returns a string.
+func validateExpressionMapValues(
+	evaluator asocel.ExpressionEvaluator,
+	entries map[string]string,
+	self any,
+) error {
+	for key, expr := range entries {
+		outputType, err := evaluator.Check(expr, self)
+		if err != nil {
+			return eris.Wrapf(err, "expression for key %q", key)
+		}
+		if !outputType.IsExactType(asocel.StringType) {
+			return eris.Errorf("expression for key %q must return a string, got %s", key, outputType)
+		}
+	}
+	return nil
 }
 
 // OptionalReferencePair represents an optional configmap pair. Each pair has two optional fields, a

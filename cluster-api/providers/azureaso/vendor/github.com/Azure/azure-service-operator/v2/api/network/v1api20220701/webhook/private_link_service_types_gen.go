@@ -116,7 +116,12 @@ func (service *PrivateLinkService) ValidateUpdate(ctx context.Context, oldResour
 
 // createValidations validates the creation of the resource
 func (service *PrivateLinkService) createValidations() []func(ctx context.Context, obj *v20220701.PrivateLinkService) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.PrivateLinkService) (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.PrivateLinkService) (admission.Warnings, error){
+		service.validateResourceReferences,
+		service.validateOwnerReference,
+		service.validateSecretDestinations,
+		service.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

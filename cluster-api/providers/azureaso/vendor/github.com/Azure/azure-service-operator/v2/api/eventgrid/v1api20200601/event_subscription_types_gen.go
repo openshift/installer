@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /{scope}/providers/Microsoft.EventGrid/eventSubscriptions/{eventSubscriptionName}
 type EventSubscription struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &EventSubscription{}
 
 // ConvertFrom populates our EventSubscription from the provided hub EventSubscription
 func (subscription *EventSubscription) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.EventSubscription)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/EventSubscription but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.EventSubscription
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return subscription.AssignProperties_From_EventSubscription(source)
+	err = subscription.AssignProperties_From_EventSubscription(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to subscription")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub EventSubscription from our EventSubscription
 func (subscription *EventSubscription) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.EventSubscription)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/EventSubscription but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.EventSubscription
+	err := subscription.AssignProperties_To_EventSubscription(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from subscription")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return subscription.AssignProperties_To_EventSubscription(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &EventSubscription{}
@@ -86,17 +101,6 @@ func (subscription *EventSubscription) SecretDestinationExpressions() []*core.De
 		return nil
 	}
 	return subscription.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &EventSubscription{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (subscription *EventSubscription) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*EventSubscription_STATUS); ok {
-		return subscription.Spec.Initialize_From_EventSubscription_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type EventSubscription_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &EventSubscription{}
@@ -236,7 +240,7 @@ func (subscription *EventSubscription) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /{scope}/providers/Microsoft.EventGrid/eventSubscriptions/{eventSubscriptionName}
 type EventSubscriptionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -305,7 +309,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties = &arm.EventSubscriptionProperties{}
 	}
 	if subscription.DeadLetterDestination != nil {
-		deadLetterDestination_ARM, err := (*subscription.DeadLetterDestination).ConvertToARM(resolved)
+		deadLetterDestination_ARM, err := subscription.DeadLetterDestination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -313,7 +317,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.DeadLetterDestination = &deadLetterDestination
 	}
 	if subscription.Destination != nil {
-		destination_ARM, err := (*subscription.Destination).ConvertToARM(resolved)
+		destination_ARM, err := subscription.Destination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +335,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.ExpirationTimeUtc = &expirationTimeUtc
 	}
 	if subscription.Filter != nil {
-		filter_ARM, err := (*subscription.Filter).ConvertToARM(resolved)
+		filter_ARM, err := subscription.Filter.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +346,7 @@ func (subscription *EventSubscription_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.Labels = append(result.Properties.Labels, item)
 	}
 	if subscription.RetryPolicy != nil {
-		retryPolicy_ARM, err := (*subscription.RetryPolicy).ConvertToARM(resolved)
+		retryPolicy_ARM, err := subscription.RetryPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -701,75 +705,6 @@ func (subscription *EventSubscription_Spec) AssignProperties_To_EventSubscriptio
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EventSubscription_STATUS populates our EventSubscription_Spec from the provided source EventSubscription_STATUS
-func (subscription *EventSubscription_Spec) Initialize_From_EventSubscription_STATUS(source *EventSubscription_STATUS) error {
-
-	// DeadLetterDestination
-	if source.DeadLetterDestination != nil {
-		var deadLetterDestination DeadLetterDestination
-		err := deadLetterDestination.Initialize_From_DeadLetterDestination_STATUS(source.DeadLetterDestination)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DeadLetterDestination_STATUS() to populate field DeadLetterDestination")
-		}
-		subscription.DeadLetterDestination = &deadLetterDestination
-	} else {
-		subscription.DeadLetterDestination = nil
-	}
-
-	// Destination
-	if source.Destination != nil {
-		var destination EventSubscriptionDestination
-		err := destination.Initialize_From_EventSubscriptionDestination_STATUS(source.Destination)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EventSubscriptionDestination_STATUS() to populate field Destination")
-		}
-		subscription.Destination = &destination
-	} else {
-		subscription.Destination = nil
-	}
-
-	// EventDeliverySchema
-	if source.EventDeliverySchema != nil {
-		eventDeliverySchema := genruntime.ToEnum(string(*source.EventDeliverySchema), eventSubscriptionProperties_EventDeliverySchema_Values)
-		subscription.EventDeliverySchema = &eventDeliverySchema
-	} else {
-		subscription.EventDeliverySchema = nil
-	}
-
-	// ExpirationTimeUtc
-	subscription.ExpirationTimeUtc = genruntime.ClonePointerToString(source.ExpirationTimeUtc)
-
-	// Filter
-	if source.Filter != nil {
-		var filter EventSubscriptionFilter
-		err := filter.Initialize_From_EventSubscriptionFilter_STATUS(source.Filter)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EventSubscriptionFilter_STATUS() to populate field Filter")
-		}
-		subscription.Filter = &filter
-	} else {
-		subscription.Filter = nil
-	}
-
-	// Labels
-	subscription.Labels = genruntime.CloneSliceOfString(source.Labels)
-
-	// RetryPolicy
-	if source.RetryPolicy != nil {
-		var retryPolicy RetryPolicy
-		err := retryPolicy.Initialize_From_RetryPolicy_STATUS(source.RetryPolicy)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_RetryPolicy_STATUS() to populate field RetryPolicy")
-		}
-		subscription.RetryPolicy = &retryPolicy
-	} else {
-		subscription.RetryPolicy = nil
 	}
 
 	// No error
@@ -1270,7 +1205,7 @@ func (destination *DeadLetterDestination) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "StorageBlob":
 	if destination.StorageBlob != nil {
-		storageBlob_ARM, err := (*destination.StorageBlob).ConvertToARM(resolved)
+		storageBlob_ARM, err := destination.StorageBlob.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1348,25 +1283,6 @@ func (destination *DeadLetterDestination) AssignProperties_To_DeadLetterDestinat
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DeadLetterDestination_STATUS populates our DeadLetterDestination from the provided source DeadLetterDestination_STATUS
-func (destination *DeadLetterDestination) Initialize_From_DeadLetterDestination_STATUS(source *DeadLetterDestination_STATUS) error {
-
-	// StorageBlob
-	if source.StorageBlob != nil {
-		var storageBlob StorageBlobDeadLetterDestination
-		err := storageBlob.Initialize_From_StorageBlobDeadLetterDestination_STATUS(source.StorageBlob)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StorageBlobDeadLetterDestination_STATUS() to populate field StorageBlob")
-		}
-		destination.StorageBlob = &storageBlob
-	} else {
-		destination.StorageBlob = nil
 	}
 
 	// No error
@@ -1488,7 +1404,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "AzureFunction":
 	if destination.AzureFunction != nil {
-		azureFunction_ARM, err := (*destination.AzureFunction).ConvertToARM(resolved)
+		azureFunction_ARM, err := destination.AzureFunction.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1498,7 +1414,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "EventHub":
 	if destination.EventHub != nil {
-		eventHub_ARM, err := (*destination.EventHub).ConvertToARM(resolved)
+		eventHub_ARM, err := destination.EventHub.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1508,7 +1424,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "HybridConnection":
 	if destination.HybridConnection != nil {
-		hybridConnection_ARM, err := (*destination.HybridConnection).ConvertToARM(resolved)
+		hybridConnection_ARM, err := destination.HybridConnection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1518,7 +1434,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "ServiceBusQueue":
 	if destination.ServiceBusQueue != nil {
-		serviceBusQueue_ARM, err := (*destination.ServiceBusQueue).ConvertToARM(resolved)
+		serviceBusQueue_ARM, err := destination.ServiceBusQueue.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1528,7 +1444,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "ServiceBusTopic":
 	if destination.ServiceBusTopic != nil {
-		serviceBusTopic_ARM, err := (*destination.ServiceBusTopic).ConvertToARM(resolved)
+		serviceBusTopic_ARM, err := destination.ServiceBusTopic.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1538,7 +1454,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "StorageQueue":
 	if destination.StorageQueue != nil {
-		storageQueue_ARM, err := (*destination.StorageQueue).ConvertToARM(resolved)
+		storageQueue_ARM, err := destination.StorageQueue.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1548,7 +1464,7 @@ func (destination *EventSubscriptionDestination) ConvertToARM(resolved genruntim
 
 	// Set property "WebHook":
 	if destination.WebHook != nil {
-		webHook_ARM, err := (*destination.WebHook).ConvertToARM(resolved)
+		webHook_ARM, err := destination.WebHook.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1836,97 +1752,6 @@ func (destination *EventSubscriptionDestination) AssignProperties_To_EventSubscr
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EventSubscriptionDestination_STATUS populates our EventSubscriptionDestination from the provided source EventSubscriptionDestination_STATUS
-func (destination *EventSubscriptionDestination) Initialize_From_EventSubscriptionDestination_STATUS(source *EventSubscriptionDestination_STATUS) error {
-
-	// AzureFunction
-	if source.AzureFunction != nil {
-		var azureFunction AzureFunctionEventSubscriptionDestination
-		err := azureFunction.Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS(source.AzureFunction)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS() to populate field AzureFunction")
-		}
-		destination.AzureFunction = &azureFunction
-	} else {
-		destination.AzureFunction = nil
-	}
-
-	// EventHub
-	if source.EventHub != nil {
-		var eventHub EventHubEventSubscriptionDestination
-		err := eventHub.Initialize_From_EventHubEventSubscriptionDestination_STATUS(source.EventHub)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EventHubEventSubscriptionDestination_STATUS() to populate field EventHub")
-		}
-		destination.EventHub = &eventHub
-	} else {
-		destination.EventHub = nil
-	}
-
-	// HybridConnection
-	if source.HybridConnection != nil {
-		var hybridConnection HybridConnectionEventSubscriptionDestination
-		err := hybridConnection.Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS(source.HybridConnection)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS() to populate field HybridConnection")
-		}
-		destination.HybridConnection = &hybridConnection
-	} else {
-		destination.HybridConnection = nil
-	}
-
-	// ServiceBusQueue
-	if source.ServiceBusQueue != nil {
-		var serviceBusQueue ServiceBusQueueEventSubscriptionDestination
-		err := serviceBusQueue.Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source.ServiceBusQueue)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS() to populate field ServiceBusQueue")
-		}
-		destination.ServiceBusQueue = &serviceBusQueue
-	} else {
-		destination.ServiceBusQueue = nil
-	}
-
-	// ServiceBusTopic
-	if source.ServiceBusTopic != nil {
-		var serviceBusTopic ServiceBusTopicEventSubscriptionDestination
-		err := serviceBusTopic.Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source.ServiceBusTopic)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS() to populate field ServiceBusTopic")
-		}
-		destination.ServiceBusTopic = &serviceBusTopic
-	} else {
-		destination.ServiceBusTopic = nil
-	}
-
-	// StorageQueue
-	if source.StorageQueue != nil {
-		var storageQueue StorageQueueEventSubscriptionDestination
-		err := storageQueue.Initialize_From_StorageQueueEventSubscriptionDestination_STATUS(source.StorageQueue)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StorageQueueEventSubscriptionDestination_STATUS() to populate field StorageQueue")
-		}
-		destination.StorageQueue = &storageQueue
-	} else {
-		destination.StorageQueue = nil
-	}
-
-	// WebHook
-	if source.WebHook != nil {
-		var webHook WebHookEventSubscriptionDestination
-		err := webHook.Initialize_From_WebHookEventSubscriptionDestination_STATUS(source.WebHook)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WebHookEventSubscriptionDestination_STATUS() to populate field WebHook")
-		}
-		destination.WebHook = &webHook
-	} else {
-		destination.WebHook = nil
 	}
 
 	// No error
@@ -2364,8 +2189,6 @@ func (filter *EventSubscriptionFilter) AssignProperties_From_EventSubscriptionFi
 	if source.AdvancedFilters != nil {
 		advancedFilterList := make([]AdvancedFilter, len(source.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter AdvancedFilter
 			err := advancedFilter.AssignProperties_From_AdvancedFilter(&advancedFilterItem)
 			if err != nil {
@@ -2408,8 +2231,6 @@ func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilt
 	if filter.AdvancedFilters != nil {
 		advancedFilterList := make([]storage.AdvancedFilter, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter storage.AdvancedFilter
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter(&advancedFilter)
 			if err != nil {
@@ -2445,48 +2266,6 @@ func (filter *EventSubscriptionFilter) AssignProperties_To_EventSubscriptionFilt
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EventSubscriptionFilter_STATUS populates our EventSubscriptionFilter from the provided source EventSubscriptionFilter_STATUS
-func (filter *EventSubscriptionFilter) Initialize_From_EventSubscriptionFilter_STATUS(source *EventSubscriptionFilter_STATUS) error {
-
-	// AdvancedFilters
-	if source.AdvancedFilters != nil {
-		advancedFilterList := make([]AdvancedFilter, len(source.AdvancedFilters))
-		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
-			var advancedFilter AdvancedFilter
-			err := advancedFilter.Initialize_From_AdvancedFilter_STATUS(&advancedFilterItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_AdvancedFilter_STATUS() to populate field AdvancedFilters")
-			}
-			advancedFilterList[advancedFilterIndex] = advancedFilter
-		}
-		filter.AdvancedFilters = advancedFilterList
-	} else {
-		filter.AdvancedFilters = nil
-	}
-
-	// IncludedEventTypes
-	filter.IncludedEventTypes = genruntime.CloneSliceOfString(source.IncludedEventTypes)
-
-	// IsSubjectCaseSensitive
-	if source.IsSubjectCaseSensitive != nil {
-		isSubjectCaseSensitive := *source.IsSubjectCaseSensitive
-		filter.IsSubjectCaseSensitive = &isSubjectCaseSensitive
-	} else {
-		filter.IsSubjectCaseSensitive = nil
-	}
-
-	// SubjectBeginsWith
-	filter.SubjectBeginsWith = genruntime.ClonePointerToString(source.SubjectBeginsWith)
-
-	// SubjectEndsWith
-	filter.SubjectEndsWith = genruntime.ClonePointerToString(source.SubjectEndsWith)
 
 	// No error
 	return nil
@@ -2573,8 +2352,6 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_From_EventSubscri
 	if source.AdvancedFilters != nil {
 		advancedFilterList := make([]AdvancedFilter_STATUS, len(source.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range source.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter AdvancedFilter_STATUS
 			err := advancedFilter.AssignProperties_From_AdvancedFilter_STATUS(&advancedFilterItem)
 			if err != nil {
@@ -2617,8 +2394,6 @@ func (filter *EventSubscriptionFilter_STATUS) AssignProperties_To_EventSubscript
 	if filter.AdvancedFilters != nil {
 		advancedFilterList := make([]storage.AdvancedFilter_STATUS, len(filter.AdvancedFilters))
 		for advancedFilterIndex, advancedFilterItem := range filter.AdvancedFilters {
-			// Shadow the loop variable to avoid aliasing
-			advancedFilterItem := advancedFilterItem
 			var advancedFilter storage.AdvancedFilter_STATUS
 			err := advancedFilterItem.AssignProperties_To_AdvancedFilter_STATUS(&advancedFilter)
 			if err != nil {
@@ -2675,8 +2450,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_From_EventSubscr
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2693,8 +2466,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_From_EventSubscr
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2720,8 +2491,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_To_EventSubscrip
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2738,8 +2507,6 @@ func (operator *EventSubscriptionOperatorSpec) AssignProperties_To_EventSubscrip
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2912,19 +2679,6 @@ func (policy *RetryPolicy) AssignProperties_To_RetryPolicy(destination *storage.
 	return nil
 }
 
-// Initialize_From_RetryPolicy_STATUS populates our RetryPolicy from the provided source RetryPolicy_STATUS
-func (policy *RetryPolicy) Initialize_From_RetryPolicy_STATUS(source *RetryPolicy_STATUS) error {
-
-	// EventTimeToLiveInMinutes
-	policy.EventTimeToLiveInMinutes = genruntime.ClonePointerToInt(source.EventTimeToLiveInMinutes)
-
-	// MaxDeliveryAttempts
-	policy.MaxDeliveryAttempts = genruntime.ClonePointerToInt(source.MaxDeliveryAttempts)
-
-	// No error
-	return nil
-}
-
 // Information about the retry policy for an event subscription.
 type RetryPolicy_STATUS struct {
 	// EventTimeToLiveInMinutes: Time To Live (in minutes) for events.
@@ -3048,7 +2802,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "BoolEquals":
 	if filter.BoolEquals != nil {
-		boolEquals_ARM, err := (*filter.BoolEquals).ConvertToARM(resolved)
+		boolEquals_ARM, err := filter.BoolEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3058,7 +2812,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberGreaterThan":
 	if filter.NumberGreaterThan != nil {
-		numberGreaterThan_ARM, err := (*filter.NumberGreaterThan).ConvertToARM(resolved)
+		numberGreaterThan_ARM, err := filter.NumberGreaterThan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3068,7 +2822,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberGreaterThanOrEquals":
 	if filter.NumberGreaterThanOrEquals != nil {
-		numberGreaterThanOrEquals_ARM, err := (*filter.NumberGreaterThanOrEquals).ConvertToARM(resolved)
+		numberGreaterThanOrEquals_ARM, err := filter.NumberGreaterThanOrEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3078,7 +2832,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberIn":
 	if filter.NumberIn != nil {
-		numberIn_ARM, err := (*filter.NumberIn).ConvertToARM(resolved)
+		numberIn_ARM, err := filter.NumberIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3088,7 +2842,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberLessThan":
 	if filter.NumberLessThan != nil {
-		numberLessThan_ARM, err := (*filter.NumberLessThan).ConvertToARM(resolved)
+		numberLessThan_ARM, err := filter.NumberLessThan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3098,7 +2852,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberLessThanOrEquals":
 	if filter.NumberLessThanOrEquals != nil {
-		numberLessThanOrEquals_ARM, err := (*filter.NumberLessThanOrEquals).ConvertToARM(resolved)
+		numberLessThanOrEquals_ARM, err := filter.NumberLessThanOrEquals.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3108,7 +2862,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "NumberNotIn":
 	if filter.NumberNotIn != nil {
-		numberNotIn_ARM, err := (*filter.NumberNotIn).ConvertToARM(resolved)
+		numberNotIn_ARM, err := filter.NumberNotIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3118,7 +2872,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringBeginsWith":
 	if filter.StringBeginsWith != nil {
-		stringBeginsWith_ARM, err := (*filter.StringBeginsWith).ConvertToARM(resolved)
+		stringBeginsWith_ARM, err := filter.StringBeginsWith.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3128,7 +2882,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringContains":
 	if filter.StringContains != nil {
-		stringContains_ARM, err := (*filter.StringContains).ConvertToARM(resolved)
+		stringContains_ARM, err := filter.StringContains.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3138,7 +2892,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringEndsWith":
 	if filter.StringEndsWith != nil {
-		stringEndsWith_ARM, err := (*filter.StringEndsWith).ConvertToARM(resolved)
+		stringEndsWith_ARM, err := filter.StringEndsWith.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3148,7 +2902,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringIn":
 	if filter.StringIn != nil {
-		stringIn_ARM, err := (*filter.StringIn).ConvertToARM(resolved)
+		stringIn_ARM, err := filter.StringIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3158,7 +2912,7 @@ func (filter *AdvancedFilter) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "StringNotIn":
 	if filter.StringNotIn != nil {
-		stringNotIn_ARM, err := (*filter.StringNotIn).ConvertToARM(resolved)
+		stringNotIn_ARM, err := filter.StringNotIn.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3621,157 +3375,6 @@ func (filter *AdvancedFilter) AssignProperties_To_AdvancedFilter(destination *st
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AdvancedFilter_STATUS populates our AdvancedFilter from the provided source AdvancedFilter_STATUS
-func (filter *AdvancedFilter) Initialize_From_AdvancedFilter_STATUS(source *AdvancedFilter_STATUS) error {
-
-	// BoolEquals
-	if source.BoolEquals != nil {
-		var boolEqual BoolEqualsAdvancedFilter
-		err := boolEqual.Initialize_From_BoolEqualsAdvancedFilter_STATUS(source.BoolEquals)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BoolEqualsAdvancedFilter_STATUS() to populate field BoolEquals")
-		}
-		filter.BoolEquals = &boolEqual
-	} else {
-		filter.BoolEquals = nil
-	}
-
-	// NumberGreaterThan
-	if source.NumberGreaterThan != nil {
-		var numberGreaterThan NumberGreaterThanAdvancedFilter
-		err := numberGreaterThan.Initialize_From_NumberGreaterThanAdvancedFilter_STATUS(source.NumberGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberGreaterThanAdvancedFilter_STATUS() to populate field NumberGreaterThan")
-		}
-		filter.NumberGreaterThan = &numberGreaterThan
-	} else {
-		filter.NumberGreaterThan = nil
-	}
-
-	// NumberGreaterThanOrEquals
-	if source.NumberGreaterThanOrEquals != nil {
-		var numberGreaterThanOrEqual NumberGreaterThanOrEqualsAdvancedFilter
-		err := numberGreaterThanOrEqual.Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source.NumberGreaterThanOrEquals)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS() to populate field NumberGreaterThanOrEquals")
-		}
-		filter.NumberGreaterThanOrEquals = &numberGreaterThanOrEqual
-	} else {
-		filter.NumberGreaterThanOrEquals = nil
-	}
-
-	// NumberIn
-	if source.NumberIn != nil {
-		var numberIn NumberInAdvancedFilter
-		err := numberIn.Initialize_From_NumberInAdvancedFilter_STATUS(source.NumberIn)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberInAdvancedFilter_STATUS() to populate field NumberIn")
-		}
-		filter.NumberIn = &numberIn
-	} else {
-		filter.NumberIn = nil
-	}
-
-	// NumberLessThan
-	if source.NumberLessThan != nil {
-		var numberLessThan NumberLessThanAdvancedFilter
-		err := numberLessThan.Initialize_From_NumberLessThanAdvancedFilter_STATUS(source.NumberLessThan)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberLessThanAdvancedFilter_STATUS() to populate field NumberLessThan")
-		}
-		filter.NumberLessThan = &numberLessThan
-	} else {
-		filter.NumberLessThan = nil
-	}
-
-	// NumberLessThanOrEquals
-	if source.NumberLessThanOrEquals != nil {
-		var numberLessThanOrEqual NumberLessThanOrEqualsAdvancedFilter
-		err := numberLessThanOrEqual.Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source.NumberLessThanOrEquals)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS() to populate field NumberLessThanOrEquals")
-		}
-		filter.NumberLessThanOrEquals = &numberLessThanOrEqual
-	} else {
-		filter.NumberLessThanOrEquals = nil
-	}
-
-	// NumberNotIn
-	if source.NumberNotIn != nil {
-		var numberNotIn NumberNotInAdvancedFilter
-		err := numberNotIn.Initialize_From_NumberNotInAdvancedFilter_STATUS(source.NumberNotIn)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NumberNotInAdvancedFilter_STATUS() to populate field NumberNotIn")
-		}
-		filter.NumberNotIn = &numberNotIn
-	} else {
-		filter.NumberNotIn = nil
-	}
-
-	// StringBeginsWith
-	if source.StringBeginsWith != nil {
-		var stringBeginsWith StringBeginsWithAdvancedFilter
-		err := stringBeginsWith.Initialize_From_StringBeginsWithAdvancedFilter_STATUS(source.StringBeginsWith)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StringBeginsWithAdvancedFilter_STATUS() to populate field StringBeginsWith")
-		}
-		filter.StringBeginsWith = &stringBeginsWith
-	} else {
-		filter.StringBeginsWith = nil
-	}
-
-	// StringContains
-	if source.StringContains != nil {
-		var stringContain StringContainsAdvancedFilter
-		err := stringContain.Initialize_From_StringContainsAdvancedFilter_STATUS(source.StringContains)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StringContainsAdvancedFilter_STATUS() to populate field StringContains")
-		}
-		filter.StringContains = &stringContain
-	} else {
-		filter.StringContains = nil
-	}
-
-	// StringEndsWith
-	if source.StringEndsWith != nil {
-		var stringEndsWith StringEndsWithAdvancedFilter
-		err := stringEndsWith.Initialize_From_StringEndsWithAdvancedFilter_STATUS(source.StringEndsWith)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StringEndsWithAdvancedFilter_STATUS() to populate field StringEndsWith")
-		}
-		filter.StringEndsWith = &stringEndsWith
-	} else {
-		filter.StringEndsWith = nil
-	}
-
-	// StringIn
-	if source.StringIn != nil {
-		var stringIn StringInAdvancedFilter
-		err := stringIn.Initialize_From_StringInAdvancedFilter_STATUS(source.StringIn)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StringInAdvancedFilter_STATUS() to populate field StringIn")
-		}
-		filter.StringIn = &stringIn
-	} else {
-		filter.StringIn = nil
-	}
-
-	// StringNotIn
-	if source.StringNotIn != nil {
-		var stringNotIn StringNotInAdvancedFilter
-		err := stringNotIn.Initialize_From_StringNotInAdvancedFilter_STATUS(source.StringNotIn)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StringNotInAdvancedFilter_STATUS() to populate field StringNotIn")
-		}
-		filter.StringNotIn = &stringNotIn
-	} else {
-		filter.StringNotIn = nil
 	}
 
 	// No error
@@ -4447,35 +4050,6 @@ func (destination *AzureFunctionEventSubscriptionDestination) AssignProperties_T
 	return nil
 }
 
-// Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS populates our AzureFunctionEventSubscriptionDestination from the provided source AzureFunctionEventSubscriptionDestination_STATUS
-func (destination *AzureFunctionEventSubscriptionDestination) Initialize_From_AzureFunctionEventSubscriptionDestination_STATUS(source *AzureFunctionEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), azureFunctionEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// MaxEventsPerBatch
-	destination.MaxEventsPerBatch = genruntime.ClonePointerToInt(source.MaxEventsPerBatch)
-
-	// PreferredBatchSizeInKilobytes
-	destination.PreferredBatchSizeInKilobytes = genruntime.ClonePointerToInt(source.PreferredBatchSizeInKilobytes)
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 type AzureFunctionEventSubscriptionDestination_STATUS struct {
 	// EndpointType: Type of the endpoint for the event subscription destination.
 	EndpointType *AzureFunctionEventSubscriptionDestination_EndpointType_STATUS `json:"endpointType,omitempty"`
@@ -4725,29 +4299,6 @@ func (destination *EventHubEventSubscriptionDestination) AssignProperties_To_Eve
 	return nil
 }
 
-// Initialize_From_EventHubEventSubscriptionDestination_STATUS populates our EventHubEventSubscriptionDestination from the provided source EventHubEventSubscriptionDestination_STATUS
-func (destination *EventHubEventSubscriptionDestination) Initialize_From_EventHubEventSubscriptionDestination_STATUS(source *EventHubEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), eventHubEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 type EventHubEventSubscriptionDestination_STATUS struct {
 	// EndpointType: Type of the endpoint for the event subscription destination.
 	EndpointType *EventHubEventSubscriptionDestination_EndpointType_STATUS `json:"endpointType,omitempty"`
@@ -4953,29 +4504,6 @@ func (destination *HybridConnectionEventSubscriptionDestination) AssignPropertie
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS populates our HybridConnectionEventSubscriptionDestination from the provided source HybridConnectionEventSubscriptionDestination_STATUS
-func (destination *HybridConnectionEventSubscriptionDestination) Initialize_From_HybridConnectionEventSubscriptionDestination_STATUS(source *HybridConnectionEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), hybridConnectionEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
 	}
 
 	// No error
@@ -5194,29 +4722,6 @@ func (destination *ServiceBusQueueEventSubscriptionDestination) AssignProperties
 	return nil
 }
 
-// Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS populates our ServiceBusQueueEventSubscriptionDestination from the provided source ServiceBusQueueEventSubscriptionDestination_STATUS
-func (destination *ServiceBusQueueEventSubscriptionDestination) Initialize_From_ServiceBusQueueEventSubscriptionDestination_STATUS(source *ServiceBusQueueEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), serviceBusQueueEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 type ServiceBusQueueEventSubscriptionDestination_STATUS struct {
 	// EndpointType: Type of the endpoint for the event subscription destination.
 	EndpointType *ServiceBusQueueEventSubscriptionDestination_EndpointType_STATUS `json:"endpointType,omitempty"`
@@ -5423,29 +4928,6 @@ func (destination *ServiceBusTopicEventSubscriptionDestination) AssignProperties
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS populates our ServiceBusTopicEventSubscriptionDestination from the provided source ServiceBusTopicEventSubscriptionDestination_STATUS
-func (destination *ServiceBusTopicEventSubscriptionDestination) Initialize_From_ServiceBusTopicEventSubscriptionDestination_STATUS(source *ServiceBusTopicEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), serviceBusTopicEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
 	}
 
 	// No error
@@ -5680,32 +5162,6 @@ func (destination *StorageBlobDeadLetterDestination) AssignProperties_To_Storage
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageBlobDeadLetterDestination_STATUS populates our StorageBlobDeadLetterDestination from the provided source StorageBlobDeadLetterDestination_STATUS
-func (destination *StorageBlobDeadLetterDestination) Initialize_From_StorageBlobDeadLetterDestination_STATUS(source *StorageBlobDeadLetterDestination_STATUS) error {
-
-	// BlobContainerName
-	destination.BlobContainerName = genruntime.ClonePointerToString(source.BlobContainerName)
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), storageBlobDeadLetterDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
 	}
 
 	// No error
@@ -5958,32 +5414,6 @@ func (destination *StorageQueueEventSubscriptionDestination) AssignProperties_To
 		target.PropertyBag = propertyBag
 	} else {
 		target.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageQueueEventSubscriptionDestination_STATUS populates our StorageQueueEventSubscriptionDestination from the provided source StorageQueueEventSubscriptionDestination_STATUS
-func (destination *StorageQueueEventSubscriptionDestination) Initialize_From_StorageQueueEventSubscriptionDestination_STATUS(source *StorageQueueEventSubscriptionDestination_STATUS) error {
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), storageQueueEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// QueueName
-	destination.QueueName = genruntime.ClonePointerToString(source.QueueName)
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		destination.ResourceReference = &resourceReference
-	} else {
-		destination.ResourceReference = nil
 	}
 
 	// No error
@@ -6314,33 +5744,6 @@ func (destination *WebHookEventSubscriptionDestination) AssignProperties_To_WebH
 	return nil
 }
 
-// Initialize_From_WebHookEventSubscriptionDestination_STATUS populates our WebHookEventSubscriptionDestination from the provided source WebHookEventSubscriptionDestination_STATUS
-func (destination *WebHookEventSubscriptionDestination) Initialize_From_WebHookEventSubscriptionDestination_STATUS(source *WebHookEventSubscriptionDestination_STATUS) error {
-
-	// AzureActiveDirectoryApplicationIdOrUri
-	destination.AzureActiveDirectoryApplicationIdOrUri = genruntime.ClonePointerToString(source.AzureActiveDirectoryApplicationIdOrUri)
-
-	// AzureActiveDirectoryTenantId
-	destination.AzureActiveDirectoryTenantId = genruntime.ClonePointerToString(source.AzureActiveDirectoryTenantId)
-
-	// EndpointType
-	if source.EndpointType != nil {
-		endpointType := genruntime.ToEnum(string(*source.EndpointType), webHookEventSubscriptionDestination_EndpointType_Values)
-		destination.EndpointType = &endpointType
-	} else {
-		destination.EndpointType = nil
-	}
-
-	// MaxEventsPerBatch
-	destination.MaxEventsPerBatch = genruntime.ClonePointerToInt(source.MaxEventsPerBatch)
-
-	// PreferredBatchSizeInKilobytes
-	destination.PreferredBatchSizeInKilobytes = genruntime.ClonePointerToInt(source.PreferredBatchSizeInKilobytes)
-
-	// No error
-	return nil
-}
-
 type WebHookEventSubscriptionDestination_STATUS struct {
 	// AzureActiveDirectoryApplicationIdOrUri: The Azure Active Directory Application ID or URI to get the access token that
 	// will be included as the bearer token in delivery requests.
@@ -6663,32 +6066,6 @@ func (filter *BoolEqualsAdvancedFilter) AssignProperties_To_BoolEqualsAdvancedFi
 	return nil
 }
 
-// Initialize_From_BoolEqualsAdvancedFilter_STATUS populates our BoolEqualsAdvancedFilter from the provided source BoolEqualsAdvancedFilter_STATUS
-func (filter *BoolEqualsAdvancedFilter) Initialize_From_BoolEqualsAdvancedFilter_STATUS(source *BoolEqualsAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), boolEqualsAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
-
-	// No error
-	return nil
-}
-
 type BoolEqualsAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -6978,32 +6355,6 @@ func (filter *NumberGreaterThanAdvancedFilter) AssignProperties_To_NumberGreater
 	return nil
 }
 
-// Initialize_From_NumberGreaterThanAdvancedFilter_STATUS populates our NumberGreaterThanAdvancedFilter from the provided source NumberGreaterThanAdvancedFilter_STATUS
-func (filter *NumberGreaterThanAdvancedFilter) Initialize_From_NumberGreaterThanAdvancedFilter_STATUS(source *NumberGreaterThanAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberGreaterThanAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
-
-	// No error
-	return nil
-}
-
 type NumberGreaterThanAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -7255,32 +6606,6 @@ func (filter *NumberGreaterThanOrEqualsAdvancedFilter) AssignProperties_To_Numbe
 	return nil
 }
 
-// Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS populates our NumberGreaterThanOrEqualsAdvancedFilter from the provided source NumberGreaterThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberGreaterThanOrEqualsAdvancedFilter) Initialize_From_NumberGreaterThanOrEqualsAdvancedFilter_STATUS(source *NumberGreaterThanOrEqualsAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberGreaterThanOrEqualsAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
-
-	// No error
-	return nil
-}
-
 type NumberGreaterThanOrEqualsAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -7487,8 +6812,6 @@ func (filter *NumberInAdvancedFilter) AssignProperties_From_NumberInAdvancedFilt
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -7520,8 +6843,6 @@ func (filter *NumberInAdvancedFilter) AssignProperties_To_NumberInAdvancedFilter
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -7534,37 +6855,6 @@ func (filter *NumberInAdvancedFilter) AssignProperties_To_NumberInAdvancedFilter
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NumberInAdvancedFilter_STATUS populates our NumberInAdvancedFilter from the provided source NumberInAdvancedFilter_STATUS
-func (filter *NumberInAdvancedFilter) Initialize_From_NumberInAdvancedFilter_STATUS(source *NumberInAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberInAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	if source.Values != nil {
-		valueList := make([]float64, len(source.Values))
-		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
-			valueList[valueIndex] = valueItem
-		}
-		filter.Values = valueList
-	} else {
-		filter.Values = nil
 	}
 
 	// No error
@@ -7637,8 +6927,6 @@ func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_From_NumberInAdvan
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -7670,8 +6958,6 @@ func (filter *NumberInAdvancedFilter_STATUS) AssignProperties_To_NumberInAdvance
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -7825,32 +7111,6 @@ func (filter *NumberLessThanAdvancedFilter) AssignProperties_To_NumberLessThanAd
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NumberLessThanAdvancedFilter_STATUS populates our NumberLessThanAdvancedFilter from the provided source NumberLessThanAdvancedFilter_STATUS
-func (filter *NumberLessThanAdvancedFilter) Initialize_From_NumberLessThanAdvancedFilter_STATUS(source *NumberLessThanAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberLessThanAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
 	}
 
 	// No error
@@ -8108,32 +7368,6 @@ func (filter *NumberLessThanOrEqualsAdvancedFilter) AssignProperties_To_NumberLe
 	return nil
 }
 
-// Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS populates our NumberLessThanOrEqualsAdvancedFilter from the provided source NumberLessThanOrEqualsAdvancedFilter_STATUS
-func (filter *NumberLessThanOrEqualsAdvancedFilter) Initialize_From_NumberLessThanOrEqualsAdvancedFilter_STATUS(source *NumberLessThanOrEqualsAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberLessThanOrEqualsAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
-
-	// No error
-	return nil
-}
-
 type NumberLessThanOrEqualsAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -8340,8 +7574,6 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_From_NumberNotInAdvanc
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -8373,8 +7605,6 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_To_NumberNotInAdvanced
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -8387,37 +7617,6 @@ func (filter *NumberNotInAdvancedFilter) AssignProperties_To_NumberNotInAdvanced
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NumberNotInAdvancedFilter_STATUS populates our NumberNotInAdvancedFilter from the provided source NumberNotInAdvancedFilter_STATUS
-func (filter *NumberNotInAdvancedFilter) Initialize_From_NumberNotInAdvancedFilter_STATUS(source *NumberNotInAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), numberNotInAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	if source.Values != nil {
-		valueList := make([]float64, len(source.Values))
-		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
-			valueList[valueIndex] = valueItem
-		}
-		filter.Values = valueList
-	} else {
-		filter.Values = nil
 	}
 
 	// No error
@@ -8490,8 +7689,6 @@ func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_From_NumberNotI
 	if source.Values != nil {
 		valueList := make([]float64, len(source.Values))
 		for valueIndex, valueItem := range source.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		filter.Values = valueList
@@ -8523,8 +7720,6 @@ func (filter *NumberNotInAdvancedFilter_STATUS) AssignProperties_To_NumberNotInA
 	if filter.Values != nil {
 		valueList := make([]float64, len(filter.Values))
 		for valueIndex, valueItem := range filter.Values {
-			// Shadow the loop variable to avoid aliasing
-			valueItem := valueItem
 			valueList[valueIndex] = valueItem
 		}
 		destination.Values = valueList
@@ -8743,27 +7938,6 @@ func (filter *StringBeginsWithAdvancedFilter) AssignProperties_To_StringBeginsWi
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StringBeginsWithAdvancedFilter_STATUS populates our StringBeginsWithAdvancedFilter from the provided source StringBeginsWithAdvancedFilter_STATUS
-func (filter *StringBeginsWithAdvancedFilter) Initialize_From_StringBeginsWithAdvancedFilter_STATUS(source *StringBeginsWithAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringBeginsWithAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	filter.Values = genruntime.CloneSliceOfString(source.Values)
 
 	// No error
 	return nil
@@ -8997,27 +8171,6 @@ func (filter *StringContainsAdvancedFilter) AssignProperties_To_StringContainsAd
 	return nil
 }
 
-// Initialize_From_StringContainsAdvancedFilter_STATUS populates our StringContainsAdvancedFilter from the provided source StringContainsAdvancedFilter_STATUS
-func (filter *StringContainsAdvancedFilter) Initialize_From_StringContainsAdvancedFilter_STATUS(source *StringContainsAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringContainsAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	filter.Values = genruntime.CloneSliceOfString(source.Values)
-
-	// No error
-	return nil
-}
-
 type StringContainsAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -9241,27 +8394,6 @@ func (filter *StringEndsWithAdvancedFilter) AssignProperties_To_StringEndsWithAd
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StringEndsWithAdvancedFilter_STATUS populates our StringEndsWithAdvancedFilter from the provided source StringEndsWithAdvancedFilter_STATUS
-func (filter *StringEndsWithAdvancedFilter) Initialize_From_StringEndsWithAdvancedFilter_STATUS(source *StringEndsWithAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringEndsWithAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	filter.Values = genruntime.CloneSliceOfString(source.Values)
 
 	// No error
 	return nil
@@ -9495,27 +8627,6 @@ func (filter *StringInAdvancedFilter) AssignProperties_To_StringInAdvancedFilter
 	return nil
 }
 
-// Initialize_From_StringInAdvancedFilter_STATUS populates our StringInAdvancedFilter from the provided source StringInAdvancedFilter_STATUS
-func (filter *StringInAdvancedFilter) Initialize_From_StringInAdvancedFilter_STATUS(source *StringInAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringInAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	filter.Values = genruntime.CloneSliceOfString(source.Values)
-
-	// No error
-	return nil
-}
-
 type StringInAdvancedFilter_STATUS struct {
 	// Key: The field/property in the event based on which you want to filter.
 	Key *string `json:"key,omitempty"`
@@ -9739,27 +8850,6 @@ func (filter *StringNotInAdvancedFilter) AssignProperties_To_StringNotInAdvanced
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StringNotInAdvancedFilter_STATUS populates our StringNotInAdvancedFilter from the provided source StringNotInAdvancedFilter_STATUS
-func (filter *StringNotInAdvancedFilter) Initialize_From_StringNotInAdvancedFilter_STATUS(source *StringNotInAdvancedFilter_STATUS) error {
-
-	// Key
-	filter.Key = genruntime.ClonePointerToString(source.Key)
-
-	// OperatorType
-	if source.OperatorType != nil {
-		operatorType := genruntime.ToEnum(string(*source.OperatorType), stringNotInAdvancedFilter_OperatorType_Values)
-		filter.OperatorType = &operatorType
-	} else {
-		filter.OperatorType = nil
-	}
-
-	// Values
-	filter.Values = genruntime.CloneSliceOfString(source.Values)
 
 	// No error
 	return nil

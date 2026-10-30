@@ -121,13 +121,19 @@ func (c *asoCredentialCache) clientOptsForASOResource(ctx context.Context, obj c
 func (c *asoCredentialCache) authTokenForScopedASOSecret(secret *corev1.Secret, clientOpts azcore.ClientOptions) (azcore.TokenCredential, error) {
 	d := secret.Data
 
+	// Air-gapped clouds (e.g. USSec/IL6) resolve a custom AAD authority; disable
+	// instance discovery for those since the public metadata endpoint used to
+	// validate the authority is unreachable.
+	disableInstanceDiscovery := azure.ShouldDisableInstanceDiscovery(clientOpts.Cloud.ActiveDirectoryAuthorityHost)
+
 	if _, hasSecret := d[config.AzureClientSecret]; hasSecret {
 		return c.cache.GetOrStoreClientSecret(
 			string(d[config.AzureTenantID]),
 			string(d[config.AzureClientID]),
 			string(d[config.AzureClientSecret]),
 			&azidentity.ClientSecretCredentialOptions{
-				ClientOptions: clientOpts,
+				ClientOptions:            clientOpts,
+				DisableInstanceDiscovery: disableInstanceDiscovery,
 			},
 		)
 	}
@@ -139,7 +145,8 @@ func (c *asoCredentialCache) authTokenForScopedASOSecret(secret *corev1.Secret, 
 			d[config.AzureClientCertificate],
 			d[config.AzureClientCertificatePassword],
 			&azidentity.ClientCertificateCredentialOptions{
-				ClientOptions: clientOpts,
+				ClientOptions:            clientOpts,
+				DisableInstanceDiscovery: disableInstanceDiscovery,
 			},
 		)
 	}
@@ -155,10 +162,11 @@ func (c *asoCredentialCache) authTokenForScopedASOSecret(secret *corev1.Secret, 
 
 	return c.cache.GetOrStoreWorkloadIdentity(
 		&azidentity.WorkloadIdentityCredentialOptions{
-			ClientOptions: clientOpts,
-			TenantID:      string(d[config.AzureTenantID]),
-			ClientID:      string(d[config.AzureClientID]),
-			TokenFilePath: scope.GetProjectedTokenPath(),
+			ClientOptions:            clientOpts,
+			DisableInstanceDiscovery: disableInstanceDiscovery,
+			TenantID:                 string(d[config.AzureTenantID]),
+			ClientID:                 string(d[config.AzureClientID]),
+			TokenFilePath:            scope.GetProjectedTokenPath(),
 		},
 	)
 }
@@ -166,13 +174,18 @@ func (c *asoCredentialCache) authTokenForScopedASOSecret(secret *corev1.Secret, 
 func (c *asoCredentialCache) authTokenForGlobalASOSecret(secret *corev1.Secret, clientOpts azcore.ClientOptions) (azcore.TokenCredential, error) {
 	d := secret.Data
 
+	// See authTokenForScopedASOSecret: disable instance discovery for air-gapped
+	// clouds whose custom authority has no reachable metadata endpoint.
+	disableInstanceDiscovery := azure.ShouldDisableInstanceDiscovery(clientOpts.Cloud.ActiveDirectoryAuthorityHost)
+
 	if workloadID, _ := strconv.ParseBool(string(d[config.UseWorkloadIdentityAuth])); workloadID {
 		return c.cache.GetOrStoreWorkloadIdentity(
 			&azidentity.WorkloadIdentityCredentialOptions{
-				ClientOptions: clientOpts,
-				TenantID:      string(d[config.AzureTenantID]),
-				ClientID:      string(d[config.AzureClientID]),
-				TokenFilePath: scope.GetProjectedTokenPath(),
+				ClientOptions:            clientOpts,
+				DisableInstanceDiscovery: disableInstanceDiscovery,
+				TenantID:                 string(d[config.AzureTenantID]),
+				ClientID:                 string(d[config.AzureClientID]),
+				TokenFilePath:            scope.GetProjectedTokenPath(),
 			},
 		)
 	}
@@ -183,7 +196,8 @@ func (c *asoCredentialCache) authTokenForGlobalASOSecret(secret *corev1.Secret, 
 			string(d[config.AzureClientID]),
 			string(d[config.AzureClientSecret]),
 			&azidentity.ClientSecretCredentialOptions{
-				ClientOptions: clientOpts,
+				ClientOptions:            clientOpts,
+				DisableInstanceDiscovery: disableInstanceDiscovery,
 			},
 		)
 	}
@@ -195,7 +209,8 @@ func (c *asoCredentialCache) authTokenForGlobalASOSecret(secret *corev1.Secret, 
 			d[config.AzureClientCertificate],
 			d[config.AzureClientCertificatePassword],
 			&azidentity.ClientCertificateCredentialOptions{
-				ClientOptions: clientOpts,
+				ClientOptions:            clientOpts,
+				DisableInstanceDiscovery: disableInstanceDiscovery,
 			},
 		)
 	}

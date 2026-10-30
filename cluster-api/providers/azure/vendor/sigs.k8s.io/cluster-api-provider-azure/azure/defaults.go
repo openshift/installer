@@ -44,6 +44,10 @@ const (
 	ChinaCloudName = "AzureChinaCloud"
 	// USGovernmentCloudName is the name of the Azure US Government cloud.
 	USGovernmentCloudName = "AzureUSGovernmentCloud"
+	// GermanCloudName is the name of the Azure German cloud.
+	GermanCloudName = "AzureGermanCloud"
+	// USSecCloudName is the name of the Azure US Government Secret cloud (IL6).
+	USSecCloudName = "AzureUSSecCloud"
 )
 
 const (
@@ -52,7 +56,7 @@ const (
 	// DefaultLinuxGalleryImageName is the default Linux community gallery image definition.
 	DefaultLinuxGalleryImageName = "capi-ubun2-2404"
 	// DefaultWindowsGalleryImageName is the default Windows community gallery image definition.
-	DefaultWindowsGalleryImageName = "capi-win-2019-containerd"
+	DefaultWindowsGalleryImageName = "capi-win-2022-containerd"
 )
 
 const (
@@ -72,7 +76,7 @@ const (
 const (
 	// DefaultWindowsOsAndVersion is the default Windows Server version to use when
 	// generating default images for Windows nodes.
-	DefaultWindowsOsAndVersion = "windows-2019"
+	DefaultWindowsOsAndVersion = "windows-2022"
 )
 
 const (
@@ -117,39 +121,14 @@ var (
 		bootstrapExtensionRetries, bootstrapSentinelFile, bootstrapExtensionSleep)
 )
 
-// GenerateBackendAddressPoolName generates a load balancer backend address pool name.
-func GenerateBackendAddressPoolName(lbName string) string {
-	return fmt.Sprintf("%s-%s", lbName, "backendPool")
-}
-
-// GenerateOutboundBackendAddressPoolName generates a load balancer outbound backend address pool name.
-func GenerateOutboundBackendAddressPoolName(lbName string) string {
-	return fmt.Sprintf("%s-%s", lbName, "outboundBackendPool")
-}
-
 // GenerateFrontendIPConfigName generates a load balancer frontend IP config name.
 func GenerateFrontendIPConfigName(lbName string) string {
 	return fmt.Sprintf("%s-%s", lbName, "frontEnd")
 }
 
-// GenerateNodeOutboundIPName generates a public IP name, based on the cluster name.
-func GenerateNodeOutboundIPName(clusterName string) string {
-	return fmt.Sprintf("pip-%s-node-outbound", clusterName)
-}
-
 // GenerateNodePublicIPName generates a node public IP name, based on the machine name.
 func GenerateNodePublicIPName(machineName string) string {
 	return fmt.Sprintf("pip-%s", machineName)
-}
-
-// GenerateControlPlaneOutboundLBName generates the name of the control plane outbound LB.
-func GenerateControlPlaneOutboundLBName(clusterName string) string {
-	return fmt.Sprintf("%s-outbound-lb", clusterName)
-}
-
-// GenerateControlPlaneOutboundIPName generates a public IP name, based on the cluster name.
-func GenerateControlPlaneOutboundIPName(clusterName string) string {
-	return fmt.Sprintf("pip-%s-controlplane-outbound", clusterName)
 }
 
 // GeneratePrivateDNSZoneName generates the name of a private DNS zone based on the cluster name.
@@ -175,11 +154,6 @@ func GenerateNICName(machineName string, multiNIC bool, index int) string {
 	return fmt.Sprintf("%s-nic", machineName)
 }
 
-// GeneratePublicNICName generates the name of a public network interface based on the name of a VM.
-func GeneratePublicNICName(machineName string) string {
-	return fmt.Sprintf("%s-public-nic", machineName)
-}
-
 // GenerateOSDiskName generates the name of an OS disk based on the name of a VM.
 func GenerateOSDiskName(machineName string) string {
 	return fmt.Sprintf("%s_OSDisk", machineName)
@@ -201,16 +175,6 @@ func GenerateVnetPeeringName(sourceVnetName string, remoteVnetName string) strin
 // For worker nodes, this will be the machine deployment name.
 func GenerateAvailabilitySetName(clusterName, nodeGroup string) string {
 	return fmt.Sprintf("%s_%s-as", clusterName, nodeGroup)
-}
-
-// WithIndex appends the index as suffix to a generated name.
-func WithIndex(name string, n int) string {
-	return fmt.Sprintf("%s-%d", name, n)
-}
-
-// ResourceGroupID returns the azure resource ID for a given resource group.
-func ResourceGroupID(subscriptionID, resourceGroup string) string {
-	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscriptionID, resourceGroup)
 }
 
 // VMID returns the azure resource ID for a given VM.
@@ -367,6 +331,9 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 		opts.Cloud = cloud.AzureChina
 	case USGovernmentCloudName:
 		opts.Cloud = cloud.AzureGovernment
+	case USSecCloudName:
+		// USSec cloud.Configuration is populated at runtime from the environment
+		// file. The caller must set opts.Cloud from Authorizer.CloudConfiguration().
 	case "":
 		// No cloud name provided, so leave at defaults.
 	default:
@@ -382,6 +349,50 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 	opts.TracingProvider = azotel.NewTracingProvider(otel.GetTracerProvider(), nil)
 
 	return opts, nil
+}
+
+// ARMClientOptionsForAuth returns ARM client options for CAPZ SDK v2 requests,
+// applying the cloud configuration resolved by the Authorizer.
+//
+// For air-gapped clouds such as USSec (IL6) the cloud.Configuration (ARM
+// endpoint and token audience) is discovered at runtime from the environment
+// file and carried on the Authorizer rather than being known at compile time.
+// Applying it here guarantees every client targets the air-gapped endpoint
+// instead of public Azure, so individual callers cannot forget to set it.
+func ARMClientOptionsForAuth(authorizer Authorizer, extraPolicies ...policy.Policy) (*arm.ClientOptions, error) {
+	if authorizer == nil {
+		return nil, fmt.Errorf("authorizer cannot be nil")
+	}
+	opts, err := ARMClientOptions(authorizer.CloudEnvironment(), extraPolicies...)
+	if err != nil {
+		return nil, err
+	}
+	if authorizer.CloudEnvironment() == USSecCloudName {
+		opts.Cloud = authorizer.CloudConfiguration()
+	}
+	return opts, nil
+}
+
+// ShouldDisableInstanceDiscovery reports whether Microsoft Entra (AAD) instance
+// discovery must be disabled for the given Active Directory authority host.
+//
+// Instance discovery validates the authority against the public
+// login.microsoftonline.com metadata endpoint, which is unreachable in
+// air-gapped clouds such as USSec (IL6). Built-in, publicly reachable clouds
+// keep discovery enabled; any other (custom) authority, such as the IL6
+// authority discovered at runtime from the environment file, disables it so
+// credential creation does not hang trying to reach the public endpoint.
+func ShouldDisableInstanceDiscovery(authorityHost string) bool {
+	switch strings.TrimRight(authorityHost, "/") {
+	case "",
+		strings.TrimRight(cloud.AzurePublic.ActiveDirectoryAuthorityHost, "/"),
+		strings.TrimRight(cloud.AzureGovernment.ActiveDirectoryAuthorityHost, "/"),
+		strings.TrimRight(cloud.AzureChina.ActiveDirectoryAuthorityHost, "/"),
+		"https://login.microsoftonline.de": // Azure Germany; not built into SDKv2.
+		return false
+	default:
+		return true
+	}
 }
 
 // correlationIDPolicy adds the "x-ms-correlation-request-id" header to requests.

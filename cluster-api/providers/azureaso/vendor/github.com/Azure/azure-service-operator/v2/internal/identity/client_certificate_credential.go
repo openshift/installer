@@ -27,7 +27,8 @@ func NewClientCertificateCredential(
 		clientID,
 		certs,
 		key,
-		options)
+		options,
+	)
 	if err != nil {
 		return nil, err
 	}

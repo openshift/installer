@@ -50,6 +50,7 @@ type ZoneProperties struct {
 
 // A reference to a another resource
 type SubResource struct {
+	// Id: Resource Id.
 	Id *string `json:"id,omitempty"`
 }
 

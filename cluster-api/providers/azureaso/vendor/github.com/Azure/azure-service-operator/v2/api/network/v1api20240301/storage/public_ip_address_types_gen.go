@@ -4,6 +4,9 @@
 package storage
 
 import (
+	"fmt"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +15,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=publicipaddresses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={publicipaddresses/status,publicipaddresses/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.PublicIPAddress
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/publicIpAddress.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/publicIpAddress.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}
 type PublicIPAddress struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +46,28 @@ func (address *PublicIPAddress) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (address *PublicIPAddress) SetConditions(conditions conditions.Conditions) {
 	address.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &PublicIPAddress{}
+
+// ConvertFrom populates our PublicIPAddress from the provided hub PublicIPAddress
+func (address *PublicIPAddress) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.PublicIPAddress)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PublicIPAddress but received %T instead", hub)
+	}
+
+	return address.AssignProperties_From_PublicIPAddress(source)
+}
+
+// ConvertTo populates the provided hub PublicIPAddress from our PublicIPAddress
+func (address *PublicIPAddress) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.PublicIPAddress)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/PublicIPAddress but received %T instead", hub)
+	}
+
+	return address.AssignProperties_To_PublicIPAddress(destination)
 }
 
 var _ configmaps.Exporter = &PublicIPAddress{}
@@ -142,8 +165,75 @@ func (address *PublicIPAddress) SetStatus(status genruntime.ConvertibleStatus) e
 	return nil
 }
 
-// Hub marks that this PublicIPAddress is the hub type for conversion
-func (address *PublicIPAddress) Hub() {}
+// AssignProperties_From_PublicIPAddress populates our PublicIPAddress from the provided source PublicIPAddress
+func (address *PublicIPAddress) AssignProperties_From_PublicIPAddress(source *v20250301s.PublicIPAddress) error {
+
+	// ObjectMeta
+	address.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec PublicIPAddress_Spec
+	err := spec.AssignProperties_From_PublicIPAddress_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddress_Spec() to populate field Spec")
+	}
+	address.Spec = spec
+
+	// Status
+	var status PublicIPAddress_STATUS
+	err = status.AssignProperties_From_PublicIPAddress_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddress_STATUS() to populate field Status")
+	}
+	address.Status = status
+
+	// Invoke the augmentConversionForPublicIPAddress interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress); ok {
+		err := augmentedAddress.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddress populates the provided destination PublicIPAddress from our PublicIPAddress
+func (address *PublicIPAddress) AssignProperties_To_PublicIPAddress(destination *v20250301s.PublicIPAddress) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *address.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.PublicIPAddress_Spec
+	err := address.Spec.AssignProperties_To_PublicIPAddress_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddress_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.PublicIPAddress_STATUS
+	err = address.Status.AssignProperties_To_PublicIPAddress_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddress_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForPublicIPAddress interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress); ok {
+		err := augmentedAddress.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (address *PublicIPAddress) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +247,17 @@ func (address *PublicIPAddress) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.PublicIPAddress
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/publicIpAddress.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/publicIpAddress.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}
 type PublicIPAddressList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []PublicIPAddress `json:"items"`
+}
+
+type augmentConversionForPublicIPAddress interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddress) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddress) error
 }
 
 // Storage version of v1api20240301.PublicIPAddress_Spec
@@ -202,20 +297,434 @@ var _ genruntime.ConvertibleSpec = &PublicIPAddress_Spec{}
 
 // ConvertSpecFrom populates our PublicIPAddress_Spec from the provided source
 func (address *PublicIPAddress_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == address {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.PublicIPAddress_Spec)
+	if ok {
+		// Populate our instance from source
+		return address.AssignProperties_From_PublicIPAddress_Spec(src)
 	}
 
-	return source.ConvertSpecTo(address)
+	// Convert to an intermediate form
+	src = &v20250301s.PublicIPAddress_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = address.AssignProperties_From_PublicIPAddress_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our PublicIPAddress_Spec
 func (address *PublicIPAddress_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == address {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.PublicIPAddress_Spec)
+	if ok {
+		// Populate destination from our instance
+		return address.AssignProperties_To_PublicIPAddress_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(address)
+	// Convert to an intermediate form
+	dst = &v20250301s.PublicIPAddress_Spec{}
+	err := address.AssignProperties_To_PublicIPAddress_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PublicIPAddress_Spec populates our PublicIPAddress_Spec from the provided source PublicIPAddress_Spec
+func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(source *v20250301s.PublicIPAddress_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	address.AzureName = source.AzureName
+
+	// DdosSettings
+	if source.DdosSettings != nil {
+		var ddosSetting DdosSettings
+		err := ddosSetting.AssignProperties_From_DdosSettings(source.DdosSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DdosSettings() to populate field DdosSettings")
+		}
+		address.DdosSettings = &ddosSetting
+	} else {
+		address.DdosSettings = nil
+	}
+
+	// DeleteOption
+	address.DeleteOption = genruntime.ClonePointerToString(source.DeleteOption)
+
+	// DnsSettings
+	if source.DnsSettings != nil {
+		var dnsSetting PublicIPAddressDnsSettings
+		err := dnsSetting.AssignProperties_From_PublicIPAddressDnsSettings(source.DnsSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings() to populate field DnsSettings")
+		}
+		address.DnsSettings = &dnsSetting
+	} else {
+		address.DnsSettings = nil
+	}
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation
+		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		address.ExtendedLocation = &extendedLocation
+	} else {
+		address.ExtendedLocation = nil
+	}
+
+	// IdleTimeoutInMinutes
+	address.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// IpAddress
+	address.IpAddress = genruntime.ClonePointerToString(source.IpAddress)
+
+	// IpTags
+	if source.IpTags != nil {
+		ipTagList := make([]IpTag, len(source.IpTags))
+		for ipTagIndex, ipTagItem := range source.IpTags {
+			var ipTag IpTag
+			err := ipTag.AssignProperties_From_IpTag(&ipTagItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag() to populate field IpTags")
+			}
+			ipTagList[ipTagIndex] = ipTag
+		}
+		address.IpTags = ipTagList
+	} else {
+		address.IpTags = nil
+	}
+
+	// LinkedPublicIPAddress
+	if source.LinkedPublicIPAddress != nil {
+		var linkedPublicIPAddress PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+		err := linkedPublicIPAddress.AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(source.LinkedPublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
+		}
+		address.LinkedPublicIPAddress = &linkedPublicIPAddress
+	} else {
+		address.LinkedPublicIPAddress = nil
+	}
+
+	// Location
+	address.Location = genruntime.ClonePointerToString(source.Location)
+
+	// NatGateway
+	if source.NatGateway != nil {
+		var natGateway NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
+		err := natGateway.AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(source.NatGateway)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+		}
+		address.NatGateway = &natGateway
+	} else {
+		address.NatGateway = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec PublicIPAddressOperatorSpec
+		err := operatorSpec.AssignProperties_From_PublicIPAddressOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
+		}
+		address.OperatorSpec = &operatorSpec
+	} else {
+		address.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	address.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		address.Owner = &owner
+	} else {
+		address.Owner = nil
+	}
+
+	// PublicIPAddressVersion
+	address.PublicIPAddressVersion = genruntime.ClonePointerToString(source.PublicIPAddressVersion)
+
+	// PublicIPAllocationMethod
+	address.PublicIPAllocationMethod = genruntime.ClonePointerToString(source.PublicIPAllocationMethod)
+
+	// PublicIPPrefix
+	if source.PublicIPPrefix != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.PublicIPPrefix)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIPPrefix")
+		}
+		var publicIPPrefix SubResource
+		err = publicIPPrefix.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPPrefix from SubResourceStash")
+		}
+		address.PublicIPPrefix = &publicIPPrefix
+	} else {
+		address.PublicIPPrefix = nil
+	}
+
+	// ServicePublicIPAddress
+	if source.ServicePublicIPAddress != nil {
+		var servicePublicIPAddress PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+		err := servicePublicIPAddress.AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(source.ServicePublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
+		}
+		address.ServicePublicIPAddress = &servicePublicIPAddress
+	} else {
+		address.ServicePublicIPAddress = nil
+	}
+
+	// Sku
+	if source.Sku != nil {
+		var sku PublicIPAddressSku
+		err := sku.AssignProperties_From_PublicIPAddressSku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku() to populate field Sku")
+		}
+		address.Sku = &sku
+	} else {
+		address.Sku = nil
+	}
+
+	// Tags
+	address.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Zones
+	address.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		address.PropertyBag = propertyBag
+	} else {
+		address.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_Spec interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_Spec); ok {
+		err := augmentedAddress.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddress_Spec populates the provided destination PublicIPAddress_Spec from our PublicIPAddress_Spec
+func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(destination *v20250301s.PublicIPAddress_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(address.PropertyBag)
+
+	// AzureName
+	destination.AzureName = address.AzureName
+
+	// DdosSettings
+	if address.DdosSettings != nil {
+		var ddosSetting v20250301s.DdosSettings
+		err := address.DdosSettings.AssignProperties_To_DdosSettings(&ddosSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DdosSettings() to populate field DdosSettings")
+		}
+		destination.DdosSettings = &ddosSetting
+	} else {
+		destination.DdosSettings = nil
+	}
+
+	// DeleteOption
+	destination.DeleteOption = genruntime.ClonePointerToString(address.DeleteOption)
+
+	// DnsSettings
+	if address.DnsSettings != nil {
+		var dnsSetting v20250301s.PublicIPAddressDnsSettings
+		err := address.DnsSettings.AssignProperties_To_PublicIPAddressDnsSettings(&dnsSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings() to populate field DnsSettings")
+		}
+		destination.DnsSettings = &dnsSetting
+	} else {
+		destination.DnsSettings = nil
+	}
+
+	// ExtendedLocation
+	if address.ExtendedLocation != nil {
+		var extendedLocation v20250301s.ExtendedLocation
+		err := address.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(address.IdleTimeoutInMinutes)
+
+	// IpAddress
+	destination.IpAddress = genruntime.ClonePointerToString(address.IpAddress)
+
+	// IpTags
+	if address.IpTags != nil {
+		ipTagList := make([]v20250301s.IpTag, len(address.IpTags))
+		for ipTagIndex, ipTagItem := range address.IpTags {
+			var ipTag v20250301s.IpTag
+			err := ipTagItem.AssignProperties_To_IpTag(&ipTag)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag() to populate field IpTags")
+			}
+			ipTagList[ipTagIndex] = ipTag
+		}
+		destination.IpTags = ipTagList
+	} else {
+		destination.IpTags = nil
+	}
+
+	// LinkedPublicIPAddress
+	if address.LinkedPublicIPAddress != nil {
+		var linkedPublicIPAddress v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+		err := address.LinkedPublicIPAddress.AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(&linkedPublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
+		}
+		destination.LinkedPublicIPAddress = &linkedPublicIPAddress
+	} else {
+		destination.LinkedPublicIPAddress = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(address.Location)
+
+	// NatGateway
+	if address.NatGateway != nil {
+		var natGateway v20250301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
+		err := address.NatGateway.AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(&natGateway)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+		}
+		destination.NatGateway = &natGateway
+	} else {
+		destination.NatGateway = nil
+	}
+
+	// OperatorSpec
+	if address.OperatorSpec != nil {
+		var operatorSpec v20250301s.PublicIPAddressOperatorSpec
+		err := address.OperatorSpec.AssignProperties_To_PublicIPAddressOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = address.OriginalVersion
+
+	// Owner
+	if address.Owner != nil {
+		owner := address.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PublicIPAddressVersion
+	destination.PublicIPAddressVersion = genruntime.ClonePointerToString(address.PublicIPAddressVersion)
+
+	// PublicIPAllocationMethod
+	destination.PublicIPAllocationMethod = genruntime.ClonePointerToString(address.PublicIPAllocationMethod)
+
+	// PublicIPPrefix
+	if address.PublicIPPrefix != nil {
+		var subResourceStash v20240601s.SubResource
+		err := address.PublicIPPrefix.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIPPrefix")
+		}
+		var publicIPPrefix v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&publicIPPrefix)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPPrefix from SubResourceStash")
+		}
+		destination.PublicIPPrefix = &publicIPPrefix
+	} else {
+		destination.PublicIPPrefix = nil
+	}
+
+	// ServicePublicIPAddress
+	if address.ServicePublicIPAddress != nil {
+		var servicePublicIPAddress v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+		err := address.ServicePublicIPAddress.AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(&servicePublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
+		}
+		destination.ServicePublicIPAddress = &servicePublicIPAddress
+	} else {
+		destination.ServicePublicIPAddress = nil
+	}
+
+	// Sku
+	if address.Sku != nil {
+		var sku v20250301s.PublicIPAddressSku
+		err := address.Sku.AssignProperties_To_PublicIPAddressSku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(address.Tags)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(address.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_Spec interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_Spec); ok {
+		err := augmentedAddress.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PublicIPAddress_STATUS
@@ -252,20 +761,416 @@ var _ genruntime.ConvertibleStatus = &PublicIPAddress_STATUS{}
 
 // ConvertStatusFrom populates our PublicIPAddress_STATUS from the provided source
 func (address *PublicIPAddress_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == address {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.PublicIPAddress_STATUS)
+	if ok {
+		// Populate our instance from source
+		return address.AssignProperties_From_PublicIPAddress_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(address)
+	// Convert to an intermediate form
+	src = &v20250301s.PublicIPAddress_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = address.AssignProperties_From_PublicIPAddress_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our PublicIPAddress_STATUS
 func (address *PublicIPAddress_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == address {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.PublicIPAddress_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return address.AssignProperties_To_PublicIPAddress_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(address)
+	// Convert to an intermediate form
+	dst = &v20250301s.PublicIPAddress_STATUS{}
+	err := address.AssignProperties_To_PublicIPAddress_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_PublicIPAddress_STATUS populates our PublicIPAddress_STATUS from the provided source PublicIPAddress_STATUS
+func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STATUS(source *v20250301s.PublicIPAddress_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	address.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DdosSettings
+	if source.DdosSettings != nil {
+		var ddosSetting DdosSettings_STATUS
+		err := ddosSetting.AssignProperties_From_DdosSettings_STATUS(source.DdosSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DdosSettings_STATUS() to populate field DdosSettings")
+		}
+		address.DdosSettings = &ddosSetting
+	} else {
+		address.DdosSettings = nil
+	}
+
+	// DeleteOption
+	address.DeleteOption = genruntime.ClonePointerToString(source.DeleteOption)
+
+	// DnsSettings
+	if source.DnsSettings != nil {
+		var dnsSetting PublicIPAddressDnsSettings_STATUS
+		err := dnsSetting.AssignProperties_From_PublicIPAddressDnsSettings_STATUS(source.DnsSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
+		}
+		address.DnsSettings = &dnsSetting
+	} else {
+		address.DnsSettings = nil
+	}
+
+	// Etag
+	address.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation_STATUS
+		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		address.ExtendedLocation = &extendedLocation
+	} else {
+		address.ExtendedLocation = nil
+	}
+
+	// Id
+	address.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IdleTimeoutInMinutes
+	address.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
+
+	// IpAddress
+	address.IpAddress = genruntime.ClonePointerToString(source.IpAddress)
+
+	// IpConfiguration
+	if source.IpConfiguration != nil {
+		var ipConfiguration IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
+		err := ipConfiguration.AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(source.IpConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
+		}
+		address.IpConfiguration = &ipConfiguration
+	} else {
+		address.IpConfiguration = nil
+	}
+
+	// IpTags
+	if source.IpTags != nil {
+		ipTagList := make([]IpTag_STATUS, len(source.IpTags))
+		for ipTagIndex, ipTagItem := range source.IpTags {
+			var ipTag IpTag_STATUS
+			err := ipTag.AssignProperties_From_IpTag_STATUS(&ipTagItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag_STATUS() to populate field IpTags")
+			}
+			ipTagList[ipTagIndex] = ipTag
+		}
+		address.IpTags = ipTagList
+	} else {
+		address.IpTags = nil
+	}
+
+	// Location
+	address.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MigrationPhase
+	address.MigrationPhase = genruntime.ClonePointerToString(source.MigrationPhase)
+
+	// Name
+	address.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NatGateway
+	if source.NatGateway != nil {
+		var natGateway NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
+		err := natGateway.AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(source.NatGateway)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+		}
+		address.NatGateway = &natGateway
+	} else {
+		address.NatGateway = nil
+	}
+
+	// ProvisioningState
+	address.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// PublicIPAddressVersion
+	address.PublicIPAddressVersion = genruntime.ClonePointerToString(source.PublicIPAddressVersion)
+
+	// PublicIPAllocationMethod
+	address.PublicIPAllocationMethod = genruntime.ClonePointerToString(source.PublicIPAllocationMethod)
+
+	// PublicIPPrefix
+	if source.PublicIPPrefix != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.PublicIPPrefix)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
+		}
+		var publicIPPrefix SubResource_STATUS
+		err = publicIPPrefix.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
+		}
+		address.PublicIPPrefix = &publicIPPrefix
+	} else {
+		address.PublicIPPrefix = nil
+	}
+
+	// ResourceGuid
+	address.ResourceGuid = genruntime.ClonePointerToString(source.ResourceGuid)
+
+	// Sku
+	if source.Sku != nil {
+		var sku PublicIPAddressSku_STATUS
+		err := sku.AssignProperties_From_PublicIPAddressSku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku_STATUS() to populate field Sku")
+		}
+		address.Sku = &sku
+	} else {
+		address.Sku = nil
+	}
+
+	// Tags
+	address.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	address.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Zones
+	address.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		address.PropertyBag = propertyBag
+	} else {
+		address.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_STATUS interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_STATUS); ok {
+		err := augmentedAddress.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddress_STATUS populates the provided destination PublicIPAddress_STATUS from our PublicIPAddress_STATUS
+func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATUS(destination *v20250301s.PublicIPAddress_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(address.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(address.Conditions)
+
+	// DdosSettings
+	if address.DdosSettings != nil {
+		var ddosSetting v20250301s.DdosSettings_STATUS
+		err := address.DdosSettings.AssignProperties_To_DdosSettings_STATUS(&ddosSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DdosSettings_STATUS() to populate field DdosSettings")
+		}
+		destination.DdosSettings = &ddosSetting
+	} else {
+		destination.DdosSettings = nil
+	}
+
+	// DeleteOption
+	destination.DeleteOption = genruntime.ClonePointerToString(address.DeleteOption)
+
+	// DnsSettings
+	if address.DnsSettings != nil {
+		var dnsSetting v20250301s.PublicIPAddressDnsSettings_STATUS
+		err := address.DnsSettings.AssignProperties_To_PublicIPAddressDnsSettings_STATUS(&dnsSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
+		}
+		destination.DnsSettings = &dnsSetting
+	} else {
+		destination.DnsSettings = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(address.Etag)
+
+	// ExtendedLocation
+	if address.ExtendedLocation != nil {
+		var extendedLocation v20250301s.ExtendedLocation_STATUS
+		err := address.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(address.Id)
+
+	// IdleTimeoutInMinutes
+	destination.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(address.IdleTimeoutInMinutes)
+
+	// IpAddress
+	destination.IpAddress = genruntime.ClonePointerToString(address.IpAddress)
+
+	// IpConfiguration
+	if address.IpConfiguration != nil {
+		var ipConfiguration v20250301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
+		err := address.IpConfiguration.AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(&ipConfiguration)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
+		}
+		destination.IpConfiguration = &ipConfiguration
+	} else {
+		destination.IpConfiguration = nil
+	}
+
+	// IpTags
+	if address.IpTags != nil {
+		ipTagList := make([]v20250301s.IpTag_STATUS, len(address.IpTags))
+		for ipTagIndex, ipTagItem := range address.IpTags {
+			var ipTag v20250301s.IpTag_STATUS
+			err := ipTagItem.AssignProperties_To_IpTag_STATUS(&ipTag)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag_STATUS() to populate field IpTags")
+			}
+			ipTagList[ipTagIndex] = ipTag
+		}
+		destination.IpTags = ipTagList
+	} else {
+		destination.IpTags = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(address.Location)
+
+	// MigrationPhase
+	destination.MigrationPhase = genruntime.ClonePointerToString(address.MigrationPhase)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(address.Name)
+
+	// NatGateway
+	if address.NatGateway != nil {
+		var natGateway v20250301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
+		err := address.NatGateway.AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(&natGateway)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+		}
+		destination.NatGateway = &natGateway
+	} else {
+		destination.NatGateway = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(address.ProvisioningState)
+
+	// PublicIPAddressVersion
+	destination.PublicIPAddressVersion = genruntime.ClonePointerToString(address.PublicIPAddressVersion)
+
+	// PublicIPAllocationMethod
+	destination.PublicIPAllocationMethod = genruntime.ClonePointerToString(address.PublicIPAllocationMethod)
+
+	// PublicIPPrefix
+	if address.PublicIPPrefix != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := address.PublicIPPrefix.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
+		}
+		var publicIPPrefix v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&publicIPPrefix)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
+		}
+		destination.PublicIPPrefix = &publicIPPrefix
+	} else {
+		destination.PublicIPPrefix = nil
+	}
+
+	// ResourceGuid
+	destination.ResourceGuid = genruntime.ClonePointerToString(address.ResourceGuid)
+
+	// Sku
+	if address.Sku != nil {
+		var sku v20250301s.PublicIPAddressSku_STATUS
+		err := address.Sku.AssignProperties_To_PublicIPAddressSku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku_STATUS() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(address.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(address.Type)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(address.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddress_STATUS interface (if implemented) to customize the conversion
+	var addressAsAny any = address
+	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_STATUS); ok {
+		err := augmentedAddress.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPublicIPAddress_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddress_Spec) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddress_Spec) error
+}
+
+type augmentConversionForPublicIPAddress_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddress_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddress_STATUS) error
 }
 
 // Storage version of v1api20240301.DdosSettings
@@ -276,6 +1181,96 @@ type DdosSettings struct {
 	ProtectionMode     *string                `json:"protectionMode,omitempty"`
 }
 
+// AssignProperties_From_DdosSettings populates our DdosSettings from the provided source DdosSettings
+func (settings *DdosSettings) AssignProperties_From_DdosSettings(source *v20250301s.DdosSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DdosProtectionPlan
+	if source.DdosProtectionPlan != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.DdosProtectionPlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from DdosProtectionPlan")
+		}
+		var ddosProtectionPlan SubResource
+		err = ddosProtectionPlan.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field DdosProtectionPlan from SubResourceStash")
+		}
+		settings.DdosProtectionPlan = &ddosProtectionPlan
+	} else {
+		settings.DdosProtectionPlan = nil
+	}
+
+	// ProtectionMode
+	settings.ProtectionMode = genruntime.ClonePointerToString(source.ProtectionMode)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDdosSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DdosSettings populates the provided destination DdosSettings from our DdosSettings
+func (settings *DdosSettings) AssignProperties_To_DdosSettings(destination *v20250301s.DdosSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// DdosProtectionPlan
+	if settings.DdosProtectionPlan != nil {
+		var subResourceStash v20240601s.SubResource
+		err := settings.DdosProtectionPlan.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from DdosProtectionPlan")
+		}
+		var ddosProtectionPlan v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&ddosProtectionPlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field DdosProtectionPlan from SubResourceStash")
+		}
+		destination.DdosProtectionPlan = &ddosProtectionPlan
+	} else {
+		destination.DdosProtectionPlan = nil
+	}
+
+	// ProtectionMode
+	destination.ProtectionMode = genruntime.ClonePointerToString(settings.ProtectionMode)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDdosSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.DdosSettings_STATUS
 // Contains the DDoS protection settings of the public IP.
 type DdosSettings_STATUS struct {
@@ -284,11 +1279,157 @@ type DdosSettings_STATUS struct {
 	ProtectionMode     *string                `json:"protectionMode,omitempty"`
 }
 
+// AssignProperties_From_DdosSettings_STATUS populates our DdosSettings_STATUS from the provided source DdosSettings_STATUS
+func (settings *DdosSettings_STATUS) AssignProperties_From_DdosSettings_STATUS(source *v20250301s.DdosSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DdosProtectionPlan
+	if source.DdosProtectionPlan != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.DdosProtectionPlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from DdosProtectionPlan")
+		}
+		var ddosProtectionPlan SubResource_STATUS
+		err = ddosProtectionPlan.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field DdosProtectionPlan from SubResource_STATUSStash")
+		}
+		settings.DdosProtectionPlan = &ddosProtectionPlan
+	} else {
+		settings.DdosProtectionPlan = nil
+	}
+
+	// ProtectionMode
+	settings.ProtectionMode = genruntime.ClonePointerToString(source.ProtectionMode)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDdosSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DdosSettings_STATUS populates the provided destination DdosSettings_STATUS from our DdosSettings_STATUS
+func (settings *DdosSettings_STATUS) AssignProperties_To_DdosSettings_STATUS(destination *v20250301s.DdosSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// DdosProtectionPlan
+	if settings.DdosProtectionPlan != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := settings.DdosProtectionPlan.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from DdosProtectionPlan")
+		}
+		var ddosProtectionPlan v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&ddosProtectionPlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field DdosProtectionPlan from SubResource_STATUSStash")
+		}
+		destination.DdosProtectionPlan = &ddosProtectionPlan
+	} else {
+		destination.DdosProtectionPlan = nil
+	}
+
+	// ProtectionMode
+	destination.ProtectionMode = genruntime.ClonePointerToString(settings.ProtectionMode)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDdosSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
 // IP configuration.
 type IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded populates our IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded from the provided source IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
+func (embedded *IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(source *v20250301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded populates the provided destination IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded from our IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
+func (embedded *IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(destination *v20250301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.IpTag
@@ -299,12 +1440,136 @@ type IpTag struct {
 	Tag         *string                `json:"tag,omitempty"`
 }
 
+// AssignProperties_From_IpTag populates our IpTag from the provided source IpTag
+func (ipTag *IpTag) AssignProperties_From_IpTag(source *v20250301s.IpTag) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IpTagType
+	ipTag.IpTagType = genruntime.ClonePointerToString(source.IpTagType)
+
+	// Tag
+	ipTag.Tag = genruntime.ClonePointerToString(source.Tag)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		ipTag.PropertyBag = propertyBag
+	} else {
+		ipTag.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIpTag interface (if implemented) to customize the conversion
+	var ipTagAsAny any = ipTag
+	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag); ok {
+		err := augmentedIpTag.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IpTag populates the provided destination IpTag from our IpTag
+func (ipTag *IpTag) AssignProperties_To_IpTag(destination *v20250301s.IpTag) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(ipTag.PropertyBag)
+
+	// IpTagType
+	destination.IpTagType = genruntime.ClonePointerToString(ipTag.IpTagType)
+
+	// Tag
+	destination.Tag = genruntime.ClonePointerToString(ipTag.Tag)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIpTag interface (if implemented) to customize the conversion
+	var ipTagAsAny any = ipTag
+	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag); ok {
+		err := augmentedIpTag.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.IpTag_STATUS
 // Contains the IpTag associated with the object.
 type IpTag_STATUS struct {
 	IpTagType   *string                `json:"ipTagType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Tag         *string                `json:"tag,omitempty"`
+}
+
+// AssignProperties_From_IpTag_STATUS populates our IpTag_STATUS from the provided source IpTag_STATUS
+func (ipTag *IpTag_STATUS) AssignProperties_From_IpTag_STATUS(source *v20250301s.IpTag_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IpTagType
+	ipTag.IpTagType = genruntime.ClonePointerToString(source.IpTagType)
+
+	// Tag
+	ipTag.Tag = genruntime.ClonePointerToString(source.Tag)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		ipTag.PropertyBag = propertyBag
+	} else {
+		ipTag.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIpTag_STATUS interface (if implemented) to customize the conversion
+	var ipTagAsAny any = ipTag
+	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag_STATUS); ok {
+		err := augmentedIpTag.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IpTag_STATUS populates the provided destination IpTag_STATUS from our IpTag_STATUS
+func (ipTag *IpTag_STATUS) AssignProperties_To_IpTag_STATUS(destination *v20250301s.IpTag_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(ipTag.PropertyBag)
+
+	// IpTagType
+	destination.IpTagType = genruntime.ClonePointerToString(ipTag.IpTagType)
+
+	// Tag
+	destination.Tag = genruntime.ClonePointerToString(ipTag.Tag)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIpTag_STATUS interface (if implemented) to customize the conversion
+	var ipTagAsAny any = ipTag
+	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag_STATUS); ok {
+		err := augmentedIpTag.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
@@ -314,6 +1579,62 @@ type NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded populates our NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded from the provided source NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
+func (embedded *NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(source *v20250301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded populates the provided destination NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded from our NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
+func (embedded *NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(destination *v20250301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
 // Nat Gateway resource.
 type NatGatewaySpec_PublicIPAddress_SubResourceEmbedded struct {
@@ -321,6 +1642,72 @@ type NatGatewaySpec_PublicIPAddress_SubResourceEmbedded struct {
 
 	// Reference: Resource ID.
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
+}
+
+// AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded populates our NatGatewaySpec_PublicIPAddress_SubResourceEmbedded from the provided source NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
+func (embedded *NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(source *v20250301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded populates the provided destination NatGatewaySpec_PublicIPAddress_SubResourceEmbedded from our NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
+func (embedded *NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(destination *v20250301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PublicIPAddressDnsSettings
@@ -333,6 +1720,80 @@ type PublicIPAddressDnsSettings struct {
 	ReverseFqdn          *string                `json:"reverseFqdn,omitempty"`
 }
 
+// AssignProperties_From_PublicIPAddressDnsSettings populates our PublicIPAddressDnsSettings from the provided source PublicIPAddressDnsSettings
+func (settings *PublicIPAddressDnsSettings) AssignProperties_From_PublicIPAddressDnsSettings(source *v20250301s.PublicIPAddressDnsSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DomainNameLabel
+	settings.DomainNameLabel = genruntime.ClonePointerToString(source.DomainNameLabel)
+
+	// DomainNameLabelScope
+	settings.DomainNameLabelScope = genruntime.ClonePointerToString(source.DomainNameLabelScope)
+
+	// Fqdn
+	settings.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
+
+	// ReverseFqdn
+	settings.ReverseFqdn = genruntime.ClonePointerToString(source.ReverseFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressDnsSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressDnsSettings populates the provided destination PublicIPAddressDnsSettings from our PublicIPAddressDnsSettings
+func (settings *PublicIPAddressDnsSettings) AssignProperties_To_PublicIPAddressDnsSettings(destination *v20250301s.PublicIPAddressDnsSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// DomainNameLabel
+	destination.DomainNameLabel = genruntime.ClonePointerToString(settings.DomainNameLabel)
+
+	// DomainNameLabelScope
+	destination.DomainNameLabelScope = genruntime.ClonePointerToString(settings.DomainNameLabelScope)
+
+	// Fqdn
+	destination.Fqdn = genruntime.ClonePointerToString(settings.Fqdn)
+
+	// ReverseFqdn
+	destination.ReverseFqdn = genruntime.ClonePointerToString(settings.ReverseFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressDnsSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PublicIPAddressDnsSettings_STATUS
 // Contains FQDN of the DNS record associated with the public IP address.
 type PublicIPAddressDnsSettings_STATUS struct {
@@ -343,12 +1804,200 @@ type PublicIPAddressDnsSettings_STATUS struct {
 	ReverseFqdn          *string                `json:"reverseFqdn,omitempty"`
 }
 
+// AssignProperties_From_PublicIPAddressDnsSettings_STATUS populates our PublicIPAddressDnsSettings_STATUS from the provided source PublicIPAddressDnsSettings_STATUS
+func (settings *PublicIPAddressDnsSettings_STATUS) AssignProperties_From_PublicIPAddressDnsSettings_STATUS(source *v20250301s.PublicIPAddressDnsSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DomainNameLabel
+	settings.DomainNameLabel = genruntime.ClonePointerToString(source.DomainNameLabel)
+
+	// DomainNameLabelScope
+	settings.DomainNameLabelScope = genruntime.ClonePointerToString(source.DomainNameLabelScope)
+
+	// Fqdn
+	settings.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
+
+	// ReverseFqdn
+	settings.ReverseFqdn = genruntime.ClonePointerToString(source.ReverseFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressDnsSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressDnsSettings_STATUS populates the provided destination PublicIPAddressDnsSettings_STATUS from our PublicIPAddressDnsSettings_STATUS
+func (settings *PublicIPAddressDnsSettings_STATUS) AssignProperties_To_PublicIPAddressDnsSettings_STATUS(destination *v20250301s.PublicIPAddressDnsSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// DomainNameLabel
+	destination.DomainNameLabel = genruntime.ClonePointerToString(settings.DomainNameLabel)
+
+	// DomainNameLabelScope
+	destination.DomainNameLabelScope = genruntime.ClonePointerToString(settings.DomainNameLabelScope)
+
+	// Fqdn
+	destination.Fqdn = genruntime.ClonePointerToString(settings.Fqdn)
+
+	// ReverseFqdn
+	destination.ReverseFqdn = genruntime.ClonePointerToString(settings.ReverseFqdn)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressDnsSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PublicIPAddressOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type PublicIPAddressOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_PublicIPAddressOperatorSpec populates our PublicIPAddressOperatorSpec from the provided source PublicIPAddressOperatorSpec
+func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddressOperatorSpec(source *v20250301s.PublicIPAddressOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPublicIPAddressOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressOperatorSpec populates the provided destination PublicIPAddressOperatorSpec from our PublicIPAddressOperatorSpec
+func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddressOperatorSpec(destination *v20250301s.PublicIPAddressOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPublicIPAddressOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PublicIPAddressSku
@@ -359,12 +2008,136 @@ type PublicIPAddressSku struct {
 	Tier        *string                `json:"tier,omitempty"`
 }
 
+// AssignProperties_From_PublicIPAddressSku populates our PublicIPAddressSku from the provided source PublicIPAddressSku
+func (addressSku *PublicIPAddressSku) AssignProperties_From_PublicIPAddressSku(source *v20250301s.PublicIPAddressSku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	addressSku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Tier
+	addressSku.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		addressSku.PropertyBag = propertyBag
+	} else {
+		addressSku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSku interface (if implemented) to customize the conversion
+	var addressSkuAsAny any = addressSku
+	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku); ok {
+		err := augmentedAddressSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressSku populates the provided destination PublicIPAddressSku from our PublicIPAddressSku
+func (addressSku *PublicIPAddressSku) AssignProperties_To_PublicIPAddressSku(destination *v20250301s.PublicIPAddressSku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(addressSku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(addressSku.Name)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(addressSku.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSku interface (if implemented) to customize the conversion
+	var addressSkuAsAny any = addressSku
+	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku); ok {
+		err := augmentedAddressSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.PublicIPAddressSku_STATUS
 // SKU of a public IP address.
 type PublicIPAddressSku_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Tier        *string                `json:"tier,omitempty"`
+}
+
+// AssignProperties_From_PublicIPAddressSku_STATUS populates our PublicIPAddressSku_STATUS from the provided source PublicIPAddressSku_STATUS
+func (addressSku *PublicIPAddressSku_STATUS) AssignProperties_From_PublicIPAddressSku_STATUS(source *v20250301s.PublicIPAddressSku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	addressSku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Tier
+	addressSku.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		addressSku.PropertyBag = propertyBag
+	} else {
+		addressSku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSku_STATUS interface (if implemented) to customize the conversion
+	var addressSkuAsAny any = addressSku
+	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku_STATUS); ok {
+		err := augmentedAddressSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressSku_STATUS populates the provided destination PublicIPAddressSku_STATUS from our PublicIPAddressSku_STATUS
+func (addressSku *PublicIPAddressSku_STATUS) AssignProperties_To_PublicIPAddressSku_STATUS(destination *v20250301s.PublicIPAddressSku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(addressSku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(addressSku.Name)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(addressSku.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSku_STATUS interface (if implemented) to customize the conversion
+	var addressSkuAsAny any = addressSku
+	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku_STATUS); ok {
+		err := augmentedAddressSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
@@ -374,6 +2147,137 @@ type PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded struct {
 
 	// Reference: Resource ID.
 	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
+}
+
+// AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded populates our PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded from the provided source PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+func (embedded *PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(source *v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Reference
+	if source.Reference != nil {
+		reference := source.Reference.Copy()
+		embedded.Reference = &reference
+	} else {
+		embedded.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded populates the provided destination PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded from our PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
+func (embedded *PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(destination *v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Reference
+	if embedded.Reference != nil {
+		reference := embedded.Reference.Copy()
+		destination.Reference = &reference
+	} else {
+		destination.Reference = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDdosSettings interface {
+	AssignPropertiesFrom(src *v20250301s.DdosSettings) error
+	AssignPropertiesTo(dst *v20250301s.DdosSettings) error
+}
+
+type augmentConversionForDdosSettings_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.DdosSettings_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.DdosSettings_STATUS) error
+}
+
+type augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) error
+}
+
+type augmentConversionForIpTag interface {
+	AssignPropertiesFrom(src *v20250301s.IpTag) error
+	AssignPropertiesTo(dst *v20250301s.IpTag) error
+}
+
+type augmentConversionForIpTag_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.IpTag_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.IpTag_STATUS) error
+}
+
+type augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) error
+}
+
+type augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) error
+}
+
+type augmentConversionForPublicIPAddressDnsSettings interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressDnsSettings) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressDnsSettings) error
+}
+
+type augmentConversionForPublicIPAddressDnsSettings_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressDnsSettings_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressDnsSettings_STATUS) error
+}
+
+type augmentConversionForPublicIPAddressOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressOperatorSpec) error
+}
+
+type augmentConversionForPublicIPAddressSku interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressSku) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressSku) error
+}
+
+type augmentConversionForPublicIPAddressSku_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressSku_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressSku_STATUS) error
+}
+
+type augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *v20250301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) error
 }
 
 func init() {

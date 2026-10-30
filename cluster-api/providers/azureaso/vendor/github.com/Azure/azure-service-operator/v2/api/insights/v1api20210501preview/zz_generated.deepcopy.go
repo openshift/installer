@@ -85,7 +85,7 @@ func (in *DiagnosticSettingOperatorSpec) DeepCopyInto(out *DiagnosticSettingOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func (in *DiagnosticSettingOperatorSpec) DeepCopyInto(out *DiagnosticSettingOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

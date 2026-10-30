@@ -116,7 +116,12 @@ func (gateway *VirtualNetworkGateway) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (gateway *VirtualNetworkGateway) createValidations() []func(ctx context.Context, obj *v20201101.VirtualNetworkGateway) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201101.VirtualNetworkGateway) (admission.Warnings, error){gateway.validateResourceReferences, gateway.validateOwnerReference, gateway.validateSecretDestinations, gateway.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201101.VirtualNetworkGateway) (admission.Warnings, error){
+		gateway.validateResourceReferences,
+		gateway.validateOwnerReference,
+		gateway.validateSecretDestinations,
+		gateway.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventhub}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2021-11-01/AuthorizationRules.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2021-11-01/AuthorizationRules.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/authorizationRules/{authorizationRuleName}
 type NamespacesEventhubsAuthorizationRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (rule *NamespacesEventhubsAuthorizationRule) OriginalGVK() *schema.GroupVer
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2021-11-01/AuthorizationRules.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2021-11-01/AuthorizationRules.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}/authorizationRules/{authorizationRuleName}
 type NamespacesEventhubsAuthorizationRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -410,8 +411,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_Spec) AssignProperties_From_Nam
 	if source.Rights != nil {
 		rightList := make([]Namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, namespaces_Eventhubs_AuthorizationRule_Properties_Rights_Spec_Values)
 		}
 		rule.Rights = rightList
@@ -458,8 +457,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_Spec) AssignProperties_To_Names
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -646,8 +643,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_STATUS) AssignProperties_From_N
 	if source.Rights != nil {
 		rightList := make([]Namespaces_Eventhubs_AuthorizationRule_Properties_Rights_STATUS, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, namespaces_Eventhubs_AuthorizationRule_Properties_Rights_STATUS_Values)
 		}
 		rule.Rights = rightList
@@ -695,8 +690,6 @@ func (rule *NamespacesEventhubsAuthorizationRule_STATUS) AssignProperties_To_Nam
 	if rule.Rights != nil {
 		rightList := make([]string, len(rule.Rights))
 		for rightIndex, rightItem := range rule.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -780,8 +773,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -798,8 +789,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -837,8 +826,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -855,8 +842,6 @@ func (operator *NamespacesEventhubsAuthorizationRuleOperatorSpec) AssignProperti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -915,7 +900,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// PrimaryConnectionString
 	if source.PrimaryConnectionString != nil {
-		primaryConnectionString := source.PrimaryConnectionString.Copy()
+		primaryConnectionString := *source.PrimaryConnectionString.DeepCopy()
 		secrets.PrimaryConnectionString = &primaryConnectionString
 	} else {
 		secrets.PrimaryConnectionString = nil
@@ -923,7 +908,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// PrimaryKey
 	if source.PrimaryKey != nil {
-		primaryKey := source.PrimaryKey.Copy()
+		primaryKey := *source.PrimaryKey.DeepCopy()
 		secrets.PrimaryKey = &primaryKey
 	} else {
 		secrets.PrimaryKey = nil
@@ -931,7 +916,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// SecondaryConnectionString
 	if source.SecondaryConnectionString != nil {
-		secondaryConnectionString := source.SecondaryConnectionString.Copy()
+		secondaryConnectionString := *source.SecondaryConnectionString.DeepCopy()
 		secrets.SecondaryConnectionString = &secondaryConnectionString
 	} else {
 		secrets.SecondaryConnectionString = nil
@@ -939,7 +924,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// SecondaryKey
 	if source.SecondaryKey != nil {
-		secondaryKey := source.SecondaryKey.Copy()
+		secondaryKey := *source.SecondaryKey.DeepCopy()
 		secrets.SecondaryKey = &secondaryKey
 	} else {
 		secrets.SecondaryKey = nil
@@ -956,7 +941,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// PrimaryConnectionString
 	if secrets.PrimaryConnectionString != nil {
-		primaryConnectionString := secrets.PrimaryConnectionString.Copy()
+		primaryConnectionString := *secrets.PrimaryConnectionString.DeepCopy()
 		destination.PrimaryConnectionString = &primaryConnectionString
 	} else {
 		destination.PrimaryConnectionString = nil
@@ -964,7 +949,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// PrimaryKey
 	if secrets.PrimaryKey != nil {
-		primaryKey := secrets.PrimaryKey.Copy()
+		primaryKey := *secrets.PrimaryKey.DeepCopy()
 		destination.PrimaryKey = &primaryKey
 	} else {
 		destination.PrimaryKey = nil
@@ -972,7 +957,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// SecondaryConnectionString
 	if secrets.SecondaryConnectionString != nil {
-		secondaryConnectionString := secrets.SecondaryConnectionString.Copy()
+		secondaryConnectionString := *secrets.SecondaryConnectionString.DeepCopy()
 		destination.SecondaryConnectionString = &secondaryConnectionString
 	} else {
 		destination.SecondaryConnectionString = nil
@@ -980,7 +965,7 @@ func (secrets *NamespacesEventhubsAuthorizationRuleOperatorSecrets) AssignProper
 
 	// SecondaryKey
 	if secrets.SecondaryKey != nil {
-		secondaryKey := secrets.SecondaryKey.Copy()
+		secondaryKey := *secrets.SecondaryKey.DeepCopy()
 		destination.SecondaryKey = &secondaryKey
 	} else {
 		destination.SecondaryKey = nil

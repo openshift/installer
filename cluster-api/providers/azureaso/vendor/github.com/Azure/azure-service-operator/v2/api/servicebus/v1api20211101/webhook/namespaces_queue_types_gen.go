@@ -116,7 +116,12 @@ func (queue *NamespacesQueue) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (queue *NamespacesQueue) createValidations() []func(ctx context.Context, obj *v20211101.NamespacesQueue) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.NamespacesQueue) (admission.Warnings, error){queue.validateResourceReferences, queue.validateOwnerReference, queue.validateSecretDestinations, queue.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.NamespacesQueue) (admission.Warnings, error){
+		queue.validateResourceReferences,
+		queue.validateOwnerReference,
+		queue.validateSecretDestinations,
+		queue.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

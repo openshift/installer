@@ -89,7 +89,8 @@ type SBNamespaceProperties_STATUS struct {
 	// UpdatedAt: The time the namespace was updated.
 	UpdatedAt *string `json:"updatedAt,omitempty"`
 
-	// ZoneRedundant: Enabling this property creates a Premium Service Bus Namespace in regions supported availability zones.
+	// ZoneRedundant: This property reflects if zone redundancy has been enabled for namespaces in regions that support
+	// availability zones.
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 

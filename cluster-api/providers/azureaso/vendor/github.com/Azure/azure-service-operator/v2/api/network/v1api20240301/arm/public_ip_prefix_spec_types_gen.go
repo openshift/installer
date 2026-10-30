@@ -72,6 +72,7 @@ type PublicIPPrefixSku struct {
 
 // Nat Gateway resource.
 type NatGatewaySpec_PublicIPPrefix_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

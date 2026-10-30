@@ -62,19 +62,34 @@ func (c *configMapExpressionExporter) parseConfigMaps(expressions []*core.Destin
 			return nil, err
 		}
 
+		annotations, err := evaluateMapExpressions(c.expressionEvaluator, expression.Annotations, c.versionedObj, nil)
+		if err != nil {
+			return nil, eris.Wrapf(err, "evaluating annotation expressions for configmap %q", expression.Name)
+		}
+		labels, err := evaluateMapExpressions(c.expressionEvaluator, expression.Labels, c.versionedObj, nil)
+		if err != nil {
+			return nil, eris.Wrapf(err, "evaluating label expressions for configmap %q", expression.Name)
+		}
+
 		if value.Value != "" {
 			collector.AddValue(
 				&genruntime.ConfigMapDestination{
-					Name: expression.Name,
-					Key:  expression.Key,
-				}, value.Value)
+					Name:        expression.Name,
+					Key:         expression.Key,
+					Annotations: annotations,
+					Labels:      labels,
+				}, value.Value,
+			)
 		} else if len(value.Values) > 0 {
 			for k, v := range value.Values {
 				collector.AddValue(
 					&genruntime.ConfigMapDestination{
-						Name: expression.Name,
-						Key:  k,
-					}, v)
+						Name:        expression.Name,
+						Key:         k,
+						Annotations: annotations,
+						Labels:      labels,
+					}, v,
+				)
 			}
 		} else {
 			return nil, eris.Errorf("unexpected expression output")
@@ -129,19 +144,34 @@ func (s *secretExpressionExporter) parseSecrets(
 			return nil, err
 		}
 
+		annotations, err := evaluateMapExpressions(s.expressionEvaluator, expression.Annotations, versionedObj, rawSecrets)
+		if err != nil {
+			return nil, eris.Wrapf(err, "evaluating annotation expressions for secret %q", expression.Name)
+		}
+		labels, err := evaluateMapExpressions(s.expressionEvaluator, expression.Labels, versionedObj, rawSecrets)
+		if err != nil {
+			return nil, eris.Wrapf(err, "evaluating label expressions for secret %q", expression.Name)
+		}
+
 		if value.Value != "" {
 			collector.AddValue(
 				&genruntime.SecretDestination{
-					Name: expression.Name,
-					Key:  expression.Key,
-				}, value.Value)
+					Name:        expression.Name,
+					Key:         expression.Key,
+					Annotations: annotations,
+					Labels:      labels,
+				}, value.Value,
+			)
 		} else if len(value.Values) > 0 {
 			for k, v := range value.Values {
 				collector.AddValue(
 					&genruntime.SecretDestination{
-						Name: expression.Name,
-						Key:  k,
-					}, v)
+						Name:        expression.Name,
+						Key:         k,
+						Annotations: annotations,
+						Labels:      labels,
+					}, v,
+				)
 			}
 		} else {
 			return nil, eris.Errorf("unexpected expression output")
@@ -153,6 +183,33 @@ func (s *secretExpressionExporter) parseSecrets(
 		return nil, err
 	}
 	return secrets.SliceToClientObjectSlice(result), nil
+}
+
+// evaluateMapExpressions evaluates each value in the map as a CEL expression that must return a string.
+// Returns nil if the input map is empty.
+func evaluateMapExpressions(
+	evaluator asocel.ExpressionEvaluator,
+	expressions map[string]string,
+	self any,
+	secret map[string]string,
+) (map[string]string, error) {
+	if len(expressions) == 0 {
+		return nil, nil
+	}
+
+	result := make(map[string]string, len(expressions))
+	for key, expr := range expressions {
+		exprResult, err := evaluator.CompileAndRun(expr, self, secret)
+		if err != nil {
+			return nil, eris.Wrapf(err, "evaluating expression for key %q", key)
+		}
+		if exprResult.Value == "" && len(exprResult.Values) > 0 {
+			return nil, eris.Errorf("expression for key %q must return a string, not map[string]string", key)
+		}
+		result[key] = exprResult.Value
+	}
+
+	return result, nil
 }
 
 func findRequiredSecrets(

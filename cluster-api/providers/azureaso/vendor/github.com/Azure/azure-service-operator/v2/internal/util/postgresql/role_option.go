@@ -82,7 +82,8 @@ func GetUserRoleOptions(ctx context.Context, db *sql.DB, user SQLUser) (*RoleOpt
 	rows, err := db.QueryContext(
 		ctx,
 		"SELECT rolcanlogin, rolcreaterole, rolcreatedb, rolreplication FROM pg_roles WHERE rolname !~ '^pg_' AND rolname = $1",
-		user.Name)
+		user.Name,
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "listing grants for user %s", user)
 	}

@@ -116,7 +116,12 @@ func (policy *BackupVaultsBackupPolicy) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (policy *BackupVaultsBackupPolicy) createValidations() []func(ctx context.Context, obj *v20231101.BackupVaultsBackupPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231101.BackupVaultsBackupPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20231101.BackupVaultsBackupPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

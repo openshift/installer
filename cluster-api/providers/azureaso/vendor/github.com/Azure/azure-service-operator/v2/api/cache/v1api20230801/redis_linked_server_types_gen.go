@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cache}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /redis/resource-manager/Microsoft.Cache/stable/2023-08-01/redis.json
+// - Generated from: /redis/resource-manager/Microsoft.Cache/Redis/stable/2023-08-01/redis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{name}/linkedServers/{linkedServerName}
 type RedisLinkedServer struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &RedisLinkedServer{}
 
 // ConvertFrom populates our RedisLinkedServer from the provided hub RedisLinkedServer
 func (server *RedisLinkedServer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.RedisLinkedServer)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230801/storage/RedisLinkedServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.RedisLinkedServer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return server.AssignProperties_From_RedisLinkedServer(source)
+	err = server.AssignProperties_From_RedisLinkedServer(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to server")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub RedisLinkedServer from our RedisLinkedServer
 func (server *RedisLinkedServer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.RedisLinkedServer)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230801/storage/RedisLinkedServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.RedisLinkedServer
+	err := server.AssignProperties_To_RedisLinkedServer(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from server")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return server.AssignProperties_To_RedisLinkedServer(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &RedisLinkedServer{}
@@ -86,17 +101,6 @@ func (server *RedisLinkedServer) SecretDestinationExpressions() []*core.Destinat
 		return nil
 	}
 	return server.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &RedisLinkedServer{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (server *RedisLinkedServer) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Redis_LinkedServer_STATUS); ok {
-		return server.Spec.Initialize_From_Redis_LinkedServer_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Redis_LinkedServer_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &RedisLinkedServer{}
@@ -237,7 +241,7 @@ func (server *RedisLinkedServer) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /redis/resource-manager/Microsoft.Cache/stable/2023-08-01/redis.json
+// - Generated from: /redis/resource-manager/Microsoft.Cache/Redis/stable/2023-08-01/redis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{name}/linkedServers/{linkedServerName}
 type RedisLinkedServerList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -795,32 +799,6 @@ func (server *RedisLinkedServer_Spec) AssignProperties_To_RedisLinkedServer_Spec
 	return nil
 }
 
-// Initialize_From_Redis_LinkedServer_STATUS populates our RedisLinkedServer_Spec from the provided source Redis_LinkedServer_STATUS
-func (server *RedisLinkedServer_Spec) Initialize_From_Redis_LinkedServer_STATUS(source *Redis_LinkedServer_STATUS) error {
-
-	// LinkedRedisCacheLocation
-	server.LinkedRedisCacheLocation = genruntime.ClonePointerToString(source.LinkedRedisCacheLocation)
-
-	// LinkedRedisCacheReference
-	if source.LinkedRedisCacheId != nil {
-		linkedRedisCacheReference := genruntime.CreateResourceReferenceFromARMID(*source.LinkedRedisCacheId)
-		server.LinkedRedisCacheReference = &linkedRedisCacheReference
-	} else {
-		server.LinkedRedisCacheReference = nil
-	}
-
-	// ServerRole
-	if source.ServerRole != nil {
-		serverRole := genruntime.ToEnum(string(*source.ServerRole), redisLinkedServerCreateProperties_ServerRole_Values)
-		server.ServerRole = &serverRole
-	} else {
-		server.ServerRole = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (server *RedisLinkedServer_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -859,8 +837,6 @@ func (operator *RedisLinkedServerOperatorSpec) AssignProperties_From_RedisLinked
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -877,8 +853,6 @@ func (operator *RedisLinkedServerOperatorSpec) AssignProperties_From_RedisLinked
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -904,8 +878,6 @@ func (operator *RedisLinkedServerOperatorSpec) AssignProperties_To_RedisLinkedSe
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -922,8 +894,6 @@ func (operator *RedisLinkedServerOperatorSpec) AssignProperties_To_RedisLinkedSe
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

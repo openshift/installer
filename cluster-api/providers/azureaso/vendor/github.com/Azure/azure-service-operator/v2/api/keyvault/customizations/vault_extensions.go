@@ -33,7 +33,6 @@ import (
 
 var _ extensions.ARMResourceModifier = &VaultExtension{}
 
-//nolint:staticcheck // Underscores for enum values is our convention in ASO
 const (
 	CreateMode_Default         = "default"
 	CreateMode_Recover         = "recover"
@@ -55,7 +54,8 @@ func (ex *VaultExtension) ModifyARMResource(
 	if !ok {
 		return nil, eris.Errorf(
 			"Cannot run VaultExtension.ModifyARMResource() with unexpected resource type %T",
-			obj)
+			obj,
+		)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -142,7 +142,8 @@ func (ex *VaultExtension) handleCreateOrRecover(
 		"KeyVault reconciliation requested CreateOrRecover",
 		"KeyVault", kv.Name,
 		"softDeletedKeyvaultExists", deletedKeyVault.Exists,
-		"createMode", result)
+		"createMode", result,
+	)
 
 	return result, err
 }
@@ -165,7 +166,8 @@ func (ex *VaultExtension) handlePurgeThenCreate(
 	log.Info(
 		"KeyVault reconciliation requested PurgeThenCreate",
 		"KeyVault", kv.Name,
-		"softDeletedKeyVaultExists", deletedKeyVault.Exists)
+		"softDeletedKeyVaultExists", deletedKeyVault.Exists,
+	)
 
 	if deletedKeyVault.Exists {
 		location := to.Value(kv.Spec.Location)
@@ -275,7 +277,7 @@ func (*VaultExtension) getOwner(
 	var id *arm.ResourceID
 
 	// No need to wait for resources that don't have an owner
-	switch owner.Result { // nolint: exhaustive
+	switch owner.Result {
 	case resolver.OwnerFoundKubernetes:
 		rg, ok := owner.Owner.(*resources.ResourceGroup)
 		if !ok {
@@ -312,7 +314,8 @@ func checkResourceGroupsMatch(new *arm.ResourceID, old *arm.ResourceID) error {
 			eris.Errorf(
 				"cannot recover KeyVault: new resourceGroup %s does not match old resource group %s",
 				new.ResourceGroupName,
-				old.ResourceGroupName),
+				old.ResourceGroupName,
+			),
 
 			conditions.ConditionSeverityError,
 			conditions.ReasonFailed,

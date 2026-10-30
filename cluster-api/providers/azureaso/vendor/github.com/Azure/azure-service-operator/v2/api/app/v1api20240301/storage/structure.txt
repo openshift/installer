@@ -402,13 +402,13 @@ ContainerApp: Resource
 │   │   ├── MaxInactiveRevisions: *int
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── Registries: Object (5 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── PasswordSecretRef: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   ├── Server: *string
 │   │   │   └── Username: *string
 │   │   ├── Secrets: Object (5 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── KeyVaultUrl: *string
 │   │   │   ├── Name: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -821,7 +821,7 @@ Job: Resource
 │   │   │   └── ReplicaCompletionCount: *int
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── Registries: Object (5 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── PasswordSecretRef: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   ├── Server: *string
@@ -834,7 +834,7 @@ Job: Resource
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   └── ReplicaCompletionCount: *int
 │   │   ├── Secrets: Object (5 properties)[]
-│   │   │   ├── IdentityReference: *genruntime.ResourceReference
+│   │   │   ├── IdentityReference: *genruntime.WellKnownResourceReference
 │   │   │   ├── KeyVaultUrl: *string
 │   │   │   ├── Name: *string
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -1202,4 +1202,400 @@ ManagedEnvironment: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── WorkloadProfileType: *string
     └── ZoneRedundant: *bool
+
+augmentConversionForAllowedAudiencesValidation: Interface
+
+augmentConversionForAllowedAudiencesValidation_STATUS: Interface
+
+augmentConversionForAllowedPrincipals: Interface
+
+augmentConversionForAllowedPrincipals_STATUS: Interface
+
+augmentConversionForAppLogsConfiguration: Interface
+
+augmentConversionForAppLogsConfiguration_STATUS: Interface
+
+augmentConversionForAppRegistration: Interface
+
+augmentConversionForAppRegistration_STATUS: Interface
+
+augmentConversionForApple: Interface
+
+augmentConversionForAppleRegistration: Interface
+
+augmentConversionForAppleRegistration_STATUS: Interface
+
+augmentConversionForApple_STATUS: Interface
+
+augmentConversionForAuthConfig: Interface
+
+augmentConversionForAuthConfigOperatorSpec: Interface
+
+augmentConversionForAuthConfig_STATUS: Interface
+
+augmentConversionForAuthConfig_Spec: Interface
+
+augmentConversionForAuthPlatform: Interface
+
+augmentConversionForAuthPlatform_STATUS: Interface
+
+augmentConversionForAzureActiveDirectory: Interface
+
+augmentConversionForAzureActiveDirectoryLogin: Interface
+
+augmentConversionForAzureActiveDirectoryLogin_STATUS: Interface
+
+augmentConversionForAzureActiveDirectoryRegistration: Interface
+
+augmentConversionForAzureActiveDirectoryRegistration_STATUS: Interface
+
+augmentConversionForAzureActiveDirectoryValidation: Interface
+
+augmentConversionForAzureActiveDirectoryValidation_STATUS: Interface
+
+augmentConversionForAzureActiveDirectory_STATUS: Interface
+
+augmentConversionForAzureStaticWebApps: Interface
+
+augmentConversionForAzureStaticWebAppsRegistration: Interface
+
+augmentConversionForAzureStaticWebAppsRegistration_STATUS: Interface
+
+augmentConversionForAzureStaticWebApps_STATUS: Interface
+
+augmentConversionForBaseContainer: Interface
+
+augmentConversionForBaseContainer_STATUS: Interface
+
+augmentConversionForBlobStorageTokenStore: Interface
+
+augmentConversionForBlobStorageTokenStore_STATUS: Interface
+
+augmentConversionForClientRegistration: Interface
+
+augmentConversionForClientRegistration_STATUS: Interface
+
+augmentConversionForConfiguration: Interface
+
+augmentConversionForConfiguration_STATUS: Interface
+
+augmentConversionForContainer: Interface
+
+augmentConversionForContainerApp: Interface
+
+augmentConversionForContainerAppOperatorConfigMaps: Interface
+
+augmentConversionForContainerAppOperatorSpec: Interface
+
+augmentConversionForContainerAppProbe: Interface
+
+augmentConversionForContainerAppProbe_HttpGet: Interface
+
+augmentConversionForContainerAppProbe_HttpGet_HttpHeaders: Interface
+
+augmentConversionForContainerAppProbe_HttpGet_HttpHeaders_STATUS: Interface
+
+augmentConversionForContainerAppProbe_HttpGet_STATUS: Interface
+
+augmentConversionForContainerAppProbe_STATUS: Interface
+
+augmentConversionForContainerAppProbe_TcpSocket: Interface
+
+augmentConversionForContainerAppProbe_TcpSocket_STATUS: Interface
+
+augmentConversionForContainerApp_STATUS: Interface
+
+augmentConversionForContainerApp_Spec: Interface
+
+augmentConversionForContainerResources: Interface
+
+augmentConversionForContainerResources_STATUS: Interface
+
+augmentConversionForContainer_STATUS: Interface
+
+augmentConversionForCookieExpiration: Interface
+
+augmentConversionForCookieExpiration_STATUS: Interface
+
+augmentConversionForCorsPolicy: Interface
+
+augmentConversionForCorsPolicy_STATUS: Interface
+
+augmentConversionForCustomDomain: Interface
+
+augmentConversionForCustomDomainConfiguration: Interface
+
+augmentConversionForCustomDomainConfiguration_STATUS: Interface
+
+augmentConversionForCustomDomain_STATUS: Interface
+
+augmentConversionForCustomOpenIdConnectProvider: Interface
+
+augmentConversionForCustomOpenIdConnectProvider_STATUS: Interface
+
+augmentConversionForCustomScaleRule: Interface
+
+augmentConversionForCustomScaleRule_STATUS: Interface
+
+augmentConversionForDapr: Interface
+
+augmentConversionForDaprConfiguration_STATUS: Interface
+
+augmentConversionForDapr_STATUS: Interface
+
+augmentConversionForDefaultAuthorizationPolicy: Interface
+
+augmentConversionForDefaultAuthorizationPolicy_STATUS: Interface
+
+augmentConversionForEncryptionSettings: Interface
+
+augmentConversionForEncryptionSettings_STATUS: Interface
+
+augmentConversionForEnvironmentVar: Interface
+
+augmentConversionForEnvironmentVar_STATUS: Interface
+
+augmentConversionForExtendedLocation: Interface
+
+augmentConversionForExtendedLocation_STATUS: Interface
+
+augmentConversionForFacebook: Interface
+
+augmentConversionForFacebook_STATUS: Interface
+
+augmentConversionForForwardProxy: Interface
+
+augmentConversionForForwardProxy_STATUS: Interface
+
+augmentConversionForGitHub: Interface
+
+augmentConversionForGitHub_STATUS: Interface
+
+augmentConversionForGlobalValidation: Interface
+
+augmentConversionForGlobalValidation_STATUS: Interface
+
+augmentConversionForGoogle: Interface
+
+augmentConversionForGoogle_STATUS: Interface
+
+augmentConversionForHttpScaleRule: Interface
+
+augmentConversionForHttpScaleRule_STATUS: Interface
+
+augmentConversionForHttpSettings: Interface
+
+augmentConversionForHttpSettingsRoutes: Interface
+
+augmentConversionForHttpSettingsRoutes_STATUS: Interface
+
+augmentConversionForHttpSettings_STATUS: Interface
+
+augmentConversionForIdentityProviders: Interface
+
+augmentConversionForIdentityProviders_STATUS: Interface
+
+augmentConversionForIngress: Interface
+
+augmentConversionForIngressPortMapping: Interface
+
+augmentConversionForIngressPortMapping_STATUS: Interface
+
+augmentConversionForIngress_STATUS: Interface
+
+augmentConversionForIngress_StickySessions: Interface
+
+augmentConversionForIngress_StickySessions_STATUS: Interface
+
+augmentConversionForIpSecurityRestrictionRule: Interface
+
+augmentConversionForIpSecurityRestrictionRule_STATUS: Interface
+
+augmentConversionForJob: Interface
+
+augmentConversionForJobConfiguration: Interface
+
+augmentConversionForJobConfiguration_EventTriggerConfig: Interface
+
+augmentConversionForJobConfiguration_EventTriggerConfig_STATUS: Interface
+
+augmentConversionForJobConfiguration_ManualTriggerConfig: Interface
+
+augmentConversionForJobConfiguration_ManualTriggerConfig_STATUS: Interface
+
+augmentConversionForJobConfiguration_STATUS: Interface
+
+augmentConversionForJobConfiguration_ScheduleTriggerConfig: Interface
+
+augmentConversionForJobConfiguration_ScheduleTriggerConfig_STATUS: Interface
+
+augmentConversionForJobOperatorSpec: Interface
+
+augmentConversionForJobScale: Interface
+
+augmentConversionForJobScaleRule: Interface
+
+augmentConversionForJobScaleRule_STATUS: Interface
+
+augmentConversionForJobScale_STATUS: Interface
+
+augmentConversionForJobTemplate: Interface
+
+augmentConversionForJobTemplate_STATUS: Interface
+
+augmentConversionForJob_STATUS: Interface
+
+augmentConversionForJob_Spec: Interface
+
+augmentConversionForJwtClaimChecks: Interface
+
+augmentConversionForJwtClaimChecks_STATUS: Interface
+
+augmentConversionForKedaConfiguration_STATUS: Interface
+
+augmentConversionForLogAnalyticsConfiguration: Interface
+
+augmentConversionForLogAnalyticsConfiguration_STATUS: Interface
+
+augmentConversionForLogin: Interface
+
+augmentConversionForLoginRoutes: Interface
+
+augmentConversionForLoginRoutes_STATUS: Interface
+
+augmentConversionForLoginScopes: Interface
+
+augmentConversionForLoginScopes_STATUS: Interface
+
+augmentConversionForLogin_STATUS: Interface
+
+augmentConversionForManagedEnvironment: Interface
+
+augmentConversionForManagedEnvironmentOperatorSpec: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerAuthentication_STATUS: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerAuthentication_Spec: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_STATUS: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Encryption_Spec: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_STATUS: Interface
+
+augmentConversionForManagedEnvironment_Properties_PeerTrafficConfiguration_Spec: Interface
+
+augmentConversionForManagedEnvironment_STATUS: Interface
+
+augmentConversionForManagedEnvironment_Spec: Interface
+
+augmentConversionForManagedServiceIdentity: Interface
+
+augmentConversionForManagedServiceIdentity_STATUS: Interface
+
+augmentConversionForMtls: Interface
+
+augmentConversionForMtls_STATUS: Interface
+
+augmentConversionForNonce: Interface
+
+augmentConversionForNonce_STATUS: Interface
+
+augmentConversionForOpenIdConnectClientCredential: Interface
+
+augmentConversionForOpenIdConnectClientCredential_STATUS: Interface
+
+augmentConversionForOpenIdConnectConfig: Interface
+
+augmentConversionForOpenIdConnectConfig_STATUS: Interface
+
+augmentConversionForOpenIdConnectLogin: Interface
+
+augmentConversionForOpenIdConnectLogin_STATUS: Interface
+
+augmentConversionForOpenIdConnectRegistration: Interface
+
+augmentConversionForOpenIdConnectRegistration_STATUS: Interface
+
+augmentConversionForQueueScaleRule: Interface
+
+augmentConversionForQueueScaleRule_STATUS: Interface
+
+augmentConversionForRegistryCredentials: Interface
+
+augmentConversionForRegistryCredentials_STATUS: Interface
+
+augmentConversionForScale: Interface
+
+augmentConversionForScaleRule: Interface
+
+augmentConversionForScaleRuleAuth: Interface
+
+augmentConversionForScaleRuleAuth_STATUS: Interface
+
+augmentConversionForScaleRule_STATUS: Interface
+
+augmentConversionForScale_STATUS: Interface
+
+augmentConversionForSecret: Interface
+
+augmentConversionForSecretVolumeItem: Interface
+
+augmentConversionForSecretVolumeItem_STATUS: Interface
+
+augmentConversionForSecret_STATUS: Interface
+
+augmentConversionForService: Interface
+
+augmentConversionForServiceBind: Interface
+
+augmentConversionForServiceBind_STATUS: Interface
+
+augmentConversionForService_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForTcpScaleRule: Interface
+
+augmentConversionForTcpScaleRule_STATUS: Interface
+
+augmentConversionForTemplate: Interface
+
+augmentConversionForTemplate_STATUS: Interface
+
+augmentConversionForTokenStore: Interface
+
+augmentConversionForTokenStore_STATUS: Interface
+
+augmentConversionForTrafficWeight: Interface
+
+augmentConversionForTrafficWeight_STATUS: Interface
+
+augmentConversionForTwitter: Interface
+
+augmentConversionForTwitterRegistration: Interface
+
+augmentConversionForTwitterRegistration_STATUS: Interface
+
+augmentConversionForTwitter_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentity_STATUS: Interface
+
+augmentConversionForVnetConfiguration: Interface
+
+augmentConversionForVnetConfiguration_STATUS: Interface
+
+augmentConversionForVolume: Interface
+
+augmentConversionForVolumeMount: Interface
+
+augmentConversionForVolumeMount_STATUS: Interface
+
+augmentConversionForVolume_STATUS: Interface
+
+augmentConversionForWorkloadProfile: Interface
+
+augmentConversionForWorkloadProfile_STATUS: Interface
 

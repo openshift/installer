@@ -38,7 +38,9 @@ type TableProperties struct {
 type TableSignedIdentifier struct {
 	// AccessPolicy: Access policy
 	AccessPolicy *TableAccessPolicy `json:"accessPolicy,omitempty"`
-	Id           *string            `json:"id,omitempty"`
+
+	// Id: unique-64-character-value of the stored access policy.
+	Id *string `json:"id,omitempty"`
 }
 
 // Table Access Policy Properties Object.

@@ -8,6 +8,8 @@ import (
 	v20201101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
 	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
+	v20250301 "github.com/Azure/azure-service-operator/v2/api/network/v20250301"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *NetworkInterfaceExtension) GetExtendedResources() []genruntime.
 		&v20201101.NetworkInterface{},
 		&v20201101s.NetworkInterface{},
 		&v20240301.NetworkInterface{},
-		&v20240301s.NetworkInterface{}}
+		&v20240301s.NetworkInterface{},
+		&v20250301.NetworkInterface{},
+		&v20250301s.NetworkInterface{}}
 }

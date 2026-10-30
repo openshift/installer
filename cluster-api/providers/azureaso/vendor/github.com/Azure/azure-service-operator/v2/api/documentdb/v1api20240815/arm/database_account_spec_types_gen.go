@@ -86,10 +86,6 @@ type DatabaseAccountCreateUpdateProperties struct {
 	// CreateMode: Enum to indicate the mode of account creation.
 	CreateMode *CreateMode `json:"createMode,omitempty"`
 
-	// CustomerManagedKeyStatus: Indicates the status of the Customer Managed Key feature on the account. In case there are
-	// errors, the property provides troubleshooting guidance.
-	CustomerManagedKeyStatus *string `json:"customerManagedKeyStatus,omitempty"`
-
 	// DatabaseAccountOfferType: The offer type for the database
 	DatabaseAccountOfferType *DatabaseAccountOfferType `json:"databaseAccountOfferType,omitempty"`
 
@@ -144,8 +140,10 @@ type DatabaseAccountCreateUpdateProperties struct {
 	MinimalTlsVersion *MinimalTlsVersion `json:"minimalTlsVersion,omitempty"`
 
 	// NetworkAclBypass: Indicates what services are allowed to bypass firewall checks.
-	NetworkAclBypass            *NetworkAclBypass `json:"networkAclBypass,omitempty"`
-	NetworkAclBypassResourceIds []string          `json:"networkAclBypassResourceIds,omitempty"`
+	NetworkAclBypass *NetworkAclBypass `json:"networkAclBypass,omitempty"`
+
+	// NetworkAclBypassResourceIds: An array that contains the Resource Ids for Network Acl Bypass for the Cosmos DB account.
+	NetworkAclBypassResourceIds []string `json:"networkAclBypassResourceIds,omitempty"`
 
 	// PublicNetworkAccess: Whether requests from Public Network are allowed
 	PublicNetworkAccess *PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
@@ -427,6 +425,8 @@ type UserAssignedIdentityDetails struct {
 
 // Virtual Network ACL Rule object
 type VirtualNetworkRule struct {
+	// Id: Resource ID of a subnet, for example:
+	// /subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}.
 	Id *string `json:"id,omitempty"`
 
 	// IgnoreMissingVNetServiceEndpoint: Create firewall rule before the virtual network has vnet service endpoint enabled.

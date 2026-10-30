@@ -67,14 +67,14 @@ const (
 	// UserAgentSuffix is appended to the default User-Agent for Azure HTTP clients.
 	UserAgentSuffix = "AZURE_USER_AGENT_SUFFIX"
 	// MaxConcurrentReconciles is the number of threads/goroutines dedicated to reconciling each resource type.
-	// If not specified, the default is 1.
+	// If not specified, the default is 4.
 	// IMPORTANT: Having MaxConcurrentReconciles set to N does not mean that ASO is limited to N interactions with
 	// Azure at any given time, because the control loop yields to another resource while it is not actively issuing HTTP
 	// calls to Azure. Any single resource only blocks the control-loop for its resource-type for as long as it takes to issue
 	// an HTTP call to Azure, view the result, and make a decision. In most cases the time taken to perform these actions
 	// (and thus how long the loop is blocked and preventing other resources from being acted upon) is a few hundred
-	// milliseconds to at most a second or two. In a typical 60s period, many hundreds or even thousands of resources
-	// can be managed with this set to 1.
+	// milliseconds to at most a second or two. In a typical 60s period, hundreds of resources
+	// for a given resource type can be managed with this set to 1.
 	// MaxConcurrentReconciles applies to every registered resource type being watched/managed by ASO.
 	MaxConcurrentReconciles = "MAX_CONCURRENT_RECONCILES"
 	// RateLimitMode configures the internal rate-limiting mode.
@@ -101,4 +101,10 @@ const (
 	// DefaultReconcilePolicy allows to change default reconciliation policy to use when serviceoperator.azure.com/reconcile-policy annotation
 	// is not explicitly defined. If omitted, it will be automatically set to "manage"
 	DefaultReconcilePolicy = "DEFAULT_RECONCILE_POLICY"
+	// AllowMultiEnvManagement determines whether per-namespace and per-resource credentials can specify
+	// their own Azure cloud environment settings (AZURE_RESOURCE_MANAGER_ENDPOINT, AZURE_RESOURCE_MANAGER_AUDIENCE,
+	// and AZURE_AUTHORITY_HOST). When enabled, credentials must specify ALL three of these settings or NONE of them.
+	// When disabled, any attempt to specify these settings in a credential will cause reconciliation to fail.
+	// This defaults to false for security reasons.
+	AllowMultiEnvManagement = "ALLOW_MULTI_ENV_MANAGEMENT"
 )

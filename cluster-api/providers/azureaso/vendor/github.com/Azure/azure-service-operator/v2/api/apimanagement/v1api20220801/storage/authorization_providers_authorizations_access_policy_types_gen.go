@@ -4,6 +4,7 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +13,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources=authorizationprovidersauthorizationsaccesspolicies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apimanagement.azure.com,resources={authorizationprovidersauthorizationsaccesspolicies/status,authorizationprovidersauthorizationsaccesspolicies/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicy
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}/accessPolicies/{authorizationAccessPolicyId}
 type AuthorizationProvidersAuthorizationsAccessPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +44,42 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) GetConditions() 
 // SetConditions sets the conditions on the resource status
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) SetConditions(conditions conditions.Conditions) {
 	policy.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &AuthorizationProvidersAuthorizationsAccessPolicy{}
+
+// ConvertFrom populates our AuthorizationProvidersAuthorizationsAccessPolicy from the provided hub AuthorizationProvidersAuthorizationsAccessPolicy
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) ConvertFrom(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvidersAuthorizationsAccessPolicy
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
+	}
+
+	err = policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to policy")
+	}
+
+	return nil
+}
+
+// ConvertTo populates the provided hub AuthorizationProvidersAuthorizationsAccessPolicy from our AuthorizationProvidersAuthorizationsAccessPolicy
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) ConvertTo(hub conversion.Hub) error {
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvidersAuthorizationsAccessPolicy
+	err := policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from policy")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
+	}
+
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvidersAuthorizationsAccessPolicy{}
@@ -142,8 +177,75 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) SetStatus(status
 	return nil
 }
 
-// Hub marks that this AuthorizationProvidersAuthorizationsAccessPolicy is the hub type for conversion
-func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) Hub() {}
+// AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy populates our AuthorizationProvidersAuthorizationsAccessPolicy from the provided source AuthorizationProvidersAuthorizationsAccessPolicy
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy(source *storage.AuthorizationProvidersAuthorizationsAccessPolicy) error {
+
+	// ObjectMeta
+	policy.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec AuthorizationProvidersAuthorizationsAccessPolicy_Spec
+	err := spec.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec() to populate field Spec")
+	}
+	policy.Spec = spec
+
+	// Status
+	var status AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
+	err = status.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS() to populate field Status")
+	}
+	policy.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy populates the provided destination AuthorizationProvidersAuthorizationsAccessPolicy from our AuthorizationProvidersAuthorizationsAccessPolicy
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy(destination *storage.AuthorizationProvidersAuthorizationsAccessPolicy) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *policy.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec
+	err := policy.Spec.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
+	err = policy.Status.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +259,17 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) OriginalGVK() *s
 // +kubebuilder:object:root=true
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicy
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}/accessPolicies/{authorizationAccessPolicyId}
 type AuthorizationProvidersAuthorizationsAccessPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AuthorizationProvidersAuthorizationsAccessPolicy `json:"items"`
+}
+
+type augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorizationsAccessPolicy) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorizationsAccessPolicy) error
 }
 
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicy_Spec
@@ -189,20 +296,196 @@ var _ genruntime.ConvertibleSpec = &AuthorizationProvidersAuthorizationsAccessPo
 
 // ConvertSpecFrom populates our AuthorizationProvidersAuthorizationsAccessPolicy_Spec from the provided source
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == policy {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec)
+	if ok {
+		// Populate our instance from source
+		return policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(src)
 	}
 
-	return source.ConvertSpecTo(policy)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our AuthorizationProvidersAuthorizationsAccessPolicy_Spec
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == policy {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec)
+	if ok {
+		// Populate destination from our instance
+		return policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(policy)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec{}
+	err := policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec populates our AuthorizationProvidersAuthorizationsAccessPolicy_Spec from the provided source AuthorizationProvidersAuthorizationsAccessPolicy_Spec
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(source *storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	policy.AzureName = source.AzureName
+
+	// ObjectId
+	policy.ObjectId = genruntime.ClonePointerToString(source.ObjectId)
+
+	// ObjectIdFromConfig
+	if source.ObjectIdFromConfig != nil {
+		objectIdFromConfig := source.ObjectIdFromConfig.Copy()
+		policy.ObjectIdFromConfig = &objectIdFromConfig
+	} else {
+		policy.ObjectIdFromConfig = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec
+		err := operatorSpec.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		policy.OperatorSpec = &operatorSpec
+	} else {
+		policy.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	policy.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		policy.Owner = &owner
+	} else {
+		policy.Owner = nil
+	}
+
+	// TenantId
+	policy.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// TenantIdFromConfig
+	if source.TenantIdFromConfig != nil {
+		tenantIdFromConfig := source.TenantIdFromConfig.Copy()
+		policy.TenantIdFromConfig = &tenantIdFromConfig
+	} else {
+		policy.TenantIdFromConfig = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec populates the provided destination AuthorizationProvidersAuthorizationsAccessPolicy_Spec from our AuthorizationProvidersAuthorizationsAccessPolicy_Spec
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_Spec) AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_Spec(destination *storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// AzureName
+	destination.AzureName = policy.AzureName
+
+	// ObjectId
+	destination.ObjectId = genruntime.ClonePointerToString(policy.ObjectId)
+
+	// ObjectIdFromConfig
+	if policy.ObjectIdFromConfig != nil {
+		objectIdFromConfig := policy.ObjectIdFromConfig.Copy()
+		destination.ObjectIdFromConfig = &objectIdFromConfig
+	} else {
+		destination.ObjectIdFromConfig = nil
+	}
+
+	// OperatorSpec
+	if policy.OperatorSpec != nil {
+		var operatorSpec storage.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec
+		err := policy.OperatorSpec.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = policy.OriginalVersion
+
+	// Owner
+	if policy.Owner != nil {
+		owner := policy.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(policy.TenantId)
+
+	// TenantIdFromConfig
+	if policy.TenantIdFromConfig != nil {
+		tenantIdFromConfig := policy.TenantIdFromConfig.Copy()
+		destination.TenantIdFromConfig = &tenantIdFromConfig
+	} else {
+		destination.TenantIdFromConfig = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
@@ -220,20 +503,146 @@ var _ genruntime.ConvertibleStatus = &AuthorizationProvidersAuthorizationsAccess
 
 // ConvertStatusFrom populates our AuthorizationProvidersAuthorizationsAccessPolicy_STATUS from the provided source
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == policy {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS)
+	if ok {
+		// Populate our instance from source
+		return policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(policy)
+	// Convert to an intermediate form
+	src = &storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = policy.AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == policy {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(policy)
+	// Convert to an intermediate form
+	dst = &storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS{}
+	err := policy.AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS populates our AuthorizationProvidersAuthorizationsAccessPolicy_STATUS from the provided source AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(source *storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	policy.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	policy.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ObjectId
+	policy.ObjectId = genruntime.ClonePointerToString(source.ObjectId)
+
+	// TenantId
+	policy.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// Type
+	policy.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS populates the provided destination AuthorizationProvidersAuthorizationsAccessPolicy_STATUS from our AuthorizationProvidersAuthorizationsAccessPolicy_STATUS
+func (policy *AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicy_STATUS(destination *storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(policy.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(policy.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(policy.Name)
+
+	// ObjectId
+	destination.ObjectId = genruntime.ClonePointerToString(policy.ObjectId)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(policy.TenantId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(policy.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_Spec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorizationsAccessPolicy_Spec) error
+}
+
+type augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicy_STATUS interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorizationsAccessPolicy_STATUS) error
 }
 
 // Storage version of v1api20220801.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec
@@ -242,6 +651,125 @@ type AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec populates our AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec from the provided source AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec
+func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) AssignProperties_From_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec(source *storage.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec populates the provided destination AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec from our AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec
+func (operator *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) AssignProperties_To_AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec(destination *storage.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) error
+	AssignPropertiesTo(dst *storage.AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) error
 }
 
 func init() {

@@ -27,8 +27,12 @@ SearchService: Resource
 │   │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   │   └── Value: *string
 │   │   └── PropertyBag: genruntime.PropertyBag
-│   ├── OperatorSpec: *Object (4 properties)
+│   ├── OperatorSpec: *Object (5 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── ConfigMaps: *Object (3 properties)
+│   │   │   ├── IdentityPrincipalId: *genruntime.ConfigMapDestination
+│   │   │   ├── IdentityTenantId: *genruntime.ConfigMapDestination
+│   │   │   └── PropertyBag: genruntime.PropertyBag
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   ├── SecretExpressions: *core.DestinationExpression[]
 │   │   └── Secrets: *Object (4 properties)
@@ -91,4 +95,48 @@ SearchService: Resource
     ├── StatusDetails: *string
     ├── Tags: map[string]string
     └── Type: *string
+
+augmentConversionForDataPlaneAadOrApiKeyAuthOption: Interface
+
+augmentConversionForDataPlaneAadOrApiKeyAuthOption_STATUS: Interface
+
+augmentConversionForDataPlaneAuthOptions: Interface
+
+augmentConversionForDataPlaneAuthOptions_STATUS: Interface
+
+augmentConversionForEncryptionWithCmk: Interface
+
+augmentConversionForEncryptionWithCmk_STATUS: Interface
+
+augmentConversionForIdentity: Interface
+
+augmentConversionForIdentity_STATUS: Interface
+
+augmentConversionForIpRule: Interface
+
+augmentConversionForIpRule_STATUS: Interface
+
+augmentConversionForNetworkRuleSet: Interface
+
+augmentConversionForNetworkRuleSet_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForSearchService: Interface
+
+augmentConversionForSearchServiceOperatorConfigMaps: Interface
+
+augmentConversionForSearchServiceOperatorSecrets: Interface
+
+augmentConversionForSearchServiceOperatorSpec: Interface
+
+augmentConversionForSearchService_STATUS: Interface
+
+augmentConversionForSearchService_Spec: Interface
+
+augmentConversionForSharedPrivateLinkResource_STATUS: Interface
+
+augmentConversionForSku: Interface
+
+augmentConversionForSku_STATUS: Interface
 

@@ -54,7 +54,8 @@ func CreateKubernetesSecretExporter(
 
 		log.V(Info).Info(
 			"Successfully retrieved Kubernetes secrets for export",
-			"ResourcesToWrite", len(objs), "RawSecrets", len(rawSecrets))
+			"ResourcesToWrite", len(objs), "RawSecrets", len(rawSecrets),
+		)
 
 		return result, nil
 	}

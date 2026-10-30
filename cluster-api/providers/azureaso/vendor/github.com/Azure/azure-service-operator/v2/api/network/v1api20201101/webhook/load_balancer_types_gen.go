@@ -116,7 +116,12 @@ func (balancer *LoadBalancer) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (balancer *LoadBalancer) createValidations() []func(ctx context.Context, obj *v20201101.LoadBalancer) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201101.LoadBalancer) (admission.Warnings, error){balancer.validateResourceReferences, balancer.validateOwnerReference, balancer.validateSecretDestinations, balancer.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201101.LoadBalancer) (admission.Warnings, error){
+		balancer.validateResourceReferences,
+		balancer.validateOwnerReference,
+		balancer.validateSecretDestinations,
+		balancer.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

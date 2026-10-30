@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -51,22 +52,36 @@ var _ conversion.Convertible = &VirtualMachine{}
 
 // ConvertFrom populates our VirtualMachine from the provided hub VirtualMachine
 func (machine *VirtualMachine) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.VirtualMachine)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachine but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.VirtualMachine
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return machine.AssignProperties_From_VirtualMachine(source)
+	err = machine.AssignProperties_From_VirtualMachine(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to machine")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualMachine from our VirtualMachine
 func (machine *VirtualMachine) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.VirtualMachine)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachine but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.VirtualMachine
+	err := machine.AssignProperties_To_VirtualMachine(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from machine")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return machine.AssignProperties_To_VirtualMachine(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualMachine{}
@@ -87,17 +102,6 @@ func (machine *VirtualMachine) SecretDestinationExpressions() []*core.Destinatio
 		return nil
 	}
 	return machine.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &VirtualMachine{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (machine *VirtualMachine) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*VirtualMachine_STATUS); ok {
-		return machine.Spec.Initialize_From_VirtualMachine_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type VirtualMachine_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &VirtualMachine{}
@@ -409,7 +413,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "ExtendedLocation":
 	if machine.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*machine.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := machine.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -419,7 +423,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Identity":
 	if machine.Identity != nil {
-		identity_ARM, err := (*machine.Identity).ConvertToARM(resolved)
+		identity_ARM, err := machine.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -438,7 +442,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "Plan":
 	if machine.Plan != nil {
-		plan_ARM, err := (*machine.Plan).ConvertToARM(resolved)
+		plan_ARM, err := machine.Plan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -472,7 +476,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties = &arm.VirtualMachineProperties{}
 	}
 	if machine.AdditionalCapabilities != nil {
-		additionalCapabilities_ARM, err := (*machine.AdditionalCapabilities).ConvertToARM(resolved)
+		additionalCapabilities_ARM, err := machine.AdditionalCapabilities.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -480,7 +484,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AdditionalCapabilities = &additionalCapabilities
 	}
 	if machine.ApplicationProfile != nil {
-		applicationProfile_ARM, err := (*machine.ApplicationProfile).ConvertToARM(resolved)
+		applicationProfile_ARM, err := machine.ApplicationProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -488,7 +492,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ApplicationProfile = &applicationProfile
 	}
 	if machine.AvailabilitySet != nil {
-		availabilitySet_ARM, err := (*machine.AvailabilitySet).ConvertToARM(resolved)
+		availabilitySet_ARM, err := machine.AvailabilitySet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -496,7 +500,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.AvailabilitySet = &availabilitySet
 	}
 	if machine.BillingProfile != nil {
-		billingProfile_ARM, err := (*machine.BillingProfile).ConvertToARM(resolved)
+		billingProfile_ARM, err := machine.BillingProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +508,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.BillingProfile = &billingProfile
 	}
 	if machine.CapacityReservation != nil {
-		capacityReservation_ARM, err := (*machine.CapacityReservation).ConvertToARM(resolved)
+		capacityReservation_ARM, err := machine.CapacityReservation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -512,7 +516,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.CapacityReservation = &capacityReservation
 	}
 	if machine.DiagnosticsProfile != nil {
-		diagnosticsProfile_ARM, err := (*machine.DiagnosticsProfile).ConvertToARM(resolved)
+		diagnosticsProfile_ARM, err := machine.DiagnosticsProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -530,7 +534,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ExtensionsTimeBudget = &extensionsTimeBudget
 	}
 	if machine.HardwareProfile != nil {
-		hardwareProfile_ARM, err := (*machine.HardwareProfile).ConvertToARM(resolved)
+		hardwareProfile_ARM, err := machine.HardwareProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -538,7 +542,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.HardwareProfile = &hardwareProfile
 	}
 	if machine.Host != nil {
-		host_ARM, err := (*machine.Host).ConvertToARM(resolved)
+		host_ARM, err := machine.Host.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -546,7 +550,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.Host = &host
 	}
 	if machine.HostGroup != nil {
-		hostGroup_ARM, err := (*machine.HostGroup).ConvertToARM(resolved)
+		hostGroup_ARM, err := machine.HostGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -558,7 +562,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.LicenseType = &licenseType
 	}
 	if machine.NetworkProfile != nil {
-		networkProfile_ARM, err := (*machine.NetworkProfile).ConvertToARM(resolved)
+		networkProfile_ARM, err := machine.NetworkProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -566,7 +570,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.NetworkProfile = &networkProfile
 	}
 	if machine.OsProfile != nil {
-		osProfile_ARM, err := (*machine.OsProfile).ConvertToARM(resolved)
+		osProfile_ARM, err := machine.OsProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -584,7 +588,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.Priority = &priority
 	}
 	if machine.ProximityPlacementGroup != nil {
-		proximityPlacementGroup_ARM, err := (*machine.ProximityPlacementGroup).ConvertToARM(resolved)
+		proximityPlacementGroup_ARM, err := machine.ProximityPlacementGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -592,7 +596,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ProximityPlacementGroup = &proximityPlacementGroup
 	}
 	if machine.ScheduledEventsProfile != nil {
-		scheduledEventsProfile_ARM, err := (*machine.ScheduledEventsProfile).ConvertToARM(resolved)
+		scheduledEventsProfile_ARM, err := machine.ScheduledEventsProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -600,7 +604,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ScheduledEventsProfile = &scheduledEventsProfile
 	}
 	if machine.SecurityProfile != nil {
-		securityProfile_ARM, err := (*machine.SecurityProfile).ConvertToARM(resolved)
+		securityProfile_ARM, err := machine.SecurityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -608,7 +612,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.SecurityProfile = &securityProfile
 	}
 	if machine.StorageProfile != nil {
-		storageProfile_ARM, err := (*machine.StorageProfile).ConvertToARM(resolved)
+		storageProfile_ARM, err := machine.StorageProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -620,7 +624,7 @@ func (machine *VirtualMachine_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.UserData = &userData
 	}
 	if machine.VirtualMachineScaleSet != nil {
-		virtualMachineScaleSet_ARM, err := (*machine.VirtualMachineScaleSet).ConvertToARM(resolved)
+		virtualMachineScaleSet_ARM, err := machine.VirtualMachineScaleSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1658,278 +1662,6 @@ func (machine *VirtualMachine_Spec) AssignProperties_To_VirtualMachine_Spec(dest
 	return nil
 }
 
-// Initialize_From_VirtualMachine_STATUS populates our VirtualMachine_Spec from the provided source VirtualMachine_STATUS
-func (machine *VirtualMachine_Spec) Initialize_From_VirtualMachine_STATUS(source *VirtualMachine_STATUS) error {
-
-	// AdditionalCapabilities
-	if source.AdditionalCapabilities != nil {
-		var additionalCapability AdditionalCapabilities
-		err := additionalCapability.Initialize_From_AdditionalCapabilities_STATUS(source.AdditionalCapabilities)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AdditionalCapabilities_STATUS() to populate field AdditionalCapabilities")
-		}
-		machine.AdditionalCapabilities = &additionalCapability
-	} else {
-		machine.AdditionalCapabilities = nil
-	}
-
-	// ApplicationProfile
-	if source.ApplicationProfile != nil {
-		var applicationProfile ApplicationProfile
-		err := applicationProfile.Initialize_From_ApplicationProfile_STATUS(source.ApplicationProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ApplicationProfile_STATUS() to populate field ApplicationProfile")
-		}
-		machine.ApplicationProfile = &applicationProfile
-	} else {
-		machine.ApplicationProfile = nil
-	}
-
-	// AvailabilitySet
-	if source.AvailabilitySet != nil {
-		var availabilitySet SubResource
-		err := availabilitySet.Initialize_From_SubResource_STATUS(source.AvailabilitySet)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field AvailabilitySet")
-		}
-		machine.AvailabilitySet = &availabilitySet
-	} else {
-		machine.AvailabilitySet = nil
-	}
-
-	// BillingProfile
-	if source.BillingProfile != nil {
-		var billingProfile BillingProfile
-		err := billingProfile.Initialize_From_BillingProfile_STATUS(source.BillingProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BillingProfile_STATUS() to populate field BillingProfile")
-		}
-		machine.BillingProfile = &billingProfile
-	} else {
-		machine.BillingProfile = nil
-	}
-
-	// CapacityReservation
-	if source.CapacityReservation != nil {
-		var capacityReservation CapacityReservationProfile
-		err := capacityReservation.Initialize_From_CapacityReservationProfile_STATUS(source.CapacityReservation)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CapacityReservationProfile_STATUS() to populate field CapacityReservation")
-		}
-		machine.CapacityReservation = &capacityReservation
-	} else {
-		machine.CapacityReservation = nil
-	}
-
-	// DiagnosticsProfile
-	if source.DiagnosticsProfile != nil {
-		var diagnosticsProfile DiagnosticsProfile
-		err := diagnosticsProfile.Initialize_From_DiagnosticsProfile_STATUS(source.DiagnosticsProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DiagnosticsProfile_STATUS() to populate field DiagnosticsProfile")
-		}
-		machine.DiagnosticsProfile = &diagnosticsProfile
-	} else {
-		machine.DiagnosticsProfile = nil
-	}
-
-	// EvictionPolicy
-	if source.EvictionPolicy != nil {
-		evictionPolicy := genruntime.ToEnum(string(*source.EvictionPolicy), evictionPolicy_Values)
-		machine.EvictionPolicy = &evictionPolicy
-	} else {
-		machine.EvictionPolicy = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		machine.ExtendedLocation = &extendedLocation
-	} else {
-		machine.ExtendedLocation = nil
-	}
-
-	// ExtensionsTimeBudget
-	machine.ExtensionsTimeBudget = genruntime.ClonePointerToString(source.ExtensionsTimeBudget)
-
-	// HardwareProfile
-	if source.HardwareProfile != nil {
-		var hardwareProfile HardwareProfile
-		err := hardwareProfile.Initialize_From_HardwareProfile_STATUS(source.HardwareProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_HardwareProfile_STATUS() to populate field HardwareProfile")
-		}
-		machine.HardwareProfile = &hardwareProfile
-	} else {
-		machine.HardwareProfile = nil
-	}
-
-	// Host
-	if source.Host != nil {
-		var host SubResource
-		err := host.Initialize_From_SubResource_STATUS(source.Host)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Host")
-		}
-		machine.Host = &host
-	} else {
-		machine.Host = nil
-	}
-
-	// HostGroup
-	if source.HostGroup != nil {
-		var hostGroup SubResource
-		err := hostGroup.Initialize_From_SubResource_STATUS(source.HostGroup)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field HostGroup")
-		}
-		machine.HostGroup = &hostGroup
-	} else {
-		machine.HostGroup = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity VirtualMachineIdentity
-		err := identity.Initialize_From_VirtualMachineIdentity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualMachineIdentity_STATUS() to populate field Identity")
-		}
-		machine.Identity = &identity
-	} else {
-		machine.Identity = nil
-	}
-
-	// LicenseType
-	machine.LicenseType = genruntime.ClonePointerToString(source.LicenseType)
-
-	// Location
-	machine.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NetworkProfile
-	if source.NetworkProfile != nil {
-		var networkProfile NetworkProfile
-		err := networkProfile.Initialize_From_NetworkProfile_STATUS(source.NetworkProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NetworkProfile_STATUS() to populate field NetworkProfile")
-		}
-		machine.NetworkProfile = &networkProfile
-	} else {
-		machine.NetworkProfile = nil
-	}
-
-	// OsProfile
-	if source.OsProfile != nil {
-		var osProfile OSProfile
-		err := osProfile.Initialize_From_OSProfile_STATUS(source.OsProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_OSProfile_STATUS() to populate field OsProfile")
-		}
-		machine.OsProfile = &osProfile
-	} else {
-		machine.OsProfile = nil
-	}
-
-	// Plan
-	if source.Plan != nil {
-		var plan Plan
-		err := plan.Initialize_From_Plan_STATUS(source.Plan)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Plan_STATUS() to populate field Plan")
-		}
-		machine.Plan = &plan
-	} else {
-		machine.Plan = nil
-	}
-
-	// PlatformFaultDomain
-	machine.PlatformFaultDomain = genruntime.ClonePointerToInt(source.PlatformFaultDomain)
-
-	// Priority
-	if source.Priority != nil {
-		priority := genruntime.ToEnum(string(*source.Priority), priority_Values)
-		machine.Priority = &priority
-	} else {
-		machine.Priority = nil
-	}
-
-	// ProximityPlacementGroup
-	if source.ProximityPlacementGroup != nil {
-		var proximityPlacementGroup SubResource
-		err := proximityPlacementGroup.Initialize_From_SubResource_STATUS(source.ProximityPlacementGroup)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ProximityPlacementGroup")
-		}
-		machine.ProximityPlacementGroup = &proximityPlacementGroup
-	} else {
-		machine.ProximityPlacementGroup = nil
-	}
-
-	// ScheduledEventsProfile
-	if source.ScheduledEventsProfile != nil {
-		var scheduledEventsProfile ScheduledEventsProfile
-		err := scheduledEventsProfile.Initialize_From_ScheduledEventsProfile_STATUS(source.ScheduledEventsProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ScheduledEventsProfile_STATUS() to populate field ScheduledEventsProfile")
-		}
-		machine.ScheduledEventsProfile = &scheduledEventsProfile
-	} else {
-		machine.ScheduledEventsProfile = nil
-	}
-
-	// SecurityProfile
-	if source.SecurityProfile != nil {
-		var securityProfile SecurityProfile
-		err := securityProfile.Initialize_From_SecurityProfile_STATUS(source.SecurityProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SecurityProfile_STATUS() to populate field SecurityProfile")
-		}
-		machine.SecurityProfile = &securityProfile
-	} else {
-		machine.SecurityProfile = nil
-	}
-
-	// StorageProfile
-	if source.StorageProfile != nil {
-		var storageProfile StorageProfile
-		err := storageProfile.Initialize_From_StorageProfile_STATUS(source.StorageProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_StorageProfile_STATUS() to populate field StorageProfile")
-		}
-		machine.StorageProfile = &storageProfile
-	} else {
-		machine.StorageProfile = nil
-	}
-
-	// Tags
-	machine.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// UserData
-	machine.UserData = genruntime.ClonePointerToString(source.UserData)
-
-	// VirtualMachineScaleSet
-	if source.VirtualMachineScaleSet != nil {
-		var virtualMachineScaleSet SubResource
-		err := virtualMachineScaleSet.Initialize_From_SubResource_STATUS(source.VirtualMachineScaleSet)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field VirtualMachineScaleSet")
-		}
-		machine.VirtualMachineScaleSet = &virtualMachineScaleSet
-	} else {
-		machine.VirtualMachineScaleSet = nil
-	}
-
-	// Zones
-	machine.Zones = genruntime.CloneSliceOfString(source.Zones)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (machine *VirtualMachine_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -2819,8 +2551,6 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 	if source.Resources != nil {
 		resourceList := make([]VirtualMachineExtension_STATUS, len(source.Resources))
 		for resourceIndex, resourceItem := range source.Resources {
-			// Shadow the loop variable to avoid aliasing
-			resourceItem := resourceItem
 			var resource VirtualMachineExtension_STATUS
 			err := resource.AssignProperties_From_VirtualMachineExtension_STATUS(&resourceItem)
 			if err != nil {
@@ -3144,8 +2874,6 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 	if machine.Resources != nil {
 		resourceList := make([]storage.VirtualMachineExtension_STATUS, len(machine.Resources))
 		for resourceIndex, resourceItem := range machine.Resources {
-			// Shadow the loop variable to avoid aliasing
-			resourceItem := resourceItem
 			var resource storage.VirtualMachineExtension_STATUS
 			err := resourceItem.AssignProperties_To_VirtualMachineExtension_STATUS(&resource)
 			if err != nil {
@@ -3352,29 +3080,6 @@ func (capabilities *AdditionalCapabilities) AssignProperties_To_AdditionalCapabi
 	return nil
 }
 
-// Initialize_From_AdditionalCapabilities_STATUS populates our AdditionalCapabilities from the provided source AdditionalCapabilities_STATUS
-func (capabilities *AdditionalCapabilities) Initialize_From_AdditionalCapabilities_STATUS(source *AdditionalCapabilities_STATUS) error {
-
-	// HibernationEnabled
-	if source.HibernationEnabled != nil {
-		hibernationEnabled := *source.HibernationEnabled
-		capabilities.HibernationEnabled = &hibernationEnabled
-	} else {
-		capabilities.HibernationEnabled = nil
-	}
-
-	// UltraSSDEnabled
-	if source.UltraSSDEnabled != nil {
-		ultraSSDEnabled := *source.UltraSSDEnabled
-		capabilities.UltraSSDEnabled = &ultraSSDEnabled
-	} else {
-		capabilities.UltraSSDEnabled = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Enables or disables a capability on the virtual machine or virtual machine scale set.
 type AdditionalCapabilities_STATUS struct {
 	// HibernationEnabled: The flag that enables or disables hibernation capability on the VM.
@@ -3530,8 +3235,6 @@ func (profile *ApplicationProfile) AssignProperties_From_ApplicationProfile(sour
 	if source.GalleryApplications != nil {
 		galleryApplicationList := make([]VMGalleryApplication, len(source.GalleryApplications))
 		for galleryApplicationIndex, galleryApplicationItem := range source.GalleryApplications {
-			// Shadow the loop variable to avoid aliasing
-			galleryApplicationItem := galleryApplicationItem
 			var galleryApplication VMGalleryApplication
 			err := galleryApplication.AssignProperties_From_VMGalleryApplication(&galleryApplicationItem)
 			if err != nil {
@@ -3557,8 +3260,6 @@ func (profile *ApplicationProfile) AssignProperties_To_ApplicationProfile(destin
 	if profile.GalleryApplications != nil {
 		galleryApplicationList := make([]storage.VMGalleryApplication, len(profile.GalleryApplications))
 		for galleryApplicationIndex, galleryApplicationItem := range profile.GalleryApplications {
-			// Shadow the loop variable to avoid aliasing
-			galleryApplicationItem := galleryApplicationItem
 			var galleryApplication storage.VMGalleryApplication
 			err := galleryApplicationItem.AssignProperties_To_VMGalleryApplication(&galleryApplication)
 			if err != nil {
@@ -3576,31 +3277,6 @@ func (profile *ApplicationProfile) AssignProperties_To_ApplicationProfile(destin
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ApplicationProfile_STATUS populates our ApplicationProfile from the provided source ApplicationProfile_STATUS
-func (profile *ApplicationProfile) Initialize_From_ApplicationProfile_STATUS(source *ApplicationProfile_STATUS) error {
-
-	// GalleryApplications
-	if source.GalleryApplications != nil {
-		galleryApplicationList := make([]VMGalleryApplication, len(source.GalleryApplications))
-		for galleryApplicationIndex, galleryApplicationItem := range source.GalleryApplications {
-			// Shadow the loop variable to avoid aliasing
-			galleryApplicationItem := galleryApplicationItem
-			var galleryApplication VMGalleryApplication
-			err := galleryApplication.Initialize_From_VMGalleryApplication_STATUS(&galleryApplicationItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VMGalleryApplication_STATUS() to populate field GalleryApplications")
-			}
-			galleryApplicationList[galleryApplicationIndex] = galleryApplication
-		}
-		profile.GalleryApplications = galleryApplicationList
-	} else {
-		profile.GalleryApplications = nil
 	}
 
 	// No error
@@ -3648,8 +3324,6 @@ func (profile *ApplicationProfile_STATUS) AssignProperties_From_ApplicationProfi
 	if source.GalleryApplications != nil {
 		galleryApplicationList := make([]VMGalleryApplication_STATUS, len(source.GalleryApplications))
 		for galleryApplicationIndex, galleryApplicationItem := range source.GalleryApplications {
-			// Shadow the loop variable to avoid aliasing
-			galleryApplicationItem := galleryApplicationItem
 			var galleryApplication VMGalleryApplication_STATUS
 			err := galleryApplication.AssignProperties_From_VMGalleryApplication_STATUS(&galleryApplicationItem)
 			if err != nil {
@@ -3675,8 +3349,6 @@ func (profile *ApplicationProfile_STATUS) AssignProperties_To_ApplicationProfile
 	if profile.GalleryApplications != nil {
 		galleryApplicationList := make([]storage.VMGalleryApplication_STATUS, len(profile.GalleryApplications))
 		for galleryApplicationIndex, galleryApplicationItem := range profile.GalleryApplications {
-			// Shadow the loop variable to avoid aliasing
-			galleryApplicationItem := galleryApplicationItem
 			var galleryApplication storage.VMGalleryApplication_STATUS
 			err := galleryApplicationItem.AssignProperties_To_VMGalleryApplication_STATUS(&galleryApplication)
 			if err != nil {
@@ -3796,21 +3468,6 @@ func (profile *BillingProfile) AssignProperties_To_BillingProfile(destination *s
 	return nil
 }
 
-// Initialize_From_BillingProfile_STATUS populates our BillingProfile from the provided source BillingProfile_STATUS
-func (profile *BillingProfile) Initialize_From_BillingProfile_STATUS(source *BillingProfile_STATUS) error {
-
-	// MaxPrice
-	if source.MaxPrice != nil {
-		maxPrice := *source.MaxPrice
-		profile.MaxPrice = &maxPrice
-	} else {
-		profile.MaxPrice = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Specifies the billing related details of a Azure Spot VM or VMSS.
 // Minimum api-version: 2019-03-01.
 type BillingProfile_STATUS struct {
@@ -3911,7 +3568,7 @@ func (profile *CapacityReservationProfile) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "CapacityReservationGroup":
 	if profile.CapacityReservationGroup != nil {
-		capacityReservationGroup_ARM, err := (*profile.CapacityReservationGroup).ConvertToARM(resolved)
+		capacityReservationGroup_ARM, err := profile.CapacityReservationGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3989,25 +3646,6 @@ func (profile *CapacityReservationProfile) AssignProperties_To_CapacityReservati
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CapacityReservationProfile_STATUS populates our CapacityReservationProfile from the provided source CapacityReservationProfile_STATUS
-func (profile *CapacityReservationProfile) Initialize_From_CapacityReservationProfile_STATUS(source *CapacityReservationProfile_STATUS) error {
-
-	// CapacityReservationGroup
-	if source.CapacityReservationGroup != nil {
-		var capacityReservationGroup SubResource
-		err := capacityReservationGroup.Initialize_From_SubResource_STATUS(source.CapacityReservationGroup)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field CapacityReservationGroup")
-		}
-		profile.CapacityReservationGroup = &capacityReservationGroup
-	} else {
-		profile.CapacityReservationGroup = nil
 	}
 
 	// No error
@@ -4121,7 +3759,7 @@ func (profile *DiagnosticsProfile) ConvertToARM(resolved genruntime.ConvertToARM
 
 	// Set property "BootDiagnostics":
 	if profile.BootDiagnostics != nil {
-		bootDiagnostics_ARM, err := (*profile.BootDiagnostics).ConvertToARM(resolved)
+		bootDiagnostics_ARM, err := profile.BootDiagnostics.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4199,25 +3837,6 @@ func (profile *DiagnosticsProfile) AssignProperties_To_DiagnosticsProfile(destin
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DiagnosticsProfile_STATUS populates our DiagnosticsProfile from the provided source DiagnosticsProfile_STATUS
-func (profile *DiagnosticsProfile) Initialize_From_DiagnosticsProfile_STATUS(source *DiagnosticsProfile_STATUS) error {
-
-	// BootDiagnostics
-	if source.BootDiagnostics != nil {
-		var bootDiagnostic BootDiagnostics
-		err := bootDiagnostic.Initialize_From_BootDiagnostics_STATUS(source.BootDiagnostics)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BootDiagnostics_STATUS() to populate field BootDiagnostics")
-		}
-		profile.BootDiagnostics = &bootDiagnostic
-	} else {
-		profile.BootDiagnostics = nil
 	}
 
 	// No error
@@ -4379,7 +3998,7 @@ func (profile *HardwareProfile) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 	// Set property "VmSizeProperties":
 	if profile.VmSizeProperties != nil {
-		vmSizeProperties_ARM, err := (*profile.VmSizeProperties).ConvertToARM(resolved)
+		vmSizeProperties_ARM, err := profile.VmSizeProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4469,33 +4088,6 @@ func (profile *HardwareProfile) AssignProperties_To_HardwareProfile(destination 
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_HardwareProfile_STATUS populates our HardwareProfile from the provided source HardwareProfile_STATUS
-func (profile *HardwareProfile) Initialize_From_HardwareProfile_STATUS(source *HardwareProfile_STATUS) error {
-
-	// VmSize
-	if source.VmSize != nil {
-		vmSize := string(*source.VmSize)
-		profile.VmSize = &vmSize
-	} else {
-		profile.VmSize = nil
-	}
-
-	// VmSizeProperties
-	if source.VmSizeProperties != nil {
-		var vmSizeProperty VMSizeProperties
-		err := vmSizeProperty.Initialize_From_VMSizeProperties_STATUS(source.VmSizeProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VMSizeProperties_STATUS() to populate field VmSizeProperties")
-		}
-		profile.VmSizeProperties = &vmSizeProperty
-	} else {
-		profile.VmSizeProperties = nil
 	}
 
 	// No error
@@ -4735,8 +4327,6 @@ func (profile *NetworkProfile) AssignProperties_From_NetworkProfile(source *stor
 	if source.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]VirtualMachineNetworkInterfaceConfiguration, len(source.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range source.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration(&networkInterfaceConfigurationItem)
 			if err != nil {
@@ -4753,8 +4343,6 @@ func (profile *NetworkProfile) AssignProperties_From_NetworkProfile(source *stor
 	if source.NetworkInterfaces != nil {
 		networkInterfaceList := make([]NetworkInterfaceReference, len(source.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface NetworkInterfaceReference
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference(&networkInterfaceItem)
 			if err != nil {
@@ -4788,8 +4376,6 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *s
 	if profile.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]storage.VirtualMachineNetworkInterfaceConfiguration, len(profile.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range profile.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration storage.VirtualMachineNetworkInterfaceConfiguration
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration(&networkInterfaceConfiguration)
 			if err != nil {
@@ -4806,8 +4392,6 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *s
 	if profile.NetworkInterfaces != nil {
 		networkInterfaceList := make([]storage.NetworkInterfaceReference, len(profile.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range profile.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface storage.NetworkInterfaceReference
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference(&networkInterface)
 			if err != nil {
@@ -4825,57 +4409,6 @@ func (profile *NetworkProfile) AssignProperties_To_NetworkProfile(destination *s
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NetworkProfile_STATUS populates our NetworkProfile from the provided source NetworkProfile_STATUS
-func (profile *NetworkProfile) Initialize_From_NetworkProfile_STATUS(source *NetworkProfile_STATUS) error {
-
-	// NetworkApiVersion
-	if source.NetworkApiVersion != nil {
-		networkApiVersion := genruntime.ToEnum(string(*source.NetworkApiVersion), networkProfile_NetworkApiVersion_Values)
-		profile.NetworkApiVersion = &networkApiVersion
-	} else {
-		profile.NetworkApiVersion = nil
-	}
-
-	// NetworkInterfaceConfigurations
-	if source.NetworkInterfaceConfigurations != nil {
-		networkInterfaceConfigurationList := make([]VirtualMachineNetworkInterfaceConfiguration, len(source.NetworkInterfaceConfigurations))
-		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range source.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
-			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration
-			err := networkInterfaceConfiguration.Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfigurationItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS() to populate field NetworkInterfaceConfigurations")
-			}
-			networkInterfaceConfigurationList[networkInterfaceConfigurationIndex] = networkInterfaceConfiguration
-		}
-		profile.NetworkInterfaceConfigurations = networkInterfaceConfigurationList
-	} else {
-		profile.NetworkInterfaceConfigurations = nil
-	}
-
-	// NetworkInterfaces
-	if source.NetworkInterfaces != nil {
-		networkInterfaceList := make([]NetworkInterfaceReference, len(source.NetworkInterfaces))
-		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
-			var networkInterface NetworkInterfaceReference
-			err := networkInterface.Initialize_From_NetworkInterfaceReference_STATUS(&networkInterfaceItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_NetworkInterfaceReference_STATUS() to populate field NetworkInterfaces")
-			}
-			networkInterfaceList[networkInterfaceIndex] = networkInterface
-		}
-		profile.NetworkInterfaces = networkInterfaceList
-	} else {
-		profile.NetworkInterfaces = nil
 	}
 
 	// No error
@@ -4958,8 +4491,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_From_NetworkProfile_STATU
 	if source.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]VirtualMachineNetworkInterfaceConfiguration_STATUS, len(source.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range source.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration VirtualMachineNetworkInterfaceConfiguration_STATUS
 			err := networkInterfaceConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfigurationItem)
 			if err != nil {
@@ -4976,8 +4507,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_From_NetworkProfile_STATU
 	if source.NetworkInterfaces != nil {
 		networkInterfaceList := make([]NetworkInterfaceReference_STATUS, len(source.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface NetworkInterfaceReference_STATUS
 			err := networkInterface.AssignProperties_From_NetworkInterfaceReference_STATUS(&networkInterfaceItem)
 			if err != nil {
@@ -5011,8 +4540,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_To_NetworkProfile_STATUS(
 	if profile.NetworkInterfaceConfigurations != nil {
 		networkInterfaceConfigurationList := make([]storage.VirtualMachineNetworkInterfaceConfiguration_STATUS, len(profile.NetworkInterfaceConfigurations))
 		for networkInterfaceConfigurationIndex, networkInterfaceConfigurationItem := range profile.NetworkInterfaceConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceConfigurationItem := networkInterfaceConfigurationItem
 			var networkInterfaceConfiguration storage.VirtualMachineNetworkInterfaceConfiguration_STATUS
 			err := networkInterfaceConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceConfiguration_STATUS(&networkInterfaceConfiguration)
 			if err != nil {
@@ -5029,8 +4556,6 @@ func (profile *NetworkProfile_STATUS) AssignProperties_To_NetworkProfile_STATUS(
 	if profile.NetworkInterfaces != nil {
 		networkInterfaceList := make([]storage.NetworkInterfaceReference_STATUS, len(profile.NetworkInterfaces))
 		for networkInterfaceIndex, networkInterfaceItem := range profile.NetworkInterfaces {
-			// Shadow the loop variable to avoid aliasing
-			networkInterfaceItem := networkInterfaceItem
 			var networkInterface storage.NetworkInterfaceReference_STATUS
 			err := networkInterfaceItem.AssignProperties_To_NetworkInterfaceReference_STATUS(&networkInterface)
 			if err != nil {
@@ -5171,7 +4696,7 @@ func (profile *OSProfile) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "LinuxConfiguration":
 	if profile.LinuxConfiguration != nil {
-		linuxConfiguration_ARM, err := (*profile.LinuxConfiguration).ConvertToARM(resolved)
+		linuxConfiguration_ARM, err := profile.LinuxConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5196,7 +4721,7 @@ func (profile *OSProfile) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "WindowsConfiguration":
 	if profile.WindowsConfiguration != nil {
-		windowsConfiguration_ARM, err := (*profile.WindowsConfiguration).ConvertToARM(resolved)
+		windowsConfiguration_ARM, err := profile.WindowsConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -5338,8 +4863,6 @@ func (profile *OSProfile) AssignProperties_From_OSProfile(source *storage.OSProf
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup
 			err := secret.AssignProperties_From_VaultSecretGroup(&secretItem)
 			if err != nil {
@@ -5422,8 +4945,6 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *storage.OSP
 	if profile.Secrets != nil {
 		secretList := make([]storage.VaultSecretGroup, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret storage.VaultSecretGroup
 			err := secretItem.AssignProperties_To_VaultSecretGroup(&secret)
 			if err != nil {
@@ -5453,80 +4974,6 @@ func (profile *OSProfile) AssignProperties_To_OSProfile(destination *storage.OSP
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_OSProfile_STATUS populates our OSProfile from the provided source OSProfile_STATUS
-func (profile *OSProfile) Initialize_From_OSProfile_STATUS(source *OSProfile_STATUS) error {
-
-	// AdminUsername
-	profile.AdminUsername = genruntime.ClonePointerToString(source.AdminUsername)
-
-	// AllowExtensionOperations
-	if source.AllowExtensionOperations != nil {
-		allowExtensionOperation := *source.AllowExtensionOperations
-		profile.AllowExtensionOperations = &allowExtensionOperation
-	} else {
-		profile.AllowExtensionOperations = nil
-	}
-
-	// ComputerName
-	profile.ComputerName = genruntime.ClonePointerToString(source.ComputerName)
-
-	// CustomData
-	profile.CustomData = genruntime.ClonePointerToString(source.CustomData)
-
-	// LinuxConfiguration
-	if source.LinuxConfiguration != nil {
-		var linuxConfiguration LinuxConfiguration
-		err := linuxConfiguration.Initialize_From_LinuxConfiguration_STATUS(source.LinuxConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LinuxConfiguration_STATUS() to populate field LinuxConfiguration")
-		}
-		profile.LinuxConfiguration = &linuxConfiguration
-	} else {
-		profile.LinuxConfiguration = nil
-	}
-
-	// RequireGuestProvisionSignal
-	if source.RequireGuestProvisionSignal != nil {
-		requireGuestProvisionSignal := *source.RequireGuestProvisionSignal
-		profile.RequireGuestProvisionSignal = &requireGuestProvisionSignal
-	} else {
-		profile.RequireGuestProvisionSignal = nil
-	}
-
-	// Secrets
-	if source.Secrets != nil {
-		secretList := make([]VaultSecretGroup, len(source.Secrets))
-		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
-			var secret VaultSecretGroup
-			err := secret.Initialize_From_VaultSecretGroup_STATUS(&secretItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VaultSecretGroup_STATUS() to populate field Secrets")
-			}
-			secretList[secretIndex] = secret
-		}
-		profile.Secrets = secretList
-	} else {
-		profile.Secrets = nil
-	}
-
-	// WindowsConfiguration
-	if source.WindowsConfiguration != nil {
-		var windowsConfiguration WindowsConfiguration
-		err := windowsConfiguration.Initialize_From_WindowsConfiguration_STATUS(source.WindowsConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WindowsConfiguration_STATUS() to populate field WindowsConfiguration")
-		}
-		profile.WindowsConfiguration = &windowsConfiguration
-	} else {
-		profile.WindowsConfiguration = nil
 	}
 
 	// No error
@@ -5711,8 +5158,6 @@ func (profile *OSProfile_STATUS) AssignProperties_From_OSProfile_STATUS(source *
 	if source.Secrets != nil {
 		secretList := make([]VaultSecretGroup_STATUS, len(source.Secrets))
 		for secretIndex, secretItem := range source.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret VaultSecretGroup_STATUS
 			err := secret.AssignProperties_From_VaultSecretGroup_STATUS(&secretItem)
 			if err != nil {
@@ -5787,8 +5232,6 @@ func (profile *OSProfile_STATUS) AssignProperties_To_OSProfile_STATUS(destinatio
 	if profile.Secrets != nil {
 		secretList := make([]storage.VaultSecretGroup_STATUS, len(profile.Secrets))
 		for secretIndex, secretItem := range profile.Secrets {
-			// Shadow the loop variable to avoid aliasing
-			secretItem := secretItem
 			var secret storage.VaultSecretGroup_STATUS
 			err := secretItem.AssignProperties_To_VaultSecretGroup_STATUS(&secret)
 			if err != nil {
@@ -5965,25 +5408,6 @@ func (plan *Plan) AssignProperties_To_Plan(destination *storage.Plan) error {
 	return nil
 }
 
-// Initialize_From_Plan_STATUS populates our Plan from the provided source Plan_STATUS
-func (plan *Plan) Initialize_From_Plan_STATUS(source *Plan_STATUS) error {
-
-	// Name
-	plan.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Product
-	plan.Product = genruntime.ClonePointerToString(source.Product)
-
-	// PromotionCode
-	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
-
-	// Publisher
-	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// No error
-	return nil
-}
-
 // Specifies information about the marketplace image used to create the virtual machine. This element is only used for
 // marketplace images. Before you can use a marketplace image from an API, you must enable the image for programmatic use.
 // In the Azure portal, find the marketplace image that you want to use and then click Want to deploy programmatically,
@@ -6145,7 +5569,7 @@ func (profile *ScheduledEventsProfile) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "TerminateNotificationProfile":
 	if profile.TerminateNotificationProfile != nil {
-		terminateNotificationProfile_ARM, err := (*profile.TerminateNotificationProfile).ConvertToARM(resolved)
+		terminateNotificationProfile_ARM, err := profile.TerminateNotificationProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6223,25 +5647,6 @@ func (profile *ScheduledEventsProfile) AssignProperties_To_ScheduledEventsProfil
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ScheduledEventsProfile_STATUS populates our ScheduledEventsProfile from the provided source ScheduledEventsProfile_STATUS
-func (profile *ScheduledEventsProfile) Initialize_From_ScheduledEventsProfile_STATUS(source *ScheduledEventsProfile_STATUS) error {
-
-	// TerminateNotificationProfile
-	if source.TerminateNotificationProfile != nil {
-		var terminateNotificationProfile TerminateNotificationProfile
-		err := terminateNotificationProfile.Initialize_From_TerminateNotificationProfile_STATUS(source.TerminateNotificationProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_TerminateNotificationProfile_STATUS() to populate field TerminateNotificationProfile")
-		}
-		profile.TerminateNotificationProfile = &terminateNotificationProfile
-	} else {
-		profile.TerminateNotificationProfile = nil
 	}
 
 	// No error
@@ -6372,7 +5777,7 @@ func (profile *SecurityProfile) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 	// Set property "UefiSettings":
 	if profile.UefiSettings != nil {
-		uefiSettings_ARM, err := (*profile.UefiSettings).ConvertToARM(resolved)
+		uefiSettings_ARM, err := profile.UefiSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6497,41 +5902,6 @@ func (profile *SecurityProfile) AssignProperties_To_SecurityProfile(destination 
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SecurityProfile_STATUS populates our SecurityProfile from the provided source SecurityProfile_STATUS
-func (profile *SecurityProfile) Initialize_From_SecurityProfile_STATUS(source *SecurityProfile_STATUS) error {
-
-	// EncryptionAtHost
-	if source.EncryptionAtHost != nil {
-		encryptionAtHost := *source.EncryptionAtHost
-		profile.EncryptionAtHost = &encryptionAtHost
-	} else {
-		profile.EncryptionAtHost = nil
-	}
-
-	// SecurityType
-	if source.SecurityType != nil {
-		securityType := genruntime.ToEnum(string(*source.SecurityType), securityProfile_SecurityType_Values)
-		profile.SecurityType = &securityType
-	} else {
-		profile.SecurityType = nil
-	}
-
-	// UefiSettings
-	if source.UefiSettings != nil {
-		var uefiSetting UefiSettings
-		err := uefiSetting.Initialize_From_UefiSettings_STATUS(source.UefiSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_UefiSettings_STATUS() to populate field UefiSettings")
-		}
-		profile.UefiSettings = &uefiSetting
-	} else {
-		profile.UefiSettings = nil
 	}
 
 	// No error
@@ -6717,7 +6087,7 @@ func (profile *StorageProfile) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "ImageReference":
 	if profile.ImageReference != nil {
-		imageReference_ARM, err := (*profile.ImageReference).ConvertToARM(resolved)
+		imageReference_ARM, err := profile.ImageReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6727,7 +6097,7 @@ func (profile *StorageProfile) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "OsDisk":
 	if profile.OsDisk != nil {
-		osDisk_ARM, err := (*profile.OsDisk).ConvertToARM(resolved)
+		osDisk_ARM, err := profile.OsDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -6792,8 +6162,6 @@ func (profile *StorageProfile) AssignProperties_From_StorageProfile(source *stor
 	if source.DataDisks != nil {
 		dataDiskList := make([]DataDisk, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk DataDisk
 			err := dataDisk.AssignProperties_From_DataDisk(&dataDiskItem)
 			if err != nil {
@@ -6843,8 +6211,6 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *s
 	if profile.DataDisks != nil {
 		dataDiskList := make([]storage.DataDisk, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk storage.DataDisk
 			err := dataDiskItem.AssignProperties_To_DataDisk(&dataDisk)
 			if err != nil {
@@ -6886,55 +6252,6 @@ func (profile *StorageProfile) AssignProperties_To_StorageProfile(destination *s
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageProfile_STATUS populates our StorageProfile from the provided source StorageProfile_STATUS
-func (profile *StorageProfile) Initialize_From_StorageProfile_STATUS(source *StorageProfile_STATUS) error {
-
-	// DataDisks
-	if source.DataDisks != nil {
-		dataDiskList := make([]DataDisk, len(source.DataDisks))
-		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
-			var dataDisk DataDisk
-			err := dataDisk.Initialize_From_DataDisk_STATUS(&dataDiskItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_DataDisk_STATUS() to populate field DataDisks")
-			}
-			dataDiskList[dataDiskIndex] = dataDisk
-		}
-		profile.DataDisks = dataDiskList
-	} else {
-		profile.DataDisks = nil
-	}
-
-	// ImageReference
-	if source.ImageReference != nil {
-		var imageReference ImageReference
-		err := imageReference.Initialize_From_ImageReference_STATUS(source.ImageReference)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ImageReference_STATUS() to populate field ImageReference")
-		}
-		profile.ImageReference = &imageReference
-	} else {
-		profile.ImageReference = nil
-	}
-
-	// OsDisk
-	if source.OsDisk != nil {
-		var osDisk OSDisk
-		err := osDisk.Initialize_From_OSDisk_STATUS(source.OsDisk)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_OSDisk_STATUS() to populate field OsDisk")
-		}
-		profile.OsDisk = &osDisk
-	} else {
-		profile.OsDisk = nil
 	}
 
 	// No error
@@ -7016,8 +6333,6 @@ func (profile *StorageProfile_STATUS) AssignProperties_From_StorageProfile_STATU
 	if source.DataDisks != nil {
 		dataDiskList := make([]DataDisk_STATUS, len(source.DataDisks))
 		for dataDiskIndex, dataDiskItem := range source.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk DataDisk_STATUS
 			err := dataDisk.AssignProperties_From_DataDisk_STATUS(&dataDiskItem)
 			if err != nil {
@@ -7067,8 +6382,6 @@ func (profile *StorageProfile_STATUS) AssignProperties_To_StorageProfile_STATUS(
 	if profile.DataDisks != nil {
 		dataDiskList := make([]storage.DataDisk_STATUS, len(profile.DataDisks))
 		for dataDiskIndex, dataDiskItem := range profile.DataDisks {
-			// Shadow the loop variable to avoid aliasing
-			dataDiskItem := dataDiskItem
 			var dataDisk storage.DataDisk_STATUS
 			err := dataDiskItem.AssignProperties_To_DataDisk_STATUS(&dataDisk)
 			if err != nil {
@@ -7401,8 +6714,6 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_From_VirtualMa
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -7501,8 +6812,6 @@ func (extension *VirtualMachineExtension_STATUS) AssignProperties_To_VirtualMach
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -7623,8 +6932,6 @@ func (identity *VirtualMachineIdentity) AssignProperties_From_VirtualMachineIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -7658,8 +6965,6 @@ func (identity *VirtualMachineIdentity) AssignProperties_To_VirtualMachineIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -7677,33 +6982,6 @@ func (identity *VirtualMachineIdentity) AssignProperties_To_VirtualMachineIdenti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachineIdentity_STATUS populates our VirtualMachineIdentity from the provided source VirtualMachineIdentity_STATUS
-func (identity *VirtualMachineIdentity) Initialize_From_VirtualMachineIdentity_STATUS(source *VirtualMachineIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), virtualMachineIdentity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -7804,8 +7082,6 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_From_VirtualMach
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]VirtualMachineIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -7845,8 +7121,6 @@ func (identity *VirtualMachineIdentity_STATUS) AssignProperties_To_VirtualMachin
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.VirtualMachineIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.VirtualMachineIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_VirtualMachineIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -8104,8 +7378,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Disks != nil {
 		diskList := make([]DiskInstanceView_STATUS, len(source.Disks))
 		for diskIndex, diskItem := range source.Disks {
-			// Shadow the loop variable to avoid aliasing
-			diskItem := diskItem
 			var disk DiskInstanceView_STATUS
 			err := disk.AssignProperties_From_DiskInstanceView_STATUS(&diskItem)
 			if err != nil {
@@ -8122,8 +7394,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Extensions != nil {
 		extensionList := make([]VirtualMachineExtensionInstanceView_STATUS, len(source.Extensions))
 		for extensionIndex, extensionItem := range source.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension VirtualMachineExtensionInstanceView_STATUS
 			err := extension.AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(&extensionItem)
 			if err != nil {
@@ -8188,8 +7458,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_From_VirtualMach
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -8257,8 +7525,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Disks != nil {
 		diskList := make([]storage.DiskInstanceView_STATUS, len(view.Disks))
 		for diskIndex, diskItem := range view.Disks {
-			// Shadow the loop variable to avoid aliasing
-			diskItem := diskItem
 			var disk storage.DiskInstanceView_STATUS
 			err := diskItem.AssignProperties_To_DiskInstanceView_STATUS(&disk)
 			if err != nil {
@@ -8275,8 +7541,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Extensions != nil {
 		extensionList := make([]storage.VirtualMachineExtensionInstanceView_STATUS, len(view.Extensions))
 		for extensionIndex, extensionItem := range view.Extensions {
-			// Shadow the loop variable to avoid aliasing
-			extensionItem := extensionItem
 			var extension storage.VirtualMachineExtensionInstanceView_STATUS
 			err := extensionItem.AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(&extension)
 			if err != nil {
@@ -8340,8 +7604,6 @@ func (view *VirtualMachineInstanceView_STATUS) AssignProperties_To_VirtualMachin
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -8405,8 +7667,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_From_VirtualMachine
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -8423,8 +7683,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_From_VirtualMachine
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -8450,8 +7708,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_To_VirtualMachineOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -8468,8 +7724,6 @@ func (operator *VirtualMachineOperatorSpec) AssignProperties_To_VirtualMachineOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -8597,24 +7851,6 @@ func (diagnostics *BootDiagnostics) AssignProperties_To_BootDiagnostics(destinat
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BootDiagnostics_STATUS populates our BootDiagnostics from the provided source BootDiagnostics_STATUS
-func (diagnostics *BootDiagnostics) Initialize_From_BootDiagnostics_STATUS(source *BootDiagnostics_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		diagnostics.Enabled = &enabled
-	} else {
-		diagnostics.Enabled = nil
-	}
-
-	// StorageUri
-	diagnostics.StorageUri = genruntime.ClonePointerToString(source.StorageUri)
 
 	// No error
 	return nil
@@ -8938,7 +8174,7 @@ func (disk *DataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 
 	// Set property "Image":
 	if disk.Image != nil {
-		image_ARM, err := (*disk.Image).ConvertToARM(resolved)
+		image_ARM, err := disk.Image.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8954,7 +8190,7 @@ func (disk *DataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 
 	// Set property "ManagedDisk":
 	if disk.ManagedDisk != nil {
-		managedDisk_ARM, err := (*disk.ManagedDisk).ConvertToARM(resolved)
+		managedDisk_ARM, err := disk.ManagedDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -8976,7 +8212,7 @@ func (disk *DataDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetai
 
 	// Set property "Vhd":
 	if disk.Vhd != nil {
-		vhd_ARM, err := (*disk.Vhd).ConvertToARM(resolved)
+		vhd_ARM, err := disk.Vhd.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -9310,106 +8546,6 @@ func (disk *DataDisk) AssignProperties_To_DataDisk(destination *storage.DataDisk
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DataDisk_STATUS populates our DataDisk from the provided source DataDisk_STATUS
-func (disk *DataDisk) Initialize_From_DataDisk_STATUS(source *DataDisk_STATUS) error {
-
-	// Caching
-	if source.Caching != nil {
-		caching := genruntime.ToEnum(string(*source.Caching), caching_Values)
-		disk.Caching = &caching
-	} else {
-		disk.Caching = nil
-	}
-
-	// CreateOption
-	if source.CreateOption != nil {
-		createOption := genruntime.ToEnum(string(*source.CreateOption), createOption_Values)
-		disk.CreateOption = &createOption
-	} else {
-		disk.CreateOption = nil
-	}
-
-	// DeleteOption
-	if source.DeleteOption != nil {
-		deleteOption := genruntime.ToEnum(string(*source.DeleteOption), deleteOption_Values)
-		disk.DeleteOption = &deleteOption
-	} else {
-		disk.DeleteOption = nil
-	}
-
-	// DetachOption
-	if source.DetachOption != nil {
-		detachOption := genruntime.ToEnum(string(*source.DetachOption), detachOption_Values)
-		disk.DetachOption = &detachOption
-	} else {
-		disk.DetachOption = nil
-	}
-
-	// DiskSizeGB
-	disk.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
-
-	// Image
-	if source.Image != nil {
-		var image VirtualHardDisk
-		err := image.Initialize_From_VirtualHardDisk_STATUS(source.Image)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
-		}
-		disk.Image = &image
-	} else {
-		disk.Image = nil
-	}
-
-	// Lun
-	disk.Lun = genruntime.ClonePointerToInt(source.Lun)
-
-	// ManagedDisk
-	if source.ManagedDisk != nil {
-		var managedDisk ManagedDiskParameters
-		err := managedDisk.Initialize_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
-		}
-		disk.ManagedDisk = &managedDisk
-	} else {
-		disk.ManagedDisk = nil
-	}
-
-	// Name
-	disk.Name = genruntime.ClonePointerToString(source.Name)
-
-	// ToBeDetached
-	if source.ToBeDetached != nil {
-		toBeDetached := *source.ToBeDetached
-		disk.ToBeDetached = &toBeDetached
-	} else {
-		disk.ToBeDetached = nil
-	}
-
-	// Vhd
-	if source.Vhd != nil {
-		var vhd VirtualHardDisk
-		err := vhd.Initialize_From_VirtualHardDisk_STATUS(source.Vhd)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
-		}
-		disk.Vhd = &vhd
-	} else {
-		disk.Vhd = nil
-	}
-
-	// WriteAcceleratorEnabled
-	if source.WriteAcceleratorEnabled != nil {
-		writeAcceleratorEnabled := *source.WriteAcceleratorEnabled
-		disk.WriteAcceleratorEnabled = &writeAcceleratorEnabled
-	} else {
-		disk.WriteAcceleratorEnabled = nil
 	}
 
 	// No error
@@ -9903,8 +9039,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]DiskEncryptionSettings_STATUS, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting DiskEncryptionSettings_STATUS
 			err := encryptionSetting.AssignProperties_From_DiskEncryptionSettings_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -9924,8 +9058,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_From_DiskInstanceView_STAT
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -9951,8 +9083,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 	if view.EncryptionSettings != nil {
 		encryptionSettingList := make([]storage.DiskEncryptionSettings_STATUS, len(view.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range view.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting storage.DiskEncryptionSettings_STATUS
 			err := encryptionSettingItem.AssignProperties_To_DiskEncryptionSettings_STATUS(&encryptionSetting)
 			if err != nil {
@@ -9972,8 +9102,6 @@ func (view *DiskInstanceView_STATUS) AssignProperties_To_DiskInstanceView_STATUS
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -10560,39 +9688,6 @@ func (reference *ImageReference) AssignProperties_To_ImageReference(destination 
 	return nil
 }
 
-// Initialize_From_ImageReference_STATUS populates our ImageReference from the provided source ImageReference_STATUS
-func (reference *ImageReference) Initialize_From_ImageReference_STATUS(source *ImageReference_STATUS) error {
-
-	// CommunityGalleryImageId
-	reference.CommunityGalleryImageId = genruntime.ClonePointerToString(source.CommunityGalleryImageId)
-
-	// Offer
-	reference.Offer = genruntime.ClonePointerToString(source.Offer)
-
-	// Publisher
-	reference.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// Reference
-	if source.Id != nil {
-		referenceTemp := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		reference.Reference = &referenceTemp
-	} else {
-		reference.Reference = nil
-	}
-
-	// SharedGalleryImageId
-	reference.SharedGalleryImageId = genruntime.ClonePointerToString(source.SharedGalleryImageId)
-
-	// Sku
-	reference.Sku = genruntime.ClonePointerToString(source.Sku)
-
-	// Version
-	reference.Version = genruntime.ClonePointerToString(source.Version)
-
-	// No error
-	return nil
-}
-
 // Specifies information about the image to use. You can specify information about platform images, marketplace images, or
 // virtual machine images. This element is required when you want to use a platform image, marketplace image, or virtual
 // machine image, but is not used in other creation operations. NOTE: Image reference publisher and offer can only be set
@@ -10939,7 +10034,7 @@ func (configuration *LinuxConfiguration) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "PatchSettings":
 	if configuration.PatchSettings != nil {
-		patchSettings_ARM, err := (*configuration.PatchSettings).ConvertToARM(resolved)
+		patchSettings_ARM, err := configuration.PatchSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -10955,7 +10050,7 @@ func (configuration *LinuxConfiguration) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "Ssh":
 	if configuration.Ssh != nil {
-		ssh_ARM, err := (*configuration.Ssh).ConvertToARM(resolved)
+		ssh_ARM, err := configuration.Ssh.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11112,53 +10207,6 @@ func (configuration *LinuxConfiguration) AssignProperties_To_LinuxConfiguration(
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LinuxConfiguration_STATUS populates our LinuxConfiguration from the provided source LinuxConfiguration_STATUS
-func (configuration *LinuxConfiguration) Initialize_From_LinuxConfiguration_STATUS(source *LinuxConfiguration_STATUS) error {
-
-	// DisablePasswordAuthentication
-	if source.DisablePasswordAuthentication != nil {
-		disablePasswordAuthentication := *source.DisablePasswordAuthentication
-		configuration.DisablePasswordAuthentication = &disablePasswordAuthentication
-	} else {
-		configuration.DisablePasswordAuthentication = nil
-	}
-
-	// PatchSettings
-	if source.PatchSettings != nil {
-		var patchSetting LinuxPatchSettings
-		err := patchSetting.Initialize_From_LinuxPatchSettings_STATUS(source.PatchSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LinuxPatchSettings_STATUS() to populate field PatchSettings")
-		}
-		configuration.PatchSettings = &patchSetting
-	} else {
-		configuration.PatchSettings = nil
-	}
-
-	// ProvisionVMAgent
-	if source.ProvisionVMAgent != nil {
-		provisionVMAgent := *source.ProvisionVMAgent
-		configuration.ProvisionVMAgent = &provisionVMAgent
-	} else {
-		configuration.ProvisionVMAgent = nil
-	}
-
-	// Ssh
-	if source.Ssh != nil {
-		var ssh SshConfiguration
-		err := ssh.Initialize_From_SshConfiguration_STATUS(source.Ssh)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SshConfiguration_STATUS() to populate field Ssh")
-		}
-		configuration.Ssh = &ssh
-	} else {
-		configuration.Ssh = nil
 	}
 
 	// No error
@@ -11670,37 +10718,6 @@ func (reference *NetworkInterfaceReference) AssignProperties_To_NetworkInterface
 	return nil
 }
 
-// Initialize_From_NetworkInterfaceReference_STATUS populates our NetworkInterfaceReference from the provided source NetworkInterfaceReference_STATUS
-func (reference *NetworkInterfaceReference) Initialize_From_NetworkInterfaceReference_STATUS(source *NetworkInterfaceReference_STATUS) error {
-
-	// DeleteOption
-	if source.DeleteOption != nil {
-		deleteOption := genruntime.ToEnum(string(*source.DeleteOption), networkInterfaceReferenceProperties_DeleteOption_Values)
-		reference.DeleteOption = &deleteOption
-	} else {
-		reference.DeleteOption = nil
-	}
-
-	// Primary
-	if source.Primary != nil {
-		primary := *source.Primary
-		reference.Primary = &primary
-	} else {
-		reference.Primary = nil
-	}
-
-	// Reference
-	if source.Id != nil {
-		referenceTemp := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		reference.Reference = &referenceTemp
-	} else {
-		reference.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Describes a network interface reference.
 type NetworkInterfaceReference_STATUS struct {
 	// DeleteOption: Specify what happens to the network interface when the VM is deleted
@@ -11939,7 +10956,7 @@ func (disk *OSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "DiffDiskSettings":
 	if disk.DiffDiskSettings != nil {
-		diffDiskSettings_ARM, err := (*disk.DiffDiskSettings).ConvertToARM(resolved)
+		diffDiskSettings_ARM, err := disk.DiffDiskSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11955,7 +10972,7 @@ func (disk *OSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "EncryptionSettings":
 	if disk.EncryptionSettings != nil {
-		encryptionSettings_ARM, err := (*disk.EncryptionSettings).ConvertToARM(resolved)
+		encryptionSettings_ARM, err := disk.EncryptionSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11965,7 +10982,7 @@ func (disk *OSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "Image":
 	if disk.Image != nil {
-		image_ARM, err := (*disk.Image).ConvertToARM(resolved)
+		image_ARM, err := disk.Image.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11975,7 +10992,7 @@ func (disk *OSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "ManagedDisk":
 	if disk.ManagedDisk != nil {
-		managedDisk_ARM, err := (*disk.ManagedDisk).ConvertToARM(resolved)
+		managedDisk_ARM, err := disk.ManagedDisk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -11999,7 +11016,7 @@ func (disk *OSDisk) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 	// Set property "Vhd":
 	if disk.Vhd != nil {
-		vhd_ARM, err := (*disk.Vhd).ConvertToARM(resolved)
+		vhd_ARM, err := disk.Vhd.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -12369,119 +11386,6 @@ func (disk *OSDisk) AssignProperties_To_OSDisk(destination *storage.OSDisk) erro
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_OSDisk_STATUS populates our OSDisk from the provided source OSDisk_STATUS
-func (disk *OSDisk) Initialize_From_OSDisk_STATUS(source *OSDisk_STATUS) error {
-
-	// Caching
-	if source.Caching != nil {
-		caching := genruntime.ToEnum(string(*source.Caching), caching_Values)
-		disk.Caching = &caching
-	} else {
-		disk.Caching = nil
-	}
-
-	// CreateOption
-	if source.CreateOption != nil {
-		createOption := genruntime.ToEnum(string(*source.CreateOption), createOption_Values)
-		disk.CreateOption = &createOption
-	} else {
-		disk.CreateOption = nil
-	}
-
-	// DeleteOption
-	if source.DeleteOption != nil {
-		deleteOption := genruntime.ToEnum(string(*source.DeleteOption), deleteOption_Values)
-		disk.DeleteOption = &deleteOption
-	} else {
-		disk.DeleteOption = nil
-	}
-
-	// DiffDiskSettings
-	if source.DiffDiskSettings != nil {
-		var diffDiskSetting DiffDiskSettings
-		err := diffDiskSetting.Initialize_From_DiffDiskSettings_STATUS(source.DiffDiskSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DiffDiskSettings_STATUS() to populate field DiffDiskSettings")
-		}
-		disk.DiffDiskSettings = &diffDiskSetting
-	} else {
-		disk.DiffDiskSettings = nil
-	}
-
-	// DiskSizeGB
-	disk.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
-
-	// EncryptionSettings
-	if source.EncryptionSettings != nil {
-		var encryptionSetting DiskEncryptionSettings
-		err := encryptionSetting.Initialize_From_DiskEncryptionSettings_STATUS(source.EncryptionSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DiskEncryptionSettings_STATUS() to populate field EncryptionSettings")
-		}
-		disk.EncryptionSettings = &encryptionSetting
-	} else {
-		disk.EncryptionSettings = nil
-	}
-
-	// Image
-	if source.Image != nil {
-		var image VirtualHardDisk
-		err := image.Initialize_From_VirtualHardDisk_STATUS(source.Image)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Image")
-		}
-		disk.Image = &image
-	} else {
-		disk.Image = nil
-	}
-
-	// ManagedDisk
-	if source.ManagedDisk != nil {
-		var managedDisk ManagedDiskParameters
-		err := managedDisk.Initialize_From_ManagedDiskParameters_STATUS(source.ManagedDisk)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedDiskParameters_STATUS() to populate field ManagedDisk")
-		}
-		disk.ManagedDisk = &managedDisk
-	} else {
-		disk.ManagedDisk = nil
-	}
-
-	// Name
-	disk.Name = genruntime.ClonePointerToString(source.Name)
-
-	// OsType
-	if source.OsType != nil {
-		osType := genruntime.ToEnum(string(*source.OsType), oSDisk_OsType_Values)
-		disk.OsType = &osType
-	} else {
-		disk.OsType = nil
-	}
-
-	// Vhd
-	if source.Vhd != nil {
-		var vhd VirtualHardDisk
-		err := vhd.Initialize_From_VirtualHardDisk_STATUS(source.Vhd)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualHardDisk_STATUS() to populate field Vhd")
-		}
-		disk.Vhd = &vhd
-	} else {
-		disk.Vhd = nil
-	}
-
-	// WriteAcceleratorEnabled
-	if source.WriteAcceleratorEnabled != nil {
-		writeAcceleratorEnabled := *source.WriteAcceleratorEnabled
-		disk.WriteAcceleratorEnabled = &writeAcceleratorEnabled
-	} else {
-		disk.WriteAcceleratorEnabled = nil
 	}
 
 	// No error
@@ -13048,24 +11952,6 @@ func (profile *TerminateNotificationProfile) AssignProperties_To_TerminateNotifi
 	return nil
 }
 
-// Initialize_From_TerminateNotificationProfile_STATUS populates our TerminateNotificationProfile from the provided source TerminateNotificationProfile_STATUS
-func (profile *TerminateNotificationProfile) Initialize_From_TerminateNotificationProfile_STATUS(source *TerminateNotificationProfile_STATUS) error {
-
-	// Enable
-	if source.Enable != nil {
-		enable := *source.Enable
-		profile.Enable = &enable
-	} else {
-		profile.Enable = nil
-	}
-
-	// NotBeforeTimeout
-	profile.NotBeforeTimeout = genruntime.ClonePointerToString(source.NotBeforeTimeout)
-
-	// No error
-	return nil
-}
-
 type TerminateNotificationProfile_STATUS struct {
 	// Enable: Specifies whether the Terminate Scheduled event is enabled or disabled.
 	Enable *bool `json:"enable,omitempty"`
@@ -13270,29 +12156,6 @@ func (settings *UefiSettings) AssignProperties_To_UefiSettings(destination *stor
 	return nil
 }
 
-// Initialize_From_UefiSettings_STATUS populates our UefiSettings from the provided source UefiSettings_STATUS
-func (settings *UefiSettings) Initialize_From_UefiSettings_STATUS(source *UefiSettings_STATUS) error {
-
-	// SecureBootEnabled
-	if source.SecureBootEnabled != nil {
-		secureBootEnabled := *source.SecureBootEnabled
-		settings.SecureBootEnabled = &secureBootEnabled
-	} else {
-		settings.SecureBootEnabled = nil
-	}
-
-	// VTpmEnabled
-	if source.VTpmEnabled != nil {
-		vTpmEnabled := *source.VTpmEnabled
-		settings.VTpmEnabled = &vTpmEnabled
-	} else {
-		settings.VTpmEnabled = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Specifies the security settings like secure boot and vTPM used while creating the virtual machine.
 // Minimum
 // api-version: 2020-12-01
@@ -13445,7 +12308,7 @@ func (group *VaultSecretGroup) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "SourceVault":
 	if group.SourceVault != nil {
-		sourceVault_ARM, err := (*group.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := group.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -13520,8 +12383,6 @@ func (group *VaultSecretGroup) AssignProperties_From_VaultSecretGroup(source *st
 	if source.VaultCertificates != nil {
 		vaultCertificateList := make([]VaultCertificate, len(source.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range source.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate VaultCertificate
 			err := vaultCertificate.AssignProperties_From_VaultCertificate(&vaultCertificateItem)
 			if err != nil {
@@ -13559,8 +12420,6 @@ func (group *VaultSecretGroup) AssignProperties_To_VaultSecretGroup(destination 
 	if group.VaultCertificates != nil {
 		vaultCertificateList := make([]storage.VaultCertificate, len(group.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range group.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate storage.VaultCertificate
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate(&vaultCertificate)
 			if err != nil {
@@ -13578,43 +12437,6 @@ func (group *VaultSecretGroup) AssignProperties_To_VaultSecretGroup(destination 
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VaultSecretGroup_STATUS populates our VaultSecretGroup from the provided source VaultSecretGroup_STATUS
-func (group *VaultSecretGroup) Initialize_From_VaultSecretGroup_STATUS(source *VaultSecretGroup_STATUS) error {
-
-	// SourceVault
-	if source.SourceVault != nil {
-		var sourceVault SubResource
-		err := sourceVault.Initialize_From_SubResource_STATUS(source.SourceVault)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
-		}
-		group.SourceVault = &sourceVault
-	} else {
-		group.SourceVault = nil
-	}
-
-	// VaultCertificates
-	if source.VaultCertificates != nil {
-		vaultCertificateList := make([]VaultCertificate, len(source.VaultCertificates))
-		for vaultCertificateIndex, vaultCertificateItem := range source.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
-			var vaultCertificate VaultCertificate
-			err := vaultCertificate.Initialize_From_VaultCertificate_STATUS(&vaultCertificateItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VaultCertificate_STATUS() to populate field VaultCertificates")
-			}
-			vaultCertificateList[vaultCertificateIndex] = vaultCertificate
-		}
-		group.VaultCertificates = vaultCertificateList
-	} else {
-		group.VaultCertificates = nil
 	}
 
 	// No error
@@ -13688,8 +12510,6 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_From_VaultSecretGroup_STA
 	if source.VaultCertificates != nil {
 		vaultCertificateList := make([]VaultCertificate_STATUS, len(source.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range source.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate VaultCertificate_STATUS
 			err := vaultCertificate.AssignProperties_From_VaultCertificate_STATUS(&vaultCertificateItem)
 			if err != nil {
@@ -13727,8 +12547,6 @@ func (group *VaultSecretGroup_STATUS) AssignProperties_To_VaultSecretGroup_STATU
 	if group.VaultCertificates != nil {
 		vaultCertificateList := make([]storage.VaultCertificate_STATUS, len(group.VaultCertificates))
 		for vaultCertificateIndex, vaultCertificateItem := range group.VaultCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vaultCertificateItem := vaultCertificateItem
 			var vaultCertificate storage.VaultCertificate_STATUS
 			err := vaultCertificateItem.AssignProperties_To_VaultCertificate_STATUS(&vaultCertificate)
 			if err != nil {
@@ -13815,8 +12633,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 	if source.ExtensionHandlers != nil {
 		extensionHandlerList := make([]VirtualMachineExtensionHandlerInstanceView_STATUS, len(source.ExtensionHandlers))
 		for extensionHandlerIndex, extensionHandlerItem := range source.ExtensionHandlers {
-			// Shadow the loop variable to avoid aliasing
-			extensionHandlerItem := extensionHandlerItem
 			var extensionHandler VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandler.AssignProperties_From_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandlerItem)
 			if err != nil {
@@ -13833,8 +12649,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_From_Virtua
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -13863,8 +12677,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 	if view.ExtensionHandlers != nil {
 		extensionHandlerList := make([]storage.VirtualMachineExtensionHandlerInstanceView_STATUS, len(view.ExtensionHandlers))
 		for extensionHandlerIndex, extensionHandlerItem := range view.ExtensionHandlers {
-			// Shadow the loop variable to avoid aliasing
-			extensionHandlerItem := extensionHandlerItem
 			var extensionHandler storage.VirtualMachineExtensionHandlerInstanceView_STATUS
 			err := extensionHandlerItem.AssignProperties_To_VirtualMachineExtensionHandlerInstanceView_STATUS(&extensionHandler)
 			if err != nil {
@@ -13881,8 +12693,6 @@ func (view *VirtualMachineAgentInstanceView_STATUS) AssignProperties_To_VirtualM
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -14179,7 +12989,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) ConvertToARM(r
 		result.Properties.DeleteOption = &deleteOption
 	}
 	if configuration.DnsSettings != nil {
-		dnsSettings_ARM, err := (*configuration.DnsSettings).ConvertToARM(resolved)
+		dnsSettings_ARM, err := configuration.DnsSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -14187,7 +12997,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) ConvertToARM(r
 		result.Properties.DnsSettings = &dnsSettings
 	}
 	if configuration.DscpConfiguration != nil {
-		dscpConfiguration_ARM, err := (*configuration.DscpConfiguration).ConvertToARM(resolved)
+		dscpConfiguration_ARM, err := configuration.DscpConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -14214,7 +13024,7 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) ConvertToARM(r
 		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.VirtualMachineNetworkInterfaceIPConfiguration))
 	}
 	if configuration.NetworkSecurityGroup != nil {
-		networkSecurityGroup_ARM, err := (*configuration.NetworkSecurityGroup).ConvertToARM(resolved)
+		networkSecurityGroup_ARM, err := configuration.NetworkSecurityGroup.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -14416,8 +13226,6 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualMachineNetworkInterfaceIPConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration
 			err := ipConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -14522,8 +13330,6 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 	if configuration.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.VirtualMachineNetworkInterfaceIPConfiguration, len(configuration.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range configuration.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.VirtualMachineNetworkInterfaceIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration(&ipConfiguration)
 			if err != nil {
@@ -14564,110 +13370,6 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration) AssignProperti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS populates our VirtualMachineNetworkInterfaceConfiguration from the provided source VirtualMachineNetworkInterfaceConfiguration_STATUS
-func (configuration *VirtualMachineNetworkInterfaceConfiguration) Initialize_From_VirtualMachineNetworkInterfaceConfiguration_STATUS(source *VirtualMachineNetworkInterfaceConfiguration_STATUS) error {
-
-	// DeleteOption
-	if source.DeleteOption != nil {
-		deleteOption := genruntime.ToEnum(string(*source.DeleteOption), virtualMachineNetworkInterfaceConfigurationProperties_DeleteOption_Values)
-		configuration.DeleteOption = &deleteOption
-	} else {
-		configuration.DeleteOption = nil
-	}
-
-	// DnsSettings
-	if source.DnsSettings != nil {
-		var dnsSetting VirtualMachineNetworkInterfaceDnsSettingsConfiguration
-		err := dnsSetting.Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS(source.DnsSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
-		}
-		configuration.DnsSettings = &dnsSetting
-	} else {
-		configuration.DnsSettings = nil
-	}
-
-	// DscpConfiguration
-	if source.DscpConfiguration != nil {
-		var dscpConfiguration SubResource
-		err := dscpConfiguration.Initialize_From_SubResource_STATUS(source.DscpConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DscpConfiguration")
-		}
-		configuration.DscpConfiguration = &dscpConfiguration
-	} else {
-		configuration.DscpConfiguration = nil
-	}
-
-	// EnableAcceleratedNetworking
-	if source.EnableAcceleratedNetworking != nil {
-		enableAcceleratedNetworking := *source.EnableAcceleratedNetworking
-		configuration.EnableAcceleratedNetworking = &enableAcceleratedNetworking
-	} else {
-		configuration.EnableAcceleratedNetworking = nil
-	}
-
-	// EnableFpga
-	if source.EnableFpga != nil {
-		enableFpga := *source.EnableFpga
-		configuration.EnableFpga = &enableFpga
-	} else {
-		configuration.EnableFpga = nil
-	}
-
-	// EnableIPForwarding
-	if source.EnableIPForwarding != nil {
-		enableIPForwarding := *source.EnableIPForwarding
-		configuration.EnableIPForwarding = &enableIPForwarding
-	} else {
-		configuration.EnableIPForwarding = nil
-	}
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]VirtualMachineNetworkInterfaceIPConfiguration, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration
-			err := ipConfiguration.Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfigurationItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		configuration.IpConfigurations = ipConfigurationList
-	} else {
-		configuration.IpConfigurations = nil
-	}
-
-	// Name
-	configuration.Name = genruntime.ClonePointerToString(source.Name)
-
-	// NetworkSecurityGroup
-	if source.NetworkSecurityGroup != nil {
-		var networkSecurityGroup SubResource
-		err := networkSecurityGroup.Initialize_From_SubResource_STATUS(source.NetworkSecurityGroup)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field NetworkSecurityGroup")
-		}
-		configuration.NetworkSecurityGroup = &networkSecurityGroup
-	} else {
-		configuration.NetworkSecurityGroup = nil
-	}
-
-	// Primary
-	if source.Primary != nil {
-		primary := *source.Primary
-		configuration.Primary = &primary
-	} else {
-		configuration.Primary = nil
 	}
 
 	// No error
@@ -14895,8 +13597,6 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualMachineNetworkInterfaceIPConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualMachineNetworkInterfaceIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -15001,8 +13701,6 @@ func (configuration *VirtualMachineNetworkInterfaceConfiguration_STATUS) AssignP
 	if configuration.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.VirtualMachineNetworkInterfaceIPConfiguration_STATUS, len(configuration.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range configuration.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.VirtualMachineNetworkInterfaceIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -15130,8 +13828,6 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_From_VirtualMac
 	if source.ConfigurationStatuses != nil {
 		configurationStatusList := make([]InstanceViewStatus_STATUS, len(source.ConfigurationStatuses))
 		for configurationStatusIndex, configurationStatusItem := range source.ConfigurationStatuses {
-			// Shadow the loop variable to avoid aliasing
-			configurationStatusItem := configurationStatusItem
 			var configurationStatus InstanceViewStatus_STATUS
 			err := configurationStatus.AssignProperties_From_InstanceViewStatus_STATUS(&configurationStatusItem)
 			if err != nil {
@@ -15181,8 +13877,6 @@ func (status *VirtualMachinePatchStatus_STATUS) AssignProperties_To_VirtualMachi
 	if status.ConfigurationStatuses != nil {
 		configurationStatusList := make([]storage.InstanceViewStatus_STATUS, len(status.ConfigurationStatuses))
 		for configurationStatusIndex, configurationStatusItem := range status.ConfigurationStatuses {
-			// Shadow the loop variable to avoid aliasing
-			configurationStatusItem := configurationStatusItem
 			var configurationStatus storage.InstanceViewStatus_STATUS
 			err := configurationStatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&configurationStatus)
 			if err != nil {
@@ -15426,46 +14120,6 @@ func (application *VMGalleryApplication) AssignProperties_To_VMGalleryApplicatio
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VMGalleryApplication_STATUS populates our VMGalleryApplication from the provided source VMGalleryApplication_STATUS
-func (application *VMGalleryApplication) Initialize_From_VMGalleryApplication_STATUS(source *VMGalleryApplication_STATUS) error {
-
-	// ConfigurationReference
-	application.ConfigurationReference = genruntime.ClonePointerToString(source.ConfigurationReference)
-
-	// EnableAutomaticUpgrade
-	if source.EnableAutomaticUpgrade != nil {
-		enableAutomaticUpgrade := *source.EnableAutomaticUpgrade
-		application.EnableAutomaticUpgrade = &enableAutomaticUpgrade
-	} else {
-		application.EnableAutomaticUpgrade = nil
-	}
-
-	// Order
-	application.Order = genruntime.ClonePointerToInt(source.Order)
-
-	// PackageReferenceReference
-	if source.PackageReferenceId != nil {
-		packageReferenceReference := genruntime.CreateResourceReferenceFromARMID(*source.PackageReferenceId)
-		application.PackageReferenceReference = &packageReferenceReference
-	} else {
-		application.PackageReferenceReference = nil
-	}
-
-	// Tags
-	application.Tags = genruntime.ClonePointerToString(source.Tags)
-
-	// TreatFailureAsDeploymentFailure
-	if source.TreatFailureAsDeploymentFailure != nil {
-		treatFailureAsDeploymentFailure := *source.TreatFailureAsDeploymentFailure
-		application.TreatFailureAsDeploymentFailure = &treatFailureAsDeploymentFailure
-	} else {
-		application.TreatFailureAsDeploymentFailure = nil
 	}
 
 	// No error
@@ -15732,19 +14386,6 @@ func (properties *VMSizeProperties) AssignProperties_To_VMSizeProperties(destina
 	return nil
 }
 
-// Initialize_From_VMSizeProperties_STATUS populates our VMSizeProperties from the provided source VMSizeProperties_STATUS
-func (properties *VMSizeProperties) Initialize_From_VMSizeProperties_STATUS(source *VMSizeProperties_STATUS) error {
-
-	// VCPUsAvailable
-	properties.VCPUsAvailable = genruntime.ClonePointerToInt(source.VCPUsAvailable)
-
-	// VCPUsPerCore
-	properties.VCPUsPerCore = genruntime.ClonePointerToInt(source.VCPUsPerCore)
-
-	// No error
-	return nil
-}
-
 // Specifies VM Size Property settings on the virtual machine.
 type VMSizeProperties_STATUS struct {
 	// VCPUsAvailable: Specifies the number of vCPUs available for the VM.
@@ -15882,7 +14523,7 @@ func (configuration *WindowsConfiguration) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "PatchSettings":
 	if configuration.PatchSettings != nil {
-		patchSettings_ARM, err := (*configuration.PatchSettings).ConvertToARM(resolved)
+		patchSettings_ARM, err := configuration.PatchSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -15904,7 +14545,7 @@ func (configuration *WindowsConfiguration) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "WinRM":
 	if configuration.WinRM != nil {
-		winRM_ARM, err := (*configuration.WinRM).ConvertToARM(resolved)
+		winRM_ARM, err := configuration.WinRM.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -15987,8 +14628,6 @@ func (configuration *WindowsConfiguration) AssignProperties_From_WindowsConfigur
 	if source.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]AdditionalUnattendContent, len(source.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range source.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent AdditionalUnattendContent
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent(&additionalUnattendContentItem)
 			if err != nil {
@@ -16057,8 +14696,6 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 	if configuration.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]storage.AdditionalUnattendContent, len(configuration.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range configuration.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent storage.AdditionalUnattendContent
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent(&additionalUnattendContent)
 			if err != nil {
@@ -16119,74 +14756,6 @@ func (configuration *WindowsConfiguration) AssignProperties_To_WindowsConfigurat
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WindowsConfiguration_STATUS populates our WindowsConfiguration from the provided source WindowsConfiguration_STATUS
-func (configuration *WindowsConfiguration) Initialize_From_WindowsConfiguration_STATUS(source *WindowsConfiguration_STATUS) error {
-
-	// AdditionalUnattendContent
-	if source.AdditionalUnattendContent != nil {
-		additionalUnattendContentList := make([]AdditionalUnattendContent, len(source.AdditionalUnattendContent))
-		for additionalUnattendContentIndex, additionalUnattendContentItem := range source.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
-			var additionalUnattendContent AdditionalUnattendContent
-			err := additionalUnattendContent.Initialize_From_AdditionalUnattendContent_STATUS(&additionalUnattendContentItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_AdditionalUnattendContent_STATUS() to populate field AdditionalUnattendContent")
-			}
-			additionalUnattendContentList[additionalUnattendContentIndex] = additionalUnattendContent
-		}
-		configuration.AdditionalUnattendContent = additionalUnattendContentList
-	} else {
-		configuration.AdditionalUnattendContent = nil
-	}
-
-	// EnableAutomaticUpdates
-	if source.EnableAutomaticUpdates != nil {
-		enableAutomaticUpdate := *source.EnableAutomaticUpdates
-		configuration.EnableAutomaticUpdates = &enableAutomaticUpdate
-	} else {
-		configuration.EnableAutomaticUpdates = nil
-	}
-
-	// PatchSettings
-	if source.PatchSettings != nil {
-		var patchSetting PatchSettings
-		err := patchSetting.Initialize_From_PatchSettings_STATUS(source.PatchSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PatchSettings_STATUS() to populate field PatchSettings")
-		}
-		configuration.PatchSettings = &patchSetting
-	} else {
-		configuration.PatchSettings = nil
-	}
-
-	// ProvisionVMAgent
-	if source.ProvisionVMAgent != nil {
-		provisionVMAgent := *source.ProvisionVMAgent
-		configuration.ProvisionVMAgent = &provisionVMAgent
-	} else {
-		configuration.ProvisionVMAgent = nil
-	}
-
-	// TimeZone
-	configuration.TimeZone = genruntime.ClonePointerToString(source.TimeZone)
-
-	// WinRM
-	if source.WinRM != nil {
-		var winRM WinRMConfiguration
-		err := winRM.Initialize_From_WinRMConfiguration_STATUS(source.WinRM)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WinRMConfiguration_STATUS() to populate field WinRM")
-		}
-		configuration.WinRM = &winRM
-	} else {
-		configuration.WinRM = nil
 	}
 
 	// No error
@@ -16298,8 +14867,6 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_From_WindowsC
 	if source.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]AdditionalUnattendContent_STATUS, len(source.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range source.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent AdditionalUnattendContent_STATUS
 			err := additionalUnattendContent.AssignProperties_From_AdditionalUnattendContent_STATUS(&additionalUnattendContentItem)
 			if err != nil {
@@ -16368,8 +14935,6 @@ func (configuration *WindowsConfiguration_STATUS) AssignProperties_To_WindowsCon
 	if configuration.AdditionalUnattendContent != nil {
 		additionalUnattendContentList := make([]storage.AdditionalUnattendContent_STATUS, len(configuration.AdditionalUnattendContent))
 		for additionalUnattendContentIndex, additionalUnattendContentItem := range configuration.AdditionalUnattendContent {
-			// Shadow the loop variable to avoid aliasing
-			additionalUnattendContentItem := additionalUnattendContentItem
 			var additionalUnattendContent storage.AdditionalUnattendContent_STATUS
 			err := additionalUnattendContentItem.AssignProperties_To_AdditionalUnattendContent_STATUS(&additionalUnattendContent)
 			if err != nil {
@@ -16616,40 +15181,6 @@ func (content *AdditionalUnattendContent) AssignProperties_To_AdditionalUnattend
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AdditionalUnattendContent_STATUS populates our AdditionalUnattendContent from the provided source AdditionalUnattendContent_STATUS
-func (content *AdditionalUnattendContent) Initialize_From_AdditionalUnattendContent_STATUS(source *AdditionalUnattendContent_STATUS) error {
-
-	// ComponentName
-	if source.ComponentName != nil {
-		componentName := genruntime.ToEnum(string(*source.ComponentName), additionalUnattendContent_ComponentName_Values)
-		content.ComponentName = &componentName
-	} else {
-		content.ComponentName = nil
-	}
-
-	// Content
-	content.Content = genruntime.ClonePointerToString(source.Content)
-
-	// PassName
-	if source.PassName != nil {
-		passName := genruntime.ToEnum(string(*source.PassName), additionalUnattendContent_PassName_Values)
-		content.PassName = &passName
-	} else {
-		content.PassName = nil
-	}
-
-	// SettingName
-	if source.SettingName != nil {
-		settingName := genruntime.ToEnum(string(*source.SettingName), additionalUnattendContent_SettingName_Values)
-		content.SettingName = &settingName
-	} else {
-		content.SettingName = nil
 	}
 
 	// No error
@@ -17316,29 +15847,6 @@ func (settings *DiffDiskSettings) AssignProperties_To_DiffDiskSettings(destinati
 	return nil
 }
 
-// Initialize_From_DiffDiskSettings_STATUS populates our DiffDiskSettings from the provided source DiffDiskSettings_STATUS
-func (settings *DiffDiskSettings) Initialize_From_DiffDiskSettings_STATUS(source *DiffDiskSettings_STATUS) error {
-
-	// Option
-	if source.Option != nil {
-		option := genruntime.ToEnum(string(*source.Option), diffDiskOption_Values)
-		settings.Option = &option
-	} else {
-		settings.Option = nil
-	}
-
-	// Placement
-	if source.Placement != nil {
-		placement := genruntime.ToEnum(string(*source.Placement), diffDiskPlacement_Values)
-		settings.Placement = &placement
-	} else {
-		settings.Placement = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Describes the parameters of ephemeral disk settings that can be specified for operating system disk.
 // NOTE: The
 // ephemeral disk settings can only be specified for managed disk.
@@ -17470,7 +15978,7 @@ func (settings *DiskEncryptionSettings) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "DiskEncryptionKey":
 	if settings.DiskEncryptionKey != nil {
-		diskEncryptionKey_ARM, err := (*settings.DiskEncryptionKey).ConvertToARM(resolved)
+		diskEncryptionKey_ARM, err := settings.DiskEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -17486,7 +15994,7 @@ func (settings *DiskEncryptionSettings) ConvertToARM(resolved genruntime.Convert
 
 	// Set property "KeyEncryptionKey":
 	if settings.KeyEncryptionKey != nil {
-		keyEncryptionKey_ARM, err := (*settings.KeyEncryptionKey).ConvertToARM(resolved)
+		keyEncryptionKey_ARM, err := settings.KeyEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -17621,45 +16129,6 @@ func (settings *DiskEncryptionSettings) AssignProperties_To_DiskEncryptionSettin
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DiskEncryptionSettings_STATUS populates our DiskEncryptionSettings from the provided source DiskEncryptionSettings_STATUS
-func (settings *DiskEncryptionSettings) Initialize_From_DiskEncryptionSettings_STATUS(source *DiskEncryptionSettings_STATUS) error {
-
-	// DiskEncryptionKey
-	if source.DiskEncryptionKey != nil {
-		var diskEncryptionKey KeyVaultSecretReference
-		err := diskEncryptionKey.Initialize_From_KeyVaultSecretReference_STATUS(source.DiskEncryptionKey)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultSecretReference_STATUS() to populate field DiskEncryptionKey")
-		}
-		settings.DiskEncryptionKey = &diskEncryptionKey
-	} else {
-		settings.DiskEncryptionKey = nil
-	}
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		settings.Enabled = &enabled
-	} else {
-		settings.Enabled = nil
-	}
-
-	// KeyEncryptionKey
-	if source.KeyEncryptionKey != nil {
-		var keyEncryptionKey KeyVaultKeyReference
-		err := keyEncryptionKey.Initialize_From_KeyVaultKeyReference_STATUS(source.KeyEncryptionKey)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultKeyReference_STATUS() to populate field KeyEncryptionKey")
-		}
-		settings.KeyEncryptionKey = &keyEncryptionKey
-	} else {
-		settings.KeyEncryptionKey = nil
 	}
 
 	// No error
@@ -18126,7 +16595,7 @@ func (settings *LinuxPatchSettings) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "AutomaticByPlatformSettings":
 	if settings.AutomaticByPlatformSettings != nil {
-		automaticByPlatformSettings_ARM, err := (*settings.AutomaticByPlatformSettings).ConvertToARM(resolved)
+		automaticByPlatformSettings_ARM, err := settings.AutomaticByPlatformSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -18262,41 +16731,6 @@ func (settings *LinuxPatchSettings) AssignProperties_To_LinuxPatchSettings(desti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LinuxPatchSettings_STATUS populates our LinuxPatchSettings from the provided source LinuxPatchSettings_STATUS
-func (settings *LinuxPatchSettings) Initialize_From_LinuxPatchSettings_STATUS(source *LinuxPatchSettings_STATUS) error {
-
-	// AssessmentMode
-	if source.AssessmentMode != nil {
-		assessmentMode := genruntime.ToEnum(string(*source.AssessmentMode), linuxPatchSettings_AssessmentMode_Values)
-		settings.AssessmentMode = &assessmentMode
-	} else {
-		settings.AssessmentMode = nil
-	}
-
-	// AutomaticByPlatformSettings
-	if source.AutomaticByPlatformSettings != nil {
-		var automaticByPlatformSetting LinuxVMGuestPatchAutomaticByPlatformSettings
-		err := automaticByPlatformSetting.Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
-		}
-		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
-	} else {
-		settings.AutomaticByPlatformSettings = nil
-	}
-
-	// PatchMode
-	if source.PatchMode != nil {
-		patchMode := genruntime.ToEnum(string(*source.PatchMode), linuxPatchSettings_PatchMode_Values)
-		settings.PatchMode = &patchMode
-	} else {
-		settings.PatchMode = nil
 	}
 
 	// No error
@@ -18494,7 +16928,7 @@ func (parameters *ManagedDiskParameters) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "DiskEncryptionSet":
 	if parameters.DiskEncryptionSet != nil {
-		diskEncryptionSet_ARM, err := (*parameters.DiskEncryptionSet).ConvertToARM(resolved)
+		diskEncryptionSet_ARM, err := parameters.DiskEncryptionSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -18514,7 +16948,7 @@ func (parameters *ManagedDiskParameters) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "SecurityProfile":
 	if parameters.SecurityProfile != nil {
-		securityProfile_ARM, err := (*parameters.SecurityProfile).ConvertToARM(resolved)
+		securityProfile_ARM, err := parameters.SecurityProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -18678,53 +17112,6 @@ func (parameters *ManagedDiskParameters) AssignProperties_To_ManagedDiskParamete
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedDiskParameters_STATUS populates our ManagedDiskParameters from the provided source ManagedDiskParameters_STATUS
-func (parameters *ManagedDiskParameters) Initialize_From_ManagedDiskParameters_STATUS(source *ManagedDiskParameters_STATUS) error {
-
-	// DiskEncryptionSet
-	if source.DiskEncryptionSet != nil {
-		var diskEncryptionSet SubResource
-		err := diskEncryptionSet.Initialize_From_SubResource_STATUS(source.DiskEncryptionSet)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
-		}
-		parameters.DiskEncryptionSet = &diskEncryptionSet
-	} else {
-		parameters.DiskEncryptionSet = nil
-	}
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		parameters.Reference = &reference
-	} else {
-		parameters.Reference = nil
-	}
-
-	// SecurityProfile
-	if source.SecurityProfile != nil {
-		var securityProfile VMDiskSecurityProfile
-		err := securityProfile.Initialize_From_VMDiskSecurityProfile_STATUS(source.SecurityProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VMDiskSecurityProfile_STATUS() to populate field SecurityProfile")
-		}
-		parameters.SecurityProfile = &securityProfile
-	} else {
-		parameters.SecurityProfile = nil
-	}
-
-	// StorageAccountType
-	if source.StorageAccountType != nil {
-		storageAccountType := genruntime.ToEnum(string(*source.StorageAccountType), storageAccountType_Values)
-		parameters.StorageAccountType = &storageAccountType
-	} else {
-		parameters.StorageAccountType = nil
 	}
 
 	// No error
@@ -18997,7 +17384,7 @@ func (settings *PatchSettings) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "AutomaticByPlatformSettings":
 	if settings.AutomaticByPlatformSettings != nil {
-		automaticByPlatformSettings_ARM, err := (*settings.AutomaticByPlatformSettings).ConvertToARM(resolved)
+		automaticByPlatformSettings_ARM, err := settings.AutomaticByPlatformSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -19161,49 +17548,6 @@ func (settings *PatchSettings) AssignProperties_To_PatchSettings(destination *st
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PatchSettings_STATUS populates our PatchSettings from the provided source PatchSettings_STATUS
-func (settings *PatchSettings) Initialize_From_PatchSettings_STATUS(source *PatchSettings_STATUS) error {
-
-	// AssessmentMode
-	if source.AssessmentMode != nil {
-		assessmentMode := genruntime.ToEnum(string(*source.AssessmentMode), patchSettings_AssessmentMode_Values)
-		settings.AssessmentMode = &assessmentMode
-	} else {
-		settings.AssessmentMode = nil
-	}
-
-	// AutomaticByPlatformSettings
-	if source.AutomaticByPlatformSettings != nil {
-		var automaticByPlatformSetting WindowsVMGuestPatchAutomaticByPlatformSettings
-		err := automaticByPlatformSetting.Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS(source.AutomaticByPlatformSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS() to populate field AutomaticByPlatformSettings")
-		}
-		settings.AutomaticByPlatformSettings = &automaticByPlatformSetting
-	} else {
-		settings.AutomaticByPlatformSettings = nil
-	}
-
-	// EnableHotpatching
-	if source.EnableHotpatching != nil {
-		enableHotpatching := *source.EnableHotpatching
-		settings.EnableHotpatching = &enableHotpatching
-	} else {
-		settings.EnableHotpatching = nil
-	}
-
-	// PatchMode
-	if source.PatchMode != nil {
-		patchMode := genruntime.ToEnum(string(*source.PatchMode), patchSettings_PatchMode_Values)
-		settings.PatchMode = &patchMode
-	} else {
-		settings.PatchMode = nil
 	}
 
 	// No error
@@ -19446,8 +17790,6 @@ func (configuration *SshConfiguration) AssignProperties_From_SshConfiguration(so
 	if source.PublicKeys != nil {
 		publicKeyList := make([]SshPublicKeySpec, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey SshPublicKeySpec
 			err := publicKey.AssignProperties_From_SshPublicKeySpec(&publicKeyItem)
 			if err != nil {
@@ -19473,8 +17815,6 @@ func (configuration *SshConfiguration) AssignProperties_To_SshConfiguration(dest
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]storage.SshPublicKeySpec, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey storage.SshPublicKeySpec
 			err := publicKeyItem.AssignProperties_To_SshPublicKeySpec(&publicKey)
 			if err != nil {
@@ -19492,31 +17832,6 @@ func (configuration *SshConfiguration) AssignProperties_To_SshConfiguration(dest
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SshConfiguration_STATUS populates our SshConfiguration from the provided source SshConfiguration_STATUS
-func (configuration *SshConfiguration) Initialize_From_SshConfiguration_STATUS(source *SshConfiguration_STATUS) error {
-
-	// PublicKeys
-	if source.PublicKeys != nil {
-		publicKeyList := make([]SshPublicKeySpec, len(source.PublicKeys))
-		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
-			var publicKey SshPublicKeySpec
-			err := publicKey.Initialize_From_SshPublicKey_STATUS(&publicKeyItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SshPublicKey_STATUS() to populate field PublicKeys")
-			}
-			publicKeyList[publicKeyIndex] = publicKey
-		}
-		configuration.PublicKeys = publicKeyList
-	} else {
-		configuration.PublicKeys = nil
 	}
 
 	// No error
@@ -19564,8 +17879,6 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_From_SshConfigura
 	if source.PublicKeys != nil {
 		publicKeyList := make([]SshPublicKey_STATUS, len(source.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range source.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey SshPublicKey_STATUS
 			err := publicKey.AssignProperties_From_SshPublicKey_STATUS(&publicKeyItem)
 			if err != nil {
@@ -19591,8 +17904,6 @@ func (configuration *SshConfiguration_STATUS) AssignProperties_To_SshConfigurati
 	if configuration.PublicKeys != nil {
 		publicKeyList := make([]storage.SshPublicKey_STATUS, len(configuration.PublicKeys))
 		for publicKeyIndex, publicKeyItem := range configuration.PublicKeys {
-			// Shadow the loop variable to avoid aliasing
-			publicKeyItem := publicKeyItem
 			var publicKey storage.SshPublicKey_STATUS
 			err := publicKeyItem.AssignProperties_To_SshPublicKey_STATUS(&publicKey)
 			if err != nil {
@@ -19721,19 +18032,6 @@ func (certificate *VaultCertificate) AssignProperties_To_VaultCertificate(destin
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VaultCertificate_STATUS populates our VaultCertificate from the provided source VaultCertificate_STATUS
-func (certificate *VaultCertificate) Initialize_From_VaultCertificate_STATUS(source *VaultCertificate_STATUS) error {
-
-	// CertificateStore
-	certificate.CertificateStore = genruntime.ClonePointerToString(source.CertificateStore)
-
-	// CertificateUrl
-	certificate.CertificateUrl = genruntime.ClonePointerToString(source.CertificateUrl)
 
 	// No error
 	return nil
@@ -19897,16 +18195,6 @@ func (disk *VirtualHardDisk) AssignProperties_To_VirtualHardDisk(destination *st
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualHardDisk_STATUS populates our VirtualHardDisk from the provided source VirtualHardDisk_STATUS
-func (disk *VirtualHardDisk) Initialize_From_VirtualHardDisk_STATUS(source *VirtualHardDisk_STATUS) error {
-
-	// Uri
-	disk.Uri = genruntime.ClonePointerToString(source.Uri)
 
 	// No error
 	return nil
@@ -20182,16 +18470,6 @@ func (configuration *VirtualMachineNetworkInterfaceDnsSettingsConfiguration) Ass
 	return nil
 }
 
-// Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS populates our VirtualMachineNetworkInterfaceDnsSettingsConfiguration from the provided source VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS
-func (configuration *VirtualMachineNetworkInterfaceDnsSettingsConfiguration) Initialize_From_VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS(source *VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS) error {
-
-	// DnsServers
-	configuration.DnsServers = genruntime.CloneSliceOfString(source.DnsServers)
-
-	// No error
-	return nil
-}
-
 // Describes a virtual machines network configuration's DNS settings.
 type VirtualMachineNetworkInterfaceDnsSettingsConfiguration_STATUS struct {
 	// DnsServers: List of DNS servers IP addresses
@@ -20340,7 +18618,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) ConvertToARM
 		result.Properties.PrivateIPAddressVersion = &privateIPAddressVersion
 	}
 	if configuration.PublicIPAddressConfiguration != nil {
-		publicIPAddressConfiguration_ARM, err := (*configuration.PublicIPAddressConfiguration).ConvertToARM(resolved)
+		publicIPAddressConfiguration_ARM, err := configuration.PublicIPAddressConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -20348,7 +18626,7 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) ConvertToARM
 		result.Properties.PublicIPAddressConfiguration = &publicIPAddressConfiguration
 	}
 	if configuration.Subnet != nil {
-		subnet_ARM, err := (*configuration.Subnet).ConvertToARM(resolved)
+		subnet_ARM, err := configuration.Subnet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -20474,8 +18752,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if source.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]SubResource, len(source.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var applicationGatewayBackendAddressPool SubResource
 			err := applicationGatewayBackendAddressPool.AssignProperties_From_SubResource(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
@@ -20492,8 +18768,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if source.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]SubResource, len(source.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var applicationSecurityGroup SubResource
 			err := applicationSecurityGroup.AssignProperties_From_SubResource(&applicationSecurityGroupItem)
 			if err != nil {
@@ -20510,8 +18784,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if source.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]SubResource, len(source.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var loadBalancerBackendAddressPool SubResource
 			err := loadBalancerBackendAddressPool.AssignProperties_From_SubResource(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
@@ -20581,8 +18853,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if configuration.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]storage.SubResource, len(configuration.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range configuration.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var applicationGatewayBackendAddressPool storage.SubResource
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource(&applicationGatewayBackendAddressPool)
 			if err != nil {
@@ -20599,8 +18869,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if configuration.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]storage.SubResource, len(configuration.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range configuration.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var applicationSecurityGroup storage.SubResource
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource(&applicationSecurityGroup)
 			if err != nil {
@@ -20617,8 +18885,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 	if configuration.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]storage.SubResource, len(configuration.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range configuration.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var loadBalancerBackendAddressPool storage.SubResource
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource(&loadBalancerBackendAddressPool)
 			if err != nil {
@@ -20679,110 +18945,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) AssignProper
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS populates our VirtualMachineNetworkInterfaceIPConfiguration from the provided source VirtualMachineNetworkInterfaceIPConfiguration_STATUS
-func (configuration *VirtualMachineNetworkInterfaceIPConfiguration) Initialize_From_VirtualMachineNetworkInterfaceIPConfiguration_STATUS(source *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) error {
-
-	// ApplicationGatewayBackendAddressPools
-	if source.ApplicationGatewayBackendAddressPools != nil {
-		applicationGatewayBackendAddressPoolList := make([]SubResource, len(source.ApplicationGatewayBackendAddressPools))
-		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
-			var applicationGatewayBackendAddressPool SubResource
-			err := applicationGatewayBackendAddressPool.Initialize_From_SubResource_STATUS(&applicationGatewayBackendAddressPoolItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationGatewayBackendAddressPools")
-			}
-			applicationGatewayBackendAddressPoolList[applicationGatewayBackendAddressPoolIndex] = applicationGatewayBackendAddressPool
-		}
-		configuration.ApplicationGatewayBackendAddressPools = applicationGatewayBackendAddressPoolList
-	} else {
-		configuration.ApplicationGatewayBackendAddressPools = nil
-	}
-
-	// ApplicationSecurityGroups
-	if source.ApplicationSecurityGroups != nil {
-		applicationSecurityGroupList := make([]SubResource, len(source.ApplicationSecurityGroups))
-		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
-			var applicationSecurityGroup SubResource
-			err := applicationSecurityGroup.Initialize_From_SubResource_STATUS(&applicationSecurityGroupItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field ApplicationSecurityGroups")
-			}
-			applicationSecurityGroupList[applicationSecurityGroupIndex] = applicationSecurityGroup
-		}
-		configuration.ApplicationSecurityGroups = applicationSecurityGroupList
-	} else {
-		configuration.ApplicationSecurityGroups = nil
-	}
-
-	// LoadBalancerBackendAddressPools
-	if source.LoadBalancerBackendAddressPools != nil {
-		loadBalancerBackendAddressPoolList := make([]SubResource, len(source.LoadBalancerBackendAddressPools))
-		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
-			var loadBalancerBackendAddressPool SubResource
-			err := loadBalancerBackendAddressPool.Initialize_From_SubResource_STATUS(&loadBalancerBackendAddressPoolItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field LoadBalancerBackendAddressPools")
-			}
-			loadBalancerBackendAddressPoolList[loadBalancerBackendAddressPoolIndex] = loadBalancerBackendAddressPool
-		}
-		configuration.LoadBalancerBackendAddressPools = loadBalancerBackendAddressPoolList
-	} else {
-		configuration.LoadBalancerBackendAddressPools = nil
-	}
-
-	// Name
-	configuration.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Primary
-	if source.Primary != nil {
-		primary := *source.Primary
-		configuration.Primary = &primary
-	} else {
-		configuration.Primary = nil
-	}
-
-	// PrivateIPAddressVersion
-	if source.PrivateIPAddressVersion != nil {
-		privateIPAddressVersion := genruntime.ToEnum(string(*source.PrivateIPAddressVersion), virtualMachineNetworkInterfaceIPConfigurationProperties_PrivateIPAddressVersion_Values)
-		configuration.PrivateIPAddressVersion = &privateIPAddressVersion
-	} else {
-		configuration.PrivateIPAddressVersion = nil
-	}
-
-	// PublicIPAddressConfiguration
-	if source.PublicIPAddressConfiguration != nil {
-		var publicIPAddressConfiguration VirtualMachinePublicIPAddressConfiguration
-		err := publicIPAddressConfiguration.Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS(source.PublicIPAddressConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS() to populate field PublicIPAddressConfiguration")
-		}
-		configuration.PublicIPAddressConfiguration = &publicIPAddressConfiguration
-	} else {
-		configuration.PublicIPAddressConfiguration = nil
-	}
-
-	// Subnet
-	if source.Subnet != nil {
-		var subnet SubResource
-		err := subnet.Initialize_From_SubResource_STATUS(source.Subnet)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
-		}
-		configuration.Subnet = &subnet
-	} else {
-		configuration.Subnet = nil
 	}
 
 	// No error
@@ -20939,8 +19101,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if source.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]SubResource_STATUS, len(source.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range source.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var applicationGatewayBackendAddressPool SubResource_STATUS
 			err := applicationGatewayBackendAddressPool.AssignProperties_From_SubResource_STATUS(&applicationGatewayBackendAddressPoolItem)
 			if err != nil {
@@ -20957,8 +19117,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if source.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]SubResource_STATUS, len(source.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range source.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var applicationSecurityGroup SubResource_STATUS
 			err := applicationSecurityGroup.AssignProperties_From_SubResource_STATUS(&applicationSecurityGroupItem)
 			if err != nil {
@@ -20975,8 +19133,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if source.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]SubResource_STATUS, len(source.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range source.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var loadBalancerBackendAddressPool SubResource_STATUS
 			err := loadBalancerBackendAddressPool.AssignProperties_From_SubResource_STATUS(&loadBalancerBackendAddressPoolItem)
 			if err != nil {
@@ -21046,8 +19202,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if configuration.ApplicationGatewayBackendAddressPools != nil {
 		applicationGatewayBackendAddressPoolList := make([]storage.SubResource_STATUS, len(configuration.ApplicationGatewayBackendAddressPools))
 		for applicationGatewayBackendAddressPoolIndex, applicationGatewayBackendAddressPoolItem := range configuration.ApplicationGatewayBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			applicationGatewayBackendAddressPoolItem := applicationGatewayBackendAddressPoolItem
 			var applicationGatewayBackendAddressPool storage.SubResource_STATUS
 			err := applicationGatewayBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&applicationGatewayBackendAddressPool)
 			if err != nil {
@@ -21064,8 +19218,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if configuration.ApplicationSecurityGroups != nil {
 		applicationSecurityGroupList := make([]storage.SubResource_STATUS, len(configuration.ApplicationSecurityGroups))
 		for applicationSecurityGroupIndex, applicationSecurityGroupItem := range configuration.ApplicationSecurityGroups {
-			// Shadow the loop variable to avoid aliasing
-			applicationSecurityGroupItem := applicationSecurityGroupItem
 			var applicationSecurityGroup storage.SubResource_STATUS
 			err := applicationSecurityGroupItem.AssignProperties_To_SubResource_STATUS(&applicationSecurityGroup)
 			if err != nil {
@@ -21082,8 +19234,6 @@ func (configuration *VirtualMachineNetworkInterfaceIPConfiguration_STATUS) Assig
 	if configuration.LoadBalancerBackendAddressPools != nil {
 		loadBalancerBackendAddressPoolList := make([]storage.SubResource_STATUS, len(configuration.LoadBalancerBackendAddressPools))
 		for loadBalancerBackendAddressPoolIndex, loadBalancerBackendAddressPoolItem := range configuration.LoadBalancerBackendAddressPools {
-			// Shadow the loop variable to avoid aliasing
-			loadBalancerBackendAddressPoolItem := loadBalancerBackendAddressPoolItem
 			var loadBalancerBackendAddressPool storage.SubResource_STATUS
 			err := loadBalancerBackendAddressPoolItem.AssignProperties_To_SubResource_STATUS(&loadBalancerBackendAddressPool)
 			if err != nil {
@@ -21209,8 +19359,6 @@ func (configuration *WinRMConfiguration) AssignProperties_From_WinRMConfiguratio
 	if source.Listeners != nil {
 		listenerList := make([]WinRMListener, len(source.Listeners))
 		for listenerIndex, listenerItem := range source.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener WinRMListener
 			err := listener.AssignProperties_From_WinRMListener(&listenerItem)
 			if err != nil {
@@ -21236,8 +19384,6 @@ func (configuration *WinRMConfiguration) AssignProperties_To_WinRMConfiguration(
 	if configuration.Listeners != nil {
 		listenerList := make([]storage.WinRMListener, len(configuration.Listeners))
 		for listenerIndex, listenerItem := range configuration.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener storage.WinRMListener
 			err := listenerItem.AssignProperties_To_WinRMListener(&listener)
 			if err != nil {
@@ -21255,31 +19401,6 @@ func (configuration *WinRMConfiguration) AssignProperties_To_WinRMConfiguration(
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WinRMConfiguration_STATUS populates our WinRMConfiguration from the provided source WinRMConfiguration_STATUS
-func (configuration *WinRMConfiguration) Initialize_From_WinRMConfiguration_STATUS(source *WinRMConfiguration_STATUS) error {
-
-	// Listeners
-	if source.Listeners != nil {
-		listenerList := make([]WinRMListener, len(source.Listeners))
-		for listenerIndex, listenerItem := range source.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
-			var listener WinRMListener
-			err := listener.Initialize_From_WinRMListener_STATUS(&listenerItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_WinRMListener_STATUS() to populate field Listeners")
-			}
-			listenerList[listenerIndex] = listener
-		}
-		configuration.Listeners = listenerList
-	} else {
-		configuration.Listeners = nil
 	}
 
 	// No error
@@ -21327,8 +19448,6 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_From_WinRMConfi
 	if source.Listeners != nil {
 		listenerList := make([]WinRMListener_STATUS, len(source.Listeners))
 		for listenerIndex, listenerItem := range source.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener WinRMListener_STATUS
 			err := listener.AssignProperties_From_WinRMListener_STATUS(&listenerItem)
 			if err != nil {
@@ -21354,8 +19473,6 @@ func (configuration *WinRMConfiguration_STATUS) AssignProperties_To_WinRMConfigu
 	if configuration.Listeners != nil {
 		listenerList := make([]storage.WinRMListener_STATUS, len(configuration.Listeners))
 		for listenerIndex, listenerItem := range configuration.Listeners {
-			// Shadow the loop variable to avoid aliasing
-			listenerItem := listenerItem
 			var listener storage.WinRMListener_STATUS
 			err := listenerItem.AssignProperties_To_WinRMListener_STATUS(&listener)
 			if err != nil {
@@ -21529,8 +19646,6 @@ func (error *ApiError_STATUS) AssignProperties_From_ApiError_STATUS(source *stor
 	if source.Details != nil {
 		detailList := make([]ApiErrorBase_STATUS, len(source.Details))
 		for detailIndex, detailItem := range source.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail ApiErrorBase_STATUS
 			err := detail.AssignProperties_From_ApiErrorBase_STATUS(&detailItem)
 			if err != nil {
@@ -21577,8 +19692,6 @@ func (error *ApiError_STATUS) AssignProperties_To_ApiError_STATUS(destination *s
 	if error.Details != nil {
 		detailList := make([]storage.ApiErrorBase_STATUS, len(error.Details))
 		for detailIndex, detailItem := range error.Details {
-			// Shadow the loop variable to avoid aliasing
-			detailItem := detailItem
 			var detail storage.ApiErrorBase_STATUS
 			err := detailItem.AssignProperties_To_ApiErrorBase_STATUS(&detail)
 			if err != nil {
@@ -21725,7 +19838,7 @@ func (reference *KeyVaultKeyReference) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -21815,28 +19928,6 @@ func (reference *KeyVaultKeyReference) AssignProperties_To_KeyVaultKeyReference(
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_KeyVaultKeyReference_STATUS populates our KeyVaultKeyReference from the provided source KeyVaultKeyReference_STATUS
-func (reference *KeyVaultKeyReference) Initialize_From_KeyVaultKeyReference_STATUS(source *KeyVaultKeyReference_STATUS) error {
-
-	// KeyUrl
-	reference.KeyUrl = genruntime.ClonePointerToString(source.KeyUrl)
-
-	// SourceVault
-	if source.SourceVault != nil {
-		var sourceVault SubResource
-		err := sourceVault.Initialize_From_SubResource_STATUS(source.SourceVault)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
-		}
-		reference.SourceVault = &sourceVault
-	} else {
-		reference.SourceVault = nil
 	}
 
 	// No error
@@ -22096,21 +20187,6 @@ func (settings *LinuxVMGuestPatchAutomaticByPlatformSettings) AssignProperties_T
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS populates our LinuxVMGuestPatchAutomaticByPlatformSettings from the provided source LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS
-func (settings *LinuxVMGuestPatchAutomaticByPlatformSettings) Initialize_From_LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS(source *LinuxVMGuestPatchAutomaticByPlatformSettings_STATUS) error {
-
-	// RebootSetting
-	if source.RebootSetting != nil {
-		rebootSetting := genruntime.ToEnum(string(*source.RebootSetting), linuxVMGuestPatchAutomaticByPlatformSettings_RebootSetting_Values)
-		settings.RebootSetting = &rebootSetting
-	} else {
-		settings.RebootSetting = nil
 	}
 
 	// No error
@@ -22424,19 +20500,6 @@ func (publicKey *SshPublicKeySpec) AssignProperties_To_SshPublicKeySpec(destinat
 	return nil
 }
 
-// Initialize_From_SshPublicKey_STATUS populates our SshPublicKeySpec from the provided source SshPublicKey_STATUS
-func (publicKey *SshPublicKeySpec) Initialize_From_SshPublicKey_STATUS(source *SshPublicKey_STATUS) error {
-
-	// KeyData
-	publicKey.KeyData = genruntime.ClonePointerToString(source.KeyData)
-
-	// Path
-	publicKey.Path = genruntime.ClonePointerToString(source.Path)
-
-	// No error
-	return nil
-}
-
 // +kubebuilder:validation:Enum={"IPv4","IPv6"}
 type VirtualMachineNetworkInterfaceIPConfigurationProperties_PrivateIPAddressVersion string
 
@@ -22528,7 +20591,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) ConvertToARM(re
 		result.Properties.DeleteOption = &deleteOption
 	}
 	if configuration.DnsSettings != nil {
-		dnsSettings_ARM, err := (*configuration.DnsSettings).ConvertToARM(resolved)
+		dnsSettings_ARM, err := configuration.DnsSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -22559,7 +20622,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) ConvertToARM(re
 		result.Properties.PublicIPAllocationMethod = &publicIPAllocationMethod
 	}
 	if configuration.PublicIPPrefix != nil {
-		publicIPPrefix_ARM, err := (*configuration.PublicIPPrefix).ConvertToARM(resolved)
+		publicIPPrefix_ARM, err := configuration.PublicIPPrefix.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -22569,7 +20632,7 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) ConvertToARM(re
 
 	// Set property "Sku":
 	if configuration.Sku != nil {
-		sku_ARM, err := (*configuration.Sku).ConvertToARM(resolved)
+		sku_ARM, err := configuration.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -22726,8 +20789,6 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 	if source.IpTags != nil {
 		ipTagList := make([]VirtualMachineIpTag, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag VirtualMachineIpTag
 			err := ipTag.AssignProperties_From_VirtualMachineIpTag(&ipTagItem)
 			if err != nil {
@@ -22821,8 +20882,6 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 	if configuration.IpTags != nil {
 		ipTagList := make([]storage.VirtualMachineIpTag, len(configuration.IpTags))
 		for ipTagIndex, ipTagItem := range configuration.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag storage.VirtualMachineIpTag
 			err := ipTagItem.AssignProperties_To_VirtualMachineIpTag(&ipTag)
 			if err != nil {
@@ -22883,97 +20942,6 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration) AssignPropertie
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS populates our VirtualMachinePublicIPAddressConfiguration from the provided source VirtualMachinePublicIPAddressConfiguration_STATUS
-func (configuration *VirtualMachinePublicIPAddressConfiguration) Initialize_From_VirtualMachinePublicIPAddressConfiguration_STATUS(source *VirtualMachinePublicIPAddressConfiguration_STATUS) error {
-
-	// DeleteOption
-	if source.DeleteOption != nil {
-		deleteOption := genruntime.ToEnum(string(*source.DeleteOption), virtualMachinePublicIPAddressConfigurationProperties_DeleteOption_Values)
-		configuration.DeleteOption = &deleteOption
-	} else {
-		configuration.DeleteOption = nil
-	}
-
-	// DnsSettings
-	if source.DnsSettings != nil {
-		var dnsSetting VirtualMachinePublicIPAddressDnsSettingsConfiguration
-		err := dnsSetting.Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS(source.DnsSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS() to populate field DnsSettings")
-		}
-		configuration.DnsSettings = &dnsSetting
-	} else {
-		configuration.DnsSettings = nil
-	}
-
-	// IdleTimeoutInMinutes
-	configuration.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
-
-	// IpTags
-	if source.IpTags != nil {
-		ipTagList := make([]VirtualMachineIpTag, len(source.IpTags))
-		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
-			var ipTag VirtualMachineIpTag
-			err := ipTag.Initialize_From_VirtualMachineIpTag_STATUS(&ipTagItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_VirtualMachineIpTag_STATUS() to populate field IpTags")
-			}
-			ipTagList[ipTagIndex] = ipTag
-		}
-		configuration.IpTags = ipTagList
-	} else {
-		configuration.IpTags = nil
-	}
-
-	// Name
-	configuration.Name = genruntime.ClonePointerToString(source.Name)
-
-	// PublicIPAddressVersion
-	if source.PublicIPAddressVersion != nil {
-		publicIPAddressVersion := genruntime.ToEnum(string(*source.PublicIPAddressVersion), virtualMachinePublicIPAddressConfigurationProperties_PublicIPAddressVersion_Values)
-		configuration.PublicIPAddressVersion = &publicIPAddressVersion
-	} else {
-		configuration.PublicIPAddressVersion = nil
-	}
-
-	// PublicIPAllocationMethod
-	if source.PublicIPAllocationMethod != nil {
-		publicIPAllocationMethod := genruntime.ToEnum(string(*source.PublicIPAllocationMethod), virtualMachinePublicIPAddressConfigurationProperties_PublicIPAllocationMethod_Values)
-		configuration.PublicIPAllocationMethod = &publicIPAllocationMethod
-	} else {
-		configuration.PublicIPAllocationMethod = nil
-	}
-
-	// PublicIPPrefix
-	if source.PublicIPPrefix != nil {
-		var publicIPPrefix SubResource
-		err := publicIPPrefix.Initialize_From_SubResource_STATUS(source.PublicIPPrefix)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIPPrefix")
-		}
-		configuration.PublicIPPrefix = &publicIPPrefix
-	} else {
-		configuration.PublicIPPrefix = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku PublicIPAddressSku
-		err := sku.Initialize_From_PublicIPAddressSku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PublicIPAddressSku_STATUS() to populate field Sku")
-		}
-		configuration.Sku = &sku
-	} else {
-		configuration.Sku = nil
 	}
 
 	// No error
@@ -23160,8 +21128,6 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 	if source.IpTags != nil {
 		ipTagList := make([]VirtualMachineIpTag_STATUS, len(source.IpTags))
 		for ipTagIndex, ipTagItem := range source.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag VirtualMachineIpTag_STATUS
 			err := ipTag.AssignProperties_From_VirtualMachineIpTag_STATUS(&ipTagItem)
 			if err != nil {
@@ -23255,8 +21221,6 @@ func (configuration *VirtualMachinePublicIPAddressConfiguration_STATUS) AssignPr
 	if configuration.IpTags != nil {
 		ipTagList := make([]storage.VirtualMachineIpTag_STATUS, len(configuration.IpTags))
 		for ipTagIndex, ipTagItem := range configuration.IpTags {
-			// Shadow the loop variable to avoid aliasing
-			ipTagItem := ipTagItem
 			var ipTag storage.VirtualMachineIpTag_STATUS
 			err := ipTagItem.AssignProperties_To_VirtualMachineIpTag_STATUS(&ipTag)
 			if err != nil {
@@ -23348,7 +21312,7 @@ func (profile *VMDiskSecurityProfile) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "DiskEncryptionSet":
 	if profile.DiskEncryptionSet != nil {
-		diskEncryptionSet_ARM, err := (*profile.DiskEncryptionSet).ConvertToARM(resolved)
+		diskEncryptionSet_ARM, err := profile.DiskEncryptionSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -23459,33 +21423,6 @@ func (profile *VMDiskSecurityProfile) AssignProperties_To_VMDiskSecurityProfile(
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VMDiskSecurityProfile_STATUS populates our VMDiskSecurityProfile from the provided source VMDiskSecurityProfile_STATUS
-func (profile *VMDiskSecurityProfile) Initialize_From_VMDiskSecurityProfile_STATUS(source *VMDiskSecurityProfile_STATUS) error {
-
-	// DiskEncryptionSet
-	if source.DiskEncryptionSet != nil {
-		var diskEncryptionSet SubResource
-		err := diskEncryptionSet.Initialize_From_SubResource_STATUS(source.DiskEncryptionSet)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field DiskEncryptionSet")
-		}
-		profile.DiskEncryptionSet = &diskEncryptionSet
-	} else {
-		profile.DiskEncryptionSet = nil
-	}
-
-	// SecurityEncryptionType
-	if source.SecurityEncryptionType != nil {
-		securityEncryptionType := genruntime.ToEnum(string(*source.SecurityEncryptionType), vMDiskSecurityProfile_SecurityEncryptionType_Values)
-		profile.SecurityEncryptionType = &securityEncryptionType
-	} else {
-		profile.SecurityEncryptionType = nil
 	}
 
 	// No error
@@ -23696,21 +21633,6 @@ func (settings *WindowsVMGuestPatchAutomaticByPlatformSettings) AssignProperties
 	return nil
 }
 
-// Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS populates our WindowsVMGuestPatchAutomaticByPlatformSettings from the provided source WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS
-func (settings *WindowsVMGuestPatchAutomaticByPlatformSettings) Initialize_From_WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS(source *WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS) error {
-
-	// RebootSetting
-	if source.RebootSetting != nil {
-		rebootSetting := genruntime.ToEnum(string(*source.RebootSetting), windowsVMGuestPatchAutomaticByPlatformSettings_RebootSetting_Values)
-		settings.RebootSetting = &rebootSetting
-	} else {
-		settings.RebootSetting = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Specifies additional settings to be applied when patch mode AutomaticByPlatform is selected in Windows patch settings.
 type WindowsVMGuestPatchAutomaticByPlatformSettings_STATUS struct {
 	// RebootSetting: Specifies the reboot setting for all AutomaticByPlatform patch installation operations.
@@ -23901,24 +21823,6 @@ func (listener *WinRMListener) AssignProperties_To_WinRMListener(destination *st
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WinRMListener_STATUS populates our WinRMListener from the provided source WinRMListener_STATUS
-func (listener *WinRMListener) Initialize_From_WinRMListener_STATUS(source *WinRMListener_STATUS) error {
-
-	// CertificateUrl
-	listener.CertificateUrl = genruntime.ClonePointerToString(source.CertificateUrl)
-
-	// Protocol
-	if source.Protocol != nil {
-		protocol := genruntime.ToEnum(string(*source.Protocol), winRMListener_Protocol_Values)
-		listener.Protocol = &protocol
-	} else {
-		listener.Protocol = nil
 	}
 
 	// No error
@@ -24349,29 +22253,6 @@ func (addressSku *PublicIPAddressSku) AssignProperties_To_PublicIPAddressSku(des
 	return nil
 }
 
-// Initialize_From_PublicIPAddressSku_STATUS populates our PublicIPAddressSku from the provided source PublicIPAddressSku_STATUS
-func (addressSku *PublicIPAddressSku) Initialize_From_PublicIPAddressSku_STATUS(source *PublicIPAddressSku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), publicIPAddressSku_Name_Values)
-		addressSku.Name = &name
-	} else {
-		addressSku.Name = nil
-	}
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), publicIPAddressSku_Tier_Values)
-		addressSku.Tier = &tier
-	} else {
-		addressSku.Tier = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Describes the public IP Sku. It can only be set with OrchestrationMode as Flexible.
 type PublicIPAddressSku_STATUS struct {
 	// Name: Specify public IP sku name
@@ -24562,19 +22443,6 @@ func (ipTag *VirtualMachineIpTag) AssignProperties_To_VirtualMachineIpTag(destin
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachineIpTag_STATUS populates our VirtualMachineIpTag from the provided source VirtualMachineIpTag_STATUS
-func (ipTag *VirtualMachineIpTag) Initialize_From_VirtualMachineIpTag_STATUS(source *VirtualMachineIpTag_STATUS) error {
-
-	// IpTagType
-	ipTag.IpTagType = genruntime.ClonePointerToString(source.IpTagType)
-
-	// Tag
-	ipTag.Tag = genruntime.ClonePointerToString(source.Tag)
 
 	// No error
 	return nil
@@ -24806,16 +22674,6 @@ func (configuration *VirtualMachinePublicIPAddressDnsSettingsConfiguration) Assi
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS populates our VirtualMachinePublicIPAddressDnsSettingsConfiguration from the provided source VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS
-func (configuration *VirtualMachinePublicIPAddressDnsSettingsConfiguration) Initialize_From_VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS(source *VirtualMachinePublicIPAddressDnsSettingsConfiguration_STATUS) error {
-
-	// DomainNameLabel
-	configuration.DomainNameLabel = genruntime.ClonePointerToString(source.DomainNameLabel)
 
 	// No error
 	return nil

@@ -117,6 +117,7 @@ func (s NamespacedSecretMapReference) String() string {
 // SecretDestination describes the location to store a single secret value.
 // Note: This is similar to: ConfigMapDestination in configmaps.go.
 // Changes to one may need to be made to the others as well.
+// +kubebuilder:object:generate=true
 type SecretDestination struct {
 	// Name is the name of the Kubernetes secret to write to.
 	// The secret will be created in the same namespace as the resource.
@@ -127,17 +128,13 @@ type SecretDestination struct {
 	// +kubebuilder:validation:Required
 	Key string `json:"key,omitempty"`
 
-	// This is a type separate from SecretReference as in the future we may want to support things like
-	// customizable annotations or labels, instructions to not delete the secret when the resource is
-	// deleted, etc. None of those things make sense for SecretReference so using the exact same type isn't
-	// advisable.
+	// Annotations is an optional set of annotations to apply to the secret.
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Labels is an optional set of labels to apply to the secret.
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// Copy makes an independent copy of the SecretDestination
-func (s SecretDestination) Copy() SecretDestination {
-	return s
-}
-
-func (s SecretDestination) String() string {
+func (s *SecretDestination) String() string {
 	return fmt.Sprintf("Name: %q, Key: %q", s.Name, s.Key)
 }

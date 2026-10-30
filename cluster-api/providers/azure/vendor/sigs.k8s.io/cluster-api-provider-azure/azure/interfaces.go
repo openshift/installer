@@ -21,11 +21,12 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -51,6 +52,7 @@ type ServiceReconciler interface {
 // Authorizer is an interface which can get details such as subscription ID, base URI, and token
 // for authorizing to an Azure service.
 type Authorizer interface {
+	CloudConfiguration() cloud.Configuration
 	SubscriptionID() string
 	ClientID() string
 	ClientSecret() string
@@ -102,9 +104,9 @@ type AsyncStatusUpdater interface {
 	SetLongRunningOperationState(*infrav1.Future)
 	GetLongRunningOperationState(string, string, string) *infrav1.Future
 	DeleteLongRunningOperationState(string, string, string)
-	UpdatePutStatus(clusterv1.ConditionType, string, error)
-	UpdateDeleteStatus(clusterv1.ConditionType, string, error)
-	UpdatePatchStatus(clusterv1.ConditionType, string, error)
+	UpdatePutStatus(clusterv1beta1.ConditionType, string, error)
+	UpdateDeleteStatus(clusterv1beta1.ConditionType, string, error)
+	UpdatePatchStatus(clusterv1beta1.ConditionType, string, error)
 	AsyncReconciler
 }
 
@@ -143,7 +145,7 @@ type ResourceSpecGetter interface {
 	// Parameters takes the existing resource and returns the desired parameters of the resource.
 	// If the resource does not exist, or we do not care about existing parameters to update the resource, existing should be nil.
 	// If no update is needed on the resource, Parameters should return nil.
-	Parameters(ctx context.Context, existing interface{}) (params interface{}, err error)
+	Parameters(ctx context.Context, existing any) (params any, err error)
 }
 
 // ResourceSpecGetterWithHeaders is a ResourceSpecGetter that can return custom headers to be added to API calls.

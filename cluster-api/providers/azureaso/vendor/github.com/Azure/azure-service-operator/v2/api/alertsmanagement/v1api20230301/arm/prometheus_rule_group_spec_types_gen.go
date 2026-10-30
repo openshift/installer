@@ -50,8 +50,11 @@ type PrometheusRuleGroupProperties struct {
 	Interval *string `json:"interval,omitempty"`
 
 	// Rules: Defines the rules in the Prometheus rule group.
-	Rules  []PrometheusRule `json:"rules,omitempty"`
-	Scopes []string         `json:"scopes,omitempty"`
+	Rules []PrometheusRule `json:"rules,omitempty"`
+
+	// Scopes: Target Azure Monitor workspaces resource ids. This api-version is currently limited to creating with one scope.
+	// This may change in future.
+	Scopes []string `json:"scopes,omitempty"`
 }
 
 // An Azure Prometheus alerting or recording rule.
@@ -92,6 +95,7 @@ type PrometheusRule struct {
 
 // An alert action. Only relevant for alerts.
 type PrometheusRuleGroupAction struct {
+	// ActionGroupId: The resource id of the action group to use.
 	ActionGroupId *string `json:"actionGroupId,omitempty"`
 
 	// ActionProperties: The properties of an action group object.

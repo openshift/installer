@@ -15,10 +15,13 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+
+	msalerrors "github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
 )
 
 const (
@@ -46,13 +49,23 @@ type jsonCaller interface {
 	JSONCall(ctx context.Context, endpoint string, headers http.Header, qv url.Values, body, resp interface{}) error
 }
 
+// For backward compatibility, accept both old and new China endpoints for a transition period.
+// This list is derived from the AAD instance discovery metadata and represents all known trusted hosts
+// across different Azure clouds (Public, China, Germany, US Government, etc.)
 var aadTrustedHostList = map[string]bool{
 	"login.windows.net":                true, // Microsoft Azure Worldwide - Used in validation scenarios where host is not this list
-	"login.partner.microsoftonline.cn": true, // Microsoft Azure China
+	"login.partner.microsoftonline.cn": true, // Microsoft Azure China (new)
+	"login.chinacloudapi.cn":           true, // Microsoft Azure China (legacy, backward compatibility)
 	"login.microsoftonline.de":         true, // Microsoft Azure Blackforest
 	"login-us.microsoftonline.com":     true, // Microsoft Azure US Government - Legacy
 	"login.microsoftonline.us":         true, // Microsoft Azure US Government
 	"login.microsoftonline.com":        true, // Microsoft Azure Worldwide
+	"login.microsoft.com":              true,
+	"sts.windows.net":                  true,
+	"login.usgovcloudapi.net":          true,
+	"login.sovcloud-identity.fr":       true, // Bleu (France sovereign cloud)
+	"login.sovcloud-identity.de":       true, // Delos (Germany sovereign cloud)
+	"login.sovcloud-identity.sg":       true, // GovSG (Singapore sovereign cloud)
 }
 
 // TrustedHost checks if an AAD host is trusted/valid.
@@ -96,6 +109,51 @@ func (r *TenantDiscoveryResponse) Validate() error {
 		return errors.New("TenantDiscoveryResponse: issuer was not found in the openid configuration")
 	}
 	return nil
+}
+
+// ValidateIssuerMatchesAuthority validates that the issuer in the TenantDiscoveryResponse matches the authority.
+// This is used to identity security or configuration issues in authorities and the OIDC endpoint
+func (r *TenantDiscoveryResponse) ValidateIssuerMatchesAuthority(authorityURI string, aliases map[string]bool) error {
+	if authorityURI == "" {
+		return errors.New("TenantDiscoveryResponse: empty authorityURI provided for validation")
+	}
+	if r.Issuer == "" {
+		return errors.New("TenantDiscoveryResponse: empty issuer in response")
+	}
+
+	issuerURL, err := url.Parse(r.Issuer)
+	if err != nil {
+		return fmt.Errorf("TenantDiscoveryResponse: failed to parse issuer URL: %w", err)
+	}
+	authorityURL, err := url.Parse(authorityURI)
+	if err != nil {
+		return fmt.Errorf("TenantDiscoveryResponse: failed to parse authority URL: %w", err)
+	}
+
+	// Fast path: exact scheme + host match
+	if issuerURL.Scheme == authorityURL.Scheme && issuerURL.Host == authorityURL.Host {
+		return nil
+	}
+
+	// Alias-based acceptance
+	if aliases != nil && aliases[issuerURL.Host] {
+		return nil
+	}
+
+	issuerHost := issuerURL.Host
+	authorityHost := authorityURL.Host
+
+	// Accept if issuer host is trusted
+	if TrustedHost(issuerHost) {
+		return nil
+	}
+
+	// Accept if authority is a regional variant ending with ".<issuerHost>"
+	if strings.HasSuffix(authorityHost, "."+issuerHost) {
+		return nil
+	}
+
+	return fmt.Errorf("TenantDiscoveryResponse: issuer '%s' does not match authority '%s' or any trusted/alias rule", r.Issuer, authorityURI)
 }
 
 type InstanceDiscoveryMetadata struct {
@@ -219,6 +277,12 @@ type AuthParams struct {
 	DomainHint string
 	// AuthnScheme is an optional scheme for formatting access tokens
 	AuthnScheme AuthenticationScheme
+	// ExtraBodyParameters are additional parameters to include in token requests.
+	// The functions are evaluated at request time to get the parameter values.
+	// These parameters are also included in the cache key.
+	ExtraBodyParameters map[string]string
+	// CacheKeyComponents are additional components to include in the cache key.
+	CacheKeyComponents map[string]string
 }
 
 // NewAuthParams creates an authorization parameters object.
@@ -354,6 +418,8 @@ type Info struct {
 	Tenant                    string
 	Region                    string
 	InstanceDiscoveryDisabled bool
+	// InstanceDiscoveryMetadata stores the metadata from AAD instance discovery
+	InstanceDiscoveryMetadata []InstanceDiscoveryMetadata
 }
 
 // NewInfoFromAuthorityURI creates an AuthorityInfo instance from the authority URL provided.
@@ -546,6 +612,14 @@ func (c Client) AADInstanceDiscovery(ctx context.Context, authorityInfo Info) (I
 
 		endpoint := fmt.Sprintf(aadInstanceDiscoveryEndpoint, discoveryHost)
 		err = c.Comm.JSONCall(ctx, endpoint, http.Header{}, qv, nil, &resp)
+		if err != nil {
+			var callErr msalerrors.CallErr
+			if errors.As(err, &callErr) && callErr.Resp != nil && callErr.Resp.StatusCode == http.StatusBadRequest {
+				if strings.Contains(callErr.Err.Error(), "invalid_instance") {
+					return resp, fmt.Errorf("invalid_instance: the authority host is not valid: %w", err)
+				}
+			}
+		}
 	}
 	return resp, err
 }
@@ -603,8 +677,42 @@ func (a *AuthParams) AssertionHash() string {
 }
 
 func (a *AuthParams) AppKey() string {
+	baseKey := a.ClientID + "_"
 	if a.AuthorityInfo.Tenant != "" {
-		return fmt.Sprintf("%s_%s_AppTokenCache", a.ClientID, a.AuthorityInfo.Tenant)
+		baseKey += a.AuthorityInfo.Tenant
 	}
-	return fmt.Sprintf("%s__AppTokenCache", a.ClientID)
+
+	// Include extra body parameters in the cache key
+	paramHash := a.CacheExtKeyGenerator()
+	if paramHash != "" {
+		baseKey = fmt.Sprintf("%s_%s", baseKey, paramHash)
+	}
+
+	return baseKey + "_AppTokenCache"
+}
+
+// CacheExtKeyGenerator computes a hash of the Cache key components key and values
+// to include in the cache key. This ensures tokens acquired with different
+// parameters are cached separately.
+func (a *AuthParams) CacheExtKeyGenerator() string {
+	if len(a.CacheKeyComponents) == 0 {
+		return ""
+	}
+
+	// Sort keys to ensure consistent hashing
+	keys := make([]string, 0, len(a.CacheKeyComponents))
+	for k := range a.CacheKeyComponents {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Create a string by concatenating key+value pairs
+	keyStr := ""
+	for _, key := range keys {
+		// Append key followed by its value with no separator
+		keyStr += key + a.CacheKeyComponents[key]
+	}
+
+	hash := sha256.Sum256([]byte(keyStr))
+	return strings.ToLower(base64.RawURLEncoding.EncodeToString(hash[:]))
 }

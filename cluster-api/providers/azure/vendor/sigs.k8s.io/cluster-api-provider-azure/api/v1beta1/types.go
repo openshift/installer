@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"slices"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/net"
@@ -312,7 +314,9 @@ type SecurityRule struct {
 	// Name is a unique name within the network security group.
 	Name string `json:"name"`
 	// A description for this rule. Restricted to 140 chars.
-	Description string `json:"description"`
+	// +kubebuilder:validation:MaxLength=140
+	// +optional
+	Description string `json:"description,omitempty"`
 	// Protocol specifies the protocol type. "Tcp", "Udp", "Icmp", or "*".
 	// +kubebuilder:validation:Enum=Tcp;Udp;Icmp;*
 	Protocol SecurityGroupProtocol `json:"protocol"`
@@ -361,11 +365,26 @@ type LoadBalancerSpec struct {
 	// FrontendIPsCount specifies the number of frontend IP addresses for the load balancer.
 	// +optional
 	FrontendIPsCount *int32 `json:"frontendIPsCount,omitempty"`
+	// PrivateLinks to the load balancer (max 8 private links).
+	// Only supported on the API server load balancer.
+	// +kubebuilder:validation:MaxItems=8
+	// +optional
+	PrivateLinks []PrivateLink `json:"privateLinks,omitempty"`
 	// BackendPool describes the backend pool of the load balancer.
 	// +optional
 	BackendPool BackendPool `json:"backendPool,omitempty"`
 
 	LoadBalancerClassSpec `json:",inline"`
+
+	// AvailabilityZones is a list of availability zones for the load balancer.
+	// When specified for an internal load balancer, the frontend IP configuration
+	// will be zone-redundant across the specified zones.
+	// For public load balancers, this should be set on the associated public IP addresses instead.
+	// +optional
+	// +listType=set
+	// +kubebuilder:validation:MaxItems=3
+	// +kubebuilder:validation:items:Pattern=`^[1-3]$`
+	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 }
 
 // SKU defines an Azure load balancer SKU.
@@ -413,7 +432,63 @@ type IPTag struct {
 	Tag string `json:"tag"`
 }
 
+// PrivateLink configures an Azure private link.
+type PrivateLink struct {
+	// Name of the private link.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+
+	// NATIPConfigurations specify up to 8 NAT IP configurations for the private link.
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=8
+	NATIPConfigurations []PrivateLinkNATIPConfiguration `json:"natIPConfigurations"`
+
+	// LBFrontendIPConfigNames are the names of the load balancer FrontendIP to which the private link will forward
+	// requests. The specified frontend IP configs must have the private IP set.
+	// +kubebuilder:validation:MinItems=1
+	LBFrontendIPConfigNames []string `json:"lbFrontendIPConfigNames"`
+
+	// AllowedSubscriptions is a list of subscriptions from which the private link can be accessed.
+	// +optional
+	AllowedSubscriptions []string `json:"allowedSubscriptions,omitempty"`
+
+	// AutoApprovedSubscriptions is a list of subscription for which the connections to private link are automatically
+	// approved.
+	// +optional
+	AutoApprovedSubscriptions []string `json:"autoApprovedSubscriptions,omitempty"`
+
+	// EnableProxyProtocol indicates whether the private link service is enabled for proxy protocol or not.
+	// +optional
+	EnableProxyProtocol *bool `json:"enableProxyProtocol,omitempty"`
+}
+
+// PrivateLinkNATIPConfiguration specifies NAT IP configuration for the private link.
+type PrivateLinkNATIPConfiguration struct {
+	// AllocationMethod specifies how the private link NAT IPs are allocated: "Static" or "Dynamic".
+	AllocationMethod PrivateLinkNATIPAllocationMethod `json:"allocationMethod"`
+
+	// Subnet from which the IP is allocated.
+	Subnet string `json:"subnet"`
+
+	// +optional
+	PrivateIPAddress string `json:"privateIPAddress,omitempty"`
+}
+
+// PrivateLinkNATIPAllocationMethod specifies whether the private link NAT IPs are allocated statically or dynamically.
+// +kubebuilder:validation:Enum=Static;Dynamic
+type PrivateLinkNATIPAllocationMethod string
+
+const (
+	// NATIPAllocationMethodStatic specifies that NAT IP for private link is allocated statically (manually set by user).
+	NATIPAllocationMethodStatic PrivateLinkNATIPAllocationMethod = "Static"
+
+	// NATIPAllocationMethodDynamic specifies that NAT IP for private link is allocated dynamically (by Azure).
+	NATIPAllocationMethodDynamic PrivateLinkNATIPAllocationMethod = "Dynamic"
+)
+
 // VMState describes the state of an Azure virtual machine.
+//
 // Deprecated: use ProvisioningState.
 type VMState string
 
@@ -449,6 +524,7 @@ type Image struct {
 	ID *string `json:"id,omitempty"`
 
 	// SharedGallery specifies an image to use from an Azure Shared Image Gallery
+	//
 	// Deprecated: use ComputeGallery instead.
 	// +optional
 	SharedGallery *AzureSharedGalleryImage `json:"sharedGallery,omitempty"`
@@ -909,12 +985,7 @@ func (s SubnetSpec) IsNatGatewayEnabled() bool {
 
 // IsIPv6Enabled returns whether or not IPv6 is enabled on the subnet.
 func (s SubnetSpec) IsIPv6Enabled() bool {
-	for _, cidr := range s.CIDRBlocks {
-		if net.IsIPv6CIDRString(cidr) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(s.CIDRBlocks, net.IsIPv6CIDRString)
 }
 
 // GetSecurityRuleByDestination returns security group rule, which matches provided destination ports.
@@ -949,7 +1020,6 @@ type SecurityProfile struct {
 
 // UefiSettings specifies the security settings like secure boot and vTPM used while creating the virtual
 // machine.
-// +optional
 type UefiSettings struct {
 	// SecureBootEnabled specifies whether secure boot should be enabled on the virtual machine.
 	// Secure Boot verifies the digital signature of all boot components and halts the boot process if signature verification fails.
@@ -967,8 +1037,8 @@ type UefiSettings struct {
 
 // AddressRecord specifies a DNS record mapping a hostname to an IPV4 or IPv6 address.
 type AddressRecord struct {
-	Hostname string
-	IP       string
+	Hostname string `json:"hostname"`
+	IP       string `json:"ip"`
 }
 
 // CloudProviderConfigOverrides represents the fields that can be overridden in azure cloud provider config.
