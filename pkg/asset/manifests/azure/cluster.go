@@ -733,18 +733,26 @@ func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
 	}
 	// Check if default lbip is within control plane network.
 	// If not in control plane network, assign the first non-reserved IP in the CIDR to lbip.
+	parsed := net.ParseIP(ip)
+	var network net.IP
 	for _, subnet := range subnets {
-		if subnet == nil {
+		if subnet == nil || len(subnet.IP) == 0 {
 			continue
 		}
-		if subnet.Contains(net.ParseIP(ip)) {
+		if network == nil {
+			network = subnet.IP
+		}
+		if subnet.Contains(parsed) {
 			return ip
 		}
 	}
-	ipSubnets := make(net.IP, len(subnets[0].IP))
-	copy(ipSubnets, subnets[0].IP)
+	if network == nil {
+		return ""
+	}
 	// Since the first 4 IP of the subnets are usually reserved[1], pick the next one that's available in the CIDR.
 	// [1] - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method
+	ipSubnets := make(net.IP, len(network))
+	copy(ipSubnets, network)
 	ipSubnets[len(ipSubnets)-1] += 4
 	return ipSubnets.String()
 }
