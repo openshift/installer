@@ -43,6 +43,13 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	// validate OSImage — must be a COS URL from which bucket, object and region can be derived
+	if p.OSImage != "" {
+		if _, _, _, err := powervs.ParseOSImageURL(p.OSImage); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("osImage"), p.OSImage, err.Error()))
+		}
+	}
+
 	// validate ServiceInstanceGUID
 	if p.ServiceInstanceGUID != "" {
 		_, err := uuid.Parse(p.ServiceInstanceGUID)

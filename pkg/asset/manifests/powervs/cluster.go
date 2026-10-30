@@ -14,13 +14,14 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	machinespowervs "github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
-func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, bucket string, object string) (*capiutils.GenerateClusterAssetsOutput, error) {
+func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	var (
 		manifests            []*asset.RuntimeFile
 		dhcpSubnet           string
@@ -31,7 +32,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		vpcRegion            string
 		cosName              string
 		cosRegion            string
-		imageName            string
 		bucketName           string
 		transitGatewayName   string
 		client               *powervsconfig.Client
@@ -39,11 +39,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		transitGatewaySource capibm.TransitGatewaySource
 		err                  error
 		powerVSCluster       *capibm.IBMPowerVSCluster
-		powerVSImage         *capibm.IBMPowerVSImage
 	)
 
 	defer func() {
-		logrus.Debugf("GenerateClusterAssets: installConfig = %+v, clusterID = %v, bucket = %v, object = %v", installConfig, *clusterID, bucket, object)
+		logrus.Debugf("GenerateClusterAssets: installConfig = %+v, clusterID = %v", installConfig, *clusterID)
 		logrus.Debugf("GenerateClusterAssets: ic.ObjectMeta = %+v", installConfig.Config.ObjectMeta.Name)
 		logrus.Debugf("GenerateClusterAssets: installConfig.Config.PowerVS = %+v", *installConfig.Config.PowerVS)
 		logrus.Debugf("GenerateClusterAssets: installConfig.Config.Platform.PowerVS.VPC = %v", installConfig.Config.Platform.PowerVS.VPC)
@@ -53,7 +52,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		logrus.Debugf("GenerateClusterAssets: transitGatewayName = %v", transitGatewayName)
 		logrus.Debugf("GenerateClusterAssets: cosName = %v", cosName)
 		logrus.Debugf("GenerateClusterAssets: cosRegion = %v", cosRegion)
-		logrus.Debugf("GenerateClusterAssets: imageName = %v", imageName)
 		logrus.Debugf("GenerateClusterAssets: bucketName = %v", bucketName)
 		logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
 	}()
@@ -176,8 +174,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
 		return nil, fmt.Errorf("unable to derive cosRegion from region: %s %w", installConfig.Config.PowerVS.Region, err)
 	}
-
-	imageName = fmt.Sprintf("rhcos-%s", clusterID.InfraID)
 
 	bucketName = fmt.Sprintf("%s-bootstrap-ign", clusterID.InfraID)
 
@@ -328,33 +324,38 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		File:   asset.File{Filename: "02_powervs-cluster.yaml"},
 	})
 
-	if vpcRegion != cosRegion {
-		logrus.Debugf("GenerateClusterAssets: vpcRegion(%s) is different than cosRegion(%s), cosRegion. Overriding bucket name", vpcRegion, cosRegion)
-		bucket = fmt.Sprintf("rhcos-powervs-images-%s", cosRegion)
-	}
+	// When osImage is set, import the image from COS into the workspace; otherwise
+	// the machines use a stock catalog image and no image manifest is needed.
+	if osImage := installConfig.Config.Platform.PowerVS.OSImage; osImage != "" {
+		imageBucket, imageObject, imageRegion, err := powervstypes.ParseOSImageURL(osImage)
+		if err != nil {
+			return nil, fmt.Errorf("invalid platform.powervs.osImage %q: %w", osImage, err)
+		}
+		logrus.Infof("Importing PowerVS image from bucket %s, object %s, region %s", imageBucket, imageObject, imageRegion)
 
-	powerVSImage = &capibm.IBMPowerVSImage{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: capibm.GroupVersion.String(),
-			Kind:       "IBMPowerVSImage",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      imageName,
-			Namespace: capiutils.Namespace,
-		},
-		Spec: capibm.IBMPowerVSImageSpec{
-			ClusterName: clusterID.InfraID,
-			Workspace:   service,
-			Bucket:      bucket,
-			Object:      object,
-			Region:      cosRegion,
-		},
+		manifests = append(manifests, &asset.RuntimeFile{
+			Object: &capibm.IBMPowerVSImage{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: capibm.GroupVersion.String(),
+					Kind:       "IBMPowerVSImage",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machinespowervs.ImportedImageName(clusterID.InfraID),
+					Namespace: capiutils.Namespace,
+				},
+				Spec: capibm.IBMPowerVSImageSpec{
+					ClusterName: clusterID.InfraID,
+					Workspace:   service,
+					Bucket:      imageBucket,
+					Object:      imageObject,
+					Region:      imageRegion,
+				},
+			},
+			File: asset.File{Filename: "03_powervs-image.yaml"},
+		})
+	} else {
+		logrus.Infof("Using PowerVS stock image: %s", machinespowervs.OSImageNameFromStream(installConfig.Config.OSImageStream))
 	}
-
-	manifests = append(manifests, &asset.RuntimeFile{
-		Object: powerVSImage,
-		File:   asset.File{Filename: "03_powervs-image.yaml"},
-	})
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
