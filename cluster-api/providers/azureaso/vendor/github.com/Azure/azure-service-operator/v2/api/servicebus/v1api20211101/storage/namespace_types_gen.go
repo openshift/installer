@@ -18,6 +18,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,servicebus}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +26,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20211101.Namespace
 // Generator information:
-// - Generated from: /servicebus/resource-manager/Microsoft.ServiceBus/stable/2021-11-01/namespace-preview.json
+// - Generated from: /servicebus/resource-manager/Microsoft.ServiceBus/ServiceBus/stable/2021-11-01/namespace-preview.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}
 type Namespace struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -245,7 +246,7 @@ func (namespace *Namespace) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20211101.Namespace
 // Generator information:
-// - Generated from: /servicebus/resource-manager/Microsoft.ServiceBus/stable/2021-11-01/namespace-preview.json
+// - Generated from: /servicebus/resource-manager/Microsoft.ServiceBus/ServiceBus/stable/2021-11-01/namespace-preview.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}
 type NamespaceList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -774,8 +775,6 @@ func (namespace *Namespace_STATUS) AssignProperties_From_Namespace_STATUS(source
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -953,8 +952,6 @@ func (namespace *Namespace_STATUS) AssignProperties_To_Namespace_STATUS(destinat
 	if namespace.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(namespace.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range namespace.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1081,8 +1078,6 @@ func (encryption *Encryption) AssignProperties_From_Encryption(source *storage.E
 	if source.KeyVaultProperties != nil {
 		keyVaultPropertyList := make([]KeyVaultProperties, len(source.KeyVaultProperties))
 		for keyVaultPropertyIndex, keyVaultPropertyItem := range source.KeyVaultProperties {
-			// Shadow the loop variable to avoid aliasing
-			keyVaultPropertyItem := keyVaultPropertyItem
 			var keyVaultProperty KeyVaultProperties
 			err := keyVaultProperty.AssignProperties_From_KeyVaultProperties(&keyVaultPropertyItem)
 			if err != nil {
@@ -1135,8 +1130,6 @@ func (encryption *Encryption) AssignProperties_To_Encryption(destination *storag
 	if encryption.KeyVaultProperties != nil {
 		keyVaultPropertyList := make([]storage.KeyVaultProperties, len(encryption.KeyVaultProperties))
 		for keyVaultPropertyIndex, keyVaultPropertyItem := range encryption.KeyVaultProperties {
-			// Shadow the loop variable to avoid aliasing
-			keyVaultPropertyItem := keyVaultPropertyItem
 			var keyVaultProperty storage.KeyVaultProperties
 			err := keyVaultPropertyItem.AssignProperties_To_KeyVaultProperties(&keyVaultProperty)
 			if err != nil {
@@ -1198,8 +1191,6 @@ func (encryption *Encryption_STATUS) AssignProperties_From_Encryption_STATUS(sou
 	if source.KeyVaultProperties != nil {
 		keyVaultPropertyList := make([]KeyVaultProperties_STATUS, len(source.KeyVaultProperties))
 		for keyVaultPropertyIndex, keyVaultPropertyItem := range source.KeyVaultProperties {
-			// Shadow the loop variable to avoid aliasing
-			keyVaultPropertyItem := keyVaultPropertyItem
 			var keyVaultProperty KeyVaultProperties_STATUS
 			err := keyVaultProperty.AssignProperties_From_KeyVaultProperties_STATUS(&keyVaultPropertyItem)
 			if err != nil {
@@ -1252,8 +1243,6 @@ func (encryption *Encryption_STATUS) AssignProperties_To_Encryption_STATUS(desti
 	if encryption.KeyVaultProperties != nil {
 		keyVaultPropertyList := make([]storage.KeyVaultProperties_STATUS, len(encryption.KeyVaultProperties))
 		for keyVaultPropertyIndex, keyVaultPropertyItem := range encryption.KeyVaultProperties {
-			// Shadow the loop variable to avoid aliasing
-			keyVaultPropertyItem := keyVaultPropertyItem
 			var keyVaultProperty storage.KeyVaultProperties_STATUS
 			err := keyVaultPropertyItem.AssignProperties_To_KeyVaultProperties_STATUS(&keyVaultProperty)
 			if err != nil {
@@ -1314,8 +1303,6 @@ func (identity *Identity) AssignProperties_From_Identity(source *storage.Identit
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -1360,8 +1347,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -1422,8 +1407,6 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserAssignedIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserAssignedIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -1474,8 +1457,6 @@ func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserAssignedIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserAssignedIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -1526,8 +1507,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_From_NamespaceOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1544,8 +1523,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_From_NamespaceOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1599,8 +1576,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_To_NamespaceOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1617,8 +1592,6 @@ func (operator *NamespaceOperatorSpec) AssignProperties_To_NamespaceOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2244,7 +2217,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_From_NamespaceOperator
 
 	// Endpoint
 	if source.Endpoint != nil {
-		endpoint := source.Endpoint.Copy()
+		endpoint := *source.Endpoint.DeepCopy()
 		secrets.Endpoint = &endpoint
 	} else {
 		secrets.Endpoint = nil
@@ -2252,7 +2225,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_From_NamespaceOperator
 
 	// PrimaryConnectionString
 	if source.PrimaryConnectionString != nil {
-		primaryConnectionString := source.PrimaryConnectionString.Copy()
+		primaryConnectionString := *source.PrimaryConnectionString.DeepCopy()
 		secrets.PrimaryConnectionString = &primaryConnectionString
 	} else {
 		secrets.PrimaryConnectionString = nil
@@ -2260,7 +2233,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_From_NamespaceOperator
 
 	// PrimaryKey
 	if source.PrimaryKey != nil {
-		primaryKey := source.PrimaryKey.Copy()
+		primaryKey := *source.PrimaryKey.DeepCopy()
 		secrets.PrimaryKey = &primaryKey
 	} else {
 		secrets.PrimaryKey = nil
@@ -2268,7 +2241,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_From_NamespaceOperator
 
 	// SecondaryConnectionString
 	if source.SecondaryConnectionString != nil {
-		secondaryConnectionString := source.SecondaryConnectionString.Copy()
+		secondaryConnectionString := *source.SecondaryConnectionString.DeepCopy()
 		secrets.SecondaryConnectionString = &secondaryConnectionString
 	} else {
 		secrets.SecondaryConnectionString = nil
@@ -2276,7 +2249,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_From_NamespaceOperator
 
 	// SecondaryKey
 	if source.SecondaryKey != nil {
-		secondaryKey := source.SecondaryKey.Copy()
+		secondaryKey := *source.SecondaryKey.DeepCopy()
 		secrets.SecondaryKey = &secondaryKey
 	} else {
 		secrets.SecondaryKey = nil
@@ -2309,7 +2282,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_To_NamespaceOperatorSe
 
 	// Endpoint
 	if secrets.Endpoint != nil {
-		endpoint := secrets.Endpoint.Copy()
+		endpoint := *secrets.Endpoint.DeepCopy()
 		destination.Endpoint = &endpoint
 	} else {
 		destination.Endpoint = nil
@@ -2317,7 +2290,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_To_NamespaceOperatorSe
 
 	// PrimaryConnectionString
 	if secrets.PrimaryConnectionString != nil {
-		primaryConnectionString := secrets.PrimaryConnectionString.Copy()
+		primaryConnectionString := *secrets.PrimaryConnectionString.DeepCopy()
 		destination.PrimaryConnectionString = &primaryConnectionString
 	} else {
 		destination.PrimaryConnectionString = nil
@@ -2325,7 +2298,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_To_NamespaceOperatorSe
 
 	// PrimaryKey
 	if secrets.PrimaryKey != nil {
-		primaryKey := secrets.PrimaryKey.Copy()
+		primaryKey := *secrets.PrimaryKey.DeepCopy()
 		destination.PrimaryKey = &primaryKey
 	} else {
 		destination.PrimaryKey = nil
@@ -2333,7 +2306,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_To_NamespaceOperatorSe
 
 	// SecondaryConnectionString
 	if secrets.SecondaryConnectionString != nil {
-		secondaryConnectionString := secrets.SecondaryConnectionString.Copy()
+		secondaryConnectionString := *secrets.SecondaryConnectionString.DeepCopy()
 		destination.SecondaryConnectionString = &secondaryConnectionString
 	} else {
 		destination.SecondaryConnectionString = nil
@@ -2341,7 +2314,7 @@ func (secrets *NamespaceOperatorSecrets) AssignProperties_To_NamespaceOperatorSe
 
 	// SecondaryKey
 	if secrets.SecondaryKey != nil {
-		secondaryKey := secrets.SecondaryKey.Copy()
+		secondaryKey := *secrets.SecondaryKey.DeepCopy()
 		destination.SecondaryKey = &secondaryKey
 	} else {
 		destination.SecondaryKey = nil

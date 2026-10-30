@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimpolicyfragments.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimpolicyfragments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/policyFragments/{id}
 type PolicyFragment struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &PolicyFragment{}
 
 // ConvertFrom populates our PolicyFragment from the provided hub PolicyFragment
 func (fragment *PolicyFragment) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.PolicyFragment)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/PolicyFragment but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.PolicyFragment
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return fragment.AssignProperties_From_PolicyFragment(source)
+	err = fragment.AssignProperties_From_PolicyFragment(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to fragment")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub PolicyFragment from our PolicyFragment
 func (fragment *PolicyFragment) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.PolicyFragment)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/PolicyFragment but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.PolicyFragment
+	err := fragment.AssignProperties_To_PolicyFragment(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from fragment")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return fragment.AssignProperties_To_PolicyFragment(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &PolicyFragment{}
@@ -86,17 +101,6 @@ func (fragment *PolicyFragment) SecretDestinationExpressions() []*core.Destinati
 		return nil
 	}
 	return fragment.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &PolicyFragment{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (fragment *PolicyFragment) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*PolicyFragment_STATUS); ok {
-		return fragment.Spec.Initialize_From_PolicyFragment_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type PolicyFragment_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &PolicyFragment{}
@@ -238,7 +242,7 @@ func (fragment *PolicyFragment) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimpolicyfragments.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimpolicyfragments.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/policyFragments/{id}
 type PolicyFragmentList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -519,27 +523,6 @@ func (fragment *PolicyFragment_Spec) AssignProperties_To_PolicyFragment_Spec(des
 	return nil
 }
 
-// Initialize_From_PolicyFragment_STATUS populates our PolicyFragment_Spec from the provided source PolicyFragment_STATUS
-func (fragment *PolicyFragment_Spec) Initialize_From_PolicyFragment_STATUS(source *PolicyFragment_STATUS) error {
-
-	// Description
-	fragment.Description = genruntime.ClonePointerToString(source.Description)
-
-	// Format
-	if source.Format != nil {
-		format := genruntime.ToEnum(string(*source.Format), policyFragmentContractProperties_Format_Values)
-		fragment.Format = &format
-	} else {
-		fragment.Format = nil
-	}
-
-	// Value
-	fragment.Value = genruntime.ClonePointerToString(source.Value)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (fragment *PolicyFragment_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -808,8 +791,6 @@ func (operator *PolicyFragmentOperatorSpec) AssignProperties_From_PolicyFragment
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -826,8 +807,6 @@ func (operator *PolicyFragmentOperatorSpec) AssignProperties_From_PolicyFragment
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -853,8 +832,6 @@ func (operator *PolicyFragmentOperatorSpec) AssignProperties_To_PolicyFragmentOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -871,8 +848,6 @@ func (operator *PolicyFragmentOperatorSpec) AssignProperties_To_PolicyFragmentOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

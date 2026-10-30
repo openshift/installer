@@ -4,7 +4,7 @@
 package storage
 
 import (
-	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v20210401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -17,6 +17,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -647,8 +648,6 @@ func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySche
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule
 			err := rule.AssignProperties_From_ManagementPolicyRule(&ruleItem)
 			if err != nil {
@@ -690,8 +689,6 @@ func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule(&rule)
 			if err != nil {
@@ -741,8 +738,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPol
 	if source.Rules != nil {
 		ruleList := make([]ManagementPolicyRule_STATUS, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule ManagementPolicyRule_STATUS
 			err := rule.AssignProperties_From_ManagementPolicyRule_STATUS(&ruleItem)
 			if err != nil {
@@ -784,8 +779,6 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolic
 	if schema.Rules != nil {
 		ruleList := make([]storage.ManagementPolicyRule_STATUS, len(schema.Rules))
 		for ruleIndex, ruleItem := range schema.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.ManagementPolicyRule_STATUS
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule_STATUS(&rule)
 			if err != nil {
@@ -835,8 +828,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -853,8 +844,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_Fr
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -896,8 +885,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -914,8 +901,6 @@ func (operator *StorageAccountsManagementPolicyOperatorSpec) AssignProperties_To
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1700,8 +1685,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilt
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter
 			err := blobIndexMatch.AssignProperties_From_TagFilter(&blobIndexMatchItem)
 			if err != nil {
@@ -1749,8 +1732,6 @@ func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter(&blobIndexMatch)
 			if err != nil {
@@ -1808,8 +1789,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPol
 	if source.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]TagFilter_STATUS, len(source.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range source.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch TagFilter_STATUS
 			err := blobIndexMatch.AssignProperties_From_TagFilter_STATUS(&blobIndexMatchItem)
 			if err != nil {
@@ -1857,8 +1836,6 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolic
 	if filter.BlobIndexMatch != nil {
 		blobIndexMatchList := make([]storage.TagFilter_STATUS, len(filter.BlobIndexMatch))
 		for blobIndexMatchIndex, blobIndexMatchItem := range filter.BlobIndexMatch {
-			// Shadow the loop variable to avoid aliasing
-			blobIndexMatchItem := blobIndexMatchItem
 			var blobIndexMatch storage.TagFilter_STATUS
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter_STATUS(&blobIndexMatch)
 			if err != nil {
@@ -1964,13 +1941,6 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		blob.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterModification
@@ -1981,13 +1951,6 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		blob.TierToCool = &tierToCool
 	} else {
 		blob.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2047,19 +2010,6 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterModification
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if blob.TierToCool != nil {
 		var tierToCool storage.DateAfterModification
@@ -2070,19 +2020,6 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterModification
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -2152,13 +2089,6 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		blob.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterModification_STATUS
@@ -2169,13 +2099,6 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		blob.TierToCool = &tierToCool
 	} else {
 		blob.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2235,19 +2158,6 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterModification_STATUS
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if blob.TierToCool != nil {
 		var tierToCool storage.DateAfterModification_STATUS
@@ -2258,19 +2168,6 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterModification_STATUS
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -2331,13 +2228,6 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		shot.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterCreation
@@ -2348,13 +2238,6 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		shot.TierToCool = &tierToCool
 	} else {
 		shot.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2406,19 +2289,6 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterCreation
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if shot.TierToCool != nil {
 		var tierToCool storage.DateAfterCreation
@@ -2429,19 +2299,6 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterCreation
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -2502,13 +2359,6 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		shot.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterCreation_STATUS
@@ -2519,13 +2369,6 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		shot.TierToCool = &tierToCool
 	} else {
 		shot.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2577,19 +2420,6 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterCreation_STATUS
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if shot.TierToCool != nil {
 		var tierToCool storage.DateAfterCreation_STATUS
@@ -2600,19 +2430,6 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterCreation_STATUS
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -2673,13 +2490,6 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		version.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterCreation
@@ -2690,13 +2500,6 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		version.TierToCool = &tierToCool
 	} else {
 		version.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2748,19 +2551,6 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterCreation
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if version.TierToCool != nil {
 		var tierToCool storage.DateAfterCreation
@@ -2771,19 +2561,6 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterCreation
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -2844,13 +2621,6 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		version.TierToArchive = nil
 	}
 
-	// TierToCold
-	if source.TierToCold != nil {
-		propertyBag.Add("TierToCold", *source.TierToCold)
-	} else {
-		propertyBag.Remove("TierToCold")
-	}
-
 	// TierToCool
 	if source.TierToCool != nil {
 		var tierToCool DateAfterCreation_STATUS
@@ -2861,13 +2631,6 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		version.TierToCool = &tierToCool
 	} else {
 		version.TierToCool = nil
-	}
-
-	// TierToHot
-	if source.TierToHot != nil {
-		propertyBag.Add("TierToHot", *source.TierToHot)
-	} else {
-		propertyBag.Remove("TierToHot")
 	}
 
 	// Update the property bag
@@ -2919,19 +2682,6 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		destination.TierToArchive = nil
 	}
 
-	// TierToCold
-	if propertyBag.Contains("TierToCold") {
-		var tierToCold storage.DateAfterCreation_STATUS
-		err := propertyBag.Pull("TierToCold", &tierToCold)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToCold' from propertyBag")
-		}
-
-		destination.TierToCold = &tierToCold
-	} else {
-		destination.TierToCold = nil
-	}
-
 	// TierToCool
 	if version.TierToCool != nil {
 		var tierToCool storage.DateAfterCreation_STATUS
@@ -2942,19 +2692,6 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		destination.TierToCool = &tierToCool
 	} else {
 		destination.TierToCool = nil
-	}
-
-	// TierToHot
-	if propertyBag.Contains("TierToHot") {
-		var tierToHot storage.DateAfterCreation_STATUS
-		err := propertyBag.Pull("TierToHot", &tierToHot)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'TierToHot' from propertyBag")
-		}
-
-		destination.TierToHot = &tierToHot
-	} else {
-		destination.TierToHot = nil
 	}
 
 	// Update the property bag
@@ -3186,13 +2923,6 @@ func (creation *DateAfterCreation) AssignProperties_From_DateAfterCreation(sourc
 	// DaysAfterCreationGreaterThan
 	creation.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterCreationGreaterThan)
 
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		propertyBag.Add("DaysAfterLastTierChangeGreaterThan", *source.DaysAfterLastTierChangeGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterLastTierChangeGreaterThan")
-	}
-
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		creation.PropertyBag = propertyBag
@@ -3220,19 +2950,6 @@ func (creation *DateAfterCreation) AssignProperties_To_DateAfterCreation(destina
 
 	// DaysAfterCreationGreaterThan
 	destination.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(creation.DaysAfterCreationGreaterThan)
-
-	// DaysAfterLastTierChangeGreaterThan
-	if propertyBag.Contains("DaysAfterLastTierChangeGreaterThan") {
-		var daysAfterLastTierChangeGreaterThan int
-		err := propertyBag.Pull("DaysAfterLastTierChangeGreaterThan", &daysAfterLastTierChangeGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterLastTierChangeGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
-	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3274,13 +2991,6 @@ func (creation *DateAfterCreation_STATUS) AssignProperties_From_DateAfterCreatio
 		creation.DaysAfterCreationGreaterThan = nil
 	}
 
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		propertyBag.Add("DaysAfterLastTierChangeGreaterThan", *source.DaysAfterLastTierChangeGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterLastTierChangeGreaterThan")
-	}
-
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		creation.PropertyBag = propertyBag
@@ -3312,19 +3022,6 @@ func (creation *DateAfterCreation_STATUS) AssignProperties_To_DateAfterCreation_
 		destination.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
 	} else {
 		destination.DaysAfterCreationGreaterThan = nil
-	}
-
-	// DaysAfterLastTierChangeGreaterThan
-	if propertyBag.Contains("DaysAfterLastTierChangeGreaterThan") {
-		var daysAfterLastTierChangeGreaterThan float64
-		err := propertyBag.Pull("DaysAfterLastTierChangeGreaterThan", &daysAfterLastTierChangeGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterLastTierChangeGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
 	}
 
 	// Update the property bag
@@ -3361,22 +3058,8 @@ func (modification *DateAfterModification) AssignProperties_From_DateAfterModifi
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
-	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		propertyBag.Add("DaysAfterCreationGreaterThan", *source.DaysAfterCreationGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterCreationGreaterThan")
-	}
-
 	// DaysAfterLastAccessTimeGreaterThan
 	modification.DaysAfterLastAccessTimeGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterLastAccessTimeGreaterThan)
-
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		propertyBag.Add("DaysAfterLastTierChangeGreaterThan", *source.DaysAfterLastTierChangeGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterLastTierChangeGreaterThan")
-	}
 
 	// DaysAfterModificationGreaterThan
 	modification.DaysAfterModificationGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterModificationGreaterThan)
@@ -3406,34 +3089,8 @@ func (modification *DateAfterModification) AssignProperties_To_DateAfterModifica
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(modification.PropertyBag)
 
-	// DaysAfterCreationGreaterThan
-	if propertyBag.Contains("DaysAfterCreationGreaterThan") {
-		var daysAfterCreationGreaterThan int
-		err := propertyBag.Pull("DaysAfterCreationGreaterThan", &daysAfterCreationGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterCreationGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		destination.DaysAfterCreationGreaterThan = nil
-	}
-
 	// DaysAfterLastAccessTimeGreaterThan
 	destination.DaysAfterLastAccessTimeGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterLastAccessTimeGreaterThan)
-
-	// DaysAfterLastTierChangeGreaterThan
-	if propertyBag.Contains("DaysAfterLastTierChangeGreaterThan") {
-		var daysAfterLastTierChangeGreaterThan int
-		err := propertyBag.Pull("DaysAfterLastTierChangeGreaterThan", &daysAfterLastTierChangeGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterLastTierChangeGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
-	}
 
 	// DaysAfterModificationGreaterThan
 	destination.DaysAfterModificationGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterModificationGreaterThan)
@@ -3472,26 +3129,12 @@ func (modification *DateAfterModification_STATUS) AssignProperties_From_DateAfte
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
-	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		propertyBag.Add("DaysAfterCreationGreaterThan", *source.DaysAfterCreationGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterCreationGreaterThan")
-	}
-
 	// DaysAfterLastAccessTimeGreaterThan
 	if source.DaysAfterLastAccessTimeGreaterThan != nil {
 		daysAfterLastAccessTimeGreaterThan := *source.DaysAfterLastAccessTimeGreaterThan
 		modification.DaysAfterLastAccessTimeGreaterThan = &daysAfterLastAccessTimeGreaterThan
 	} else {
 		modification.DaysAfterLastAccessTimeGreaterThan = nil
-	}
-
-	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		propertyBag.Add("DaysAfterLastTierChangeGreaterThan", *source.DaysAfterLastTierChangeGreaterThan)
-	} else {
-		propertyBag.Remove("DaysAfterLastTierChangeGreaterThan")
 	}
 
 	// DaysAfterModificationGreaterThan
@@ -3527,38 +3170,12 @@ func (modification *DateAfterModification_STATUS) AssignProperties_To_DateAfterM
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(modification.PropertyBag)
 
-	// DaysAfterCreationGreaterThan
-	if propertyBag.Contains("DaysAfterCreationGreaterThan") {
-		var daysAfterCreationGreaterThan float64
-		err := propertyBag.Pull("DaysAfterCreationGreaterThan", &daysAfterCreationGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterCreationGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		destination.DaysAfterCreationGreaterThan = nil
-	}
-
 	// DaysAfterLastAccessTimeGreaterThan
 	if modification.DaysAfterLastAccessTimeGreaterThan != nil {
 		daysAfterLastAccessTimeGreaterThan := *modification.DaysAfterLastAccessTimeGreaterThan
 		destination.DaysAfterLastAccessTimeGreaterThan = &daysAfterLastAccessTimeGreaterThan
 	} else {
 		destination.DaysAfterLastAccessTimeGreaterThan = nil
-	}
-
-	// DaysAfterLastTierChangeGreaterThan
-	if propertyBag.Contains("DaysAfterLastTierChangeGreaterThan") {
-		var daysAfterLastTierChangeGreaterThan float64
-		err := propertyBag.Pull("DaysAfterLastTierChangeGreaterThan", &daysAfterLastTierChangeGreaterThan)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'DaysAfterLastTierChangeGreaterThan' from propertyBag")
-		}
-
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
 	}
 
 	// DaysAfterModificationGreaterThan

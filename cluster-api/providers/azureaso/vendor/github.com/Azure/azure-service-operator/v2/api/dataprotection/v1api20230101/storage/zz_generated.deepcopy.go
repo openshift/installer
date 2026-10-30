@@ -813,7 +813,7 @@ func (in *BackupVaultOperatorConfigMaps) DeepCopyInto(out *BackupVaultOperatorCo
 	if in.PrincipalId != nil {
 		in, out := &in.PrincipalId, &out.PrincipalId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -844,7 +844,7 @@ func (in *BackupVaultOperatorSpec) DeepCopyInto(out *BackupVaultOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -867,7 +867,7 @@ func (in *BackupVaultOperatorSpec) DeepCopyInto(out *BackupVaultOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1190,7 +1190,7 @@ func (in *BackupVaultsBackupPolicyOperatorSpec) DeepCopyInto(out *BackupVaultsBa
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1208,7 +1208,7 @@ func (in *BackupVaultsBackupPolicyOperatorSpec) DeepCopyInto(out *BackupVaultsBa
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

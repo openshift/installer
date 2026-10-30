@@ -104,7 +104,12 @@ func (settings *FlexibleServersAdvancedThreatProtectionSettings) ValidateUpdate(
 
 // createValidations validates the creation of the resource
 func (settings *FlexibleServersAdvancedThreatProtectionSettings) createValidations() []func(ctx context.Context, obj *v20240801.FlexibleServersAdvancedThreatProtectionSettings) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240801.FlexibleServersAdvancedThreatProtectionSettings) (admission.Warnings, error){settings.validateResourceReferences, settings.validateOwnerReference, settings.validateSecretDestinations, settings.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240801.FlexibleServersAdvancedThreatProtectionSettings) (admission.Warnings, error){
+		settings.validateResourceReferences,
+		settings.validateOwnerReference,
+		settings.validateSecretDestinations,
+		settings.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

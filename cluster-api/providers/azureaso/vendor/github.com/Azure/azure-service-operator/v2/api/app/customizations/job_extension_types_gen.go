@@ -4,8 +4,14 @@
 package customizations
 
 import (
-	v20240301 "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301"
-	storage "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/storage"
+	app_v1api20240301 "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301"
+	app_v1api20240301s "github.com/Azure/azure-service-operator/v2/api/app/v1api20240301/storage"
+	app_v1api20250101 "github.com/Azure/azure-service-operator/v2/api/app/v1api20250101"
+	app_v1api20250101s "github.com/Azure/azure-service-operator/v2/api/app/v1api20250101/storage"
+	app_v20240301 "github.com/Azure/azure-service-operator/v2/api/app/v20240301"
+	app_v20240301s "github.com/Azure/azure-service-operator/v2/api/app/v20240301/storage"
+	app_v20250101 "github.com/Azure/azure-service-operator/v2/api/app/v20250101"
+	app_v20250101s "github.com/Azure/azure-service-operator/v2/api/app/v20250101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +21,12 @@ type JobExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *JobExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20240301.Job{},
-		&storage.Job{}}
+		&app_v1api20240301.Job{},
+		&app_v1api20240301s.Job{},
+		&app_v1api20250101.Job{},
+		&app_v1api20250101s.Job{},
+		&app_v20240301.Job{},
+		&app_v20240301s.Job{},
+		&app_v20250101.Job{},
+		&app_v20250101s.Job{}}
 }

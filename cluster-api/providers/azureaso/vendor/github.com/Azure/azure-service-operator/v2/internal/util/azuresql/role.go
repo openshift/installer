@@ -61,7 +61,8 @@ where m.name = @user
 	rows, err := db.QueryContext(
 		ctx,
 		tsql,
-		sql.Named("user", user))
+		sql.Named("user", user),
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "listing roles for user %s", user)
 	}

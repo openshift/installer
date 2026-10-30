@@ -116,7 +116,12 @@ func (table *StorageAccountsTableServicesTable) ValidateUpdate(ctx context.Conte
 
 // createValidations validates the creation of the resource
 func (table *StorageAccountsTableServicesTable) createValidations() []func(ctx context.Context, obj *v20220901.StorageAccountsTableServicesTable) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220901.StorageAccountsTableServicesTable) (admission.Warnings, error){table.validateResourceReferences, table.validateOwnerReference, table.validateSecretDestinations, table.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220901.StorageAccountsTableServicesTable) (admission.Warnings, error){
+		table.validateResourceReferences,
+		table.validateOwnerReference,
+		table.validateSecretDestinations,
+		table.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

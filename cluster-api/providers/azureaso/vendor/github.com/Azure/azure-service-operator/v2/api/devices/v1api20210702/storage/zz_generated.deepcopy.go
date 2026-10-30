@@ -618,22 +618,22 @@ func (in *IotHubOperatorSecrets) DeepCopyInto(out *IotHubOperatorSecrets) {
 	if in.DevicePrimaryKey != nil {
 		in, out := &in.DevicePrimaryKey, &out.DevicePrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.DeviceSecondaryKey != nil {
 		in, out := &in.DeviceSecondaryKey, &out.DeviceSecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.IotHubOwnerPrimaryKey != nil {
 		in, out := &in.IotHubOwnerPrimaryKey, &out.IotHubOwnerPrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.IotHubOwnerSecondaryKey != nil {
 		in, out := &in.IotHubOwnerSecondaryKey, &out.IotHubOwnerSecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -645,32 +645,32 @@ func (in *IotHubOperatorSecrets) DeepCopyInto(out *IotHubOperatorSecrets) {
 	if in.RegistryReadPrimaryKey != nil {
 		in, out := &in.RegistryReadPrimaryKey, &out.RegistryReadPrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.RegistryReadSecondaryKey != nil {
 		in, out := &in.RegistryReadSecondaryKey, &out.RegistryReadSecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.RegistryReadWritePrimaryKey != nil {
 		in, out := &in.RegistryReadWritePrimaryKey, &out.RegistryReadWritePrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.RegistryReadWriteSecondaryKey != nil {
 		in, out := &in.RegistryReadWriteSecondaryKey, &out.RegistryReadWriteSecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ServicePrimaryKey != nil {
 		in, out := &in.ServicePrimaryKey, &out.ServicePrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ServiceSecondaryKey != nil {
 		in, out := &in.ServiceSecondaryKey, &out.ServiceSecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -694,7 +694,7 @@ func (in *IotHubOperatorSpec) DeepCopyInto(out *IotHubOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -712,7 +712,7 @@ func (in *IotHubOperatorSpec) DeepCopyInto(out *IotHubOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

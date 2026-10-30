@@ -39,6 +39,7 @@ var (
 	ReasonReconcileBlocked                = Reason{Name: "ReconciliationBlocked", RetryClassification: retry.Slow}
 	ReasonReconcilePostponed              = Reason{Name: "ReconciliationPostponed", RetryClassification: retry.Slow}
 	ReasonPostReconcileFailure            = Reason{Name: "PostReconciliationFailure", RetryClassification: retry.Slow}
+	ReasonDeletionNotSupported            = Reason{Name: "DeletionNotSupportedInAzure", RetryClassification: retry.VerySlow}
 )
 
 // ReasonFailed is a catch-all error code for when we don't have a more specific error classification
@@ -68,7 +69,8 @@ func (b *ReadyConditionBuilder) ReadyCondition(severity ConditionSeverity, obser
 		severity,
 		observedGeneration,
 		reason,
-		message)
+		message,
+	)
 }
 
 func (b *ReadyConditionBuilder) Reconciling(observedGeneration int64) Condition {
@@ -77,7 +79,8 @@ func (b *ReadyConditionBuilder) Reconciling(observedGeneration int64) Condition 
 		ConditionSeverityInfo,
 		observedGeneration,
 		ReasonReconciling.Name,
-		"The resource is in the process of being reconciled by the operator")
+		"The resource is in the process of being reconciled by the operator",
+	)
 }
 
 func (b *ReadyConditionBuilder) Deleting(observedGeneration int64) Condition {
@@ -86,7 +89,8 @@ func (b *ReadyConditionBuilder) Deleting(observedGeneration int64) Condition {
 		ConditionSeverityInfo,
 		observedGeneration,
 		ReasonDeleting.Name,
-		"The resource is being deleted")
+		"The resource is being deleted",
+	)
 }
 
 func (b *ReadyConditionBuilder) Succeeded(observedGeneration int64) Condition {

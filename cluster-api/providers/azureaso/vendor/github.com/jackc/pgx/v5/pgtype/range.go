@@ -191,11 +191,13 @@ type untypedBinaryRange struct {
 // 18 = [      = 10010
 // 24 =        = 11000
 
-const emptyMask = 1
-const lowerInclusiveMask = 2
-const upperInclusiveMask = 4
-const lowerUnboundedMask = 8
-const upperUnboundedMask = 16
+const (
+	emptyMask          = 1
+	lowerInclusiveMask = 2
+	upperInclusiveMask = 4
+	lowerUnboundedMask = 8
+	upperUnboundedMask = 16
+)
 
 func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 	ubr := &untypedBinaryRange{}
@@ -216,19 +218,21 @@ func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 		return ubr, nil
 	}
 
-	if rangeType&lowerInclusiveMask > 0 {
+	switch {
+	case rangeType&lowerInclusiveMask > 0:
 		ubr.LowerType = Inclusive
-	} else if rangeType&lowerUnboundedMask > 0 {
+	case rangeType&lowerUnboundedMask > 0:
 		ubr.LowerType = Unbounded
-	} else {
+	default:
 		ubr.LowerType = Exclusive
 	}
 
-	if rangeType&upperInclusiveMask > 0 {
+	switch {
+	case rangeType&upperInclusiveMask > 0:
 		ubr.UpperType = Inclusive
-	} else if rangeType&upperUnboundedMask > 0 {
+	case rangeType&upperUnboundedMask > 0:
 		ubr.UpperType = Unbounded
-	} else {
+	default:
 		ubr.UpperType = Exclusive
 	}
 
@@ -245,6 +249,9 @@ func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 	valueLen := int(binary.BigEndian.Uint32(src[rp:]))
 	rp += 4
 
+	if valueLen < 0 || len(src[rp:]) < valueLen {
+		return nil, fmt.Errorf("range lower bound length %d exceeds remaining %d bytes", valueLen, len(src[rp:]))
+	}
 	val := src[rp : rp+valueLen]
 	rp += valueLen
 
@@ -264,6 +271,9 @@ func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 		}
 		valueLen := int(binary.BigEndian.Uint32(src[rp:]))
 		rp += 4
+		if valueLen < 0 || len(src[rp:]) < valueLen {
+			return nil, fmt.Errorf("range upper bound length %d exceeds remaining %d bytes", valueLen, len(src[rp:]))
+		}
 		ubr.Upper = src[rp : rp+valueLen]
 		rp += valueLen
 	}
@@ -273,7 +283,6 @@ func parseUntypedBinaryRange(src []byte) (*untypedBinaryRange, error) {
 	}
 
 	return ubr, nil
-
 }
 
 // Range is a generic range type.

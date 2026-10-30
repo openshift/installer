@@ -127,26 +127,14 @@ func (h TypedFuncs[object, request]) Create(ctx context.Context, e event.TypedCr
 			h.CreateFunc(ctx, e, q)
 			return
 		}
-		wq := workqueueWithCustomAddFunc[request]{
-			TypedRateLimitingInterface: q,
+
+		wq := workqueueWithDefaultPriority[request]{
 			// We already know that we have a priority queue, that event.Object implements
 			// client.Object and that its not nil
-			addFunc: func(item request, q workqueue.TypedRateLimitingInterface[request]) {
-				// We construct a new event typed to client.Object because isObjectUnchanged
-				// is a generic and hence has to know at compile time the type of the event
-				// it gets. We only figure that out at runtime though, but we know for sure
-				// that it implements client.Object at this point so we can hardcode the event
-				// type to that.
-				evt := event.CreateEvent{Object: any(e.Object).(client.Object)}
-				var priority int
-				if isObjectUnchanged(evt) {
-					priority = LowPriority
-				}
-				q.(priorityqueue.PriorityQueue[request]).AddWithOpts(
-					priorityqueue.AddOpts{Priority: priority},
-					item,
-				)
-			},
+			PriorityQueue: q.(priorityqueue.PriorityQueue[request]),
+		}
+		if e.IsInInitialList {
+			wq.priority = new(LowPriority)
 		}
 		h.CreateFunc(ctx, e, wq)
 	}
@@ -167,20 +155,13 @@ func (h TypedFuncs[object, request]) Update(ctx context.Context, e event.TypedUp
 			return
 		}
 
-		wq := workqueueWithCustomAddFunc[request]{
-			TypedRateLimitingInterface: q,
+		wq := workqueueWithDefaultPriority[request]{
 			// We already know that we have a priority queue, that event.ObjectOld and ObjectNew implement
 			// client.Object and that they are  not nil
-			addFunc: func(item request, q workqueue.TypedRateLimitingInterface[request]) {
-				var priority int
-				if any(e.ObjectOld).(client.Object).GetResourceVersion() == any(e.ObjectNew).(client.Object).GetResourceVersion() {
-					priority = LowPriority
-				}
-				q.(priorityqueue.PriorityQueue[request]).AddWithOpts(
-					priorityqueue.AddOpts{Priority: priority},
-					item,
-				)
-			},
+			PriorityQueue: q.(priorityqueue.PriorityQueue[request]),
+		}
+		if any(e.ObjectOld).(client.Object).GetResourceVersion() == any(e.ObjectNew).(client.Object).GetResourceVersion() {
+			wq.priority = new(LowPriority)
 		}
 		h.UpdateFunc(ctx, e, wq)
 	}
@@ -208,20 +189,28 @@ func WithLowPriorityWhenUnchanged[object client.Object, request comparable](u Ty
 	}
 }
 
-type workqueueWithCustomAddFunc[request comparable] struct {
-	workqueue.TypedRateLimitingInterface[request]
-	addFunc func(item request, q workqueue.TypedRateLimitingInterface[request])
+type workqueueWithDefaultPriority[request comparable] struct {
+	priorityqueue.PriorityQueue[request]
+	priority *int
 }
 
-func (w workqueueWithCustomAddFunc[request]) Add(item request) {
-	w.addFunc(item, w.TypedRateLimitingInterface)
+func (w workqueueWithDefaultPriority[request]) Add(item request) {
+	w.PriorityQueue.AddWithOpts(priorityqueue.AddOpts{Priority: w.priority}, item)
 }
 
-// isObjectUnchanged checks if the object in a create event is unchanged, for example because
-// we got it in our initial listwatch. The heuristic it uses is to check if the object is older
-// than one minute.
-func isObjectUnchanged[object client.Object](e event.TypedCreateEvent[object]) bool {
-	return e.Object.GetCreationTimestamp().Time.Before(time.Now().Add(-time.Minute))
+func (w workqueueWithDefaultPriority[request]) AddAfter(item request, after time.Duration) {
+	w.PriorityQueue.AddWithOpts(priorityqueue.AddOpts{Priority: w.priority, After: after}, item)
+}
+
+func (w workqueueWithDefaultPriority[request]) AddRateLimited(item request) {
+	w.PriorityQueue.AddWithOpts(priorityqueue.AddOpts{Priority: w.priority, RateLimited: true}, item)
+}
+
+func (w workqueueWithDefaultPriority[request]) AddWithOpts(o priorityqueue.AddOpts, items ...request) {
+	if o.Priority == nil {
+		o.Priority = w.priority
+	}
+	w.PriorityQueue.AddWithOpts(o, items...)
 }
 
 // addToQueueCreate adds the reconcile.Request to the priorityqueue in the handler
@@ -233,9 +222,9 @@ func addToQueueCreate[T client.Object, request comparable](q workqueue.TypedRate
 		return
 	}
 
-	var priority int
-	if isObjectUnchanged(evt) {
-		priority = LowPriority
+	var priority *int
+	if evt.IsInInitialList {
+		priority = new(LowPriority)
 	}
 	priorityQueue.AddWithOpts(priorityqueue.AddOpts{Priority: priority}, item)
 }
@@ -249,9 +238,9 @@ func addToQueueUpdate[T client.Object, request comparable](q workqueue.TypedRate
 		return
 	}
 
-	var priority int
+	var priority *int
 	if evt.ObjectOld.GetResourceVersion() == evt.ObjectNew.GetResourceVersion() {
-		priority = LowPriority
+		priority = new(LowPriority)
 	}
 	priorityQueue.AddWithOpts(priorityqueue.AddOpts{Priority: priority}, item)
 }

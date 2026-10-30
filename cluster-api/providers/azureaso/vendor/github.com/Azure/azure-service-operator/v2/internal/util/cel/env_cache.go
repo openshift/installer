@@ -45,11 +45,13 @@ func NewEnvCache(
 	cache.OnInsertion(
 		func(ctx context.Context, item *ttlcache.Item[string, envCacheItem]) {
 			log.V(Debug).Info("Env cache item inserted", "key", item.Key(), "expiry", item.ExpiresAt())
-		})
+		},
+	)
 	cache.OnEviction(
 		func(ctx context.Context, reason ttlcache.EvictionReason, item *ttlcache.Item[string, envCacheItem]) {
 			log.V(Debug).Info("Env cache item evicted", "key", item.Key(), "expiry", item.ExpiresAt(), "reason", reason)
-		})
+		},
+	)
 
 	return &EnvCache{
 		cache:   cache,

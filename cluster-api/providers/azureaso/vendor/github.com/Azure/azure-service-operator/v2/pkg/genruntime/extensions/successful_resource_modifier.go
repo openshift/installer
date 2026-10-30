@@ -14,9 +14,17 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
-// SuccessfulCreationHandler can be implemented to customize the resource upon successful creation
+// SuccessfulCreationHandler can be implemented to customize the resource upon successful creation in Azure.
+// This extension is invoked once after the initial ARM PUT operation succeeds, giving resources the opportunity
+// to perform one-time initialization that depends on the Azure-assigned resource ID.
+// Implement this extension when:
+// - Resource ID needs custom computation or override after creation
+// - Child resources need special ID references set on the parent
+// - One-time initialization is required after the resource exists in Azure
 type SuccessfulCreationHandler interface {
-	// Success modifies the resource based on a successful creation
+	// Success performs custom logic after the resource is successfully created in Azure for the first time.
+	// obj is the resource that was just created, with populated status including the Azure resource ID.
+	// Returns an error if the success handling fails, which will prevent the Ready condition from being set.
 	Success(obj genruntime.ARMMetaObject) error
 }
 

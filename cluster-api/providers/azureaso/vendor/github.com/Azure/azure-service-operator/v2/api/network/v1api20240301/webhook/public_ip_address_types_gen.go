@@ -116,7 +116,12 @@ func (address *PublicIPAddress) ValidateUpdate(ctx context.Context, oldResource 
 
 // createValidations validates the creation of the resource
 func (address *PublicIPAddress) createValidations() []func(ctx context.Context, obj *v20240301.PublicIPAddress) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.PublicIPAddress) (admission.Warnings, error){address.validateResourceReferences, address.validateOwnerReference, address.validateSecretDestinations, address.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.PublicIPAddress) (admission.Warnings, error){
+		address.validateResourceReferences,
+		address.validateOwnerReference,
+		address.validateSecretDestinations,
+		address.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

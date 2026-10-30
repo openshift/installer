@@ -175,7 +175,8 @@ func (h ResourceHierarchy) fullyQualifiedARMIDImpl(subscriptionID string, origin
 				len(remainingNames),
 				len(resourceTypes),
 				remainingNames,
-				resourceTypes)
+				resourceTypes,
+			)
 		}
 
 		// Join them together
@@ -197,7 +198,8 @@ func (h ResourceHierarchy) fullyQualifiedARMIDImpl(subscriptionID string, origin
 				len(azureNames),
 				len(resourceTypes),
 				azureNames,
-				resourceTypes)
+				resourceTypes,
+			)
 		}
 		// Join them together
 		interleaved := genruntime.InterleaveStrSlice(resourceTypes, azureNames)
