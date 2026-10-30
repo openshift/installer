@@ -1229,7 +1229,7 @@ spec:
               userAssignedIdentityCredentialsCloudType:
                 description: |-
                   UserAssignedIdentityCredentialsCloudType is used with UserAssignedIdentityCredentialsPath to specify the Cloud
-                  type. Can only be one of the following values: public, china, or usgovernment
+                  type. Can only be one of the following values: public, china, usgovernment, or ussec
                   If a value is not specified, defaults to public
                 type: string
               userAssignedIdentityCredentialsPath:
@@ -1414,6 +1414,7 @@ spec:
                   - GermanCloud: "AzureGermanCloud"
                   - PublicCloud: "AzurePublicCloud"
                   - USGovernmentCloud: "AzureUSGovernmentCloud"
+                  - USSecCloud: "AzureUSSecCloud"
 
                   Note that values other than the default must also be accompanied by corresponding changes to the
                   aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
@@ -1424,6 +1425,10 @@ spec:
                   - AZURE_RESOURCE_MANAGER_AUDIENCE
 
                   See the [ASO docs] for more details.
+
+                  When set to "AzureUSSecCloud", the AZURE_ENVIRONMENT_FILEPATH environment
+                  variable must be set on the controller, pointing to a JSON file containing
+                  the dynamically-discovered cloud endpoints for the air-gapped environment.
 
                   [ASO docs]: https://azure.github.io/azure-service-operator/guide/aso-controller-settings-options/
                 type: string
@@ -1678,6 +1683,7 @@ spec:
                                     description:
                                       description: A description for this rule. Restricted
                                         to 140 chars.
+                                      maxLength: 140
                                       type: string
                                     destination:
                                       description: Destination is the destination
@@ -1745,7 +1751,6 @@ spec:
                                         type: string
                                       type: array
                                   required:
-                                  - description
                                   - direction
                                   - name
                                   - protocol
@@ -2122,9 +2127,11 @@ spec:
                                 requests. The specified frontend IP configs must have the private IP set.
                               items:
                                 type: string
+                              minItems: 1
                               type: array
                             name:
                               description: Name of the private link.
+                              minLength: 1
                               type: string
                             natIPConfigurations:
                               description: NATIPConfigurations specify up to 8 NAT
@@ -2150,11 +2157,15 @@ spec:
                                 - allocationMethod
                                 - subnet
                                 type: object
+                              maxItems: 8
+                              minItems: 1
                               type: array
                           required:
                           - lbFrontendIPConfigNames
+                          - name
                           - natIPConfigurations
                           type: object
+                        maxItems: 8
                         type: array
                       sku:
                         description: SKU defines an Azure load balancer SKU.
@@ -2282,9 +2293,11 @@ spec:
                                 requests. The specified frontend IP configs must have the private IP set.
                               items:
                                 type: string
+                              minItems: 1
                               type: array
                             name:
                               description: Name of the private link.
+                              minLength: 1
                               type: string
                             natIPConfigurations:
                               description: NATIPConfigurations specify up to 8 NAT
@@ -2310,11 +2323,15 @@ spec:
                                 - allocationMethod
                                 - subnet
                                 type: object
+                              maxItems: 8
+                              minItems: 1
                               type: array
                           required:
                           - lbFrontendIPConfigNames
+                          - name
                           - natIPConfigurations
                           type: object
+                        maxItems: 8
                         type: array
                       sku:
                         description: SKU defines an Azure load balancer SKU.
@@ -2441,9 +2458,11 @@ spec:
                                 requests. The specified frontend IP configs must have the private IP set.
                               items:
                                 type: string
+                              minItems: 1
                               type: array
                             name:
                               description: Name of the private link.
+                              minLength: 1
                               type: string
                             natIPConfigurations:
                               description: NATIPConfigurations specify up to 8 NAT
@@ -2469,11 +2488,15 @@ spec:
                                 - allocationMethod
                                 - subnet
                                 type: object
+                              maxItems: 8
+                              minItems: 1
                               type: array
                           required:
                           - lbFrontendIPConfigNames
+                          - name
                           - natIPConfigurations
                           type: object
+                        maxItems: 8
                         type: array
                       sku:
                         description: SKU defines an Azure load balancer SKU.
@@ -2700,6 +2723,7 @@ spec:
                                   description:
                                     description: A description for this rule. Restricted
                                       to 140 chars.
+                                    maxLength: 140
                                     type: string
                                   destination:
                                     description: Destination is the destination address
@@ -2764,7 +2788,6 @@ spec:
                                       type: string
                                     type: array
                                 required:
-                                - description
                                 - direction
                                 - name
                                 - protocol
@@ -3133,6 +3156,7 @@ spec:
                           - GermanCloud: "AzureGermanCloud"
                           - PublicCloud: "AzurePublicCloud"
                           - USGovernmentCloud: "AzureUSGovernmentCloud"
+                          - USSecCloud: "AzureUSSecCloud"
 
                           Note that values other than the default must also be accompanied by corresponding changes to the
                           aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
@@ -3143,6 +3167,10 @@ spec:
                           - AZURE_RESOURCE_MANAGER_AUDIENCE
 
                           See the [ASO docs] for more details.
+
+                          When set to "AzureUSSecCloud", the AZURE_ENVIRONMENT_FILEPATH environment
+                          variable must be set on the controller, pointing to a JSON file containing
+                          the dynamically-discovered cloud endpoints for the air-gapped environment.
 
                           [ASO docs]: https://azure.github.io/azure-service-operator/guide/aso-controller-settings-options/
                         type: string
@@ -3296,6 +3324,7 @@ spec:
                                             description:
                                               description: A description for this
                                                 rule. Restricted to 140 chars.
+                                              maxLength: 140
                                               type: string
                                             destination:
                                               description: Destination is the destination
@@ -3367,7 +3396,6 @@ spec:
                                                 type: string
                                               type: array
                                           required:
-                                          - description
                                           - direction
                                           - name
                                           - protocol
@@ -3815,6 +3843,7 @@ spec:
                                           description:
                                             description: A description for this rule.
                                               Restricted to 140 chars.
+                                            maxLength: 140
                                             type: string
                                           destination:
                                             description: Destination is the destination
@@ -3884,7 +3913,6 @@ spec:
                                               type: string
                                             type: array
                                         required:
-                                        - description
                                         - direction
                                         - name
                                         - protocol
@@ -7729,6 +7757,7 @@ spec:
                   - ChinaCloud: "AzureChinaCloud"
                   - PublicCloud: "AzurePublicCloud"
                   - USGovernmentCloud: "AzureUSGovernmentCloud"
+                  - USSecCloud: "AzureUSSecCloud"
 
                   Note that values other than the default must also be accompanied by corresponding changes to the
                   aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
@@ -7739,6 +7768,10 @@ spec:
                   - AZURE_RESOURCE_MANAGER_AUDIENCE
 
                   See the [ASO docs] for more details.
+
+                  When set to "AzureUSSecCloud", the AZURE_ENVIRONMENT_FILEPATH environment
+                  variable must be set on the controller, pointing to a JSON file containing
+                  the dynamically-discovered cloud endpoints for the air-gapped environment.
 
                   [ASO docs]: https://azure.github.io/azure-service-operator/guide/aso-controller-settings-options/
                 type: string
@@ -8767,6 +8800,7 @@ spec:
                           - ChinaCloud: "AzureChinaCloud"
                           - PublicCloud: "AzurePublicCloud"
                           - USGovernmentCloud: "AzureUSGovernmentCloud"
+                          - USSecCloud: "AzureUSSecCloud"
 
                           Note that values other than the default must also be accompanied by corresponding changes to the
                           aso-controller-settings Secret to configure ASO to refer to the non-Public cloud. ASO currently does
@@ -8777,6 +8811,10 @@ spec:
                           - AZURE_RESOURCE_MANAGER_AUDIENCE
 
                           See the [ASO docs] for more details.
+
+                          When set to "AzureUSSecCloud", the AZURE_ENVIRONMENT_FILEPATH environment
+                          variable must be set on the controller, pointing to a JSON file containing
+                          the dynamically-discovered cloud endpoints for the air-gapped environment.
 
                           [ASO docs]: https://azure.github.io/azure-service-operator/guide/aso-controller-settings-options/
                         type: string
@@ -10984,6 +11022,7 @@ rules:
   - policies
   - policyfragments
   - productapis
+  - productgroups
   - productpolicies
   - products
   - servicegatewayapis
@@ -11034,6 +11073,8 @@ rules:
   - policyfragments/status
   - productapis/finalizers
   - productapis/status
+  - productgroups/finalizers
+  - productgroups/status
   - productpolicies/finalizers
   - productpolicies/status
   - products/finalizers
@@ -11262,6 +11303,7 @@ rules:
   resources:
   - accounts
   - deployments
+  - projects
   verbs:
   - create
   - delete
@@ -11277,6 +11319,8 @@ rules:
   - accounts/status
   - deployments/finalizers
   - deployments/status
+  - projects/finalizers
+  - projects/status
   verbs:
   - get
   - patch
@@ -13055,7 +13099,7 @@ stringData:
   AZURE_SUBSCRIPTION_ID: ""
   AZURE_SYNC_PERIOD: ${AZURE_SYNC_PERIOD:=""}
   AZURE_TENANT_ID: ""
-  AZURE_USER_AGENT_SUFFIX: cluster-api-provider-azure/v1.27.0
+  AZURE_USER_AGENT_SUFFIX: cluster-api-provider-azure/main
 type: Opaque
 ---
 apiVersion: v1
@@ -13074,7 +13118,7 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: azure-service-operator
-    app.kubernetes.io/version: v2.19.0
+    app.kubernetes.io/version: v2.20.0
     control-plane: controller-manager
   name: azureserviceoperator-controller-manager-metrics-service
   namespace: capz-system
@@ -13090,7 +13134,7 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/name: azure-service-operator
-    app.kubernetes.io/version: v2.19.0
+    app.kubernetes.io/version: v2.20.0
   name: azureserviceoperator-webhook-service
   namespace: capz-system
 spec:
@@ -13119,7 +13163,7 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/name: azure-service-operator
-    app.kubernetes.io/version: v2.19.0
+    app.kubernetes.io/version: v2.20.0
     control-plane: controller-manager
   name: azureserviceoperator-controller-manager
   namespace: capz-system
@@ -13137,7 +13181,7 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels:
         app.kubernetes.io/name: azure-service-operator
-        app.kubernetes.io/version: v2.19.0
+        app.kubernetes.io/version: v2.20.0
         control-plane: controller-manager
     spec:
       containers:
@@ -13151,6 +13195,7 @@ spec:
         - --crd-pattern=containerservice.azure.com/FleetsMember;containerservice.azure.com/MaintenanceConfiguration;containerservice.azure.com/ManagedCluster;containerservice.azure.com/ManagedClustersAgentPool;kubernetesconfiguration.azure.com/Extension;network.azure.com/BastionHost;network.azure.com/NatGateway;network.azure.com/PrivateEndpoint;network.azure.com/PrivateLinkService;network.azure.com/VirtualNetwork;network.azure.com/VirtualNetworksSubnet;resources.azure.com/ResourceGroup;${ADDITIONAL_ASO_CRDS:=resources.azure.com/ResourceGroup}
         - --webhook-port=9443
         - --webhook-cert-dir=/tmp/k8s-webhook-server/serving-certs
+        - --metrics-cert-dir=/tmp/k8s-metrics-server/serving-certs
         env:
         - name: GOMEMLIMIT
           value: 400MiB
@@ -13287,7 +13332,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: mcr.microsoft.com/k8s/azureserviceoperator:v2.19.0
+        image: mcr.microsoft.com/k8s/azureserviceoperator:v2.20.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -13331,6 +13376,9 @@ spec:
             port: 8081
           periodSeconds: 10
         volumeMounts:
+        - mountPath: /tmp/k8s-metrics-server/serving-certs
+          name: metrics-cert
+          readOnly: true
         - mountPath: /var/run/secrets/tokens
           name: azure-identity
           readOnly: true
@@ -13342,7 +13390,7 @@ spec:
         - migrate-aso-crds
         command:
         - /manager
-        image: registry.k8s.io/cluster-api-azure/cluster-api-azure-controller:v1.27.0
+        image: gcr.io/k8s-staging-cluster-api-azure/cluster-api-azure-controller:main
         name: migrate-aso-crd-stored-versions
         resources:
           limits:
@@ -13367,6 +13415,10 @@ spec:
       serviceAccountName: azureserviceoperator-default
       terminationGracePeriodSeconds: 10
       volumes:
+      - name: metrics-cert
+        secret:
+          defaultMode: 420
+          secretName: metrics-server-cert
       - name: cert
         secret:
           defaultMode: 420
@@ -13432,8 +13484,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: registry.k8s.io/cluster-api-azure/cluster-api-azure-controller:v1.27.0
-        imagePullPolicy: IfNotPresent
+        image: gcr.io/k8s-staging-cluster-api-azure/cluster-api-azure-controller:main
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /healthz
@@ -13509,6 +13561,23 @@ spec:
   selector:
     matchLabels:
       control-plane: controller-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: azureserviceoperator-metrics-server-cert
+  namespace: capz-system
+spec:
+  dnsNames:
+  - azureserviceoperator-controller-manager-metrics-service.azureserviceoperator-system.svc
+  - azureserviceoperator-controller-manager-metrics-service.azureserviceoperator-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: azureserviceoperator-selfsigned-issuer
+  secretName: metrics-server-cert
+  subject:
+    organizations:
+    - azure
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -15451,6 +15520,27 @@ webhooks:
     service:
       name: azureserviceoperator-webhook-service
       namespace: capz-system
+      path: /mutate-apimanagement-azure-com-v20240501-productgroup
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240501.productgroups.apimanagement.azure.com
+  rules:
+  - apiGroups:
+    - apimanagement.azure.com
+    apiVersions:
+    - v20240501
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - productgroups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
       path: /mutate-apimanagement-azure-com-v20240501-productpolicy
   failurePolicy: Fail
   matchPolicy: Exact
@@ -15804,6 +15894,174 @@ webhooks:
     - app.azure.com
     apiVersions:
     - v1api20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - managedenvironments
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20240301-authconfig
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240301.authconfigs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - authconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20240301-containerapp
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240301.containerapps.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - containerapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20240301-job
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240301.jobs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - jobs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20240301-managedenvironment
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240301.managedenvironments.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - managedenvironments
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20250101-authconfig
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250101.authconfigs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - authconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20250101-containerapp
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250101.containerapps.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - containerapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20250101-job
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250101.jobs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - jobs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-app-azure-com-v20250101-managedenvironment
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250101.managedenvironments.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
     operations:
     - CREATE
     - UPDATE
@@ -16929,6 +17187,27 @@ webhooks:
     resources:
     - deployments
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-cognitiveservices-azure-com-v20250601-project
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250601.projects.cognitiveservices.azure.com
+  rules:
+  - apiGroups:
+    - cognitiveservices.azure.com
+    apiVersions:
+    - v20250601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - projects
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -17449,6 +17728,426 @@ webhooks:
     resources:
     - capacityreservations
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20200930-disk
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200930.disks.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20200930
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - disks
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20200930-snapshot
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200930.snapshots.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20200930
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snapshots
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20201201-virtualmachine
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20201201.virtualmachines.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachines
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20201201-virtualmachinescaleset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20201201.virtualmachinescalesets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20201201-virtualmachinescalesetsextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20201201.virtualmachinescalesetsextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesetsextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20201201-virtualmachinesextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20201201.virtualmachinesextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinesextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20210701-image
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20210701.images.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20210701
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220301-image
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220301.images.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220301-virtualmachine
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220301.virtualmachines.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachines
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220301-virtualmachinescaleset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220301.virtualmachinescalesets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220301-virtualmachinescalesetsextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220301.virtualmachinescalesetsextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesetsextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220301-virtualmachinesextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220301.virtualmachinesextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinesextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20220702-diskencryptionset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20220702.diskencryptionsets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220702
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskencryptionsets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20240302-diskaccess
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240302.diskaccesses.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskaccesses
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20240302-diskencryptionset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240302.diskencryptionsets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskencryptionsets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20240302-disk
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240302.disks.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - disks
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20240302-snapshot
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20240302.snapshots.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snapshots
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20241101-availabilityset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20241101.availabilitysets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20241101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - availabilitysets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20250401-capacityreservationgroup
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250401.capacityreservationgroups.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20250401
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capacityreservationgroups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-compute-azure-com-v20250401-capacityreservation
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20250401.capacityreservations.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20250401
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capacityreservations
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -17937,6 +18636,27 @@ webhooks:
     - datafactory.azure.com
     apiVersions:
     - v1api20180601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - factories
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-datafactory-azure-com-v20180601-factory
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20180601.factories.datafactory.azure.com
+  rules:
+  - apiGroups:
+    - datafactory.azure.com
+    apiVersions:
+    - v20180601
     operations:
     - CREATE
     - UPDATE
@@ -20773,6 +21493,90 @@ webhooks:
     - eventgrid.azure.com
     apiVersions:
     - v1api20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - topics
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-eventgrid-azure-com-v20200601-domain
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200601.domains.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - domains
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-eventgrid-azure-com-v20200601-domainstopic
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200601.domainstopics.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - domainstopics
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-eventgrid-azure-com-v20200601-eventsubscription
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200601.eventsubscriptions.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - eventsubscriptions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /mutate-eventgrid-azure-com-v20200601-topic
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: default.v20200601.topics.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
     operations:
     - CREATE
     - UPDATE
@@ -29232,6 +30036,27 @@ webhooks:
     service:
       name: azureserviceoperator-webhook-service
       namespace: capz-system
+      path: /validate-apimanagement-azure-com-v20240501-productgroup
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240501.productgroups.apimanagement.azure.com
+  rules:
+  - apiGroups:
+    - apimanagement.azure.com
+    apiVersions:
+    - v20240501
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - productgroups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
       path: /validate-apimanagement-azure-com-v20240501-productpolicy
   failurePolicy: Fail
   matchPolicy: Exact
@@ -29585,6 +30410,174 @@ webhooks:
     - app.azure.com
     apiVersions:
     - v1api20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - managedenvironments
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20240301-authconfig
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240301.authconfigs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - authconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20240301-containerapp
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240301.containerapps.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - containerapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20240301-job
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240301.jobs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - jobs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20240301-managedenvironment
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240301.managedenvironments.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20240301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - managedenvironments
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20250101-authconfig
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250101.authconfigs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - authconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20250101-containerapp
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250101.containerapps.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - containerapps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20250101-job
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250101.jobs.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - jobs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-app-azure-com-v20250101-managedenvironment
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250101.managedenvironments.app.azure.com
+  rules:
+  - apiGroups:
+    - app.azure.com
+    apiVersions:
+    - v20250101
     operations:
     - CREATE
     - UPDATE
@@ -30710,6 +31703,27 @@ webhooks:
     resources:
     - deployments
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-cognitiveservices-azure-com-v20250601-project
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250601.projects.cognitiveservices.azure.com
+  rules:
+  - apiGroups:
+    - cognitiveservices.azure.com
+    apiVersions:
+    - v20250601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - projects
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -31230,6 +32244,426 @@ webhooks:
     resources:
     - capacityreservations
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20200930-disk
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200930.disks.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20200930
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - disks
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20200930-snapshot
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200930.snapshots.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20200930
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snapshots
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20201201-virtualmachine
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20201201.virtualmachines.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachines
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20201201-virtualmachinescaleset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20201201.virtualmachinescalesets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20201201-virtualmachinescalesetsextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20201201.virtualmachinescalesetsextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesetsextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20201201-virtualmachinesextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20201201.virtualmachinesextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20201201
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinesextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20210701-image
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20210701.images.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20210701
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220301-image
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220301.images.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220301-virtualmachine
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220301.virtualmachines.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachines
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220301-virtualmachinescaleset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220301.virtualmachinescalesets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220301-virtualmachinescalesetsextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220301.virtualmachinescalesetsextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinescalesetsextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220301-virtualmachinesextension
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220301.virtualmachinesextensions.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220301
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualmachinesextensions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20220702-diskencryptionset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20220702.diskencryptionsets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20220702
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskencryptionsets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20240302-diskaccess
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240302.diskaccesses.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskaccesses
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20240302-diskencryptionset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240302.diskencryptionsets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - diskencryptionsets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20240302-disk
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240302.disks.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - disks
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20240302-snapshot
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20240302.snapshots.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20240302
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snapshots
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20241101-availabilityset
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20241101.availabilitysets.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20241101
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - availabilitysets
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20250401-capacityreservationgroup
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250401.capacityreservationgroups.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20250401
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capacityreservationgroups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-compute-azure-com-v20250401-capacityreservation
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20250401.capacityreservations.compute.azure.com
+  rules:
+  - apiGroups:
+    - compute.azure.com
+    apiVersions:
+    - v20250401
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capacityreservations
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -31718,6 +33152,27 @@ webhooks:
     - datafactory.azure.com
     apiVersions:
     - v1api20180601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - factories
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-datafactory-azure-com-v20180601-factory
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20180601.factories.datafactory.azure.com
+  rules:
+  - apiGroups:
+    - datafactory.azure.com
+    apiVersions:
+    - v20180601
     operations:
     - CREATE
     - UPDATE
@@ -34554,6 +36009,90 @@ webhooks:
     - eventgrid.azure.com
     apiVersions:
     - v1api20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - topics
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-eventgrid-azure-com-v20200601-domain
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200601.domains.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - domains
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-eventgrid-azure-com-v20200601-domainstopic
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200601.domainstopics.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - domainstopics
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-eventgrid-azure-com-v20200601-eventsubscription
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200601.eventsubscriptions.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - eventsubscriptions
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: azureserviceoperator-webhook-service
+      namespace: capz-system
+      path: /validate-eventgrid-azure-com-v20200601-topic
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: validate.v20200601.topics.eventgrid.azure.com
+  rules:
+  - apiGroups:
+    - eventgrid.azure.com
+    apiVersions:
+    - v20200601
     operations:
     - CREATE
     - UPDATE
