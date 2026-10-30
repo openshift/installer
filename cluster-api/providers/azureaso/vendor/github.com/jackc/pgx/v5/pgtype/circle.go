@@ -25,31 +25,32 @@ type Circle struct {
 	Valid bool
 }
 
+// ScanCircle implements the [CircleScanner] interface.
 func (c *Circle) ScanCircle(v Circle) error {
 	*c = v
 	return nil
 }
 
+// CircleValue implements the [CircleValuer] interface.
 func (c Circle) CircleValue() (Circle, error) {
 	return c, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (dst *Circle) Scan(src any) error {
 	if src == nil {
 		*dst = Circle{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToCircleScanner{}.Scan([]byte(src), dst)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (src Circle) Value() (driver.Value, error) {
 	if !src.Valid {
 		return nil, nil
@@ -128,13 +129,11 @@ func (encodePlanCircleCodecText) Encode(value any, buf []byte) (newBuf []byte, e
 func (CircleCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case CircleScanner:
+		if _, ok := target.(CircleScanner); ok {
 			return scanPlanBinaryCircleToCircleScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case CircleScanner:
+		if _, ok := target.(CircleScanner); ok {
 			return scanPlanTextAnyToCircleScanner{}
 		}
 	}
@@ -196,24 +195,34 @@ func (scanPlanTextAnyToCircleScanner) Scan(src []byte, dst any) error {
 		return fmt.Errorf("invalid length for Circle: %v", len(src))
 	}
 
-	str := string(src[2:])
-	end := strings.IndexByte(str, ',')
-	x, err := strconv.ParseFloat(str[:end], 64)
+	// Expected format: <(x,y),r>
+	str, ok := strings.CutPrefix(string(src), "<(")
+	if !ok {
+		return fmt.Errorf("invalid format for Circle")
+	}
+	str, ok = strings.CutSuffix(str, ">")
+	if !ok {
+		return fmt.Errorf("invalid format for Circle")
+	}
+
+	sx, str, found := strings.Cut(str, ",")
+	if !found {
+		return fmt.Errorf("invalid format for Circle")
+	}
+	sy, sr, found := strings.Cut(str, "),")
+	if !found {
+		return fmt.Errorf("invalid format for Circle")
+	}
+
+	x, err := strconv.ParseFloat(sx, 64)
 	if err != nil {
 		return err
 	}
-
-	str = str[end+1:]
-	end = strings.IndexByte(str, ')')
-
-	y, err := strconv.ParseFloat(str[:end], 64)
+	y, err := strconv.ParseFloat(sy, 64)
 	if err != nil {
 		return err
 	}
-
-	str = str[end+2 : len(str)-1]
-
-	r, err := strconv.ParseFloat(str, 64)
+	r, err := strconv.ParseFloat(sr, 64)
 	if err != nil {
 		return err
 	}

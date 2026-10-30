@@ -49,7 +49,46 @@ func (c *Collector) get(dest *genruntime.SecretDestination) *v1.Secret {
 		}
 		c.secrets[dest.Name] = existing
 	}
+
 	return existing
+}
+
+// mergeStringMap merges src into dest, returning the result.
+// If the same key already exists in dest with a different value, an error is recorded.
+func (c *Collector) mergeStringMap(dest map[string]string, src map[string]string, secretName string, kind string) map[string]string {
+	if len(src) == 0 {
+		return dest
+	}
+	if dest == nil {
+		dest = make(map[string]string, len(src))
+	}
+	for k, v := range src {
+		if existing, ok := dest[k]; ok && existing != v {
+			c.errors = append(
+				c.errors,
+				eris.Errorf(
+					"%s collision for secret %q: %s %q has conflicting values %q and %q",
+					kind,
+					secretName,
+					kind,
+					k,
+					existing,
+					v,
+				),
+			)
+			continue
+		}
+		dest[k] = v
+	}
+	return dest
+}
+
+func (c *Collector) mergeAnnotations(dest map[string]string, src map[string]string, secretName string) map[string]string {
+	return c.mergeStringMap(dest, src, secretName, "annotation")
+}
+
+func (c *Collector) mergeLabels(dest map[string]string, src map[string]string, secretName string) map[string]string {
+	return c.mergeStringMap(dest, src, secretName, "label")
 }
 
 func (c *Collector) errIfKeyExists(val *v1.Secret, key string) error {
@@ -86,6 +125,8 @@ func (c *Collector) AddValue(dest *genruntime.SecretDestination, value string) {
 	}
 
 	existing.StringData[dest.Key] = value
+	existing.Annotations = c.mergeAnnotations(existing.Annotations, dest.Annotations, dest.Name)
+	existing.Labels = c.mergeLabels(existing.Labels, dest.Labels, dest.Name)
 }
 
 // AddBinaryValue adds the dest and secretValue pair to the collector. If another value has already
@@ -104,6 +145,8 @@ func (c *Collector) AddBinaryValue(dest *genruntime.SecretDestination, value []b
 	}
 
 	existing.Data[dest.Key] = value
+	existing.Annotations = c.mergeAnnotations(existing.Annotations, dest.Annotations, dest.Name)
+	existing.Labels = c.mergeLabels(existing.Labels, dest.Labels, dest.Name)
 }
 
 // Values returns the set of secrets that have been collected.

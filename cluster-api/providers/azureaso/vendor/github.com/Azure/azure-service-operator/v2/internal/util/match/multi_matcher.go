@@ -66,7 +66,8 @@ func (mm *multiMatcher) WasMatched() error {
 		kerrors.NewAggregate(errs),
 		"%d of %d did not match",
 		count,
-		len(mm.matchers))
+		len(mm.matchers),
+	)
 }
 
 // IsRestrictive returns true if any of our contained matchers are restrictive

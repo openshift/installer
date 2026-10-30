@@ -1039,7 +1039,7 @@ func (in *WorkspaceOperatorSpec) DeepCopyInto(out *WorkspaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1050,7 +1050,7 @@ func (in *WorkspaceOperatorSpec) DeepCopyInto(out *WorkspaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1529,7 +1529,7 @@ func (in *WorkspacesBigDataPoolOperatorSpec) DeepCopyInto(out *WorkspacesBigData
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1540,7 +1540,7 @@ func (in *WorkspacesBigDataPoolOperatorSpec) DeepCopyInto(out *WorkspacesBigData
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

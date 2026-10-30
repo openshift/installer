@@ -103,6 +103,8 @@ type Destination_Properties struct {
 	DataLakeFolderPath *string `json:"dataLakeFolderPath,omitempty"`
 
 	// DataLakeSubscriptionId: Subscription Id of Azure Data Lake Store
-	DataLakeSubscriptionId   *string `json:"dataLakeSubscriptionId,omitempty"`
+	DataLakeSubscriptionId *string `json:"dataLakeSubscriptionId,omitempty"`
+
+	// StorageAccountResourceId: Resource id of the storage account to be used to create the blobs
 	StorageAccountResourceId *string `json:"storageAccountResourceId,omitempty"`
 }

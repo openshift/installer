@@ -116,7 +116,12 @@ func (pool *ManagedClustersAgentPool) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (pool *ManagedClustersAgentPool) createValidations() []func(ctx context.Context, obj *v20240901.ManagedClustersAgentPool) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240901.ManagedClustersAgentPool) (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240901.ManagedClustersAgentPool) (admission.Warnings, error){
+		pool.validateResourceReferences,
+		pool.validateOwnerReference,
+		pool.validateSecretDestinations,
+		pool.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

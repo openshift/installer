@@ -34,12 +34,3 @@ type MongoUserDefinitionResource_STATUS struct {
 	// UserName: The user name for User Definition.
 	UserName *string `json:"userName,omitempty"`
 }
-
-// The set of roles permitted through this Role Definition.
-type Role_STATUS struct {
-	// Db: The database name the role is applied.
-	Db *string `json:"db,omitempty"`
-
-	// Role: The role name.
-	Role *string `json:"role,omitempty"`
-}

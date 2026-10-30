@@ -116,7 +116,12 @@ func (domain *CustomDomain) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (domain *CustomDomain) createValidations() []func(ctx context.Context, obj *v20240301.CustomDomain) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.CustomDomain) (admission.Warnings, error){domain.validateResourceReferences, domain.validateOwnerReference, domain.validateSecretDestinations, domain.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.CustomDomain) (admission.Warnings, error){
+		domain.validateResourceReferences,
+		domain.validateOwnerReference,
+		domain.validateSecretDestinations,
+		domain.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

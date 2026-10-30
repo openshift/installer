@@ -104,7 +104,12 @@ func (policy *ServersSecurityAlertPolicy) ValidateUpdate(ctx context.Context, ol
 
 // createValidations validates the creation of the resource
 func (policy *ServersSecurityAlertPolicy) createValidations() []func(ctx context.Context, obj *v20211101.ServersSecurityAlertPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersSecurityAlertPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersSecurityAlertPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

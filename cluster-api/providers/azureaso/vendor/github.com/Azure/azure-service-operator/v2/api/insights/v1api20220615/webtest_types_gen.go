@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,insights}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -343,7 +344,7 @@ func (webtest *Webtest_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties = &arm.WebTestProperties{}
 	}
 	if webtest.Configuration != nil {
-		configuration_ARM, err := (*webtest.Configuration).ConvertToARM(resolved)
+		configuration_ARM, err := webtest.Configuration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +381,7 @@ func (webtest *Webtest_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.Name = &name
 	}
 	if webtest.Request != nil {
-		request_ARM, err := (*webtest.Request).ConvertToARM(resolved)
+		request_ARM, err := webtest.Request.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -400,7 +401,7 @@ func (webtest *Webtest_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.Timeout = &timeout
 	}
 	if webtest.ValidationRules != nil {
-		validationRules_ARM, err := (*webtest.ValidationRules).ConvertToARM(resolved)
+		validationRules_ARM, err := webtest.ValidationRules.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -686,8 +687,6 @@ func (webtest *Webtest_Spec) AssignProperties_From_Webtest_Spec(source *storage.
 	if source.Locations != nil {
 		locationList := make([]WebTestGeolocation, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location WebTestGeolocation
 			err := location.AssignProperties_From_WebTestGeolocation(&locationItem)
 			if err != nil {
@@ -817,8 +816,6 @@ func (webtest *Webtest_Spec) AssignProperties_To_Webtest_Spec(destination *stora
 	if webtest.Locations != nil {
 		locationList := make([]storage.WebTestGeolocation, len(webtest.Locations))
 		for locationIndex, locationItem := range webtest.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location storage.WebTestGeolocation
 			err := locationItem.AssignProperties_To_WebTestGeolocation(&location)
 			if err != nil {
@@ -953,8 +950,6 @@ func (webtest *Webtest_Spec) Initialize_From_Webtest_STATUS(source *Webtest_STAT
 	if source.Locations != nil {
 		locationList := make([]WebTestGeolocation, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location WebTestGeolocation
 			err := location.Initialize_From_WebTestGeolocation_STATUS(&locationItem)
 			if err != nil {
@@ -1376,8 +1371,6 @@ func (webtest *Webtest_STATUS) AssignProperties_From_Webtest_STATUS(source *stor
 	if source.Locations != nil {
 		locationList := make([]WebTestGeolocation_STATUS, len(source.Locations))
 		for locationIndex, locationItem := range source.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location WebTestGeolocation_STATUS
 			err := location.AssignProperties_From_WebTestGeolocation_STATUS(&locationItem)
 			if err != nil {
@@ -1499,8 +1492,6 @@ func (webtest *Webtest_STATUS) AssignProperties_To_Webtest_STATUS(destination *s
 	if webtest.Locations != nil {
 		locationList := make([]storage.WebTestGeolocation_STATUS, len(webtest.Locations))
 		for locationIndex, locationItem := range webtest.Locations {
-			// Shadow the loop variable to avoid aliasing
-			locationItem := locationItem
 			var location storage.WebTestGeolocation_STATUS
 			err := locationItem.AssignProperties_To_WebTestGeolocation_STATUS(&location)
 			if err != nil {
@@ -1736,8 +1727,6 @@ func (operator *WebtestOperatorSpec) AssignProperties_From_WebtestOperatorSpec(s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1754,8 +1743,6 @@ func (operator *WebtestOperatorSpec) AssignProperties_From_WebtestOperatorSpec(s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1781,8 +1768,6 @@ func (operator *WebtestOperatorSpec) AssignProperties_To_WebtestOperatorSpec(des
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1799,8 +1784,6 @@ func (operator *WebtestOperatorSpec) AssignProperties_To_WebtestOperatorSpec(des
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2137,8 +2120,6 @@ func (request *WebTestProperties_Request) AssignProperties_From_WebTestPropertie
 	if source.Headers != nil {
 		headerList := make([]HeaderField, len(source.Headers))
 		for headerIndex, headerItem := range source.Headers {
-			// Shadow the loop variable to avoid aliasing
-			headerItem := headerItem
 			var header HeaderField
 			err := header.AssignProperties_From_HeaderField(&headerItem)
 			if err != nil {
@@ -2189,8 +2170,6 @@ func (request *WebTestProperties_Request) AssignProperties_To_WebTestProperties_
 	if request.Headers != nil {
 		headerList := make([]storage.HeaderField, len(request.Headers))
 		for headerIndex, headerItem := range request.Headers {
-			// Shadow the loop variable to avoid aliasing
-			headerItem := headerItem
 			var header storage.HeaderField
 			err := headerItem.AssignProperties_To_HeaderField(&header)
 			if err != nil {
@@ -2246,8 +2225,6 @@ func (request *WebTestProperties_Request) Initialize_From_WebTestProperties_Requ
 	if source.Headers != nil {
 		headerList := make([]HeaderField, len(source.Headers))
 		for headerIndex, headerItem := range source.Headers {
-			// Shadow the loop variable to avoid aliasing
-			headerItem := headerItem
 			var header HeaderField
 			err := header.Initialize_From_HeaderField_STATUS(&headerItem)
 			if err != nil {
@@ -2374,8 +2351,6 @@ func (request *WebTestProperties_Request_STATUS) AssignProperties_From_WebTestPr
 	if source.Headers != nil {
 		headerList := make([]HeaderField_STATUS, len(source.Headers))
 		for headerIndex, headerItem := range source.Headers {
-			// Shadow the loop variable to avoid aliasing
-			headerItem := headerItem
 			var header HeaderField_STATUS
 			err := header.AssignProperties_From_HeaderField_STATUS(&headerItem)
 			if err != nil {
@@ -2426,8 +2401,6 @@ func (request *WebTestProperties_Request_STATUS) AssignProperties_To_WebTestProp
 	if request.Headers != nil {
 		headerList := make([]storage.HeaderField_STATUS, len(request.Headers))
 		for headerIndex, headerItem := range request.Headers {
-			// Shadow the loop variable to avoid aliasing
-			headerItem := headerItem
 			var header storage.HeaderField_STATUS
 			err := headerItem.AssignProperties_To_HeaderField_STATUS(&header)
 			if err != nil {
@@ -2497,7 +2470,7 @@ func (rules *WebTestProperties_ValidationRules) ConvertToARM(resolved genruntime
 
 	// Set property "ContentValidation":
 	if rules.ContentValidation != nil {
-		contentValidation_ARM, err := (*rules.ContentValidation).ConvertToARM(resolved)
+		contentValidation_ARM, err := rules.ContentValidation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

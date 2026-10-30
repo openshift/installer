@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
@@ -32,56 +31,63 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/strfmt"
 )
 
+var (
+	// base64_length estimate for base64 regex size from github.com/asaskevich/govalidator
+	base64Length = 84
+	// url_length estimate for url regex size from github.com/asaskevich/govalidator
+	urlLength = 1103
+)
+
 // Format provides a CEL library exposing common named Kubernetes string
 // validations. Can be used in CRD ValidationRules messageExpression.
 //
-//  Example:
+// Example:
 //
-//    rule:              format.dns1123label.validate(object.metadata.name).hasValue()
-//    messageExpression: format.dns1123label.validate(object.metadata.name).value().join("\n")
+//	rule:              format.dns1123label.validate(object.metadata.name).hasValue()
+//	messageExpression: format.dns1123label.validate(object.metadata.name).value().join("\n")
 //
 // format.named(name: string) -> ?Format
 //
-//  Returns the Format with the given name, if it exists. Otherwise, optional.none
-//  Allowed names are:
-// 	 - `dns1123Label`
-// 	 - `dns1123Subdomain`
-// 	 - `dns1035Label`
-// 	 - `qualifiedName`
-// 	 - `dns1123LabelPrefix`
-// 	 - `dns1123SubdomainPrefix`
-// 	 - `dns1035LabelPrefix`
-// 	 - `labelValue`
-// 	 - `uri`
-// 	 - `uuid`
-// 	 - `byte`
-// 	 - `date`
-// 	 - `datetime`
+// Returns the Format with the given name, if it exists. Otherwise, optional.none
+// Allowed names are:
+//   - `dns1123Label`
+//   - `dns1123Subdomain`
+//   - `dns1035Label`
+//   - `qualifiedName`
+//   - `dns1123LabelPrefix`
+//   - `dns1123SubdomainPrefix`
+//   - `dns1035LabelPrefix`
+//   - `labelValue`
+//   - `uri`
+//   - `uuid`
+//   - `byte`
+//   - `date`
+//   - `datetime`
 //
 // format.<formatName>() -> Format
 //
-//  Convenience functions for all the named formats are also available
+// Convenience functions for all the named formats are also available.
 //
-//  Examples:
-//      format.dns1123Label().validate("my-label-name")
-//      format.dns1123Subdomain().validate("apiextensions.k8s.io")
-//      format.dns1035Label().validate("my-label-name")
-//      format.qualifiedName().validate("apiextensions.k8s.io/v1beta1")
-//      format.dns1123LabelPrefix().validate("my-label-prefix-")
-//      format.dns1123SubdomainPrefix().validate("mysubdomain.prefix.-")
-//      format.dns1035LabelPrefix().validate("my-label-prefix-")
-//      format.uri().validate("http://example.com")
-//          Uses same pattern as isURL, but returns an error
-//      format.uuid().validate("123e4567-e89b-12d3-a456-426614174000")
-//      format.byte().validate("aGVsbG8=")
-//      format.date().validate("2021-01-01")
-//      format.datetime().validate("2021-01-01T00:00:00Z")
+// Examples:
 //
-
+//	format.dns1123Label().validate("my-label-name")
+//	format.dns1123Subdomain().validate("apiextensions.k8s.io")
+//	format.dns1035Label().validate("my-label-name")
+//	format.qualifiedName().validate("apiextensions.k8s.io/v1beta1")
+//	format.dns1123LabelPrefix().validate("my-label-prefix-")
+//	format.dns1123SubdomainPrefix().validate("mysubdomain.prefix.-")
+//	format.dns1035LabelPrefix().validate("my-label-prefix-")
+//	format.uri().validate("http://example.com")
+//	    Uses same pattern as isURL, but returns an error
+//	format.uuid().validate("123e4567-e89b-12d3-a456-426614174000")
+//	format.byte().validate("aGVsbG8=")
+//	format.date().validate("2021-01-01")
+//	format.datetime().validate("2021-01-01T00:00:00Z")
+//
 // <Format>.validate(str: string) -> ?list<string>
 //
-//	Validates the given string against the given format. Returns optional.none
-//	if the string is valid, otherwise a list of validation error strings.
+// Validates the given string against the given format. Returns optional.none
+// if the string is valid, otherwise a list of validation error strings.
 func Format() cel.EnvOption {
 	return cel.Lib(formatLib)
 }
@@ -193,7 +199,7 @@ var ConstantFormats = map[string]apiservercel.Format{
 		},
 		// Use govalidator url regex to estimate, since ParseRequestURI
 		// doesnt use regex
-		MaxRegexSize: len(govalidator.URL),
+		MaxRegexSize: urlLength,
 	},
 	"uuid": {
 		Name: "uuid",
@@ -213,7 +219,7 @@ var ConstantFormats = map[string]apiservercel.Format{
 			}
 			return nil
 		},
-		MaxRegexSize: len(govalidator.Base64),
+		MaxRegexSize: base64Length,
 	},
 	"date": {
 		Name: "date",

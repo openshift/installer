@@ -730,3 +730,175 @@ SitesSourcecontrol: Resource
     ├── RepoUrl: *string
     └── Type: *string
 
+augmentConversionForApiDefinitionInfo: Interface
+
+augmentConversionForApiDefinitionInfo_STATUS: Interface
+
+augmentConversionForApiManagementConfig: Interface
+
+augmentConversionForApiManagementConfig_STATUS: Interface
+
+augmentConversionForAutoHealActions: Interface
+
+augmentConversionForAutoHealActions_STATUS: Interface
+
+augmentConversionForAutoHealCustomAction: Interface
+
+augmentConversionForAutoHealCustomAction_STATUS: Interface
+
+augmentConversionForAutoHealRules: Interface
+
+augmentConversionForAutoHealRules_STATUS: Interface
+
+augmentConversionForAutoHealTriggers: Interface
+
+augmentConversionForAutoHealTriggers_STATUS: Interface
+
+augmentConversionForAzureStorageInfoValue: Interface
+
+augmentConversionForAzureStorageInfoValue_STATUS: Interface
+
+augmentConversionForCapability: Interface
+
+augmentConversionForCapability_STATUS: Interface
+
+augmentConversionForCloningInfo: Interface
+
+augmentConversionForCloningInfo_STATUS: Interface
+
+augmentConversionForConnStringInfo: Interface
+
+augmentConversionForConnStringInfo_STATUS: Interface
+
+augmentConversionForCorsSettings: Interface
+
+augmentConversionForCorsSettings_STATUS: Interface
+
+augmentConversionForExperiments: Interface
+
+augmentConversionForExperiments_STATUS: Interface
+
+augmentConversionForExtendedLocation: Interface
+
+augmentConversionForExtendedLocation_STATUS: Interface
+
+augmentConversionForGitHubActionCodeConfiguration: Interface
+
+augmentConversionForGitHubActionCodeConfiguration_STATUS: Interface
+
+augmentConversionForGitHubActionConfiguration: Interface
+
+augmentConversionForGitHubActionConfiguration_STATUS: Interface
+
+augmentConversionForGitHubActionContainerConfiguration: Interface
+
+augmentConversionForGitHubActionContainerConfiguration_STATUS: Interface
+
+augmentConversionForHandlerMapping: Interface
+
+augmentConversionForHandlerMapping_STATUS: Interface
+
+augmentConversionForHostNameSslState: Interface
+
+augmentConversionForHostNameSslState_STATUS: Interface
+
+augmentConversionForHostingEnvironmentProfile: Interface
+
+augmentConversionForHostingEnvironmentProfile_STATUS: Interface
+
+augmentConversionForIpSecurityRestriction: Interface
+
+augmentConversionForIpSecurityRestriction_STATUS: Interface
+
+augmentConversionForKubeEnvironmentProfile: Interface
+
+augmentConversionForKubeEnvironmentProfile_STATUS: Interface
+
+augmentConversionForManagedServiceIdentity: Interface
+
+augmentConversionForManagedServiceIdentity_STATUS: Interface
+
+augmentConversionForNameValuePair: Interface
+
+augmentConversionForNameValuePair_STATUS: Interface
+
+augmentConversionForPushSettings: Interface
+
+augmentConversionForPushSettings_STATUS: Interface
+
+augmentConversionForRampUpRule: Interface
+
+augmentConversionForRampUpRule_STATUS: Interface
+
+augmentConversionForRequestsBasedTrigger: Interface
+
+augmentConversionForRequestsBasedTrigger_STATUS: Interface
+
+augmentConversionForServerFarm: Interface
+
+augmentConversionForServerFarmOperatorSpec: Interface
+
+augmentConversionForServerFarm_STATUS: Interface
+
+augmentConversionForServerFarm_Spec: Interface
+
+augmentConversionForSite: Interface
+
+augmentConversionForSiteConfig: Interface
+
+augmentConversionForSiteConfig_STATUS: Interface
+
+augmentConversionForSiteLimits: Interface
+
+augmentConversionForSiteLimits_STATUS: Interface
+
+augmentConversionForSiteMachineKey_STATUS: Interface
+
+augmentConversionForSiteOperatorSpec: Interface
+
+augmentConversionForSite_STATUS: Interface
+
+augmentConversionForSite_Spec: Interface
+
+augmentConversionForSitesSourcecontrol: Interface
+
+augmentConversionForSitesSourcecontrolOperatorSpec: Interface
+
+augmentConversionForSitesSourcecontrol_STATUS: Interface
+
+augmentConversionForSitesSourcecontrol_Spec: Interface
+
+augmentConversionForSkuCapacity: Interface
+
+augmentConversionForSkuCapacity_STATUS: Interface
+
+augmentConversionForSkuDescription: Interface
+
+augmentConversionForSkuDescription_STATUS: Interface
+
+augmentConversionForSlotSwapStatus_STATUS: Interface
+
+augmentConversionForSlowRequestsBasedTrigger: Interface
+
+augmentConversionForSlowRequestsBasedTrigger_STATUS: Interface
+
+augmentConversionForStatusCodesBasedTrigger: Interface
+
+augmentConversionForStatusCodesBasedTrigger_STATUS: Interface
+
+augmentConversionForStatusCodesRangeBasedTrigger: Interface
+
+augmentConversionForStatusCodesRangeBasedTrigger_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentity_STATUS: Interface
+
+augmentConversionForVirtualApplication: Interface
+
+augmentConversionForVirtualApplication_STATUS: Interface
+
+augmentConversionForVirtualDirectory: Interface
+
+augmentConversionForVirtualDirectory_STATUS: Interface
+

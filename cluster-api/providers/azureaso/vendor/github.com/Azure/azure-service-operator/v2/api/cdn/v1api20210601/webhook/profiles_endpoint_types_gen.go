@@ -116,7 +116,12 @@ func (endpoint *ProfilesEndpoint) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (endpoint *ProfilesEndpoint) createValidations() []func(ctx context.Context, obj *v20210601.ProfilesEndpoint) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210601.ProfilesEndpoint) (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210601.ProfilesEndpoint) (admission.Warnings, error){
+		endpoint.validateResourceReferences,
+		endpoint.validateOwnerReference,
+		endpoint.validateSecretDestinations,
+		endpoint.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

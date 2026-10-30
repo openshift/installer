@@ -4,8 +4,7 @@
 package storage
 
 import (
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v20201201/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -19,6 +18,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -51,22 +51,36 @@ var _ conversion.Convertible = &VirtualMachinesExtension{}
 
 // ConvertFrom populates our VirtualMachinesExtension from the provided hub VirtualMachinesExtension
 func (extension *VirtualMachinesExtension) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.VirtualMachinesExtension)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachinesExtension but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.VirtualMachinesExtension
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return extension.AssignProperties_From_VirtualMachinesExtension(source)
+	err = extension.AssignProperties_From_VirtualMachinesExtension(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to extension")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualMachinesExtension from our VirtualMachinesExtension
 func (extension *VirtualMachinesExtension) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.VirtualMachinesExtension)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachinesExtension but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.VirtualMachinesExtension
+	err := extension.AssignProperties_To_VirtualMachinesExtension(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from extension")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return extension.AssignProperties_To_VirtualMachinesExtension(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualMachinesExtension{}
@@ -410,13 +424,6 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_From_VirtualMac
 		extension.ProtectedSettings = nil
 	}
 
-	// ProtectedSettingsFromKeyVault
-	if source.ProtectedSettingsFromKeyVault != nil {
-		propertyBag.Add("ProtectedSettingsFromKeyVault", *source.ProtectedSettingsFromKeyVault)
-	} else {
-		propertyBag.Remove("ProtectedSettingsFromKeyVault")
-	}
-
 	// Publisher
 	extension.Publisher = genruntime.ClonePointerToString(source.Publisher)
 
@@ -424,20 +431,11 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_From_VirtualMac
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
 	} else {
 		extension.Settings = nil
-	}
-
-	// SuppressFailures
-	if source.SuppressFailures != nil {
-		propertyBag.Add("SuppressFailures", *source.SuppressFailures)
-	} else {
-		propertyBag.Remove("SuppressFailures")
 	}
 
 	// Tags
@@ -542,19 +540,6 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_To_VirtualMachi
 		destination.ProtectedSettings = nil
 	}
 
-	// ProtectedSettingsFromKeyVault
-	if propertyBag.Contains("ProtectedSettingsFromKeyVault") {
-		var protectedSettingsFromKeyVault storage.KeyVaultSecretReference
-		err := propertyBag.Pull("ProtectedSettingsFromKeyVault", &protectedSettingsFromKeyVault)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'ProtectedSettingsFromKeyVault' from propertyBag")
-		}
-
-		destination.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
-	} else {
-		destination.ProtectedSettingsFromKeyVault = nil
-	}
-
 	// Publisher
 	destination.Publisher = genruntime.ClonePointerToString(extension.Publisher)
 
@@ -562,26 +547,11 @@ func (extension *VirtualMachinesExtension_Spec) AssignProperties_To_VirtualMachi
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
 	} else {
 		destination.Settings = nil
-	}
-
-	// SuppressFailures
-	if propertyBag.Contains("SuppressFailures") {
-		var suppressFailure bool
-		err := propertyBag.Pull("SuppressFailures", &suppressFailure)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'SuppressFailures' from propertyBag")
-		}
-
-		destination.SuppressFailures = &suppressFailure
-	} else {
-		destination.SuppressFailures = nil
 	}
 
 	// Tags
@@ -734,13 +704,6 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_From_VirtualM
 	// PropertiesType
 	extension.PropertiesType = genruntime.ClonePointerToString(source.PropertiesType)
 
-	// ProtectedSettingsFromKeyVault
-	if source.ProtectedSettingsFromKeyVault != nil {
-		propertyBag.Add("ProtectedSettingsFromKeyVault", *source.ProtectedSettingsFromKeyVault)
-	} else {
-		propertyBag.Remove("ProtectedSettingsFromKeyVault")
-	}
-
 	// ProvisioningState
 	extension.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
 
@@ -751,20 +714,11 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_From_VirtualM
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
 	} else {
 		extension.Settings = nil
-	}
-
-	// SuppressFailures
-	if source.SuppressFailures != nil {
-		propertyBag.Add("SuppressFailures", *source.SuppressFailures)
-	} else {
-		propertyBag.Remove("SuppressFailures")
 	}
 
 	// Tags
@@ -847,19 +801,6 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_To_VirtualMac
 	// PropertiesType
 	destination.PropertiesType = genruntime.ClonePointerToString(extension.PropertiesType)
 
-	// ProtectedSettingsFromKeyVault
-	if propertyBag.Contains("ProtectedSettingsFromKeyVault") {
-		var protectedSettingsFromKeyVault storage.KeyVaultSecretReference_STATUS
-		err := propertyBag.Pull("ProtectedSettingsFromKeyVault", &protectedSettingsFromKeyVault)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'ProtectedSettingsFromKeyVault' from propertyBag")
-		}
-
-		destination.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
-	} else {
-		destination.ProtectedSettingsFromKeyVault = nil
-	}
-
 	// ProvisioningState
 	destination.ProvisioningState = genruntime.ClonePointerToString(extension.ProvisioningState)
 
@@ -870,26 +811,11 @@ func (extension *VirtualMachinesExtension_STATUS) AssignProperties_To_VirtualMac
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
 	} else {
 		destination.Settings = nil
-	}
-
-	// SuppressFailures
-	if propertyBag.Contains("SuppressFailures") {
-		var suppressFailure bool
-		err := propertyBag.Pull("SuppressFailures", &suppressFailure)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'SuppressFailures' from propertyBag")
-		}
-
-		destination.SuppressFailures = &suppressFailure
-	} else {
-		destination.SuppressFailures = nil
 	}
 
 	// Tags
@@ -954,8 +880,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMa
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus
 			err := status.AssignProperties_From_InstanceViewStatus(&statusItem)
 			if err != nil {
@@ -972,8 +896,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMa
 	if source.Substatuses != nil {
 		substatusList := make([]InstanceViewStatus, len(source.Substatuses))
 		for substatusIndex, substatusItem := range source.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus InstanceViewStatus
 			err := substatus.AssignProperties_From_InstanceViewStatus(&substatusItem)
 			if err != nil {
@@ -1024,8 +946,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus
 			err := statusItem.AssignProperties_To_InstanceViewStatus(&status)
 			if err != nil {
@@ -1042,8 +962,6 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 	if view.Substatuses != nil {
 		substatusList := make([]storage.InstanceViewStatus, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus storage.InstanceViewStatus
 			err := substatusItem.AssignProperties_To_InstanceViewStatus(&substatus)
 			if err != nil {
@@ -1105,8 +1023,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_Vi
 	if source.Statuses != nil {
 		statusList := make([]InstanceViewStatus_STATUS, len(source.Statuses))
 		for statusIndex, statusItem := range source.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status InstanceViewStatus_STATUS
 			err := status.AssignProperties_From_InstanceViewStatus_STATUS(&statusItem)
 			if err != nil {
@@ -1123,8 +1039,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_Vi
 	if source.Substatuses != nil {
 		substatusList := make([]InstanceViewStatus_STATUS, len(source.Substatuses))
 		for substatusIndex, substatusItem := range source.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus InstanceViewStatus_STATUS
 			err := substatus.AssignProperties_From_InstanceViewStatus_STATUS(&substatusItem)
 			if err != nil {
@@ -1175,8 +1089,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 	if view.Statuses != nil {
 		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
-			// Shadow the loop variable to avoid aliasing
-			statusItem := statusItem
 			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
@@ -1193,8 +1105,6 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 	if view.Substatuses != nil {
 		substatusList := make([]storage.InstanceViewStatus_STATUS, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
-			// Shadow the loop variable to avoid aliasing
-			substatusItem := substatusItem
 			var substatus storage.InstanceViewStatus_STATUS
 			err := substatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&substatus)
 			if err != nil {
@@ -1250,8 +1160,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_From_Virt
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1268,8 +1176,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_From_Virt
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1311,8 +1217,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_To_Virtua
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1329,8 +1233,6 @@ func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_To_Virtua
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

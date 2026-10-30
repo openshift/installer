@@ -23,13 +23,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,managedidentity}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
+// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}
 type UserAssignedIdentity struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -268,7 +269,7 @@ func (identity *UserAssignedIdentity) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
+// - Generated from: /msi/resource-manager/Microsoft.ManagedIdentity/ManagedIdentity/stable/2023-01-31/ManagedIdentity.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}
 type UserAssignedIdentityList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -821,8 +822,6 @@ func (operator *UserAssignedIdentityOperatorSpec) AssignProperties_From_UserAssi
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -851,8 +850,6 @@ func (operator *UserAssignedIdentityOperatorSpec) AssignProperties_From_UserAssi
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -890,8 +887,6 @@ func (operator *UserAssignedIdentityOperatorSpec) AssignProperties_To_UserAssign
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -920,8 +915,6 @@ func (operator *UserAssignedIdentityOperatorSpec) AssignProperties_To_UserAssign
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -973,7 +966,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_From_UserAs
 
 	// ClientId
 	if source.ClientId != nil {
-		clientId := source.ClientId.Copy()
+		clientId := *source.ClientId.DeepCopy()
 		maps.ClientId = &clientId
 	} else {
 		maps.ClientId = nil
@@ -981,7 +974,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_From_UserAs
 
 	// PrincipalId
 	if source.PrincipalId != nil {
-		principalId := source.PrincipalId.Copy()
+		principalId := *source.PrincipalId.DeepCopy()
 		maps.PrincipalId = &principalId
 	} else {
 		maps.PrincipalId = nil
@@ -989,7 +982,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_From_UserAs
 
 	// TenantId
 	if source.TenantId != nil {
-		tenantId := source.TenantId.Copy()
+		tenantId := *source.TenantId.DeepCopy()
 		maps.TenantId = &tenantId
 	} else {
 		maps.TenantId = nil
@@ -1006,7 +999,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_To_UserAssi
 
 	// ClientId
 	if maps.ClientId != nil {
-		clientId := maps.ClientId.Copy()
+		clientId := *maps.ClientId.DeepCopy()
 		destination.ClientId = &clientId
 	} else {
 		destination.ClientId = nil
@@ -1014,7 +1007,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_To_UserAssi
 
 	// PrincipalId
 	if maps.PrincipalId != nil {
-		principalId := maps.PrincipalId.Copy()
+		principalId := *maps.PrincipalId.DeepCopy()
 		destination.PrincipalId = &principalId
 	} else {
 		destination.PrincipalId = nil
@@ -1022,7 +1015,7 @@ func (maps *UserAssignedIdentityOperatorConfigMaps) AssignProperties_To_UserAssi
 
 	// TenantId
 	if maps.TenantId != nil {
-		tenantId := maps.TenantId.Copy()
+		tenantId := *maps.TenantId.DeepCopy()
 		destination.TenantId = &tenantId
 	} else {
 		destination.TenantId = nil
@@ -1047,6 +1040,10 @@ type UserAssignedIdentityOperatorSecrets struct {
 	// Azure.
 	PrincipalId *genruntime.SecretDestination `json:"principalId,omitempty"`
 
+	// SubscriptionId: indicates where the SubscriptionId secret should be placed. If omitted, the secret will not be retrieved
+	// from Azure.
+	SubscriptionId *genruntime.SecretDestination `json:"subscriptionId,omitempty"`
+
 	// TenantId: indicates where the TenantId secret should be placed. If omitted, the secret will not be retrieved from Azure.
 	TenantId *genruntime.SecretDestination `json:"tenantId,omitempty"`
 }
@@ -1056,7 +1053,7 @@ func (secrets *UserAssignedIdentityOperatorSecrets) AssignProperties_From_UserAs
 
 	// ClientId
 	if source.ClientId != nil {
-		clientId := source.ClientId.Copy()
+		clientId := *source.ClientId.DeepCopy()
 		secrets.ClientId = &clientId
 	} else {
 		secrets.ClientId = nil
@@ -1064,15 +1061,23 @@ func (secrets *UserAssignedIdentityOperatorSecrets) AssignProperties_From_UserAs
 
 	// PrincipalId
 	if source.PrincipalId != nil {
-		principalId := source.PrincipalId.Copy()
+		principalId := *source.PrincipalId.DeepCopy()
 		secrets.PrincipalId = &principalId
 	} else {
 		secrets.PrincipalId = nil
 	}
 
+	// SubscriptionId
+	if source.SubscriptionId != nil {
+		subscriptionId := *source.SubscriptionId.DeepCopy()
+		secrets.SubscriptionId = &subscriptionId
+	} else {
+		secrets.SubscriptionId = nil
+	}
+
 	// TenantId
 	if source.TenantId != nil {
-		tenantId := source.TenantId.Copy()
+		tenantId := *source.TenantId.DeepCopy()
 		secrets.TenantId = &tenantId
 	} else {
 		secrets.TenantId = nil
@@ -1089,7 +1094,7 @@ func (secrets *UserAssignedIdentityOperatorSecrets) AssignProperties_To_UserAssi
 
 	// ClientId
 	if secrets.ClientId != nil {
-		clientId := secrets.ClientId.Copy()
+		clientId := *secrets.ClientId.DeepCopy()
 		destination.ClientId = &clientId
 	} else {
 		destination.ClientId = nil
@@ -1097,15 +1102,23 @@ func (secrets *UserAssignedIdentityOperatorSecrets) AssignProperties_To_UserAssi
 
 	// PrincipalId
 	if secrets.PrincipalId != nil {
-		principalId := secrets.PrincipalId.Copy()
+		principalId := *secrets.PrincipalId.DeepCopy()
 		destination.PrincipalId = &principalId
 	} else {
 		destination.PrincipalId = nil
 	}
 
+	// SubscriptionId
+	if secrets.SubscriptionId != nil {
+		subscriptionId := *secrets.SubscriptionId.DeepCopy()
+		destination.SubscriptionId = &subscriptionId
+	} else {
+		destination.SubscriptionId = nil
+	}
+
 	// TenantId
 	if secrets.TenantId != nil {
-		tenantId := secrets.TenantId.Copy()
+		tenantId := *secrets.TenantId.DeepCopy()
 		destination.TenantId = &tenantId
 	} else {
 		destination.TenantId = nil

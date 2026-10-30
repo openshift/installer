@@ -116,7 +116,12 @@ func (job *Job) ValidateUpdate(ctx context.Context, oldResource runtime.Object, 
 
 // createValidations validates the creation of the resource
 func (job *Job) createValidations() []func(ctx context.Context, obj *v20240301.Job) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.Job) (admission.Warnings, error){job.validateResourceReferences, job.validateOwnerReference, job.validateSecretDestinations, job.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.Job) (admission.Warnings, error){
+		job.validateResourceReferences,
+		job.validateOwnerReference,
+		job.validateSecretDestinations,
+		job.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

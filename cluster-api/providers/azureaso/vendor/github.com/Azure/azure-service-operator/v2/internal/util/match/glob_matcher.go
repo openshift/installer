@@ -69,7 +69,8 @@ func (gm *globMatcher) WasMatched() error {
 	return eris.Errorf(
 		"no match for %q (available candidates were %s)",
 		gm.glob,
-		strings.Join(choices, ", "))
+		strings.Join(choices, ", "),
+	)
 }
 
 // IsRestrictive returns false if we are blank or a universal wildcard, true otherwise.

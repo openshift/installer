@@ -116,7 +116,12 @@ func (workspace *Workspace) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (workspace *Workspace) createValidations() []func(ctx context.Context, obj *v20210701.Workspace) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210701.Workspace) (admission.Warnings, error){workspace.validateResourceReferences, workspace.validateOwnerReference, workspace.validateSecretDestinations, workspace.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210701.Workspace) (admission.Warnings, error){
+		workspace.validateResourceReferences,
+		workspace.validateOwnerReference,
+		workspace.validateSecretDestinations,
+		workspace.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

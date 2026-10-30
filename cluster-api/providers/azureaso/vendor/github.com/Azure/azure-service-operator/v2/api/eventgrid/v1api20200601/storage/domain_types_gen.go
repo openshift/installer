@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventgrid/v20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=eventgrid.azure.com,resources=domains,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=eventgrid.azure.com,resources={domains/status,domains/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20200601.Domain
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}
 type Domain struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (domain *Domain) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (domain *Domain) SetConditions(conditions conditions.Conditions) {
 	domain.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &Domain{}
+
+// ConvertFrom populates our Domain from the provided hub Domain
+func (domain *Domain) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.Domain)
+	if !ok {
+		return fmt.Errorf("expected eventgrid/v20200601/storage/Domain but received %T instead", hub)
+	}
+
+	return domain.AssignProperties_From_Domain(source)
+}
+
+// ConvertTo populates the provided hub Domain from our Domain
+func (domain *Domain) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.Domain)
+	if !ok {
+		return fmt.Errorf("expected eventgrid/v20200601/storage/Domain but received %T instead", hub)
+	}
+
+	return domain.AssignProperties_To_Domain(destination)
 }
 
 var _ configmaps.Exporter = &Domain{}
@@ -142,8 +164,75 @@ func (domain *Domain) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this Domain is the hub type for conversion
-func (domain *Domain) Hub() {}
+// AssignProperties_From_Domain populates our Domain from the provided source Domain
+func (domain *Domain) AssignProperties_From_Domain(source *storage.Domain) error {
+
+	// ObjectMeta
+	domain.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec Domain_Spec
+	err := spec.AssignProperties_From_Domain_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Domain_Spec() to populate field Spec")
+	}
+	domain.Spec = spec
+
+	// Status
+	var status Domain_STATUS
+	err = status.AssignProperties_From_Domain_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Domain_STATUS() to populate field Status")
+	}
+	domain.Status = status
+
+	// Invoke the augmentConversionForDomain interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain); ok {
+		err := augmentedDomain.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Domain populates the provided destination Domain from our Domain
+func (domain *Domain) AssignProperties_To_Domain(destination *storage.Domain) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *domain.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.Domain_Spec
+	err := domain.Spec.AssignProperties_To_Domain_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Domain_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.Domain_STATUS
+	err = domain.Status.AssignProperties_To_Domain_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Domain_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDomain interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain); ok {
+		err := augmentedDomain.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (domain *Domain) OriginalGVK() *schema.GroupVersionKind {
@@ -157,7 +246,7 @@ func (domain *Domain) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20200601.Domain
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}
 type DomainList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -170,6 +259,11 @@ type DomainList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2020-06-01")
+
+type augmentConversionForDomain interface {
+	AssignPropertiesFrom(src *storage.Domain) error
+	AssignPropertiesTo(dst *storage.Domain) error
+}
 
 // Storage version of v1api20200601.Domain_Spec
 type Domain_Spec struct {
@@ -197,20 +291,232 @@ var _ genruntime.ConvertibleSpec = &Domain_Spec{}
 
 // ConvertSpecFrom populates our Domain_Spec from the provided source
 func (domain *Domain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == domain {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.Domain_Spec)
+	if ok {
+		// Populate our instance from source
+		return domain.AssignProperties_From_Domain_Spec(src)
 	}
 
-	return source.ConvertSpecTo(domain)
+	// Convert to an intermediate form
+	src = &storage.Domain_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = domain.AssignProperties_From_Domain_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our Domain_Spec
 func (domain *Domain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == domain {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.Domain_Spec)
+	if ok {
+		// Populate destination from our instance
+		return domain.AssignProperties_To_Domain_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(domain)
+	// Convert to an intermediate form
+	dst = &storage.Domain_Spec{}
+	err := domain.AssignProperties_To_Domain_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Domain_Spec populates our Domain_Spec from the provided source Domain_Spec
+func (domain *Domain_Spec) AssignProperties_From_Domain_Spec(source *storage.Domain_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	domain.AzureName = source.AzureName
+
+	// InboundIpRules
+	if source.InboundIpRules != nil {
+		inboundIpRuleList := make([]InboundIpRule, len(source.InboundIpRules))
+		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
+			var inboundIpRule InboundIpRule
+			err := inboundIpRule.AssignProperties_From_InboundIpRule(&inboundIpRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_InboundIpRule() to populate field InboundIpRules")
+			}
+			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
+		}
+		domain.InboundIpRules = inboundIpRuleList
+	} else {
+		domain.InboundIpRules = nil
+	}
+
+	// InputSchema
+	domain.InputSchema = genruntime.ClonePointerToString(source.InputSchema)
+
+	// InputSchemaMapping
+	if source.InputSchemaMapping != nil {
+		var inputSchemaMapping InputSchemaMapping
+		err := inputSchemaMapping.AssignProperties_From_InputSchemaMapping(source.InputSchemaMapping)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_InputSchemaMapping() to populate field InputSchemaMapping")
+		}
+		domain.InputSchemaMapping = &inputSchemaMapping
+	} else {
+		domain.InputSchemaMapping = nil
+	}
+
+	// Location
+	domain.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DomainOperatorSpec
+		err := operatorSpec.AssignProperties_From_DomainOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DomainOperatorSpec() to populate field OperatorSpec")
+		}
+		domain.OperatorSpec = &operatorSpec
+	} else {
+		domain.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	domain.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		domain.Owner = &owner
+	} else {
+		domain.Owner = nil
+	}
+
+	// PublicNetworkAccess
+	domain.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// Tags
+	domain.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		domain.PropertyBag = propertyBag
+	} else {
+		domain.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomain_Spec interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain_Spec); ok {
+		err := augmentedDomain.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Domain_Spec populates the provided destination Domain_Spec from our Domain_Spec
+func (domain *Domain_Spec) AssignProperties_To_Domain_Spec(destination *storage.Domain_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(domain.PropertyBag)
+
+	// AzureName
+	destination.AzureName = domain.AzureName
+
+	// InboundIpRules
+	if domain.InboundIpRules != nil {
+		inboundIpRuleList := make([]storage.InboundIpRule, len(domain.InboundIpRules))
+		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
+			var inboundIpRule storage.InboundIpRule
+			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_InboundIpRule() to populate field InboundIpRules")
+			}
+			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
+		}
+		destination.InboundIpRules = inboundIpRuleList
+	} else {
+		destination.InboundIpRules = nil
+	}
+
+	// InputSchema
+	destination.InputSchema = genruntime.ClonePointerToString(domain.InputSchema)
+
+	// InputSchemaMapping
+	if domain.InputSchemaMapping != nil {
+		var inputSchemaMapping storage.InputSchemaMapping
+		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping(&inputSchemaMapping)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_InputSchemaMapping() to populate field InputSchemaMapping")
+		}
+		destination.InputSchemaMapping = &inputSchemaMapping
+	} else {
+		destination.InputSchemaMapping = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(domain.Location)
+
+	// OperatorSpec
+	if domain.OperatorSpec != nil {
+		var operatorSpec storage.DomainOperatorSpec
+		err := domain.OperatorSpec.AssignProperties_To_DomainOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DomainOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = domain.OriginalVersion
+
+	// Owner
+	if domain.Owner != nil {
+		owner := domain.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(domain.PublicNetworkAccess)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(domain.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomain_Spec interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain_Spec); ok {
+		err := augmentedDomain.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.Domain_STATUS
@@ -238,20 +544,288 @@ var _ genruntime.ConvertibleStatus = &Domain_STATUS{}
 
 // ConvertStatusFrom populates our Domain_STATUS from the provided source
 func (domain *Domain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == domain {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.Domain_STATUS)
+	if ok {
+		// Populate our instance from source
+		return domain.AssignProperties_From_Domain_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(domain)
+	// Convert to an intermediate form
+	src = &storage.Domain_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = domain.AssignProperties_From_Domain_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our Domain_STATUS
 func (domain *Domain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == domain {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.Domain_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return domain.AssignProperties_To_Domain_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(domain)
+	// Convert to an intermediate form
+	dst = &storage.Domain_STATUS{}
+	err := domain.AssignProperties_To_Domain_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Domain_STATUS populates our Domain_STATUS from the provided source Domain_STATUS
+func (domain *Domain_STATUS) AssignProperties_From_Domain_STATUS(source *storage.Domain_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	domain.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Endpoint
+	domain.Endpoint = genruntime.ClonePointerToString(source.Endpoint)
+
+	// Id
+	domain.Id = genruntime.ClonePointerToString(source.Id)
+
+	// InboundIpRules
+	if source.InboundIpRules != nil {
+		inboundIpRuleList := make([]InboundIpRule_STATUS, len(source.InboundIpRules))
+		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
+			var inboundIpRule InboundIpRule_STATUS
+			err := inboundIpRule.AssignProperties_From_InboundIpRule_STATUS(&inboundIpRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_InboundIpRule_STATUS() to populate field InboundIpRules")
+			}
+			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
+		}
+		domain.InboundIpRules = inboundIpRuleList
+	} else {
+		domain.InboundIpRules = nil
+	}
+
+	// InputSchema
+	domain.InputSchema = genruntime.ClonePointerToString(source.InputSchema)
+
+	// InputSchemaMapping
+	if source.InputSchemaMapping != nil {
+		var inputSchemaMapping InputSchemaMapping_STATUS
+		err := inputSchemaMapping.AssignProperties_From_InputSchemaMapping_STATUS(source.InputSchemaMapping)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
+		}
+		domain.InputSchemaMapping = &inputSchemaMapping
+	} else {
+		domain.InputSchemaMapping = nil
+	}
+
+	// Location
+	domain.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MetricResourceId
+	domain.MetricResourceId = genruntime.ClonePointerToString(source.MetricResourceId)
+
+	// Name
+	domain.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateEndpointConnections
+	if source.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(source.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
+			var privateEndpointConnection PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
+			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnectionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		domain.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		domain.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	domain.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// PublicNetworkAccess
+	domain.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		domain.SystemData = &systemDatum
+	} else {
+		domain.SystemData = nil
+	}
+
+	// Tags
+	domain.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	domain.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		domain.PropertyBag = propertyBag
+	} else {
+		domain.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomain_STATUS interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain_STATUS); ok {
+		err := augmentedDomain.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Domain_STATUS populates the provided destination Domain_STATUS from our Domain_STATUS
+func (domain *Domain_STATUS) AssignProperties_To_Domain_STATUS(destination *storage.Domain_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(domain.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(domain.Conditions)
+
+	// Endpoint
+	destination.Endpoint = genruntime.ClonePointerToString(domain.Endpoint)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(domain.Id)
+
+	// InboundIpRules
+	if domain.InboundIpRules != nil {
+		inboundIpRuleList := make([]storage.InboundIpRule_STATUS, len(domain.InboundIpRules))
+		for inboundIpRuleIndex, inboundIpRuleItem := range domain.InboundIpRules {
+			var inboundIpRule storage.InboundIpRule_STATUS
+			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_InboundIpRule_STATUS() to populate field InboundIpRules")
+			}
+			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
+		}
+		destination.InboundIpRules = inboundIpRuleList
+	} else {
+		destination.InboundIpRules = nil
+	}
+
+	// InputSchema
+	destination.InputSchema = genruntime.ClonePointerToString(domain.InputSchema)
+
+	// InputSchemaMapping
+	if domain.InputSchemaMapping != nil {
+		var inputSchemaMapping storage.InputSchemaMapping_STATUS
+		err := domain.InputSchemaMapping.AssignProperties_To_InputSchemaMapping_STATUS(&inputSchemaMapping)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
+		}
+		destination.InputSchemaMapping = &inputSchemaMapping
+	} else {
+		destination.InputSchemaMapping = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(domain.Location)
+
+	// MetricResourceId
+	destination.MetricResourceId = genruntime.ClonePointerToString(domain.MetricResourceId)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(domain.Name)
+
+	// PrivateEndpointConnections
+	if domain.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded, len(domain.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range domain.PrivateEndpointConnections {
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
+			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(&privateEndpointConnection)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		destination.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		destination.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(domain.ProvisioningState)
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(domain.PublicNetworkAccess)
+
+	// SystemData
+	if domain.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := domain.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(domain.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(domain.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomain_STATUS interface (if implemented) to customize the conversion
+	var domainAsAny any = domain
+	if augmentedDomain, ok := domainAsAny.(augmentConversionForDomain_STATUS); ok {
+		err := augmentedDomain.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDomain_Spec interface {
+	AssignPropertiesFrom(src *storage.Domain_Spec) error
+	AssignPropertiesTo(dst *storage.Domain_Spec) error
+}
+
+type augmentConversionForDomain_STATUS interface {
+	AssignPropertiesFrom(src *storage.Domain_STATUS) error
+	AssignPropertiesTo(dst *storage.Domain_STATUS) error
 }
 
 // Storage version of v1api20200601.DomainOperatorSpec
@@ -262,11 +836,187 @@ type DomainOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_DomainOperatorSpec populates our DomainOperatorSpec from the provided source DomainOperatorSpec
+func (operator *DomainOperatorSpec) AssignProperties_From_DomainOperatorSpec(source *storage.DomainOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomainOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDomainOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DomainOperatorSpec populates the provided destination DomainOperatorSpec from our DomainOperatorSpec
+func (operator *DomainOperatorSpec) AssignProperties_To_DomainOperatorSpec(destination *storage.DomainOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDomainOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDomainOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.InboundIpRule
 type InboundIpRule struct {
 	Action      *string                `json:"action,omitempty"`
 	IpMask      *string                `json:"ipMask,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_InboundIpRule populates our InboundIpRule from the provided source InboundIpRule
+func (rule *InboundIpRule) AssignProperties_From_InboundIpRule(source *storage.InboundIpRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Action
+	rule.Action = genruntime.ClonePointerToString(source.Action)
+
+	// IpMask
+	rule.IpMask = genruntime.ClonePointerToString(source.IpMask)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundIpRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForInboundIpRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InboundIpRule populates the provided destination InboundIpRule from our InboundIpRule
+func (rule *InboundIpRule) AssignProperties_To_InboundIpRule(destination *storage.InboundIpRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Action
+	destination.Action = genruntime.ClonePointerToString(rule.Action)
+
+	// IpMask
+	destination.IpMask = genruntime.ClonePointerToString(rule.IpMask)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundIpRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForInboundIpRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.InboundIpRule_STATUS
@@ -276,10 +1026,146 @@ type InboundIpRule_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_InboundIpRule_STATUS populates our InboundIpRule_STATUS from the provided source InboundIpRule_STATUS
+func (rule *InboundIpRule_STATUS) AssignProperties_From_InboundIpRule_STATUS(source *storage.InboundIpRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Action
+	rule.Action = genruntime.ClonePointerToString(source.Action)
+
+	// IpMask
+	rule.IpMask = genruntime.ClonePointerToString(source.IpMask)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundIpRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForInboundIpRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InboundIpRule_STATUS populates the provided destination InboundIpRule_STATUS from our InboundIpRule_STATUS
+func (rule *InboundIpRule_STATUS) AssignProperties_To_InboundIpRule_STATUS(destination *storage.InboundIpRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Action
+	destination.Action = genruntime.ClonePointerToString(rule.Action)
+
+	// IpMask
+	destination.IpMask = genruntime.ClonePointerToString(rule.IpMask)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInboundIpRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForInboundIpRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.InputSchemaMapping
 type InputSchemaMapping struct {
 	Json        *JsonInputSchemaMapping `json:"json,omitempty"`
 	PropertyBag genruntime.PropertyBag  `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_InputSchemaMapping populates our InputSchemaMapping from the provided source InputSchemaMapping
+func (mapping *InputSchemaMapping) AssignProperties_From_InputSchemaMapping(source *storage.InputSchemaMapping) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Json
+	if source.Json != nil {
+		var json JsonInputSchemaMapping
+		err := json.AssignProperties_From_JsonInputSchemaMapping(source.Json)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping() to populate field Json")
+		}
+		mapping.Json = &json
+	} else {
+		mapping.Json = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mapping.PropertyBag = propertyBag
+	} else {
+		mapping.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInputSchemaMapping interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForInputSchemaMapping); ok {
+		err := augmentedMapping.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InputSchemaMapping populates the provided destination InputSchemaMapping from our InputSchemaMapping
+func (mapping *InputSchemaMapping) AssignProperties_To_InputSchemaMapping(destination *storage.InputSchemaMapping) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mapping.PropertyBag)
+
+	// Json
+	if mapping.Json != nil {
+		var json storage.JsonInputSchemaMapping
+		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping(&json)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping() to populate field Json")
+		}
+		destination.Json = &json
+	} else {
+		destination.Json = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInputSchemaMapping interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForInputSchemaMapping); ok {
+		err := augmentedMapping.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.InputSchemaMapping_STATUS
@@ -288,10 +1174,140 @@ type InputSchemaMapping_STATUS struct {
 	PropertyBag genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_InputSchemaMapping_STATUS populates our InputSchemaMapping_STATUS from the provided source InputSchemaMapping_STATUS
+func (mapping *InputSchemaMapping_STATUS) AssignProperties_From_InputSchemaMapping_STATUS(source *storage.InputSchemaMapping_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Json
+	if source.Json != nil {
+		var json JsonInputSchemaMapping_STATUS
+		err := json.AssignProperties_From_JsonInputSchemaMapping_STATUS(source.Json)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonInputSchemaMapping_STATUS() to populate field Json")
+		}
+		mapping.Json = &json
+	} else {
+		mapping.Json = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mapping.PropertyBag = propertyBag
+	} else {
+		mapping.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInputSchemaMapping_STATUS interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForInputSchemaMapping_STATUS); ok {
+		err := augmentedMapping.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_InputSchemaMapping_STATUS populates the provided destination InputSchemaMapping_STATUS from our InputSchemaMapping_STATUS
+func (mapping *InputSchemaMapping_STATUS) AssignProperties_To_InputSchemaMapping_STATUS(destination *storage.InputSchemaMapping_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mapping.PropertyBag)
+
+	// Json
+	if mapping.Json != nil {
+		var json storage.JsonInputSchemaMapping_STATUS
+		err := mapping.Json.AssignProperties_To_JsonInputSchemaMapping_STATUS(&json)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonInputSchemaMapping_STATUS() to populate field Json")
+		}
+		destination.Json = &json
+	} else {
+		destination.Json = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForInputSchemaMapping_STATUS interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForInputSchemaMapping_STATUS); ok {
+		err := augmentedMapping.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
 type PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded populates our PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded from the provided source PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
+func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_From_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(source *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded populates the provided destination PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded from our PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded
+func (embedded *PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) AssignProperties_To_PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded(destination *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.SystemData_STATUS
@@ -306,6 +1322,127 @@ type SystemData_STATUS struct {
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDomainOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DomainOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DomainOperatorSpec) error
+}
+
+type augmentConversionForInboundIpRule interface {
+	AssignPropertiesFrom(src *storage.InboundIpRule) error
+	AssignPropertiesTo(dst *storage.InboundIpRule) error
+}
+
+type augmentConversionForInboundIpRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.InboundIpRule_STATUS) error
+	AssignPropertiesTo(dst *storage.InboundIpRule_STATUS) error
+}
+
+type augmentConversionForInputSchemaMapping interface {
+	AssignPropertiesFrom(src *storage.InputSchemaMapping) error
+	AssignPropertiesTo(dst *storage.InputSchemaMapping) error
+}
+
+type augmentConversionForInputSchemaMapping_STATUS interface {
+	AssignPropertiesFrom(src *storage.InputSchemaMapping_STATUS) error
+	AssignPropertiesTo(dst *storage.InputSchemaMapping_STATUS) error
+}
+
+type augmentConversionForPrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS_Domain_SubResourceEmbedded) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
+}
+
 // Storage version of v1api20200601.JsonInputSchemaMapping
 type JsonInputSchemaMapping struct {
 	DataVersion            *JsonFieldWithDefault  `json:"dataVersion,omitempty"`
@@ -316,6 +1453,206 @@ type JsonInputSchemaMapping struct {
 	PropertyBag            genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Subject                *JsonFieldWithDefault  `json:"subject,omitempty"`
 	Topic                  *JsonField             `json:"topic,omitempty"`
+}
+
+// AssignProperties_From_JsonInputSchemaMapping populates our JsonInputSchemaMapping from the provided source JsonInputSchemaMapping
+func (mapping *JsonInputSchemaMapping) AssignProperties_From_JsonInputSchemaMapping(source *storage.JsonInputSchemaMapping) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DataVersion
+	if source.DataVersion != nil {
+		var dataVersion JsonFieldWithDefault
+		err := dataVersion.AssignProperties_From_JsonFieldWithDefault(source.DataVersion)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field DataVersion")
+		}
+		mapping.DataVersion = &dataVersion
+	} else {
+		mapping.DataVersion = nil
+	}
+
+	// EventTime
+	if source.EventTime != nil {
+		var eventTime JsonField
+		err := eventTime.AssignProperties_From_JsonField(source.EventTime)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field EventTime")
+		}
+		mapping.EventTime = &eventTime
+	} else {
+		mapping.EventTime = nil
+	}
+
+	// EventType
+	if source.EventType != nil {
+		var eventType JsonFieldWithDefault
+		err := eventType.AssignProperties_From_JsonFieldWithDefault(source.EventType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field EventType")
+		}
+		mapping.EventType = &eventType
+	} else {
+		mapping.EventType = nil
+	}
+
+	// Id
+	if source.Id != nil {
+		var id JsonField
+		err := id.AssignProperties_From_JsonField(source.Id)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Id")
+		}
+		mapping.Id = &id
+	} else {
+		mapping.Id = nil
+	}
+
+	// InputSchemaMappingType
+	mapping.InputSchemaMappingType = genruntime.ClonePointerToString(source.InputSchemaMappingType)
+
+	// Subject
+	if source.Subject != nil {
+		var subject JsonFieldWithDefault
+		err := subject.AssignProperties_From_JsonFieldWithDefault(source.Subject)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault() to populate field Subject")
+		}
+		mapping.Subject = &subject
+	} else {
+		mapping.Subject = nil
+	}
+
+	// Topic
+	if source.Topic != nil {
+		var topic JsonField
+		err := topic.AssignProperties_From_JsonField(source.Topic)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField() to populate field Topic")
+		}
+		mapping.Topic = &topic
+	} else {
+		mapping.Topic = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mapping.PropertyBag = propertyBag
+	} else {
+		mapping.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonInputSchemaMapping interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForJsonInputSchemaMapping); ok {
+		err := augmentedMapping.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonInputSchemaMapping populates the provided destination JsonInputSchemaMapping from our JsonInputSchemaMapping
+func (mapping *JsonInputSchemaMapping) AssignProperties_To_JsonInputSchemaMapping(destination *storage.JsonInputSchemaMapping) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mapping.PropertyBag)
+
+	// DataVersion
+	if mapping.DataVersion != nil {
+		var dataVersion storage.JsonFieldWithDefault
+		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault(&dataVersion)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field DataVersion")
+		}
+		destination.DataVersion = &dataVersion
+	} else {
+		destination.DataVersion = nil
+	}
+
+	// EventTime
+	if mapping.EventTime != nil {
+		var eventTime storage.JsonField
+		err := mapping.EventTime.AssignProperties_To_JsonField(&eventTime)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field EventTime")
+		}
+		destination.EventTime = &eventTime
+	} else {
+		destination.EventTime = nil
+	}
+
+	// EventType
+	if mapping.EventType != nil {
+		var eventType storage.JsonFieldWithDefault
+		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault(&eventType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field EventType")
+		}
+		destination.EventType = &eventType
+	} else {
+		destination.EventType = nil
+	}
+
+	// Id
+	if mapping.Id != nil {
+		var id storage.JsonField
+		err := mapping.Id.AssignProperties_To_JsonField(&id)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Id")
+		}
+		destination.Id = &id
+	} else {
+		destination.Id = nil
+	}
+
+	// InputSchemaMappingType
+	destination.InputSchemaMappingType = genruntime.ClonePointerToString(mapping.InputSchemaMappingType)
+
+	// Subject
+	if mapping.Subject != nil {
+		var subject storage.JsonFieldWithDefault
+		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault(&subject)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault() to populate field Subject")
+		}
+		destination.Subject = &subject
+	} else {
+		destination.Subject = nil
+	}
+
+	// Topic
+	if mapping.Topic != nil {
+		var topic storage.JsonField
+		err := mapping.Topic.AssignProperties_To_JsonField(&topic)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField() to populate field Topic")
+		}
+		destination.Topic = &topic
+	} else {
+		destination.Topic = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonInputSchemaMapping interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForJsonInputSchemaMapping); ok {
+		err := augmentedMapping.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.JsonInputSchemaMapping_STATUS
@@ -330,6 +1667,216 @@ type JsonInputSchemaMapping_STATUS struct {
 	Topic                  *JsonField_STATUS            `json:"topic,omitempty"`
 }
 
+// AssignProperties_From_JsonInputSchemaMapping_STATUS populates our JsonInputSchemaMapping_STATUS from the provided source JsonInputSchemaMapping_STATUS
+func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_From_JsonInputSchemaMapping_STATUS(source *storage.JsonInputSchemaMapping_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DataVersion
+	if source.DataVersion != nil {
+		var dataVersion JsonFieldWithDefault_STATUS
+		err := dataVersion.AssignProperties_From_JsonFieldWithDefault_STATUS(source.DataVersion)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field DataVersion")
+		}
+		mapping.DataVersion = &dataVersion
+	} else {
+		mapping.DataVersion = nil
+	}
+
+	// EventTime
+	if source.EventTime != nil {
+		var eventTime JsonField_STATUS
+		err := eventTime.AssignProperties_From_JsonField_STATUS(source.EventTime)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field EventTime")
+		}
+		mapping.EventTime = &eventTime
+	} else {
+		mapping.EventTime = nil
+	}
+
+	// EventType
+	if source.EventType != nil {
+		var eventType JsonFieldWithDefault_STATUS
+		err := eventType.AssignProperties_From_JsonFieldWithDefault_STATUS(source.EventType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field EventType")
+		}
+		mapping.EventType = &eventType
+	} else {
+		mapping.EventType = nil
+	}
+
+	// Id
+	if source.Id != nil {
+		var id JsonField_STATUS
+		err := id.AssignProperties_From_JsonField_STATUS(source.Id)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Id")
+		}
+		mapping.Id = &id
+	} else {
+		mapping.Id = nil
+	}
+
+	// InputSchemaMappingType
+	mapping.InputSchemaMappingType = genruntime.ClonePointerToString(source.InputSchemaMappingType)
+
+	// Subject
+	if source.Subject != nil {
+		var subject JsonFieldWithDefault_STATUS
+		err := subject.AssignProperties_From_JsonFieldWithDefault_STATUS(source.Subject)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonFieldWithDefault_STATUS() to populate field Subject")
+		}
+		mapping.Subject = &subject
+	} else {
+		mapping.Subject = nil
+	}
+
+	// Topic
+	if source.Topic != nil {
+		var topic JsonField_STATUS
+		err := topic.AssignProperties_From_JsonField_STATUS(source.Topic)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_JsonField_STATUS() to populate field Topic")
+		}
+		mapping.Topic = &topic
+	} else {
+		mapping.Topic = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		mapping.PropertyBag = propertyBag
+	} else {
+		mapping.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonInputSchemaMapping_STATUS interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForJsonInputSchemaMapping_STATUS); ok {
+		err := augmentedMapping.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonInputSchemaMapping_STATUS populates the provided destination JsonInputSchemaMapping_STATUS from our JsonInputSchemaMapping_STATUS
+func (mapping *JsonInputSchemaMapping_STATUS) AssignProperties_To_JsonInputSchemaMapping_STATUS(destination *storage.JsonInputSchemaMapping_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(mapping.PropertyBag)
+
+	// DataVersion
+	if mapping.DataVersion != nil {
+		var dataVersion storage.JsonFieldWithDefault_STATUS
+		err := mapping.DataVersion.AssignProperties_To_JsonFieldWithDefault_STATUS(&dataVersion)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field DataVersion")
+		}
+		destination.DataVersion = &dataVersion
+	} else {
+		destination.DataVersion = nil
+	}
+
+	// EventTime
+	if mapping.EventTime != nil {
+		var eventTime storage.JsonField_STATUS
+		err := mapping.EventTime.AssignProperties_To_JsonField_STATUS(&eventTime)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field EventTime")
+		}
+		destination.EventTime = &eventTime
+	} else {
+		destination.EventTime = nil
+	}
+
+	// EventType
+	if mapping.EventType != nil {
+		var eventType storage.JsonFieldWithDefault_STATUS
+		err := mapping.EventType.AssignProperties_To_JsonFieldWithDefault_STATUS(&eventType)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field EventType")
+		}
+		destination.EventType = &eventType
+	} else {
+		destination.EventType = nil
+	}
+
+	// Id
+	if mapping.Id != nil {
+		var id storage.JsonField_STATUS
+		err := mapping.Id.AssignProperties_To_JsonField_STATUS(&id)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Id")
+		}
+		destination.Id = &id
+	} else {
+		destination.Id = nil
+	}
+
+	// InputSchemaMappingType
+	destination.InputSchemaMappingType = genruntime.ClonePointerToString(mapping.InputSchemaMappingType)
+
+	// Subject
+	if mapping.Subject != nil {
+		var subject storage.JsonFieldWithDefault_STATUS
+		err := mapping.Subject.AssignProperties_To_JsonFieldWithDefault_STATUS(&subject)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonFieldWithDefault_STATUS() to populate field Subject")
+		}
+		destination.Subject = &subject
+	} else {
+		destination.Subject = nil
+	}
+
+	// Topic
+	if mapping.Topic != nil {
+		var topic storage.JsonField_STATUS
+		err := mapping.Topic.AssignProperties_To_JsonField_STATUS(&topic)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_JsonField_STATUS() to populate field Topic")
+		}
+		destination.Topic = &topic
+	} else {
+		destination.Topic = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonInputSchemaMapping_STATUS interface (if implemented) to customize the conversion
+	var mappingAsAny any = mapping
+	if augmentedMapping, ok := mappingAsAny.(augmentConversionForJsonInputSchemaMapping_STATUS); ok {
+		err := augmentedMapping.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForJsonInputSchemaMapping interface {
+	AssignPropertiesFrom(src *storage.JsonInputSchemaMapping) error
+	AssignPropertiesTo(dst *storage.JsonInputSchemaMapping) error
+}
+
+type augmentConversionForJsonInputSchemaMapping_STATUS interface {
+	AssignPropertiesFrom(src *storage.JsonInputSchemaMapping_STATUS) error
+	AssignPropertiesTo(dst *storage.JsonInputSchemaMapping_STATUS) error
+}
+
 // Storage version of v1api20200601.JsonField
 // This is used to express the source of an input schema mapping for a single target field in the Event Grid Event schema.
 // This is currently used in the mappings for the 'id', 'topic' and 'eventtime' properties. This represents a field in the
@@ -339,6 +1886,62 @@ type JsonField struct {
 	SourceField *string                `json:"sourceField,omitempty"`
 }
 
+// AssignProperties_From_JsonField populates our JsonField from the provided source JsonField
+func (field *JsonField) AssignProperties_From_JsonField(source *storage.JsonField) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SourceField
+	field.SourceField = genruntime.ClonePointerToString(source.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		field.PropertyBag = propertyBag
+	} else {
+		field.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonField interface (if implemented) to customize the conversion
+	var fieldAsAny any = field
+	if augmentedField, ok := fieldAsAny.(augmentConversionForJsonField); ok {
+		err := augmentedField.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonField populates the provided destination JsonField from our JsonField
+func (field *JsonField) AssignProperties_To_JsonField(destination *storage.JsonField) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(field.PropertyBag)
+
+	// SourceField
+	destination.SourceField = genruntime.ClonePointerToString(field.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonField interface (if implemented) to customize the conversion
+	var fieldAsAny any = field
+	if augmentedField, ok := fieldAsAny.(augmentConversionForJsonField); ok {
+		err := augmentedField.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.JsonField_STATUS
 // This is used to express the source of an input schema mapping for a single target field in the Event Grid Event schema.
 // This is currently used in the mappings for the 'id', 'topic' and 'eventtime' properties. This represents a field in the
@@ -346,6 +1949,62 @@ type JsonField struct {
 type JsonField_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SourceField *string                `json:"sourceField,omitempty"`
+}
+
+// AssignProperties_From_JsonField_STATUS populates our JsonField_STATUS from the provided source JsonField_STATUS
+func (field *JsonField_STATUS) AssignProperties_From_JsonField_STATUS(source *storage.JsonField_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SourceField
+	field.SourceField = genruntime.ClonePointerToString(source.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		field.PropertyBag = propertyBag
+	} else {
+		field.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonField_STATUS interface (if implemented) to customize the conversion
+	var fieldAsAny any = field
+	if augmentedField, ok := fieldAsAny.(augmentConversionForJsonField_STATUS); ok {
+		err := augmentedField.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonField_STATUS populates the provided destination JsonField_STATUS from our JsonField_STATUS
+func (field *JsonField_STATUS) AssignProperties_To_JsonField_STATUS(destination *storage.JsonField_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(field.PropertyBag)
+
+	// SourceField
+	destination.SourceField = genruntime.ClonePointerToString(field.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonField_STATUS interface (if implemented) to customize the conversion
+	var fieldAsAny any = field
+	if augmentedField, ok := fieldAsAny.(augmentConversionForJsonField_STATUS); ok {
+		err := augmentedField.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20200601.JsonFieldWithDefault
@@ -362,6 +2021,68 @@ type JsonFieldWithDefault struct {
 	SourceField  *string                `json:"sourceField,omitempty"`
 }
 
+// AssignProperties_From_JsonFieldWithDefault populates our JsonFieldWithDefault from the provided source JsonFieldWithDefault
+func (withDefault *JsonFieldWithDefault) AssignProperties_From_JsonFieldWithDefault(source *storage.JsonFieldWithDefault) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DefaultValue
+	withDefault.DefaultValue = genruntime.ClonePointerToString(source.DefaultValue)
+
+	// SourceField
+	withDefault.SourceField = genruntime.ClonePointerToString(source.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		withDefault.PropertyBag = propertyBag
+	} else {
+		withDefault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonFieldWithDefault interface (if implemented) to customize the conversion
+	var withDefaultAsAny any = withDefault
+	if augmentedWithDefault, ok := withDefaultAsAny.(augmentConversionForJsonFieldWithDefault); ok {
+		err := augmentedWithDefault.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonFieldWithDefault populates the provided destination JsonFieldWithDefault from our JsonFieldWithDefault
+func (withDefault *JsonFieldWithDefault) AssignProperties_To_JsonFieldWithDefault(destination *storage.JsonFieldWithDefault) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(withDefault.PropertyBag)
+
+	// DefaultValue
+	destination.DefaultValue = genruntime.ClonePointerToString(withDefault.DefaultValue)
+
+	// SourceField
+	destination.SourceField = genruntime.ClonePointerToString(withDefault.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonFieldWithDefault interface (if implemented) to customize the conversion
+	var withDefaultAsAny any = withDefault
+	if augmentedWithDefault, ok := withDefaultAsAny.(augmentConversionForJsonFieldWithDefault); ok {
+		err := augmentedWithDefault.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20200601.JsonFieldWithDefault_STATUS
 // This is used to express the source of an input schema mapping for a single target field
 // in the Event Grid Event schema.
@@ -374,6 +2095,88 @@ type JsonFieldWithDefault_STATUS struct {
 	DefaultValue *string                `json:"defaultValue,omitempty"`
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SourceField  *string                `json:"sourceField,omitempty"`
+}
+
+// AssignProperties_From_JsonFieldWithDefault_STATUS populates our JsonFieldWithDefault_STATUS from the provided source JsonFieldWithDefault_STATUS
+func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_From_JsonFieldWithDefault_STATUS(source *storage.JsonFieldWithDefault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DefaultValue
+	withDefault.DefaultValue = genruntime.ClonePointerToString(source.DefaultValue)
+
+	// SourceField
+	withDefault.SourceField = genruntime.ClonePointerToString(source.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		withDefault.PropertyBag = propertyBag
+	} else {
+		withDefault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonFieldWithDefault_STATUS interface (if implemented) to customize the conversion
+	var withDefaultAsAny any = withDefault
+	if augmentedWithDefault, ok := withDefaultAsAny.(augmentConversionForJsonFieldWithDefault_STATUS); ok {
+		err := augmentedWithDefault.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_JsonFieldWithDefault_STATUS populates the provided destination JsonFieldWithDefault_STATUS from our JsonFieldWithDefault_STATUS
+func (withDefault *JsonFieldWithDefault_STATUS) AssignProperties_To_JsonFieldWithDefault_STATUS(destination *storage.JsonFieldWithDefault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(withDefault.PropertyBag)
+
+	// DefaultValue
+	destination.DefaultValue = genruntime.ClonePointerToString(withDefault.DefaultValue)
+
+	// SourceField
+	destination.SourceField = genruntime.ClonePointerToString(withDefault.SourceField)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForJsonFieldWithDefault_STATUS interface (if implemented) to customize the conversion
+	var withDefaultAsAny any = withDefault
+	if augmentedWithDefault, ok := withDefaultAsAny.(augmentConversionForJsonFieldWithDefault_STATUS); ok {
+		err := augmentedWithDefault.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForJsonField interface {
+	AssignPropertiesFrom(src *storage.JsonField) error
+	AssignPropertiesTo(dst *storage.JsonField) error
+}
+
+type augmentConversionForJsonField_STATUS interface {
+	AssignPropertiesFrom(src *storage.JsonField_STATUS) error
+	AssignPropertiesTo(dst *storage.JsonField_STATUS) error
+}
+
+type augmentConversionForJsonFieldWithDefault interface {
+	AssignPropertiesFrom(src *storage.JsonFieldWithDefault) error
+	AssignPropertiesTo(dst *storage.JsonFieldWithDefault) error
+}
+
+type augmentConversionForJsonFieldWithDefault_STATUS interface {
+	AssignPropertiesFrom(src *storage.JsonFieldWithDefault_STATUS) error
+	AssignPropertiesTo(dst *storage.JsonFieldWithDefault_STATUS) error
 }
 
 func init() {

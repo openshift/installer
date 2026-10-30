@@ -105,7 +105,7 @@ func (in *ApplicationSecurityGroupOperatorSpec) DeepCopyInto(out *ApplicationSec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -116,7 +116,7 @@ func (in *ApplicationSecurityGroupOperatorSpec) DeepCopyInto(out *ApplicationSec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1345,7 +1345,7 @@ func (in *WebApplicationFirewallPolicyOperatorSpec) DeepCopyInto(out *WebApplica
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1356,7 +1356,7 @@ func (in *WebApplicationFirewallPolicyOperatorSpec) DeepCopyInto(out *WebApplica
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

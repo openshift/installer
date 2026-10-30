@@ -116,7 +116,12 @@ func (rule *NamespacesEventhubsAuthorizationRule) ValidateUpdate(ctx context.Con
 
 // createValidations validates the creation of the resource
 func (rule *NamespacesEventhubsAuthorizationRule) createValidations() []func(ctx context.Context, obj *v20240101.NamespacesEventhubsAuthorizationRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240101.NamespacesEventhubsAuthorizationRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240101.NamespacesEventhubsAuthorizationRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

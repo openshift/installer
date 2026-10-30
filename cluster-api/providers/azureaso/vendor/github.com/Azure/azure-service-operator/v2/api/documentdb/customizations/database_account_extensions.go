@@ -213,7 +213,6 @@ var _ extensions.PreReconciliationChecker = &DatabaseAccountExtension{}
 func (ext *DatabaseAccountExtension) PreReconcileCheck(
 	ctx context.Context,
 	obj genruntime.MetaObject,
-	owner genruntime.MetaObject,
 	resourceResolver *resolver.Resolver,
 	armClient *genericarmclient.GenericClient,
 	log logr.Logger,
@@ -236,5 +235,5 @@ func (ext *DatabaseAccountExtension) PreReconcileCheck(
 		return extensions.BlockReconcile("reconcile blocked while account is at status deleting"), nil
 	}
 
-	return next(ctx, obj, owner, resourceResolver, armClient, log)
+	return next(ctx, obj, resourceResolver, armClient, log)
 }

@@ -104,7 +104,12 @@ func (service *StorageAccountsBlobService) ValidateUpdate(ctx context.Context, o
 
 // createValidations validates the creation of the resource
 func (service *StorageAccountsBlobService) createValidations() []func(ctx context.Context, obj *v20210401.StorageAccountsBlobService) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210401.StorageAccountsBlobService) (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210401.StorageAccountsBlobService) (admission.Warnings, error){
+		service.validateResourceReferences,
+		service.validateOwnerReference,
+		service.validateSecretDestinations,
+		service.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
