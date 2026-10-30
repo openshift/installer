@@ -4,7 +4,7 @@ go 1.23.0
 
 toolchain go1.24.2
 
-require github.com/Azure/azure-service-operator/v2 v2.13.0
+require github.com/Azure/azure-service-operator/v2 v2.20.0
 
 require (
 	cel.dev/expr v0.22.1 // indirect
