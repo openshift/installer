@@ -2169,17 +2169,17 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `[controlPlane.architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64", compute\[0\].architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64"]`,
 		},
 		{
-			name: "cluster is not heteregenous",
+			name: "cluster is not heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{Azure: validAzureStackPlatform()}
 				c.Compute[0].Architecture = types.ArchitectureARM64
 				return c
 			}(),
-			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heterogeneous multi-arch is not supported; compute pool architecture must match control plane$`,
 		},
 		{
-			name: "aws cluster is heteregeneous",
+			name: "aws cluster is heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Compute[0].Architecture = types.ArchitectureARM64
@@ -2187,7 +2187,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "gcp cluster is heteregeneous",
+			name: "gcp cluster is heterogeneous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{GCP: validGCPPlatform()}

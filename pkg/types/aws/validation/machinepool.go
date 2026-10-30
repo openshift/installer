@@ -32,6 +32,11 @@ var (
 		aws.ConfidentialComputePolicyDisabled,
 		aws.ConfidentialComputePolicySEVSNP,
 	}
+
+	validNestedVirtualizationPolicies = sets.NewString(
+		string(aws.NestedVirtualizationDisabled),
+		string(aws.NestedVirtualizationEnabled),
+	)
 )
 
 // AWS has a limit of 16 security groups. See:
@@ -49,7 +54,7 @@ const maxIopsThroughputRatio = 4
 const gp3DefaultIOPS int32 = 3000
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, poolName string, management types.MachineManagementAPI, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, zone := range p.Zones {
 		if !strings.HasPrefix(zone, platform.Region) {
@@ -68,7 +73,7 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, poolName st
 	}
 
 	allErrs = append(allErrs, validateSecurityGroups(platform, p, fldPath)...)
-	allErrs = append(allErrs, ValidateCPUOptions(p, fldPath)...)
+	allErrs = append(allErrs, ValidateCPUOptions(p, poolName, management, fldPath)...)
 	allErrs = append(allErrs, validateHostPlacement(p, poolName, fldPath.Child("hostPlacement"))...)
 
 	return allErrs
@@ -249,7 +254,7 @@ func ValidateMachinePoolArchitecture(pool *types.MachinePool, fldPath *field.Pat
 }
 
 // ValidateCPUOptions checks that valid CPU options are set for a machine pool.
-func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
+func ValidateCPUOptions(p *aws.MachinePool, poolName string, management types.MachineManagementAPI, fldPath *field.Path) field.ErrorList {
 	if p.CPUOptions == nil {
 		return nil
 	}
@@ -283,5 +288,46 @@ func ValidateCPUOptions(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 		}
 	}
 
+	if p.CPUOptions.NestedVirtualization != nil {
+		nestedVirtPath := fldPath.Child("cpuOptions", "nestedVirtualization")
+		if !validNestedVirtualizationPolicies.Has(string(*p.CPUOptions.NestedVirtualization)) {
+			allErrs = append(
+				allErrs,
+				field.NotSupported(
+					nestedVirtPath,
+					p.CPUOptions.NestedVirtualization,
+					validNestedVirtualizationPolicies.List(),
+				),
+			)
+		} else {
+			allErrs = append(allErrs, validateNestedVirtualization(p.CPUOptions.NestedVirtualization, poolName, management, nestedVirtPath)...)
+		}
+	}
+
 	return allErrs
+}
+
+// validateNestedVirtualization checks that nested virtualization is configured on a
+// machine pool that can actually support it.
+func validateNestedVirtualization(nestedVirt *aws.NestedVirtualizationPolicy, poolName string, management types.MachineManagementAPI, fldPath *field.Path) field.ErrorList {
+	var detail string
+
+	switch poolName {
+	case types.MachinePoolControlPlaneRoleName:
+		// The control plane cannot be managed by Cluster API on AWS at the moment.
+		// FIXME: Update this block when control plane supports ClusterAPI management.
+		detail = "NestedVirtualization cannot be set on Control Plane nodes; configure it on compute machine pools only"
+	case types.MachinePoolDefaultConfig:
+		// Defaulting copies this stanza into every pool before validation runs, so any value
+		// set here reaches the unsupported control plane.
+		detail = "NestedVirtualization cannot be set in defaultMachinePlatform as it would be inherited by Control Plane nodes; configure it on compute machine pools only"
+	default:
+		// Compute and edge pools, which may still opt into Machine API.
+		if management == types.ClusterAPI {
+			return nil
+		}
+		detail = "NestedVirtualization can only be set when management is set to ClusterAPI"
+	}
+
+	return field.ErrorList{field.Invalid(fldPath, nestedVirt, detail)}
 }
