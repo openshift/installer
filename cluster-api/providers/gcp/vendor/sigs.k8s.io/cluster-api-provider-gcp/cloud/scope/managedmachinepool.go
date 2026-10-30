@@ -43,6 +43,7 @@ import (
 type ManagedMachinePoolScopeParams struct {
 	ManagedClusterClient        *container.ClusterManagerClient
 	InstanceGroupManagersClient *compute.InstanceGroupManagersClient
+	InstanceTemplatesClient     *compute.InstanceTemplatesClient
 	Client                      client.Client
 	Cluster                     *clusterv1.Cluster
 	MachinePool                 *clusterv1.MachinePool
@@ -84,6 +85,13 @@ func NewManagedMachinePoolScope(ctx context.Context, params ManagedMachinePoolSc
 		}
 		params.InstanceGroupManagersClient = instanceGroupManagersClient
 	}
+	if params.InstanceTemplatesClient == nil {
+		instanceTemplatesClient, err := newInstanceTemplatesRESTClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.ServiceEndpoints)
+		if err != nil {
+			return nil, errors.Errorf("failed to create gcp instance templates client: %v", err)
+		}
+		params.InstanceTemplatesClient = instanceTemplatesClient
+	}
 
 	helper, err := v1beta1patch.NewHelper(params.GCPManagedMachinePool, params.Client)
 	if err != nil {
@@ -91,14 +99,15 @@ func NewManagedMachinePoolScope(ctx context.Context, params ManagedMachinePoolSc
 	}
 
 	return &ManagedMachinePoolScope{
-		client:                 params.Client,
-		Cluster:                params.Cluster,
-		MachinePool:            params.MachinePool,
-		GCPManagedControlPlane: params.GCPManagedControlPlane,
-		GCPManagedMachinePool:  params.GCPManagedMachinePool,
-		mcClient:               params.ManagedClusterClient,
-		migClient:              params.InstanceGroupManagersClient,
-		patchHelper:            helper,
+		client:                  params.Client,
+		Cluster:                 params.Cluster,
+		MachinePool:             params.MachinePool,
+		GCPManagedControlPlane:  params.GCPManagedControlPlane,
+		GCPManagedMachinePool:   params.GCPManagedMachinePool,
+		mcClient:                params.ManagedClusterClient,
+		migClient:               params.InstanceGroupManagersClient,
+		instanceTemplatesClient: params.InstanceTemplatesClient,
+		patchHelper:             helper,
 	}, nil
 }
 
@@ -107,13 +116,14 @@ type ManagedMachinePoolScope struct {
 	client      client.Client
 	patchHelper *v1beta1patch.Helper
 
-	Cluster                *clusterv1.Cluster
-	MachinePool            *clusterv1.MachinePool
-	GCPManagedCluster      *infrav1exp.GCPManagedCluster
-	GCPManagedControlPlane *infrav1exp.GCPManagedControlPlane
-	GCPManagedMachinePool  *infrav1exp.GCPManagedMachinePool
-	mcClient               *container.ClusterManagerClient
-	migClient              *compute.InstanceGroupManagersClient
+	Cluster                 *clusterv1.Cluster
+	MachinePool             *clusterv1.MachinePool
+	GCPManagedCluster       *infrav1exp.GCPManagedCluster
+	GCPManagedControlPlane  *infrav1exp.GCPManagedControlPlane
+	GCPManagedMachinePool   *infrav1exp.GCPManagedMachinePool
+	mcClient                *container.ClusterManagerClient
+	migClient               *compute.InstanceGroupManagersClient
+	instanceTemplatesClient *compute.InstanceTemplatesClient
 }
 
 // PatchObject persists the managed control plane configuration and status.
@@ -133,6 +143,7 @@ func (s *ManagedMachinePoolScope) PatchObject(ctx context.Context) error {
 func (s *ManagedMachinePoolScope) Close(ctx context.Context) error {
 	s.mcClient.Close()
 	s.migClient.Close()
+	s.instanceTemplatesClient.Close()
 	return s.PatchObject(ctx)
 }
 
@@ -149,6 +160,11 @@ func (s *ManagedMachinePoolScope) ManagedMachinePoolClient() *container.ClusterM
 // InstanceGroupManagersClient returns a client used to interact with GCP MIG.
 func (s *ManagedMachinePoolScope) InstanceGroupManagersClient() *compute.InstanceGroupManagersClient {
 	return s.migClient
+}
+
+// InstanceTemplatesClient returns a client used to interact with GCE instance templates.
+func (s *ManagedMachinePoolScope) InstanceTemplatesClient() *compute.InstanceTemplatesClient {
+	return s.instanceTemplatesClient
 }
 
 // NodePoolVersion returns the k8s version of the node pool.
@@ -195,12 +211,6 @@ func ConvertToSdkNodePool(nodePool infrav1exp.GCPManagedMachinePool, machinePool
 			ResourceLabels: NodePoolResourceLabels(nodePool.Spec.AdditionalLabels, clusterName),
 		},
 	}
-	if nodePool.Spec.MachineType != nil {
-		sdkNodePool.Config.MachineType = *nodePool.Spec.MachineType
-	}
-	if nodePool.Spec.DiskSizeGb != nil {
-		sdkNodePool.Config.DiskSizeGb = *nodePool.Spec.DiskSizeGb
-	}
 	if nodePool.Spec.ImageType != nil {
 		sdkNodePool.Config.ImageType = *nodePool.Spec.ImageType
 	}
@@ -227,17 +237,21 @@ func ConvertToSdkNodePool(nodePool infrav1exp.GCPManagedMachinePool, machinePool
 			MaxPodsPerNode: *nodePool.Spec.MaxPodsPerNode,
 		}
 	}
+	// MachineType is deprecated in favor of InstanceType; apply it first so that
+	// InstanceType - the canonical field - takes precedence when both are set.
+	if nodePool.Spec.MachineType != nil { //nolint:staticcheck // SA1019: deprecated field read intentionally for backward compatibility
+		sdkNodePool.Config.MachineType = *nodePool.Spec.MachineType //nolint:staticcheck // SA1019: deprecated field read intentionally for backward compatibility
+	}
 	if nodePool.Spec.InstanceType != nil {
 		sdkNodePool.Config.MachineType = *nodePool.Spec.InstanceType
 	}
-	if nodePool.Spec.ImageType != nil {
-		sdkNodePool.Config.ImageType = *nodePool.Spec.ImageType
+	// DiskSizeGB is deprecated in favor of DiskSizeGb; apply it first so that
+	// DiskSizeGb - the canonical field - takes precedence when both are set.
+	if nodePool.Spec.DiskSizeGB != nil { //nolint:staticcheck // SA1019: deprecated field read intentionally for backward compatibility
+		sdkNodePool.Config.DiskSizeGb = int32(*nodePool.Spec.DiskSizeGB) //nolint:gosec,staticcheck // SA1019: deprecated field read intentionally for backward compatibility
 	}
-	if nodePool.Spec.DiskType != nil {
-		sdkNodePool.Config.DiskType = string(*nodePool.Spec.DiskType)
-	}
-	if nodePool.Spec.DiskSizeGB != nil {
-		sdkNodePool.Config.DiskSizeGb = int32(*nodePool.Spec.DiskSizeGB) //nolint:gosec
+	if nodePool.Spec.DiskSizeGb != nil {
+		sdkNodePool.Config.DiskSizeGb = *nodePool.Spec.DiskSizeGb
 	}
 	if len(nodePool.Spec.NodeNetwork.Tags) != 0 {
 		sdkNodePool.Config.Tags = nodePool.Spec.NodeNetwork.Tags

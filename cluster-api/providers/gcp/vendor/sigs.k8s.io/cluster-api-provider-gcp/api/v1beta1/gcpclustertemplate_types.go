@@ -36,6 +36,10 @@ type GCPClusterTemplateResource struct {
 	Spec GCPClusterSpec `json:"spec"`
 }
 
+func init() {
+	objectTypes = append(objectTypes, &GCPClusterTemplate{}, &GCPClusterTemplateList{})
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=gcpclustertemplates,scope=Namespaced,categories=cluster-api,shortName=gcpct
 // +kubebuilder:storageversion
@@ -55,8 +59,4 @@ type GCPClusterTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []GCPClusterTemplate `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&GCPClusterTemplate{}, &GCPClusterTemplateList{})
 }

@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capierrors "sigs.k8s.io/cluster-api/errors"
+	capierrors "sigs.k8s.io/cluster-api/api/deprecated/errors"
 )
 
 const (
@@ -559,7 +559,7 @@ type MachineStatus struct {
 	// NodeHealthy, Updating, Deleting, Paused.
 	// If a MachineHealthCheck is targeting this machine, also HealthCheckSucceeded, OwnerRemediated conditions are added.
 	// Additionally control plane Machines controlled by KubeadmControlPlane will have following additional conditions:
-	// APIServerPodHealthy, ControllerManagerPodHealthy, SchedulerPodHealthy, EtcdPodHealthy, EtcdMemberHealthy.
+	// APIServerPodHealthy, ControllerManagerPodHealthy, SchedulerPodHealthy, EtcdPodHealthy, EtcdMemberHealthy, NodeKubeadmLabelsAndTaintsSet.
 	// +optional
 	// +listType=map
 	// +listMapKey=type
@@ -588,6 +588,12 @@ type MachineStatus struct {
 	// This field is copied from the infrastructure provider reference.
 	// +optional
 	Addresses MachineAddresses `json:"addresses,omitempty"`
+
+	// failureDomain is the failure domain where the Machine has been scheduled.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	FailureDomain string `json:"failureDomain,omitempty"`
 
 	// phase represents the current phase of machine actuation.
 	// +optional
@@ -733,6 +739,18 @@ type MachineDeletionStatus struct {
 	// Only present when the Machine has a deletionTimestamp and waiting for volume detachments had been started.
 	// +optional
 	WaitForNodeVolumeDetachStartTime metav1.Time `json:"waitForNodeVolumeDetachStartTime,omitempty,omitzero"`
+
+	// waitForPreDrainHookStartTime is the time when waiting for pre-drain hooks started
+	// and is used to determine if the pre-drain hooks are taking too long.
+	// Only present when the Machine has a deletionTimestamp and waiting for pre-drain hooks had been started.
+	// +optional
+	WaitForPreDrainHookStartTime metav1.Time `json:"waitForPreDrainHookStartTime,omitempty,omitzero"`
+
+	// waitForPreTerminateHookStartTime is the time when waiting for pre-terminate hooks started
+	// and is used to determine if the pre-terminate hooks are taking too long.
+	// Only present when the Machine has a deletionTimestamp and waiting for pre-terminate hooks had been started.
+	// +optional
+	WaitForPreTerminateHookStartTime metav1.Time `json:"waitForPreTerminateHookStartTime,omitempty,omitzero"`
 }
 
 // SetTypedPhase sets the Phase field to the string representation of MachinePhase.
@@ -783,6 +801,7 @@ type Bootstrap struct {
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.clusterName",description="Cluster"
 // +kubebuilder:printcolumn:name="Node Name",type="string",JSONPath=".status.nodeRef.name",description="Node name associated with this machine"
 // +kubebuilder:printcolumn:name="Provider ID",type="string",JSONPath=".spec.providerID",description="Provider ID",priority=10
+// +kubebuilder:printcolumn:name="Failure domain",type="string",JSONPath=".status.failureDomain",description="The failure domain where the Machine has been scheduled"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].status`,description="Machine pass all readiness checks"
 // +kubebuilder:printcolumn:name="Available",type="string",JSONPath=`.status.conditions[?(@.type=="Available")].status`,description="Machine is Ready for at least MinReadySeconds"
 // +kubebuilder:printcolumn:name="Up-to-date",type="string",JSONPath=`.status.conditions[?(@.type=="UpToDate")].status`,description=" Machine spec matches the spec of the Machine's owner resource, e.g. MachineDeployment"
