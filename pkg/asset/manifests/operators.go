@@ -93,6 +93,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&BMCVerifyCAConfigMap{},
 		&PKIConfiguration{},
 		&BGPVIPConfigMap{},
+		&BGPVIPConfigCR{},
 	}
 }
 
@@ -112,8 +113,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 	pkiConfig := &PKIConfiguration{}
 	bgpVIPConfigMap := &BGPVIPConfigMap{}
+	bgpVIPConfigCR := &BGPVIPConfigCR{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap, bgpVIPConfigCR)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -154,6 +156,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 	m.FileList = append(m.FileList, pkiConfig.Files()...)
 	m.FileList = append(m.FileList, bgpVIPConfigMap.Files()...)
+	m.FileList = append(m.FileList, bgpVIPConfigCR.Files()...)
 
 	asset.SortFiles(m.FileList)
 
