@@ -31,6 +31,7 @@ generate_capi_manifest() {
 			"privateendpoints.network.azure.com"
 			"fleetsmembers.containerservice.azure.com"
 			"extensions.kubernetesconfiguration.azure.com"
+                        "privatelinkservices.network.azure.com"
 		)
 
 		# Build the yq filter for allowed CRD names
