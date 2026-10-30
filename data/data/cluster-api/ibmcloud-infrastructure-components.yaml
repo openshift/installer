@@ -12662,7 +12662,7 @@ spec:
           value: /home/.ibmcloud/ibm-credentials.env
         - name: IBMCLOUD_STAGING
           value: ${IBMCLOUD_STAGING:-}
-        image: gcr.io/k8s-staging-capi-ibmcloud/cluster-api-ibmcloud-controller:dev
+        image: registry.k8s.io/capi-ibmcloud/cluster-api-ibmcloud-controller:v0.15.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
