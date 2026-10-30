@@ -63,6 +63,7 @@ type PrivateLinkServiceProperties struct {
 
 // Frontend IP address of the load balancer.
 type FrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -101,5 +102,6 @@ type PrivateLinkServiceIpConfigurationProperties struct {
 
 // Subnet in a virtual network resource.
 type Subnet_PrivateLinkService_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }

@@ -4,7 +4,9 @@
 package storage
 
 import (
-	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	"fmt"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -13,21 +15,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=bastionhosts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={bastionhosts/status,bastionhosts/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.BastionHost
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHost struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -46,6 +46,28 @@ func (host *BastionHost) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (host *BastionHost) SetConditions(conditions conditions.Conditions) {
 	host.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &BastionHost{}
+
+// ConvertFrom populates our BastionHost from the provided hub BastionHost
+func (host *BastionHost) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.BastionHost)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/BastionHost but received %T instead", hub)
+	}
+
+	return host.AssignProperties_From_BastionHost(source)
+}
+
+// ConvertTo populates the provided hub BastionHost from our BastionHost
+func (host *BastionHost) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.BastionHost)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/BastionHost but received %T instead", hub)
+	}
+
+	return host.AssignProperties_To_BastionHost(destination)
 }
 
 var _ configmaps.Exporter = &BastionHost{}
@@ -143,8 +165,75 @@ func (host *BastionHost) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this BastionHost is the hub type for conversion
-func (host *BastionHost) Hub() {}
+// AssignProperties_From_BastionHost populates our BastionHost from the provided source BastionHost
+func (host *BastionHost) AssignProperties_From_BastionHost(source *v20250301s.BastionHost) error {
+
+	// ObjectMeta
+	host.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec BastionHost_Spec
+	err := spec.AssignProperties_From_BastionHost_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_BastionHost_Spec() to populate field Spec")
+	}
+	host.Spec = spec
+
+	// Status
+	var status BastionHost_STATUS
+	err = status.AssignProperties_From_BastionHost_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_BastionHost_STATUS() to populate field Status")
+	}
+	host.Status = status
+
+	// Invoke the augmentConversionForBastionHost interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost); ok {
+		err := augmentedHost.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHost populates the provided destination BastionHost from our BastionHost
+func (host *BastionHost) AssignProperties_To_BastionHost(destination *v20250301s.BastionHost) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *host.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.BastionHost_Spec
+	err := host.Spec.AssignProperties_To_BastionHost_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_BastionHost_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.BastionHost_STATUS
+	err = host.Status.AssignProperties_To_BastionHost_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_BastionHost_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForBastionHost interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost); ok {
+		err := augmentedHost.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (host *BastionHost) OriginalGVK() *schema.GroupVersionKind {
@@ -158,7 +247,7 @@ func (host *BastionHost) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.BastionHost
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHostList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -166,11 +255,10 @@ type BastionHostList struct {
 	Items           []BastionHost `json:"items"`
 }
 
-// Storage version of v1api20240301.APIVersion
-// +kubebuilder:validation:Enum={"2024-03-01"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2024-03-01")
+type augmentConversionForBastionHost interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHost) error
+	AssignPropertiesTo(dst *v20250301s.BastionHost) error
+}
 
 // Storage version of v1api20240301.BastionHost_Spec
 type BastionHost_Spec struct {
@@ -208,20 +296,428 @@ var _ genruntime.ConvertibleSpec = &BastionHost_Spec{}
 
 // ConvertSpecFrom populates our BastionHost_Spec from the provided source
 func (host *BastionHost_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == host {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.BastionHost_Spec)
+	if ok {
+		// Populate our instance from source
+		return host.AssignProperties_From_BastionHost_Spec(src)
 	}
 
-	return source.ConvertSpecTo(host)
+	// Convert to an intermediate form
+	src = &v20250301s.BastionHost_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = host.AssignProperties_From_BastionHost_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our BastionHost_Spec
 func (host *BastionHost_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == host {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.BastionHost_Spec)
+	if ok {
+		// Populate destination from our instance
+		return host.AssignProperties_To_BastionHost_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(host)
+	// Convert to an intermediate form
+	dst = &v20250301s.BastionHost_Spec{}
+	err := host.AssignProperties_To_BastionHost_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BastionHost_Spec populates our BastionHost_Spec from the provided source BastionHost_Spec
+func (host *BastionHost_Spec) AssignProperties_From_BastionHost_Spec(source *v20250301s.BastionHost_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	host.AzureName = source.AzureName
+
+	// DisableCopyPaste
+	if source.DisableCopyPaste != nil {
+		disableCopyPaste := *source.DisableCopyPaste
+		host.DisableCopyPaste = &disableCopyPaste
+	} else {
+		host.DisableCopyPaste = nil
+	}
+
+	// DnsName
+	host.DnsName = genruntime.ClonePointerToString(source.DnsName)
+
+	// EnableFileCopy
+	if source.EnableFileCopy != nil {
+		enableFileCopy := *source.EnableFileCopy
+		host.EnableFileCopy = &enableFileCopy
+	} else {
+		host.EnableFileCopy = nil
+	}
+
+	// EnableIpConnect
+	if source.EnableIpConnect != nil {
+		enableIpConnect := *source.EnableIpConnect
+		host.EnableIpConnect = &enableIpConnect
+	} else {
+		host.EnableIpConnect = nil
+	}
+
+	// EnableKerberos
+	if source.EnableKerberos != nil {
+		enableKerbero := *source.EnableKerberos
+		host.EnableKerberos = &enableKerbero
+	} else {
+		host.EnableKerberos = nil
+	}
+
+	// EnablePrivateOnlyBastion
+	if source.EnablePrivateOnlyBastion != nil {
+		propertyBag.Add("EnablePrivateOnlyBastion", *source.EnablePrivateOnlyBastion)
+	} else {
+		propertyBag.Remove("EnablePrivateOnlyBastion")
+	}
+
+	// EnableSessionRecording
+	if source.EnableSessionRecording != nil {
+		enableSessionRecording := *source.EnableSessionRecording
+		host.EnableSessionRecording = &enableSessionRecording
+	} else {
+		host.EnableSessionRecording = nil
+	}
+
+	// EnableShareableLink
+	if source.EnableShareableLink != nil {
+		enableShareableLink := *source.EnableShareableLink
+		host.EnableShareableLink = &enableShareableLink
+	} else {
+		host.EnableShareableLink = nil
+	}
+
+	// EnableTunneling
+	if source.EnableTunneling != nil {
+		enableTunneling := *source.EnableTunneling
+		host.EnableTunneling = &enableTunneling
+	} else {
+		host.EnableTunneling = nil
+	}
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]BastionHostIPConfiguration, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration BastionHostIPConfiguration
+			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_BastionHostIPConfiguration() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		host.IpConfigurations = ipConfigurationList
+	} else {
+		host.IpConfigurations = nil
+	}
+
+	// Location
+	host.Location = genruntime.ClonePointerToString(source.Location)
+
+	// NetworkAcls
+	if source.NetworkAcls != nil {
+		var networkAcl BastionHostPropertiesFormat_NetworkAcls
+		err := networkAcl.AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls(source.NetworkAcls)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls() to populate field NetworkAcls")
+		}
+		host.NetworkAcls = &networkAcl
+	} else {
+		host.NetworkAcls = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec BastionHostOperatorSpec
+		err := operatorSpec.AssignProperties_From_BastionHostOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_BastionHostOperatorSpec() to populate field OperatorSpec")
+		}
+		host.OperatorSpec = &operatorSpec
+	} else {
+		host.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	host.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		host.Owner = &owner
+	} else {
+		host.Owner = nil
+	}
+
+	// ScaleUnits
+	host.ScaleUnits = genruntime.ClonePointerToInt(source.ScaleUnits)
+
+	// Sku
+	if source.Sku != nil {
+		var sku Sku
+		err := sku.AssignProperties_From_Sku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+		}
+		host.Sku = &sku
+	} else {
+		host.Sku = nil
+	}
+
+	// Tags
+	host.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// VirtualNetwork
+	if source.VirtualNetwork != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.VirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from VirtualNetwork")
+		}
+		var virtualNetwork SubResource
+		err = virtualNetwork.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field VirtualNetwork from SubResourceStash")
+		}
+		host.VirtualNetwork = &virtualNetwork
+	} else {
+		host.VirtualNetwork = nil
+	}
+
+	// Zones
+	host.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		host.PropertyBag = propertyBag
+	} else {
+		host.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHost_Spec interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost_Spec); ok {
+		err := augmentedHost.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHost_Spec populates the provided destination BastionHost_Spec from our BastionHost_Spec
+func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *v20250301s.BastionHost_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(host.PropertyBag)
+
+	// AzureName
+	destination.AzureName = host.AzureName
+
+	// DisableCopyPaste
+	if host.DisableCopyPaste != nil {
+		disableCopyPaste := *host.DisableCopyPaste
+		destination.DisableCopyPaste = &disableCopyPaste
+	} else {
+		destination.DisableCopyPaste = nil
+	}
+
+	// DnsName
+	destination.DnsName = genruntime.ClonePointerToString(host.DnsName)
+
+	// EnableFileCopy
+	if host.EnableFileCopy != nil {
+		enableFileCopy := *host.EnableFileCopy
+		destination.EnableFileCopy = &enableFileCopy
+	} else {
+		destination.EnableFileCopy = nil
+	}
+
+	// EnableIpConnect
+	if host.EnableIpConnect != nil {
+		enableIpConnect := *host.EnableIpConnect
+		destination.EnableIpConnect = &enableIpConnect
+	} else {
+		destination.EnableIpConnect = nil
+	}
+
+	// EnableKerberos
+	if host.EnableKerberos != nil {
+		enableKerbero := *host.EnableKerberos
+		destination.EnableKerberos = &enableKerbero
+	} else {
+		destination.EnableKerberos = nil
+	}
+
+	// EnablePrivateOnlyBastion
+	if propertyBag.Contains("EnablePrivateOnlyBastion") {
+		var enablePrivateOnlyBastion bool
+		err := propertyBag.Pull("EnablePrivateOnlyBastion", &enablePrivateOnlyBastion)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'EnablePrivateOnlyBastion' from propertyBag")
+		}
+
+		destination.EnablePrivateOnlyBastion = &enablePrivateOnlyBastion
+	} else {
+		destination.EnablePrivateOnlyBastion = nil
+	}
+
+	// EnableSessionRecording
+	if host.EnableSessionRecording != nil {
+		enableSessionRecording := *host.EnableSessionRecording
+		destination.EnableSessionRecording = &enableSessionRecording
+	} else {
+		destination.EnableSessionRecording = nil
+	}
+
+	// EnableShareableLink
+	if host.EnableShareableLink != nil {
+		enableShareableLink := *host.EnableShareableLink
+		destination.EnableShareableLink = &enableShareableLink
+	} else {
+		destination.EnableShareableLink = nil
+	}
+
+	// EnableTunneling
+	if host.EnableTunneling != nil {
+		enableTunneling := *host.EnableTunneling
+		destination.EnableTunneling = &enableTunneling
+	} else {
+		destination.EnableTunneling = nil
+	}
+
+	// IpConfigurations
+	if host.IpConfigurations != nil {
+		ipConfigurationList := make([]v20250301s.BastionHostIPConfiguration, len(host.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
+			var ipConfiguration v20250301s.BastionHostIPConfiguration
+			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_BastionHostIPConfiguration() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(host.Location)
+
+	// NetworkAcls
+	if host.NetworkAcls != nil {
+		var networkAcl v20250301s.BastionHostPropertiesFormat_NetworkAcls
+		err := host.NetworkAcls.AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls(&networkAcl)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls() to populate field NetworkAcls")
+		}
+		destination.NetworkAcls = &networkAcl
+	} else {
+		destination.NetworkAcls = nil
+	}
+
+	// OperatorSpec
+	if host.OperatorSpec != nil {
+		var operatorSpec v20250301s.BastionHostOperatorSpec
+		err := host.OperatorSpec.AssignProperties_To_BastionHostOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_BastionHostOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = host.OriginalVersion
+
+	// Owner
+	if host.Owner != nil {
+		owner := host.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// ScaleUnits
+	destination.ScaleUnits = genruntime.ClonePointerToInt(host.ScaleUnits)
+
+	// Sku
+	if host.Sku != nil {
+		var sku v20250301s.Sku
+		err := host.Sku.AssignProperties_To_Sku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(host.Tags)
+
+	// VirtualNetwork
+	if host.VirtualNetwork != nil {
+		var subResourceStash v20240601s.SubResource
+		err := host.VirtualNetwork.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from VirtualNetwork")
+		}
+		var virtualNetwork v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&virtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field VirtualNetwork from SubResourceStash")
+		}
+		destination.VirtualNetwork = &virtualNetwork
+	} else {
+		destination.VirtualNetwork = nil
+	}
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(host.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHost_Spec interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost_Spec); ok {
+		err := augmentedHost.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.BastionHost_STATUS
@@ -256,20 +752,422 @@ var _ genruntime.ConvertibleStatus = &BastionHost_STATUS{}
 
 // ConvertStatusFrom populates our BastionHost_STATUS from the provided source
 func (host *BastionHost_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == host {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.BastionHost_STATUS)
+	if ok {
+		// Populate our instance from source
+		return host.AssignProperties_From_BastionHost_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(host)
+	// Convert to an intermediate form
+	src = &v20250301s.BastionHost_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = host.AssignProperties_From_BastionHost_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our BastionHost_STATUS
 func (host *BastionHost_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == host {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.BastionHost_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return host.AssignProperties_To_BastionHost_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(host)
+	// Convert to an intermediate form
+	dst = &v20250301s.BastionHost_STATUS{}
+	err := host.AssignProperties_To_BastionHost_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BastionHost_STATUS populates our BastionHost_STATUS from the provided source BastionHost_STATUS
+func (host *BastionHost_STATUS) AssignProperties_From_BastionHost_STATUS(source *v20250301s.BastionHost_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	host.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DisableCopyPaste
+	if source.DisableCopyPaste != nil {
+		disableCopyPaste := *source.DisableCopyPaste
+		host.DisableCopyPaste = &disableCopyPaste
+	} else {
+		host.DisableCopyPaste = nil
+	}
+
+	// DnsName
+	host.DnsName = genruntime.ClonePointerToString(source.DnsName)
+
+	// EnableFileCopy
+	if source.EnableFileCopy != nil {
+		enableFileCopy := *source.EnableFileCopy
+		host.EnableFileCopy = &enableFileCopy
+	} else {
+		host.EnableFileCopy = nil
+	}
+
+	// EnableIpConnect
+	if source.EnableIpConnect != nil {
+		enableIpConnect := *source.EnableIpConnect
+		host.EnableIpConnect = &enableIpConnect
+	} else {
+		host.EnableIpConnect = nil
+	}
+
+	// EnableKerberos
+	if source.EnableKerberos != nil {
+		enableKerbero := *source.EnableKerberos
+		host.EnableKerberos = &enableKerbero
+	} else {
+		host.EnableKerberos = nil
+	}
+
+	// EnablePrivateOnlyBastion
+	if source.EnablePrivateOnlyBastion != nil {
+		propertyBag.Add("EnablePrivateOnlyBastion", *source.EnablePrivateOnlyBastion)
+	} else {
+		propertyBag.Remove("EnablePrivateOnlyBastion")
+	}
+
+	// EnableSessionRecording
+	if source.EnableSessionRecording != nil {
+		enableSessionRecording := *source.EnableSessionRecording
+		host.EnableSessionRecording = &enableSessionRecording
+	} else {
+		host.EnableSessionRecording = nil
+	}
+
+	// EnableShareableLink
+	if source.EnableShareableLink != nil {
+		enableShareableLink := *source.EnableShareableLink
+		host.EnableShareableLink = &enableShareableLink
+	} else {
+		host.EnableShareableLink = nil
+	}
+
+	// EnableTunneling
+	if source.EnableTunneling != nil {
+		enableTunneling := *source.EnableTunneling
+		host.EnableTunneling = &enableTunneling
+	} else {
+		host.EnableTunneling = nil
+	}
+
+	// Etag
+	host.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	host.Id = genruntime.ClonePointerToString(source.Id)
+
+	// IpConfigurations
+	if source.IpConfigurations != nil {
+		ipConfigurationList := make([]BastionHostIPConfiguration_STATUS, len(source.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
+			var ipConfiguration BastionHostIPConfiguration_STATUS
+			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration_STATUS(&ipConfigurationItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_BastionHostIPConfiguration_STATUS() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		host.IpConfigurations = ipConfigurationList
+	} else {
+		host.IpConfigurations = nil
+	}
+
+	// Location
+	host.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	host.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NetworkAcls
+	if source.NetworkAcls != nil {
+		var networkAcl BastionHostPropertiesFormat_NetworkAcls_STATUS
+		err := networkAcl.AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls_STATUS(source.NetworkAcls)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls_STATUS() to populate field NetworkAcls")
+		}
+		host.NetworkAcls = &networkAcl
+	} else {
+		host.NetworkAcls = nil
+	}
+
+	// ProvisioningState
+	host.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// ScaleUnits
+	host.ScaleUnits = genruntime.ClonePointerToInt(source.ScaleUnits)
+
+	// Sku
+	if source.Sku != nil {
+		var sku Sku_STATUS
+		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+		}
+		host.Sku = &sku
+	} else {
+		host.Sku = nil
+	}
+
+	// Tags
+	host.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	host.Type = genruntime.ClonePointerToString(source.Type)
+
+	// VirtualNetwork
+	if source.VirtualNetwork != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.VirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from VirtualNetwork")
+		}
+		var virtualNetwork SubResource_STATUS
+		err = virtualNetwork.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field VirtualNetwork from SubResource_STATUSStash")
+		}
+		host.VirtualNetwork = &virtualNetwork
+	} else {
+		host.VirtualNetwork = nil
+	}
+
+	// Zones
+	host.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		host.PropertyBag = propertyBag
+	} else {
+		host.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHost_STATUS interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost_STATUS); ok {
+		err := augmentedHost.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHost_STATUS populates the provided destination BastionHost_STATUS from our BastionHost_STATUS
+func (host *BastionHost_STATUS) AssignProperties_To_BastionHost_STATUS(destination *v20250301s.BastionHost_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(host.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(host.Conditions)
+
+	// DisableCopyPaste
+	if host.DisableCopyPaste != nil {
+		disableCopyPaste := *host.DisableCopyPaste
+		destination.DisableCopyPaste = &disableCopyPaste
+	} else {
+		destination.DisableCopyPaste = nil
+	}
+
+	// DnsName
+	destination.DnsName = genruntime.ClonePointerToString(host.DnsName)
+
+	// EnableFileCopy
+	if host.EnableFileCopy != nil {
+		enableFileCopy := *host.EnableFileCopy
+		destination.EnableFileCopy = &enableFileCopy
+	} else {
+		destination.EnableFileCopy = nil
+	}
+
+	// EnableIpConnect
+	if host.EnableIpConnect != nil {
+		enableIpConnect := *host.EnableIpConnect
+		destination.EnableIpConnect = &enableIpConnect
+	} else {
+		destination.EnableIpConnect = nil
+	}
+
+	// EnableKerberos
+	if host.EnableKerberos != nil {
+		enableKerbero := *host.EnableKerberos
+		destination.EnableKerberos = &enableKerbero
+	} else {
+		destination.EnableKerberos = nil
+	}
+
+	// EnablePrivateOnlyBastion
+	if propertyBag.Contains("EnablePrivateOnlyBastion") {
+		var enablePrivateOnlyBastion bool
+		err := propertyBag.Pull("EnablePrivateOnlyBastion", &enablePrivateOnlyBastion)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'EnablePrivateOnlyBastion' from propertyBag")
+		}
+
+		destination.EnablePrivateOnlyBastion = &enablePrivateOnlyBastion
+	} else {
+		destination.EnablePrivateOnlyBastion = nil
+	}
+
+	// EnableSessionRecording
+	if host.EnableSessionRecording != nil {
+		enableSessionRecording := *host.EnableSessionRecording
+		destination.EnableSessionRecording = &enableSessionRecording
+	} else {
+		destination.EnableSessionRecording = nil
+	}
+
+	// EnableShareableLink
+	if host.EnableShareableLink != nil {
+		enableShareableLink := *host.EnableShareableLink
+		destination.EnableShareableLink = &enableShareableLink
+	} else {
+		destination.EnableShareableLink = nil
+	}
+
+	// EnableTunneling
+	if host.EnableTunneling != nil {
+		enableTunneling := *host.EnableTunneling
+		destination.EnableTunneling = &enableTunneling
+	} else {
+		destination.EnableTunneling = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(host.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(host.Id)
+
+	// IpConfigurations
+	if host.IpConfigurations != nil {
+		ipConfigurationList := make([]v20250301s.BastionHostIPConfiguration_STATUS, len(host.IpConfigurations))
+		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
+			var ipConfiguration v20250301s.BastionHostIPConfiguration_STATUS
+			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration_STATUS(&ipConfiguration)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_BastionHostIPConfiguration_STATUS() to populate field IpConfigurations")
+			}
+			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
+		}
+		destination.IpConfigurations = ipConfigurationList
+	} else {
+		destination.IpConfigurations = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(host.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(host.Name)
+
+	// NetworkAcls
+	if host.NetworkAcls != nil {
+		var networkAcl v20250301s.BastionHostPropertiesFormat_NetworkAcls_STATUS
+		err := host.NetworkAcls.AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls_STATUS(&networkAcl)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls_STATUS() to populate field NetworkAcls")
+		}
+		destination.NetworkAcls = &networkAcl
+	} else {
+		destination.NetworkAcls = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(host.ProvisioningState)
+
+	// ScaleUnits
+	destination.ScaleUnits = genruntime.ClonePointerToInt(host.ScaleUnits)
+
+	// Sku
+	if host.Sku != nil {
+		var sku v20250301s.Sku_STATUS
+		err := host.Sku.AssignProperties_To_Sku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(host.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(host.Type)
+
+	// VirtualNetwork
+	if host.VirtualNetwork != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := host.VirtualNetwork.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from VirtualNetwork")
+		}
+		var virtualNetwork v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&virtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field VirtualNetwork from SubResource_STATUSStash")
+		}
+		destination.VirtualNetwork = &virtualNetwork
+	} else {
+		destination.VirtualNetwork = nil
+	}
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(host.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHost_STATUS interface (if implemented) to customize the conversion
+	var hostAsAny any = host
+	if augmentedHost, ok := hostAsAny.(augmentConversionForBastionHost_STATUS); ok {
+		err := augmentedHost.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBastionHost_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHost_Spec) error
+	AssignPropertiesTo(dst *v20250301s.BastionHost_Spec) error
+}
+
+type augmentConversionForBastionHost_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHost_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.BastionHost_STATUS) error
 }
 
 // Storage version of v1api20240301.BastionHostIPConfiguration
@@ -282,11 +1180,197 @@ type BastionHostIPConfiguration struct {
 	Subnet                    *SubResource           `json:"subnet,omitempty"`
 }
 
+// AssignProperties_From_BastionHostIPConfiguration populates our BastionHostIPConfiguration from the provided source BastionHostIPConfiguration
+func (configuration *BastionHostIPConfiguration) AssignProperties_From_BastionHostIPConfiguration(source *v20250301s.BastionHostIPConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	configuration.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateIPAllocationMethod
+	configuration.PrivateIPAllocationMethod = genruntime.ClonePointerToString(source.PrivateIPAllocationMethod)
+
+	// PublicIPAddress
+	if source.PublicIPAddress != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.PublicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIPAddress")
+		}
+		var publicIPAddress SubResource
+		err = publicIPAddress.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPAddress from SubResourceStash")
+		}
+		configuration.PublicIPAddress = &publicIPAddress
+	} else {
+		configuration.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if source.Subnet != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.Subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from Subnet")
+		}
+		var subnet SubResource
+		err = subnet.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet from SubResourceStash")
+		}
+		configuration.Subnet = &subnet
+	} else {
+		configuration.Subnet = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostIPConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForBastionHostIPConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostIPConfiguration populates the provided destination BastionHostIPConfiguration from our BastionHostIPConfiguration
+func (configuration *BastionHostIPConfiguration) AssignProperties_To_BastionHostIPConfiguration(destination *v20250301s.BastionHostIPConfiguration) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(configuration.Name)
+
+	// PrivateIPAllocationMethod
+	destination.PrivateIPAllocationMethod = genruntime.ClonePointerToString(configuration.PrivateIPAllocationMethod)
+
+	// PublicIPAddress
+	if configuration.PublicIPAddress != nil {
+		var subResourceStash v20240601s.SubResource
+		err := configuration.PublicIPAddress.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIPAddress")
+		}
+		var publicIPAddress v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&publicIPAddress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPAddress from SubResourceStash")
+		}
+		destination.PublicIPAddress = &publicIPAddress
+	} else {
+		destination.PublicIPAddress = nil
+	}
+
+	// Subnet
+	if configuration.Subnet != nil {
+		var subResourceStash v20240601s.SubResource
+		err := configuration.Subnet.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from Subnet")
+		}
+		var subnet v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&subnet)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet from SubResourceStash")
+		}
+		destination.Subnet = &subnet
+	} else {
+		destination.Subnet = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostIPConfiguration interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForBastionHostIPConfiguration); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.BastionHostIPConfiguration_STATUS
 // IP configuration of an Bastion Host.
 type BastionHostIPConfiguration_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BastionHostIPConfiguration_STATUS populates our BastionHostIPConfiguration_STATUS from the provided source BastionHostIPConfiguration_STATUS
+func (configuration *BastionHostIPConfiguration_STATUS) AssignProperties_From_BastionHostIPConfiguration_STATUS(source *v20250301s.BastionHostIPConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	configuration.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		configuration.PropertyBag = propertyBag
+	} else {
+		configuration.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostIPConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForBastionHostIPConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostIPConfiguration_STATUS populates the provided destination BastionHostIPConfiguration_STATUS from our BastionHostIPConfiguration_STATUS
+func (configuration *BastionHostIPConfiguration_STATUS) AssignProperties_To_BastionHostIPConfiguration_STATUS(destination *v20250301s.BastionHostIPConfiguration_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(configuration.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(configuration.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostIPConfiguration_STATUS interface (if implemented) to customize the conversion
+	var configurationAsAny any = configuration
+	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForBastionHostIPConfiguration_STATUS); ok {
+		err := augmentedConfiguration.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.BastionHostOperatorSpec
@@ -297,16 +1381,294 @@ type BastionHostOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_BastionHostOperatorSpec populates our BastionHostOperatorSpec from the provided source BastionHostOperatorSpec
+func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperatorSpec(source *v20250301s.BastionHostOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBastionHostOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostOperatorSpec populates the provided destination BastionHostOperatorSpec from our BastionHostOperatorSpec
+func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperatorSpec(destination *v20250301s.BastionHostOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBastionHostOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.BastionHostPropertiesFormat_NetworkAcls
 type BastionHostPropertiesFormat_NetworkAcls struct {
 	IpRules     []IPRule               `json:"ipRules,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls populates our BastionHostPropertiesFormat_NetworkAcls from the provided source BastionHostPropertiesFormat_NetworkAcls
+func (acls *BastionHostPropertiesFormat_NetworkAcls) AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls(source *v20250301s.BastionHostPropertiesFormat_NetworkAcls) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IpRules
+	if source.IpRules != nil {
+		ipRuleList := make([]IPRule, len(source.IpRules))
+		for ipRuleIndex, ipRuleItem := range source.IpRules {
+			var ipRule IPRule
+			err := ipRule.AssignProperties_From_IPRule(&ipRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_IPRule() to populate field IpRules")
+			}
+			ipRuleList[ipRuleIndex] = ipRule
+		}
+		acls.IpRules = ipRuleList
+	} else {
+		acls.IpRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		acls.PropertyBag = propertyBag
+	} else {
+		acls.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostPropertiesFormat_NetworkAcls interface (if implemented) to customize the conversion
+	var aclsAsAny any = acls
+	if augmentedAcls, ok := aclsAsAny.(augmentConversionForBastionHostPropertiesFormat_NetworkAcls); ok {
+		err := augmentedAcls.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls populates the provided destination BastionHostPropertiesFormat_NetworkAcls from our BastionHostPropertiesFormat_NetworkAcls
+func (acls *BastionHostPropertiesFormat_NetworkAcls) AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls(destination *v20250301s.BastionHostPropertiesFormat_NetworkAcls) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(acls.PropertyBag)
+
+	// IpRules
+	if acls.IpRules != nil {
+		ipRuleList := make([]v20250301s.IPRule, len(acls.IpRules))
+		for ipRuleIndex, ipRuleItem := range acls.IpRules {
+			var ipRule v20250301s.IPRule
+			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_IPRule() to populate field IpRules")
+			}
+			ipRuleList[ipRuleIndex] = ipRule
+		}
+		destination.IpRules = ipRuleList
+	} else {
+		destination.IpRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostPropertiesFormat_NetworkAcls interface (if implemented) to customize the conversion
+	var aclsAsAny any = acls
+	if augmentedAcls, ok := aclsAsAny.(augmentConversionForBastionHostPropertiesFormat_NetworkAcls); ok {
+		err := augmentedAcls.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.BastionHostPropertiesFormat_NetworkAcls_STATUS
 type BastionHostPropertiesFormat_NetworkAcls_STATUS struct {
 	IpRules     []IPRule_STATUS        `json:"ipRules,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls_STATUS populates our BastionHostPropertiesFormat_NetworkAcls_STATUS from the provided source BastionHostPropertiesFormat_NetworkAcls_STATUS
+func (acls *BastionHostPropertiesFormat_NetworkAcls_STATUS) AssignProperties_From_BastionHostPropertiesFormat_NetworkAcls_STATUS(source *v20250301s.BastionHostPropertiesFormat_NetworkAcls_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IpRules
+	if source.IpRules != nil {
+		ipRuleList := make([]IPRule_STATUS, len(source.IpRules))
+		for ipRuleIndex, ipRuleItem := range source.IpRules {
+			var ipRule IPRule_STATUS
+			err := ipRule.AssignProperties_From_IPRule_STATUS(&ipRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_IPRule_STATUS() to populate field IpRules")
+			}
+			ipRuleList[ipRuleIndex] = ipRule
+		}
+		acls.IpRules = ipRuleList
+	} else {
+		acls.IpRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		acls.PropertyBag = propertyBag
+	} else {
+		acls.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostPropertiesFormat_NetworkAcls_STATUS interface (if implemented) to customize the conversion
+	var aclsAsAny any = acls
+	if augmentedAcls, ok := aclsAsAny.(augmentConversionForBastionHostPropertiesFormat_NetworkAcls_STATUS); ok {
+		err := augmentedAcls.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls_STATUS populates the provided destination BastionHostPropertiesFormat_NetworkAcls_STATUS from our BastionHostPropertiesFormat_NetworkAcls_STATUS
+func (acls *BastionHostPropertiesFormat_NetworkAcls_STATUS) AssignProperties_To_BastionHostPropertiesFormat_NetworkAcls_STATUS(destination *v20250301s.BastionHostPropertiesFormat_NetworkAcls_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(acls.PropertyBag)
+
+	// IpRules
+	if acls.IpRules != nil {
+		ipRuleList := make([]v20250301s.IPRule_STATUS, len(acls.IpRules))
+		for ipRuleIndex, ipRuleItem := range acls.IpRules {
+			var ipRule v20250301s.IPRule_STATUS
+			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_IPRule_STATUS() to populate field IpRules")
+			}
+			ipRuleList[ipRuleIndex] = ipRule
+		}
+		destination.IpRules = ipRuleList
+	} else {
+		destination.IpRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBastionHostPropertiesFormat_NetworkAcls_STATUS interface (if implemented) to customize the conversion
+	var aclsAsAny any = acls
+	if augmentedAcls, ok := aclsAsAny.(augmentConversionForBastionHostPropertiesFormat_NetworkAcls_STATUS); ok {
+		err := augmentedAcls.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.Sku
@@ -316,6 +1678,62 @@ type Sku struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Sku populates our Sku from the provided source Sku
+func (sku *Sku) AssignProperties_From_Sku(source *v20250301s.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sku.PropertyBag = propertyBag
+	} else {
+		sku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Sku populates the provided destination Sku from our Sku
+func (sku *Sku) AssignProperties_To_Sku(destination *v20250301s.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Sku_STATUS
 // The sku of this Bastion Host.
 type Sku_STATUS struct {
@@ -323,39 +1741,25 @@ type Sku_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
-// Storage version of v1api20240301.SubResource
-// Reference to another subresource.
-type SubResource struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
-}
-
-// AssignProperties_From_SubResource populates our SubResource from the provided source SubResource
-func (resource *SubResource) AssignProperties_From_SubResource(source *storage.SubResource) error {
+// AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20250301s.Sku_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
-	// Reference
-	if source.Reference != nil {
-		reference := source.Reference.Copy()
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
-		resource.PropertyBag = propertyBag
+		sku.PropertyBag = propertyBag
 	} else {
-		resource.PropertyBag = nil
+		sku.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
-		err := augmentedResource.AssignPropertiesFrom(source)
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
 		if err != nil {
 			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
@@ -365,18 +1769,13 @@ func (resource *SubResource) AssignProperties_From_SubResource(source *storage.S
 	return nil
 }
 
-// AssignProperties_To_SubResource populates the provided destination SubResource from our SubResource
-func (resource *SubResource) AssignProperties_To_SubResource(destination *storage.SubResource) error {
+// AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20250301s.Sku_STATUS) error {
 	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
 
-	// Reference
-	if resource.Reference != nil {
-		reference := resource.Reference.Copy()
-		destination.Reference = &reference
-	} else {
-		destination.Reference = nil
-	}
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -385,10 +1784,10 @@ func (resource *SubResource) AssignProperties_To_SubResource(destination *storag
 		destination.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForSubResource interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource); ok {
-		err := augmentedResource.AssignPropertiesTo(destination)
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
 		if err != nil {
 			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
@@ -398,77 +1797,39 @@ func (resource *SubResource) AssignProperties_To_SubResource(destination *storag
 	return nil
 }
 
-// Storage version of v1api20240301.SubResource_STATUS
-// Reference to another subresource.
-type SubResource_STATUS struct {
-	Id          *string                `json:"id,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+type augmentConversionForBastionHostIPConfiguration interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHostIPConfiguration) error
+	AssignPropertiesTo(dst *v20250301s.BastionHostIPConfiguration) error
 }
 
-// AssignProperties_From_SubResource_STATUS populates our SubResource_STATUS from the provided source SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *storage.SubResource_STATUS) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// Id
-	resource.Id = genruntime.ClonePointerToString(source.Id)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		resource.PropertyBag = propertyBag
-	} else {
-		resource.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
-		err := augmentedResource.AssignPropertiesFrom(source)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
-		}
-	}
-
-	// No error
-	return nil
+type augmentConversionForBastionHostIPConfiguration_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHostIPConfiguration_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.BastionHostIPConfiguration_STATUS) error
 }
 
-// AssignProperties_To_SubResource_STATUS populates the provided destination SubResource_STATUS from our SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *storage.SubResource_STATUS) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
-
-	// Id
-	destination.Id = genruntime.ClonePointerToString(resource.Id)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForSubResource_STATUS interface (if implemented) to customize the conversion
-	var resourceAsAny any = resource
-	if augmentedResource, ok := resourceAsAny.(augmentConversionForSubResource_STATUS); ok {
-		err := augmentedResource.AssignPropertiesTo(destination)
-		if err != nil {
-			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
-		}
-	}
-
-	// No error
-	return nil
+type augmentConversionForBastionHostOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHostOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.BastionHostOperatorSpec) error
 }
 
-type augmentConversionForSubResource interface {
-	AssignPropertiesFrom(src *storage.SubResource) error
-	AssignPropertiesTo(dst *storage.SubResource) error
+type augmentConversionForBastionHostPropertiesFormat_NetworkAcls interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHostPropertiesFormat_NetworkAcls) error
+	AssignPropertiesTo(dst *v20250301s.BastionHostPropertiesFormat_NetworkAcls) error
 }
 
-type augmentConversionForSubResource_STATUS interface {
-	AssignPropertiesFrom(src *storage.SubResource_STATUS) error
-	AssignPropertiesTo(dst *storage.SubResource_STATUS) error
+type augmentConversionForBastionHostPropertiesFormat_NetworkAcls_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.BastionHostPropertiesFormat_NetworkAcls_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.BastionHostPropertiesFormat_NetworkAcls_STATUS) error
+}
+
+type augmentConversionForSku interface {
+	AssignPropertiesFrom(src *v20250301s.Sku) error
+	AssignPropertiesTo(dst *v20250301s.Sku) error
+}
+
+type augmentConversionForSku_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.Sku_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.Sku_STATUS) error
 }
 
 // Storage version of v1api20240301.IPRule
@@ -477,10 +1838,132 @@ type IPRule struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_IPRule populates our IPRule from the provided source IPRule
+func (rule *IPRule) AssignProperties_From_IPRule(source *v20250301s.IPRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AddressPrefix
+	rule.AddressPrefix = genruntime.ClonePointerToString(source.AddressPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForIPRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IPRule populates the provided destination IPRule from our IPRule
+func (rule *IPRule) AssignProperties_To_IPRule(destination *v20250301s.IPRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// AddressPrefix
+	destination.AddressPrefix = genruntime.ClonePointerToString(rule.AddressPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForIPRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.IPRule_STATUS
 type IPRule_STATUS struct {
 	AddressPrefix *string                `json:"addressPrefix,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_IPRule_STATUS populates our IPRule_STATUS from the provided source IPRule_STATUS
+func (rule *IPRule_STATUS) AssignProperties_From_IPRule_STATUS(source *v20250301s.IPRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AddressPrefix
+	rule.AddressPrefix = genruntime.ClonePointerToString(source.AddressPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForIPRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_IPRule_STATUS populates the provided destination IPRule_STATUS from our IPRule_STATUS
+func (rule *IPRule_STATUS) AssignProperties_To_IPRule_STATUS(destination *v20250301s.IPRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// AddressPrefix
+	destination.AddressPrefix = genruntime.ClonePointerToString(rule.AddressPrefix)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForIPRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForIPRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForIPRule interface {
+	AssignPropertiesFrom(src *v20250301s.IPRule) error
+	AssignPropertiesTo(dst *v20250301s.IPRule) error
+}
+
+type augmentConversionForIPRule_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.IPRule_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.IPRule_STATUS) error
 }
 
 func init() {

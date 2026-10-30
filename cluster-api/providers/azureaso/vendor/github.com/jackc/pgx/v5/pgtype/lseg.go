@@ -24,31 +24,32 @@ type Lseg struct {
 	Valid bool
 }
 
+// ScanLseg implements the [LsegScanner] interface.
 func (lseg *Lseg) ScanLseg(v Lseg) error {
 	*lseg = v
 	return nil
 }
 
+// LsegValue implements the [LsegValuer] interface.
 func (lseg Lseg) LsegValue() (Lseg, error) {
 	return lseg, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (lseg *Lseg) Scan(src any) error {
 	if src == nil {
 		*lseg = Lseg{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToLsegScanner{}.Scan([]byte(src), lseg)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (lseg Lseg) Value() (driver.Value, error) {
 	if !lseg.Valid {
 		return nil, nil
@@ -127,16 +128,13 @@ func (encodePlanLsegCodecText) Encode(value any, buf []byte) (newBuf []byte, err
 }
 
 func (LsegCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case LsegScanner:
+		if _, ok := target.(LsegScanner); ok {
 			return scanPlanBinaryLsegToLsegScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case LsegScanner:
+		if _, ok := target.(LsegScanner); ok {
 			return scanPlanTextAnyToLsegScanner{}
 		}
 	}
@@ -184,35 +182,34 @@ func (scanPlanTextAnyToLsegScanner) Scan(src []byte, dst any) error {
 		return fmt.Errorf("invalid length for lseg: %v", len(src))
 	}
 
-	str := string(src[2:])
+	// Expected format: [(x1,y1),(x2,y2)]
+	sp1, sp2, found := strings.Cut(string(src[2:len(src)-2]), "),(")
+	if !found {
+		return fmt.Errorf("invalid format for lseg")
+	}
 
-	var end int
-	end = strings.IndexByte(str, ',')
+	sx1, sy1, found := strings.Cut(sp1, ",")
+	if !found {
+		return fmt.Errorf("invalid format for lseg")
+	}
+	sx2, sy2, found := strings.Cut(sp2, ",")
+	if !found {
+		return fmt.Errorf("invalid format for lseg")
+	}
 
-	x1, err := strconv.ParseFloat(str[:end], 64)
+	x1, err := strconv.ParseFloat(sx1, 64)
 	if err != nil {
 		return err
 	}
-
-	str = str[end+1:]
-	end = strings.IndexByte(str, ')')
-
-	y1, err := strconv.ParseFloat(str[:end], 64)
+	y1, err := strconv.ParseFloat(sy1, 64)
 	if err != nil {
 		return err
 	}
-
-	str = str[end+3:]
-	end = strings.IndexByte(str, ',')
-
-	x2, err := strconv.ParseFloat(str[:end], 64)
+	x2, err := strconv.ParseFloat(sx2, 64)
 	if err != nil {
 		return err
 	}
-
-	str = str[end+1 : len(str)-2]
-
-	y2, err := strconv.ParseFloat(str, 64)
+	y2, err := strconv.ParseFloat(sy2, 64)
 	if err != nil {
 		return err
 	}

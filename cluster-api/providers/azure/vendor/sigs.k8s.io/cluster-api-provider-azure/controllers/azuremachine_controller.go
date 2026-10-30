@@ -24,10 +24,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"k8s.io/utils/ptr"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -114,7 +116,7 @@ func (amr *AzureMachineReconciler) SetupWithManager(ctx context.Context, mgr ctr
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
 			builder.WithPredicates(
-				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, amr.WatchFilterValue),
 			),
 		).
@@ -195,7 +197,7 @@ func (amr *AzureMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		CredentialCache: amr.CredentialCache,
 	})
 	if err != nil {
-		amr.Recorder.Eventf(azureCluster, corev1.EventTypeWarning, "Error creating the cluster scope", err.Error())
+		amr.Recorder.Event(azureCluster, corev1.EventTypeWarning, "Error creating the cluster scope", err.Error())
 		return reconcile.Result{}, err
 	}
 
@@ -207,7 +209,7 @@ func (amr *AzureMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		ClusterScope: clusterScope,
 	})
 	if err != nil {
-		amr.Recorder.Eventf(azureMachine, corev1.EventTypeWarning, "Error creating the machine scope", err.Error())
+		amr.Recorder.Event(azureMachine, corev1.EventTypeWarning, "Error creating the machine scope", err.Error())
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
 	}
 
@@ -254,17 +256,17 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 		}
 	}
 
-	// Make sure the Cluster Infrastructure is ready.
-	if !clusterScope.Cluster.Status.InfrastructureReady {
-		log.Info("Cluster infrastructure is not ready yet")
-		conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1.ConditionSeverityInfo, "")
+	// Make sure the Cluster Infrastructure is provisioned.
+	if !ptr.Deref(clusterScope.Cluster.Status.Initialization.InfrastructureProvisioned, false) {
+		log.Info("Cluster infrastructure is not provisioned yet")
+		v1beta1conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return reconcile.Result{}, nil
 	}
 
 	// Make sure bootstrap data is available and populated.
 	if machineScope.Machine.Spec.Bootstrap.DataSecretName == nil {
 		log.Info("Bootstrap data secret reference is not yet available")
-		conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, infrav1.WaitingForBootstrapDataReason, clusterv1.ConditionSeverityInfo, "")
+		v1beta1conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, infrav1.WaitingForBootstrapDataReason, clusterv1beta1.ConditionSeverityInfo, "")
 		return reconcile.Result{}, nil
 	}
 
@@ -274,7 +276,7 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 	err := machineScope.InitMachineCache(ctx)
 	if err != nil {
 		if errors.As(err, &reconcileError) && reconcileError.IsTerminal() {
-			amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, "SKUNotFound", errors.Wrap(err, "failed to initialize machine cache").Error())
+			amr.Recorder.Event(machineScope.AzureMachine, corev1.EventTypeWarning, "SKUNotFound", errors.Wrap(err, "failed to initialize machine cache").Error())
 			log.Error(err, "Failed to initialize machine cache")
 			machineScope.SetFailureReason(azure.InvalidConfiguration)
 			machineScope.SetFailureMessage(err)
@@ -285,7 +287,7 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 	}
 
 	// Mark the AzureMachine as failed if the identities are not ready.
-	cond := conditions.Get(machineScope.AzureMachine, infrav1.VMIdentitiesReadyCondition)
+	cond := v1beta1conditions.Get(machineScope.AzureMachine, infrav1.VMIdentitiesReadyCondition)
 	if cond != nil && cond.Status == corev1.ConditionFalse && cond.Reason == infrav1.UserAssignedIdentityMissingReason {
 		amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, infrav1.UserAssignedIdentityMissingReason, "VM is unhealthy")
 		machineScope.SetFailureReason(azure.UnsupportedChange)
@@ -302,7 +304,7 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 		// This means that a VM was created and managed by this controller, but is not present anymore.
 		// In this case, we mark it as failed and leave it to MHC for remediation
 		if errors.As(err, &azure.VMDeletedError{}) {
-			amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, "VMDeleted", errors.Wrap(err, "failed to reconcile AzureMachine").Error())
+			amr.Recorder.Event(machineScope.AzureMachine, corev1.EventTypeWarning, "VMDeleted", errors.Wrap(err, "failed to reconcile AzureMachine").Error())
 			machineScope.SetFailureReason(azure.UpdateError)
 			machineScope.SetFailureMessage(err)
 			machineScope.SetNotReady()
@@ -313,7 +315,7 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 		// Handle transient and terminal errors
 		if errors.As(err, &reconcileError) {
 			if reconcileError.IsTerminal() {
-				amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, "ReconcileError", errors.Wrapf(err, "failed to reconcile AzureMachine").Error())
+				amr.Recorder.Event(machineScope.AzureMachine, corev1.EventTypeWarning, "ReconcileError", errors.Wrapf(err, "failed to reconcile AzureMachine").Error())
 				log.Error(err, "failed to reconcile AzureMachine", "name", machineScope.Name())
 				machineScope.SetFailureReason(azure.CreateError)
 				machineScope.SetFailureMessage(err)
@@ -331,7 +333,7 @@ func (amr *AzureMachineReconciler) reconcileNormal(ctx context.Context, machineS
 				return reconcile.Result{RequeueAfter: reconcileError.RequeueAfter()}, nil
 			}
 		}
-		amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, "ReconcileError", errors.Wrapf(err, "failed to reconcile AzureMachine").Error())
+		amr.Recorder.Event(machineScope.AzureMachine, corev1.EventTypeWarning, "ReconcileError", errors.Wrapf(err, "failed to reconcile AzureMachine").Error())
 		return reconcile.Result{}, errors.Wrap(err, "failed to reconcile AzureMachine")
 	}
 
@@ -364,7 +366,7 @@ func (amr *AzureMachineReconciler) reconcileDelete(ctx context.Context, machineS
 	defer done()
 
 	log.Info("Handling deleted AzureMachine")
-	conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	v1beta1conditions.MarkFalse(machineScope.AzureMachine, infrav1.VMRunningCondition, clusterv1beta1.DeletingReason, clusterv1beta1.ConditionSeverityInfo, "")
 	if err := machineScope.PatchObject(ctx); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -390,7 +392,7 @@ func (amr *AzureMachineReconciler) reconcileDelete(ctx context.Context, machineS
 				}
 			}
 
-			amr.Recorder.Eventf(machineScope.AzureMachine, corev1.EventTypeWarning, "Error deleting AzureMachine", errors.Wrapf(err, "error deleting AzureMachine %s/%s", machineScope.Namespace(), machineScope.Name()).Error())
+			amr.Recorder.Event(machineScope.AzureMachine, corev1.EventTypeWarning, "Error deleting AzureMachine", errors.Wrapf(err, "error deleting AzureMachine %s/%s", machineScope.Namespace(), machineScope.Name()).Error())
 			return reconcile.Result{}, errors.Wrapf(err, "error deleting AzureMachine %s/%s", machineScope.Namespace(), machineScope.Name())
 		}
 	} else {

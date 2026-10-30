@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/tags"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/virtualmachines"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/vmextensions"
+	apiinternal "sigs.k8s.io/cluster-api-provider-azure/internal/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -118,7 +119,7 @@ func (s *azureMachineService) reconcile(ctx context.Context) error {
 	defer done()
 
 	// Ensure that the deprecated networking field values have been migrated to the new NetworkInterfaces field.
-	s.scope.AzureMachine.Spec.SetNetworkInterfacesDefaults()
+	apiinternal.SetDefaultAzureMachineSpecNetworkInterfaces(&s.scope.AzureMachine.Spec)
 
 	if err := s.scope.SetSubnetName(); err != nil {
 		return errors.Wrap(err, "failed defaulting subnet name")

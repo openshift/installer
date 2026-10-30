@@ -116,7 +116,13 @@ func (credential *FederatedIdentityCredential) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (credential *FederatedIdentityCredential) createValidations() []func(ctx context.Context, obj *v20220131p.FederatedIdentityCredential) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220131p.FederatedIdentityCredential) (admission.Warnings, error){credential.validateResourceReferences, credential.validateOwnerReference, credential.validateSecretDestinations, credential.validateConfigMapDestinations, credential.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20220131p.FederatedIdentityCredential) (admission.Warnings, error){
+		credential.validateResourceReferences,
+		credential.validateOwnerReference,
+		credential.validateSecretDestinations,
+		credential.validateConfigMapDestinations,
+		credential.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

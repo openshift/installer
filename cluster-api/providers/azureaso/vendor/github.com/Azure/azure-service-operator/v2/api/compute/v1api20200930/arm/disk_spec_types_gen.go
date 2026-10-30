@@ -51,7 +51,9 @@ type DiskProperties struct {
 
 	// CreationData: Disk source information. CreationData information cannot be changed after the disk has been created.
 	CreationData *CreationData `json:"creationData,omitempty"`
-	DiskAccessId *string       `json:"diskAccessId,omitempty"`
+
+	// DiskAccessId: ARM id of the DiskAccess resource for using private endpoints on disks.
+	DiskAccessId *string `json:"diskAccessId,omitempty"`
 
 	// DiskIOPSReadOnly: The total number of IOPS that will be allowed across all VMs mounting the shared disk as ReadOnly. One
 	// operation can transfer between 4k and 256k bytes.
@@ -131,8 +133,10 @@ type CreationData struct {
 	ImageReference *ImageDiskReference `json:"imageReference,omitempty"`
 
 	// LogicalSectorSize: Logical sector size in bytes for Ultra disks. Supported values are 512 ad 4096. 4096 is the default.
-	LogicalSectorSize *int    `json:"logicalSectorSize,omitempty"`
-	SourceResourceId  *string `json:"sourceResourceId,omitempty"`
+	LogicalSectorSize *int `json:"logicalSectorSize,omitempty"`
+
+	// SourceResourceId: If createOption is Copy, this is the ARM id of the source snapshot or disk.
+	SourceResourceId *string `json:"sourceResourceId,omitempty"`
 
 	// SourceUri: If createOption is Import, this is the URI of a blob to be imported into a managed disk.
 	SourceUri *string `json:"sourceUri,omitempty"`
@@ -195,6 +199,7 @@ var diskSku_Name_Values = map[string]DiskSku_Name{
 
 // Encryption at rest settings for disk or snapshot
 type Encryption struct {
+	// DiskEncryptionSetId: ResourceId of the disk encryption set to use for enabling encryption at rest.
 	DiskEncryptionSetId *string `json:"diskEncryptionSetId,omitempty"`
 
 	// Type: The type of key used to encrypt the data of the disk.
@@ -313,6 +318,7 @@ var encryptionType_Values = map[string]EncryptionType{
 
 // The source image used for creating the disk.
 type ImageDiskReference struct {
+	// Id: A relative uri containing either a Platform Image Repository or user image reference.
 	Id *string `json:"id,omitempty"`
 
 	// Lun: If the disk is created from an image's data disk, this is an index that indicates which of the data disks in the
@@ -341,5 +347,6 @@ type KeyVaultAndSecretReference struct {
 // The vault id is an Azure Resource Manager Resource id in the form
 // /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
 type SourceVault struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 }

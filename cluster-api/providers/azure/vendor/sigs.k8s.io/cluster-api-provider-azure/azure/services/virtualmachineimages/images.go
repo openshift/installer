@@ -19,7 +19,6 @@ package virtualmachineimages
 import (
 	"context"
 	"regexp"
-	"strings"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
@@ -106,7 +105,8 @@ func (s *Service) GetDefaultWindowsImage(ctx context.Context, _, k8sVersion, run
 		if len(match) != 2 {
 			return nil, errors.Errorf("unsupported osAndVersion %s", osAndVersion)
 		}
-		imageName = strings.Replace(imageName, "2019", match[1], 1)
+		// Substitute the requested Windows Server year into the default image name.
+		imageName = regexp.MustCompile(`\d{4}`).ReplaceAllString(imageName, match[1])
 	}
 
 	// Use the Azure Marketplace for specific older versions, to keep "clusterctl upgrade" from rolling new machines.

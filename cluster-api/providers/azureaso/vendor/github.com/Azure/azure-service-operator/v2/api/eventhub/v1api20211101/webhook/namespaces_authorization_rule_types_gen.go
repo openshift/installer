@@ -116,7 +116,12 @@ func (rule *NamespacesAuthorizationRule) ValidateUpdate(ctx context.Context, old
 
 // createValidations validates the creation of the resource
 func (rule *NamespacesAuthorizationRule) createValidations() []func(ctx context.Context, obj *v20211101.NamespacesAuthorizationRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.NamespacesAuthorizationRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.NamespacesAuthorizationRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

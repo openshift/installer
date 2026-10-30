@@ -31,6 +31,23 @@ type Getter interface {
 	GetFutures() infrav1.Futures
 }
 
+// GetByServiceAndType returns the future for the specified service and future type, if the future does not exists,
+// it returns nil.
+func GetByServiceAndType(from Getter, service, futureType string) infrav1.Futures {
+	futures := from.GetFutures()
+	if futures == nil {
+		return nil
+	}
+
+	var result infrav1.Futures
+	for _, f := range futures {
+		if f.ServiceName == service && f.Type == futureType {
+			result = append(result, f)
+		}
+	}
+	return result
+}
+
 // Get returns the future with the given name, if the future does not exists,
 // it returns nil.
 func Get(from Getter, name, service, futureType string) *infrav1.Future {

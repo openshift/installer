@@ -147,7 +147,8 @@ func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved
 				serverFQDN,
 				mysqlutil.SystemDatabase,
 				mysqlutil.ServerPort,
-				adminUser)
+				adminUser,
+			)
 		}
 
 		return db, nil

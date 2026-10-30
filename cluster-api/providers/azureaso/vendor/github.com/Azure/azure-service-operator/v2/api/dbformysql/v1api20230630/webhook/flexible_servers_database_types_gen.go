@@ -116,7 +116,12 @@ func (database *FlexibleServersDatabase) ValidateUpdate(ctx context.Context, old
 
 // createValidations validates the creation of the resource
 func (database *FlexibleServersDatabase) createValidations() []func(ctx context.Context, obj *v20230630.FlexibleServersDatabase) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230630.FlexibleServersDatabase) (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230630.FlexibleServersDatabase) (admission.Warnings, error){
+		database.validateResourceReferences,
+		database.validateOwnerReference,
+		database.validateSecretDestinations,
+		database.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

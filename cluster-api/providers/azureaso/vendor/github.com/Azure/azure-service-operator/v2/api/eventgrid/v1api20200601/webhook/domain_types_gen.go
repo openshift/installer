@@ -116,7 +116,12 @@ func (domain *Domain) ValidateUpdate(ctx context.Context, oldResource runtime.Ob
 
 // createValidations validates the creation of the resource
 func (domain *Domain) createValidations() []func(ctx context.Context, obj *v20200601.Domain) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200601.Domain) (admission.Warnings, error){domain.validateResourceReferences, domain.validateOwnerReference, domain.validateSecretDestinations, domain.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200601.Domain) (admission.Warnings, error){
+		domain.validateResourceReferences,
+		domain.validateOwnerReference,
+		domain.validateSecretDestinations,
+		domain.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

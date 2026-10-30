@@ -87,6 +87,9 @@ type RedisCreateProperties struct {
 	// StaticIP: Static IP address. Optionally, may be specified when deploying a Redis cache inside an existing Azure Virtual
 	// Network; auto assigned by default.
 	StaticIP *string `json:"staticIP,omitempty"`
+
+	// SubnetId: The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format:
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
 	SubnetId *string `json:"subnetId,omitempty"`
 
 	// TenantSettings: A dictionary of tenant settings

@@ -103,7 +103,10 @@ type ApiManagementServiceProperties struct {
 
 	// NotificationSenderEmail: Email address from which the notification will be sent.
 	NotificationSenderEmail *string `json:"notificationSenderEmail,omitempty"`
-	PublicIpAddressId       *string `json:"publicIpAddressId,omitempty"`
+
+	// PublicIpAddressId: Public Standard SKU IP V4 based IP address to be associated with Virtual Network deployed service in
+	// the region. Supported only for Developer and Premium SKU being deployed in Virtual Network.
+	PublicIpAddressId *string `json:"publicIpAddressId,omitempty"`
 
 	// PublicNetworkAccess: Whether or not public endpoint access is allowed for this API Management service.  Value is
 	// optional but if passed in, must be 'Enabled' or 'Disabled'. If 'Disabled', private endpoints are the exclusive access
@@ -149,8 +152,11 @@ type AdditionalLocation struct {
 	Location *string `json:"location,omitempty"`
 
 	// NatGatewayState: Property can be used to enable NAT Gateway for this API Management service.
-	NatGatewayState   *AdditionalLocation_NatGatewayState `json:"natGatewayState,omitempty"`
-	PublicIpAddressId *string                             `json:"publicIpAddressId,omitempty"`
+	NatGatewayState *AdditionalLocation_NatGatewayState `json:"natGatewayState,omitempty"`
+
+	// PublicIpAddressId: Public Standard SKU IP V4 based IP address to be associated with Virtual Network deployed service in
+	// the location. Supported only for Premium SKU being deployed in Virtual Network.
+	PublicIpAddressId *string `json:"publicIpAddressId,omitempty"`
 
 	// Sku: SKU properties of the API Management service.
 	Sku *ApiManagementServiceSkuProperties `json:"sku,omitempty"`
@@ -316,6 +322,7 @@ type UserAssignedIdentityDetails struct {
 
 // Configuration of a virtual network to which API Management service is deployed.
 type VirtualNetworkConfiguration struct {
+	// SubnetResourceId: The full resource ID of a subnet in a virtual network to deploy the API Management service in.
 	SubnetResourceId *string `json:"subnetResourceId,omitempty"`
 }
 

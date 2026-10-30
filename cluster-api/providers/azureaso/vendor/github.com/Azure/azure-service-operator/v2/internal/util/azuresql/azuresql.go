@@ -37,7 +37,8 @@ func ConnectToDB(
 		database,
 		user,
 		password,
-		port)
+		port,
+	)
 
 	db, err := sql.Open(driverName, connString)
 	if err != nil {
@@ -93,7 +94,8 @@ func CreateOrUpdateUser(ctx context.Context, db *sql.DB, username string, passwo
 		return eris.Wrap(err, "problem found with username")
 	}
 	if err := findBadChars(password); err != nil {
-		return eris.Wrap(err, "problem found with password")
+		// Don't wrap the original error as it contains the raw password string
+		return fmt.Errorf("problem found with password: potentially dangerous character sequence found")
 	}
 
 	tsql := `

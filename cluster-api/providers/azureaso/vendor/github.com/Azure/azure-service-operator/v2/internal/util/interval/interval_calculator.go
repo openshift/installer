@@ -105,7 +105,6 @@ func (i *calculator) NextInterval(req ctrl.Request, result ctrl.Result, err erro
 	isRequeueing := result.Requeue || result.RequeueAfter > time.Duration(0)
 	if hasRequeueDelayOverride && isRequeueing {
 		result.RequeueAfter = i.requeueDelayOverride
-		result.Requeue = true
 	}
 	return result, nil
 }

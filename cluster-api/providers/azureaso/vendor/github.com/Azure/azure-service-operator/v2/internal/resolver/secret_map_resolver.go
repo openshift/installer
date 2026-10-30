@@ -68,7 +68,8 @@ func (r *kubeSecretMapResolver) ResolveSecretMapReference(
 				err,
 				"couldn't resolve secret collection %s/%s",
 				ref.Namespace,
-				ref.Name)
+				ref.Name,
+			)
 		}
 
 		return nil, eris.Wrapf(err, "couldn't resolve secret collection %s", ref.String())
