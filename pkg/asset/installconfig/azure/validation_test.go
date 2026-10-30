@@ -201,6 +201,21 @@ var (
 	securityTypeTrustedLaunchCompute = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
 	}
+	validConfidentialVMControlPlaneInstanceTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_DC8ads_v5"
+	}
+	validConfidentialVMComputeInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.InstanceType = "Standard_DC8ads_v5"
+	}
+	nonConfidentialVMControlPlaneInstanceTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.InstanceType = "Standard_D4s_v5"
+	}
+	nonConfidentialVMComputeInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4s_v5"
+	}
+	nonConfidentialVMDefaultInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4s_v5"
+	}
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -808,6 +823,21 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Unsupported TrustedLaunch security type in default machine platform",
 			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchDefaultMachinePlatform},
 			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_D4ps_v5]`,
+		},
+		{
+			name:     "Supported ConfidentialVM security type in control plane does not leak into compute",
+			edits:    editFunctions{validConfidentialVMControlPlaneInstanceTypes, nonConfidentialVMComputeInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported ConfidentialVM security type in control plane does not leak into the default machine platform check",
+			edits:    editFunctions{validConfidentialVMControlPlaneInstanceTypes, nonConfidentialVMComputeInstanceTypes, nonConfidentialVMDefaultInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported ConfidentialVM security type in compute does not leak into the default machine platform check",
+			edits:    editFunctions{nonConfidentialVMControlPlaneInstanceTypes, validConfidentialVMComputeInstanceTypes, nonConfidentialVMDefaultInstanceTypes, securityTypeConfidentialVMCompute},
+			errorMsg: "",
 		},
 		{
 			name:     "BootDiagnostics type user managed and valid storage account values",
