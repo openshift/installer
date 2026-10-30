@@ -380,6 +380,56 @@ func TestValidate(t *testing.T) {
 			instanceTypes: validInstanceTypes(),
 		},
 		{
+			name: "valid instance type with support for nested virtualization",
+			installConfig: icBuild.build(
+				icBuild.withMachineManagementAPI(types.ClusterAPI, 0),
+				icBuild.withInstanceType("c8i.xlarge", "c8i.xlarge", "c8i.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "valid instance type with support for nested virtualization disabled",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("c8i.xlarge", "c8i.xlarge", "c8i.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "valid instance type without nested virtualization support is accepted when disabled",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "invalid instance type without support for nested virtualization",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+				}, 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `^\Qcompute[0].platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support Nested Virtualization\E$`,
+		},
+		{
 			name:          "valid dual-stack with IPv6 supporting instance types",
 			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
 			availRegions:  validAvailRegions(),
@@ -2549,7 +2599,16 @@ func validInstanceTypes() map[string]InstanceType {
 			MemInMiB:     16384,
 			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
-			Features:     []string{"amd-sev-snp"},
+			Features:     []string{string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp)},
+		},
+		"c8i.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
+			Hypervisor:   string(ec2types.InstanceTypeHypervisorNitro),
+			Features: []string{
+				string(ec2types.SupportedAdditionalProcessorFeatureNestedVirtualization),
+			},
 		},
 	}
 }
@@ -2595,6 +2654,7 @@ func (icBuild icBuildForAWS) build(opts ...icOption) *types.InstallConfig {
 		},
 		Compute: []types.MachinePool{{
 			Name:         types.MachinePoolComputeRoleName,
+			Management:   types.MachineAPI,
 			Architecture: types.ArchitectureAMD64,
 			Replicas:     ptr.To[int64](3),
 			Platform: types.MachinePoolPlatform{
@@ -2850,6 +2910,12 @@ func (icBuild icBuildForAWS) withDefaultMachinePlatformAMI(amiID string) icOptio
 func (icBuild icBuildForAWS) withControlPlaneCPUOptions(cpuOptions *aws.CPUOptions) icOption {
 	return func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.AWS.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withMachineManagementAPI(managementAPI types.MachineManagementAPI, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Compute[index].Management = managementAPI
 	}
 }
 
