@@ -161,9 +161,7 @@ func bgpVIPConfigFromInstallConfig(ic *types.InstallConfig) (*mcfgv1alpha1.BGPVI
 }
 
 // BGPVIPConfigCR generates the BGPVIPConfig custom resource and the peer
-// password Secrets for BGP-based VIP management. It is emitted alongside the
-// bgp-vip-config ConfigMap (BGPVIPConfigMap) while the operators move from
-// the ConfigMap to the CR; the ConfigMap goes away once they have.
+// password Secrets for BGP-based VIP management.
 type BGPVIPConfigCR struct {
 	Config   *mcfgv1alpha1.BGPVIPConfig
 	FileList []*asset.File

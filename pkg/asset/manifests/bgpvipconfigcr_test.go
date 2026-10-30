@@ -158,6 +158,34 @@ func TestBGPVIPConfigOverridePeerSecretNaming(t *testing.T) {
 	assert.Equal(t, "bgp-vip-peer-worker-1-fd2e-1", got.Spec.HostOverrides[1].Peers[0].PasswordSecret.Name)
 }
 
+// bgpInstallConfig is a minimal bare-metal install config with BGP-based
+// VIP management enabled: one default peer, one host override, no
+// passwords.
+func bgpInstallConfig() *installconfig.InstallConfig {
+	return installconfig.MakeAsset(&types.InstallConfig{
+		Platform: types.Platform{
+			BareMetal: &baremetal.Platform{
+				APIVIPs:     []string{"192.168.111.5"},
+				IngressVIPs: []string{"192.168.111.4"},
+				BGPVIPConfig: &baremetal.BGPVIPConfig{
+					LocalASN: 64512,
+					Peers: []baremetal.BGPPeerConfig{
+						{PeerAddress: "192.168.111.1", PeerASN: 64513},
+					},
+				},
+				Hosts: []*baremetal.Host{
+					{
+						Name: "master-0",
+						BGPPeers: []baremetal.BGPPeerConfig{
+							{PeerAddress: "192.168.1.1", PeerASN: 64513},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
 // Without passwords the asset renders exactly one file: the CR, with no
 // passwordSecret key (omitzero) and no VIPs.
 func TestBGPVIPConfigCRAssetRendersCR(t *testing.T) {
