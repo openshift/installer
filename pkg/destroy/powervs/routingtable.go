@@ -119,14 +119,18 @@ func (o *ClusterUninstaller) deleteRoutingTable(item cloudResource) error {
 
 	vpcID := item.status
 
-	// Confirm it still exists.
+	// Confirm it still exists. Only a 404 means it is already gone; any other
+	// error (429, 5xx, auth, context) must be returned so the caller retries.
 	getOptions := o.vpcSvc.NewGetVPCRoutingTableOptions(vpcID, item.id)
-	_, _, err := o.vpcSvc.GetVPCRoutingTableWithContext(ctx, getOptions)
+	_, getResponse, err := o.vpcSvc.GetVPCRoutingTableWithContext(ctx, getOptions)
 	if err != nil {
-		o.Logger.Debugf("deleteRoutingTable: routing table %q no longer exists", item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted VPC Routing Table %q", item.name)
-		return nil
+		if getResponse != nil && getResponse.StatusCode == gohttp.StatusNotFound {
+			o.Logger.Debugf("deleteRoutingTable: routing table %q no longer exists", item.name)
+			o.deletePendingItems(item.typeName, []cloudResource{item})
+			o.Logger.Infof("Deleted VPC Routing Table %q", item.name)
+			return nil
+		}
+		return fmt.Errorf("failed to get routing table %s: err = %w, response = %v", item.name, err, getResponse)
 	}
 
 	o.Logger.Debugf("Deleting VPC routing table %q (%s) in VPC %s", item.name, item.id, vpcID)
@@ -174,16 +178,20 @@ func (o *ClusterUninstaller) destroyRoutingTables() error {
 			Cap:      leftInContext(ctx),
 			Steps:    math.MaxInt32,
 		}
+		// Errors are logged and retried until the context deadline: returning a
+		// non-nil error from the condition would abort the backoff immediately.
+		var lastErr error
 		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 			err2 := o.deleteRoutingTable(item)
 			if err2 == nil {
 				return true, nil
 			}
+			lastErr = err2
 			o.errorTracker.suppressWarning(item.key, err2, o.Logger)
-			return false, err2
+			return false, nil
 		})
 		if err != nil {
-			o.Logger.Fatal("destroyRoutingTables: ExponentialBackoffWithContext (destroy) returns ", err)
+			o.Logger.Fatalf("destroyRoutingTables: ExponentialBackoffWithContext (destroy) returns %v (last error: %v)", err, lastErr)
 		}
 	}
 
@@ -207,10 +215,13 @@ func (o *ClusterUninstaller) destroyRoutingTables() error {
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32,
 	}
+	var lastListErr error
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 		secondPassList, err2 := o.listRoutingTables()
 		if err2 != nil {
-			return false, err2
+			lastListErr = err2
+			o.errorTracker.suppressWarning(routingTableTypeName, err2, o.Logger)
+			return false, nil
 		}
 		if len(secondPassList) == 0 {
 			return true, nil
@@ -221,7 +232,7 @@ func (o *ClusterUninstaller) destroyRoutingTables() error {
 		return false, nil
 	})
 	if err != nil {
-		o.Logger.Fatal("destroyRoutingTables: ExponentialBackoffWithContext (list) returns ", err)
+		o.Logger.Fatalf("destroyRoutingTables: ExponentialBackoffWithContext (list) returns %v (last error: %v)", err, lastListErr)
 	}
 
 	return nil
