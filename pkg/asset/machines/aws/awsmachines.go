@@ -99,6 +99,15 @@ func GenerateCAPIMachineSpec(in *CAPIMachineSpecInput) capa.AWSMachineSpec {
 		if in.CPUOptions.ConfidentialCompute != nil {
 			cpuOptions.ConfidentialCompute = capa.AWSConfidentialComputePolicy(*in.CPUOptions.ConfidentialCompute)
 		}
+
+		if in.CPUOptions.NestedVirtualization != nil {
+			switch *in.CPUOptions.NestedVirtualization {
+			case awstypes.NestedVirtualizationEnabled:
+				cpuOptions.NestedVirtualization = capa.NestedVirtualizationPolicyEnabled
+			case awstypes.NestedVirtualizationDisabled:
+				cpuOptions.NestedVirtualization = capa.NestedVirtualizationPolicyDisabled
+			}
+		}
 		spec.CPUOptions = cpuOptions
 	}
 
