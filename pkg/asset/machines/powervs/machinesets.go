@@ -24,7 +24,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
-	var network string
+	network := networkName(clusterID, platform)
 	// When osImage is specified in the install-config, the image is imported into the
 	// workspace; otherwise a stock catalog image derived from osImageStream is used.
 	image := ImageName(clusterID, config)

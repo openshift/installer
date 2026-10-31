@@ -8479,6 +8479,24 @@ spec:
                           type: string
                         type: array
                     type: object
+                  networkType:
+                    description: |-
+                      NetworkType selects the PowerVS network provisioning strategy.
+                      Allowed values are "DHCPSubnet" (default) and "DHCPServer" (legacy).
+
+                      DHCPSubnet creates a plain PowerVS network with DHCP natively enabled and is the
+                      recommended mode. It enables the full new networking model: route-mode Network Load
+                      Balancer, VPC Routing Table advertising 0.0.0.0/0, and a VPC Public Gateway.
+
+                      DHCPServer creates a dedicated DHCP Service VM (legacy). When this mode is selected
+                      the route-mode NLB, Routing Table, and Public Gateway are suppressed because the
+                      DHCP Server manages its own SNAT and egress.
+
+                      Leave unset to use DHCPSubnet.
+                    enum:
+                    - DHCPSubnet
+                    - DHCPServer
+                    type: string
                   osImage:
                     description: |-
                       OSImage is the IBM Cloud Object Storage URL of a Power VS image to import into the

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -23,22 +24,21 @@ import (
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	var (
-		manifests            []*asset.RuntimeFile
-		dhcpSubnet           string
-		service              capibm.ResourceIdentifier
-		workspaceSource      capibm.WorkspaceSource
-		vpcNameOrID          string
-		vpcStruct            *vpcv1.VPC
-		vpcRegion            string
-		cosName              string
-		cosRegion            string
-		bucketName           string
-		transitGatewayName   string
-		client               *powervsconfig.Client
-		vpcSource            capibm.VPCSource
-		transitGatewaySource capibm.TransitGatewaySource
-		err                  error
-		powerVSCluster       *capibm.IBMPowerVSCluster
+		manifests          []*asset.RuntimeFile
+		network            string
+		dhcpSubnetCIDR     string
+		service            capibm.ResourceIdentifier
+		workspaceSource    capibm.WorkspaceSource
+		vpcNameOrID        string
+		vpcStruct          *vpcv1.VPC
+		vpcRegion          string
+		cosName            string
+		cosRegion          string
+		bucketName         string
+		transitGatewayName string
+		client             *powervsconfig.Client
+		err                error
+		powerVSCluster     *capibm.IBMPowerVSCluster
 	)
 
 	defer func() {
@@ -58,13 +58,16 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	manifests = []*asset.RuntimeFile{}
 
+	network = fmt.Sprintf("%s-network", clusterID.InfraID)
+
 	logrus.Debugf("GenerateClusterAssets: len MachineNetwork = %d", len(installConfig.Config.Networking.MachineNetwork))
-	dhcpSubnet = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	dhcpSubnetCIDR = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 	if numNetworks := len(installConfig.Config.Networking.MachineNetwork); numNetworks > 1 {
 		logrus.Infof("Warning: %d machineNetwork found! Ignoring all except the first.", numNetworks)
 	}
-	logrus.Debugf("GenerateClusterAssets: dhcpSubnet = %s", dhcpSubnet)
+	logrus.Debugf("GenerateClusterAssets: dhcpSubnetCIDR = %s", dhcpSubnetCIDR)
 
+	// Build v1beta3 WorkspaceSource
 	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
 		service = capibm.ResourceIdentifier{Name: serviceName}
@@ -97,78 +100,94 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	// Build v1beta3 VPCSource
 	// The VPC specified can be either:
 	// 1) blank - CAPI will create one for us.
 	// 2) an id of an existing VPC.
 	// 3) a name of an existing VPC.
 	vpcNameOrID = installConfig.Config.Platform.PowerVS.VPC
-	vpcSource = capibm.VPCSource{Region: vpcRegion}
-
+	var vpcSource capibm.VPCSource
 	if vpcStruct, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion); err == nil {
+		// #2 — ID
 		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC ID is valid")
-		vpcSource.Type = capibm.SourceTypeReference
-		vpcSource.Reference = capibm.ResourceIdentifier{ID: vpcNameOrID}
+		vpcSource = capibm.VPCSource{
+			Type:   capibm.SourceTypeReference,
+			Region: vpcRegion,
+			Reference: capibm.ResourceIdentifier{
+				ID: installConfig.Config.Platform.PowerVS.VPC,
+			},
+		}
 	} else if vpcStruct, err = client.GetVPCByName(ctx, vpcNameOrID); err == nil {
+		// #3 — Name
 		logrus.Debugf("GenerateClusterAssets: PowerVS.VPC Name is valid")
-		vpcSource.Type = capibm.SourceTypeReference
-		vpcSource.Reference = capibm.ResourceIdentifier{Name: vpcNameOrID}
+		vpcSource = capibm.VPCSource{
+			Type:   capibm.SourceTypeReference,
+			Region: vpcRegion,
+			Reference: capibm.ResourceIdentifier{
+				Name: vpcNameOrID,
+			},
+		}
 	} else {
 		if vpcNameOrID == "" {
+			// #1 — provision
 			logrus.Debugf("GenerateClusterAssets: PowerVS.VPC is empty")
 			vpcNameOrID = fmt.Sprintf("vpc-%s", clusterID.InfraID)
 			vpcStruct = nil
-			vpcSource.Type = capibm.SourceTypeProvision
-			vpcSource.Provision = capibm.VPCProvision{Name: vpcNameOrID}
+			vpcSource = capibm.VPCSource{
+				Type:   capibm.SourceTypeProvision,
+				Region: vpcRegion,
+				Provision: capibm.VPCProvision{
+					Name: vpcNameOrID,
+				},
+			}
 		} else {
 			return nil, fmt.Errorf("generateClusterAssets could not handle vpc")
 		}
 	}
+
+	// Build VPC Security Groups (unchanged — uses powervs/v1beta2 compatible type via getVPCSecurityGroups)
 	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID)
+
+	// Build v1beta3 TransitGatewaySource
 	// The Transit Gateway can be either:
 	// 1) blank - CAPI will create one for us.
 	// 2) an id of an existing TG.
 	// 3) a name of an existing TG.
 	transitGatewayName = installConfig.Config.Platform.PowerVS.TransitGateway
-	transitGatewaySource = capibm.TransitGatewaySource{}
-
+	var tgSource capibm.TransitGatewaySource
 	if err = client.TransitGatewayIDValid(ctx, transitGatewayName); err == nil {
 		logrus.Debugf("GenerateClusterAssets: TG ID is valid")
-		transitGatewaySource.Type = capibm.SourceTypeReference
-		transitGatewaySource.Reference = capibm.ResourceIdentifier{
-			ID: transitGatewayName,
-		}
-		transitGatewaySource.VPCConnection = capibm.TransitGatewayConnectionSource{
-			Type: capibm.SourceTypeProvision,
-		}
-		transitGatewaySource.PowerVSConnection = capibm.TransitGatewayConnectionSource{
-			Type: capibm.SourceTypeProvision,
-		}
-	} else if transitGatewayName == "" {
-		logrus.Debugf("GenerateClusterAssets: PowerVS.TransitGateway is empty")
-		transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
-		transitGatewaySource.Type = capibm.SourceTypeProvision
-		transitGatewaySource.Provision = capibm.TransitGatewayProvision{
-			Name: transitGatewayName,
-		}
-		transitGatewaySource.VPCConnection = capibm.TransitGatewayConnectionSource{
-			Type: capibm.SourceTypeProvision,
-		}
-		transitGatewaySource.PowerVSConnection = capibm.TransitGatewayConnectionSource{
-			Type: capibm.SourceTypeProvision,
+		tgSource = capibm.TransitGatewaySource{
+			Type: capibm.SourceTypeReference,
+			Reference: capibm.ResourceIdentifier{
+				ID: installConfig.Config.Platform.PowerVS.TransitGateway,
+			},
+			VPCConnection: capibm.TransitGatewayConnectionSource{
+				Type: capibm.SourceTypeProvision,
+			},
+			PowerVSConnection: capibm.TransitGatewayConnectionSource{
+				Type: capibm.SourceTypeProvision,
+			},
 		}
 	} else {
-		logrus.Debugf("GenerateClusterAssets: TG name is being used")
-		transitGatewaySource.Type = capibm.SourceTypeReference
-		transitGatewaySource.Reference = capibm.ResourceIdentifier{
-			Name: transitGatewayName,
+		if transitGatewayName == "" {
+			logrus.Debugf("GenerateClusterAssets: PowerVS.TransitGateway is empty")
+			transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
 		}
-		transitGatewaySource.VPCConnection = capibm.TransitGatewayConnectionSource{
+		tgSource = capibm.TransitGatewaySource{
 			Type: capibm.SourceTypeProvision,
-		}
-		transitGatewaySource.PowerVSConnection = capibm.TransitGatewayConnectionSource{
-			Type: capibm.SourceTypeProvision,
+			Provision: capibm.TransitGatewayProvision{
+				Name: transitGatewayName,
+			},
+			VPCConnection: capibm.TransitGatewayConnectionSource{
+				Type: capibm.SourceTypeProvision,
+			},
+			PowerVSConnection: capibm.TransitGatewayConnectionSource{
+				Type: capibm.SourceTypeProvision,
+			},
 		}
 	}
+
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
 
 	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
@@ -177,14 +196,119 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	bucketName = fmt.Sprintf("%s-bootstrap-ign", clusterID.InfraID)
 
-	vpcSubnets := make([]capibm.VPCSubnetSource, 0)
-	if vpcStruct == nil {
-		vpcSubnets = append(vpcSubnets, capibm.VPCSubnetSource{
+	cosSource := capibm.COSInstanceSource{
+		Type:         capibm.SourceTypeProvision,
+		BucketName:   bucketName,
+		BucketRegion: cosRegion,
+		Provision: capibm.COSInstanceProvision{
+			Name: cosName,
+		},
+	}
+
+	// useDHCPServer is true when the user has explicitly requested the legacy DHCPServer mode.
+	// Default (empty string) means DHCPSubnet.
+	useDHCPServer := installConfig.Config.Platform.PowerVS.NetworkType == powervstypes.NetworkTypeDHCPServer
+
+	// Build v1beta3 NetworkSource.
+	//
+	// DHCPSubnet (default): creates a plain PowerVS network with DHCP natively enabled.
+	// No separate DHCP server VM is created. Enables the full new networking model.
+	//
+	// DHCPServer (legacy): creates a dedicated DHCP Service VM. The DHCP Server handles its
+	// own SNAT/egress so the route-mode NLB, Routing Table, and Public Gateway are omitted.
+	var networkSource capibm.NetworkSource
+	if useDHCPServer {
+		networkSource = capibm.NetworkSource{
 			Type: capibm.SourceTypeProvision,
-			Provision: capibm.VPCSubnetProvision{
-				Name: fmt.Sprintf("%s-vpcsubnet", clusterID.InfraID),
+			Provision: capibm.NetworkProvisionConfig{
+				Type: capibm.NetworkProvisionTypeDHCPServer,
+				DHCPServer: capibm.DHCPServer{
+					Name: network,
+					CIDR: dhcpSubnetCIDR,
+					Snat: capibm.DHCPSnatPolicyEnabled,
+				},
 			},
-		})
+		}
+	} else {
+		networkSource = capibm.NetworkSource{
+			Type: capibm.SourceTypeProvision,
+			Provision: capibm.NetworkProvisionConfig{
+				Type: capibm.NetworkProvisionTypeDHCPSubnet,
+				DHCPSubnet: capibm.DHCPSubnet{
+					Name: network,
+					CIDR: dhcpSubnetCIDR,
+				},
+			},
+		}
+	}
+
+	loadBalancers := buildLoadBalancers(clusterID.InfraID, useDHCPServer, installConfig.Config.Publish)
+
+	// ResourceGroup
+	rgSource := capibm.ResourceGroupSource{
+		Type: capibm.SourceTypeReference,
+		Reference: capibm.ResourceIdentifier{
+			Name: installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
+		},
+	}
+
+	// Build v1beta3 VPCPublicGateways and VPCRoutingTables.
+	//
+	// These are only needed for the DHCPSubnet networking model. When using DHCPServer,
+	// the DHCP server VM handles SNAT and provides egress — no VPC routing is required.
+	var (
+		publicGateways []capibm.VPCPublicGateway
+		routingTables  []capibm.VPCRoutingTableSource
+		pgwName        string
+		pgwVPCZone     string
+	)
+	if !useDHCPServer {
+		// Derive the VPC zone from the PowerVS zone for the Public Gateway and Routing Table.
+		var vpcZoneErr error
+		pgwVPCZone, vpcZoneErr = powervstypes.VPCZoneForPowerVSZone(installConfig.Config.Platform.PowerVS.Zone)
+		if vpcZoneErr != nil {
+			return nil, fmt.Errorf("unable to derive VPC zone for Public Gateway from PowerVS zone %s: %w",
+				installConfig.Config.Platform.PowerVS.Zone, vpcZoneErr)
+		}
+
+		// Public Gateway — outbound internet access for VPC subnets.
+		pgwName = fmt.Sprintf("%s-pgw", clusterID.InfraID)
+		publicGateways = []capibm.VPCPublicGateway{
+			{
+				Type: capibm.SourceTypeProvision,
+				Zone: pgwVPCZone,
+				Provision: capibm.VPCPublicGatewayProvision{
+					Name: pgwName,
+				},
+			},
+		}
+
+		// Routing Table — advertises 0.0.0.0/0 via the route-mode NLB to the Transit Gateway.
+		// The nextHop is intentionally left empty: CAPIBM auto-populates it from
+		// LoadBalancerStatus.PrivateIPs[0] of the private route-mode load balancer.
+		rtName := fmt.Sprintf("%s-rt", clusterID.InfraID)
+		routeName := fmt.Sprintf("%s-rt-default", clusterID.InfraID)
+		routingTables = []capibm.VPCRoutingTableSource{
+			{
+				Type: capibm.SourceTypeProvision,
+				Provision: capibm.VPCRoutingTableProvision{
+					Name:                       rtName,
+					RouteTransitGatewayIngress: capibm.RoutingTableIngressPolicyEnabled,
+					AdvertiseRoutesTo: []capibm.AdvertiseRouteTarget{
+						capibm.AdvertiseRouteTargetTransitGateway,
+					},
+					Routes: []capibm.VPCRoutingTableRoute{
+						{
+							Name:        routeName,
+							Action:      capibm.VPCRoutingTableRouteActionDeliver,
+							Destination: "0.0.0.0/0",
+							Zone:        pgwVPCZone,
+							Advertise:   capibm.RouteAdvertisePolicyEnabled,
+						},
+					},
+				},
+			},
+		}
 	}
 
 	powerVSCluster = &capibm.IBMPowerVSCluster{
@@ -200,83 +324,61 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 		Spec: capibm.IBMPowerVSClusterSpec{
-			Topology: capibm.PowerVSLoadBalancerTopology,
-			ResourceGroup: capibm.ResourceGroupSource{
-				Type: capibm.SourceTypeReference,
-				Reference: capibm.ResourceIdentifier{
-					Name: installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
-				},
-			},
-			Zone:      installConfig.Config.Platform.PowerVS.Zone,
-			Workspace: workspaceSource,
-			Network: capibm.NetworkSource{
-				Type: capibm.SourceTypeProvision,
-				Provision: capibm.NetworkProvisionConfig{
-					Type: capibm.NetworkProvisionTypeDHCPServer,
-					DHCPServer: capibm.DHCPServer{
-						Name: fmt.Sprintf("%s-dhcp", clusterID.InfraID),
-						CIDR: dhcpSubnet,
-					},
-				},
-			},
+			// Topology must be set so the CAPIBM webhook accepts the object.
+			// Both DHCPSubnet and DHCPServer paths use a VPC and Load Balancer,
+			// so PowerVSLoadBalancerTopology is always correct here.
+			Topology:          capibm.PowerVSLoadBalancerTopology,
+			Workspace:         workspaceSource,
+			Network:           networkSource,
+			Zone:              installConfig.Config.Platform.PowerVS.Zone,
+			ResourceGroup:     rgSource,
 			VPC:               vpcSource,
-			VPCSubnets:        vpcSubnets,
 			VPCSecurityGroups: vpcSecurityGroups,
-			TransitGateway:    transitGatewaySource,
-			LoadBalancers: []capibm.LoadBalancerSource{
-				{
-					Type: capibm.SourceTypeProvision,
-					Provision: capibm.LoadBalancerProvision{
-						Name: fmt.Sprintf("%s-loadbalancer", clusterID.InfraID),
-						Type: capibm.LoadBalancerTypePublic,
-						AdditionalListeners: []capibm.AdditionalListener{
-							{
-								Port:     22,
-								Protocol: capibm.LoadBalancerListenerProtocolTCP,
-							},
-							// @BUG We should be able to specify this:
-							// capibm.AdditionalListener{
-							//	Port: 6443,
-							// },
-						},
-					},
-				},
-				{
-					Type: capibm.SourceTypeProvision,
-					Provision: capibm.LoadBalancerProvision{
-						Name: fmt.Sprintf("%s-loadbalancer-int", clusterID.InfraID),
-						Type: capibm.LoadBalancerTypePrivate,
-						AdditionalListeners: []capibm.AdditionalListener{
-							// @BUG We should be able to specify this:
-							// capibm.AdditionalListener{
-							//	Port: 6443,
-							// },
-							{
-								Port:     22623,
-								Protocol: capibm.LoadBalancerListenerProtocolTCP,
-							},
-						},
-					},
-				},
-			},
-			COSInstance: capibm.COSInstanceSource{
-				Type:         capibm.SourceTypeProvision,
-				BucketName:   bucketName,
-				BucketRegion: cosRegion,
-				Provision: capibm.COSInstanceProvision{
-					Name: cosName,
-				},
-			},
+			TransitGateway:    tgSource,
+			LoadBalancers:     loadBalancers,
+			VPCPublicGateways: publicGateways,
+			VPCRoutingTables:  routingTables,
+			COSInstance:       cosSource,
 			Ignition: capibm.Ignition{
 				Version: "3.4",
 			},
 		},
 	}
 
-	// Use a custom resolver if using an Internal publishing strategy
+	// DHCPSubnet path: explicitly provision all three VPC subnets (one per zone) so that
+	// CAPIBM does not auto-expand them without a PublicGateway reference. Only the subnet
+	// in the same zone as the PGW gets the PublicGateway field set — IBM Cloud only supports
+	// one PGW per zone, and the route-mode NLB also selects this zone.
+	if !useDHCPServer && vpcStruct == nil {
+		allVPCZones, vpcZonesErr := powervstypes.AvailableVPCZones(installConfig.Config.Platform.PowerVS.Region)
+		if vpcZonesErr != nil {
+			return nil, fmt.Errorf("unable to derive VPC zones for PowerVS region %s: %w",
+				installConfig.Config.Platform.PowerVS.Region, vpcZonesErr)
+		}
+		for _, zone := range allVPCZones {
+			subnetName := fmt.Sprintf("%s-subnet-%s", clusterID.InfraID, zone)
+			subnetSource := capibm.VPCSubnetSource{
+				Type: capibm.SourceTypeProvision,
+				Zone: zone,
+				Provision: capibm.VPCSubnetProvision{
+					Name: subnetName,
+				},
+			}
+			// Attach the PGW only to the subnet that shares its zone.
+			if zone == pgwVPCZone {
+				subnetSource.PublicGateway = capibm.ResourceIdentifier{
+					Name: pgwName,
+				}
+			}
+			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
+		}
+		logrus.Debugf("GenerateClusterAssets: VPCSubnets with PGW attachment = %+v", powerVSCluster.Spec.VPCSubnets)
+	}
+
+	// Use a custom DNS resolver for Internal publishing strategy
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
 		var dnsServerIP string
-		err := installConfig.PowerVS.EnsureVPCNameIsSpecifiedForInternal(installConfig.Config.PowerVS.VPC)
+		err = installConfig.PowerVS.EnsureVPCNameIsSpecifiedForInternal(installConfig.Config.PowerVS.VPC)
 		if err != nil {
 			return nil, err
 		}
@@ -284,13 +386,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPC, err)
 		}
-
-		powerVSCluster.Spec.Network.Provision.DHCPServer.DNSServer = dnsServerIP
-		// Disable SNAT for disconnected scenario.
-		if len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0 {
-			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = capibm.DHCPSnatPolicyEnabled
+		// Inject the DNS server IP into the network provision config.
+		// DHCPSubnet uses a []string slice; DHCPServer uses a single string field.
+		if useDHCPServer {
+			powerVSCluster.Spec.Network.Provision.DHCPServer.DNSServer = dnsServerIP
+			// Disable SNAT for disconnected scenario.
+			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = dhcpServerSnatPolicy(installConfig.Config)
 		} else {
-			powerVSCluster.Spec.Network.Provision.DHCPServer.Snat = capibm.DHCPSnatPolicyDisabled
+			powerVSCluster.Spec.Network.Provision.DHCPSubnet.DNSServers = []string{dnsServerIP}
 		}
 	}
 
@@ -306,15 +409,21 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", *vpcStruct.Name, err)
 		}
-		powerVSCluster.Spec.VPCSubnets = nil
 		for _, subnet := range subnets {
-			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets,
-				capibm.VPCSubnetSource{
-					Type: capibm.SourceTypeReference,
-					Reference: capibm.ResourceIdentifier{
-						ID: *subnet.ID,
-					},
-				})
+			subnetSource := capibm.VPCSubnetSource{
+				Type: capibm.SourceTypeReference,
+				Reference: capibm.ResourceIdentifier{
+					ID:   ptr.Deref(subnet.ID, ""),
+					Name: ptr.Deref(subnet.Name, ""),
+				},
+			}
+			// For DHCPSubnet mode, attach the PGW to the subnet in the matching zone.
+			if !useDHCPServer && subnet.Zone != nil && subnet.Zone.Name != nil && *subnet.Zone.Name == pgwVPCZone {
+				subnetSource.PublicGateway = capibm.ResourceIdentifier{
+					Name: pgwName,
+				}
+			}
+			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
 		}
 		logrus.Debugf("GenerateClusterAssets: subnets = %+v", powerVSCluster.Spec.VPCSubnets)
 	}
@@ -368,4 +477,100 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+// dhcpServerSnatPolicy returns the SNAT policy for the legacy DHCPServer network.
+// SNAT is disabled for disconnected clusters (Internal publishing with image mirror
+// sources configured) so that egress is not NATed through the DHCP server.
+func dhcpServerSnatPolicy(ic *types.InstallConfig) capibm.DHCPSnatPolicy {
+	if ic.Publish == types.InternalPublishingStrategy &&
+		(len(ic.DeprecatedImageContentSources) > 0 || len(ic.ImageDigestSources) > 0) {
+		return capibm.DHCPSnatPolicyDisabled
+	}
+	return capibm.DHCPSnatPolicyEnabled
+}
+
+// buildLoadBalancers builds the v1beta3 load balancers for the cluster.
+//
+// DHCPSubnet mode: uses a private "network-fixed" NLB with RouteMode enabled so it acts
+// as a private L3 next-hop router (VNF). IBM Cloud rejects route_mode=true on public NLBs,
+// so the LB visibility is explicitly set to Private. The CAPIBM webhook enforces that
+// RouteMode=Enabled requires Profile=network-fixed. This NLB is only the egress next hop;
+// it is never an API endpoint and gets no DNS record.
+//
+// DHCPSubnet + publish External: a separate public "application" LB named
+// "<infraID>-loadbalancer" serves the external API (api.*), because the route-mode NLB
+// is private and unreachable from outside the VPC. The route-mode NLB is named
+// "<infraID>-loadbalancer-egress" so it does not collide with the public LB's name,
+// which the DNS record creation and control plane machine sets key off.
+//
+// DHCPServer mode: uses a public LB with the default "application" profile (no RouteMode)
+// because the DHCP Server's own SNAT provides egress — a route-mode NLB is not needed.
+//
+// The private/internal LB always uses the "application" profile.
+func buildLoadBalancers(infraID string, useDHCPServer bool, publish types.PublishingStrategy) []capibm.LoadBalancerSource {
+	lbName := fmt.Sprintf("%s-loadbalancer", infraID)
+	lbIntName := fmt.Sprintf("%s-loadbalancer-int", infraID)
+	lbEgressName := fmt.Sprintf("%s-loadbalancer-egress", infraID)
+
+	sshListener := []capibm.AdditionalListener{
+		{
+			Port:     22,
+			Protocol: capibm.LoadBalancerListenerProtocolTCP,
+		},
+	}
+
+	var loadBalancers []capibm.LoadBalancerSource
+	if useDHCPServer {
+		loadBalancers = append(loadBalancers, capibm.LoadBalancerSource{
+			Type: capibm.SourceTypeProvision,
+			Provision: capibm.LoadBalancerProvision{
+				Name:                lbName,
+				Type:                capibm.LoadBalancerTypePublic,
+				AdditionalListeners: sshListener,
+			},
+		})
+	} else {
+		// DHCPSubnet path: route-mode NLB required for VPC Routing Table egress.
+		// IBM Cloud requires route_mode=true only on private NLBs; public NLBs do not
+		// support route mode. The route-mode LB acts as a private L3 next-hop router
+		// (VNF), not as the external API server endpoint.
+		routeModeName := lbName
+		if publish == types.ExternalPublishingStrategy {
+			routeModeName = lbEgressName
+			// The public LB is listed first so it is preferred as the API endpoint.
+			loadBalancers = append(loadBalancers, capibm.LoadBalancerSource{
+				Type: capibm.SourceTypeProvision,
+				Provision: capibm.LoadBalancerProvision{
+					Name:                lbName,
+					Type:                capibm.LoadBalancerTypePublic,
+					AdditionalListeners: sshListener,
+				},
+			})
+		}
+		loadBalancers = append(loadBalancers, capibm.LoadBalancerSource{
+			Type: capibm.SourceTypeProvision,
+			Provision: capibm.LoadBalancerProvision{
+				Name:                routeModeName,
+				Type:                capibm.LoadBalancerTypePrivate,
+				AdditionalListeners: sshListener,
+				Profile:             capibm.PowerVSLoadBalancerProfileNetworkFixed,
+				RouteMode:           capibm.PowerVSLoadBalancerRouteModeEnabled,
+			},
+		})
+	}
+
+	return append(loadBalancers, capibm.LoadBalancerSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.LoadBalancerProvision{
+			Name: lbIntName,
+			Type: capibm.LoadBalancerTypePrivate,
+			AdditionalListeners: []capibm.AdditionalListener{
+				{
+					Port:     22623,
+					Protocol: capibm.LoadBalancerListenerProtocolTCP,
+				},
+			},
+		},
+	})
 }
