@@ -896,9 +896,6 @@ controlPlane:
   name: master
   platform: {}
   replicas: 2
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   external:
     platformName: oci
@@ -1811,9 +1808,6 @@ controlPlane:
       username: "admin"
       password: "password"
       address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   external:
     platformName: oci
@@ -1880,10 +1874,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 							CloudControllerManager: external.CloudControllerManagerTypeExternal,
 						},
 					},
-					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-					Publish:      types.ExternalPublishingStrategy,
-					FeatureSet:   configv1.CustomNoUpgrade,
-					FeatureGates: []string{"DualReplica=true"},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
 				}
 				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
 				return ic
@@ -1914,9 +1906,6 @@ controlPlane:
       username: "admin"
       password: "password"
       address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   aws:
     region: us-east-1
@@ -1926,7 +1915,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			expectedError: `invalid install-config configuration: [controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found, platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"]`,
 		},
 		{
-			name: "TNF cluster without DualReplica feature gate",
+			name: "TNF cluster with the default feature set",
 			data: `
 apiVersion: v1
 metadata:
@@ -2051,9 +2040,6 @@ controlPlane:
   name: master
   platform: {}
   replicas: 2
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   external:
     platformName: oci
@@ -2090,9 +2076,6 @@ controlPlane:
       username: "admin"
       password: "password"
       address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   external:
     platformName: oci
@@ -2133,9 +2116,6 @@ controlPlane:
       username: "admin"
       password: "password"
       address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   external:
     platformName: oci
@@ -2202,10 +2182,8 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 							CloudControllerManager: external.CloudControllerManagerTypeExternal,
 						},
 					},
-					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-					Publish:      types.ExternalPublishingStrategy,
-					FeatureSet:   configv1.CustomNoUpgrade,
-					FeatureGates: []string{"DualReplica=true"},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
 				}
 				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
 				return ic
@@ -2242,9 +2220,6 @@ controlPlane:
       username: "admin"
       password: "password"
       address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-featureSet: CustomNoUpgrade
-featureGates:
-- DualReplica=true
 platform:
   none: {}
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
@@ -2303,11 +2278,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 							Architecture:   types.ArchitectureAMD64,
 						},
 					},
-					Platform:     types.Platform{None: &none.Platform{}},
-					PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-					Publish:      types.ExternalPublishingStrategy,
-					FeatureSet:   configv1.CustomNoUpgrade,
-					FeatureGates: []string{"DualReplica=true"},
+					Platform:   types.Platform{None: &none.Platform{}},
+					PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+					Publish:    types.ExternalPublishingStrategy,
 				}
 				ic.OSImageStream = rhcos.GetDefaultOSImageStream(ic)
 				return ic
