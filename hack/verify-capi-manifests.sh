@@ -42,8 +42,11 @@ generate_capi_manifest() {
 		crd_filter="${crd_filter}false"  # Add false at the end to close the OR chain
 		set -x
 
-		# Download and filter CRDs (keeping webhooks and other non-CRD resources)
-		# We filter by selecting: (not a CRD) OR (CRD with allowed name)
+		# Download operator manifests (namespace, deployment, webhooks, services)
+		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_${version}.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		echo "---" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+
+		# Download and filter CRDs to only include those needed by CAPZ
 		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" | \
 		    yq e ". | select(.kind != \"CustomResourceDefinition\" or (.kind == \"CustomResourceDefinition\" and (${crd_filter})))" - \
 			>>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
