@@ -6,13 +6,13 @@ package v1alpha1
 // BackupLister.
 type BackupListerExpansion interface{}
 
-// CRIOCredentialProviderConfigListerExpansion allows custom methods to be added to
-// CRIOCredentialProviderConfigLister.
-type CRIOCredentialProviderConfigListerExpansion interface{}
-
 // ClusterMonitoringListerExpansion allows custom methods to be added to
 // ClusterMonitoringLister.
 type ClusterMonitoringListerExpansion interface{}
+
+// ControllerManagerListerExpansion allows custom methods to be added to
+// ControllerManagerLister.
+type ControllerManagerListerExpansion interface{}
 
 // InsightsDataGatherListerExpansion allows custom methods to be added to
 // InsightsDataGatherLister.
