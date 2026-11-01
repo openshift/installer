@@ -1981,8 +1981,8 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift-sustaining/crypto v0.33.0-sec.4 h1:GeTbv5TVM8Lw5Iie2SyXoQGA2/Wd66q0E1D6Kxyz3rk=
-github.com/openshift-sustaining/crypto v0.33.0-sec.4/go.mod h1:bVdXmD7IV/4GdElGPozy6U7lWdRXA4qyRVGJV57uQ5M=
+github.com/openshift-sustaining/crypto v0.33.0-sec.6 h1:UUpSy0PUv0Hss9S7lSm55b42sFuquwZqHm2Kb3+iGzs=
+github.com/openshift-sustaining/crypto v0.33.0-sec.6/go.mod h1:bVdXmD7IV/4GdElGPozy6U7lWdRXA4qyRVGJV57uQ5M=
 github.com/openshift-sustaining/net v0.35.0-sec.4 h1:Iby7f5aipaxoDnCzIaMGfVDjy4Qopq2L12fDzjcSx1U=
 github.com/openshift-sustaining/net v0.35.0-sec.4/go.mod h1:EglIi67kWsHKlRzzVMUD93VMSWGFOMSZgxFjparz1Qk=
 github.com/openshift/api v0.0.0-20240517002838-931fa9860c01 h1:X3PJCyGHG5aM9yUTb8yaLjR43Qp1lvsT2rMlcdl4G+c=
