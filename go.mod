@@ -325,6 +325,6 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 // https://issues.redhat.com/browse/OCPBUGS-27507
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.4
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.6
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
