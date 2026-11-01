@@ -77,6 +77,21 @@ hardlink='-H'
 if test -f /run/ostree-live; then
     ostree_repo=/var/ostreecontainer/repo
     ostree_checkout=/var/ostreecontainer/checkout
+    # but we won't be able to force hardlinks cross-device
+    hardlink=''
+fi
+
+# the service is Type=oneshot with RemainAfterExit=yes, but a reboot of the
+# live environment starts it fresh; if a previous run already pulled and
+# checked out the node image, exit cleanly rather than tripping over the
+# existing checkout and ref
+# https://redhat.atlassian.net/browse/OCPBUGS-99776
+if [ -e "${ostree_checkout}/.pull-complete" ]; then
+    echo "Node image already pulled and checked out; nothing to do"
+    exit 0
+fi
+
+if test -f /run/ostree-live; then
     mkdir -p "${ostree_repo}"
     echo "In live environment; creating temporary repo to pull node image"
     ostree init --mode=bare --repo="${ostree_repo}"
@@ -87,8 +102,6 @@ if test -f /run/ostree-live; then
         ostree pull-local --repo="${ostree_repo}" /ostree/repo
         df -h "${ostree_repo}"
     fi
-    # but we won't be able to force hardlinks cross-device
-    hardlink=''
 else
     echo "Not in live environment"
     # (remember, we're MountFlags=slave)
@@ -114,6 +127,9 @@ if [ $(echo "$ref" | wc -l) != 1 ]; then
     echo "$ref"
     exit 1
 fi
+# a previous, interrupted run may have left the ref behind; delete it so
+# --create doesn't fail on re-runs
+ostree refs --repo "${ostree_repo}" --delete coreos/node-image 2>/dev/null || true
 ostree refs --repo "${ostree_repo}" "$ref" --create coreos/node-image
 
 # massive hack to make ostree admin config-diff work in live environments where
@@ -127,9 +143,15 @@ fi
 # get all state files in /etc; this is a cheap way to get "3-way /etc merge" semantics
 etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
 
-# check out the commit
+# check out the commit, clearing any partial checkout from an interrupted
+# previous run first
 echo "Checking out node image content"
+rm -rf "${ostree_checkout}"
 ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${ostree_checkout}" --skip-list=<(cat <<< "$etc_keep")
+
+# record completion so re-runs (e.g. after a reboot of the live environment)
+# can skip straight to the overlay
+touch "${ostree_checkout}/.pull-complete"
 
 # in the assisted-installer case, nuke the temporary repo to save RAM
 if grep -q coreos.liveiso= /proc/cmdline; then
