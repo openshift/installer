@@ -88,6 +88,19 @@ fi
 # https://redhat.atlassian.net/browse/OCPBUGS-99776
 if [ -e "${ostree_checkout}/.pull-complete" ]; then
     echo "Node image already pulled and checked out; nothing to do"
+    # recompute the /etc exclusions so files changed in /etc since the
+    # original checkout (e.g. manual fixes followed by a reboot) are not
+    # clobbered when node-image-overlay.sh replays its rsync
+    if test -f /run/ostree-live; then
+        # (remember, we're MountFlags=slave)
+        mount -o bind,ro /etc /ostree/deploy/*/deploy/*/etc
+    fi
+    etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
+    while IFS= read -r etc_file; do
+        case "${etc_file}" in
+            /usr/etc/*) rm -rf "${ostree_checkout}${etc_file}" ;;
+        esac
+    done <<< "${etc_keep}"
     exit 0
 fi
 
