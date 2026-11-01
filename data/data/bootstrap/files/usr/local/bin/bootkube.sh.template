@@ -15,6 +15,12 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
+# the CVO bootstrap pod reads /etc/kubernetes/kubeconfig; /etc does not survive
+# a reboot of the live environment while the cvo-bootstrap.done marker does, so
+# refresh the copy on every run instead of only inside the guarded stage below
+cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
+
 # the stage markers below live in /opt/openshift, which persists across
 # reboots of the live environment, but the rendered static pod manifests in
 # /etc do not; if a previous boot rendered the control plane and that output
@@ -233,8 +239,6 @@ then
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
-	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
-	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
 
 	touch cvo-bootstrap.done
     record_service_stage_success
@@ -246,20 +250,30 @@ then
     record_service_stage_start "etcd-bootstrap"
 	echo "Rendering CEO Manifests..."
 
-	rm --recursive --force etcd-bootstrap
+	# the renderer generates a fresh TLS signer on every run, which would
+	# invalidate any credentials issued from the previous signer, e.g. an
+	# etcd peer that already joined; its output persists in /opt across
+	# reboots of the live environment, so when re-running only because the
+	# /etc copies were lost, reuse the previous output
+	if [ ! -f etcd-bootstrap/.render-complete ]
+	then
+		rm --recursive --force etcd-bootstrap
 
-	bootkube_podman_run \
-		--name etcd-render \
-		--volume "$PWD:/assets:z" \
-		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-etcd-operator render \
-		--asset-output-dir=/assets/etcd-bootstrap \
-		--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
-		--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		--network-config-file=/assets/manifests/cluster-network-02-config.yml \
-		--rendered-manifest-files=/assets/manifests \
-		--payload-version=$VERSION
+		bootkube_podman_run \
+			--name etcd-render \
+			--volume "$PWD:/assets:z" \
+			"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+			/usr/bin/cluster-etcd-operator render \
+			--asset-output-dir=/assets/etcd-bootstrap \
+			--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
+			--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+			--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+			--network-config-file=/assets/manifests/cluster-network-02-config.yml \
+			--rendered-manifest-files=/assets/manifests \
+			--payload-version=$VERSION
+
+		touch etcd-bootstrap/.render-complete
+	fi
 
 	# Copy configuration required to start etcd
 	cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
