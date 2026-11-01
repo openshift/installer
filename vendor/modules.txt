@@ -1608,7 +1608,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.33.0 => github.com/openshift-sustaining/crypto v0.33.0-sec.4
+# golang.org/x/crypto v0.33.0 => github.com/openshift-sustaining/crypto v0.33.0-sec.6
 ## explicit; go 1.20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -2698,5 +2698,5 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
-# golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.4
+# golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.6
 # golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
