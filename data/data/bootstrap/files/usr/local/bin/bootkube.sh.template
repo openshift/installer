@@ -30,7 +30,12 @@ cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
 if [ -f etcd-bootstrap.done ] && [ ! -f stop-etcd.done ] \
     && ! compgen -G '/etc/kubernetes/manifests/*' >/dev/null; then
     echo "Stage markers found but rendered static pod manifests are missing; re-rendering all stages"
-    rm -f -- *.done
+    for marker in *.done; do
+        # keep the Konnectivity CA: it persists in /opt/openshift/tls, and a
+        # regenerated one would not reach agents already running on the
+        # cluster, as cluster-bootstrap does not replace an existing Secret
+        [ "${marker}" = konnectivity-certs.done ] || rm -f -- "${marker}"
+    done
 fi
 
 {{- if .BootstrapInPlace }}

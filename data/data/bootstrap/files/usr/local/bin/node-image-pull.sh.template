@@ -4,6 +4,51 @@ set -euo pipefail
 # shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
 
+# try to do this in the system repo so we get hardlinks and the checkout is
+# read-only, but fallback to using /var if we're in the live environment since
+# that's truly read-only
+ostree_repo=/ostree/repo
+ostree_checkout="${ostree_repo}/tmp/node-image"
+hardlink='-H'
+# this is the CoreOS API for "are we in a live environment", i.e. PXE or ISO
+if test -f /run/ostree-live; then
+    ostree_repo=/var/ostreecontainer/repo
+    ostree_checkout=/var/ostreecontainer/checkout
+    # but we won't be able to force hardlinks cross-device
+    hardlink=''
+else
+    echo "Not in live environment"
+    # (remember, we're MountFlags=slave)
+    mount -o rw,remount /sysroot
+fi
+
+# the service is Type=oneshot with RemainAfterExit=yes, but a reboot of the
+# live environment starts it fresh; if a previous run already pulled and
+# checked out the node image, exit cleanly rather than tripping over the
+# existing checkout and ref; this runs before the registry lookups below so
+# that recovery does not depend on the registry (the MCO image is removed
+# after the first run and would otherwise have to be pulled again)
+# https://redhat.atlassian.net/browse/OCPBUGS-99776
+if [ -e "${ostree_checkout}/.pull-complete" ]; then
+    echo "Node image already pulled and checked out; nothing to do"
+    # recompute the /etc exclusions so files changed in /etc since the
+    # original checkout (e.g. manual fixes followed by a reboot) are not
+    # clobbered when node-image-overlay.sh replays its rsync
+    if test -f /run/ostree-live; then
+        # (remember, we're MountFlags=slave)
+        mount -o bind,ro /etc /ostree/deploy/*/deploy/*/etc
+    fi
+    # config-diff prints "<status>    <path>"; -f5- keeps paths with spaces whole
+    etc_keep=$(ostree admin config-diff | cut -f5- -d' ' | sed -e 's,^,/usr/etc/,')
+    while IFS= read -r etc_file; do
+        case "${etc_file}" in
+            # ?* so an empty path can never remove all of usr/etc
+            /usr/etc/?*) rm -rf "${ostree_checkout}${etc_file}" ;;
+        esac
+    done <<< "${etc_keep}"
+    exit 0
+fi
+
 # Get the Machine Config Operator image from the release payload
 until MCO_IMAGE=$(image_for 'machine-config-operator'); do
     echo 'Failed to query MCO image from release; retrying...'
@@ -67,47 +112,6 @@ booted_version=$(rpm-ostree status --json | jq -r .deployments[0].version)
 echo "Currently on CoreOS version $booted_version"
 echo "Target node image is $COREOS_IMAGE"
 
-# try to do this in the system repo so we get hardlinks and the checkout is
-# read-only, but fallback to using /var if we're in the live environment since
-# that's truly read-only
-ostree_repo=/ostree/repo
-ostree_checkout="${ostree_repo}/tmp/node-image"
-hardlink='-H'
-# this is the CoreOS API for "are we in a live environment", i.e. PXE or ISO
-if test -f /run/ostree-live; then
-    ostree_repo=/var/ostreecontainer/repo
-    ostree_checkout=/var/ostreecontainer/checkout
-    # but we won't be able to force hardlinks cross-device
-    hardlink=''
-else
-    echo "Not in live environment"
-    # (remember, we're MountFlags=slave)
-    mount -o rw,remount /sysroot
-fi
-
-# the service is Type=oneshot with RemainAfterExit=yes, but a reboot of the
-# live environment starts it fresh; if a previous run already pulled and
-# checked out the node image, exit cleanly rather than tripping over the
-# existing checkout and ref
-# https://redhat.atlassian.net/browse/OCPBUGS-99776
-if [ -e "${ostree_checkout}/.pull-complete" ]; then
-    echo "Node image already pulled and checked out; nothing to do"
-    # recompute the /etc exclusions so files changed in /etc since the
-    # original checkout (e.g. manual fixes followed by a reboot) are not
-    # clobbered when node-image-overlay.sh replays its rsync
-    if test -f /run/ostree-live; then
-        # (remember, we're MountFlags=slave)
-        mount -o bind,ro /etc /ostree/deploy/*/deploy/*/etc
-    fi
-    etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
-    while IFS= read -r etc_file; do
-        case "${etc_file}" in
-            /usr/etc/*) rm -rf "${ostree_checkout}${etc_file}" ;;
-        esac
-    done <<< "${etc_keep}"
-    exit 0
-fi
-
 if test -f /run/ostree-live; then
     mkdir -p "${ostree_repo}"
     echo "In live environment; creating temporary repo to pull node image"
@@ -154,7 +158,7 @@ if test -f /run/ostree-live; then
 fi
 
 # get all state files in /etc; this is a cheap way to get "3-way /etc merge" semantics
-etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
+etc_keep=$(ostree admin config-diff | cut -f5- -d' ' | sed -e 's,^,/usr/etc/,')
 
 # check out the commit, clearing any partial checkout from an interrupted
 # previous run first
