@@ -79,6 +79,10 @@ if test -f /run/ostree-live; then
     ostree_checkout=/var/ostreecontainer/checkout
     # but we won't be able to force hardlinks cross-device
     hardlink=''
+else
+    echo "Not in live environment"
+    # (remember, we're MountFlags=slave)
+    mount -o rw,remount /sysroot
 fi
 
 # the service is Type=oneshot with RemainAfterExit=yes, but a reboot of the
@@ -115,10 +119,6 @@ if test -f /run/ostree-live; then
         ostree pull-local --repo="${ostree_repo}" /ostree/repo
         df -h "${ostree_repo}"
     fi
-else
-    echo "Not in live environment"
-    # (remember, we're MountFlags=slave)
-    mount -o rw,remount /sysroot
 fi
 
 # Use ostree stack to pull the container here. This gives us efficient
