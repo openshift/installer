@@ -356,6 +356,6 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 // This is to force capi back for the older provider version
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.41.0-sec.3
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.41.0-sec.5
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.43.0-sec.4
