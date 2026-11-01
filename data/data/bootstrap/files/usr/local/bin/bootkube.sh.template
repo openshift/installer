@@ -15,6 +15,18 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+# the stage markers below live in /opt/openshift, which persists across
+# reboots of the live environment, but the rendered static pod manifests in
+# /etc do not; if a previous boot rendered the control plane and that output
+# was lost, discard the markers and re-render, otherwise bootkube skips to
+# the etcd health check, which can never pass without the etcd static pod
+# https://redhat.atlassian.net/browse/OCPBUGS-99776
+if [ -f etcd-bootstrap.done ] && [ ! -f stop-etcd.done ] \
+    && ! compgen -G '/etc/kubernetes/manifests/*' >/dev/null; then
+    echo "Stage markers found but rendered static pod manifests are missing; re-rendering all stages"
+    rm -f -- *.done
+fi
+
 {{- if .BootstrapInPlace }}
 BOOTSTRAP_INPLACE=true
 {{ else }}
@@ -24,6 +36,17 @@ BOOTSTRAP_INPLACE=false
 ETCD_ENDPOINTS=
 
 bootkube_podman_run() {
+    # a bootkube run interrupted by a reboot leaves its containers behind in
+    # the persistent podman store; they died with the VM before --rm could
+    # clean them up, so drop any leftover with the same name to avoid a
+    # collision on the re-run
+    local prev arg
+    for arg in "$@"; do
+        if [ "${prev:-}" = "--name" ]; then
+            podman rm -f "${arg}" >/dev/null 2>&1 || true
+        fi
+        prev="${arg}"
+    done
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
     podman run --quiet --net=host --rm --log-driver=k8s-file "${@}"
