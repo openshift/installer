@@ -44,7 +44,7 @@ type machineDrainController struct {
 func newDrainController(mgr manager.Manager) reconcile.Reconciler {
 	d := &machineDrainController{
 		Client:        mgr.GetClient(),
-		eventRecorder: mgr.GetEventRecorderFor("machine-drain-controller"),
+		eventRecorder: mgr.GetEventRecorderFor("machine-drain-controller"), //nolint:staticcheck
 		config:        mgr.GetConfig(),
 		scheme:        mgr.GetScheme(),
 	}
