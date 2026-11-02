@@ -191,7 +191,14 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 		if zones, ok := zonesByInstanceType[instanceType]; ok {
 			return zones, true
 		}
-		zones, err := client.GetAvailabilityZones(context.TODO(), clusterRegion, instanceType)
+		// GetAvailabilityZones pages through every SKU in the region and, unlike
+		// most of the client, applies no timeout of its own. Bound it here to
+		// match the other paged SKU lookups; see
+		// https://issues.redhat.com/browse/OCPBUGS-29469 before lowering it.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		zones, err := client.GetAvailabilityZones(ctx, clusterRegion, instanceType)
 		if err != nil {
 			// Instance type validation already reports lookup failures.
 			return nil, false
