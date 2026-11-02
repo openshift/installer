@@ -1478,8 +1478,8 @@ github.com/openshift/library-go/pkg/crypto
 github.com/openshift/library-go/pkg/image/dockerv1client
 github.com/openshift/library-go/pkg/pki
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-operator v0.2.1-0.20251110092458-e0af0f3f44b8
-## explicit; go 1.24.0
+# github.com/openshift/machine-api-operator v0.2.1-0.20260320085232-221c405ba014
+## explicit; go 1.25.0
 github.com/openshift/machine-api-operator/pkg/controller/machine
 github.com/openshift/machine-api-operator/pkg/metrics
 github.com/openshift/machine-api-operator/pkg/util
@@ -1490,8 +1490,8 @@ github.com/openshift/machine-api-provider-gcp/pkg/cloud/gcp/actuators/services/c
 github.com/openshift/machine-api-provider-gcp/pkg/cloud/gcp/actuators/services/tags
 github.com/openshift/machine-api-provider-gcp/pkg/cloud/gcp/actuators/util
 github.com/openshift/machine-api-provider-gcp/pkg/version
-# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
-## explicit; go 1.19
+# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20260721141120-a31f65a76615
+## explicit; go 1.25.0
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
 # github.com/opentracing/opentracing-go v1.2.0
@@ -2926,8 +2926,8 @@ sigs.k8s.io/controller-runtime/pkg/webhook/admission/metrics
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion/metrics
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
-# sigs.k8s.io/controller-tools v0.19.0
-## explicit; go 1.24.0
+# sigs.k8s.io/controller-tools v0.20.1
+## explicit; go 1.25.0
 sigs.k8s.io/controller-tools/cmd/controller-gen
 sigs.k8s.io/controller-tools/pkg/applyconfiguration
 sigs.k8s.io/controller-tools/pkg/crd
