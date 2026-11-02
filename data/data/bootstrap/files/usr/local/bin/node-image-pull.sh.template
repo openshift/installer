@@ -39,7 +39,7 @@ cleanup_mco() {
         TEMP_DIR=
     fi
 }
-trap cleanup_mco EXIT
+trap 'record_service_exit $?; cleanup_mco' EXIT
 
 echo "Extracting machine-config-osimagestream binary to ${TEMP_DIR}"
 

@@ -84,8 +84,9 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		check    func(analysis) bool
 		optional bool
 	}{
-		{name: "release-image", check: checkReleaseImageDownload, optional: false},
+		// Check services in startup order so the first failure is reported.
 		{name: "node-image-pull", check: checkNodeImagePull, optional: false},
+		{name: "release-image", check: checkReleaseImageDownload, optional: false},
 		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
 	for _, check := range analysisChecks {
@@ -111,7 +112,7 @@ func checkReleaseImageDownload(a analysis) bool {
 		return true
 	}
 	logrus.Error("The bootstrap machine failed to download the release image")
-	a.logLastError()
+	a.logLastError("release-image")
 	return false
 }
 
@@ -120,7 +121,7 @@ func checkNodeImagePull(a analysis) bool {
 		return true
 	}
 	logrus.Error("Node image pull failed on the bootstrap machine")
-	a.logLastError()
+	a.logLastError("node-image-pull")
 	return false
 }
 
@@ -140,7 +141,7 @@ func checkBootkubeService(a analysis) bool {
 	default:
 		logrus.Errorf("The bootkube service failed at stage %q", a.failingStage)
 	}
-	a.logLastError()
+	a.logLastError("bootkube")
 	return true
 }
 
@@ -199,7 +200,11 @@ func analyzeService(r io.Reader) (analysis, error) {
 	return a, nil
 }
 
-func (a analysis) logLastError() {
+func (a analysis) logLastError(serviceName string) {
+	if strings.TrimSpace(a.lastError) == "" {
+		logrus.Infof("See bootstrap/journals/%s.log in the log bundle for more details", serviceName)
+		return
+	}
 	for _, l := range strings.Split(a.lastError, "\n") {
 		logrus.Info(l)
 	}
