@@ -252,6 +252,89 @@ func TestGenerateMachinesSecurityProfile(t *testing.T) {
 	}
 }
 
+func TestCapacityReservationGroupID(t *testing.T) {
+	testCases := []struct {
+		name     string
+		group    *aztypes.CapacityReservationGroup
+		expected string
+	}{
+		{
+			name:     "no group configured",
+			group:    nil,
+			expected: "",
+		},
+		{
+			name: "subscription specified",
+			group: &aztypes.CapacityReservationGroup{
+				SubscriptionID: "reservation-subscription",
+				ResourceGroup:  "reservation-resource-group",
+				Name:           "reservation-group",
+			},
+			expected: "/subscriptions/reservation-subscription/resourceGroups/reservation-resource-group/providers/Microsoft.Compute/capacityReservationGroups/reservation-group",
+		},
+		{
+			name: "subscription omitted falls back to the cluster subscription",
+			group: &aztypes.CapacityReservationGroup{
+				ResourceGroup: "reservation-resource-group",
+				Name:          "reservation-group",
+			},
+			expected: "/subscriptions/cluster-subscription/resourceGroups/reservation-resource-group/providers/Microsoft.Compute/capacityReservationGroups/reservation-group",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var original aztypes.CapacityReservationGroup
+			if tc.group != nil {
+				original = *tc.group
+			}
+
+			assert.Equal(t, tc.expected, capacityReservationGroupID(tc.group, "cluster-subscription"))
+
+			if tc.group != nil {
+				// The group is shared with the install-config asset, so the
+				// fallback must not write back to it.
+				assert.Equal(t, original, *tc.group)
+			}
+		})
+	}
+}
+
+func TestProviderCapacityReservationGroupSubscriptionDefault(t *testing.T) {
+	group := &aztypes.CapacityReservationGroup{
+		ResourceGroup: "reservation-resource-group",
+		Name:          "reservation-group",
+	}
+	azIdx := 0
+	spec, err := provider(
+		&aztypes.Platform{Region: "eastus"},
+		&aztypes.MachinePool{
+			InstanceType:             "Standard_D2s_v3",
+			Zones:                    []string{"1"},
+			Identity:                 &aztypes.VMIdentity{},
+			CapacityReservationGroup: group,
+		},
+		"",
+		"user-data",
+		"test-cluster",
+		"master",
+		&azIdx,
+		map[string]string{"HyperVGenerations": "V1,V2"},
+		&icazure.Session{
+			Credentials: icazure.Credentials{SubscriptionID: "test-subscription"},
+			Environment: azureenv.PublicCloud,
+		},
+		"test-network-resource-group",
+		"test-vnet",
+		"test-subnet",
+	)
+	assert.NoError(t, err)
+	assert.Equal(t,
+		"/subscriptions/test-subscription/resourceGroups/reservation-resource-group/providers/Microsoft.Compute/capacityReservationGroups/reservation-group",
+		spec.CapacityReservationGroupID)
+	assert.Empty(t, group.SubscriptionID)
+}
+
 func TestCapzImage(t *testing.T) {
 	testCases := []struct {
 		name           string
