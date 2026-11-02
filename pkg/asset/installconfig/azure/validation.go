@@ -234,9 +234,23 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 		if len(zones) == 0 && defaultPlatform != nil {
 			zones = defaultPlatform.Zones
 		}
-		zones = namedZones(zones)
+		named := namedZones(zones)
+
+		// An empty entry means "no zone" for the machines that land on it, and
+		// machine generation only replaces the zone list when it is entirely
+		// absent. So a configured list holding an empty entry, on its own or
+		// mixed with named zones, always leaves some machines in an
+		// availability set.
+		if len(named) < len(zones) {
+			usage.unzoned.Insert(fmt.Sprintf("%s (zone list contains an entry with no zone)", fieldPath.String()))
+		}
+		if len(named) > 0 {
+			usage.poolZones.Insert(named...)
+			return
+		}
 		if len(zones) > 0 {
-			usage.poolZones.Insert(zones...)
+			// Every entry was empty. Discovery does not run for a non-empty
+			// list, so there is nothing further to resolve.
 			return
 		}
 
@@ -293,10 +307,22 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 				fmt.Sprintf("machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: %s",
 					strings.Join(sets.List(usage.unzoned), ", "))))
 		}
-		if usage.poolZones.Len() > 0 && len(eligibleZones(result)) == 0 {
-			allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,
-				fmt.Sprintf("capacity reservation group has no eligible availability zones, but it is used by machine pools in zone(s) %s",
-					strings.Join(sets.List(usage.poolZones), ", "))))
+		if usage.poolZones.Len() > 0 {
+			eligible := sets.New(eligibleZones(result)...)
+			switch {
+			case eligible.Len() == 0:
+				allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,
+					fmt.Sprintf("capacity reservation group has no eligible availability zones, but it is used by machine pools in zone(s) %s",
+						strings.Join(sets.List(usage.poolZones), ", "))))
+			default:
+				// A group holds reservations only in its own zones, so a pool
+				// placed outside them cannot draw on it.
+				if unsupported := usage.poolZones.Difference(eligible); unsupported.Len() > 0 {
+					allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,
+						fmt.Sprintf("capacity reservation group has no eligible availability zones in zone(s) %s, it is eligible in zone(s) %s",
+							strings.Join(sets.List(unsupported), ", "), strings.Join(sets.List(eligible), ", "))))
+				}
+			}
 		}
 	}
 

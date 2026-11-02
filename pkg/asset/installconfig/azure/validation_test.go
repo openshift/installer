@@ -1226,8 +1226,31 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 			edits: editFunctions{validCapacityReservationGroupControlPlane},
 		},
 		{
-			name:  "control plane with an empty zone and a regional group",
-			edits: editFunctions{validCapacityReservationGroupControlPlane, zonesControlPlane("")},
+			// Machine generation only runs zone discovery for an absent zone
+			// list, so an explicit empty entry leaves the machine unzoned.
+			name:     "control plane with an empty zone and a regional group",
+			edits:    editFunctions{validCapacityReservationGroupControlPlane, zonesControlPlane("")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(zone list contains an entry with no zone\)$`,
+		},
+		{
+			// Some machines land in zone 1, the rest in an availability set.
+			name:     "control plane mixing a named and an empty zone",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("1", "")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(zone list contains an entry with no zone\)$`,
+		},
+		{
+			name:     "control plane in a zone the group is not eligible in",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("3")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 3, it is eligible in zone\(s\) 1, 2$`,
+		},
+		{
+			name:     "compute partially outside the group's eligible zones",
+			edits:    editFunctions{zonedCapacityReservationGroupCompute, zonesCompute("2", "4")},
+			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 4, it is eligible in zone\(s\) 1, 2$`,
+		},
+		{
+			name:  "control plane in all of the group's eligible zones",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("1", "2")},
 		},
 		{
 			name:     "zoned control plane with a regional group",
