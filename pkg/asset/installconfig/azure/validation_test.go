@@ -418,6 +418,25 @@ var (
 		ic.Compute[0].Platform.Azure.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
 	}
 
+	// A group created without zones; it backs only regional reservations.
+	regionalCapacityReservationGroupName   = "regional-capacity-reservation-group"
+	regionalCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           regionalCapacityReservationGroupName,
+		}
+	}
+	regionalCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+	regionalCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+	regionalCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+
 	zonedCapacityReservationGroupName   = "zoned-capacity-reservation-group"
 	zonedCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
 		return &azure.CapacityReservationGroup{
@@ -1166,14 +1185,24 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 }
 
 func TestAzureCapacityReservationGroup(t *testing.T) {
-	// A group created without zones backs only regional reservations.
-	validResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(validRegion)}
+	// Groups eligible in every zone discovery reports, so that pools which omit
+	// zones are compatible with them.
+	validResult := &azenc.CapacityReservationGroup{
+		Location: to.StringPtr(validRegion),
+		Zones:    &[]string{"1", "2", "3"},
+	}
 	wrongRegion := "westus"
-	wrongRegionResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(wrongRegion)}
+	wrongRegionResult := &azenc.CapacityReservationGroup{
+		Location: to.StringPtr(wrongRegion),
+		Zones:    &[]string{"1", "2", "3"},
+	}
+	// Eligible in a subset of the discovered zones, for partial-overlap cases.
 	zonedResult := &azenc.CapacityReservationGroup{
 		Location: to.StringPtr(validRegion),
 		Zones:    &[]string{"1", "2"},
 	}
+	// A group created without zones backs only regional reservations.
+	regionalResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(validRegion)}
 
 	cases := []struct {
 		name     string
@@ -1222,8 +1251,18 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 			edits: editFunctions{zonedCapacityReservationGroupCompute, zonesCompute("2")},
 		},
 		{
-			name:  "unzoned control plane with a regional group",
-			edits: editFunctions{validCapacityReservationGroupControlPlane},
+			// Discovery gives the pool zones 1-3; a regional group serves none
+			// of them.
+			name:     "unzoned control plane with a regional group",
+			edits:    editFunctions{regionalCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 2, 3$`,
+		},
+		{
+			// Discovered zones take part in the partial-overlap check: the pool
+			// omits zones and so spreads over 1-3, but the group covers 1-2.
+			name:     "unzoned control plane partially outside the group's eligible zones",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 3, it is eligible in zone\(s\) 1, 2$`,
 		},
 		{
 			// Machine generation only runs zone discovery for an absent zone
@@ -1254,37 +1293,31 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 		},
 		{
 			name:     "zoned control plane with a regional group",
-			edits:    editFunctions{validCapacityReservationGroupControlPlane, zonesControlPlane("1", "3")},
+			edits:    editFunctions{regionalCapacityReservationGroupControlPlane, zonesControlPlane("1", "3")},
 			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 3$`,
 		},
 		{
 			name:     "zoned compute with a regional group",
-			edits:    editFunctions{validCapacityReservationGroupCompute, zonesCompute("2")},
+			edits:    editFunctions{regionalCapacityReservationGroupCompute, zonesCompute("2")},
 			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 2$`,
 		},
 		{
 			name:     "zoned default machine platform with a regional group",
-			edits:    editFunctions{validCapacityReservationGroupDefaultMachinePlatform, zonesDefaultMachinePlatform("1")},
+			edits:    editFunctions{regionalCapacityReservationGroupDefaultMachinePlatform, zonesDefaultMachinePlatform("1")},
 			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1$`,
 		},
 		{
 			// The pools inherit the default group, so the group is fetched and
 			// reported once, against the union of the zones they ask for.
 			name:     "inherited regional group with zoned pools",
-			edits:    editFunctions{validCapacityReservationGroupDefaultMachinePlatform, zonesControlPlane("1"), zonesCompute("2")},
+			edits:    editFunctions{regionalCapacityReservationGroupDefaultMachinePlatform, zonesControlPlane("1"), zonesCompute("2")},
 			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 2$`,
 		},
 		{
 			// The pool overrides the group but inherits the default zones.
 			name:     "pool group with inherited default zones",
-			edits:    editFunctions{zonesDefaultMachinePlatform("1"), validCapacityReservationGroupControlPlane},
+			edits:    editFunctions{zonesDefaultMachinePlatform("1"), regionalCapacityReservationGroupControlPlane},
 			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1$`,
-		},
-		{
-			// Zone discovery finds zones, so the pool is zonal rather than in an
-			// availability set, even though it configures no zones itself.
-			name:  "group with a zoned instance type and no configured zones",
-			edits: editFunctions{zonedCapacityReservationGroupControlPlane},
 		},
 		{
 			name:     "group on a control plane placed in an availability set",
@@ -1324,6 +1357,7 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, invalidCapacityReservationGroupName).Return(nil, fmt.Errorf("failed to get capacity reservation group")).AnyTimes()
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, wrongRegionCapacityReservationGroupName).Return(wrongRegionResult, nil).AnyTimes()
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, zonedCapacityReservationGroupName).Return(zonedResult, nil).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, regionalCapacityReservationGroupName).Return(regionalResult, nil).AnyTimes()
 	// Declared before the catch-all so that the unzoned instance type matches it first.
 	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), unzonedInstanceType).Return(nil, nil).AnyTimes()
 	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()

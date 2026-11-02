@@ -266,13 +266,18 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 		} else if defaultPlatform != nil && defaultPlatform.InstanceType != "" {
 			instanceType = defaultPlatform.InstanceType
 		}
-		// Only the presence of zones matters here. Which zones the pool lands in
-		// is decided at machine generation, so they are not compared against the
-		// group's eligible zones.
 		discovered, known := discoverZones(instanceType)
-		if known && len(namedZones(discovered)) == 0 {
-			usage.unzoned.Insert(fmt.Sprintf("%s (instance type %s has no availability zones in %s)", fieldPath.String(), instanceType, clusterRegion))
+		if !known {
+			return
 		}
+		// Machine generation spreads the pool over every discovered zone, so
+		// those zones are the pool's real placement and take part in the
+		// group's eligibility checks just like configured ones.
+		if named := namedZones(discovered); len(named) > 0 {
+			usage.poolZones.Insert(named...)
+			return
+		}
+		usage.unzoned.Insert(fmt.Sprintf("%s (instance type %s has no availability zones in %s)", fieldPath.String(), instanceType, clusterRegion))
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
