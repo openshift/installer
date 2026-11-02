@@ -1666,7 +1666,7 @@ type Label struct {
 type RemoteWriteSpec struct {
 	// url is the URL of the remote write endpoint.
 	// Must be a valid URL with http or https scheme and a non-empty hostname.
-	// Query parameters, fragments, and user information (e.g. user:password@host) are not allowed.
+	// Query parameters are allowed. Fragments and user information (e.g. user:password@host) are not allowed.
 	// Empty string is invalid. Must be between 1 and 2048 characters in length.
 	// +required
 	// +kubebuilder:validation:MaxLength=2048
@@ -1674,9 +1674,8 @@ type RemoteWriteSpec struct {
 	// +kubebuilder:validation:XValidation:rule="isURL(self)",message="must be a valid URL"
 	// +kubebuilder:validation:XValidation:rule="!isURL(self) || url(self).getScheme() == 'http' || url(self).getScheme() == 'https'",message="must use http or https scheme"
 	// +kubebuilder:validation:XValidation:rule="!isURL(self) || size(url(self).getHostname()) > 0",message="must have a non-empty hostname"
-	// +kubebuilder:validation:XValidation:rule="!isURL(self) || url(self).getQuery().size() == 0",message="query parameters are not allowed"
 	// +kubebuilder:validation:XValidation:rule="!self.matches('.*#.*')",message="fragments are not allowed"
-	// +kubebuilder:validation:XValidation:rule="!self.matches('.*@.*')",message="user information (e.g. user:password@host) is not allowed"
+	// +kubebuilder:validation:XValidation:rule="!self.matches('^[^:]+://[^/?#]*@')",message="user information (e.g. user:password@host) is not allowed"
 	URL string `json:"url,omitempty"`
 	// name is a required identifier for this remote write configuration (name is the list key for the remoteWrite list).
 	// This name is used in metrics and logging to differentiate remote write queues.
@@ -2126,7 +2125,10 @@ type RelabelConfig struct {
 	// When omitted, the rule operates without extracting source labels (useful for actions like labelmap).
 	// Minimum of 1 and maximum of 10 source labels can be specified, each between 1 and 128 characters.
 	// Each entry must be unique.
-	// Label names beginning with "__" (two underscores) are reserved for internal Prometheus use and are not allowed.
+	// Labels beginning with "__" (two underscores) are Prometheus internal/meta labels
+	// (e.g., __name__, __address__) and are valid in sourceLabels because relabeling reads
+	// from them before they are stripped. Using __name__ in sourceLabels is the standard way
+	// to filter metrics by name in writeRelabelConfigs.
 	// Label names SHOULD start with a letter (a-z, A-Z) or underscore (_), followed by zero or more letters, digits (0-9), or underscores for best compatibility.
 	// While Prometheus supports UTF-8 characters in label names (since v3.0.0), using the recommended character set
 	// ensures better compatibility with the wider ecosystem (tooling, third-party instrumentation, etc.).
@@ -2135,7 +2137,6 @@ type RelabelConfig struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +kubebuilder:validation:items:MinLength=1
 	// +kubebuilder:validation:items:MaxLength=128
-	// +kubebuilder:validation:items:XValidation:rule="!self.startsWith('__')",message="label names beginning with '__' (two underscores) are reserved for internal Prometheus use and are not allowed"
 	// +listType=set
 	SourceLabels []string `json:"sourceLabels,omitempty"`
 

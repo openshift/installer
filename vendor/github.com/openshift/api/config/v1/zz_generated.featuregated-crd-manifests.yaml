@@ -396,6 +396,7 @@ infrastructures.config.openshift.io:
   - MutableTopology
   - NutanixMultiSubnets
   - OnPremDNSRecords
+  - OpenStackMaxAllowedAddressPairs
   - VSphereHostVMGroupZonal
   - VSphereMultiVCenterDay2
   FilenameOperatorName: config-operator
