@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	capierrors "sigs.k8s.io/cluster-api/errors"
+	capierrors "sigs.k8s.io/cluster-api/api/deprecated/errors"
 )
 
 const (
@@ -113,7 +113,7 @@ type MachineSetSpec struct {
 // +kubebuilder:validation:MinProperties=1
 type MachineSetDeletionSpec struct {
 	// order defines the order in which Machines are deleted when downscaling.
-	// Defaults to "Random".  Valid values are "Random, "Newest", "Oldest"
+	// Defaults to "Random". Valid values are "Random", "Newest", "Oldest"
 	// +optional
 	Order MachineSetDeletionOrder `json:"order,omitempty"`
 }
@@ -331,6 +331,14 @@ type MachineSetStatus struct {
 	// upToDateReplicas is the number of up-to-date replicas for this MachineSet. A machine is considered up-to-date when Machine's UpToDate condition is true.
 	// +optional
 	UpToDateReplicas *int32 `json:"upToDateReplicas,omitempty"`
+
+	// versions is the aggregated Kubernetes versions in this MachineSet.
+	// +optional
+	// +listType=map
+	// +listMapKey=version
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
+	Versions []StatusVersion `json:"versions,omitempty"`
 
 	// observedGeneration reflects the generation of the most recently observed MachineSet.
 	// +optional
