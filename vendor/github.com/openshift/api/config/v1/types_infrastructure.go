@@ -1250,6 +1250,17 @@ type OpenStackPlatformSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self.all(x, self.exists_one(y, x == y))"
 	// +optional
 	MachineNetworks []CIDR `json:"machineNetworks"`
+
+	// maxAllowedAddressPairs is the maximum number of allowed address pairs
+	// configured in Neutron. When set, the value must be between 1 and 2,147,483,647
+	// inclusive. When omitted, it means there is no opinion and the platform will
+	// choose a reasonable default which is subject to change. Currently, the default
+	// value matches Neutron's default.
+	// +openshift:enable:FeatureGate=OpenStackMaxAllowedAddressPairs
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=2147483647
+	// +optional
+	MaxAllowedAddressPairs int32 `json:"maxAllowedAddressPairs,omitempty"`
 }
 
 // OpenStackPlatformStatus holds the current status of the OpenStack infrastructure provider.
