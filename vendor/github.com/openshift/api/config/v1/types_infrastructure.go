@@ -20,8 +20,6 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 // +openshift:validation:FeatureGateAwareXValidation:featureGate=MutableTopology,rule="!has(self.spec.controlPlaneTopology) || (has(oldSelf.spec.controlPlaneTopology) && self.spec.controlPlaneTopology == oldSelf.spec.controlPlaneTopology) || (has(self.status.controlPlaneTopology) && self.spec.controlPlaneTopology == self.status.controlPlaneTopology) || (has(self.status.controlPlaneTopology) && self.status.controlPlaneTopology == 'SingleReplica' && self.spec.controlPlaneTopology == 'HighlyAvailable')",message="spec.controlPlaneTopology must match status.controlPlaneTopology or be set to HighlyAvailable when status.controlPlaneTopology is SingleReplica"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=MutableTopology,rule="!has(self.spec.controlPlaneTopology) || !has(oldSelf.spec.controlPlaneTopology) || self.spec.controlPlaneTopology == oldSelf.spec.controlPlaneTopology || (oldSelf.spec.controlPlaneTopology == oldSelf.status.controlPlaneTopology && (!has(oldSelf.spec.infrastructureTopology) || oldSelf.spec.infrastructureTopology == oldSelf.status.infrastructureTopology))",message="spec.controlPlaneTopology is immutable while a topology transition is in progress"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=MutableTopology,rule="!has(self.spec.infrastructureTopology) || !has(oldSelf.spec.infrastructureTopology) || self.spec.infrastructureTopology == oldSelf.spec.infrastructureTopology || ((!has(oldSelf.spec.controlPlaneTopology) || oldSelf.spec.controlPlaneTopology == oldSelf.status.controlPlaneTopology) && oldSelf.spec.infrastructureTopology == oldSelf.status.infrastructureTopology)",message="spec.infrastructureTopology is immutable while a topology transition is in progress"
 type Infrastructure struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -134,13 +132,13 @@ type InfrastructureStatus struct {
 	// The default is 'HighlyAvailable', which represents the behavior operators have in a "normal" cluster.
 	// The 'SingleReplica' mode will be used in single-node deployments
 	// and the operators should not configure the operand for highly-available operation
+	// The 'DualReplica' mode is used in two-node deployments with fencing.
 	// The 'External' mode indicates that the control plane is hosted externally to the cluster and that
 	// its components are not visible within the cluster.
 	// The 'HighlyAvailableArbiter' mode indicates that the control plane will consist of 2 control-plane nodes
 	// that run conventional services and 1 smaller sized arbiter node that runs a bare minimum of services to maintain quorum.
 	// +kubebuilder:default=HighlyAvailable
-	// +openshift:validation:FeatureGateAwareEnum:featureGate="",enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;External
-	// +openshift:validation:FeatureGateAwareEnum:featureGate=DualReplica,enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;DualReplica;External
+	// +kubebuilder:validation:Enum=HighlyAvailable;HighlyAvailableArbiter;SingleReplica;DualReplica;External
 	// +optional
 	ControlPlaneTopology TopologyMode `json:"controlPlaneTopology"`
 
@@ -155,6 +153,16 @@ type InfrastructureStatus struct {
 	// +kubebuilder:validation:Enum=HighlyAvailable;SingleReplica
 	// +optional
 	InfrastructureTopology TopologyMode `json:"infrastructureTopology,omitempty"`
+
+	// topologyTransitionStatus reports evaluations of supported topology transitions
+	// and the status of a requested transition, if any.
+	// It is optional and is omitted until the topology controller reports transition status.
+	// A transition is requested through spec.controlPlaneTopology. The controller
+	// reports completion only after both topologies reach that transition's target
+	// and post-transition checks pass; reaching the target topology alone is not completion.
+	// +openshift:enable:FeatureGate=MutableTopology
+	// +optional
+	TopologyTransitionStatus TopologyTransitionStatus `json:"topologyTransitionStatus,omitzero"`
 
 	// cpuPartitioning expresses if CPU partitioning is a currently enabled feature in the cluster.
 	// CPU Partitioning means that this cluster can support partitioning workloads to specific CPU Sets.

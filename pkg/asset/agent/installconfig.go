@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
@@ -269,14 +268,6 @@ func (a *OptionalInstallConfig) validateTNFConfiguration(installConfig *types.In
 		return nil
 	}
 
-	// At this point we know: 2 replicas + fencing configured
-	// Check if TNF feature gate is enabled
-	if !installConfig.Enabled(features.FeatureGateDualReplica) {
-		fieldPath := field.NewPath("controlPlane", "fencing")
-		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
-			"fencing configuration requires FeatureGateDualReplica to be enabled"))
-	}
-
 	// Validate fencing credentials count matches control plane replicas
 	if len(installConfig.ControlPlane.Fencing.Credentials) != 2 {
 		fieldPath := field.NewPath("controlPlane", "fencing", "credentials")
@@ -295,10 +286,7 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 		// Basic boundary check for control plane replicas
 		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 {
 			fieldPath = field.NewPath("controlPlane", "replicas")
-			supportedControlPlaneRange := []string{"3", "1", "4", "5", "2 (with arbiter)"}
-			if installConfig.Enabled(features.FeatureGateDualReplica) {
-				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with fencing)")
-			}
+			supportedControlPlaneRange := []string{"3", "1", "4", "5", "2 (with arbiter)", "2 (with fencing)"}
 			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Replicas, supportedControlPlaneRange))
 		}
 	}

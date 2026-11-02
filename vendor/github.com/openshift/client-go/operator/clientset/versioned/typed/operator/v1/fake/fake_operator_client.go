@@ -44,6 +44,10 @@ func (c *FakeOperatorV1) Etcds() v1.EtcdInterface {
 	return newFakeEtcds(c)
 }
 
+func (c *FakeOperatorV1) Ingresses() v1.IngressInterface {
+	return newFakeIngresses(c)
+}
+
 func (c *FakeOperatorV1) IngressControllers(namespace string) v1.IngressControllerInterface {
 	return newFakeIngressControllers(c, namespace)
 }
