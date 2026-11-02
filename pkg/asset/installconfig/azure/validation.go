@@ -150,57 +150,119 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 	defaultPlatform := ic.Platform.Azure.DefaultMachinePlatform
 	defaultPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "capacityReservationGroup")
 
-	// A group is validated once, against the zones of every machine pool that
-	// ends up using it, so that inherited groups are not fetched or reported
-	// more than once.
+	// A group is validated once, against every machine pool that ends up using
+	// it, so that inherited groups are not fetched or reported more than once.
 	type groupUsage struct {
 		group     *aztypes.CapacityReservationGroup
 		fieldPath *field.Path
 		poolZones sets.Set[string]
+		// unzoned holds a description of each pool using this group that will be
+		// placed in an availability set, which Azure does not allow to be
+		// combined with a capacity reservation.
+		unzoned sets.Set[string]
 	}
 	var usages []*groupUsage
 	byFieldPath := map[string]*groupUsage{}
 
-	record := func(group *aztypes.CapacityReservationGroup, fieldPath *field.Path, zones []string) {
+	usageFor := func(group *aztypes.CapacityReservationGroup, fieldPath *field.Path) *groupUsage {
 		if group == nil {
-			return
+			return nil
 		}
 		usage, ok := byFieldPath[fieldPath.String()]
 		if !ok {
-			usage = &groupUsage{group: group, fieldPath: fieldPath, poolZones: sets.New[string]()}
+			usage = &groupUsage{
+				group:     group,
+				fieldPath: fieldPath,
+				poolZones: sets.New[string](),
+				unzoned:   sets.New[string](),
+			}
 			byFieldPath[fieldPath.String()] = usage
 			usages = append(usages, usage)
 		}
-		usage.poolZones.Insert(namedZones(zones)...)
+		return usage
+	}
+
+	// zonesByInstanceType memoizes the zone discovery that machine generation
+	// runs for any pool that does not configure zones itself. The second result
+	// is false when the lookup failed, so that unknown zones are not mistaken
+	// for an absence of zones.
+	zonesByInstanceType := map[string][]string{}
+	discoverZones := func(instanceType string) ([]string, bool) {
+		if zones, ok := zonesByInstanceType[instanceType]; ok {
+			return zones, true
+		}
+		zones, err := client.GetAvailabilityZones(context.TODO(), clusterRegion, instanceType)
+		if err != nil {
+			// Instance type validation already reports lookup failures.
+			return nil, false
+		}
+		zonesByInstanceType[instanceType] = zones
+		return zones, true
 	}
 
 	// Record the default group first so that it is still validated when no pool
 	// inherits it.
 	if defaultPlatform != nil {
-		record(defaultPlatform.CapacityReservationGroup, defaultPath, defaultPlatform.Zones)
+		if usage := usageFor(defaultPlatform.CapacityReservationGroup, defaultPath); usage != nil {
+			usage.poolZones.Insert(namedZones(defaultPlatform.Zones)...)
+		}
 	}
 
-	// Attribute each pool's effective zones to the group that pool actually
-	// uses, which is its own group when set and the default group otherwise.
-	recordPool := func(pool *aztypes.MachinePool, fieldPath *field.Path) {
+	// Attribute each pool to the group it actually uses, which is its own group
+	// when set and the default group otherwise.
+	recordPool := func(pool *aztypes.MachinePool, instanceType string, fieldPath *field.Path) {
+		group, groupPath := pool.CapacityReservationGroup, fieldPath
+		if group == nil {
+			if defaultPlatform == nil {
+				return
+			}
+			group, groupPath = defaultPlatform.CapacityReservationGroup, defaultPath
+		}
+		usage := usageFor(group, groupPath)
+		if usage == nil {
+			return
+		}
+
 		zones := pool.Zones
 		if len(zones) == 0 && defaultPlatform != nil {
 			zones = defaultPlatform.Zones
 		}
-		if pool.CapacityReservationGroup != nil {
-			record(pool.CapacityReservationGroup, fieldPath, zones)
-		} else if defaultPlatform != nil {
-			record(defaultPlatform.CapacityReservationGroup, defaultPath, zones)
+		zones = namedZones(zones)
+		if len(zones) > 0 {
+			usage.poolZones.Insert(zones...)
+			return
+		}
+
+		// The pool configures no zones, so machine generation falls back to the
+		// zones discovered for its instance type. A pool left with no zone at
+		// all is placed in an availability set.
+		if ic.Azure.CloudName == aztypes.StackCloud {
+			usage.unzoned.Insert(fmt.Sprintf("%s (Azure Stack does not support availability zones)", fieldPath.String()))
+			return
+		}
+		if pool.InstanceType != "" {
+			instanceType = pool.InstanceType
+		} else if defaultPlatform != nil && defaultPlatform.InstanceType != "" {
+			instanceType = defaultPlatform.InstanceType
+		}
+		// Only the presence of zones matters here. Which zones the pool lands in
+		// is decided at machine generation, so they are not compared against the
+		// group's eligible zones.
+		discovered, known := discoverZones(instanceType)
+		if known && len(namedZones(discovered)) == 0 {
+			usage.unzoned.Insert(fmt.Sprintf("%s (instance type %s has no availability zones in %s)", fieldPath.String(), instanceType, clusterRegion))
 		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
 		recordPool(ic.ControlPlane.Platform.Azure,
+			defaults.ControlPlaneInstanceType(ic.Azure.CloudName, clusterRegion, ic.ControlPlane.Architecture),
 			field.NewPath("controlPlane").Child("platform", "azure", "capacityReservationGroup"))
 	}
 	for idx, compute := range ic.Compute {
 		if compute.Platform.Azure != nil {
 			recordPool(compute.Platform.Azure,
+				defaults.ComputeInstanceType(ic.Azure.CloudName, clusterRegion, compute.Architecture),
 				field.NewPath("compute").Index(idx).Child("platform", "azure", "capacityReservationGroup"))
 		}
 	}
@@ -218,6 +280,11 @@ func ValidateCapacityReservationGroup(client API, ic *types.InstallConfig) field
 		if result.Location != nil && !strings.EqualFold(*result.Location, clusterRegion) {
 			allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,
 				fmt.Sprintf("capacity reservation group is in %s, but the cluster region is %s", *result.Location, clusterRegion)))
+		}
+		if usage.unzoned.Len() > 0 {
+			allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,
+				fmt.Sprintf("machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: %s",
+					strings.Join(sets.List(usage.unzoned), ", "))))
 		}
 		if usage.poolZones.Len() > 0 && len(eligibleZones(result)) == 0 {
 			allErrs = append(allErrs, field.Invalid(usage.fieldPath, group,

@@ -100,6 +100,13 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 
 	var reservationGroupID *string
 	if groupID := capacityReservationGroupID(mpool.CapacityReservationGroup, subscriptionID); groupID != "" {
+		// Guards both the control plane machines and the bootstrap machine
+		// below, each of which clears FailureDomain for an empty zone and so
+		// lands in an availability set. Install-config validation rejects this
+		// combination first; this keeps it unrepresentable.
+		if unzonedPlacement(mpool.Zones) {
+			return nil, fmt.Errorf("machines without an availability zone are placed in an availability set, which cannot be combined with capacity reservation group %s", groupID)
+		}
 		reservationGroupID = ptr.To(groupID)
 	}
 

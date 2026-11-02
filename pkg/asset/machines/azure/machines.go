@@ -162,6 +162,22 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
+// unzonedPlacement reports whether any machine in a pool with these zones is
+// created without a failure domain. CAPZ places such a machine in an
+// availability set, which Azure does not allow to be combined with a capacity
+// reservation group.
+func unzonedPlacement(zones []string) bool {
+	if len(zones) == 0 {
+		return true
+	}
+	for _, zone := range zones {
+		if strings.TrimSpace(zone) == "" {
+			return true
+		}
+	}
+	return false
+}
+
 // capacityReservationGroupID builds the Azure resource ID of the capacity
 // reservation group, falling back to defaultSubscriptionID when the group does
 // not name a subscription of its own. The install-config defaulting in
@@ -323,6 +339,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	if platform.CloudName == azure.StackCloud {
 		spec.AvailabilitySet = fmt.Sprintf("%s_control-plane-as", clusterID)
+	}
+
+	if spec.AvailabilitySet != "" && spec.CapacityReservationGroupID != "" {
+		return nil, fmt.Errorf("machine in availability set %s cannot also use capacity reservation group %s: Azure does not support combining the two",
+			spec.AvailabilitySet, spec.CapacityReservationGroupID)
 	}
 
 	return spec, nil

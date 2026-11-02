@@ -448,6 +448,19 @@ var (
 		}
 	}
 
+	// An instance type that zone discovery reports as having no availability
+	// zones, so machines using it are placed in an availability set.
+	unzonedInstanceType          = "Standard_Unzoned_Instance_Type"
+	unzonedInstanceTypeComputeIC = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.InstanceType = unzonedInstanceType
+	}
+	unzonedInstanceTypeControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.InstanceType = unzonedInstanceType
+	}
+	azureStackCloud = func(ic *types.InstallConfig) {
+		ic.Azure.CloudName = azure.StackCloud
+	}
+
 	validOSImagePublisher            = "test-publisher"
 	validOSImageOffer                = "test-offer"
 	validOSImageSKU                  = "test-sku"
@@ -1244,6 +1257,42 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 			edits:    editFunctions{zonesDefaultMachinePlatform("1"), validCapacityReservationGroupControlPlane},
 			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1$`,
 		},
+		{
+			// Zone discovery finds zones, so the pool is zonal rather than in an
+			// availability set, even though it configures no zones itself.
+			name:  "group with a zoned instance type and no configured zones",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane},
+		},
+		{
+			name:     "group on a control plane placed in an availability set",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, unzonedInstanceTypeControlPlane},
+			errorMsg: fmt.Sprintf(`^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
+		{
+			name:     "group on compute placed in an availability set",
+			edits:    editFunctions{zonedCapacityReservationGroupCompute, unzonedInstanceTypeComputeIC},
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: compute\[0\].platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
+		{
+			// Azure Stack has no availability zones at all, so the control plane
+			// is always placed in an availability set.
+			name:     "group on Azure Stack",
+			edits:    editFunctions{azureStackCloud, zonedCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(Azure Stack does not support availability zones\)$`,
+		},
+		{
+			// An explicit zone wins over the unzoned instance type, so there is
+			// no availability set.
+			name:  "zoned pool with an unzoned instance type",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane, unzonedInstanceTypeControlPlane, zonesControlPlane("1")},
+		},
+		{
+			// Both pools inherit the default group; only the unzoned one is
+			// reported, and the group is still reported once.
+			name:     "inherited group with one pool in an availability set",
+			edits:    editFunctions{validCapacityReservationGroupDefaultMachinePlatform, unzonedInstanceTypeComputeIC},
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: compute\[0\].platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -1252,6 +1301,9 @@ func TestAzureCapacityReservationGroup(t *testing.T) {
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, invalidCapacityReservationGroupName).Return(nil, fmt.Errorf("failed to get capacity reservation group")).AnyTimes()
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, wrongRegionCapacityReservationGroupName).Return(wrongRegionResult, nil).AnyTimes()
 	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, zonedCapacityReservationGroupName).Return(zonedResult, nil).AnyTimes()
+	// Declared before the catch-all so that the unzoned instance type matches it first.
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), unzonedInstanceType).Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

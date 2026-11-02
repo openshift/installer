@@ -2,6 +2,7 @@ package azure
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
@@ -333,6 +334,58 @@ func TestProviderCapacityReservationGroupSubscriptionDefault(t *testing.T) {
 		"/subscriptions/test-subscription/resourceGroups/reservation-resource-group/providers/Microsoft.Compute/capacityReservationGroups/reservation-group",
 		spec.CapacityReservationGroupID)
 	assert.Empty(t, group.SubscriptionID)
+}
+
+func TestProviderRejectsCapacityReservationGroupInAvailabilitySet(t *testing.T) {
+	// Azure Stack always places the control plane in an availability set.
+	azIdx := 0
+	spec, err := provider(
+		&aztypes.Platform{Region: "eastus", CloudName: aztypes.StackCloud},
+		&aztypes.MachinePool{
+			InstanceType: "Standard_D2s_v3",
+			Zones:        []string{"1"},
+			Identity:     &aztypes.VMIdentity{},
+			CapacityReservationGroup: &aztypes.CapacityReservationGroup{
+				ResourceGroup: "reservation-resource-group",
+				Name:          "reservation-group",
+			},
+		},
+		"",
+		"user-data",
+		"test-cluster",
+		"master",
+		&azIdx,
+		map[string]string{"HyperVGenerations": "V1,V2"},
+		&icazure.Session{
+			Credentials: icazure.Credentials{SubscriptionID: "test-subscription"},
+			Environment: azureenv.PublicCloud,
+		},
+		"test-network-resource-group",
+		"test-vnet",
+		"test-subnet",
+	)
+	assert.Nil(t, spec)
+	assert.ErrorContains(t, err, "cannot also use capacity reservation group")
+}
+
+func TestUnzonedPlacement(t *testing.T) {
+	testCases := []struct {
+		zones    []string
+		expected bool
+	}{
+		{zones: nil, expected: true},
+		{zones: []string{}, expected: true},
+		{zones: []string{""}, expected: true},
+		{zones: []string{"1", ""}, expected: true},
+		{zones: []string{"1"}, expected: false},
+		{zones: []string{"1", "2"}, expected: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%q", tc.zones), func(t *testing.T) {
+			assert.Equal(t, tc.expected, unzonedPlacement(tc.zones))
+		})
+	}
 }
 
 func TestCapzImage(t *testing.T) {
