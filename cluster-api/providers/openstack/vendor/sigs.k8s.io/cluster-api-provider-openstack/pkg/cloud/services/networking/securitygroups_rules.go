@@ -16,20 +16,33 @@ limitations under the License.
 
 package networking
 
+const (
+	securityGroupRuleDirectionIngress            = "ingress"
+	securityGroupRuleDirectionEgress             = "egress"
+	securityGroupRuleEtherTypeIPv4               = "IPv4"
+	securityGroupRuleEtherTypeIPv6               = "IPv6"
+	securityGroupRuleProtocolTCP                 = "tcp"
+	securityGroupRuleProtocolUDP                 = "udp"
+	securityGroupRuleDescriptionSSH              = "SSH"
+	securityGroupRuleDescriptionKubeletAPI       = "Kubelet API"
+	securityGroupRuleDescriptionNodePortServices = "Node Port Services"
+	securityGroupRuleDescriptionInClusterIngress = "In-cluster Ingress"
+)
+
 var defaultRules = []resolvedSecurityGroupRuleSpec{
 	{
-		Direction:      "egress",
+		Direction:      securityGroupRuleDirectionEgress,
 		Description:    "Full open",
-		EtherType:      "IPv4",
+		EtherType:      securityGroupRuleEtherTypeIPv4,
 		PortRangeMin:   0,
 		PortRangeMax:   0,
 		Protocol:       "",
 		RemoteIPPrefix: "",
 	},
 	{
-		Direction:      "egress",
+		Direction:      securityGroupRuleDirectionEgress,
 		Description:    "Full open",
-		EtherType:      "IPv6",
+		EtherType:      securityGroupRuleEtherTypeIPv6,
 		PortRangeMin:   0,
 		PortRangeMax:   0,
 		Protocol:       "",
@@ -42,31 +55,31 @@ func getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID string) []resol
 	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "Etcd",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  2379,
 			PortRangeMax:  2380,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: remoteGroupIDSelf,
 		},
 		{
 			// kubeadm says this is needed
-			Description:   "Kubelet API",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionKubeletAPI,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  10250,
 			PortRangeMax:  10250,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: remoteGroupIDSelf,
 		},
 		{
 			// This is needed to support metrics-server deployments
-			Description:   "Kubelet API",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionKubeletAPI,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  10250,
 			PortRangeMax:  10250,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secWorkerGroupID,
 		},
 	}
@@ -77,21 +90,21 @@ func getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID string) []resol
 	return []resolvedSecurityGroupRuleSpec{
 		{
 			// This is needed to support metrics-server deployments
-			Description:   "Kubelet API",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionKubeletAPI,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  10250,
 			PortRangeMax:  10250,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: remoteGroupIDSelf,
 		},
 		{
-			Description:   "Kubelet API",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionKubeletAPI,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  10250,
 			PortRangeMax:  10250,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secControlPlaneGroupID,
 		},
 	}
@@ -101,12 +114,12 @@ func getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID string) []resol
 func getSGControlPlaneSSH(secBastionGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:   "SSH",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionSSH,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  22,
 			PortRangeMax:  22,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secBastionGroupID,
 		},
 	}
@@ -116,12 +129,12 @@ func getSGControlPlaneSSH(secBastionGroupID string) []resolvedSecurityGroupRuleS
 func getSGWorkerSSH(secBastionGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:   "SSH",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionSSH,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  22,
 			PortRangeMax:  22,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secBastionGroupID,
 		},
 	}
@@ -132,11 +145,11 @@ func getSGControlPlaneHTTPS() []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:  "Kubernetes API",
-			Direction:    "ingress",
-			EtherType:    "IPv4",
+			Direction:    securityGroupRuleDirectionIngress,
+			EtherType:    securityGroupRuleEtherTypeIPv4,
 			PortRangeMin: 6443,
 			PortRangeMax: 6443,
-			Protocol:     "tcp",
+			Protocol:     securityGroupRuleProtocolTCP,
 		},
 	}
 }
@@ -145,39 +158,39 @@ func getSGControlPlaneHTTPS() []resolvedSecurityGroupRuleSpec {
 func getSGWorkerNodePort(secWorkerGroupID string, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:   "Node Port Services",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionNodePortServices,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  30000,
 			PortRangeMax:  32767,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secWorkerGroupID,
 		},
 		{
-			Description:   "Node Port Services",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionNodePortServices,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  30000,
 			PortRangeMax:  32767,
-			Protocol:      "udp",
+			Protocol:      securityGroupRuleProtocolUDP,
 			RemoteGroupID: secWorkerGroupID,
 		},
 		{
-			Description:   "Node Port Services",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionNodePortServices,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  30000,
 			PortRangeMax:  32767,
-			Protocol:      "tcp",
+			Protocol:      securityGroupRuleProtocolTCP,
 			RemoteGroupID: secControlPlaneGroupID,
 		},
 		{
-			Description:   "Node Port Services",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionNodePortServices,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  30000,
 			PortRangeMax:  32767,
-			Protocol:      "udp",
+			Protocol:      securityGroupRuleProtocolUDP,
 			RemoteGroupID: secControlPlaneGroupID,
 		},
 	}
@@ -187,21 +200,21 @@ func getSGWorkerNodePort(secWorkerGroupID string, secControlPlaneGroupID string)
 func getSGWorkerNodePortCIDR(cidr string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:    "Node Port Services",
-			Direction:      "ingress",
-			EtherType:      "IPv4",
+			Description:    securityGroupRuleDescriptionNodePortServices,
+			Direction:      securityGroupRuleDirectionIngress,
+			EtherType:      securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:   30000,
 			PortRangeMax:   32767,
-			Protocol:       "tcp",
+			Protocol:       securityGroupRuleProtocolTCP,
 			RemoteIPPrefix: cidr,
 		},
 		{
-			Description:    "Node Port Services",
-			Direction:      "ingress",
-			EtherType:      "IPv4",
+			Description:    securityGroupRuleDescriptionNodePortServices,
+			Direction:      securityGroupRuleDirectionIngress,
+			EtherType:      securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:   30000,
 			PortRangeMax:   32767,
-			Protocol:       "udp",
+			Protocol:       securityGroupRuleProtocolUDP,
 			RemoteIPPrefix: cidr,
 		},
 	}
@@ -211,18 +224,18 @@ func getSGWorkerNodePortCIDR(cidr string) []resolvedSecurityGroupRuleSpec {
 func getSGControlPlaneAllowAll(remoteGroupIDSelf, secWorkerGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:   "In-cluster Ingress",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionInClusterIngress,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  0,
 			PortRangeMax:  0,
 			Protocol:      "",
 			RemoteGroupID: remoteGroupIDSelf,
 		},
 		{
-			Description:   "In-cluster Ingress",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionInClusterIngress,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  0,
 			PortRangeMax:  0,
 			Protocol:      "",
@@ -235,18 +248,18 @@ func getSGControlPlaneAllowAll(remoteGroupIDSelf, secWorkerGroupID string) []res
 func getSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:   "In-cluster Ingress",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionInClusterIngress,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  0,
 			PortRangeMax:  0,
 			Protocol:      "",
 			RemoteGroupID: remoteGroupIDSelf,
 		},
 		{
-			Description:   "In-cluster Ingress",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
+			Description:   securityGroupRuleDescriptionInClusterIngress,
+			Direction:     securityGroupRuleDirectionIngress,
+			EtherType:     securityGroupRuleEtherTypeIPv4,
 			PortRangeMin:  0,
 			PortRangeMax:  0,
 			Protocol:      "",
@@ -256,32 +269,26 @@ func getSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []res
 }
 
 // Permit ports that defined in openStackCluster.Spec.APIServerLoadBalancer.AdditionalPorts.
-func getSGControlPlaneAdditionalPorts(ports []int) []resolvedSecurityGroupRuleSpec {
-	controlPlaneRules := []resolvedSecurityGroupRuleSpec{}
+func getSGControlPlaneAdditionalPorts(ports []int32) []resolvedSecurityGroupRuleSpec {
 	// Preallocate r with len(ports)
 	r := make([]resolvedSecurityGroupRuleSpec, len(ports))
 	for i, p := range ports {
 		r[i] = resolvedSecurityGroupRuleSpec{
 			Description:  "Additional port",
-			Direction:    "ingress",
-			EtherType:    "IPv4",
-			Protocol:     "tcp",
-			PortRangeMin: p,
-			PortRangeMax: p,
+			Direction:    securityGroupRuleDirectionIngress,
+			EtherType:    securityGroupRuleEtherTypeIPv4,
+			Protocol:     securityGroupRuleProtocolTCP,
+			PortRangeMin: int(p),
+			PortRangeMax: int(p),
 		}
 	}
-	controlPlaneRules = append(controlPlaneRules, r...)
-	return controlPlaneRules
+	return r
 }
 
 func getSGControlPlaneGeneral(remoteGroupIDSelf, secWorkerGroupID string) []resolvedSecurityGroupRuleSpec {
-	controlPlaneRules := []resolvedSecurityGroupRuleSpec{}
-	controlPlaneRules = append(controlPlaneRules, getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID)...)
-	return controlPlaneRules
+	return getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID)
 }
 
 func getSGWorkerGeneral(remoteGroupIDSelf, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
-	workerRules := []resolvedSecurityGroupRuleSpec{}
-	workerRules = append(workerRules, getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID)...)
-	return workerRules
+	return getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID)
 }

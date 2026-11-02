@@ -166,7 +166,7 @@ func (q *QuotaDetail) UnmarshalJSON(b []byte) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("reserved has unexpected type: %T", t)
+		return fmt.Errorf("Reserved has unexpected type: %T", t) //nolint:staticcheck
 	}
 
 	return nil

@@ -25,7 +25,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
@@ -78,7 +78,7 @@ func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, cl
 		IPs:  routerIPs,
 	}
 
-	if len(openStackCluster.Spec.ExternalRouterIPs) > 0 {
+	if openStackCluster.Spec.ManagedRouter != nil && len(openStackCluster.Spec.ManagedRouter.ExternalIPs) > 0 {
 		if err := s.setRouterExternalIPs(openStackCluster, router); err != nil {
 			return err
 		}
@@ -183,9 +183,21 @@ func (s *Service) createRouter(openStackCluster *infrav1.OpenStackCluster, clust
 	// should be configured because at least in our environment
 	// we can only set the routerIP via gateway update not during create
 	// That's also the same way terraform provider OpenStack does it
-	if len(openStackCluster.Spec.ExternalRouterIPs) == 0 {
+	if openStackCluster.Spec.ManagedRouter == nil || len(openStackCluster.Spec.ManagedRouter.ExternalIPs) == 0 {
 		opts.GatewayInfo = &routers.GatewayInfo{
 			NetworkID: openStackCluster.Status.ExternalNetwork.ID,
+		}
+	}
+
+	// Determine standard-attr-tag support before creating the router, so
+	// that a failed extension lookup doesn't leave behind a created router
+	// that reconciliation never retries tagging for.
+	var tagsSupported bool
+	if len(openStackCluster.Spec.Tags) > 0 {
+		var err error
+		tagsSupported, err = s.hasStandardAttrTagExtension()
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -197,11 +209,15 @@ func (s *Service) createRouter(openStackCluster *infrav1.OpenStackCluster, clust
 	record.Eventf(openStackCluster, "SuccessfulCreateRouter", "Created router %s with id %s", name, router.ID)
 
 	if len(openStackCluster.Spec.Tags) > 0 {
-		_, err = s.client.ReplaceAllAttributesTags("routers", router.ID, attributestags.ReplaceAllOpts{
-			Tags: openStackCluster.Spec.Tags,
-		})
-		if err != nil {
-			return nil, err
+		if tagsSupported {
+			_, err = s.client.ReplaceAllAttributesTags("routers", router.ID, attributestags.ReplaceAllOpts{
+				Tags: openStackCluster.Spec.Tags,
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", "routers", "resourceID", router.ID)
 		}
 	}
 
@@ -215,8 +231,8 @@ func (s *Service) setRouterExternalIPs(openStackCluster *infrav1.OpenStackCluste
 		},
 	}
 
-	for i := range openStackCluster.Spec.ExternalRouterIPs {
-		externalRouterIP := openStackCluster.Spec.ExternalRouterIPs[i]
+	for i := range openStackCluster.Spec.ManagedRouter.ExternalIPs {
+		externalRouterIP := openStackCluster.Spec.ManagedRouter.ExternalIPs[i]
 		subnetID, err := s.GetSubnetIDByParam(&externalRouterIP.Subnet)
 		if err != nil {
 			return fmt.Errorf("failed to get subnet for external router: %w", err)
