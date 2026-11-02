@@ -3,168 +3,35 @@
 package fake
 
 import (
-	"context"
-	json "encoding/json"
-	"fmt"
-
 	v1alpha1 "github.com/openshift/api/machineconfiguration/v1alpha1"
 	machineconfigurationv1alpha1 "github.com/openshift/client-go/machineconfiguration/applyconfigurations/machineconfiguration/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	typedmachineconfigurationv1alpha1 "github.com/openshift/client-go/machineconfiguration/clientset/versioned/typed/machineconfiguration/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeMachineOSConfigs implements MachineOSConfigInterface
-type FakeMachineOSConfigs struct {
+// fakeMachineOSConfigs implements MachineOSConfigInterface
+type fakeMachineOSConfigs struct {
+	*gentype.FakeClientWithListAndApply[*v1alpha1.MachineOSConfig, *v1alpha1.MachineOSConfigList, *machineconfigurationv1alpha1.MachineOSConfigApplyConfiguration]
 	Fake *FakeMachineconfigurationV1alpha1
 }
 
-var machineosconfigsResource = v1alpha1.SchemeGroupVersion.WithResource("machineosconfigs")
-
-var machineosconfigsKind = v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfig")
-
-// Get takes name of the machineOSConfig, and returns the corresponding machineOSConfig object, and an error if there is any.
-func (c *FakeMachineOSConfigs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootGetActionWithOptions(machineosconfigsResource, name, options), emptyResult)
-	if obj == nil {
-		return emptyResult, err
+func newFakeMachineOSConfigs(fake *FakeMachineconfigurationV1alpha1) typedmachineconfigurationv1alpha1.MachineOSConfigInterface {
+	return &fakeMachineOSConfigs{
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.MachineOSConfig, *v1alpha1.MachineOSConfigList, *machineconfigurationv1alpha1.MachineOSConfigApplyConfiguration](
+			fake.Fake,
+			"",
+			v1alpha1.SchemeGroupVersion.WithResource("machineosconfigs"),
+			v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfig"),
+			func() *v1alpha1.MachineOSConfig { return &v1alpha1.MachineOSConfig{} },
+			func() *v1alpha1.MachineOSConfigList { return &v1alpha1.MachineOSConfigList{} },
+			func(dst, src *v1alpha1.MachineOSConfigList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.MachineOSConfigList) []*v1alpha1.MachineOSConfig {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.MachineOSConfigList, items []*v1alpha1.MachineOSConfig) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// List takes label and field selectors, and returns the list of MachineOSConfigs that match those selectors.
-func (c *FakeMachineOSConfigs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MachineOSConfigList, err error) {
-	emptyResult := &v1alpha1.MachineOSConfigList{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootListActionWithOptions(machineosconfigsResource, machineosconfigsKind, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.MachineOSConfigList{ListMeta: obj.(*v1alpha1.MachineOSConfigList).ListMeta}
-	for _, item := range obj.(*v1alpha1.MachineOSConfigList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested machineOSConfigs.
-func (c *FakeMachineOSConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewRootWatchActionWithOptions(machineosconfigsResource, opts))
-}
-
-// Create takes the representation of a machineOSConfig and creates it.  Returns the server's representation of the machineOSConfig, and an error, if there is any.
-func (c *FakeMachineOSConfigs) Create(ctx context.Context, machineOSConfig *v1alpha1.MachineOSConfig, opts v1.CreateOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateActionWithOptions(machineosconfigsResource, machineOSConfig, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// Update takes the representation of a machineOSConfig and updates it. Returns the server's representation of the machineOSConfig, and an error, if there is any.
-func (c *FakeMachineOSConfigs) Update(ctx context.Context, machineOSConfig *v1alpha1.MachineOSConfig, opts v1.UpdateOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateActionWithOptions(machineosconfigsResource, machineOSConfig, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMachineOSConfigs) UpdateStatus(ctx context.Context, machineOSConfig *v1alpha1.MachineOSConfig, opts v1.UpdateOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(machineosconfigsResource, "status", machineOSConfig, opts), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// Delete takes name of the machineOSConfig and deletes it. Returns an error if one occurs.
-func (c *FakeMachineOSConfigs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewRootDeleteActionWithOptions(machineosconfigsResource, name, opts), &v1alpha1.MachineOSConfig{})
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeMachineOSConfigs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionActionWithOptions(machineosconfigsResource, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.MachineOSConfigList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched machineOSConfig.
-func (c *FakeMachineOSConfigs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MachineOSConfig, err error) {
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosconfigsResource, name, pt, data, opts, subresources...), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied machineOSConfig.
-func (c *FakeMachineOSConfigs) Apply(ctx context.Context, machineOSConfig *machineconfigurationv1alpha1.MachineOSConfigApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	if machineOSConfig == nil {
-		return nil, fmt.Errorf("machineOSConfig provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(machineOSConfig)
-	if err != nil {
-		return nil, err
-	}
-	name := machineOSConfig.Name
-	if name == nil {
-		return nil, fmt.Errorf("machineOSConfig.Name must be provided to Apply")
-	}
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakeMachineOSConfigs) ApplyStatus(ctx context.Context, machineOSConfig *machineconfigurationv1alpha1.MachineOSConfigApplyConfiguration, opts v1.ApplyOptions) (result *v1alpha1.MachineOSConfig, err error) {
-	if machineOSConfig == nil {
-		return nil, fmt.Errorf("machineOSConfig provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(machineOSConfig)
-	if err != nil {
-		return nil, err
-	}
-	name := machineOSConfig.Name
-	if name == nil {
-		return nil, fmt.Errorf("machineOSConfig.Name must be provided to Apply")
-	}
-	emptyResult := &v1alpha1.MachineOSConfig{}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.MachineOSConfig), err
 }

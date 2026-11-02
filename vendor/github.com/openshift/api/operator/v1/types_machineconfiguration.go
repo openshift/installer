@@ -64,11 +64,10 @@ type MachineConfigurationStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	// conditions is a list of conditions and their status
-	// +patchMergeKey=type
-	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// Previously there was a StaticPodOperatorStatus here for legacy reasons. Many of the fields within
 	// it are no longer relevant for the MachineConfiguration CRD's functions. The following remainder

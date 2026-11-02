@@ -3,8 +3,8 @@
 package internal
 
 import (
-	"fmt"
-	"sync"
+	fmt "fmt"
+	sync "sync"
 
 	typed "sigs.k8s.io/structured-merge-diff/v4/typed"
 )
@@ -3710,6 +3710,46 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - type
+- name: com.github.openshift.api.config.v1alpha1.ClusterMonitoring
+  map:
+    fields:
+    - name: apiVersion
+      type:
+        scalar: string
+    - name: kind
+      type:
+        scalar: string
+    - name: metadata
+      type:
+        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+      default: {}
+    - name: spec
+      type:
+        namedType: com.github.openshift.api.config.v1alpha1.ClusterMonitoringSpec
+      default: {}
+    - name: status
+      type:
+        namedType: com.github.openshift.api.config.v1alpha1.ClusterMonitoringStatus
+      default: {}
+- name: com.github.openshift.api.config.v1alpha1.ClusterMonitoringSpec
+  map:
+    fields:
+    - name: userDefined
+      type:
+        namedType: com.github.openshift.api.config.v1alpha1.UserDefinedMonitoring
+      default: {}
+- name: com.github.openshift.api.config.v1alpha1.ClusterMonitoringStatus
+  map:
+    elementType:
+      scalar: untyped
+      list:
+        elementType:
+          namedType: __untyped_atomic_
+        elementRelationship: atomic
+      map:
+        elementType:
+          namedType: __untyped_deduced_
+        elementRelationship: separable
 - name: com.github.openshift.api.config.v1alpha1.EtcdBackupSpec
   map:
     fields:
@@ -3960,6 +4000,13 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: maxSizeOfBackupsGb
       type:
         scalar: numeric
+- name: com.github.openshift.api.config.v1alpha1.UserDefinedMonitoring
+  map:
+    fields:
+    - name: mode
+      type:
+        scalar: string
+      default: ""
 - name: io.k8s.api.core.v1.ConfigMapKeySelector
   map:
     fields:

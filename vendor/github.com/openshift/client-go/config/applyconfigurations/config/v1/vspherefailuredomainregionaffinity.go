@@ -3,13 +3,13 @@
 package v1
 
 import (
-	v1 "github.com/openshift/api/config/v1"
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // VSphereFailureDomainRegionAffinityApplyConfiguration represents a declarative configuration of the VSphereFailureDomainRegionAffinity type for use
 // with apply.
 type VSphereFailureDomainRegionAffinityApplyConfiguration struct {
-	Type *v1.VSphereFailureDomainRegionType `json:"type,omitempty"`
+	Type *configv1.VSphereFailureDomainRegionType `json:"type,omitempty"`
 }
 
 // VSphereFailureDomainRegionAffinityApplyConfiguration constructs a declarative configuration of the VSphereFailureDomainRegionAffinity type for use with
@@ -21,7 +21,7 @@ func VSphereFailureDomainRegionAffinity() *VSphereFailureDomainRegionAffinityApp
 // WithType sets the Type field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Type field is set to the value of the last call.
-func (b *VSphereFailureDomainRegionAffinityApplyConfiguration) WithType(value v1.VSphereFailureDomainRegionType) *VSphereFailureDomainRegionAffinityApplyConfiguration {
+func (b *VSphereFailureDomainRegionAffinityApplyConfiguration) WithType(value configv1.VSphereFailureDomainRegionType) *VSphereFailureDomainRegionAffinityApplyConfiguration {
 	b.Type = &value
 	return b
 }
