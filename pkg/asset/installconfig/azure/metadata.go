@@ -21,9 +21,10 @@ type Metadata struct {
 	client            API
 	dnsCfg            *DNSConfig
 	availabilityZones []string
-	vmZones           []string
-	Region            string `json:"region,omitempty"`
-	ZonesSubnetMap    map[string][]string
+	// vmZones caches discovered availability zones per instance type.
+	vmZones        map[string][]string
+	Region         string `json:"region,omitempty"`
+	ZonesSubnetMap map[string][]string
 
 	controlPlane    *types.MachinePool
 	compute         *types.MachinePool
@@ -144,18 +145,23 @@ func (m *Metadata) VMAvailabilityZones(ctx context.Context, instanceType string)
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if len(m.vmZones) == 0 {
-		zones, err := m.client.GetAvailabilityZones(ctx, m.Region, instanceType)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
-		}
-		if zones != nil {
-			sort.Strings(zones)
-			m.vmZones = zones
-		}
+	// Zone availability differs between instance types, so the result is cached
+	// per instance type rather than once for the whole region.
+	if zones, ok := m.vmZones[instanceType]; ok {
+		return zones, nil
 	}
 
-	return m.vmZones, nil
+	zones, err := m.client.GetAvailabilityZones(ctx, m.Region, instanceType)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
+	}
+	sort.Strings(zones)
+	if m.vmZones == nil {
+		m.vmZones = map[string][]string{}
+	}
+	m.vmZones[instanceType] = zones
+
+	return zones, nil
 }
 
 // GenerateZonesSubnetMap creates a map of all the zones that are supported for nat gateways and vms and
