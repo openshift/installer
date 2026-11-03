@@ -333,6 +333,54 @@ func (m *Metadata) GetVPCSubnets(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.S
 	return subnets, err
 }
 
+// vpcRegionFromCRN returns the IBM Cloud region a VPC lives in, taken from its CRN.
+func vpcRegionFromCRN(vpc *vpcv1.VPC) (string, error) {
+	if vpc == nil || vpc.CRN == nil {
+		return "", fmt.Errorf("VPC is nil or has no CRN")
+	}
+	vpcCRN, err := crn.Parse(*vpc.CRN)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse VPC CRN: %w", err)
+	}
+	return vpcCRN.Region, nil
+}
+
+// GetVPCPublicGateways gets the Public Gateways, in every zone, of a VPC.
+func (m *Metadata) GetVPCPublicGateways(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.PublicGateway, error) {
+	region, err := vpcRegionFromCRN(vpc)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListPublicGatewaysByVPC(ctx, *vpc.ID, region)
+}
+
+// GetVPCRoutingTables gets the Routing Tables of a VPC.
+func (m *Metadata) GetVPCRoutingTables(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.RoutingTable, error) {
+	region, err := vpcRegionFromCRN(vpc)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListVPCRoutingTables(ctx, *vpc.ID, region)
+}
+
 // GetDNSServerIP gets the IP of a custom resolver for DNS use.
 func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, error) {
 	if m.dnsInstanceCRN == "" {

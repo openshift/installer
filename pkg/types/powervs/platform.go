@@ -103,6 +103,10 @@ type Platform struct {
 	// DHCPSubnet creates a plain PowerVS network with DHCP natively enabled and is the
 	// recommended mode. It enables the full new networking model: route-mode Network Load
 	// Balancer, VPC Routing Table advertising 0.0.0.0/0, and a VPC Public Gateway.
+	// When an existing VPC is supplied, a Public Gateway already present in the zone is
+	// reused, and the Routing Table is not created if the VPC already has one with
+	// Transit Gateway ingress enabled (IBM Cloud allows only one); in that case that
+	// table must route outbound traffic to the cluster.
 	//
 	// DHCPServer creates a dedicated DHCP Service VM (legacy). When this mode is selected
 	// the route-mode NLB, Routing Table, and Public Gateway are suppressed because the

@@ -220,15 +220,23 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}
 
+	// If a VPC was specified, list its subnets up front: they are needed both to plan
+	// the egress resources below and to pass the subnets to cluster API.
+	var existingSubnets []vpcv1.Subnet
+	if vpcStruct != nil {
+		existingSubnets, err = installConfig.PowerVS.GetVPCSubnets(ctx, vpcStruct)
+		if err != nil {
+			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", *vpcStruct.Name, err)
+		}
+	}
+
 	// Build v1beta3 VPCPublicGateways and VPCRoutingTables.
 	//
 	// These are only needed for the DHCPSubnet networking model. When using DHCPServer,
 	// the DHCP server VM handles SNAT and provides egress — no VPC routing is required.
 	var (
-		publicGateways []capibm.VPCPublicGateway
-		routingTables  []capibm.VPCRoutingTableSource
-		pgwName        string
-		pgwVPCZone     string
+		egress     vpcEgressPlan
+		pgwVPCZone string
 	)
 	if !useDHCPServer {
 		// Derive the VPC zone from the PowerVS zone for the Public Gateway and Routing Table.
@@ -239,43 +247,27 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				installConfig.Config.Platform.PowerVS.Zone, vpcZoneErr)
 		}
 
-		// Public Gateway — outbound internet access for VPC subnets.
-		pgwName = fmt.Sprintf("%s-pgw", clusterID.InfraID)
-		publicGateways = []capibm.VPCPublicGateway{
-			{
-				Type: capibm.SourceTypeProvision,
-				Zone: pgwVPCZone,
-				Provision: capibm.VPCPublicGatewayProvision{
-					Name: pgwName,
-				},
-			},
-		}
-
-		// Routing Table — advertises 0.0.0.0/0 via the route-mode NLB to the Transit Gateway.
-		// The nextHop is intentionally left empty: CAPIBM auto-populates it from
-		// LoadBalancerStatus.PrivateIPs[0] of the private route-mode load balancer.
-		rtName := fmt.Sprintf("%s-rt", clusterID.InfraID)
-		routeName := fmt.Sprintf("%s-rt-default", clusterID.InfraID)
-		routingTables = []capibm.VPCRoutingTableSource{
-			{
-				Type: capibm.SourceTypeProvision,
-				Provision: capibm.VPCRoutingTableProvision{
-					Name:                       rtName,
-					RouteTransitGatewayIngress: capibm.RoutingTableIngressPolicyEnabled,
-					AdvertiseRoutesTo: []capibm.AdvertiseRouteTarget{
-						capibm.AdvertiseRouteTargetTransitGateway,
-					},
-					Routes: []capibm.VPCRoutingTableRoute{
-						{
-							Name:        routeName,
-							Action:      capibm.VPCRoutingTableRouteActionDeliver,
-							Destination: "0.0.0.0/0",
-							Zone:        pgwVPCZone,
-							Advertise:   capibm.RouteAdvertisePolicyEnabled,
-						},
-					},
-				},
-			},
+		egress = newVPCEgressPlan(clusterID.InfraID, pgwVPCZone)
+		if vpcStruct != nil {
+			// A user-supplied VPC may already own a Public Gateway in this zone, or a
+			// routing table that ingests Transit Gateway traffic. IBM Cloud allows only one
+			// of each, so look at what exists before deciding what to create.
+			existingPGWs, pgwErr := installConfig.PowerVS.GetVPCPublicGateways(ctx, vpcStruct)
+			if pgwErr != nil {
+				return nil, fmt.Errorf("error getting public gateways in specified VPC: %s %w", *vpcStruct.Name, pgwErr)
+			}
+			existingRTs, rtErr := installConfig.PowerVS.GetVPCRoutingTables(ctx, vpcStruct)
+			if rtErr != nil {
+				return nil, fmt.Errorf("error getting routing tables in specified VPC: %s %w", *vpcStruct.Name, rtErr)
+			}
+			var planErr error
+			egress, planErr = planVPCEgress(clusterID.InfraID, pgwVPCZone, existingSubnets, existingPGWs, existingRTs)
+			if planErr != nil {
+				return nil, fmt.Errorf("unable to plan outbound access for VPC %s: %w", *vpcStruct.Name, planErr)
+			}
+			for _, w := range egress.warnings {
+				logrus.Warn(w)
+			}
 		}
 	}
 
@@ -304,8 +296,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			VPCSecurityGroups: vpcSecurityGroups,
 			TransitGateway:    tgSource,
 			LoadBalancers:     loadBalancers,
-			VPCPublicGateways: publicGateways,
-			VPCRoutingTables:  routingTables,
+			VPCPublicGateways: egress.publicGateways,
+			VPCRoutingTables:  egress.routingTables,
 			COSInstance:       cosSource,
 			Ignition: capibm.Ignition{
 				Version: "3.4",
@@ -334,9 +326,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			}
 			// Attach the PGW only to the subnet that shares its zone.
 			if zone == pgwVPCZone {
-				subnetSource.PublicGateway = capibm.ResourceIdentifier{
-					Name: pgwName,
-				}
+				subnetSource.PublicGateway = egress.attach
 			}
 			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
 		}
@@ -373,17 +363,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("error ensuring VPC is permitted: %s %w", *vpcStruct.Name, err)
 		}
-		subnets, err := installConfig.PowerVS.GetVPCSubnets(ctx, vpcStruct)
-		if err != nil {
-			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", *vpcStruct.Name, err)
-		}
-		for _, subnet := range subnets {
+		for _, subnet := range existingSubnets {
 			subnetSource := existingSubnetSource(subnet)
 			// For DHCPSubnet mode, attach the PGW to the subnet in the matching zone.
-			if !useDHCPServer && subnet.Zone != nil && subnet.Zone.Name != nil && *subnet.Zone.Name == pgwVPCZone {
-				subnetSource.PublicGateway = capibm.ResourceIdentifier{
-					Name: pgwName,
-				}
+			// Leave a gateway the user already attached to the subnet untouched.
+			if !useDHCPServer && subnet.PublicGateway == nil && subnetInZone(subnet, pgwVPCZone) {
+				subnetSource.PublicGateway = egress.attach
 			}
 			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets, subnetSource)
 		}
@@ -467,6 +452,146 @@ func buildTransitGatewaySource(name string, isID bool, infraID string) capibm.Tr
 		source.Reference = capibm.ResourceIdentifier{Name: name}
 	}
 	return source
+}
+
+// subnetInZone reports whether the subnet is in the named VPC zone.
+func subnetInZone(subnet vpcv1.Subnet, zone string) bool {
+	return subnet.Zone != nil && subnet.Zone.Name != nil && *subnet.Zone.Name == zone
+}
+
+// vpcEgressPlan holds the outbound-access resources declared on the IBMPowerVSCluster
+// for the DHCPSubnet networking model: a Public Gateway and a Transit Gateway ingress
+// routing table.
+type vpcEgressPlan struct {
+	// publicGateways and routingTables are what get declared on the cluster spec.
+	publicGateways []capibm.VPCPublicGateway
+	routingTables  []capibm.VPCRoutingTableSource
+	// attach is the Public Gateway to attach to subnets in the Public Gateway zone.
+	// It is empty when no gateway should be attached.
+	attach capibm.ResourceIdentifier
+	// warnings are for the user to read, not errors.
+	warnings []string
+}
+
+// newVPCEgressPlan returns the plan for a VPC that the installer creates: provision
+// a Public Gateway and a routing table named after the infra ID.
+func newVPCEgressPlan(infraID string, zone string) vpcEgressPlan {
+	pgwName := fmt.Sprintf("%s-pgw", infraID)
+	return vpcEgressPlan{
+		publicGateways: []capibm.VPCPublicGateway{provisionPublicGateway(pgwName, zone)},
+		routingTables:  []capibm.VPCRoutingTableSource{provisionRoutingTable(infraID, zone)},
+		attach:         capibm.ResourceIdentifier{Name: pgwName},
+	}
+}
+
+// provisionPublicGateway is a Public Gateway outbound-internet source for the VPC subnets.
+func provisionPublicGateway(name string, zone string) capibm.VPCPublicGateway {
+	return capibm.VPCPublicGateway{
+		Type:      capibm.SourceTypeProvision,
+		Zone:      zone,
+		Provision: capibm.VPCPublicGatewayProvision{Name: name},
+	}
+}
+
+// provisionRoutingTable is a Routing Table that advertises 0.0.0.0/0 via the route-mode
+// NLB to the Transit Gateway.
+// The nextHop is intentionally left empty: CAPIBM auto-populates it from
+// LoadBalancerStatus.PrivateIPs[0] of the private route-mode load balancer.
+func provisionRoutingTable(infraID string, zone string) capibm.VPCRoutingTableSource {
+	return capibm.VPCRoutingTableSource{
+		Type: capibm.SourceTypeProvision,
+		Provision: capibm.VPCRoutingTableProvision{
+			Name:                       fmt.Sprintf("%s-rt", infraID),
+			RouteTransitGatewayIngress: capibm.RoutingTableIngressPolicyEnabled,
+			AdvertiseRoutesTo: []capibm.AdvertiseRouteTarget{
+				capibm.AdvertiseRouteTargetTransitGateway,
+			},
+			Routes: []capibm.VPCRoutingTableRoute{
+				{
+					Name:        fmt.Sprintf("%s-rt-default", infraID),
+					Action:      capibm.VPCRoutingTableRouteActionDeliver,
+					Destination: "0.0.0.0/0",
+					Zone:        zone,
+					Advertise:   capibm.RouteAdvertisePolicyEnabled,
+				},
+			},
+		},
+	}
+}
+
+// planVPCEgress decides what to create for a VPC the user supplied. IBM Cloud allows a
+// single Public Gateway per zone and a single Transit Gateway ingress routing table per
+// VPC, so creating ours blindly would fail the install, or change the user's network,
+// whenever the VPC already has them.
+//
+//   - Public Gateway: an existing one in the zone is reused rather than creating a second.
+//     If it is attached to no subnet in the zone it is attached to them (with a warning).
+//   - Routing table: if another routing table already has Transit Gateway ingress enabled,
+//     ours is not created. The user's table is not modified, so outbound traffic then
+//     depends on its routes; a warning says so.
+//
+// A table or gateway already named after the infra ID is kept as a Provision source,
+// because provisioning is idempotent by name and this keeps a retried install working.
+func planVPCEgress(infraID string, zone string, subnets []vpcv1.Subnet, pgws []vpcv1.PublicGateway, rts []vpcv1.RoutingTable) (vpcEgressPlan, error) {
+	plan := newVPCEgressPlan(infraID, zone)
+	pgwName := fmt.Sprintf("%s-pgw", infraID)
+	rtName := fmt.Sprintf("%s-rt", infraID)
+
+	// Public Gateway.
+	var zonePGW *vpcv1.PublicGateway
+	for i := range pgws {
+		if pgws[i].Zone != nil && pgws[i].Zone.Name != nil && *pgws[i].Zone.Name == zone {
+			zonePGW = &pgws[i]
+			break
+		}
+	}
+	var zoneSubnets, unattached int
+	for _, subnet := range subnets {
+		if subnetInZone(subnet, zone) {
+			zoneSubnets++
+			if subnet.PublicGateway == nil {
+				unattached++
+			}
+		}
+	}
+	switch {
+	case zonePGW != nil && zonePGW.Name != nil && *zonePGW.Name == pgwName:
+		// Left by an earlier attempt of this install; keep provisioning it by name.
+	case zonePGW != nil:
+		name := ptr.Deref(zonePGW.Name, ptr.Deref(zonePGW.ID, ""))
+		plan.publicGateways = []capibm.VPCPublicGateway{{
+			Type:      capibm.SourceTypeReference,
+			Zone:      zone,
+			Reference: capibm.ResourceIdentifier{ID: ptr.Deref(zonePGW.ID, "")},
+		}}
+		plan.attach = capibm.ResourceIdentifier{ID: ptr.Deref(zonePGW.ID, "")}
+		if unattached > 0 {
+			plan.warnings = append(plan.warnings, fmt.Sprintf(
+				"VPC already has Public Gateway %q in zone %s; reusing it and attaching it to %d subnet(s) in that zone that have none",
+				name, zone, unattached))
+		}
+	case zoneSubnets == 0:
+		return vpcEgressPlan{}, fmt.Errorf("the VPC has no Public Gateway and no subnet in zone %s, "+
+			"so a Public Gateway could not be attached; add a subnet in that zone", zone)
+	}
+
+	// Routing table.
+	for _, rt := range rts {
+		if !ptr.Deref(rt.RouteTransitGatewayIngress, false) {
+			continue
+		}
+		if ptr.Deref(rt.Name, "") == rtName {
+			break // Left by an earlier attempt of this install.
+		}
+		plan.routingTables = nil
+		plan.warnings = append(plan.warnings, fmt.Sprintf(
+			"VPC routing table %q already has Transit Gateway ingress enabled and only one is allowed per VPC; "+
+				"not creating %q. Make sure that table routes 0.0.0.0/0 to the cluster's route-mode load balancer, "+
+				"or the cluster will have no outbound access", ptr.Deref(rt.Name, ptr.Deref(rt.ID, "")), rtName))
+		break
+	}
+
+	return plan, nil
 }
 
 // existingSubnetSource builds the reference to a subnet that already exists in a

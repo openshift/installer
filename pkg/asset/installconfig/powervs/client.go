@@ -54,6 +54,8 @@ type API interface {
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCsInResourceGroup(ctx context.Context, resourceGroupID string, region string) ([]vpcv1.VPC, error)
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
+	ListPublicGatewaysByVPC(ctx context.Context, vpcID string, region string) ([]vpcv1.PublicGateway, error)
+	ListVPCRoutingTables(ctx context.Context, vpcID string, region string) ([]vpcv1.RoutingTable, error)
 
 	// TG
 	TransitGatewayNameToID(ctx context.Context, name string) (string, error)
@@ -660,6 +662,67 @@ func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vp
 	}
 
 	return nil, nil
+}
+
+// ListPublicGatewaysByVPC lists every Public Gateway that belongs to the given VPC, across all zones.
+func (c *Client) ListPublicGatewaysByVPC(ctx context.Context, vpcID string, region string) ([]vpcv1.PublicGateway, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(ctx, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	var result []vpcv1.PublicGateway
+	options := c.vpcAPI.NewListPublicGatewaysOptions()
+	for {
+		page, _, err := c.vpcAPI.ListPublicGatewaysWithContext(ctx, options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list public gateways: %w", err)
+		}
+		// The API has no VPC filter, so filter client-side.
+		for _, gw := range page.PublicGateways {
+			if gw.VPC != nil && gw.VPC.ID != nil && *gw.VPC.ID == vpcID {
+				result = append(result, gw)
+			}
+		}
+		next, err := page.GetNextStart()
+		if err != nil {
+			return nil, err
+		}
+		if next == nil {
+			return result, nil
+		}
+		options.SetStart(*next)
+	}
+}
+
+// ListVPCRoutingTables lists every Routing Table that belongs to the given VPC.
+func (c *Client) ListVPCRoutingTables(ctx context.Context, vpcID string, region string) ([]vpcv1.RoutingTable, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(ctx, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	var result []vpcv1.RoutingTable
+	options := c.vpcAPI.NewListVPCRoutingTablesOptions(vpcID)
+	for {
+		page, _, err := c.vpcAPI.ListVPCRoutingTablesWithContext(ctx, options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list routing tables: %w", err)
+		}
+		result = append(result, page.RoutingTables...)
+		next, err := page.GetNextStart()
+		if err != nil {
+			return nil, err
+		}
+		if next == nil {
+			return result, nil
+		}
+		options.SetStart(*next)
+	}
 }
 
 // GetVPCSubnets retrieves all subnets in the given VPC.
