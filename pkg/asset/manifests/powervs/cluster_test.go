@@ -137,3 +137,56 @@ func TestExistingSubnetSource(t *testing.T) {
 	assert.Equal(t, id, got.Reference.ID)
 	assert.Empty(t, got.Reference.Name)
 }
+
+func TestBuildTransitGatewaySource(t *testing.T) {
+	const infraID = "test-abcde"
+
+	cases := []struct {
+		name         string
+		tgName       string
+		isID         bool
+		expectType   capibm.SourceType
+		expectRef    capibm.ResourceIdentifier
+		expectProv   capibm.TransitGatewayProvision
+		expectNoProv bool
+	}{
+		{
+			name:         "existing gateway ID is referenced by ID",
+			tgName:       "0123abcd-ef01-2345-6789-abcdef012345",
+			isID:         true,
+			expectType:   capibm.SourceTypeReference,
+			expectRef:    capibm.ResourceIdentifier{ID: "0123abcd-ef01-2345-6789-abcdef012345"},
+			expectNoProv: true,
+		},
+		{
+			name:       "blank name provisions a new gateway named after the infra ID",
+			tgName:     "",
+			expectType: capibm.SourceTypeProvision,
+			expectProv: capibm.TransitGatewayProvision{Name: infraID + "-tg"},
+		},
+		{
+			name:         "non-ID name is referenced by name, not provisioned",
+			tgName:       "my-existing-tg",
+			expectType:   capibm.SourceTypeReference,
+			expectRef:    capibm.ResourceIdentifier{Name: "my-existing-tg"},
+			expectNoProv: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := buildTransitGatewaySource(tc.tgName, tc.isID, infraID)
+
+			assert.Equal(t, tc.expectType, got.Type)
+			assert.Equal(t, tc.expectRef, got.Reference)
+			if tc.expectNoProv {
+				assert.Equal(t, capibm.TransitGatewayProvision{}, got.Provision)
+			} else {
+				assert.Equal(t, tc.expectProv, got.Provision)
+			}
+			// The VPC and PowerVS connections are always provisioned.
+			assert.Equal(t, capibm.SourceTypeProvision, got.VPCConnection.Type)
+			assert.Equal(t, capibm.SourceTypeProvision, got.PowerVSConnection.Type)
+		})
+	}
+}

@@ -154,39 +154,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// 2) an id of an existing TG.
 	// 3) a name of an existing TG.
 	transitGatewayName = installConfig.Config.Platform.PowerVS.TransitGateway
-	var tgSource capibm.TransitGatewaySource
-	if err = client.TransitGatewayIDValid(ctx, transitGatewayName); err == nil {
-		logrus.Debugf("GenerateClusterAssets: TG ID is valid")
-		tgSource = capibm.TransitGatewaySource{
-			Type: capibm.SourceTypeReference,
-			Reference: capibm.ResourceIdentifier{
-				ID: installConfig.Config.Platform.PowerVS.TransitGateway,
-			},
-			VPCConnection: capibm.TransitGatewayConnectionSource{
-				Type: capibm.SourceTypeProvision,
-			},
-			PowerVSConnection: capibm.TransitGatewayConnectionSource{
-				Type: capibm.SourceTypeProvision,
-			},
-		}
-	} else {
-		if transitGatewayName == "" {
-			logrus.Debugf("GenerateClusterAssets: PowerVS.TransitGateway is empty")
-			transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
-		}
-		tgSource = capibm.TransitGatewaySource{
-			Type: capibm.SourceTypeProvision,
-			Provision: capibm.TransitGatewayProvision{
-				Name: transitGatewayName,
-			},
-			VPCConnection: capibm.TransitGatewayConnectionSource{
-				Type: capibm.SourceTypeProvision,
-			},
-			PowerVSConnection: capibm.TransitGatewayConnectionSource{
-				Type: capibm.SourceTypeProvision,
-			},
-		}
-	}
+	tgSource := buildTransitGatewaySource(transitGatewayName, client.TransitGatewayIDValid(ctx, transitGatewayName) == nil, clusterID.InfraID)
 
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
 
@@ -471,6 +439,34 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+// buildTransitGatewaySource builds the Transit Gateway source. isID reports whether
+// name is the ID of an existing Transit Gateway.
+//
+//  1. name is an existing gateway ID: reference it by ID.
+//  2. name is blank: provision a new gateway named "<infraID>-tg".
+//  3. name is not an ID: it is the name of an existing gateway, so reference it by name.
+//
+// The VPC and PowerVS connections are always provisioned.
+func buildTransitGatewaySource(name string, isID bool, infraID string) capibm.TransitGatewaySource {
+	source := capibm.TransitGatewaySource{
+		VPCConnection:     capibm.TransitGatewayConnectionSource{Type: capibm.SourceTypeProvision},
+		PowerVSConnection: capibm.TransitGatewayConnectionSource{Type: capibm.SourceTypeProvision},
+	}
+
+	switch {
+	case isID:
+		source.Type = capibm.SourceTypeReference
+		source.Reference = capibm.ResourceIdentifier{ID: name}
+	case name == "":
+		source.Type = capibm.SourceTypeProvision
+		source.Provision = capibm.TransitGatewayProvision{Name: fmt.Sprintf("%s-tg", infraID)}
+	default:
+		source.Type = capibm.SourceTypeReference
+		source.Reference = capibm.ResourceIdentifier{Name: name}
+	}
+	return source
 }
 
 // existingSubnetSource builds the reference to a subnet that already exists in a
