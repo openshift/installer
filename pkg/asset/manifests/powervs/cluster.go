@@ -410,13 +410,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", *vpcStruct.Name, err)
 		}
 		for _, subnet := range subnets {
-			subnetSource := capibm.VPCSubnetSource{
-				Type: capibm.SourceTypeReference,
-				Reference: capibm.ResourceIdentifier{
-					ID:   ptr.Deref(subnet.ID, ""),
-					Name: ptr.Deref(subnet.Name, ""),
-				},
-			}
+			subnetSource := existingSubnetSource(subnet)
 			// For DHCPSubnet mode, attach the PGW to the subnet in the matching zone.
 			if !useDHCPServer && subnet.Zone != nil && subnet.Zone.Name != nil && *subnet.Zone.Name == pgwVPCZone {
 				subnetSource.PublicGateway = capibm.ResourceIdentifier{
@@ -477,6 +471,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+// existingSubnetSource builds the reference to a subnet that already exists in a
+// user-supplied VPC. CAPIBM's ResourceIdentifier requires exactly one of id or name,
+// so only the ID is set.
+func existingSubnetSource(subnet vpcv1.Subnet) capibm.VPCSubnetSource {
+	return capibm.VPCSubnetSource{
+		Type: capibm.SourceTypeReference,
+		Reference: capibm.ResourceIdentifier{
+			ID: ptr.Deref(subnet.ID, ""),
+		},
+	}
 }
 
 // dhcpServerSnatPolicy returns the SNAT policy for the legacy DHCPServer network.

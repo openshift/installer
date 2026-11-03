@@ -3,6 +3,7 @@ package powervs
 import (
 	"testing"
 
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/stretchr/testify/assert"
 	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/powervs/v1beta3"
 
@@ -123,4 +124,16 @@ func TestDHCPServerSnatPolicy(t *testing.T) {
 			assert.Equal(t, tc.expected, dhcpServerSnatPolicy(tc.ic))
 		})
 	}
+}
+
+func TestExistingSubnetSource(t *testing.T) {
+	id := "subnet-id"
+	name := "subnet-name"
+
+	got := existingSubnetSource(vpcv1.Subnet{ID: &id, Name: &name})
+
+	assert.Equal(t, capibm.SourceTypeReference, got.Type)
+	// CAPIBM requires exactly one of id or name on a ResourceIdentifier.
+	assert.Equal(t, id, got.Reference.ID)
+	assert.Empty(t, got.Reference.Name)
 }
