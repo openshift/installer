@@ -96,6 +96,10 @@ type ClusterUninstaller struct {
 	VPCRegion      string
 	Zone           string
 	TransitGateway string
+	// VPC is the name or ID of a VPC the user supplied in install-config.yaml. It is
+	// empty when the installer created the VPC. The VPC itself is never deleted, but
+	// resources the installer created inside it must be.
+	VPC string
 
 	managementSvc      *resourcemanagerv2.ResourceManagerV2
 	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
@@ -156,6 +160,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGateway = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGateway)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPC = %v", metadata.ClusterPlatformMetadata.PowerVS.VPC)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -185,6 +190,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 		TransitGateway:     metadata.ClusterPlatformMetadata.PowerVS.TransitGateway,
+		VPC:                metadata.ClusterPlatformMetadata.PowerVS.VPC,
 		searchByTag:        false, // @TODO Enable in the future
 		siPreconfigured:    siPreconfigured,
 	}, nil
