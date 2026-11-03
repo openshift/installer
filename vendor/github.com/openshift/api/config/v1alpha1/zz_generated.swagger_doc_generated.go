@@ -908,50 +908,12 @@ func (Storage) SwaggerDoc() map[string]string {
 	return map_Storage
 }
 
-var map_CertificateConfig = map[string]string{
-	"":    "CertificateConfig specifies configuration parameters for certificates. At least one property must be specified.",
-	"key": "key specifies the cryptographic parameters for the certificate's key pair. Currently this is the only configurable parameter. When omitted in an overrides entry, the key configuration from defaults is used.",
-}
-
-func (CertificateConfig) SwaggerDoc() map[string]string {
-	return map_CertificateConfig
-}
-
 var map_CustomPKIPolicy = map[string]string{
-	"": "CustomPKIPolicy contains administrator-specified cryptographic configuration. Administrators must specify defaults for all certificates and may optionally override specific categories of certificates.",
+	"": "CustomPKIPolicy contains administrator-specified cryptographic configuration, wrapping a PKIProfile. When set, at least one property must be specified.\n\nDeprecated: the wrapped fields were flattened into PKICertificatePolicy.",
 }
 
 func (CustomPKIPolicy) SwaggerDoc() map[string]string {
 	return map_CustomPKIPolicy
-}
-
-var map_DefaultCertificateConfig = map[string]string{
-	"":    "DefaultCertificateConfig specifies the default certificate configuration parameters. All fields are required to ensure that defaults are fully specified for all certificates.",
-	"key": "key specifies the cryptographic parameters for the certificate's key pair. This field is required in defaults to ensure all certificates have a well-defined key configuration.",
-}
-
-func (DefaultCertificateConfig) SwaggerDoc() map[string]string {
-	return map_DefaultCertificateConfig
-}
-
-var map_ECDSAKeyConfig = map[string]string{
-	"":      "ECDSAKeyConfig specifies parameters for ECDSA key generation.",
-	"curve": "curve specifies the NIST elliptic curve for ECDSA keys. Valid values are \"P256\", \"P384\", and \"P521\".\n\nWhen set to P256, the NIST P-256 curve (also known as secp256r1) is used, providing 128-bit security.\n\nWhen set to P384, the NIST P-384 curve (also known as secp384r1) is used, providing 192-bit security.\n\nWhen set to P521, the NIST P-521 curve (also known as secp521r1) is used, providing 256-bit security.",
-}
-
-func (ECDSAKeyConfig) SwaggerDoc() map[string]string {
-	return map_ECDSAKeyConfig
-}
-
-var map_KeyConfig = map[string]string{
-	"":          "KeyConfig specifies cryptographic parameters for key generation.",
-	"algorithm": "algorithm specifies the key generation algorithm. Valid values are \"RSA\" and \"ECDSA\".\n\nWhen set to RSA, the rsa field must be specified and the generated key will be an RSA key with the configured key size.\n\nWhen set to ECDSA, the ecdsa field must be specified and the generated key will be an ECDSA key using the configured elliptic curve.",
-	"rsa":       "rsa specifies RSA key parameters. Required when algorithm is RSA, and forbidden otherwise.",
-	"ecdsa":     "ecdsa specifies ECDSA key parameters. Required when algorithm is ECDSA, and forbidden otherwise.",
-}
-
-func (KeyConfig) SwaggerDoc() map[string]string {
-	return map_KeyConfig
 }
 
 var map_PKI = map[string]string{
@@ -964,14 +926,74 @@ func (PKI) SwaggerDoc() map[string]string {
 	return map_PKI
 }
 
+var map_PKICertificateConfig = map[string]string{
+	"":    "PKICertificateConfig specifies configuration parameters for certificates.",
+	"key": "key specifies the cryptographic parameters for the certificate's key pair.",
+}
+
+func (PKICertificateConfig) SwaggerDoc() map[string]string {
+	return map_PKICertificateConfig
+}
+
 var map_PKICertificateManagement = map[string]string{
-	"":       "PKICertificateManagement determines whether components use hardcoded defaults (Unmanaged), follow OpenShift best practices (Default), or use administrator-specified cryptographic parameters (Custom). This provides flexibility for organizations with specific compliance requirements or security policies while maintaining backwards compatibility for existing clusters.",
-	"mode":   "mode determines how PKI configuration is managed. Valid values are \"Unmanaged\", \"Default\", and \"Custom\".\n\nWhen set to Unmanaged, components use their existing hardcoded certificate generation behavior, exactly as if this feature did not exist. Each component generates certificates using whatever parameters it was using before this feature. While most components use RSA 2048, some may use different parameters. Use of this mode might prevent upgrading to the next major OpenShift release.\n\nWhen set to Default, OpenShift-recommended best practices for certificate generation are applied. The specific parameters may evolve across OpenShift releases to adopt improved cryptographic standards. In the initial release, this matches Unmanaged behavior for each component. In future releases, this may adopt ECDSA or larger RSA keys based on industry best practices. Recommended for most customers who want to benefit from security improvements automatically.\n\nWhen set to Custom, the certificate management parameters can be set explicitly. Use the custom field to specify certificate generation parameters.",
-	"custom": "custom contains administrator-specified cryptographic configuration. Use the defaults and category override fields to specify certificate generation parameters. Required when mode is Custom, and forbidden otherwise.",
+	"":       "PKICertificateManagement is the former container for certificate configuration, a mode union determining whether components use hardcoded defaults (Unmanaged), follow OpenShift best practices (Default), or use administrator-specified cryptographic parameters (Custom).\n\nDeprecated: use PKICertificatePolicy instead.",
+	"mode":   "mode determines how PKI configuration is managed. Valid values are \"Unmanaged\", \"Default\", and \"Custom\".\n\nWhen set to Unmanaged, components use their existing hardcoded certificate generation behavior, exactly as if this feature did not exist. Each component generates certificates using whatever parameters it was using before this feature. While most components use RSA 2048, some may use different parameters. Use of this mode might prevent upgrading to the next major OpenShift release.\n\nWhen set to Default, OpenShift-recommended best practices for certificate generation are applied. The specific parameters may evolve across OpenShift releases to adopt improved cryptographic standards. In the initial release, this matches Unmanaged behavior for each component. In future releases, this may adopt ECDSA or larger RSA keys based on industry best practices. Recommended for most customers who want to benefit from security improvements automatically.\n\nWhen set to Custom, the certificate management parameters can be set explicitly. Use the custom field to specify certificate generation parameters.\n\nDeprecated: configure PKICertificatePolicy via the certificates field instead.",
+	"custom": "custom contains administrator-specified cryptographic configuration. Use the defaults and category override fields of the embedded PKIProfile to specify certificate generation parameters. Required when mode is Custom, and forbidden otherwise. When omitted, mode governs behavior on its own.\n\nDeprecated: use the fields of PKICertificatePolicy instead.",
 }
 
 func (PKICertificateManagement) SwaggerDoc() map[string]string {
 	return map_PKICertificateManagement
+}
+
+var map_PKICertificatePolicy = map[string]string{
+	"":                   "PKICertificatePolicy is the cluster's policy for internally-generated certificates: a required defaults, optional per-category overrides, and optional overrides for specific named certificates. The most-specific setting wins.",
+	"defaults":           "defaults specifies the default certificate configuration applied to any certificate that has no more-specific (category or named) override. This field is required so that every certificate has a well-defined configuration.",
+	"caCertificates":     "caCertificates optionally overrides certificate parameters for certificate authority (CA) certificates that sign other certificates. When set, these parameters take precedence over defaults for all CA certificates. When omitted, defaults are used for CA certificates.",
+	"serverCertificates": "serverCertificates optionally overrides certificate parameters for TLS server certificates. When set, these parameters take precedence over defaults for all server certificates. When omitted, defaults are used for server certificates.",
+	"clientCertificates": "clientCertificates optionally overrides certificate parameters for client authentication certificates. When set, these parameters take precedence over defaults for all client certificates. When omitted, defaults are used for client certificates.",
+	"namedCertificates":  "namedCertificates optionally overrides certificate parameters for specific certificates identified by their well-known name. These overrides have the highest precedence (named, then category, then defaults). Entries are keyed by name, so a given name may appear at most once. When omitted, no named overrides are applied. When present, the list must contain at least one entry. At most 512 named certificate overrides may be specified.",
+}
+
+func (PKICertificatePolicy) SwaggerDoc() map[string]string {
+	return map_PKICertificatePolicy
+}
+
+var map_PKIDefaultCertificateConfig = map[string]string{
+	"":    "PKIDefaultCertificateConfig specifies the default certificate configuration parameters. All fields are required to ensure that defaults are fully specified for all certificates.",
+	"key": "key specifies the cryptographic parameters for the certificate's key pair. This field is required in defaults to ensure all certificates have a well-defined key configuration.",
+}
+
+func (PKIDefaultCertificateConfig) SwaggerDoc() map[string]string {
+	return map_PKIDefaultCertificateConfig
+}
+
+var map_PKIECDSAKeyConfig = map[string]string{
+	"":      "PKIECDSAKeyConfig specifies parameters for ECDSA key generation.",
+	"curve": "curve specifies the NIST elliptic curve for ECDSA keys. Valid values are \"P256\", \"P384\", and \"P521\".\n\nWhen set to P256, the NIST P-256 curve (also known as secp256r1) is used, providing 128-bit security.\n\nWhen set to P384, the NIST P-384 curve (also known as secp384r1) is used, providing 192-bit security.\n\nWhen set to P521, the NIST P-521 curve (also known as secp521r1) is used, providing 256-bit security.",
+}
+
+func (PKIECDSAKeyConfig) SwaggerDoc() map[string]string {
+	return map_PKIECDSAKeyConfig
+}
+
+var map_PKIKeyConfig = map[string]string{
+	"":          "PKIKeyConfig specifies cryptographic parameters for key generation.",
+	"algorithm": "algorithm specifies the key generation algorithm. Valid values are \"RSA\" and \"ECDSA\".\n\nWhen set to RSA, the rsa field must be specified and the generated key will be an RSA key with the configured key size.\n\nWhen set to ECDSA, the ecdsa field must be specified and the generated key will be an ECDSA key using the configured elliptic curve.",
+	"rsa":       "rsa specifies RSA key parameters. Required when algorithm is RSA, and forbidden otherwise.",
+	"ecdsa":     "ecdsa specifies ECDSA key parameters. Required when algorithm is ECDSA, and forbidden otherwise.",
+}
+
+func (PKIKeyConfig) SwaggerDoc() map[string]string {
+	return map_PKIKeyConfig
+}
+
+var map_PKIKeyPolicy = map[string]string{
+	"":          "PKIKeyPolicy configures keys generated outside of any certificate, by well-known name. When set, at least one named key must be specified; an empty object is rejected.",
+	"namedKeys": "namedKeys configures keys generated outside of any certificate, such as the bound service-account token signing key, identified by their well-known name. Entries are opt-in with no inherited default and are keyed by name, so a given name may appear at most once. This field is required so that a keys object is never empty. At most 16 named keys may be specified.",
+}
+
+func (PKIKeyPolicy) SwaggerDoc() map[string]string {
+	return map_PKIKeyPolicy
 }
 
 var map_PKIList = map[string]string{
@@ -984,34 +1006,55 @@ func (PKIList) SwaggerDoc() map[string]string {
 	return map_PKIList
 }
 
+var map_PKINamedCertificateConfig = map[string]string{
+	"":     "PKINamedCertificateConfig overrides certificate parameters for a specific certificate identified by its well-known name.",
+	"name": "name is the well-known override name of the targeted certificate. It is a DNS subdomain prefix, a \"/\", then a name made of alphanumerics, \"-\", \"_\" and \".\" (for example \"openshift.io/service-ca.service-serving-signer\"). The prefix is at most 253 characters and the name after the \"/\" at most 63, so the full name must be between 1 and 317 characters. The name is validated for format only; there is no registry of valid names, because certificates can be registered dynamically. Core-platform certificates use the bare \"openshift.io/\" prefix; names outside the core platform use an owner subdomain prefix (for example \"hypershift.openshift.io/\"). This field is required so that every named certificate override identifies the certificate it applies to.",
+}
+
+func (PKINamedCertificateConfig) SwaggerDoc() map[string]string {
+	return map_PKINamedCertificateConfig
+}
+
+var map_PKINamedKeyConfig = map[string]string{
+	"":     "PKINamedKeyConfig configures the cryptographic parameters for a single key generated outside of any certificate, identified by its well-known name.",
+	"name": "name is the well-known name of the key. It is a DNS subdomain prefix, a \"/\", then a name made of alphanumerics, \"-\", \"_\" and \".\" (for example \"openshift.io/kube-apiserver.bound-service-account-token-signer\"). The prefix is at most 253 characters and the name after the \"/\" at most 63, so the full name must be between 1 and 317 characters. The name is validated for format only, using the same rules as a named certificate override. This field is required so that every named key entry identifies the key it configures.",
+	"key":  "key specifies the cryptographic parameters for this key. It is required because keys configured here have no inherited default.",
+}
+
+func (PKINamedKeyConfig) SwaggerDoc() map[string]string {
+	return map_PKINamedKeyConfig
+}
+
 var map_PKIProfile = map[string]string{
-	"":                    "PKIProfile defines the certificate generation parameters that OpenShift components use to create certificates. Category overrides take precedence over defaults.",
-	"defaults":            "defaults specifies the default certificate configuration that applies to all certificates unless overridden by a category override.",
-	"signerCertificates":  "signerCertificates optionally overrides certificate parameters for certificate authority (CA) certificates that sign other certificates. When set, these parameters take precedence over defaults for all signer certificates. When omitted, the defaults are used for signer certificates.",
-	"servingCertificates": "servingCertificates optionally overrides certificate parameters for TLS server certificates used to serve HTTPS endpoints. When set, these parameters take precedence over defaults for all serving certificates. When omitted, the defaults are used for serving certificates.",
-	"clientCertificates":  "clientCertificates optionally overrides certificate parameters for client authentication certificates used to authenticate to servers. When set, these parameters take precedence over defaults for all client certificates. When omitted, the defaults are used for client certificates.",
+	"":                    "PKIProfile defines the certificate generation parameters that OpenShift components use to create certificates. Category overrides take precedence over defaults.\n\nDeprecated: use PKICertificatePolicy instead.",
+	"defaults":            "defaults specifies the default certificate configuration that applies to all certificates unless overridden by a category override. This field is required so that every certificate has a well-defined configuration.\n\nDeprecated: use PKICertificatePolicy.Defaults instead.",
+	"signerCertificates":  "signerCertificates optionally overrides certificate parameters for certificate authority (CA) certificates that sign other certificates. When set, these parameters take precedence over defaults for all signer certificates. When omitted, the defaults are used for signer certificates. The key field within it is now marked required (previously enforced via minProperties: 1).\n\nDeprecated: use PKICertificatePolicy.CACertificates instead.",
+	"servingCertificates": "servingCertificates optionally overrides certificate parameters for TLS server certificates used to serve HTTPS endpoints. When set, these parameters take precedence over defaults for all serving certificates. When omitted, the defaults are used for serving certificates. The key field within it is now marked required (previously enforced via minProperties: 1).\n\nDeprecated: use PKICertificatePolicy.ServerCertificates instead.",
+	"clientCertificates":  "clientCertificates optionally overrides certificate parameters for client authentication certificates used to authenticate to servers. When set, these parameters take precedence over defaults for all client certificates. When omitted, the defaults are used for client certificates. The key field within it is now marked required (previously enforced via minProperties: 1).\n\nDeprecated: use PKICertificatePolicy.ClientCertificates instead.",
 }
 
 func (PKIProfile) SwaggerDoc() map[string]string {
 	return map_PKIProfile
 }
 
+var map_PKIRSAKeyConfig = map[string]string{
+	"":        "PKIRSAKeyConfig specifies parameters for RSA key generation.",
+	"keySize": "keySize specifies the size of RSA keys in bits. Valid values are multiples of 1024 from 2048 to 4096.",
+}
+
+func (PKIRSAKeyConfig) SwaggerDoc() map[string]string {
+	return map_PKIRSAKeyConfig
+}
+
 var map_PKISpec = map[string]string{
-	"":                      "PKISpec holds the specification for PKI configuration.",
-	"certificateManagement": "certificateManagement specifies how PKI configuration is managed for internally-generated certificates. This controls the certificate generation approach for all OpenShift components that create certificates internally, including certificate authorities, serving certificates, and client certificates.",
+	"":                      "PKISpec holds the specification for PKI configuration. Exactly one of certificates or certificateManagement must be set.",
+	"certificates":          "certificates specifies the cluster's certificate policy for internally-generated certificates, resolved most-specific-wins: a named certificate override, then a category override (CA, server, client), then the required defaults. This field is optional and mutually exclusive with the deprecated certificateManagement field; exactly one of the two must be set. This field names a configuration policy; it is unrelated to the X.509 certificate-policies extension.",
+	"keys":                  "keys optionally configures keys generated outside of any certificate, such as the bound service-account token signing key. Entries are named and opt-in with no inherited default. When omitted, no keys are configured by this resource. When set, at least one named key must be specified; an empty object is rejected. Unlike certificates, keys have no resolution chain: a key is either configured here or it is not, and a component whose key is not configured decides for itself (an internal default, or an error if it has none).",
+	"certificateManagement": "certificateManagement is the former shape of certificates, a mode union (Unmanaged/Default/Custom). It is retained only so that clients written against it keep compiling and so that objects using it keep roundtripping; it is mutually exclusive with certificates and exactly one of the two must be set. Note that key validation is tighter than it was when this field was current: RSA key sizes above 4096 bits, which were previously accepted, are now rejected.\n\nDeprecated: use certificates instead.",
 }
 
 func (PKISpec) SwaggerDoc() map[string]string {
 	return map_PKISpec
-}
-
-var map_RSAKeyConfig = map[string]string{
-	"":        "RSAKeyConfig specifies parameters for RSA key generation.",
-	"keySize": "keySize specifies the size of RSA keys in bits. Valid values are multiples of 1024 from 2048 to 8192.",
-}
-
-func (RSAKeyConfig) SwaggerDoc() map[string]string {
-	return map_RSAKeyConfig
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE
