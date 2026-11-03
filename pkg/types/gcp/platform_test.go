@@ -153,3 +153,42 @@ func TestGetDefaultServiceAccount(t *testing.T) {
 		})
 	}
 }
+
+func TestClientAccessGlobal(t *testing.T) {
+	cases := []struct {
+		name     string
+		platform *Platform
+		expected bool
+	}{
+		{
+			name:     "nil platform",
+			platform: nil,
+			expected: false,
+		},
+		{
+			name:     "unset load balancer",
+			platform: &Platform{},
+			expected: false,
+		},
+		{
+			name: "local client access",
+			platform: &Platform{
+				LoadBalancer: &LoadBalancer{ClientAccess: ClientAccessLocal},
+			},
+			expected: false,
+		},
+		{
+			name: "global client access",
+			platform: &Platform{
+				LoadBalancer: &LoadBalancer{ClientAccess: ClientAccessGlobal},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.platform.ClientAccessGlobal())
+		})
+	}
+}
