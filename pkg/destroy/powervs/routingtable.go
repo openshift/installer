@@ -111,7 +111,7 @@ func (o *ClusterUninstaller) listRoutingTables() (cloudResources, error) {
 				if !strings.Contains(*rt.Name, o.InfraID) {
 					continue
 				}
-				o.Logger.Debugf("listRoutingTables: FOUND: %s (%s) in VPC %s", *rt.Name, *rt.ID, vpcID)
+				o.Logger.Debugf("listRoutingTables: FOUND: %s (%s)", *rt.Name, *rt.ID)
 
 				// Verify it still exists with a GET before adding to results.
 				getOptions := o.vpcSvc.NewGetVPCRoutingTableOptions(vpcID, *rt.ID)
@@ -179,7 +179,7 @@ func (o *ClusterUninstaller) deleteRoutingTable(item cloudResource) error {
 		return fmt.Errorf("failed to get routing table %s: err = %w, response = %v", item.name, err, getResponse)
 	}
 
-	o.Logger.Debugf("Deleting VPC routing table %q (%s) in VPC %s", item.name, item.id, vpcID)
+	o.Logger.Debugf("Deleting VPC routing table %q (%s)", item.name, item.id)
 
 	deleteOptions := o.vpcSvc.NewDeleteVPCRoutingTableOptions(vpcID, item.id)
 	response, err := o.vpcSvc.DeleteVPCRoutingTableWithContext(ctx, deleteOptions)

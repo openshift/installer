@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -154,7 +155,26 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// 2) an id of an existing TG.
 	// 3) a name of an existing TG.
 	transitGatewayName = installConfig.Config.Platform.PowerVS.TransitGateway
-	tgSource := buildTransitGatewaySource(transitGatewayName, client.TransitGatewayIDValid(ctx, transitGatewayName) == nil, clusterID.InfraID)
+	tgIsID := false
+	if transitGatewayName != "" {
+		idErr := client.TransitGatewayIDValid(ctx, transitGatewayName)
+		switch {
+		case idErr == nil:
+			tgIsID = true
+		case errors.Is(idErr, powervsconfig.ErrTransitGatewayIDNotFound):
+			// Not an ID, so it must be the name of an existing gateway.
+			tgID, nameErr := client.TransitGatewayNameToID(ctx, transitGatewayName)
+			if nameErr != nil {
+				return nil, fmt.Errorf("failed to look up transit gateway name %q: %w", transitGatewayName, nameErr)
+			}
+			if tgID == "" {
+				return nil, fmt.Errorf("transit gateway %q is neither an existing ID nor a name", transitGatewayName)
+			}
+		default:
+			return nil, fmt.Errorf("failed to validate transit gateway id %q: %w", transitGatewayName, idErr)
+		}
+	}
+	tgSource := buildTransitGatewaySource(transitGatewayName, tgIsID, clusterID.InfraID)
 
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
 
@@ -239,13 +259,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		pgwVPCZone string
 	)
 	if !useDHCPServer {
-		// Derive the VPC zone from the PowerVS zone for the Public Gateway and Routing Table.
-		var vpcZoneErr error
-		pgwVPCZone, vpcZoneErr = powervstypes.VPCZoneForPowerVSZone(installConfig.Config.Platform.PowerVS.Zone)
+		// The Public Gateway and Routing Table go in the first zone of the VPC region. Use the
+		// resolved vpcRegion, not the PowerVS region's default, so a vpcRegion override is honored.
+		vpcZones, vpcZoneErr := powervstypes.VPCZonesForVPCRegion(vpcRegion)
 		if vpcZoneErr != nil {
-			return nil, fmt.Errorf("unable to derive VPC zone for Public Gateway from PowerVS zone %s: %w",
-				installConfig.Config.Platform.PowerVS.Zone, vpcZoneErr)
+			return nil, fmt.Errorf("unable to derive VPC zone for Public Gateway: %w", vpcZoneErr)
 		}
+		pgwVPCZone = vpcZones[0]
 
 		egress = newVPCEgressPlan(clusterID.InfraID, pgwVPCZone)
 		if vpcStruct != nil {
@@ -310,10 +330,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// in the same zone as the PGW gets the PublicGateway field set — IBM Cloud only supports
 	// one PGW per zone, and the route-mode NLB also selects this zone.
 	if !useDHCPServer && vpcStruct == nil {
-		allVPCZones, vpcZonesErr := powervstypes.AvailableVPCZones(installConfig.Config.Platform.PowerVS.Region)
+		allVPCZones, vpcZonesErr := powervstypes.VPCZonesForVPCRegion(vpcRegion)
 		if vpcZonesErr != nil {
-			return nil, fmt.Errorf("unable to derive VPC zones for PowerVS region %s: %w",
-				installConfig.Config.Platform.PowerVS.Region, vpcZonesErr)
+			return nil, fmt.Errorf("unable to derive VPC zones: %w", vpcZonesErr)
 		}
 		for _, zone := range allVPCZones {
 			subnetName := fmt.Sprintf("%s-subnet-%s", clusterID.InfraID, zone)
@@ -558,7 +577,6 @@ func planVPCEgress(infraID string, zone string, subnets []vpcv1.Subnet, pgws []v
 	case zonePGW != nil && zonePGW.Name != nil && *zonePGW.Name == pgwName:
 		// Left by an earlier attempt of this install; keep provisioning it by name.
 	case zonePGW != nil:
-		name := ptr.Deref(zonePGW.Name, ptr.Deref(zonePGW.ID, ""))
 		plan.publicGateways = []capibm.VPCPublicGateway{{
 			Type:      capibm.SourceTypeReference,
 			Zone:      zone,
@@ -567,8 +585,8 @@ func planVPCEgress(infraID string, zone string, subnets []vpcv1.Subnet, pgws []v
 		plan.attach = capibm.ResourceIdentifier{ID: ptr.Deref(zonePGW.ID, "")}
 		if unattached > 0 {
 			plan.warnings = append(plan.warnings, fmt.Sprintf(
-				"VPC already has Public Gateway %q in zone %s; reusing it and attaching it to %d subnet(s) in that zone that have none",
-				name, zone, unattached))
+				"VPC already has a Public Gateway in zone %s; reusing it and attaching it to %d subnet(s) in that zone that have none",
+				zone, unattached))
 		}
 	case zoneSubnets == 0:
 		return vpcEgressPlan{}, fmt.Errorf("the VPC has no Public Gateway and no subnet in zone %s, "+
@@ -584,10 +602,10 @@ func planVPCEgress(infraID string, zone string, subnets []vpcv1.Subnet, pgws []v
 			break // Left by an earlier attempt of this install.
 		}
 		plan.routingTables = nil
-		plan.warnings = append(plan.warnings, fmt.Sprintf(
-			"VPC routing table %q already has Transit Gateway ingress enabled and only one is allowed per VPC; "+
-				"not creating %q. Make sure that table routes 0.0.0.0/0 to the cluster's route-mode load balancer, "+
-				"or the cluster will have no outbound access", ptr.Deref(rt.Name, ptr.Deref(rt.ID, "")), rtName))
+		plan.warnings = append(plan.warnings,
+			"An existing VPC routing table already has Transit Gateway ingress enabled and only one is allowed per VPC; "+
+				"not creating the cluster's routing table. Make sure that table routes 0.0.0.0/0 to the cluster's route-mode load balancer, "+
+				"or the cluster will have no outbound access")
 		break
 	}
 

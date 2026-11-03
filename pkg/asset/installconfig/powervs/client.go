@@ -1241,7 +1241,12 @@ func (c *Client) TransitGatewayNameToID(ctx context.Context, name string) (strin
 	return "", nil
 }
 
+// ErrTransitGatewayIDNotFound is returned by TransitGatewayIDValid when the lookup succeeded
+// but no transit gateway has the given id. Other errors are list/API failures.
+var ErrTransitGatewayIDNotFound = errors.New("transit gateway id not found")
+
 // TransitGatewayIDValid checks to see if the id is an existing transit gateway id.
+// It wraps ErrTransitGatewayIDNotFound when no transit gateway has that id.
 func (c *Client) TransitGatewayIDValid(ctx context.Context, id string) error {
 	var (
 		gateways []transitgatewayapisv1.TransitGateway
@@ -1259,7 +1264,7 @@ func (c *Client) TransitGatewayIDValid(ctx context.Context, id string) error {
 		}
 	}
 
-	return fmt.Errorf("transit gateway id (%s) not found", id)
+	return fmt.Errorf("transit gateway id (%s): %w", id, ErrTransitGatewayIDNotFound)
 }
 
 // GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.

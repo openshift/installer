@@ -18,7 +18,7 @@ const errorBody = `{"errors":[{"code":"err","message":"err"}]}`
 // writeBody writes body to w and fails the test if the write fails.
 func writeBody(t *testing.T, w http.ResponseWriter, body string) {
 	t.Helper()
-	_, err := w.Write([]byte(body))
+	_, err := w.Write([]byte(body)) //nolint:gosec // test fixture served by httptest, not a browser response
 	assert.NoError(t, err)
 }
 

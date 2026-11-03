@@ -160,7 +160,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGateway = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGateway)
-	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPC = %v", metadata.ClusterPlatformMetadata.PowerVS.VPC)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
