@@ -157,3 +157,128 @@ func TestTemplatingWithoutGateway(t *testing.T) {
 	assert.Equal(t, result.ProvisioningNetworkGateway, "")
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100,24")
 }
+
+func TestTemplatingVirtualMediaViaExternalNetwork(t *testing.T) {
+	tests := []struct {
+		name            string
+		provisioningCR  string
+		expectedHTTPURL string
+	}{
+		{
+			name: "enabled",
+			provisioningCR: `
+            apiVersion: metal3.io/v1alpha1
+            kind: Provisioning
+            metadata:
+              name: provisioning-configuration
+            spec:
+              virtualMediaViaExternalNetwork: true
+            `,
+			expectedHTTPURL: "https://192.0.2.10:6183/",
+		},
+		{
+			name: "disabled",
+			provisioningCR: `
+            apiVersion: metal3.io/v1alpha1
+            kind: Provisioning
+            metadata:
+              name: provisioning-configuration
+            spec:
+              virtualMediaViaExternalNetwork: false
+            `,
+			expectedHTTPURL: "",
+		},
+		{
+			name: "enabled with virtual media TLS disabled",
+			provisioningCR: `
+            apiVersion: metal3.io/v1alpha1
+            kind: Provisioning
+            metadata:
+              name: provisioning-configuration
+            spec:
+              virtualMediaViaExternalNetwork: true
+              disableVirtualMediaTLS: true
+            `,
+			expectedHTTPURL: "http://192.0.2.10:6180/",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bareMetalConfig := baremetal.Platform{
+				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
+				BootstrapProvisioningIP: "172.22.0.2",
+				ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
+				ProvisioningDHCPRange:   "172.22.0.10,172.22.0.100",
+				APIVIPs:                 []string{"192.0.2.10"},
+			}
+
+			openshiftManifests := &manifests.Openshift{
+				FileList: []*asset.File{
+					{
+						Filename: "openshift/99_baremetal-provisioning-config.yaml",
+						Data:     []byte(test.provisioningCR),
+					},
+				},
+			}
+
+			dependencies := asset.Parents{}
+			dependencies.Add(openshiftManifests)
+
+			result := GetTemplateData(
+				&bareMetalConfig,
+				nil,
+				3,
+				"bootstrap-ironic-user",
+				"passw0rd",
+				dependencies,
+			)
+
+			assert.Equal(t, test.expectedHTTPURL, result.ExternalHTTPURL)
+		})
+	}
+}
+
+func TestTemplatingVirtualMediaViaExternalNetworkDualStack(t *testing.T) {
+	bareMetalConfig := baremetal.Platform{
+		ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
+		BootstrapProvisioningIP: "172.22.0.2",
+		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
+		ProvisioningDHCPRange:   "172.22.0.10,172.22.0.100",
+		APIVIPs: []string{
+			"2001:db8::10",
+			"192.0.2.10",
+		},
+	}
+
+	openshiftManifests := &manifests.Openshift{
+		FileList: []*asset.File{
+			{
+				Filename: "openshift/99_baremetal-provisioning-config.yaml",
+				Data: []byte(`
+apiVersion: metal3.io/v1alpha1
+kind: Provisioning
+metadata:
+  name: provisioning-configuration
+spec:
+  virtualMediaViaExternalNetwork: true
+`),
+			},
+		},
+	}
+
+	dependencies := asset.Parents{}
+	dependencies.Add(openshiftManifests)
+
+	result := GetTemplateData(
+		&bareMetalConfig,
+		nil,
+		3,
+		"bootstrap-ironic-user",
+		"passw0rd",
+		dependencies,
+	)
+
+	assert.Equal(t, "https://192.0.2.10:6183/", result.ExternalHTTPURL)
+	assert.Equal(t, "https://[2001:db8::10]:6183/", result.ExternalURLv6)
+}
