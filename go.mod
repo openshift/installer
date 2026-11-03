@@ -318,4 +318,4 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.5
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.6
