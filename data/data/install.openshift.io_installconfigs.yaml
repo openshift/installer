@@ -791,11 +791,6 @@ spec:
                           confidentialCompute is an optional field defining whether the instance should have
                           Confidential Computing enabled or not, and the Confidential Computing technology of choice.
                               With Disabled, Confidential Computing is disabled.
-                              With Enabled, Confidential Computing is enabled with no preference on the
-                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
-                          which is subject to change over time.
-                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
-                          AMD Secure Encrypted Virtualization (AMD SEV).
                               With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
                           enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
                           (AMD SEV-SNP).
@@ -809,9 +804,7 @@ spec:
                           to "Terminate".
                         enum:
                         - ""
-                        - Enabled
                         - Disabled
-                        - AMDEncryptedVirtualization
                         - AMDEncryptedVirtualizationNestedPaging
                         - IntelTrustedDomainExtensions
                         type: string
@@ -2421,11 +2414,6 @@ spec:
                             confidentialCompute is an optional field defining whether the instance should have
                             Confidential Computing enabled or not, and the Confidential Computing technology of choice.
                                 With Disabled, Confidential Computing is disabled.
-                                With Enabled, Confidential Computing is enabled with no preference on the
-                            Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
-                            which is subject to change over time.
-                                With AMDEncryptedVirtualization, Confidential Computing is enabled with
-                            AMD Secure Encrypted Virtualization (AMD SEV).
                                 With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
                             enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
                             (AMD SEV-SNP).
@@ -2439,9 +2427,7 @@ spec:
                             to "Terminate".
                           enum:
                           - ""
-                          - Enabled
                           - Disabled
-                          - AMDEncryptedVirtualization
                           - AMDEncryptedVirtualizationNestedPaging
                           - IntelTrustedDomainExtensions
                           type: string
@@ -4005,11 +3991,6 @@ spec:
                           confidentialCompute is an optional field defining whether the instance should have
                           Confidential Computing enabled or not, and the Confidential Computing technology of choice.
                               With Disabled, Confidential Computing is disabled.
-                              With Enabled, Confidential Computing is enabled with no preference on the
-                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
-                          which is subject to change over time.
-                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
-                          AMD Secure Encrypted Virtualization (AMD SEV).
                               With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
                           enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
                           (AMD SEV-SNP).
@@ -4023,9 +4004,7 @@ spec:
                           to "Terminate".
                         enum:
                         - ""
-                        - Enabled
                         - Disabled
-                        - AMDEncryptedVirtualization
                         - AMDEncryptedVirtualizationNestedPaging
                         - IntelTrustedDomainExtensions
                         type: string
@@ -6739,11 +6718,6 @@ spec:
                           confidentialCompute is an optional field defining whether the instance should have
                           Confidential Computing enabled or not, and the Confidential Computing technology of choice.
                               With Disabled, Confidential Computing is disabled.
-                              With Enabled, Confidential Computing is enabled with no preference on the
-                          Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
-                          which is subject to change over time.
-                              With AMDEncryptedVirtualization, Confidential Computing is enabled with
-                          AMD Secure Encrypted Virtualization (AMD SEV).
                               With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
                           enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
                           (AMD SEV-SNP).
@@ -6757,9 +6731,7 @@ spec:
                           to "Terminate".
                         enum:
                         - ""
-                        - Enabled
                         - Disabled
-                        - AMDEncryptedVirtualization
                         - AMDEncryptedVirtualizationNestedPaging
                         - IntelTrustedDomainExtensions
                         type: string
