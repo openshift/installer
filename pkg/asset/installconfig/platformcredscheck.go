@@ -94,9 +94,9 @@ func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			return errors.Wrap(err, "creating Azure session")
 		}
 		switch azureSession.AuthType {
-		case azureconfig.ClientCertificateAuth, azureconfig.ManagedIdentityAuth:
+		case azureconfig.ClientCertificateAuth, azureconfig.ManagedIdentityAuth, azureconfig.AzureCLIAuth:
 			if ic.Config.CredentialsMode != types.ManualCredentialsMode {
-				return fmt.Errorf("authentication with client certificates or managed identity is only supported in manual credentials mode")
+				return fmt.Errorf("authentication with client certificates, managed identity, or Azure CLI (az login) is only supported with credentialsMode: Manual")
 			}
 		}
 	case ovirt.Name:
