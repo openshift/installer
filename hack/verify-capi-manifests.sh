@@ -55,6 +55,9 @@ generate_capi_manifest() {
 	elif [ "${provider}" = "openstackorc" ]; then
 		# Just copy the CRD from upstream
 		curl -fSsL "https://github.com/k-orc/openstack-resource-controller/releases/download/${version}/install.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+	elif [ "${provider}" = "openstack" ]; then
+		# Use the published release manifest; generating it locally defaults to the staging image registry.
+		curl -fSsL "https://github.com/kubernetes-sigs/cluster-api-provider-openstack/releases/download/${version}/infrastructure-components.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	elif [ "${provider}" = "nutanix" ]; then
 		# Download pre-built infrastructure components from GitHub releases
 		curl -fSsL "https://github.com/nutanix-cloud-native/cluster-api-provider-nutanix/releases/download/${version}/infrastructure-components.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"

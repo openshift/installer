@@ -9148,7 +9148,7 @@ spec:
         - --feature-gates=PriorityQueue=${EXP_CAPO_PRIORITY_QUEUE:=false},AutoScaleFromZero=${EXP_CAPO_AUTOSCALE_FROM_ZERO:=false}
         command:
         - /manager
-        image: gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:v0.14.6
+        image: registry.k8s.io/capi-openstack/capi-openstack-controller:v0.14.6
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
