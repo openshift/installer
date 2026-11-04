@@ -9184,6 +9184,16 @@ spec:
             description: SSHKey is the public Secure Shell (SSH) key to provide access
               to instances.
             type: string
+          tlsProfileType:
+            description: |-
+              TLSProfileType sets the TLS security profile applied across the cluster.
+              Valid values are "Modern", "Intermediate" and "Old". When omitted,
+              "Modern" is used.
+            enum:
+            - Modern
+            - Intermediate
+            - Old
+            type: string
         required:
         - baseDomain
         - metadata

@@ -239,6 +239,13 @@ type InstallConfig struct {
 	// +openshift:enable:FeatureGate=ConfigurablePKI
 	// +optional
 	PKI *PKIConfig `json:"pki,omitempty"`
+
+	// TLSProfileType sets the TLS security profile applied across the cluster.
+	// Valid values are "Modern", "Intermediate" and "Old". When omitted,
+	// "Modern" is used.
+	// +kubebuilder:validation:Enum=Modern;Intermediate;Old
+	// +optional
+	TLSProfileType string `json:"tlsProfileType,omitempty"`
 }
 
 // PKIConfig configures cryptographic parameters for installer-generated
