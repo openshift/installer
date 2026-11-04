@@ -143,15 +143,21 @@ func (r *keyring) List() ([]*Key, error) {
 	return ids, nil
 }
 
-// Insert adds a private key to the keyring. If a certificate
-// is given, that certificate is added as public key. Note that
-// any constraints given are ignored.
+// Add adds a private key to the keyring. If a certificate is given, that
+// certificate is added as public key.
+//
+// Add returns an error if key contains ConstraintExtensions.
 func (r *keyring) Add(key AddedKey) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.locked {
 		return errLocked
 	}
+
+	if len(key.ConstraintExtensions) > 0 {
+		return errors.New("agent: constraint extensions are present but not supported")
+	}
+
 	signer, err := ssh.NewSignerFromKey(key.PrivateKey)
 
 	if err != nil {
@@ -173,6 +179,15 @@ func (r *keyring) Add(key AddedKey) error {
 	if key.LifetimeSecs > 0 {
 		t := time.Now().Add(time.Duration(key.LifetimeSecs) * time.Second)
 		p.expire = &t
+	}
+
+	// If we already have a Signer with the same public key, replace it with the
+	// new one.
+	for idx, k := range r.keys {
+		if bytes.Equal(k.signer.PublicKey().Marshal(), p.signer.PublicKey().Marshal()) {
+			r.keys[idx] = p
+			return nil
+		}
 	}
 
 	r.keys = append(r.keys, p)
