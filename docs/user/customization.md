@@ -70,6 +70,13 @@ feature set.
     Valid values are `External` (the default) and `Internal`.
 * `pullSecret` (required string): The secret to use when pulling images.
 * `sshKey` (optional string): The public Secure Shell (SSH) key to provide access to instances.
+* `tlsProfileType` (optional string): The cluster-wide TLS security profile, based on the [Mozilla Server Side TLS recommendations](https://wiki.mozilla.org/Security/Server_Side_TLS).
+    Valid values are:
+    * `Modern`: most secure, newest clients only.
+    * `Intermediate`: balanced security and compatibility.
+    * `Old`: maximum compatibility with legacy clients.
+
+    When omitted, `Modern` is used.
 
 ### Capabilities
 
