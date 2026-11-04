@@ -116,7 +116,12 @@ func (instance *BackupVaultsBackupInstance) ValidateUpdate(ctx context.Context, 
 
 // createValidations validates the creation of the resource
 func (instance *BackupVaultsBackupInstance) createValidations() []func(ctx context.Context, obj *v20231101.BackupVaultsBackupInstance) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231101.BackupVaultsBackupInstance) (admission.Warnings, error){instance.validateResourceReferences, instance.validateOwnerReference, instance.validateSecretDestinations, instance.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20231101.BackupVaultsBackupInstance) (admission.Warnings, error){
+		instance.validateResourceReferences,
+		instance.validateOwnerReference,
+		instance.validateSecretDestinations,
+		instance.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

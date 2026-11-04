@@ -20,6 +20,7 @@ import (
 	"github.com/microsoft/go-mssqldb/aecmk"
 	"github.com/microsoft/go-mssqldb/internal/querytext"
 	"github.com/microsoft/go-mssqldb/msdsn"
+	"github.com/shopspring/decimal"
 )
 
 // ReturnStatus may be used to return the return value from a proc.
@@ -64,7 +65,7 @@ type Driver struct {
 }
 
 // OpenConnector opens a new connector. Useful to dial with a context.
-func (d *Driver) OpenConnector(dsn string) (*Connector, error) {
+func (d *Driver) OpenConnector(dsn string) (driver.Connector, error) {
 	params, err := msdsn.Parse(dsn)
 	if err != nil {
 		return nil, err
@@ -143,6 +144,16 @@ func NewConnectorWithAccessTokenProvider(dsn string, tokenProvider func(ctx cont
 // The returned connector may be used with sql.OpenDB.
 func NewConnectorConfig(config msdsn.Config) *Connector {
 	return newConnector(config, driverInstanceNoProcess)
+}
+
+// NewConnectorWithProcessQueryText creates a new Connector for a DSN Config struct
+// that pre-processes query text, converting "?" and ":N" placeholder parameters to
+// "@pN" parameter names. This enables compatibility with libraries like sqlx that use
+// "?" as parameter placeholders. The pre-processing behavior is equivalent to that of
+// the deprecated "mssql" driver name.
+// The returned connector may be used with sql.OpenDB.
+func NewConnectorWithProcessQueryText(config msdsn.Config) *Connector {
+	return newConnector(config, driverInstance)
 }
 
 func newConnector(config msdsn.Config, driver *Driver) *Connector {
@@ -236,6 +247,9 @@ type Conn struct {
 	processQueryText bool
 	connectionGood   bool
 
+	// True between Begin() and Commit()/Rollback(); detects server-side rollback.
+	inTransaction bool
+
 	outs outputs
 }
 
@@ -292,8 +306,21 @@ func (c *Conn) clearOuts() {
 	c.outs = outputs{}
 }
 
-func (c *Conn) simpleProcessResp(ctx context.Context) error {
+// checkServerAbortedTransaction returns an error when the server ended
+// the transaction without the driver's knowledge (e.g. XACT_ABORT).
+func (c *Conn) checkServerAbortedTransaction() error {
+	if c.inTransaction && c.sess.tranid == 0 {
+		return Error{
+			Number:  0,
+			Message: "server does not have an active transaction: the transaction was aborted by the server, likely due to an error while SET XACT_ABORT is ON; any changes have been rolled back",
+		}
+	}
+	return nil
+}
+
+func (c *Conn) simpleProcessResp(ctx context.Context, isRollback bool) error {
 	reader := startReading(c.sess, ctx, c.outs)
+	reader.noAttn = isRollback
 	c.clearOuts()
 
 	var resultError error
@@ -308,10 +335,14 @@ func (c *Conn) Commit() error {
 	if !c.connectionGood {
 		return driver.ErrBadConn
 	}
+	defer func() { c.inTransaction = false }()
+	if err := c.checkServerAbortedTransaction(); err != nil {
+		return err
+	}
 	if err := c.sendCommitRequest(); err != nil {
 		return c.checkBadConn(c.transactionCtx, err, true)
 	}
-	return c.simpleProcessResp(c.transactionCtx)
+	return c.simpleProcessResp(c.transactionCtx, false)
 }
 
 func (c *Conn) sendCommitRequest() error {
@@ -333,10 +364,15 @@ func (c *Conn) Rollback() error {
 	if !c.connectionGood {
 		return driver.ErrBadConn
 	}
+	defer func() { c.inTransaction = false }()
+	// Server already rolled back (e.g. XACT_ABORT); nothing to send.
+	if c.inTransaction && c.sess.tranid == 0 {
+		return nil
+	}
 	if err := c.sendRollbackRequest(); err != nil {
 		return c.checkBadConn(c.transactionCtx, err, true)
 	}
-	return c.simpleProcessResp(c.transactionCtx)
+	return c.simpleProcessResp(c.transactionCtx, true)
 }
 
 func (c *Conn) sendRollbackRequest() error {
@@ -390,11 +426,12 @@ func (c *Conn) sendBeginRequest(ctx context.Context, tdsIsolation isoLevel) erro
 }
 
 func (c *Conn) processBeginResponse(ctx context.Context) (driver.Tx, error) {
-	if err := c.simpleProcessResp(ctx); err != nil {
+	if err := c.simpleProcessResp(ctx, false); err != nil {
 		return nil, err
 	}
 	// successful BEGINXACT request will return sess.tranid
 	// for started transaction
+	c.inTransaction = true
 	return c, nil
 }
 
@@ -407,21 +444,32 @@ func (d *Driver) open(ctx context.Context, dsn string) (*Conn, error) {
 	return d.connect(ctx, c, params)
 }
 
+
+func failoverPartnerParams(params msdsn.Config) *msdsn.Config {
+	if params.FailOverPartner == "" {
+		return nil
+	}
+	params.Host = params.FailOverPartner
+	if params.FailOverPort != 0 {
+		params.Port = params.FailOverPort
+	}
+	if params.FailOverPartnerSPN != "" {
+		params.ServerSPN = params.FailOverPartnerSPN
+	}
+	return &params
+}
+
 // connect to the server, using the provided context for dialing only.
 func (d *Driver) connect(ctx context.Context, c *Connector, params msdsn.Config) (*Conn, error) {
 	sess, err := connect(ctx, c, d.logger, params)
 	if err != nil {
 		// main server failed, try fail-over partner
-		if params.FailOverPartner == "" {
+		foParams := failoverPartnerParams(params)
+		if foParams == nil {
 			return nil, err
 		}
 
-		params.Host = params.FailOverPartner
-		if params.FailOverPort != 0 {
-			params.Port = params.FailOverPort
-		}
-
-		sess, err = connect(ctx, c, d.logger, params)
+		sess, err = connect(ctx, c, d.logger, *foParams)
 		if err != nil {
 			// fail-over partner also failed, now fail
 			return nil, err
@@ -496,6 +544,11 @@ func (s *Stmt) NumInput() int {
 }
 
 func (s *Stmt) sendQuery(ctx context.Context, args []namedValue) (err error) {
+	// Fail fast if XACT_ABORT rolled back the transaction. The mssql.Error
+	// type avoids triggering checkBadConn's retry/reconnect path.
+	if err := s.c.checkServerAbortedTransaction(); err != nil {
+		return err
+	}
 	headers := []headerStruct{
 		{hdrtype: dataStmHdrTransDescr,
 			data: transDescrHdr{s.c.sess.tranid, 1}.pack()},
@@ -554,13 +607,20 @@ func (s *Stmt) sendQuery(ctx context.Context, args []namedValue) (err error) {
 			params[0] = makeStrParam(s.query)
 			params[1] = makeStrParam(strings.Join(decls, ","))
 		}
-		if err = sendRpc(conn.sess.buf, headers, proc, 0, params, reset); err != nil {
+		if err = sendRpc(conn.sess.buf, headers, proc, 0, params, reset, conn.sess.encoding); err != nil {
 			conn.sess.LogF(ctx, msdsn.LogErrors, "Failed to send Rpc with %v", err)
 			conn.connectionGood = false
 			return fmt.Errorf("failed to send RPC: %v", err)
 		}
 	}
 	return
+}
+
+// Builtin commands are not stored procs, but rather T-SQL commands
+// those commands can be invoke without extra options
+var builtinCommands = []string{
+	"RECONFIGURE", "SHUTDOWN", "CHECKPOINT",
+	"COMMIT", "ROLLBACK",
 }
 
 // isProc takes the query text in s and determines if it is a stored proc name
@@ -619,6 +679,12 @@ func isProc(s string) bool {
 			case r == ']':
 				st = outside
 			}
+		}
+	}
+	s = strings.ToUpper(s)
+	for _, cmd := range builtinCommands {
+		if s == cmd {
+			return false
 		}
 	}
 	return true
@@ -816,22 +882,36 @@ type Rows struct {
 }
 
 func (rc *Rows) Close() error {
-	// need to add a test which returns lots of rows
-	// and check closing after reading only few rows
+	// Cancel the context first to prevent blocking indefinitely if
+	// processSingleResponse is waiting on a network read. This is safe
+	// because nextToken's non-blocking first select still delivers any
+	// tokens already buffered in the channel before ctx.Done() fires.
 	rc.cancel()
 
+	var closeErr error
 	for {
 		tok, err := rc.reader.nextToken()
 		if err == nil {
 			if tok == nil {
-				return nil
-			} else {
-				// continue consuming tokens
-				continue
+				return closeErr
 			}
+			// Check for server errors in done tokens so that errors
+			// arriving after result rows (e.g. XACT_ABORT rollbacks)
+			// are not silently swallowed.
+			// We only check doneStruct, not doneInProcStruct, because
+			// in-proc done tokens accumulate their errors into the
+			// subsequent doneStruct (via the errs slice in
+			// processSingleResponse). A standalone doneInProcStruct
+			// error here would be a duplicate.
+			if done, ok := tok.(doneStruct); ok && done.isError() {
+				if closeErr == nil {
+					closeErr = rc.stmt.c.checkBadConn(rc.reader.ctx, done.getError(), false)
+				}
+			}
+			continue
 		} else {
 			if err == rc.reader.ctx.Err() {
-				return nil
+				return closeErr
 			} else {
 				return err
 			}
@@ -968,6 +1048,7 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		res.ti.Size = 0
 		return
 	}
+
 	switch valuer := val.(type) {
 	// sql.Nullxxx integer types return an int64. We want the original type, to match the SQL type size.
 	case sql.NullByte:
@@ -981,6 +1062,14 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 	case sql.NullInt32:
 		if valuer.Valid {
 			return s.makeParam(valuer.Int32)
+		}
+	case decimal.NullDecimal:
+		if valuer.Valid {
+			return s.makeParam(valuer.Decimal)
+		}
+	case Money[decimal.NullDecimal]:
+		if valuer.Decimal.Valid {
+			return s.makeParam(Money[decimal.Decimal]{valuer.Decimal.Decimal})
 		}
 	case UniqueIdentifier:
 	case NullUniqueIdentifier:
@@ -1065,6 +1154,16 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		res.buffer = []byte{}
 		res.ti.Size = 1
 		res.ti.TypeId = typeIntN
+	case decimal.NullDecimal:
+		// only null values should be getting here
+		res.ti.TypeId = typeNVarChar
+		res.buffer = nil
+		res.ti.Size = 8000
+	case Money[decimal.NullDecimal]:
+		// only null values should be getting here
+		res.ti.TypeId = typeNVarChar
+		res.buffer = nil
+		res.ti.Size = 8000
 	case byte:
 		res.ti.TypeId = typeIntN
 		res.buffer = []byte{val}
@@ -1129,6 +1228,20 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		} else {
 			res.ti.TypeId = typeDateTimeN
 		}
+	case NullDate:
+		res.buffer = []byte{}
+		res.ti.TypeId = typeDateN
+		res.ti.Size = 3
+	case NullDateTime:
+		res.buffer = []byte{}
+		res.ti.TypeId = typeDateTime2N
+		res.ti.Scale = 7
+		res.ti.Size = 8
+	case NullTime:
+		res.buffer = []byte{}
+		res.ti.TypeId = typeTimeN
+		res.ti.Scale = 7
+		res.ti.Size = 5
 	case driver.Valuer:
 		// We have a custom Valuer implementation with a nil value
 		return s.makeParam(nil)
@@ -1147,6 +1260,7 @@ func (r *Result) RowsAffected() (int64, error) {
 	return r.rowsAffected, nil
 }
 
+var _ driver.DriverContext = &Driver{}
 var _ driver.Pinger = &Conn{}
 
 // Ping is used to check if the remote server is available and satisfies the Pinger interface.
@@ -1254,7 +1368,6 @@ type Rowsq struct {
 
 func (rc *Rowsq) Close() error {
 	rc.cancel()
-
 	for {
 		tok, err := rc.reader.nextToken()
 		if err == nil {
@@ -1328,6 +1441,7 @@ func (rc *Rowsq) Next(dest []driver.Value) error {
 					return nil
 				case doneStruct:
 					if tokdata.Status&doneMore == 0 {
+						rc.reader.sess.LogF(rc.reader.ctx, msdsn.LogDebug, "Setting requestDone to true for done token with status %d", tokdata.Status)
 						rc.requestDone = true
 					}
 					if tokdata.isError() {
@@ -1361,7 +1475,7 @@ func (rc *Rowsq) Next(dest []driver.Value) error {
 // In Message Queue mode, we always claim another resultset could be on the way
 // to avoid Rows being closed prematurely
 func (rc *Rowsq) HasNextResultSet() bool {
-	return !rc.requestDone
+	return true
 }
 
 // Scans to the end of the current statement being processed

@@ -116,7 +116,12 @@ func (configuration *FlexibleServersConfiguration) ValidateUpdate(ctx context.Co
 
 // createValidations validates the creation of the resource
 func (configuration *FlexibleServersConfiguration) createValidations() []func(ctx context.Context, obj *v20231230.FlexibleServersConfiguration) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20231230.FlexibleServersConfiguration) (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20231230.FlexibleServersConfiguration) (admission.Warnings, error){
+		configuration.validateResourceReferences,
+		configuration.validateOwnerReference,
+		configuration.validateSecretDestinations,
+		configuration.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

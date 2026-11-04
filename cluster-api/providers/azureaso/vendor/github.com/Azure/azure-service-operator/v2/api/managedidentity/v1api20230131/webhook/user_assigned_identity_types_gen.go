@@ -116,7 +116,12 @@ func (identity *UserAssignedIdentity) ValidateUpdate(ctx context.Context, oldRes
 
 // createValidations validates the creation of the resource
 func (identity *UserAssignedIdentity) createValidations() []func(ctx context.Context, obj *v20230131.UserAssignedIdentity) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230131.UserAssignedIdentity) (admission.Warnings, error){identity.validateResourceReferences, identity.validateOwnerReference, identity.validateSecretDestinations, identity.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230131.UserAssignedIdentity) (admission.Warnings, error){
+		identity.validateResourceReferences,
+		identity.validateOwnerReference,
+		identity.validateSecretDestinations,
+		identity.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -183,6 +188,7 @@ func (identity *UserAssignedIdentity) validateSecretDestinations(ctx context.Con
 		toValidate = []*genruntime.SecretDestination{
 			obj.Spec.OperatorSpec.Secrets.ClientId,
 			obj.Spec.OperatorSpec.Secrets.PrincipalId,
+			obj.Spec.OperatorSpec.Secrets.SubscriptionId,
 			obj.Spec.OperatorSpec.Secrets.TenantId,
 		}
 	}

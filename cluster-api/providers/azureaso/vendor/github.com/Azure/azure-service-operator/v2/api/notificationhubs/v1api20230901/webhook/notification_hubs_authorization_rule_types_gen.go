@@ -116,7 +116,12 @@ func (rule *NotificationHubsAuthorizationRule) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (rule *NotificationHubsAuthorizationRule) createValidations() []func(ctx context.Context, obj *v20230901.NotificationHubsAuthorizationRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230901.NotificationHubsAuthorizationRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230901.NotificationHubsAuthorizationRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

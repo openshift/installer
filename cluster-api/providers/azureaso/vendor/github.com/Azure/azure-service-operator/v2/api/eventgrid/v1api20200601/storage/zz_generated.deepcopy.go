@@ -461,7 +461,7 @@ func (in *DomainOperatorSpec) DeepCopyInto(out *DomainOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -479,7 +479,7 @@ func (in *DomainOperatorSpec) DeepCopyInto(out *DomainOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -735,7 +735,7 @@ func (in *DomainsTopicOperatorSpec) DeepCopyInto(out *DomainsTopicOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -753,7 +753,7 @@ func (in *DomainsTopicOperatorSpec) DeepCopyInto(out *DomainsTopicOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1200,7 +1200,7 @@ func (in *EventSubscriptionOperatorSpec) DeepCopyInto(out *EventSubscriptionOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1218,7 +1218,7 @@ func (in *EventSubscriptionOperatorSpec) DeepCopyInto(out *EventSubscriptionOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3134,7 +3134,7 @@ func (in *TopicOperatorConfigMaps) DeepCopyInto(out *TopicOperatorConfigMaps) {
 	if in.Endpoint != nil {
 		in, out := &in.Endpoint, &out.Endpoint
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -3161,12 +3161,12 @@ func (in *TopicOperatorSecrets) DeepCopyInto(out *TopicOperatorSecrets) {
 	if in.Key1 != nil {
 		in, out := &in.Key1, &out.Key1
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Key2 != nil {
 		in, out := &in.Key2, &out.Key2
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -3197,7 +3197,7 @@ func (in *TopicOperatorSpec) DeepCopyInto(out *TopicOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3220,7 +3220,7 @@ func (in *TopicOperatorSpec) DeepCopyInto(out *TopicOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

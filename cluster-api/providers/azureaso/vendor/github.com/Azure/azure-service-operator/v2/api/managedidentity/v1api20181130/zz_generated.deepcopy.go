@@ -81,17 +81,17 @@ func (in *UserAssignedIdentityOperatorConfigMaps) DeepCopyInto(out *UserAssigned
 	if in.ClientId != nil {
 		in, out := &in.ClientId, &out.ClientId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrincipalId != nil {
 		in, out := &in.PrincipalId, &out.PrincipalId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.TenantId != nil {
 		in, out := &in.TenantId, &out.TenantId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -115,7 +115,7 @@ func (in *UserAssignedIdentityOperatorSpec) DeepCopyInto(out *UserAssignedIdenti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -131,7 +131,7 @@ func (in *UserAssignedIdentityOperatorSpec) DeepCopyInto(out *UserAssignedIdenti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

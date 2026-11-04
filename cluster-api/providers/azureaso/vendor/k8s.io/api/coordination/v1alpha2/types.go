@@ -35,7 +35,7 @@ type LeaseCandidate struct {
 
 	// spec contains the specification of the Lease.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-	// +optional
+	// +required
 	Spec LeaseCandidateSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
@@ -73,8 +73,6 @@ type LeaseCandidateSpec struct {
 	// If multiple candidates for the same Lease return different strategies, the strategy provided
 	// by the candidate with the latest BinaryVersion will be used. If there is still conflict,
 	// this is a user error and coordinated leader election will not operate the Lease until resolved.
-	// (Alpha) Using this field requires the CoordinatedLeaderElection feature gate to be enabled.
-	// +featureGate=CoordinatedLeaderElection
 	// +required
 	Strategy v1.CoordinatedLeaseStrategy `json:"strategy,omitempty" protobuf:"bytes,6,opt,name=strategy"`
 }

@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,sql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -312,7 +313,7 @@ func (group *ServersFailoverGroup_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.PartnerServers = append(result.Properties.PartnerServers, *item_ARM.(*arm.PartnerInfo))
 	}
 	if group.ReadOnlyEndpoint != nil {
-		readOnlyEndpoint_ARM, err := (*group.ReadOnlyEndpoint).ConvertToARM(resolved)
+		readOnlyEndpoint_ARM, err := group.ReadOnlyEndpoint.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +321,7 @@ func (group *ServersFailoverGroup_Spec) ConvertToARM(resolved genruntime.Convert
 		result.Properties.ReadOnlyEndpoint = &readOnlyEndpoint
 	}
 	if group.ReadWriteEndpoint != nil {
-		readWriteEndpoint_ARM, err := (*group.ReadWriteEndpoint).ConvertToARM(resolved)
+		readWriteEndpoint_ARM, err := group.ReadWriteEndpoint.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -476,8 +477,6 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 	if source.DatabasesReferences != nil {
 		databasesReferenceList := make([]genruntime.ResourceReference, len(source.DatabasesReferences))
 		for databasesReferenceIndex, databasesReferenceItem := range source.DatabasesReferences {
-			// Shadow the loop variable to avoid aliasing
-			databasesReferenceItem := databasesReferenceItem
 			databasesReferenceList[databasesReferenceIndex] = databasesReferenceItem.Copy()
 		}
 		group.DatabasesReferences = databasesReferenceList
@@ -509,8 +508,6 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 	if source.PartnerServers != nil {
 		partnerServerList := make([]PartnerInfo, len(source.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range source.PartnerServers {
-			// Shadow the loop variable to avoid aliasing
-			partnerServerItem := partnerServerItem
 			var partnerServer PartnerInfo
 			err := partnerServer.AssignProperties_From_PartnerInfo(&partnerServerItem)
 			if err != nil {
@@ -566,8 +563,6 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 	if group.DatabasesReferences != nil {
 		databasesReferenceList := make([]genruntime.ResourceReference, len(group.DatabasesReferences))
 		for databasesReferenceIndex, databasesReferenceItem := range group.DatabasesReferences {
-			// Shadow the loop variable to avoid aliasing
-			databasesReferenceItem := databasesReferenceItem
 			databasesReferenceList[databasesReferenceIndex] = databasesReferenceItem.Copy()
 		}
 		destination.DatabasesReferences = databasesReferenceList
@@ -602,8 +597,6 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 	if group.PartnerServers != nil {
 		partnerServerList := make([]storage.PartnerInfo, len(group.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range group.PartnerServers {
-			// Shadow the loop variable to avoid aliasing
-			partnerServerItem := partnerServerItem
 			var partnerServer storage.PartnerInfo
 			err := partnerServerItem.AssignProperties_To_PartnerInfo(&partnerServer)
 			if err != nil {
@@ -661,8 +654,6 @@ func (group *ServersFailoverGroup_Spec) Initialize_From_ServersFailoverGroup_STA
 	if source.PartnerServers != nil {
 		partnerServerList := make([]PartnerInfo, len(source.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range source.PartnerServers {
-			// Shadow the loop variable to avoid aliasing
-			partnerServerItem := partnerServerItem
 			var partnerServer PartnerInfo
 			err := partnerServer.Initialize_From_PartnerInfo_STATUS(&partnerServerItem)
 			if err != nil {
@@ -945,8 +936,6 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_From_ServersFailoverG
 	if source.PartnerServers != nil {
 		partnerServerList := make([]PartnerInfo_STATUS, len(source.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range source.PartnerServers {
-			// Shadow the loop variable to avoid aliasing
-			partnerServerItem := partnerServerItem
 			var partnerServer PartnerInfo_STATUS
 			err := partnerServer.AssignProperties_From_PartnerInfo_STATUS(&partnerServerItem)
 			if err != nil {
@@ -1029,8 +1018,6 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_To_ServersFailoverGro
 	if group.PartnerServers != nil {
 		partnerServerList := make([]storage.PartnerInfo_STATUS, len(group.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range group.PartnerServers {
-			// Shadow the loop variable to avoid aliasing
-			partnerServerItem := partnerServerItem
 			var partnerServer storage.PartnerInfo_STATUS
 			err := partnerServerItem.AssignProperties_To_PartnerInfo_STATUS(&partnerServer)
 			if err != nil {
@@ -1722,8 +1709,6 @@ func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_From_ServersF
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1740,8 +1725,6 @@ func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_From_ServersF
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1767,8 +1750,6 @@ func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_To_ServersFai
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1785,8 +1766,6 @@ func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_To_ServersFai
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

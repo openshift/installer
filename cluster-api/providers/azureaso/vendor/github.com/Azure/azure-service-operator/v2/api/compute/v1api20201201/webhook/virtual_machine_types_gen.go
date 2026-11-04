@@ -116,7 +116,12 @@ func (machine *VirtualMachine) ValidateUpdate(ctx context.Context, oldResource r
 
 // createValidations validates the creation of the resource
 func (machine *VirtualMachine) createValidations() []func(ctx context.Context, obj *v20201201.VirtualMachine) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201201.VirtualMachine) (admission.Warnings, error){machine.validateResourceReferences, machine.validateOwnerReference, machine.validateSecretDestinations, machine.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201201.VirtualMachine) (admission.Warnings, error){
+		machine.validateResourceReferences,
+		machine.validateOwnerReference,
+		machine.validateSecretDestinations,
+		machine.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

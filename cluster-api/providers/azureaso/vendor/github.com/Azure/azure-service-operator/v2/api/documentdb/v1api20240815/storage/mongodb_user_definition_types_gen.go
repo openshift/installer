@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=documentdb.azure.com,resources={mongodbuserdefinitions/status,mongodbuserdefinitions/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240815.MongodbUserDefinition
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/mongorbac.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/mongorbac.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbUserDefinitions/{mongoUserDefinitionId}
 type MongodbUserDefinition struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (definition *MongodbUserDefinition) OriginalGVK() *schema.GroupVersionKind 
 // +kubebuilder:object:root=true
 // Storage version of v1api20240815.MongodbUserDefinition
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/mongorbac.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/mongorbac.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbUserDefinitions/{mongoUserDefinitionId}
 type MongodbUserDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -247,22 +248,6 @@ type MongodbUserDefinitionOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
-}
-
-// Storage version of v1api20240815.Role
-// The set of roles permitted through this Role Definition.
-type Role struct {
-	Db          *string                `json:"db,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Role        *string                `json:"role,omitempty"`
-}
-
-// Storage version of v1api20240815.Role_STATUS
-// The set of roles permitted through this Role Definition.
-type Role_STATUS struct {
-	Db          *string                `json:"db,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Role        *string                `json:"role,omitempty"`
 }
 
 func init() {

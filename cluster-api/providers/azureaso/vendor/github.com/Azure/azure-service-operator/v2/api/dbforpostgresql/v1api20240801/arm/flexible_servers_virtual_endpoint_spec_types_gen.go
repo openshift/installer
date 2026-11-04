@@ -8,7 +8,7 @@ import "github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 type FlexibleServersVirtualEndpoint_Spec struct {
 	Name string `json:"name,omitempty"`
 
-	// Properties: Properties of the virtual endpoint resource.
+	// Properties: Properties of the pair of virtual endpoints.
 	Properties *VirtualEndpointResourceProperties `json:"properties,omitempty"`
 }
 
@@ -29,12 +29,12 @@ func (endpoint *FlexibleServersVirtualEndpoint_Spec) GetType() string {
 	return "Microsoft.DBforPostgreSQL/flexibleServers/virtualendpoints"
 }
 
-// The properties of a virtual endpoint.
+// Properties of a pair of virtual endpoints.
 type VirtualEndpointResourceProperties struct {
-	// EndpointType: The endpoint type for the virtual endpoint.
+	// EndpointType: Type of endpoint for the virtual endpoints.
 	EndpointType *VirtualEndpointResourceProperties_EndpointType `json:"endpointType,omitempty"`
 
-	// Members: List of members for a virtual endpoint
+	// Members: List of flexible servers that one of the virtual endpoints can refer to.
 	Members []string `json:"members,omitempty"`
 }
 

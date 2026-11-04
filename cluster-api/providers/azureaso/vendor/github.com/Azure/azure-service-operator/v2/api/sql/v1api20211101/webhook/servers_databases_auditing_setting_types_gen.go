@@ -104,7 +104,12 @@ func (setting *ServersDatabasesAuditingSetting) ValidateUpdate(ctx context.Conte
 
 // createValidations validates the creation of the resource
 func (setting *ServersDatabasesAuditingSetting) createValidations() []func(ctx context.Context, obj *v20211101.ServersDatabasesAuditingSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersDatabasesAuditingSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersDatabasesAuditingSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateOwnerReference,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

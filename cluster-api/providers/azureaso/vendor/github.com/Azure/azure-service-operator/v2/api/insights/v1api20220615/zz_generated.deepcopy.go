@@ -467,7 +467,7 @@ func (in *ScheduledQueryRuleOperatorSpec) DeepCopyInto(out *ScheduledQueryRuleOp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -478,7 +478,7 @@ func (in *ScheduledQueryRuleOperatorSpec) DeepCopyInto(out *ScheduledQueryRuleOp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1193,7 +1193,7 @@ func (in *WebtestOperatorSpec) DeepCopyInto(out *WebtestOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1204,7 +1204,7 @@ func (in *WebtestOperatorSpec) DeepCopyInto(out *WebtestOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

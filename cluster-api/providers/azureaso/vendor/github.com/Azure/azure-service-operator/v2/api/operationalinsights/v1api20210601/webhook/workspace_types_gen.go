@@ -116,7 +116,12 @@ func (workspace *Workspace) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (workspace *Workspace) createValidations() []func(ctx context.Context, obj *v20210601.Workspace) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210601.Workspace) (admission.Warnings, error){workspace.validateResourceReferences, workspace.validateOwnerReference, workspace.validateSecretDestinations, workspace.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210601.Workspace) (admission.Warnings, error){
+		workspace.validateResourceReferences,
+		workspace.validateOwnerReference,
+		workspace.validateSecretDestinations,
+		workspace.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -170,7 +175,14 @@ func (workspace *Workspace) validateSecretDestinations(ctx context.Context, obj 
 	if obj.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	return secrets.ValidateDestinations(obj, nil, obj.Spec.OperatorSpec.SecretExpressions)
+	var toValidate []*genruntime.SecretDestination
+	if obj.Spec.OperatorSpec.Secrets != nil {
+		toValidate = []*genruntime.SecretDestination{
+			obj.Spec.OperatorSpec.Secrets.PrimarySharedKey,
+			obj.Spec.OperatorSpec.Secrets.SecondarySharedKey,
+		}
+	}
+	return secrets.ValidateDestinations(obj, toValidate, obj.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties

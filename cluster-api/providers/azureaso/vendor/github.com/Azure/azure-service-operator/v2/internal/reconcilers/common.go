@@ -127,7 +127,8 @@ func (r *ARMOwnedResourceReconcilerCommon) ApplyOwnership(ctx context.Context, l
 	log.V(Info).Info(
 		"Set owner reference",
 		"ownerGvk", ownerDetails.Owner.GetObjectKind().GroupVersionKind(),
-		"ownerName", ownerDetails.Owner.GetName())
+		"ownerName", ownerDetails.Owner.GetName(),
+	)
 
 	return nil
 }

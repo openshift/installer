@@ -6,9 +6,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/golang-sql/sqlexp"
 	"github.com/microsoft/go-mssqldb/aecmk"
@@ -27,6 +27,8 @@ type token byte
 const (
 	tokenReturnStatus  token = 121 // 0x79
 	tokenColMetadata   token = 129 // 0x81
+	tokenTabName       token = 164 // 0xA4
+	tokenColInfo       token = 165 // 0xA5
 	tokenOrder         token = 169 // 0xA9
 	tokenError         token = 170 // 0xAA
 	tokenInfo          token = 171 // 0xAB
@@ -110,8 +112,37 @@ const (
 	// TODO implement more flags
 )
 
+// cancelDrainTimeout bounds how long to wait for the server's cancel confirmation.
+// If the drain fails for any reason (timeout, I/O error, or context cancellation),
+// the connection is marked bad via checkBadConn.
+const cancelDrainTimeout = 5 * time.Second
+
+type cancelConfirmationResult uint8
+
+const (
+	cancelConfirmationReceived cancelConfirmationResult = iota
+	cancelConfirmationChannelClosed
+	cancelConfirmationUnavailable
+)
+
 // interface for all tokens
 type tokenStruct interface{}
+
+// cancelDrainError builds a StreamError for cancel-drain failures.
+// StreamError is used instead of ServerError because this is a client-side
+// drain failure, not a server internal error, and StreamError.Error()
+// surfaces the diagnostic message whereas ServerError.Error() is a fixed string.
+func cancelDrainError(phase string, drainCtx context.Context, tokErr error) error {
+	msg := "did not get cancellation confirmation from the server"
+	cause := tokErr
+	if cause == nil {
+		cause = drainCtx.Err()
+	}
+	if cause != nil {
+		return StreamError{InnerError: fmt.Errorf("%s (%s: %w)", msg, phase, cause)}
+	}
+	return StreamError{InnerError: fmt.Errorf("%s (%s)", msg, phase)}
+}
 
 type orderStruct struct {
 	ColIds []uint16
@@ -412,6 +443,28 @@ func parseOrder(r *tdsBuffer) (res orderStruct) {
 	return res
 }
 
+// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/9b5c1e40-b6ce-4e5f-9ce2-2284cc44a38d
+func parseTabName(r *tdsBuffer) {
+	// The TABNAME token describes the table names associated with a result set.
+	// It is sent in response to browse-mode queries and INSERT/UPDATE/DELETE on tables with triggers.
+	// We read and discard the data since it is informational only.
+	size := r.uint16()
+	if _, err := io.CopyN(io.Discard, r, int64(size)); err != nil {
+		badStreamPanic(err)
+	}
+}
+
+// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/7ec86c73-d57e-4a0d-b945-d660ef8e5bf8
+func parseColInfo(r *tdsBuffer) {
+	// The COLINFO token describes the source of the column data in browse mode and
+	// for INSERT/UPDATE/DELETE on tables with triggers.
+	// We read and discard the data since it is informational only.
+	size := r.uint16()
+	if _, err := io.CopyN(io.Discard, r, int64(size)); err != nil {
+		badStreamPanic(err)
+	}
+}
+
 // https://msdn.microsoft.com/en-us/library/dd340421.aspx
 func parseDone(r *tdsBuffer) (res doneStruct) {
 	res.Status = r.uint16()
@@ -586,7 +639,7 @@ func parseFeatureExtAck(r *tdsBuffer) featureExtAck {
 
 		// Skip unprocessed bytes
 		if length > 0 {
-			io.CopyN(ioutil.Discard, r, int64(length))
+			io.CopyN(io.Discard, r, int64(length))
 		}
 	}
 
@@ -610,7 +663,7 @@ func parseColMetadata72(r *tdsBuffer, s *tdsSession) (columns []columnStruct) {
 	for i := range columns {
 		column := &columns[i]
 		baseTi := getBaseTypeInfo(r, true)
-		typeInfo := readTypeInfo(r, baseTi.TypeId, column.cryptoMeta)
+		typeInfo := readTypeInfo(r, baseTi.TypeId, column.cryptoMeta, s.encoding)
 		typeInfo.UserType = baseTi.UserType
 		typeInfo.Flags = baseTi.Flags
 		typeInfo.TypeId = baseTi.TypeId
@@ -621,7 +674,7 @@ func parseColMetadata72(r *tdsBuffer, s *tdsSession) (columns []columnStruct) {
 
 		if column.isEncrypted() && s.alwaysEncrypted {
 			// Read Crypto Metadata
-			cryptoMeta := parseCryptoMetadata(r, cekTable)
+			cryptoMeta := parseCryptoMetadata(r, cekTable, s.encoding)
 			cryptoMeta.typeInfo.Flags = baseTi.Flags
 			column.cryptoMeta = &cryptoMeta
 		} else {
@@ -657,14 +710,14 @@ type cryptoMetadata struct {
 	typeInfo      typeInfo
 }
 
-func parseCryptoMetadata(r *tdsBuffer, cekTable *cekTable) cryptoMetadata {
+func parseCryptoMetadata(r *tdsBuffer, cekTable *cekTable, encoding msdsn.EncodeParameters) cryptoMetadata {
 	ordinal := uint16(0)
 	if cekTable != nil {
 		ordinal = r.uint16()
 	}
 
 	typeInfo := getBaseTypeInfo(r, false)
-	ti := readTypeInfo(r, typeInfo.TypeId, nil)
+	ti := readTypeInfo(r, typeInfo.TypeId, nil, encoding)
 	ti.UserType = typeInfo.UserType
 	ti.Flags = typeInfo.Flags
 	ti.TypeId = typeInfo.TypeId
@@ -780,8 +833,9 @@ func readCekTableEntry(r *tdsBuffer) cekTableEntry {
 
 // http://msdn.microsoft.com/en-us/library/dd357254.aspx
 func parseRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []columnStruct, row []interface{}) error {
-	for i, column := range columns {
-		columnContent := column.ti.Reader(&column.ti, r, nil)
+	for i := range columns {
+		column := &columns[i]
+		columnContent := column.ti.Reader(&column.ti, r, nil, s.encoding)
 		if columnContent == nil {
 			row[i] = columnContent
 			continue
@@ -793,7 +847,7 @@ func parseRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []column
 				return err
 			}
 			// Decrypt
-			row[i] = column.cryptoMeta.typeInfo.Reader(&column.cryptoMeta.typeInfo, buffer, column.cryptoMeta)
+			row[i] = column.cryptoMeta.typeInfo.Reader(&column.cryptoMeta.typeInfo, buffer, column.cryptoMeta, s.encoding)
 		} else {
 			row[i] = columnContent
 		}
@@ -817,7 +871,7 @@ func (R RWCBuffer) Close() error {
 	return nil
 }
 
-func decryptColumn(ctx context.Context, column columnStruct, s *tdsSession, columnContent interface{}) (*tdsBuffer, error) {
+func decryptColumn(ctx context.Context, column *columnStruct, s *tdsSession, columnContent interface{}) (*tdsBuffer, error) {
 	encType := encryption.From(column.cryptoMeta.encType)
 	cekValue := column.cryptoMeta.entry.cekValues[column.cryptoMeta.ordinal]
 	if (s.logFlags & uint64(msdsn.LogDebug)) == uint64(msdsn.LogDebug) {
@@ -861,19 +915,20 @@ func parseNbcRow(ctx context.Context, r *tdsBuffer, s *tdsSession, columns []col
 	bitlen := (len(columns) + 7) / 8
 	pres := make([]byte, bitlen)
 	r.ReadFull(pres)
-	for i, col := range columns {
+	for i := range columns {
+		col := &columns[i]
 		if pres[i/8]&(1<<(uint(i)%8)) != 0 {
 			row[i] = nil
 			continue
 		}
-		columnContent := col.ti.Reader(&col.ti, r, nil)
+		columnContent := col.ti.Reader(&col.ti, r, nil, s.encoding)
 		if col.isEncrypted() {
 			buffer, err := decryptColumn(ctx, col, s, columnContent)
 			if err != nil {
 				return err
 			}
 			// Decrypt
-			row[i] = col.cryptoMeta.typeInfo.Reader(&col.cryptoMeta.typeInfo, buffer, col.cryptoMeta)
+			row[i] = col.cryptoMeta.typeInfo.Reader(&col.cryptoMeta.typeInfo, buffer, col.cryptoMeta, s.encoding)
 		} else {
 			row[i] = columnContent
 		}
@@ -929,12 +984,12 @@ func parseReturnValue(r *tdsBuffer, s *tdsSession) (nv namedValue) {
 
 	var cryptoMetadata *cryptoMetadata = nil
 	if s.alwaysEncrypted && (ti.Flags&fEncrypted) == fEncrypted {
-		cm := parseCryptoMetadata(r, nil) // CryptoMetadata
+		cm := parseCryptoMetadata(r, nil, s.encoding) // CryptoMetadata
 		cryptoMetadata = &cm
 	}
 
-	ti2 := readTypeInfo(r, ti.TypeId, cryptoMetadata)
-	nv.Value = ti2.Reader(&ti2, r, cryptoMetadata)
+	ti2 := readTypeInfo(r, ti.TypeId, cryptoMetadata, s.encoding)
+	nv.Value = ti2.Reader(&ti2, r, cryptoMetadata, s.encoding)
 
 	return
 }
@@ -942,14 +997,14 @@ func parseReturnValue(r *tdsBuffer, s *tdsSession) (nv namedValue) {
 func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenStruct, outs outputs) {
 	defer func() {
 		if err := recover(); err != nil {
-			sess.LogF(ctx, msdsn.LogErrors, "Intercepted panic %v", err)
+			sess.LogF(ctx, msdsn.LogErrors, "intercepted panic: %v", err)
 			if outs.msgq != nil {
 				var derr error
 				switch e := err.(type) {
 				case error:
 					derr = e
 				default:
-					derr = fmt.Errorf("Unhandled session error %v", e)
+					derr = fmt.Errorf("unhandled session error: %v", e)
 				}
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgError{Error: derr})
 
@@ -996,13 +1051,16 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 		case tokenFeatureExtAck:
 			featureExtAck := parseFeatureExtAck(sess.buf)
 			ch <- featureExtAck
+		case tokenTabName:
+			parseTabName(sess.buf)
+		case tokenColInfo:
+			parseColInfo(sess.buf)
 		case tokenOrder:
 			order := parseOrder(sess.buf)
 			ch <- order
 		case tokenDoneInProc:
 			done := parseDoneInProc(sess.buf)
 
-			ch <- done
 			if done.Status&doneCount != 0 {
 				sess.LogF(ctx, msdsn.LogRows, "(%d rows affected)", done.RowCount)
 
@@ -1010,10 +1068,14 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgRowsAffected{Count: int64(done.RowCount)})
 				}
 			}
+
+			ch <- done
+
 			if outs.msgq != nil {
 				// For now we ignore ctx->Done errors that ReturnMessageEnqueue might return
 				// It's not clear how to handle them correctly here, and data/sql seems
 				// to set Rows.Err correctly when ctx expires already
+				sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDoneInProc")
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 			}
 			colsReceived = false
@@ -1021,6 +1083,7 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 				// Rows marks the request as done when seeing this done token. We queue another result set message
 				// so the app calls NextResultSet again which will return false.
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDoneInProc with doneMore=0")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
@@ -1035,11 +1098,11 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 			if done.Status&doneSrvError != 0 {
 				ch <- ServerError{done.getError()}
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone with doneSrvError")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
 			}
-			ch <- done
 			if done.Status&doneCount != 0 {
 				sess.LogF(ctx, msdsn.LogRows, "(Rows affected: %d)", done.RowCount)
 
@@ -1048,14 +1111,19 @@ func processSingleResponse(ctx context.Context, sess *tdsSession, ch chan tokenS
 				}
 
 			}
+
+			ch <- done
+
 			colsReceived = false
 			if outs.msgq != nil {
+				sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone or tokenDoneProc")
 				_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 			}
 			if done.Status&doneMore == 0 {
 				// Rows marks the request as done when seeing this done token. We queue another result set message
 				// so the app calls NextResultSet again which will return false.
 				if outs.msgq != nil {
+					sess.LogF(ctx, msdsn.LogDebug, "queueing MsgNextResultSet after tokenDone or tokenDoneProc with doneMore=0")
 					_ = sqlexp.ReturnMessageEnqueue(ctx, outs.msgq, sqlexp.MsgNextResultSet{})
 				}
 				return
@@ -1131,9 +1199,23 @@ type tokenProcessor struct {
 	noAttn bool
 }
 
+// startResponseReader waits for any previous reader goroutine to finish,
+// then launches a new one that writes tokens to tokChan.
+func (sess *tdsSession) startResponseReader(ctx context.Context, tokChan chan tokenStruct, outs outputs) {
+	if sess.readDone != nil {
+		<-sess.readDone
+	}
+	readDone := make(chan struct{})
+	sess.readDone = readDone
+	go func() {
+		defer close(readDone)
+		processSingleResponse(ctx, sess, tokChan, outs)
+	}()
+}
+
 func startReading(sess *tdsSession, ctx context.Context, outs outputs) *tokenProcessor {
 	tokChan := make(chan tokenStruct, 5)
-	go processSingleResponse(ctx, sess, tokChan, outs)
+	sess.startResponseReader(ctx, tokChan, outs)
 	return &tokenProcessor{
 		tokChan: tokChan,
 		ctx:     ctx,
@@ -1188,6 +1270,7 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 	case tok, more := <-t.tokChan:
 		err, more := tok.(error)
 		if more {
+			t.sess.LogF(t.ctx, msdsn.LogDebug, "%s", "nextToken returned an error:"+err.Error())
 			// this is an error and not a token
 			return nil, err
 		} else {
@@ -1202,7 +1285,6 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 		if more {
 			err, ok := tok.(error)
 			if ok {
-				// this is an error and not a token
 				return nil, err
 			} else {
 				return tok, nil
@@ -1212,13 +1294,10 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 			return nil, nil
 		}
 	case <-t.ctx.Done():
-		// It seems the Message function on t.outs.msgq doesn't get the Done if it comes here instead
-		if t.outs.msgq != nil {
-			_ = sqlexp.ReturnMessageEnqueue(t.ctx, t.outs.msgq, sqlexp.MsgNextResultSet{})
-		}
 		if t.noAttn {
 			return nil, t.ctx.Err()
 		}
+		t.sess.LogF(t.ctx, msdsn.LogDebug, "Sending attention to the server")
 		if err := sendAttention(t.sess.buf); err != nil {
 			// unable to send attention, current connection is bad
 			// notify caller and close channel
@@ -1231,36 +1310,90 @@ func (t tokenProcessor) nextToken() (tokenStruct, error) {
 		// in this case current response would not contain confirmation
 		// and we would need to read one more response
 
+		// t.ctx is already cancelled; use a separate context to drain.
+		drainCtx, drainCancel := context.WithTimeout(context.Background(), cancelDrainTimeout)
+		defer drainCancel()
+
 		// first lets finish reading current response and look
 		// for confirmation in it
-		if readCancelConfirmation(t.tokChan) {
+		result, tokErr := readCancelConfirmation(drainCtx, t.tokChan)
+		switch result {
+		case cancelConfirmationReceived:
 			// we got confirmation in current response
 			return nil, t.ctx.Err()
+		case cancelConfirmationUnavailable:
+			// Drain tokChan in the background so processSingleResponse
+			// can finish sending and exit once the connection closes.
+			go func() {
+				for range t.tokChan {
+				}
+			}()
+			return nil, cancelDrainError("current response", drainCtx, tokErr)
 		}
 		// we did not get cancellation confirmation in the current response
 		// read one more response, it must be there
 		t.tokChan = make(chan tokenStruct, 5)
-		go processSingleResponse(t.ctx, t.sess, t.tokChan, t.outs)
-		if readCancelConfirmation(t.tokChan) {
+		// Use t.ctx (already cancelled) for processSingleResponse so that
+		// ReturnMessageEnqueue calls return immediately via ctx.Done()
+		// instead of blocking on a full message queue, which would stall
+		// the goroutine and prevent it from delivering the DONE_ATTN token.
+		t.sess.startResponseReader(t.ctx, t.tokChan, t.outs)
+		// Fresh timeout for second drain so the first attempt's elapsed
+		// time does not reduce the budget for the second response.
+		drainCtx2, drainCancel2 := context.WithTimeout(context.Background(), cancelDrainTimeout)
+		defer drainCancel2()
+		result2, tokErr2 := readCancelConfirmation(drainCtx2, t.tokChan)
+		if result2 == cancelConfirmationReceived {
 			return nil, t.ctx.Err()
 		}
 		// we did not get cancellation confirmation, something is not
 		// right, this connection is not usable anymore
-		return nil, ServerError{Error{Message: "did not get cancellation confirmation from the server"}}
+		// Drain tokChan in the background so processSingleResponse
+		// can finish sending and exit once the connection closes.
+		go func() {
+			for range t.tokChan {
+			}
+		}()
+		return nil, cancelDrainError("second response", drainCtx2, tokErr2)
 	}
 }
 
-func readCancelConfirmation(tokChan chan tokenStruct) bool {
-	for tok := range tokChan {
-		switch tok := tok.(type) {
-		default:
-		// just skip token
-		case doneStruct:
-			if tok.Status&doneAttn != 0 {
-				// got cancellation confirmation, exit
-				return true
+func readCancelConfirmation(ctx context.Context, tokChan chan tokenStruct) (cancelConfirmationResult, error) {
+	for {
+		select {
+		case <-ctx.Done():
+			// ctx.Done may win the select even when tokChan is also
+			// ready (Go select is pseudo-random). Drain any buffered
+			// tokens so we don't miss a just-arrived DONE_ATTN.
+			for {
+				select {
+				case tok, ok := <-tokChan:
+					if !ok {
+						return cancelConfirmationChannelClosed, nil
+					}
+					if done, isDone := tok.(doneStruct); isDone && done.Status&doneAttn != 0 {
+						return cancelConfirmationReceived, nil
+					}
+					if tokErr, isErr := tok.(error); isErr {
+						return cancelConfirmationUnavailable, tokErr
+					}
+					continue
+				default:
+					return cancelConfirmationUnavailable, nil
+				}
+			}
+		case tok, ok := <-tokChan:
+			if !ok {
+				return cancelConfirmationChannelClosed, nil
+			}
+			switch tok := tok.(type) {
+			case doneStruct:
+				if tok.Status&doneAttn != 0 {
+					return cancelConfirmationReceived, nil
+				}
+			case error:
+				return cancelConfirmationUnavailable, tok
 			}
 		}
 	}
-	return false
 }

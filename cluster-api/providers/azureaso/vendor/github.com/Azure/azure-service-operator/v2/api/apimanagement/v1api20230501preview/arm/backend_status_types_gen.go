@@ -35,7 +35,7 @@ type BackendContractProperties_STATUS struct {
 	// Properties: Backend Properties contract
 	Properties *BackendProperties_STATUS `json:"properties,omitempty"`
 
-	// Protocol: Backend communication protocol.
+	// Protocol: Backend communication protocol. Required when backend type is 'Single'.
 	Protocol *BackendContractProperties_Protocol_STATUS `json:"protocol,omitempty"`
 
 	// Proxy: Backend gateway Contract Properties
@@ -54,7 +54,7 @@ type BackendContractProperties_STATUS struct {
 	// Type: Type of the backend. A backend can be either Single or Pool.
 	Type *BackendContractProperties_Type_STATUS `json:"type,omitempty"`
 
-	// Url: Runtime Url of the Backend.
+	// Url: Runtime Url of the Backend. Required when backend type is 'Single'.
 	Url *string `json:"url,omitempty"`
 }
 

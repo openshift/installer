@@ -23,13 +23,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}
 type Topic struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -54,22 +55,36 @@ var _ conversion.Convertible = &Topic{}
 
 // ConvertFrom populates our Topic from the provided hub Topic
 func (topic *Topic) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Topic)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Topic but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Topic
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return topic.AssignProperties_From_Topic(source)
+	err = topic.AssignProperties_From_Topic(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to topic")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Topic from our Topic
 func (topic *Topic) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Topic)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/Topic but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Topic
+	err := topic.AssignProperties_To_Topic(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from topic")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return topic.AssignProperties_To_Topic(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Topic{}
@@ -90,17 +105,6 @@ func (topic *Topic) SecretDestinationExpressions() []*core.DestinationExpression
 		return nil
 	}
 	return topic.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Topic{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (topic *Topic) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Topic_STATUS); ok {
-		return topic.Spec.Initialize_From_Topic_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Topic_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesConfigExporter = &Topic{}
@@ -258,7 +262,7 @@ func (topic *Topic) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/topics/{topicName}
 type TopicList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -344,7 +348,7 @@ func (topic *Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		result.Properties.InputSchema = &inputSchema
 	}
 	if topic.InputSchemaMapping != nil {
-		inputSchemaMapping_ARM, err := (*topic.InputSchemaMapping).ConvertToARM(resolved)
+		inputSchemaMapping_ARM, err := topic.InputSchemaMapping.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -518,8 +522,6 @@ func (topic *Topic_Spec) AssignProperties_From_Topic_Spec(source *storage.Topic_
 	if source.InboundIpRules != nil {
 		inboundIpRuleList := make([]InboundIpRule, len(source.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule InboundIpRule
 			err := inboundIpRule.AssignProperties_From_InboundIpRule(&inboundIpRuleItem)
 			if err != nil {
@@ -604,8 +606,6 @@ func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *storage.Top
 	if topic.InboundIpRules != nil {
 		inboundIpRuleList := make([]storage.InboundIpRule, len(topic.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range topic.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule storage.InboundIpRule
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule(&inboundIpRule)
 			if err != nil {
@@ -681,65 +681,6 @@ func (topic *Topic_Spec) AssignProperties_To_Topic_Spec(destination *storage.Top
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Topic_STATUS populates our Topic_Spec from the provided source Topic_STATUS
-func (topic *Topic_Spec) Initialize_From_Topic_STATUS(source *Topic_STATUS) error {
-
-	// InboundIpRules
-	if source.InboundIpRules != nil {
-		inboundIpRuleList := make([]InboundIpRule, len(source.InboundIpRules))
-		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
-			var inboundIpRule InboundIpRule
-			err := inboundIpRule.Initialize_From_InboundIpRule_STATUS(&inboundIpRuleItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_InboundIpRule_STATUS() to populate field InboundIpRules")
-			}
-			inboundIpRuleList[inboundIpRuleIndex] = inboundIpRule
-		}
-		topic.InboundIpRules = inboundIpRuleList
-	} else {
-		topic.InboundIpRules = nil
-	}
-
-	// InputSchema
-	if source.InputSchema != nil {
-		inputSchema := genruntime.ToEnum(string(*source.InputSchema), topicProperties_InputSchema_Values)
-		topic.InputSchema = &inputSchema
-	} else {
-		topic.InputSchema = nil
-	}
-
-	// InputSchemaMapping
-	if source.InputSchemaMapping != nil {
-		var inputSchemaMapping InputSchemaMapping
-		err := inputSchemaMapping.Initialize_From_InputSchemaMapping_STATUS(source.InputSchemaMapping)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_InputSchemaMapping_STATUS() to populate field InputSchemaMapping")
-		}
-		topic.InputSchemaMapping = &inputSchemaMapping
-	} else {
-		topic.InputSchemaMapping = nil
-	}
-
-	// Location
-	topic.Location = genruntime.ClonePointerToString(source.Location)
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), topicProperties_PublicNetworkAccess_Values)
-		topic.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		topic.PublicNetworkAccess = nil
-	}
-
-	// Tags
-	topic.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1023,8 +964,6 @@ func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *storage.To
 	if source.InboundIpRules != nil {
 		inboundIpRuleList := make([]InboundIpRule_STATUS, len(source.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range source.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule InboundIpRule_STATUS
 			err := inboundIpRule.AssignProperties_From_InboundIpRule_STATUS(&inboundIpRuleItem)
 			if err != nil {
@@ -1071,8 +1010,6 @@ func (topic *Topic_STATUS) AssignProperties_From_Topic_STATUS(source *storage.To
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1143,8 +1080,6 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *storage
 	if topic.InboundIpRules != nil {
 		inboundIpRuleList := make([]storage.InboundIpRule_STATUS, len(topic.InboundIpRules))
 		for inboundIpRuleIndex, inboundIpRuleItem := range topic.InboundIpRules {
-			// Shadow the loop variable to avoid aliasing
-			inboundIpRuleItem := inboundIpRuleItem
 			var inboundIpRule storage.InboundIpRule_STATUS
 			err := inboundIpRuleItem.AssignProperties_To_InboundIpRule_STATUS(&inboundIpRule)
 			if err != nil {
@@ -1190,8 +1125,6 @@ func (topic *Topic_STATUS) AssignProperties_To_Topic_STATUS(destination *storage
 	if topic.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded, len(topic.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range topic.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_Topic_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
@@ -1329,8 +1262,6 @@ func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(sourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1359,8 +1290,6 @@ func (operator *TopicOperatorSpec) AssignProperties_From_TopicOperatorSpec(sourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1398,8 +1327,6 @@ func (operator *TopicOperatorSpec) AssignProperties_To_TopicOperatorSpec(destina
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1428,8 +1355,6 @@ func (operator *TopicOperatorSpec) AssignProperties_To_TopicOperatorSpec(destina
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1554,7 +1479,7 @@ func (maps *TopicOperatorConfigMaps) AssignProperties_From_TopicOperatorConfigMa
 
 	// Endpoint
 	if source.Endpoint != nil {
-		endpoint := source.Endpoint.Copy()
+		endpoint := *source.Endpoint.DeepCopy()
 		maps.Endpoint = &endpoint
 	} else {
 		maps.Endpoint = nil
@@ -1571,7 +1496,7 @@ func (maps *TopicOperatorConfigMaps) AssignProperties_To_TopicOperatorConfigMaps
 
 	// Endpoint
 	if maps.Endpoint != nil {
-		endpoint := maps.Endpoint.Copy()
+		endpoint := *maps.Endpoint.DeepCopy()
 		destination.Endpoint = &endpoint
 	} else {
 		destination.Endpoint = nil
@@ -1601,7 +1526,7 @@ func (secrets *TopicOperatorSecrets) AssignProperties_From_TopicOperatorSecrets(
 
 	// Key1
 	if source.Key1 != nil {
-		key1 := source.Key1.Copy()
+		key1 := *source.Key1.DeepCopy()
 		secrets.Key1 = &key1
 	} else {
 		secrets.Key1 = nil
@@ -1609,7 +1534,7 @@ func (secrets *TopicOperatorSecrets) AssignProperties_From_TopicOperatorSecrets(
 
 	// Key2
 	if source.Key2 != nil {
-		key2 := source.Key2.Copy()
+		key2 := *source.Key2.DeepCopy()
 		secrets.Key2 = &key2
 	} else {
 		secrets.Key2 = nil
@@ -1626,7 +1551,7 @@ func (secrets *TopicOperatorSecrets) AssignProperties_To_TopicOperatorSecrets(de
 
 	// Key1
 	if secrets.Key1 != nil {
-		key1 := secrets.Key1.Copy()
+		key1 := *secrets.Key1.DeepCopy()
 		destination.Key1 = &key1
 	} else {
 		destination.Key1 = nil
@@ -1634,7 +1559,7 @@ func (secrets *TopicOperatorSecrets) AssignProperties_To_TopicOperatorSecrets(de
 
 	// Key2
 	if secrets.Key2 != nil {
-		key2 := secrets.Key2.Copy()
+		key2 := *secrets.Key2.DeepCopy()
 		destination.Key2 = &key2
 	} else {
 		destination.Key2 = nil

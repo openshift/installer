@@ -257,9 +257,6 @@ type TimeWindow_STATUS struct {
 type WebhookNotification_STATUS struct {
 	// Properties: a property bag of settings. This value can be empty.
 	Properties map[string]string `json:"properties,omitempty"`
-
-	// ServiceUri: the service address to receive the notification.
-	ServiceUri *string `json:"serviceUri,omitempty"`
 }
 
 // The trigger that results in a scaling action.

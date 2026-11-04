@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,insights}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -378,7 +379,7 @@ func (rule *ScheduledQueryRule_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties = &arm.ScheduledQueryRuleProperties{}
 	}
 	if rule.Actions != nil {
-		actions_ARM, err := (*rule.Actions).ConvertToARM(resolved)
+		actions_ARM, err := rule.Actions.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -394,7 +395,7 @@ func (rule *ScheduledQueryRule_Spec) ConvertToARM(resolved genruntime.ConvertToA
 		result.Properties.CheckWorkspaceAlertsStorageConfigured = &checkWorkspaceAlertsStorageConfigured
 	}
 	if rule.Criteria != nil {
-		criteria_ARM, err := (*rule.Criteria).ConvertToARM(resolved)
+		criteria_ARM, err := rule.Criteria.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -803,8 +804,6 @@ func (rule *ScheduledQueryRule_Spec) AssignProperties_From_ScheduledQueryRule_Sp
 	if source.ScopesReferences != nil {
 		scopesReferenceList := make([]genruntime.ResourceReference, len(source.ScopesReferences))
 		for scopesReferenceIndex, scopesReferenceItem := range source.ScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopesReferenceItem := scopesReferenceItem
 			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
 		}
 		rule.ScopesReferences = scopesReferenceList
@@ -950,8 +949,6 @@ func (rule *ScheduledQueryRule_Spec) AssignProperties_To_ScheduledQueryRule_Spec
 	if rule.ScopesReferences != nil {
 		scopesReferenceList := make([]genruntime.ResourceReference, len(rule.ScopesReferences))
 		for scopesReferenceIndex, scopesReferenceItem := range rule.ScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopesReferenceItem := scopesReferenceItem
 			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
 		}
 		destination.ScopesReferences = scopesReferenceList
@@ -1897,8 +1894,6 @@ func (actions *Actions) AssignProperties_From_Actions(source *storage.Actions) e
 	if source.ActionGroupsReferences != nil {
 		actionGroupsReferenceList := make([]genruntime.ResourceReference, len(source.ActionGroupsReferences))
 		for actionGroupsReferenceIndex, actionGroupsReferenceItem := range source.ActionGroupsReferences {
-			// Shadow the loop variable to avoid aliasing
-			actionGroupsReferenceItem := actionGroupsReferenceItem
 			actionGroupsReferenceList[actionGroupsReferenceIndex] = actionGroupsReferenceItem.Copy()
 		}
 		actions.ActionGroupsReferences = actionGroupsReferenceList
@@ -1922,8 +1917,6 @@ func (actions *Actions) AssignProperties_To_Actions(destination *storage.Actions
 	if actions.ActionGroupsReferences != nil {
 		actionGroupsReferenceList := make([]genruntime.ResourceReference, len(actions.ActionGroupsReferences))
 		for actionGroupsReferenceIndex, actionGroupsReferenceItem := range actions.ActionGroupsReferences {
-			// Shadow the loop variable to avoid aliasing
-			actionGroupsReferenceItem := actionGroupsReferenceItem
 			actionGroupsReferenceList[actionGroupsReferenceIndex] = actionGroupsReferenceItem.Copy()
 		}
 		destination.ActionGroupsReferences = actionGroupsReferenceList
@@ -2116,8 +2109,6 @@ func (criteria *ScheduledQueryRuleCriteria) AssignProperties_From_ScheduledQuery
 	if source.AllOf != nil {
 		allOfList := make([]Condition, len(source.AllOf))
 		for allOfIndex, allOfItem := range source.AllOf {
-			// Shadow the loop variable to avoid aliasing
-			allOfItem := allOfItem
 			var allOf Condition
 			err := allOf.AssignProperties_From_Condition(&allOfItem)
 			if err != nil {
@@ -2143,8 +2134,6 @@ func (criteria *ScheduledQueryRuleCriteria) AssignProperties_To_ScheduledQueryRu
 	if criteria.AllOf != nil {
 		allOfList := make([]storage.Condition, len(criteria.AllOf))
 		for allOfIndex, allOfItem := range criteria.AllOf {
-			// Shadow the loop variable to avoid aliasing
-			allOfItem := allOfItem
 			var allOf storage.Condition
 			err := allOfItem.AssignProperties_To_Condition(&allOf)
 			if err != nil {
@@ -2175,8 +2164,6 @@ func (criteria *ScheduledQueryRuleCriteria) Initialize_From_ScheduledQueryRuleCr
 	if source.AllOf != nil {
 		allOfList := make([]Condition, len(source.AllOf))
 		for allOfIndex, allOfItem := range source.AllOf {
-			// Shadow the loop variable to avoid aliasing
-			allOfItem := allOfItem
 			var allOf Condition
 			err := allOf.Initialize_From_Condition_STATUS(&allOfItem)
 			if err != nil {
@@ -2234,8 +2221,6 @@ func (criteria *ScheduledQueryRuleCriteria_STATUS) AssignProperties_From_Schedul
 	if source.AllOf != nil {
 		allOfList := make([]Condition_STATUS, len(source.AllOf))
 		for allOfIndex, allOfItem := range source.AllOf {
-			// Shadow the loop variable to avoid aliasing
-			allOfItem := allOfItem
 			var allOf Condition_STATUS
 			err := allOf.AssignProperties_From_Condition_STATUS(&allOfItem)
 			if err != nil {
@@ -2261,8 +2246,6 @@ func (criteria *ScheduledQueryRuleCriteria_STATUS) AssignProperties_To_Scheduled
 	if criteria.AllOf != nil {
 		allOfList := make([]storage.Condition_STATUS, len(criteria.AllOf))
 		for allOfIndex, allOfItem := range criteria.AllOf {
-			// Shadow the loop variable to avoid aliasing
-			allOfItem := allOfItem
 			var allOf storage.Condition_STATUS
 			err := allOfItem.AssignProperties_To_Condition_STATUS(&allOf)
 			if err != nil {
@@ -2302,8 +2285,6 @@ func (operator *ScheduledQueryRuleOperatorSpec) AssignProperties_From_ScheduledQ
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2320,8 +2301,6 @@ func (operator *ScheduledQueryRuleOperatorSpec) AssignProperties_From_ScheduledQ
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2347,8 +2326,6 @@ func (operator *ScheduledQueryRuleOperatorSpec) AssignProperties_To_ScheduledQue
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2365,8 +2342,6 @@ func (operator *ScheduledQueryRuleOperatorSpec) AssignProperties_To_ScheduledQue
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2624,7 +2599,7 @@ func (condition *Condition) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 	// Set property "FailingPeriods":
 	if condition.FailingPeriods != nil {
-		failingPeriods_ARM, err := (*condition.FailingPeriods).ConvertToARM(resolved)
+		failingPeriods_ARM, err := condition.FailingPeriods.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2770,8 +2745,6 @@ func (condition *Condition) AssignProperties_From_Condition(source *storage.Cond
 	if source.Dimensions != nil {
 		dimensionList := make([]Dimension, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension Dimension
 			err := dimension.AssignProperties_From_Dimension(&dimensionItem)
 			if err != nil {
@@ -2852,8 +2825,6 @@ func (condition *Condition) AssignProperties_To_Condition(destination *storage.C
 	if condition.Dimensions != nil {
 		dimensionList := make([]storage.Dimension, len(condition.Dimensions))
 		for dimensionIndex, dimensionItem := range condition.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension storage.Dimension
 			err := dimensionItem.AssignProperties_To_Dimension(&dimension)
 			if err != nil {
@@ -2937,8 +2908,6 @@ func (condition *Condition) Initialize_From_Condition_STATUS(source *Condition_S
 	if source.Dimensions != nil {
 		dimensionList := make([]Dimension, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension Dimension
 			err := dimension.Initialize_From_Dimension_STATUS(&dimensionItem)
 			if err != nil {
@@ -3125,8 +3094,6 @@ func (condition *Condition_STATUS) AssignProperties_From_Condition_STATUS(source
 	if source.Dimensions != nil {
 		dimensionList := make([]Dimension_STATUS, len(source.Dimensions))
 		for dimensionIndex, dimensionItem := range source.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension Dimension_STATUS
 			err := dimension.AssignProperties_From_Dimension_STATUS(&dimensionItem)
 			if err != nil {
@@ -3202,8 +3169,6 @@ func (condition *Condition_STATUS) AssignProperties_To_Condition_STATUS(destinat
 	if condition.Dimensions != nil {
 		dimensionList := make([]storage.Dimension_STATUS, len(condition.Dimensions))
 		for dimensionIndex, dimensionItem := range condition.Dimensions {
-			// Shadow the loop variable to avoid aliasing
-			dimensionItem := dimensionItem
 			var dimension storage.Dimension_STATUS
 			err := dimensionItem.AssignProperties_To_Dimension_STATUS(&dimension)
 			if err != nil {

@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={dnszonestxtrecords/status,dnszonestxtrecords/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20180501.DnsZonesTXTRecord
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/TXT/{relativeRecordSetName}
 type DnsZonesTXTRecord struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (record *DnsZonesTXTRecord) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20180501.DnsZonesTXTRecord
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/TXT/{relativeRecordSetName}
 type DnsZonesTXTRecordList struct {
 	metav1.TypeMeta `json:",inline"`

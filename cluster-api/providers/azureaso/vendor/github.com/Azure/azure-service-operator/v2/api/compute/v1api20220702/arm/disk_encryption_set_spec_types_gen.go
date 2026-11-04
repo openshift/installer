@@ -115,5 +115,6 @@ type UserAssignedIdentityDetails struct {
 // The vault id is an Azure Resource Manager Resource id in the form
 // /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
 type SourceVault struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 }

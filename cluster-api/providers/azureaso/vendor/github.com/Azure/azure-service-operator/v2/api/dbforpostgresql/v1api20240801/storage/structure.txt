@@ -371,3 +371,111 @@ FlexibleServersVirtualEndpoint: Resource
     ├── Type: *string
     └── VirtualEndpoints: string[]
 
+augmentConversionForAuthConfig: Interface
+
+augmentConversionForAuthConfig_STATUS: Interface
+
+augmentConversionForBackup: Interface
+
+augmentConversionForBackup_STATUS: Interface
+
+augmentConversionForDataEncryption: Interface
+
+augmentConversionForDataEncryption_STATUS: Interface
+
+augmentConversionForFlexibleServer: Interface
+
+augmentConversionForFlexibleServerOperatorConfigMaps: Interface
+
+augmentConversionForFlexibleServerOperatorSecrets: Interface
+
+augmentConversionForFlexibleServerOperatorSpec: Interface
+
+augmentConversionForFlexibleServer_STATUS: Interface
+
+augmentConversionForFlexibleServer_Spec: Interface
+
+augmentConversionForFlexibleServersAdvancedThreatProtectionSettings: Interface
+
+augmentConversionForFlexibleServersAdvancedThreatProtectionSettingsOperatorSpec: Interface
+
+augmentConversionForFlexibleServersAdvancedThreatProtectionSettings_STATUS: Interface
+
+augmentConversionForFlexibleServersAdvancedThreatProtectionSettings_Spec: Interface
+
+augmentConversionForFlexibleServersBackup: Interface
+
+augmentConversionForFlexibleServersBackupOperatorSpec: Interface
+
+augmentConversionForFlexibleServersBackup_STATUS: Interface
+
+augmentConversionForFlexibleServersBackup_Spec: Interface
+
+augmentConversionForFlexibleServersConfiguration: Interface
+
+augmentConversionForFlexibleServersConfigurationOperatorSpec: Interface
+
+augmentConversionForFlexibleServersConfiguration_STATUS: Interface
+
+augmentConversionForFlexibleServersConfiguration_Spec: Interface
+
+augmentConversionForFlexibleServersDatabase: Interface
+
+augmentConversionForFlexibleServersDatabaseOperatorSpec: Interface
+
+augmentConversionForFlexibleServersDatabase_STATUS: Interface
+
+augmentConversionForFlexibleServersDatabase_Spec: Interface
+
+augmentConversionForFlexibleServersFirewallRule: Interface
+
+augmentConversionForFlexibleServersFirewallRuleOperatorSpec: Interface
+
+augmentConversionForFlexibleServersFirewallRule_STATUS: Interface
+
+augmentConversionForFlexibleServersFirewallRule_Spec: Interface
+
+augmentConversionForFlexibleServersVirtualEndpoint: Interface
+
+augmentConversionForFlexibleServersVirtualEndpointOperatorSpec: Interface
+
+augmentConversionForFlexibleServersVirtualEndpoint_STATUS: Interface
+
+augmentConversionForFlexibleServersVirtualEndpoint_Spec: Interface
+
+augmentConversionForHighAvailability: Interface
+
+augmentConversionForHighAvailability_STATUS: Interface
+
+augmentConversionForMaintenanceWindow: Interface
+
+augmentConversionForMaintenanceWindow_STATUS: Interface
+
+augmentConversionForNetwork: Interface
+
+augmentConversionForNetwork_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForReplica: Interface
+
+augmentConversionForReplica_STATUS: Interface
+
+augmentConversionForSku: Interface
+
+augmentConversionForSku_STATUS: Interface
+
+augmentConversionForStorage: Interface
+
+augmentConversionForStorage_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForUserAssignedIdentity: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentity_STATUS: Interface
+
+augmentConversionForUserIdentity_STATUS: Interface
+

@@ -116,7 +116,11 @@ func (extension *Extension) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (extension *Extension) createValidations() []func(ctx context.Context, obj *v20241101.Extension) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20241101.Extension) (admission.Warnings, error){extension.validateResourceReferences, extension.validateSecretDestinations, extension.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20241101.Extension) (admission.Warnings, error){
+		extension.validateResourceReferences,
+		extension.validateSecretDestinations,
+		extension.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

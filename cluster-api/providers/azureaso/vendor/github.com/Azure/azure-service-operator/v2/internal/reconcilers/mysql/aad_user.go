@@ -143,7 +143,8 @@ func connectToDBAAD(ctx context.Context, credentialProvider identity.CredentialP
 			fqdn,
 			mysqlutil.SystemDatabase,
 			mysqlutil.ServerPort,
-			adminUser)
+			adminUser,
+		)
 	}
 
 	return db, nil

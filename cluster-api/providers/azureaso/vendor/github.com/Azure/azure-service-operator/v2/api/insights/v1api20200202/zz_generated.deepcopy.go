@@ -81,12 +81,12 @@ func (in *ComponentOperatorConfigMaps) DeepCopyInto(out *ComponentOperatorConfig
 	if in.ConnectionString != nil {
 		in, out := &in.ConnectionString, &out.ConnectionString
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.InstrumentationKey != nil {
 		in, out := &in.InstrumentationKey, &out.InstrumentationKey
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -110,7 +110,7 @@ func (in *ComponentOperatorSpec) DeepCopyInto(out *ComponentOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -126,7 +126,7 @@ func (in *ComponentOperatorSpec) DeepCopyInto(out *ComponentOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

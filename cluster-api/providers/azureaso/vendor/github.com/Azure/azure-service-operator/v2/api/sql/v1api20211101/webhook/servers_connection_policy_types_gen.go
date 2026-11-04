@@ -104,7 +104,12 @@ func (policy *ServersConnectionPolicy) ValidateUpdate(ctx context.Context, oldRe
 
 // createValidations validates the creation of the resource
 func (policy *ServersConnectionPolicy) createValidations() []func(ctx context.Context, obj *v20211101.ServersConnectionPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersConnectionPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersConnectionPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

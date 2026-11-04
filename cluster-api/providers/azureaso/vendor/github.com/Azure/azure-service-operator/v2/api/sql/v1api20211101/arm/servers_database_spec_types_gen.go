@@ -85,8 +85,10 @@ type DatabaseProperties struct {
 	// RestoreLongTermRetentionBackup: Creates a database by restoring from a long term retention vault.
 	// recoveryServicesRecoveryPointResourceId must be specified as the recovery point resource ID.
 	// Copy, Secondary, and RestoreLongTermRetentionBackup are not supported for DataWarehouse edition.
-	CreateMode    *DatabaseProperties_CreateMode `json:"createMode,omitempty"`
-	ElasticPoolId *string                        `json:"elasticPoolId,omitempty"`
+	CreateMode *DatabaseProperties_CreateMode `json:"createMode,omitempty"`
+
+	// ElasticPoolId: The resource identifier of the elastic pool containing this database.
+	ElasticPoolId *string `json:"elasticPoolId,omitempty"`
 
 	// FederatedClientId: The Client id used for cross tenant per database CMK scenario
 	FederatedClientId *string `json:"federatedClientId,omitempty"`
@@ -101,8 +103,11 @@ type DatabaseProperties struct {
 
 	// LicenseType: The license type to apply for this database. `LicenseIncluded` if you need a license, or `BasePrice` if you
 	// have a license and are eligible for the Azure Hybrid Benefit.
-	LicenseType                       *DatabaseProperties_LicenseType `json:"licenseType,omitempty"`
-	LongTermRetentionBackupResourceId *string                         `json:"longTermRetentionBackupResourceId,omitempty"`
+	LicenseType *DatabaseProperties_LicenseType `json:"licenseType,omitempty"`
+
+	// LongTermRetentionBackupResourceId: The resource identifier of the long term retention backup associated with create
+	// operation of this database.
+	LongTermRetentionBackupResourceId *string `json:"longTermRetentionBackupResourceId,omitempty"`
 
 	// MaintenanceConfigurationId: Maintenance configuration id assigned to the database. This configuration defines the period
 	// when the maintenance updates will occur.
@@ -117,13 +122,22 @@ type DatabaseProperties struct {
 	// ReadScale: The state of read-only routing. If enabled, connections that have application intent set to readonly in their
 	// connection string may be routed to a readonly secondary replica in the same region. Not applicable to a Hyperscale
 	// database within an elastic pool.
-	ReadScale                       *DatabaseProperties_ReadScale `json:"readScale,omitempty"`
-	RecoverableDatabaseId           *string                       `json:"recoverableDatabaseId,omitempty"`
-	RecoveryServicesRecoveryPointId *string                       `json:"recoveryServicesRecoveryPointId,omitempty"`
+	ReadScale *DatabaseProperties_ReadScale `json:"readScale,omitempty"`
+
+	// RecoverableDatabaseId: The resource identifier of the recoverable database associated with create operation of this
+	// database.
+	RecoverableDatabaseId *string `json:"recoverableDatabaseId,omitempty"`
+
+	// RecoveryServicesRecoveryPointId: The resource identifier of the recovery point associated with create operation of this
+	// database.
+	RecoveryServicesRecoveryPointId *string `json:"recoveryServicesRecoveryPointId,omitempty"`
 
 	// RequestedBackupStorageRedundancy: The storage account type to be used to store backups for this database.
 	RequestedBackupStorageRedundancy *DatabaseProperties_RequestedBackupStorageRedundancy `json:"requestedBackupStorageRedundancy,omitempty"`
-	RestorableDroppedDatabaseId      *string                                              `json:"restorableDroppedDatabaseId,omitempty"`
+
+	// RestorableDroppedDatabaseId: The resource identifier of the restorable dropped database associated with create operation
+	// of this database.
+	RestorableDroppedDatabaseId *string `json:"restorableDroppedDatabaseId,omitempty"`
 
 	// RestorePointInTime: Specifies the point in time (ISO8601 format) of the source database that will be restored to create
 	// the new database.
@@ -137,8 +151,24 @@ type DatabaseProperties struct {
 
 	// SourceDatabaseDeletionDate: Specifies the time that the database was deleted.
 	SourceDatabaseDeletionDate *string `json:"sourceDatabaseDeletionDate,omitempty"`
-	SourceDatabaseId           *string `json:"sourceDatabaseId,omitempty"`
-	SourceResourceId           *string `json:"sourceResourceId,omitempty"`
+
+	// SourceDatabaseId: The resource identifier of the source database associated with create operation of this database.
+	SourceDatabaseId *string `json:"sourceDatabaseId,omitempty"`
+
+	// SourceResourceId: The resource identifier of the source associated with the create operation of this database.
+	// This property is only supported for DataWarehouse edition and allows to restore across subscriptions.
+	// When sourceResourceId is specified, sourceDatabaseId, recoverableDatabaseId, restorableDroppedDatabaseId and
+	// sourceDatabaseDeletionDate must not be specified and CreateMode must be PointInTimeRestore, Restore or Recover.
+	// When createMode is PointInTimeRestore, sourceResourceId must be the resource ID of the existing database or existing sql
+	// pool, and restorePointInTime must be specified.
+	// When createMode is Restore, sourceResourceId must be the resource ID of restorable dropped database or restorable
+	// dropped sql pool.
+	// When createMode is Recover, sourceResourceId must be the resource ID of recoverable database or recoverable sql pool.
+	// When source subscription belongs to a different tenant than target subscription, “x-ms-authorization-auxiliary”
+	// header must contain authentication token for the source tenant. For more details about
+	// “x-ms-authorization-auxiliary” header see
+	// https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/authenticate-multi-tenant
+	SourceResourceId *string `json:"sourceResourceId,omitempty"`
 
 	// ZoneRedundant: Whether or not this database is zone redundant, which means the replicas of this database will be spread
 	// across multiple availability zones.

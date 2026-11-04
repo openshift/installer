@@ -77,7 +77,8 @@ func GetUserDatabasePrivileges(ctx context.Context, db *sql.DB, user string, hos
 	rows, err := db.QueryContext(
 		ctx,
 		"SELECT TABLE_SCHEMA, PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES WHERE GRANTEE = ?",
-		formatUser(user, hostname))
+		formatUser(user, hostname),
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "listing database grants for user %s", user)
 	}
@@ -119,7 +120,8 @@ func GetUserServerPrivileges(ctx context.Context, db *sql.DB, user string, hostn
 	rows, err := db.QueryContext(
 		ctx,
 		"SELECT PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.USER_PRIVILEGES WHERE GRANTEE = ? AND PRIVILEGE_TYPE != 'USAGE'",
-		formatUser(user, hostname))
+		formatUser(user, hostname),
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "listing grants for user %s", user)
 	}

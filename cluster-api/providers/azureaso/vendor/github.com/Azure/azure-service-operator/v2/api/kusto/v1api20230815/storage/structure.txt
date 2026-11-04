@@ -348,3 +348,97 @@ Database: Resource
         │   └── SuspensionStartDate: *string
         └── Type: *string
 
+augmentConversionForAcceptedAudiences: Interface
+
+augmentConversionForAcceptedAudiences_STATUS: Interface
+
+augmentConversionForAzureSku: Interface
+
+augmentConversionForAzureSku_STATUS: Interface
+
+augmentConversionForCluster: Interface
+
+augmentConversionForClusterOperatorSpec: Interface
+
+augmentConversionForCluster_STATUS: Interface
+
+augmentConversionForCluster_Spec: Interface
+
+augmentConversionForCosmosDbDataConnection: Interface
+
+augmentConversionForCosmosDbDataConnection_STATUS: Interface
+
+augmentConversionForDataConnection: Interface
+
+augmentConversionForDataConnectionOperatorSpec: Interface
+
+augmentConversionForDataConnection_STATUS: Interface
+
+augmentConversionForDataConnection_Spec: Interface
+
+augmentConversionForDatabase: Interface
+
+augmentConversionForDatabaseOperatorSpec: Interface
+
+augmentConversionForDatabaseStatistics_STATUS: Interface
+
+augmentConversionForDatabase_STATUS: Interface
+
+augmentConversionForDatabase_Spec: Interface
+
+augmentConversionForEventGridDataConnection: Interface
+
+augmentConversionForEventGridDataConnection_STATUS: Interface
+
+augmentConversionForEventHubDataConnection: Interface
+
+augmentConversionForEventHubDataConnection_STATUS: Interface
+
+augmentConversionForIdentity: Interface
+
+augmentConversionForIdentity_STATUS: Interface
+
+augmentConversionForIdentity_UserAssignedIdentities_STATUS: Interface
+
+augmentConversionForIotHubDataConnection: Interface
+
+augmentConversionForIotHubDataConnection_STATUS: Interface
+
+augmentConversionForKeyVaultProperties: Interface
+
+augmentConversionForKeyVaultProperties_STATUS: Interface
+
+augmentConversionForLanguageExtension: Interface
+
+augmentConversionForLanguageExtension_STATUS: Interface
+
+augmentConversionForLanguageExtensionsList: Interface
+
+augmentConversionForLanguageExtensionsList_STATUS: Interface
+
+augmentConversionForMigrationClusterProperties_STATUS: Interface
+
+augmentConversionForOptimizedAutoscale: Interface
+
+augmentConversionForOptimizedAutoscale_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForReadWriteDatabase: Interface
+
+augmentConversionForReadWriteDatabase_STATUS: Interface
+
+augmentConversionForSuspensionDetails_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForTrustedExternalTenant: Interface
+
+augmentConversionForTrustedExternalTenant_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForVirtualNetworkConfiguration: Interface
+
+augmentConversionForVirtualNetworkConfiguration_STATUS: Interface
+

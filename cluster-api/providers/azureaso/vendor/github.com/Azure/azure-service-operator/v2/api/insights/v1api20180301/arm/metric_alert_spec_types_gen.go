@@ -57,8 +57,11 @@ type MetricAlertProperties struct {
 	Enabled *bool `json:"enabled,omitempty"`
 
 	// EvaluationFrequency: how often the metric alert is evaluated represented in ISO 8601 duration format.
-	EvaluationFrequency *string  `json:"evaluationFrequency,omitempty"`
-	Scopes              []string `json:"scopes,omitempty"`
+	EvaluationFrequency *string `json:"evaluationFrequency,omitempty"`
+
+	// Scopes: the list of resource id's that this metric alert is scoped to. You cannot change the scope of a metric rule
+	// based on logs.
+	Scopes []string `json:"scopes,omitempty"`
 
 	// Severity: Alert severity {0, 1, 2, 3, 4}
 	Severity *int `json:"severity,omitempty"`
@@ -161,7 +164,9 @@ type MetricAlertSingleResourceMultipleMetricCriteria struct {
 
 type WebtestLocationAvailabilityCriteria struct {
 	AdditionalProperties map[string]v1.JSON `json:"additionalProperties,omitempty"`
-	ComponentId          *string            `json:"componentId,omitempty"`
+
+	// ComponentId: The Application Insights resource Id.
+	ComponentId *string `json:"componentId,omitempty"`
 
 	// FailedLocationCount: The number of failed locations.
 	FailedLocationCount *float64 `json:"failedLocationCount,omitempty"`

@@ -116,7 +116,12 @@ func (networkInterface *NetworkInterface) ValidateUpdate(ctx context.Context, ol
 
 // createValidations validates the creation of the resource
 func (networkInterface *NetworkInterface) createValidations() []func(ctx context.Context, obj *v20240301.NetworkInterface) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.NetworkInterface) (admission.Warnings, error){networkInterface.validateResourceReferences, networkInterface.validateOwnerReference, networkInterface.validateSecretDestinations, networkInterface.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.NetworkInterface) (admission.Warnings, error){
+		networkInterface.validateResourceReferences,
+		networkInterface.validateOwnerReference,
+		networkInterface.validateSecretDestinations,
+		networkInterface.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

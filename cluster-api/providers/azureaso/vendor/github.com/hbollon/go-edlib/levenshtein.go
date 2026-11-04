@@ -65,26 +65,25 @@ func OSADamerauLevenshteinDistance(str1, str2 string) int {
 		return runeStr1len
 	} else if utils.Equal(runeStr1, runeStr2) {
 		return 0
+	} else if runeStr1len < runeStr2len {
+		return OSADamerauLevenshteinDistance(str2, str1)
 	}
 
 	// 2D Array
-	matrix := make([][]int, runeStr1len+1)
-	for i := 0; i <= runeStr1len; i++ {
+	row := utils.Min(runeStr1len+1, 3)
+	matrix := make([][]int, row)
+	for i := 0; i < row; i++ {
 		matrix[i] = make([]int, runeStr2len+1)
-		for j := 0; j <= runeStr2len; j++ {
-			matrix[i][j] = 0
-		}
-	}
-
-	for i := 0; i <= runeStr1len; i++ {
 		matrix[i][0] = i
 	}
+
 	for j := 0; j <= runeStr2len; j++ {
 		matrix[0][j] = j
 	}
 
 	var count int
 	for i := 1; i <= runeStr1len; i++ {
+		matrix[i%3][0] = i
 		for j := 1; j <= runeStr2len; j++ {
 			if runeStr1[i-1] == runeStr2[j-1] {
 				count = 0
@@ -92,13 +91,14 @@ func OSADamerauLevenshteinDistance(str1, str2 string) int {
 				count = 1
 			}
 
-			matrix[i][j] = utils.Min(utils.Min(matrix[i-1][j]+1, matrix[i][j-1]+1), matrix[i-1][j-1]+count) // insertion, deletion, substitution
+			matrix[i%3][j] = utils.Min(utils.Min(matrix[(i-1)%3][j]+1, matrix[i%3][j-1]+1),
+				matrix[(i-1)%3][j-1]+count) // insertion, deletion, substitution
 			if i > 1 && j > 1 && runeStr1[i-1] == runeStr2[j-2] && runeStr1[i-2] == runeStr2[j-1] {
-				matrix[i][j] = utils.Min(matrix[i][j], matrix[i-2][j-2]+1) // translation
+				matrix[i%3][j] = utils.Min(matrix[i%3][j], matrix[(i-2)%3][j-2]+1) // translation
 			}
 		}
 	}
-	return matrix[runeStr1len][runeStr2len]
+	return matrix[runeStr1len%3][runeStr2len]
 }
 
 // DamerauLevenshteinDistance calculate the distance between two string

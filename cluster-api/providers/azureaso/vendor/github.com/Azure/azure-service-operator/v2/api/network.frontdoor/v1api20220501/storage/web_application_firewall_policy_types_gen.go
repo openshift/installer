@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.frontdoor.azure.com,resources={webapplicationfirewallpolicies/status,webapplicationfirewallpolicies/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,networkfrontdoor}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -356,7 +357,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "ExtendedLocation":
 	if disk.ExtendedLocation != nil {
-		extendedLocation_ARM, err := (*disk.ExtendedLocation).ConvertToARM(resolved)
+		extendedLocation_ARM, err := disk.ExtendedLocation.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -397,7 +398,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.BurstingEnabled = &burstingEnabled
 	}
 	if disk.CreationData != nil {
-		creationData_ARM, err := (*disk.CreationData).ConvertToARM(resolved)
+		creationData_ARM, err := disk.CreationData.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -433,7 +434,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.DiskSizeGB = &diskSizeGB
 	}
 	if disk.Encryption != nil {
-		encryption_ARM, err := (*disk.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := disk.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -441,7 +442,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.Encryption = &encryption
 	}
 	if disk.EncryptionSettingsCollection != nil {
-		encryptionSettingsCollection_ARM, err := (*disk.EncryptionSettingsCollection).ConvertToARM(resolved)
+		encryptionSettingsCollection_ARM, err := disk.EncryptionSettingsCollection.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -471,7 +472,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 		result.Properties.OsType = &osType
 	}
 	if disk.PurchasePlan != nil {
-		purchasePlan_ARM, err := (*disk.PurchasePlan).ConvertToARM(resolved)
+		purchasePlan_ARM, err := disk.PurchasePlan.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -485,7 +486,7 @@ func (disk *Disk_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDeta
 
 	// Set property "Sku":
 	if disk.Sku != nil {
-		sku_ARM, err := (*disk.Sku).ConvertToARM(resolved)
+		sku_ARM, err := disk.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1797,8 +1798,6 @@ func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_
 	if source.ShareInfo != nil {
 		shareInfoList := make([]ShareInfoElement_STATUS, len(source.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range source.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo ShareInfoElement_STATUS
 			err := shareInfo.AssignProperties_From_ShareInfoElement_STATUS(&shareInfoItem)
 			if err != nil {
@@ -1999,8 +1998,6 @@ func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Di
 	if disk.ShareInfo != nil {
 		shareInfoList := make([]storage.ShareInfoElement_STATUS, len(disk.ShareInfo))
 		for shareInfoIndex, shareInfoItem := range disk.ShareInfo {
-			// Shadow the loop variable to avoid aliasing
-			shareInfoItem := shareInfoItem
 			var shareInfo storage.ShareInfoElement_STATUS
 			err := shareInfoItem.AssignProperties_To_ShareInfoElement_STATUS(&shareInfo)
 			if err != nil {
@@ -2105,7 +2102,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "GalleryImageReference":
 	if data.GalleryImageReference != nil {
-		galleryImageReference_ARM, err := (*data.GalleryImageReference).ConvertToARM(resolved)
+		galleryImageReference_ARM, err := data.GalleryImageReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2115,7 +2112,7 @@ func (data *CreationData) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "ImageReference":
 	if data.ImageReference != nil {
-		imageReference_ARM, err := (*data.ImageReference).ConvertToARM(resolved)
+		imageReference_ARM, err := data.ImageReference.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2617,8 +2614,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2635,8 +2630,6 @@ func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source 
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2662,8 +2655,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2680,8 +2671,6 @@ func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destinati
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3265,8 +3254,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_From_Encryption
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement(&encryptionSettingItem)
 			if err != nil {
@@ -3303,8 +3290,6 @@ func (collection *EncryptionSettingsCollection) AssignProperties_To_EncryptionSe
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]storage.EncryptionSettingsElement, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting storage.EncryptionSettingsElement
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement(&encryptionSetting)
 			if err != nil {
@@ -3401,8 +3386,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_From_Enc
 	if source.EncryptionSettings != nil {
 		encryptionSettingList := make([]EncryptionSettingsElement_STATUS, len(source.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting EncryptionSettingsElement_STATUS
 			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement_STATUS(&encryptionSettingItem)
 			if err != nil {
@@ -3439,8 +3422,6 @@ func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_To_Encry
 	if collection.EncryptionSettings != nil {
 		encryptionSettingList := make([]storage.EncryptionSettingsElement_STATUS, len(collection.EncryptionSettings))
 		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
-			// Shadow the loop variable to avoid aliasing
-			encryptionSettingItem := encryptionSettingItem
 			var encryptionSetting storage.EncryptionSettingsElement_STATUS
 			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement_STATUS(&encryptionSetting)
 			if err != nil {
@@ -4104,7 +4085,7 @@ func (element *EncryptionSettingsElement) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "DiskEncryptionKey":
 	if element.DiskEncryptionKey != nil {
-		diskEncryptionKey_ARM, err := (*element.DiskEncryptionKey).ConvertToARM(resolved)
+		diskEncryptionKey_ARM, err := element.DiskEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4114,7 +4095,7 @@ func (element *EncryptionSettingsElement) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "KeyEncryptionKey":
 	if element.KeyEncryptionKey != nil {
-		keyEncryptionKey_ARM, err := (*element.KeyEncryptionKey).ConvertToARM(resolved)
+		keyEncryptionKey_ARM, err := element.KeyEncryptionKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4618,7 +4599,7 @@ func (reference *KeyVaultAndKeyReference) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4839,7 +4820,7 @@ func (reference *KeyVaultAndSecretReference) ConvertToARM(resolved genruntime.Co
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

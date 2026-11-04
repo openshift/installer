@@ -55,6 +55,8 @@ func (webhook *SqlRoleAssignment) defaultAzureName(_ context.Context, assignment
 				assignment.Owner(),
 				gk,
 				assignment.Namespace,
-				assignment.Name))
+				assignment.Name,
+			),
+		)
 	}
 }

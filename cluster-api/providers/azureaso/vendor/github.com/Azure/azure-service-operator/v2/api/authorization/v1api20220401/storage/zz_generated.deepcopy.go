@@ -169,7 +169,7 @@ func (in *RoleAssignmentOperatorSpec) DeepCopyInto(out *RoleAssignmentOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -192,7 +192,7 @@ func (in *RoleAssignmentOperatorSpec) DeepCopyInto(out *RoleAssignmentOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -369,7 +369,7 @@ func (in *RoleAssignment_Spec) DeepCopyInto(out *RoleAssignment_Spec) {
 	}
 	if in.RoleDefinitionReference != nil {
 		in, out := &in.RoleDefinitionReference, &out.RoleDefinitionReference
-		*out = new(genruntime.ResourceReference)
+		*out = new(genruntime.WellKnownResourceReference)
 		**out = **in
 	}
 }
@@ -453,7 +453,7 @@ func (in *RoleDefinitionOperatorSpec) DeepCopyInto(out *RoleDefinitionOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -476,7 +476,7 @@ func (in *RoleDefinitionOperatorSpec) DeepCopyInto(out *RoleDefinitionOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

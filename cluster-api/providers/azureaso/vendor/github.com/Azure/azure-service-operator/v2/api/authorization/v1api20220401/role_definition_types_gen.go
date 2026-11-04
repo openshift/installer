@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,authorization}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -447,8 +448,6 @@ func (definition *RoleDefinition_Spec) AssignProperties_From_RoleDefinition_Spec
 	if source.AssignableScopesReferences != nil {
 		assignableScopesReferenceList := make([]genruntime.ResourceReference, len(source.AssignableScopesReferences))
 		for assignableScopesReferenceIndex, assignableScopesReferenceItem := range source.AssignableScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			assignableScopesReferenceItem := assignableScopesReferenceItem
 			assignableScopesReferenceList[assignableScopesReferenceIndex] = assignableScopesReferenceItem.Copy()
 		}
 		definition.AssignableScopesReferences = assignableScopesReferenceList
@@ -486,8 +485,6 @@ func (definition *RoleDefinition_Spec) AssignProperties_From_RoleDefinition_Spec
 	if source.Permissions != nil {
 		permissionList := make([]Permission, len(source.Permissions))
 		for permissionIndex, permissionItem := range source.Permissions {
-			// Shadow the loop variable to avoid aliasing
-			permissionItem := permissionItem
 			var permission Permission
 			err := permission.AssignProperties_From_Permission(&permissionItem)
 			if err != nil {
@@ -519,8 +516,6 @@ func (definition *RoleDefinition_Spec) AssignProperties_To_RoleDefinition_Spec(d
 	if definition.AssignableScopesReferences != nil {
 		assignableScopesReferenceList := make([]genruntime.ResourceReference, len(definition.AssignableScopesReferences))
 		for assignableScopesReferenceIndex, assignableScopesReferenceItem := range definition.AssignableScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			assignableScopesReferenceItem := assignableScopesReferenceItem
 			assignableScopesReferenceList[assignableScopesReferenceIndex] = assignableScopesReferenceItem.Copy()
 		}
 		destination.AssignableScopesReferences = assignableScopesReferenceList
@@ -561,8 +556,6 @@ func (definition *RoleDefinition_Spec) AssignProperties_To_RoleDefinition_Spec(d
 	if definition.Permissions != nil {
 		permissionList := make([]storage.Permission, len(definition.Permissions))
 		for permissionIndex, permissionItem := range definition.Permissions {
-			// Shadow the loop variable to avoid aliasing
-			permissionItem := permissionItem
 			var permission storage.Permission
 			err := permissionItem.AssignProperties_To_Permission(&permission)
 			if err != nil {
@@ -602,8 +595,6 @@ func (definition *RoleDefinition_Spec) Initialize_From_RoleDefinition_STATUS(sou
 	if source.Permissions != nil {
 		permissionList := make([]Permission, len(source.Permissions))
 		for permissionIndex, permissionItem := range source.Permissions {
-			// Shadow the loop variable to avoid aliasing
-			permissionItem := permissionItem
 			var permission Permission
 			err := permission.Initialize_From_Permission_STATUS(&permissionItem)
 			if err != nil {
@@ -878,8 +869,6 @@ func (definition *RoleDefinition_STATUS) AssignProperties_From_RoleDefinition_ST
 	if source.Permissions != nil {
 		permissionList := make([]Permission_STATUS, len(source.Permissions))
 		for permissionIndex, permissionItem := range source.Permissions {
-			// Shadow the loop variable to avoid aliasing
-			permissionItem := permissionItem
 			var permission Permission_STATUS
 			err := permission.AssignProperties_From_Permission_STATUS(&permissionItem)
 			if err != nil {
@@ -941,8 +930,6 @@ func (definition *RoleDefinition_STATUS) AssignProperties_To_RoleDefinition_STAT
 	if definition.Permissions != nil {
 		permissionList := make([]storage.Permission_STATUS, len(definition.Permissions))
 		for permissionIndex, permissionItem := range definition.Permissions {
-			// Shadow the loop variable to avoid aliasing
-			permissionItem := permissionItem
 			var permission storage.Permission_STATUS
 			err := permissionItem.AssignProperties_To_Permission_STATUS(&permission)
 			if err != nil {
@@ -1250,8 +1237,6 @@ func (operator *RoleDefinitionOperatorSpec) AssignProperties_From_RoleDefinition
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1271,8 +1256,6 @@ func (operator *RoleDefinitionOperatorSpec) AssignProperties_From_RoleDefinition
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1298,8 +1281,6 @@ func (operator *RoleDefinitionOperatorSpec) AssignProperties_To_RoleDefinitionOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1319,8 +1300,6 @@ func (operator *RoleDefinitionOperatorSpec) AssignProperties_To_RoleDefinitionOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=eventhub.azure.com,resources={namespaceseventhubs/status,namespaceseventhubs/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventhub}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240101.NamespacesEventhub
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/eventhubs.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/eventhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}
 type NamespacesEventhub struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (eventhub *NamespacesEventhub) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240101.NamespacesEventhub
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2024-01-01/eventhubs.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2024-01-01/eventhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}
 type NamespacesEventhubList struct {
 	metav1.TypeMeta `json:",inline"`

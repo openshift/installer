@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerregistry}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/stable/2021-09-01/containerregistry.json
+// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/Registry/stable/2021-09-01/containerregistry.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}
 type Registry struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (registry *Registry) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/stable/2021-09-01/containerregistry.json
+// - Generated from: /containerregistry/resource-manager/Microsoft.ContainerRegistry/Registry/stable/2021-09-01/containerregistry.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}
 type RegistryList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -321,7 +322,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Identity":
 	if registry.Identity != nil {
-		identity_ARM, err := (*registry.Identity).ConvertToARM(resolved)
+		identity_ARM, err := registry.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +359,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.DataEndpointEnabled = &dataEndpointEnabled
 	}
 	if registry.Encryption != nil {
-		encryption_ARM, err := (*registry.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := registry.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -372,7 +373,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.NetworkRuleBypassOptions = &networkRuleBypassOptions
 	}
 	if registry.NetworkRuleSet != nil {
-		networkRuleSet_ARM, err := (*registry.NetworkRuleSet).ConvertToARM(resolved)
+		networkRuleSet_ARM, err := registry.NetworkRuleSet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +381,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.NetworkRuleSet = &networkRuleSet
 	}
 	if registry.Policies != nil {
-		policies_ARM, err := (*registry.Policies).ConvertToARM(resolved)
+		policies_ARM, err := registry.Policies.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -402,7 +403,7 @@ func (registry *Registry_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 	// Set property "Sku":
 	if registry.Sku != nil {
-		sku_ARM, err := (*registry.Sku).ConvertToARM(resolved)
+		sku_ARM, err := registry.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1386,8 +1387,6 @@ func (registry *Registry_STATUS) AssignProperties_From_Registry_STATUS(source *s
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1575,8 +1574,6 @@ func (registry *Registry_STATUS) AssignProperties_To_Registry_STATUS(destination
 	if registry.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(registry.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range registry.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1685,7 +1682,7 @@ func (property *EncryptionProperty) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "KeyVaultProperties":
 	if property.KeyVaultProperties != nil {
-		keyVaultProperties_ARM, err := (*property.KeyVaultProperties).ConvertToARM(resolved)
+		keyVaultProperties_ARM, err := property.KeyVaultProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2031,8 +2028,6 @@ func (properties *IdentityProperties) AssignProperties_From_IdentityProperties(s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2072,8 +2067,6 @@ func (properties *IdentityProperties) AssignProperties_To_IdentityProperties(des
 	if properties.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(properties.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range properties.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2188,8 +2181,6 @@ func (properties *IdentityProperties_STATUS) AssignProperties_From_IdentityPrope
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserIdentityProperties_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserIdentityProperties_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserIdentityProperties_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -2229,8 +2220,6 @@ func (properties *IdentityProperties_STATUS) AssignProperties_To_IdentityPropert
 	if properties.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserIdentityProperties_STATUS, len(properties.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range properties.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserIdentityProperties_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentityProperties_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -2342,8 +2331,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule
 			err := ipRule.AssignProperties_From_IPRule(&ipRuleItem)
 			if err != nil {
@@ -2377,8 +2364,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 	if ruleSet.IpRules != nil {
 		ipRuleList := make([]storage.IPRule, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule
 			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
 			if err != nil {
@@ -2463,8 +2448,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule_STATUS
 			err := ipRule.AssignProperties_From_IPRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -2498,8 +2481,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 	if ruleSet.IpRules != nil {
 		ipRuleList := make([]storage.IPRule_STATUS, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
 			if err != nil {
@@ -2549,7 +2530,7 @@ func (policies *Policies) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "ExportPolicy":
 	if policies.ExportPolicy != nil {
-		exportPolicy_ARM, err := (*policies.ExportPolicy).ConvertToARM(resolved)
+		exportPolicy_ARM, err := policies.ExportPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2559,7 +2540,7 @@ func (policies *Policies) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "QuarantinePolicy":
 	if policies.QuarantinePolicy != nil {
-		quarantinePolicy_ARM, err := (*policies.QuarantinePolicy).ConvertToARM(resolved)
+		quarantinePolicy_ARM, err := policies.QuarantinePolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2569,7 +2550,7 @@ func (policies *Policies) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "RetentionPolicy":
 	if policies.RetentionPolicy != nil {
-		retentionPolicy_ARM, err := (*policies.RetentionPolicy).ConvertToARM(resolved)
+		retentionPolicy_ARM, err := policies.RetentionPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2579,7 +2560,7 @@ func (policies *Policies) ConvertToARM(resolved genruntime.ConvertToARMResolvedD
 
 	// Set property "TrustPolicy":
 	if policies.TrustPolicy != nil {
-		trustPolicy_ARM, err := (*policies.TrustPolicy).ConvertToARM(resolved)
+		trustPolicy_ARM, err := policies.TrustPolicy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -3039,8 +3020,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_From_RegistryOperatorSpec
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3057,8 +3036,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_From_RegistryOperatorSpec
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3084,8 +3061,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_To_RegistryOperatorSpec(d
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3102,8 +3077,6 @@ func (operator *RegistryOperatorSpec) AssignProperties_To_RegistryOperatorSpec(d
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

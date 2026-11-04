@@ -7,8 +7,8 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 	// Etag: The ETag of the virtual network link.
 	Etag *string `json:"etag,omitempty"`
 
-	// Id: Fully qualified resource Id for the resource. Example -
-	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateDnsZoneName}'.
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
 	// Location: The Azure Region where the resource lives
@@ -20,10 +20,13 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 	// Properties: Properties of the virtual network link to the Private DNS zone.
 	Properties *VirtualNetworkLinkProperties_STATUS `json:"properties,omitempty"`
 
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// Type: The type of the resource. Example - 'Microsoft.Network/privateDnsZones'.
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 }
 
@@ -31,7 +34,7 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 type VirtualNetworkLinkProperties_STATUS struct {
 	// ProvisioningState: The provisioning state of the resource. This is a read-only property and any attempt to set this
 	// value will be ignored.
-	ProvisioningState *VirtualNetworkLinkProperties_ProvisioningState_STATUS `json:"provisioningState,omitempty"`
+	ProvisioningState *ProvisioningState_STATUS `json:"provisioningState,omitempty"`
 
 	// RegistrationEnabled: Is auto-registration of virtual machine records in the virtual network in the Private DNS zone
 	// enabled?
@@ -40,14 +43,30 @@ type VirtualNetworkLinkProperties_STATUS struct {
 	// ResolutionPolicy: The resolution policy on the virtual network link. Only applicable for virtual network links to
 	// privatelink zones, and for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public
 	// resolution if private dns query resolution results in non-existent domain response.
-	ResolutionPolicy *VirtualNetworkLinkProperties_ResolutionPolicy_STATUS `json:"resolutionPolicy,omitempty"`
+	ResolutionPolicy *ResolutionPolicy_STATUS `json:"resolutionPolicy,omitempty"`
 
 	// VirtualNetwork: The reference of the virtual network.
 	VirtualNetwork *SubResource_STATUS `json:"virtualNetwork,omitempty"`
 
 	// VirtualNetworkLinkState: The status of the virtual network link to the Private DNS zone. Possible values are
 	// 'InProgress' and 'Done'. This is a read-only property and any attempt to set this value will be ignored.
-	VirtualNetworkLinkState *VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS `json:"virtualNetworkLinkState,omitempty"`
+	VirtualNetworkLinkState *VirtualNetworkLinkState_STATUS `json:"virtualNetworkLinkState,omitempty"`
+}
+
+// The resolution policy on the virtual network link. Only applicable for virtual network links to privatelink zones, and
+// for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public resolution if private
+// dns query resolution results in non-existent domain response.
+type ResolutionPolicy_STATUS string
+
+const (
+	ResolutionPolicy_STATUS_Default          = ResolutionPolicy_STATUS("Default")
+	ResolutionPolicy_STATUS_NxDomainRedirect = ResolutionPolicy_STATUS("NxDomainRedirect")
+)
+
+// Mapping from string to ResolutionPolicy_STATUS
+var resolutionPolicy_STATUS_Values = map[string]ResolutionPolicy_STATUS{
+	"default":          ResolutionPolicy_STATUS_Default,
+	"nxdomainredirect": ResolutionPolicy_STATUS_NxDomainRedirect,
 }
 
 // Reference to another subresource.
@@ -56,49 +75,17 @@ type SubResource_STATUS struct {
 	Id *string `json:"id,omitempty"`
 }
 
-type VirtualNetworkLinkProperties_ProvisioningState_STATUS string
+// The status of the virtual network link to the Private DNS zone. Possible values are 'InProgress' and 'Done'. This is a
+// read-only property and any attempt to set this value will be ignored.
+type VirtualNetworkLinkState_STATUS string
 
 const (
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Canceled  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Canceled")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Creating  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Creating")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Deleting  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Deleting")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Failed    = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Failed")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Succeeded = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Succeeded")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Updating  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Updating")
+	VirtualNetworkLinkState_STATUS_Completed  = VirtualNetworkLinkState_STATUS("Completed")
+	VirtualNetworkLinkState_STATUS_InProgress = VirtualNetworkLinkState_STATUS("InProgress")
 )
 
-// Mapping from string to VirtualNetworkLinkProperties_ProvisioningState_STATUS
-var virtualNetworkLinkProperties_ProvisioningState_STATUS_Values = map[string]VirtualNetworkLinkProperties_ProvisioningState_STATUS{
-	"canceled":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Canceled,
-	"creating":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Creating,
-	"deleting":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Deleting,
-	"failed":    VirtualNetworkLinkProperties_ProvisioningState_STATUS_Failed,
-	"succeeded": VirtualNetworkLinkProperties_ProvisioningState_STATUS_Succeeded,
-	"updating":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Updating,
-}
-
-type VirtualNetworkLinkProperties_ResolutionPolicy_STATUS string
-
-const (
-	VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_Default          = VirtualNetworkLinkProperties_ResolutionPolicy_STATUS("Default")
-	VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_NxDomainRedirect = VirtualNetworkLinkProperties_ResolutionPolicy_STATUS("NxDomainRedirect")
-)
-
-// Mapping from string to VirtualNetworkLinkProperties_ResolutionPolicy_STATUS
-var virtualNetworkLinkProperties_ResolutionPolicy_STATUS_Values = map[string]VirtualNetworkLinkProperties_ResolutionPolicy_STATUS{
-	"default":          VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_Default,
-	"nxdomainredirect": VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_NxDomainRedirect,
-}
-
-type VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS string
-
-const (
-	VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Completed  = VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS("Completed")
-	VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_InProgress = VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS("InProgress")
-)
-
-// Mapping from string to VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS
-var virtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Values = map[string]VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS{
-	"completed":  VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Completed,
-	"inprogress": VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_InProgress,
+// Mapping from string to VirtualNetworkLinkState_STATUS
+var virtualNetworkLinkState_STATUS_Values = map[string]VirtualNetworkLinkState_STATUS{
+	"completed":  VirtualNetworkLinkState_STATUS_Completed,
+	"inprogress": VirtualNetworkLinkState_STATUS_InProgress,
 }

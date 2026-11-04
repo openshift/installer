@@ -18,10 +18,14 @@ Workspace: Resource
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── ForceCmkForQuery: *bool
 │   ├── Location: *string
-│   ├── OperatorSpec: *Object (3 properties)
+│   ├── OperatorSpec: *Object (4 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
+│   │   └── Secrets: *Object (3 properties)
+│   │       ├── PrimarySharedKey: *genruntime.SecretDestination
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── SecondarySharedKey: *genruntime.SecretDestination
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -75,4 +79,28 @@ Workspace: Resource
         ├── DataIngestionStatus: *string
         ├── PropertyBag: genruntime.PropertyBag
         └── QuotaNextResetTime: *string
+
+augmentConversionForPrivateLinkScopedResource_STATUS: Interface
+
+augmentConversionForWorkspace: Interface
+
+augmentConversionForWorkspaceCapping: Interface
+
+augmentConversionForWorkspaceCapping_STATUS: Interface
+
+augmentConversionForWorkspaceFeatures: Interface
+
+augmentConversionForWorkspaceFeatures_STATUS: Interface
+
+augmentConversionForWorkspaceOperatorSecrets: Interface
+
+augmentConversionForWorkspaceOperatorSpec: Interface
+
+augmentConversionForWorkspaceSku: Interface
+
+augmentConversionForWorkspaceSku_STATUS: Interface
+
+augmentConversionForWorkspace_STATUS: Interface
+
+augmentConversionForWorkspace_Spec: Interface
 

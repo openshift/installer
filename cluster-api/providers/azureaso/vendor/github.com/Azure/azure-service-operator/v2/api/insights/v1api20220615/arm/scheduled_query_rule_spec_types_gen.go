@@ -86,8 +86,10 @@ type ScheduledQueryRuleProperties struct {
 
 	// OverrideQueryTimeRange: If specified then overrides the query time range (default is
 	// WindowSize*NumberOfEvaluationPeriods). Relevant only for rules of the kind LogAlert.
-	OverrideQueryTimeRange *string  `json:"overrideQueryTimeRange,omitempty"`
-	Scopes                 []string `json:"scopes,omitempty"`
+	OverrideQueryTimeRange *string `json:"overrideQueryTimeRange,omitempty"`
+
+	// Scopes: The list of resource id's that this scheduled query rule is scoped to.
+	Scopes []string `json:"scopes,omitempty"`
 
 	// Severity: Severity of the alert. Should be an integer between [0-4]. Value of 0 is severest. Relevant and required only
 	// for rules of the kind LogAlert.
@@ -110,6 +112,7 @@ type ScheduledQueryRuleProperties struct {
 
 // Actions to invoke when the alert fires.
 type Actions struct {
+	// ActionGroups: Action Group resource Ids to invoke when the alert fires.
 	ActionGroups []string `json:"actionGroups,omitempty"`
 
 	// CustomProperties: The properties of an alert payload.
@@ -152,7 +155,10 @@ type Condition struct {
 	Operator *Condition_Operator `json:"operator,omitempty"`
 
 	// Query: Log query alert
-	Query            *string `json:"query,omitempty"`
+	Query *string `json:"query,omitempty"`
+
+	// ResourceIdColumn: The column containing the resource id. The content of the column must be a uri formatted as resource
+	// id. Relevant only for rules of the kind LogAlert.
 	ResourceIdColumn *string `json:"resourceIdColumn,omitempty"`
 
 	// Threshold: the criteria threshold value that activates the alert. Relevant and required only for rules of the kind

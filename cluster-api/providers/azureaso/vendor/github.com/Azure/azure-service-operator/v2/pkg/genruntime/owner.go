@@ -36,7 +36,8 @@ func CheckTargetOwnedByObj(obj client.Object, target client.Object) error {
 			target.GetName(),
 			target.GetObjectKind().GroupVersionKind(),
 			obj.GetName(),
-			obj.GetObjectKind().GroupVersionKind())
+			obj.GetObjectKind().GroupVersionKind(),
+		)
 	}
 
 	return nil

@@ -254,7 +254,7 @@ func (in *BatchAccountOperatorSpec) DeepCopyInto(out *BatchAccountOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -272,7 +272,7 @@ func (in *BatchAccountOperatorSpec) DeepCopyInto(out *BatchAccountOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

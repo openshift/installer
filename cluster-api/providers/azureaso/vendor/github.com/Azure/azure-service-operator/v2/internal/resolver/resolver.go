@@ -59,7 +59,8 @@ func (r *Resolver) IndexStorageTypes(scheme *runtime.Scheme, objs []*registratio
 				gvk.Group,
 				gvk.Kind,
 				existing.Version,
-				gvk.Version)
+				gvk.Version,
+			)
 
 		}
 		r.reconciledResourceLookup[groupKind] = gvk
@@ -117,7 +118,7 @@ func (r *Resolver) ResolveResourceReferences(ctx context.Context, metaObject gen
 
 	// Include the namespace
 	namespacedRefs := make(map[genruntime.NamespacedResourceReference]struct{}, len(refs))
-	for ref := range refs {
+	for _, ref := range refs {
 		namespacedRefs[ref.AsNamespacedRef(metaObject.GetNamespace())] = struct{}{}
 	}
 
@@ -183,7 +184,8 @@ func (r *Resolver) ResolveReference(ctx context.Context, ref genruntime.Namespac
 				err,
 				"couldn't resolve reference %s/%s",
 				ref.Namespace,
-				ref.Name)
+				ref.Name,
+			)
 		}
 
 		return nil, eris.Wrapf(err, "couldn't resolve reference %s", ref.String())
@@ -276,6 +278,16 @@ func (r *Resolver) Scheme() *runtime.Scheme {
 	return r.client.Scheme()
 }
 
+// FindGVKForGroupKind looks up the GVK for a given Group and Kind.
+// Returns an error if the Group/Kind is not registered.
+func (r *Resolver) FindGVKForGroupKind(groupKind schema.GroupKind) (schema.GroupVersionKind, error) {
+	gvk, ok := r.reconciledResourceLookup[groupKind]
+	if !ok {
+		return schema.GroupVersionKind{}, eris.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", groupKind.Group, groupKind.Kind)
+	}
+	return gvk, nil
+}
+
 func (r *Resolver) findGVK(ref genruntime.NamespacedResourceReference) (schema.GroupVersionKind, error) {
 	var ownerGvk schema.GroupVersionKind
 
@@ -284,9 +296,9 @@ func (r *Resolver) findGVK(ref genruntime.NamespacedResourceReference) (schema.G
 	}
 
 	groupKind := schema.GroupKind{Group: ref.Group, Kind: ref.Kind}
-	gvk, ok := r.reconciledResourceLookup[groupKind]
-	if !ok {
-		return ownerGvk, eris.Errorf("group: %q, kind: %q was not in reconciledResourceLookup", ref.Group, ref.Kind)
+	gvk, err := r.FindGVKForGroupKind(groupKind)
+	if err != nil {
+		return ownerGvk, err
 	}
 
 	return gvk, nil
@@ -309,7 +321,7 @@ func (r *Resolver) ResolveResourceSecretReferences(ctx context.Context, metaObje
 
 	// Include the namespace
 	namespacedSecretRefs := set.Make[genruntime.NamespacedSecretReference]()
-	for ref := range refs {
+	for _, ref := range refs {
 		namespacedSecretRefs.Add(ref.AsNamespacedRef(metaObject.GetNamespace()))
 	}
 
@@ -342,7 +354,7 @@ func (r *Resolver) ResolveResourceSecretMapReferences(
 
 	// Include the namespace
 	namespacedSecretRefs := set.Make[genruntime.NamespacedSecretMapReference]()
-	for ref := range refs {
+	for _, ref := range refs {
 		namespacedSecretRefs.Add(ref.AsNamespacedRef(metaObject.GetNamespace()))
 	}
 
@@ -363,6 +375,11 @@ func (r *Resolver) ResolveConfigMapReferences(
 	return r.kubeConfigMapResolver.ResolveConfigMapReferences(ctx, refs)
 }
 
+// ResolveConfigMapReference resolves a single configmap reference
+func (r *Resolver) ResolveConfigMapReference(ctx context.Context, ref genruntime.NamespacedConfigMapReference) (string, error) {
+	return r.kubeConfigMapResolver.ResolveConfigMapReference(ctx, ref)
+}
+
 // ResolveResourceConfigMapReferences resolves the specified genruntime.MetaObject's configmap references.
 func (r *Resolver) ResolveResourceConfigMapReferences(ctx context.Context, metaObject genruntime.MetaObject) (genruntime.Resolved[genruntime.ConfigMapReference, string], error) {
 	refs, err := reflecthelpers.FindConfigMapReferences(metaObject)
@@ -372,7 +389,7 @@ func (r *Resolver) ResolveResourceConfigMapReferences(ctx context.Context, metaO
 
 	// Include the namespace
 	namespacedConfigMapReferences := set.Make[genruntime.NamespacedConfigMapReference]()
-	for ref := range refs {
+	for _, ref := range refs {
 		namespacedConfigMapReferences.Add(ref.AsNamespacedRef(metaObject.GetNamespace()))
 	}
 

@@ -22,6 +22,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={trafficmanagerprofiles/status,trafficmanagerprofiles/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -30,7 +31,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220401.TrafficManagerProfile
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}
 type TrafficManagerProfile struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -180,7 +181,7 @@ func (profile *TrafficManagerProfile) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20220401.TrafficManagerProfile
 // Generator information:
-// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/stable/2022-04-01/trafficmanager.json
+// - Generated from: /trafficmanager/resource-manager/Microsoft.Network/TrafficManager/stable/2022-04-01/trafficmanager.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficmanagerprofiles/{profileName}
 type TrafficManagerProfileList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -300,38 +301,54 @@ type DnsConfig_STATUS struct {
 // Storage version of v1api20220401.Endpoint_STATUS
 // Class representing a Traffic Manager endpoint.
 type Endpoint_STATUS struct {
-	Id          *string                `json:"id,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	AlwaysServe           *string                                      `json:"alwaysServe,omitempty"`
+	CustomHeaders         []EndpointPropertiesCustomHeadersItem_STATUS `json:"customHeaders,omitempty"`
+	EndpointLocation      *string                                      `json:"endpointLocation,omitempty"`
+	EndpointMonitorStatus *string                                      `json:"endpointMonitorStatus,omitempty"`
+	EndpointStatus        *string                                      `json:"endpointStatus,omitempty"`
+	GeoMapping            []string                                     `json:"geoMapping,omitempty"`
+	Id                    *string                                      `json:"id,omitempty"`
+	MinChildEndpoints     *int                                         `json:"minChildEndpoints,omitempty"`
+	MinChildEndpointsIPv4 *int                                         `json:"minChildEndpointsIPv4,omitempty"`
+	MinChildEndpointsIPv6 *int                                         `json:"minChildEndpointsIPv6,omitempty"`
+	Name                  *string                                      `json:"name,omitempty"`
+	Priority              *int                                         `json:"priority,omitempty"`
+	PropertyBag           genruntime.PropertyBag                       `json:"$propertyBag,omitempty"`
+	Subnets               []EndpointPropertiesSubnetsItem_STATUS       `json:"subnets,omitempty"`
+	Target                *string                                      `json:"target,omitempty"`
+	TargetResourceId      *string                                      `json:"targetResourceId,omitempty"`
+	Type                  *string                                      `json:"type,omitempty"`
+	Weight                *int                                         `json:"weight,omitempty"`
 }
 
 // Storage version of v1api20220401.MonitorConfig
 // Class containing endpoint monitoring settings in a Traffic Manager profile.
 type MonitorConfig struct {
-	CustomHeaders             []MonitorConfig_CustomHeaders            `json:"customHeaders,omitempty"`
-	ExpectedStatusCodeRanges  []MonitorConfig_ExpectedStatusCodeRanges `json:"expectedStatusCodeRanges,omitempty"`
-	IntervalInSeconds         *int                                     `json:"intervalInSeconds,omitempty"`
-	Path                      *string                                  `json:"path,omitempty"`
-	Port                      *int                                     `json:"port,omitempty"`
-	ProfileMonitorStatus      *string                                  `json:"profileMonitorStatus,omitempty"`
-	PropertyBag               genruntime.PropertyBag                   `json:"$propertyBag,omitempty"`
-	Protocol                  *string                                  `json:"protocol,omitempty"`
-	TimeoutInSeconds          *int                                     `json:"timeoutInSeconds,omitempty"`
-	ToleratedNumberOfFailures *int                                     `json:"toleratedNumberOfFailures,omitempty"`
+	CustomHeaders             []MonitorConfigCustomHeadersItem            `json:"customHeaders,omitempty"`
+	ExpectedStatusCodeRanges  []MonitorConfigExpectedStatusCodeRangesItem `json:"expectedStatusCodeRanges,omitempty"`
+	IntervalInSeconds         *int                                        `json:"intervalInSeconds,omitempty"`
+	Path                      *string                                     `json:"path,omitempty"`
+	Port                      *int                                        `json:"port,omitempty"`
+	ProfileMonitorStatus      *string                                     `json:"profileMonitorStatus,omitempty"`
+	PropertyBag               genruntime.PropertyBag                      `json:"$propertyBag,omitempty"`
+	Protocol                  *string                                     `json:"protocol,omitempty"`
+	TimeoutInSeconds          *int                                        `json:"timeoutInSeconds,omitempty"`
+	ToleratedNumberOfFailures *int                                        `json:"toleratedNumberOfFailures,omitempty"`
 }
 
 // Storage version of v1api20220401.MonitorConfig_STATUS
 // Class containing endpoint monitoring settings in a Traffic Manager profile.
 type MonitorConfig_STATUS struct {
-	CustomHeaders             []MonitorConfig_CustomHeaders_STATUS            `json:"customHeaders,omitempty"`
-	ExpectedStatusCodeRanges  []MonitorConfig_ExpectedStatusCodeRanges_STATUS `json:"expectedStatusCodeRanges,omitempty"`
-	IntervalInSeconds         *int                                            `json:"intervalInSeconds,omitempty"`
-	Path                      *string                                         `json:"path,omitempty"`
-	Port                      *int                                            `json:"port,omitempty"`
-	ProfileMonitorStatus      *string                                         `json:"profileMonitorStatus,omitempty"`
-	PropertyBag               genruntime.PropertyBag                          `json:"$propertyBag,omitempty"`
-	Protocol                  *string                                         `json:"protocol,omitempty"`
-	TimeoutInSeconds          *int                                            `json:"timeoutInSeconds,omitempty"`
-	ToleratedNumberOfFailures *int                                            `json:"toleratedNumberOfFailures,omitempty"`
+	CustomHeaders             []MonitorConfigCustomHeadersItem_STATUS            `json:"customHeaders,omitempty"`
+	ExpectedStatusCodeRanges  []MonitorConfigExpectedStatusCodeRangesItem_STATUS `json:"expectedStatusCodeRanges,omitempty"`
+	IntervalInSeconds         *int                                               `json:"intervalInSeconds,omitempty"`
+	Path                      *string                                            `json:"path,omitempty"`
+	Port                      *int                                               `json:"port,omitempty"`
+	ProfileMonitorStatus      *string                                            `json:"profileMonitorStatus,omitempty"`
+	PropertyBag               genruntime.PropertyBag                             `json:"$propertyBag,omitempty"`
+	Protocol                  *string                                            `json:"protocol,omitempty"`
+	TimeoutInSeconds          *int                                               `json:"timeoutInSeconds,omitempty"`
+	ToleratedNumberOfFailures *int                                               `json:"toleratedNumberOfFailures,omitempty"`
 }
 
 // Storage version of v1api20220401.TrafficManagerProfileOperatorSpec
@@ -343,29 +360,33 @@ type TrafficManagerProfileOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression            `json:"secretExpressions,omitempty"`
 }
 
-// Storage version of v1api20220401.MonitorConfig_CustomHeaders
-type MonitorConfig_CustomHeaders struct {
+// Storage version of v1api20220401.MonitorConfigCustomHeadersItem
+// Custom header name and value.
+type MonitorConfigCustomHeadersItem struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Value       *string                `json:"value,omitempty"`
 }
 
-// Storage version of v1api20220401.MonitorConfig_CustomHeaders_STATUS
-type MonitorConfig_CustomHeaders_STATUS struct {
+// Storage version of v1api20220401.MonitorConfigCustomHeadersItem_STATUS
+// Custom header name and value.
+type MonitorConfigCustomHeadersItem_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Value       *string                `json:"value,omitempty"`
 }
 
-// Storage version of v1api20220401.MonitorConfig_ExpectedStatusCodeRanges
-type MonitorConfig_ExpectedStatusCodeRanges struct {
+// Storage version of v1api20220401.MonitorConfigExpectedStatusCodeRangesItem
+// Min and max value of a status code range.
+type MonitorConfigExpectedStatusCodeRangesItem struct {
 	Max         *int                   `json:"max,omitempty"`
 	Min         *int                   `json:"min,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
-// Storage version of v1api20220401.MonitorConfig_ExpectedStatusCodeRanges_STATUS
-type MonitorConfig_ExpectedStatusCodeRanges_STATUS struct {
+// Storage version of v1api20220401.MonitorConfigExpectedStatusCodeRangesItem_STATUS
+// Min and max value of a status code range.
+type MonitorConfigExpectedStatusCodeRangesItem_STATUS struct {
 	Max         *int                   `json:"max,omitempty"`
 	Min         *int                   `json:"min,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`

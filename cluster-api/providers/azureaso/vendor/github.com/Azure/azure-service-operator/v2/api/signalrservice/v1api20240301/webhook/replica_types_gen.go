@@ -116,7 +116,12 @@ func (replica *Replica) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (replica *Replica) createValidations() []func(ctx context.Context, obj *v20240301.Replica) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.Replica) (admission.Warnings, error){replica.validateResourceReferences, replica.validateOwnerReference, replica.validateSecretDestinations, replica.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.Replica) (admission.Warnings, error){
+		replica.validateResourceReferences,
+		replica.validateOwnerReference,
+		replica.validateSecretDestinations,
+		replica.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

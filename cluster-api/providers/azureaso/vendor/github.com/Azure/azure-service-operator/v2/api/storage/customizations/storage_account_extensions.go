@@ -16,7 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	"github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	"github.com/Azure/azure-service-operator/v2/api/storage/v20250601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"

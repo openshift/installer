@@ -4,10 +4,18 @@
 package customizations
 
 import (
-	v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
-	v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801"
+	apimanagement_v1api20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	apimanagement_v1api20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview"
+	apimanagement_v1api20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20230501preview/storage"
+	apimanagement_v1api20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501"
+	apimanagement_v1api20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20240501/storage"
+	apimanagement_v20220801 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801"
+	apimanagement_v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20220801/storage"
+	apimanagement_v20230501p "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview"
+	apimanagement_v20230501ps "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20230501preview/storage"
+	apimanagement_v20240501 "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501"
+	apimanagement_v20240501s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -17,8 +25,16 @@ type ProductPolicyExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *ProductPolicyExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20220801.ProductPolicy{},
-		&v20220801s.ProductPolicy{},
-		&v20230501p.ProductPolicy{},
-		&v20230501ps.ProductPolicy{}}
+		&apimanagement_v1api20220801.ProductPolicy{},
+		&apimanagement_v1api20220801s.ProductPolicy{},
+		&apimanagement_v1api20230501p.ProductPolicy{},
+		&apimanagement_v1api20230501ps.ProductPolicy{},
+		&apimanagement_v1api20240501.ProductPolicy{},
+		&apimanagement_v1api20240501s.ProductPolicy{},
+		&apimanagement_v20220801.ProductPolicy{},
+		&apimanagement_v20220801s.ProductPolicy{},
+		&apimanagement_v20230501p.ProductPolicy{},
+		&apimanagement_v20230501ps.ProductPolicy{},
+		&apimanagement_v20240501.ProductPolicy{},
+		&apimanagement_v20240501s.ProductPolicy{}}
 }

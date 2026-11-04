@@ -5,6 +5,8 @@ ApplicationGatewayExtension: Object (0 properties)
 
 ApplicationSecurityGroupExtension: Object (0 properties)
 
+AzureFirewallExtension: Object (0 properties)
+
 BastionHostExtension: Object (0 properties)
 
 DnsForwardingRuleSetsForwardingRuleExtension: Object (0 properties)
@@ -39,6 +41,10 @@ DnsZonesSRVRecordExtension: Object (0 properties)
 
 DnsZonesTXTRecordExtension: Object (0 properties)
 
+FirewallPoliciesRuleCollectionGroupExtension: Object (0 properties)
+
+FirewallPolicyExtension: Object (0 properties)
+
 LoadBalancerExtension: Object (0 properties)
 
 LoadBalancersInboundNatRuleExtension: Object (0 properties)
@@ -50,6 +56,10 @@ NetworkInterfaceExtension: Object (0 properties)
 NetworkSecurityGroupExtension: Object (0 properties)
 
 NetworkSecurityGroupsSecurityRuleExtension: Object (0 properties)
+
+NetworkWatcherExtension: Object (0 properties)
+
+NetworkWatchersFlowLogExtension: Object (0 properties)
 
 PrivateDnsZoneExtension: Object (0 properties)
 

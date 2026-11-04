@@ -116,7 +116,12 @@ func (peering *VirtualNetworksVirtualNetworkPeering) ValidateUpdate(ctx context.
 
 // createValidations validates the creation of the resource
 func (peering *VirtualNetworksVirtualNetworkPeering) createValidations() []func(ctx context.Context, obj *v20240301.VirtualNetworksVirtualNetworkPeering) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.VirtualNetworksVirtualNetworkPeering) (admission.Warnings, error){peering.validateResourceReferences, peering.validateOwnerReference, peering.validateSecretDestinations, peering.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.VirtualNetworksVirtualNetworkPeering) (admission.Warnings, error){
+		peering.validateResourceReferences,
+		peering.validateOwnerReference,
+		peering.validateSecretDestinations,
+		peering.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

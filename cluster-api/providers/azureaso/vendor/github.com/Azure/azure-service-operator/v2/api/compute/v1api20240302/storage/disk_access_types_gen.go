@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=compute.azure.com,resources=diskaccesses,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=compute.azure.com,resources={diskaccesses/status,diskaccesses/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240302.DiskAccess
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskAccess.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}
 type DiskAccess struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (access *DiskAccess) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (access *DiskAccess) SetConditions(conditions conditions.Conditions) {
 	access.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &DiskAccess{}
+
+// ConvertFrom populates our DiskAccess from the provided hub DiskAccess
+func (access *DiskAccess) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.DiskAccess)
+	if !ok {
+		return fmt.Errorf("expected compute/v20240302/storage/DiskAccess but received %T instead", hub)
+	}
+
+	return access.AssignProperties_From_DiskAccess(source)
+}
+
+// ConvertTo populates the provided hub DiskAccess from our DiskAccess
+func (access *DiskAccess) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.DiskAccess)
+	if !ok {
+		return fmt.Errorf("expected compute/v20240302/storage/DiskAccess but received %T instead", hub)
+	}
+
+	return access.AssignProperties_To_DiskAccess(destination)
 }
 
 var _ configmaps.Exporter = &DiskAccess{}
@@ -142,8 +164,75 @@ func (access *DiskAccess) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this DiskAccess is the hub type for conversion
-func (access *DiskAccess) Hub() {}
+// AssignProperties_From_DiskAccess populates our DiskAccess from the provided source DiskAccess
+func (access *DiskAccess) AssignProperties_From_DiskAccess(source *storage.DiskAccess) error {
+
+	// ObjectMeta
+	access.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec DiskAccess_Spec
+	err := spec.AssignProperties_From_DiskAccess_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_DiskAccess_Spec() to populate field Spec")
+	}
+	access.Spec = spec
+
+	// Status
+	var status DiskAccess_STATUS
+	err = status.AssignProperties_From_DiskAccess_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_DiskAccess_STATUS() to populate field Status")
+	}
+	access.Status = status
+
+	// Invoke the augmentConversionForDiskAccess interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess); ok {
+		err := augmentedAccess.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskAccess populates the provided destination DiskAccess from our DiskAccess
+func (access *DiskAccess) AssignProperties_To_DiskAccess(destination *storage.DiskAccess) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *access.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.DiskAccess_Spec
+	err := access.Spec.AssignProperties_To_DiskAccess_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_DiskAccess_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.DiskAccess_STATUS
+	err = access.Status.AssignProperties_To_DiskAccess_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_DiskAccess_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDiskAccess interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess); ok {
+		err := augmentedAccess.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (access *DiskAccess) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (access *DiskAccess) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240302.DiskAccess
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/diskAccess.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/diskAccesses/{diskAccessName}
 type DiskAccessList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DiskAccess `json:"items"`
+}
+
+type augmentConversionForDiskAccess interface {
+	AssignPropertiesFrom(src *storage.DiskAccess) error
+	AssignPropertiesTo(dst *storage.DiskAccess) error
 }
 
 // Storage version of v1api20240302.DiskAccess_Spec
@@ -188,20 +282,188 @@ var _ genruntime.ConvertibleSpec = &DiskAccess_Spec{}
 
 // ConvertSpecFrom populates our DiskAccess_Spec from the provided source
 func (access *DiskAccess_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == access {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.DiskAccess_Spec)
+	if ok {
+		// Populate our instance from source
+		return access.AssignProperties_From_DiskAccess_Spec(src)
 	}
 
-	return source.ConvertSpecTo(access)
+	// Convert to an intermediate form
+	src = &storage.DiskAccess_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = access.AssignProperties_From_DiskAccess_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our DiskAccess_Spec
 func (access *DiskAccess_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == access {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.DiskAccess_Spec)
+	if ok {
+		// Populate destination from our instance
+		return access.AssignProperties_To_DiskAccess_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(access)
+	// Convert to an intermediate form
+	dst = &storage.DiskAccess_Spec{}
+	err := access.AssignProperties_To_DiskAccess_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DiskAccess_Spec populates our DiskAccess_Spec from the provided source DiskAccess_Spec
+func (access *DiskAccess_Spec) AssignProperties_From_DiskAccess_Spec(source *storage.DiskAccess_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	access.AzureName = source.AzureName
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation
+		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		access.ExtendedLocation = &extendedLocation
+	} else {
+		access.ExtendedLocation = nil
+	}
+
+	// Location
+	access.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DiskAccessOperatorSpec
+		err := operatorSpec.AssignProperties_From_DiskAccessOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskAccessOperatorSpec() to populate field OperatorSpec")
+		}
+		access.OperatorSpec = &operatorSpec
+	} else {
+		access.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	access.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		access.Owner = &owner
+	} else {
+		access.Owner = nil
+	}
+
+	// Tags
+	access.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		access.PropertyBag = propertyBag
+	} else {
+		access.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccess_Spec interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess_Spec); ok {
+		err := augmentedAccess.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskAccess_Spec populates the provided destination DiskAccess_Spec from our DiskAccess_Spec
+func (access *DiskAccess_Spec) AssignProperties_To_DiskAccess_Spec(destination *storage.DiskAccess_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(access.PropertyBag)
+
+	// AzureName
+	destination.AzureName = access.AzureName
+
+	// ExtendedLocation
+	if access.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation
+		err := access.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(access.Location)
+
+	// OperatorSpec
+	if access.OperatorSpec != nil {
+		var operatorSpec storage.DiskAccessOperatorSpec
+		err := access.OperatorSpec.AssignProperties_To_DiskAccessOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskAccessOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = access.OriginalVersion
+
+	// Owner
+	if access.Owner != nil {
+		owner := access.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(access.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccess_Spec interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess_Spec); ok {
+		err := augmentedAccess.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.DiskAccess_STATUS
@@ -215,6 +477,7 @@ type DiskAccess_STATUS struct {
 	PrivateEndpointConnections []PrivateEndpointConnection_STATUS `json:"privateEndpointConnections,omitempty"`
 	PropertyBag                genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 	ProvisioningState          *string                            `json:"provisioningState,omitempty"`
+	SystemData                 *SystemData_STATUS                 `json:"systemData,omitempty"`
 	Tags                       map[string]string                  `json:"tags,omitempty"`
 	TimeCreated                *string                            `json:"timeCreated,omitempty"`
 	Type                       *string                            `json:"type,omitempty"`
@@ -224,20 +487,238 @@ var _ genruntime.ConvertibleStatus = &DiskAccess_STATUS{}
 
 // ConvertStatusFrom populates our DiskAccess_STATUS from the provided source
 func (access *DiskAccess_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == access {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.DiskAccess_STATUS)
+	if ok {
+		// Populate our instance from source
+		return access.AssignProperties_From_DiskAccess_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(access)
+	// Convert to an intermediate form
+	src = &storage.DiskAccess_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = access.AssignProperties_From_DiskAccess_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our DiskAccess_STATUS
 func (access *DiskAccess_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == access {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.DiskAccess_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return access.AssignProperties_To_DiskAccess_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(access)
+	// Convert to an intermediate form
+	dst = &storage.DiskAccess_STATUS{}
+	err := access.AssignProperties_To_DiskAccess_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_DiskAccess_STATUS populates our DiskAccess_STATUS from the provided source DiskAccess_STATUS
+func (access *DiskAccess_STATUS) AssignProperties_From_DiskAccess_STATUS(source *storage.DiskAccess_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	access.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation_STATUS
+		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		access.ExtendedLocation = &extendedLocation
+	} else {
+		access.ExtendedLocation = nil
+	}
+
+	// Id
+	access.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	access.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	access.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PrivateEndpointConnections
+	if source.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
+			var privateEndpointConnection PrivateEndpointConnection_STATUS
+			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		access.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		access.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	access.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		access.SystemData = &systemDatum
+	} else {
+		access.SystemData = nil
+	}
+
+	// Tags
+	access.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// TimeCreated
+	access.TimeCreated = genruntime.ClonePointerToString(source.TimeCreated)
+
+	// Type
+	access.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		access.PropertyBag = propertyBag
+	} else {
+		access.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccess_STATUS interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess_STATUS); ok {
+		err := augmentedAccess.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskAccess_STATUS populates the provided destination DiskAccess_STATUS from our DiskAccess_STATUS
+func (access *DiskAccess_STATUS) AssignProperties_To_DiskAccess_STATUS(destination *storage.DiskAccess_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(access.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(access.Conditions)
+
+	// ExtendedLocation
+	if access.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation_STATUS
+		err := access.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(access.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(access.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(access.Name)
+
+	// PrivateEndpointConnections
+	if access.PrivateEndpointConnections != nil {
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(access.PrivateEndpointConnections))
+		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range access.PrivateEndpointConnections {
+			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
+			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+			}
+			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
+		}
+		destination.PrivateEndpointConnections = privateEndpointConnectionList
+	} else {
+		destination.PrivateEndpointConnections = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(access.ProvisioningState)
+
+	// SystemData
+	if access.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := access.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(access.Tags)
+
+	// TimeCreated
+	destination.TimeCreated = genruntime.ClonePointerToString(access.TimeCreated)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(access.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccess_STATUS interface (if implemented) to customize the conversion
+	var accessAsAny any = access
+	if augmentedAccess, ok := accessAsAny.(augmentConversionForDiskAccess_STATUS); ok {
+		err := augmentedAccess.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDiskAccess_Spec interface {
+	AssignPropertiesFrom(src *storage.DiskAccess_Spec) error
+	AssignPropertiesTo(dst *storage.DiskAccess_Spec) error
+}
+
+type augmentConversionForDiskAccess_STATUS interface {
+	AssignPropertiesFrom(src *storage.DiskAccess_STATUS) error
+	AssignPropertiesTo(dst *storage.DiskAccess_STATUS) error
 }
 
 // Storage version of v1api20240302.DiskAccessOperatorSpec
@@ -248,11 +729,191 @@ type DiskAccessOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_DiskAccessOperatorSpec populates our DiskAccessOperatorSpec from the provided source DiskAccessOperatorSpec
+func (operator *DiskAccessOperatorSpec) AssignProperties_From_DiskAccessOperatorSpec(source *storage.DiskAccessOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccessOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskAccessOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskAccessOperatorSpec populates the provided destination DiskAccessOperatorSpec from our DiskAccessOperatorSpec
+func (operator *DiskAccessOperatorSpec) AssignProperties_To_DiskAccessOperatorSpec(destination *storage.DiskAccessOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskAccessOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskAccessOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.PrivateEndpointConnection_STATUS
 // The Private Endpoint Connection resource.
 type PrivateEndpointConnection_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDiskAccessOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DiskAccessOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DiskAccessOperatorSpec) error
+}
+
+type augmentConversionForPrivateEndpointConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS) error
 }
 
 func init() {

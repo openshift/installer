@@ -4,8 +4,7 @@
 package storage
 
 import (
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -18,6 +17,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbformysql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +25,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20230630.FlexibleServersAdministrator
 // Generator information:
-// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/AAD/stable/2023-06-30/AzureADAdministrator.json
+// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/FlexibleServers/stable/2023-06-30/AzureADAdministrator.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DBforMySQL/flexibleServers/{serverName}/administrators/{administratorName}
 type FlexibleServersAdministrator struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +50,36 @@ var _ conversion.Convertible = &FlexibleServersAdministrator{}
 
 // ConvertFrom populates our FlexibleServersAdministrator from the provided hub FlexibleServersAdministrator
 func (administrator *FlexibleServersAdministrator) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersAdministrator)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20231230/storage/FlexibleServersAdministrator but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersAdministrator
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return administrator.AssignProperties_From_FlexibleServersAdministrator(source)
+	err = administrator.AssignProperties_From_FlexibleServersAdministrator(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to administrator")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersAdministrator from our FlexibleServersAdministrator
 func (administrator *FlexibleServersAdministrator) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersAdministrator)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20231230/storage/FlexibleServersAdministrator but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersAdministrator
+	err := administrator.AssignProperties_To_FlexibleServersAdministrator(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from administrator")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return administrator.AssignProperties_To_FlexibleServersAdministrator(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersAdministrator{}
@@ -245,7 +259,7 @@ func (administrator *FlexibleServersAdministrator) OriginalGVK() *schema.GroupVe
 // +kubebuilder:object:root=true
 // Storage version of v1api20230630.FlexibleServersAdministrator
 // Generator information:
-// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/AAD/stable/2023-06-30/AzureADAdministrator.json
+// - Generated from: /mysql/resource-manager/Microsoft.DBforMySQL/FlexibleServers/stable/2023-06-30/AzureADAdministrator.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DBforMySQL/flexibleServers/{serverName}/administrators/{administratorName}
 type FlexibleServersAdministratorList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -718,8 +732,6 @@ func (operator *FlexibleServersAdministratorOperatorSpec) AssignProperties_From_
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -736,8 +748,6 @@ func (operator *FlexibleServersAdministratorOperatorSpec) AssignProperties_From_
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -779,8 +789,6 @@ func (operator *FlexibleServersAdministratorOperatorSpec) AssignProperties_To_Fl
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -797,8 +805,6 @@ func (operator *FlexibleServersAdministratorOperatorSpec) AssignProperties_To_Fl
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

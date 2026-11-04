@@ -63,7 +63,9 @@ func (webhook *RoleDefinition) defaultAzureName(_ context.Context, definition *v
 					definition.Owner(),
 					gk,
 					definition.Namespace,
-					definition.Name))
+					definition.Name,
+				),
+			)
 		}
 	}
 }
