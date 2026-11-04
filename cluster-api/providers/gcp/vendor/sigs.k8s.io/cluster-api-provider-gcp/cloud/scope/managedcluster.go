@@ -120,7 +120,7 @@ func (s *ManagedClusterScope) Namespace() string {
 
 // NetworkName returns the cluster network unique identifier.
 func (s *ManagedClusterScope) NetworkName() string {
-	return ptr.Deref(s.GCPManagedCluster.Spec.Network.Name, "default")
+	return ptr.Deref(s.GCPManagedCluster.Spec.Network.Name, defaultNetworkName)
 }
 
 // NetworkProject returns the project name where network resources should exist.
@@ -277,11 +277,16 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 // ANCHOR: ClusterFirewallSpec
 
 // FirewallRulesSpec returns google compute firewall spec.
-func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
+// The default CAPG firewall rules (health-check and cluster-internal) target
+// CAPI-specific instance tags (e.g. "<cluster>-control-plane", "<cluster>-node")
+// that do not exist on GKE nodes, so they are never created for GCPManagedCluster.
+// The DefaultRulesManagement field is ignored here; only user-specified custom
+// firewall rules are reconciled.
+func (s *ManagedClusterScope) FirewallRulesSpec() ([]*compute.Firewall, error) {
 	return createFirewallRules(
 		s.Name(),
 		s.NetworkLink(),
-		s.GCPManagedCluster.Spec.Network.Firewall.DefaultRulesManagement,
+		infrav1.RulesManagementUnmanaged,
 		s.GCPManagedCluster.Spec.Network.Firewall.FirewallRules,
 	)
 }

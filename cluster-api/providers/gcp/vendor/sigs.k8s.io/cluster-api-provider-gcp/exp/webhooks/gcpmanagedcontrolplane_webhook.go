@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	"github.com/pkg/errors"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
@@ -107,6 +108,11 @@ func (*GCPManagedControlPlane) ValidateCreate(_ context.Context, r *expinfrav1.G
 			r.Spec.ClusterNetwork.GatewayAPIChannel, "can't be set when autopilot is enabled"))
 	}
 
+	if r.Spec.EnableAutopilot && r.Spec.ClusterNetwork != nil && r.Spec.ClusterNetwork.DatapathProvider != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ClusterNetwork", "DatapathProvider"),
+			r.Spec.ClusterNetwork.DatapathProvider, "can't be set when autopilot is enabled: Autopilot clusters always use Dataplane V2"))
+	}
+
 	if r.Spec.ControlPlaneVersion != nil { //nolint:staticcheck
 		if r.Spec.Version != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ControlPlaneVersion"),
@@ -168,6 +174,28 @@ func (*GCPManagedControlPlane) ValidateUpdate(_ context.Context, old, r *expinfr
 	if old.Spec.EnableAutopilot && r.Spec.ClusterNetwork != nil && r.Spec.ClusterNetwork.GatewayAPIChannel != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ClusterNetwork", "GatewayAPIChannel"),
 			r.Spec.ClusterNetwork.GatewayAPIChannel, "can't be set when autopilot is enabled"))
+	}
+
+	if old.Spec.EnableAutopilot && r.Spec.ClusterNetwork != nil && r.Spec.ClusterNetwork.DatapathProvider != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ClusterNetwork", "DatapathProvider"),
+			r.Spec.ClusterNetwork.DatapathProvider, "can't be set when autopilot is enabled: Autopilot clusters always use Dataplane V2"))
+	}
+
+	oldClusterNetwork := ptr.Deref(old.Spec.ClusterNetwork, expinfrav1.ClusterNetwork{})
+	newClusterNetwork := ptr.Deref(r.Spec.ClusterNetwork, expinfrav1.ClusterNetwork{})
+
+	if !cmp.Equal(oldClusterNetwork.DatapathProvider, newClusterNetwork.DatapathProvider) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "ClusterNetwork", "DatapathProvider"),
+				newClusterNetwork.DatapathProvider, "field is immutable"),
+		)
+	}
+
+	if oldClusterNetwork.DNSConfig != nil && newClusterNetwork.DNSConfig == nil {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "ClusterNetwork", "DNSConfig"),
+				newClusterNetwork.DNSConfig, "DNSConfig cannot be removed once set"),
+		)
 	}
 
 	if old.Spec.Version != nil && r.Spec.ControlPlaneVersion != nil { //nolint:staticcheck

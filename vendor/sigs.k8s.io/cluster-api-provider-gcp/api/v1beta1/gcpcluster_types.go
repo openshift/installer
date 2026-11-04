@@ -82,7 +82,7 @@ type GCPClusterStatus struct {
 	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 	Network        Network                       `json:"network,omitempty"`
 
-	// Bastion Instance `json:"bastion,omitempty"`
+	// Ready denotes that the cluster infrastructure is ready.
 	Ready bool `json:"ready"`
 }
 
@@ -91,7 +91,7 @@ type GCPClusterStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this GCPCluster belongs"
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Cluster infrastructure is ready for GCE instances"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Cluster infrastructure is ready for GCE instances"
 // +kubebuilder:printcolumn:name="Network",type="string",JSONPath=".spec.network.name",description="GCP network the cluster is using"
 // +kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=".status.apiEndpoints[0]",description="API Endpoint",priority=1
 
@@ -114,5 +114,5 @@ type GCPClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GCPCluster{}, &GCPClusterList{})
+	objectTypes = append(objectTypes, &GCPCluster{}, &GCPClusterList{})
 }

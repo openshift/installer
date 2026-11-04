@@ -8,8 +8,9 @@ generate_capi_manifest() {
 	echo "Generating ${provider} manifest"
 	pushd "$1"
 	# Parse provider module URL and revision
-	# Workaround the import path for azure-service-operator & openstackorc being different from the module path
-	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed -En 's/"//g;s#/cmd(/(controller|manager))?$##; p')"
+	# Workaround the import path for azure-service-operator & openstackorc being different from the module path,
+	# and for CAPI core, whose manager moved from the module root to the `core` package in v1.14.
+	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed -En 's/"//g;s#/(cmd(/(controller|manager))?|core)$##; p')"
 	mod_info="$(go mod download -json "${provider_go_module}")"
 	popd
 	version="$(echo "${mod_info}" | jq '.Version' | sed 's|"||g')"

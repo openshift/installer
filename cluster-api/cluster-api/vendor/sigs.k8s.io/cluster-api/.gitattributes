@@ -1,3 +1,0 @@
-# Hide generated crd yamls by default in the Github diff UX
-**/config/crd/bases/*.yaml linguist-generated=true
-cmd/clusterctl/config/manifest/clusterctl-api.yaml linguist-generated=true
