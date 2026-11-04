@@ -1276,11 +1276,74 @@ func TestValidateBGPVIP(t *testing.T) {
 			expected: `must be a standard (AA:NN) or large (AA:BB:CC) BGP community`,
 		},
 		{
+			name: "valid standard and large communities at their limits",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"0:0", "65535:65535", "4294967295:0:4294967295"}
+			}),
+			network: ovnNetwork(),
+		},
+		{
+			name: "standard community segment above 16 bits",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"64512:65536"}
+			}),
+			network:  ovnNetwork(),
+			expected: `standard community (AA:NN) segments must be between 0 and 65535`,
+		},
+		{
+			name: "standard community with a 32-bit ASN",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"4200000000:100"}
+			}),
+			network:  ovnNetwork(),
+			expected: `standard community (AA:NN) segments must be between 0 and 65535`,
+		},
+		{
+			name: "large community segment above 32 bits",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"64512:1:4294967296"}
+			}),
+			network:  ovnNetwork(),
+			expected: `large community (AA:BB:CC) segments must be between 0 and 4294967295`,
+		},
+		{
+			name: "community with a leading zero",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"64512:0100"}
+			}),
+			network:  ovnNetwork(),
+			expected: `without leading zeros`,
+		},
+		{
+			name: "community with an overflowing segment",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"64512:99999999999999999999"}
+			}),
+			network:  ovnNetwork(),
+			expected: `segments must be between 0 and 65535`,
+		},
+		{
+			name: "duplicate community",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"64512:100", "64512:100"}
+			}),
+			network:  ovnNetwork(),
+			expected: `Duplicate value: "64512:100"`,
+		},
+		{
+			name: "too many communities",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Communities = []string{"1:1", "1:2", "1:3", "1:4", "1:5", "1:6", "1:7", "1:8", "1:9"}
+			}),
+			network:  ovnNetwork(),
+			expected: `Too many: 9: must have at most 8 items`,
+		},
+		{
 			name: "too many host override peers",
 			platform: bgpPlatform(func(p *baremetal.Platform) {
 				peers := make([]baremetal.BGPPeerConfig, 17)
 				for i := range peers {
-					peers[i] = baremetal.BGPPeerConfig{PeerAddress: "192.168.111.2", PeerASN: 64513}
+					peers[i] = baremetal.BGPPeerConfig{PeerAddress: fmt.Sprintf("192.168.111.%d", i+2), PeerASN: 64513}
 				}
 				p.Hosts = append(p.Hosts, &baremetal.Host{
 					Name:           "host-0",
@@ -1291,6 +1354,75 @@ func TestValidateBGPVIP(t *testing.T) {
 			}),
 			network:  ovnNetwork(),
 			expected: `Too many`,
+		},
+		{
+			name: "password at the 80-byte limit",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].Password = strings.Repeat("x", 80)
+			}),
+			network: ovnNetwork(),
+		},
+		{
+			name: "password above the 80-byte limit",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].Password = strings.Repeat("x", 81)
+			}),
+			network:  ovnNetwork(),
+			expected: `baremetal.bgpVIPConfig.peers[0].password: Too long: may not be more than 80 bytes`,
+		},
+		{
+			name: "password limit counts bytes, not characters",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers[0].Password = strings.Repeat("é", 41)
+			}),
+			network:  ovnNetwork(),
+			expected: `may not be more than 80 bytes`,
+		},
+		{
+			name: "host override password above the 80-byte limit",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.Hosts = append(p.Hosts, &baremetal.Host{
+					Name:           "host-0",
+					BootMACAddress: "CA:FE:CA:FE:00:00",
+					BMC:            baremetal.BMC{Address: "ipmi://192.168.111.10", Username: "u", Password: "p"},
+					BGPPeers:       []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.2", PeerASN: 64513, Password: strings.Repeat("x", 81)}},
+				})
+			}),
+			network:  ovnNetwork(),
+			expected: `bgpPeers[0].password: Too long: may not be more than 80 bytes`,
+		},
+		{
+			name: "duplicate default peer address",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.BGPVIPConfig.Peers = append(p.BGPVIPConfig.Peers, baremetal.BGPPeerConfig{PeerAddress: "192.168.111.1", PeerASN: 64514})
+			}),
+			network:  ovnNetwork(),
+			expected: `baremetal.bgpVIPConfig.peers[1].peerAddress: Duplicate value: "192.168.111.1"`,
+		},
+		{
+			name: "duplicate host override peer address",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.Hosts = append(p.Hosts, &baremetal.Host{
+					Name:           "host-0",
+					BootMACAddress: "CA:FE:CA:FE:00:00",
+					BMC:            baremetal.BMC{Address: "ipmi://192.168.111.10", Username: "u", Password: "p"},
+					BGPPeers:       []baremetal.BGPPeerConfig{{PeerAddress: "fd2e::1", PeerASN: 64513}, {PeerAddress: "fd2e::1", PeerASN: 64514}},
+				})
+			}),
+			network:  ovnNetwork(),
+			expected: `bgpPeers[1].peerAddress: Duplicate value: "fd2e::1"`,
+		},
+		{
+			name: "host override may reuse a default peer address",
+			platform: bgpPlatform(func(p *baremetal.Platform) {
+				p.Hosts = append(p.Hosts, &baremetal.Host{
+					Name:           "host-0",
+					BootMACAddress: "CA:FE:CA:FE:00:00",
+					BMC:            baremetal.BMC{Address: "ipmi://192.168.111.10", Username: "u", Password: "p"},
+					BGPPeers:       []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.1", PeerASN: 64514}},
+				})
+			}),
+			network: ovnNetwork(),
 		},
 		{
 			name: "host bgpPeers without bgpVIPConfig",
@@ -1318,5 +1450,24 @@ func TestValidateBGPVIP(t *testing.T) {
 				assert.ErrorContains(t, err, tc.expected)
 			}
 		})
+	}
+}
+
+// An overlong BGP password is rejected without echoing it in the error.
+func TestValidateBGPVIPPasswordNotEchoed(t *testing.T) {
+	n := network()
+	n.NetworkType = "OVNKubernetes"
+	p := platform().build()
+	password := "do-not-print-" + strings.Repeat("s", 80)
+	p.BGPVIPConfig = &baremetal.BGPVIPConfig{
+		LocalASN: 64512,
+		Peers:    []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.1", PeerASN: 64513, Password: password}},
+	}
+	cfg := installConfig().build()
+	cfg.BareMetal = p
+	err := ValidatePlatform(p, false, n, field.NewPath("baremetal"), cfg).ToAggregate()
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "may not be more than 80 bytes")
+		assert.NotContains(t, err.Error(), "do-not-print")
 	}
 }

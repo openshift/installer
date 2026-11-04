@@ -93,6 +93,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&BMCVerifyCAConfigMap{},
 		&PKIConfiguration{},
 		&BGPVIPConfigMap{},
+		&BGPVIPConfigCR{},
 	}
 }
 
@@ -112,8 +113,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 	pkiConfig := &PKIConfiguration{}
 	bgpVIPConfigMap := &BGPVIPConfigMap{}
+	bgpVIPConfigCR := &BGPVIPConfigCR{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap, bgpVIPConfigCR)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -154,6 +156,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 	m.FileList = append(m.FileList, pkiConfig.Files()...)
 	m.FileList = append(m.FileList, bgpVIPConfigMap.Files()...)
+	m.FileList = append(m.FileList, bgpVIPConfigCR.Files()...)
 
 	asset.SortFiles(m.FileList)
 
@@ -379,11 +382,20 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 		// Endpoint is preserved (non-sensitive)
 
 	case newConfig.Platform.BareMetal != nil:
-		// Redact BMC credentials for all hosts
+		// Redact BMC credentials and BGP peer passwords for all hosts
 		for _, host := range newConfig.Platform.BareMetal.Hosts {
 			if host != nil {
 				host.BMC.Username = ""
 				host.BMC.Password = ""
+				for i := range host.BGPPeers {
+					host.BGPPeers[i].Password = ""
+				}
+			}
+		}
+		// Redact BGP peer passwords; they reach the cluster as Secrets
+		if bgp := newConfig.Platform.BareMetal.BGPVIPConfig; bgp != nil {
+			for i := range bgp.Peers {
+				bgp.Peers[i].Password = ""
 			}
 		}
 	}

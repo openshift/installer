@@ -394,3 +394,51 @@ sshKey: test-ssh-key
 	}
 	assert.Equal(t, expectedConfig, ic, "install config was unexpectedly modified")
 }
+
+// TestRedactedInstallConfigBareMetalBGP checks that BGP peer passwords, both
+// default peers and per-host overrides, are redacted like BMC credentials.
+func TestRedactedInstallConfigBareMetalBGP(t *testing.T) {
+	createInstallConfig := func() *types.InstallConfig {
+		return &types.InstallConfig{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-bgp-cluster"},
+			PullSecret: "test-pull-secret",
+			Platform: types.Platform{
+				BareMetal: &baremetaltypes.Platform{
+					BGPVIPConfig: &baremetaltypes.BGPVIPConfig{
+						LocalASN: 64512,
+						Peers: []baremetaltypes.BGPPeerConfig{
+							{PeerAddress: "192.168.111.1", PeerASN: 64513, Password: "test-bgp-default-password"},
+							{PeerAddress: "192.168.111.2", PeerASN: 64513},
+						},
+					},
+					Hosts: []*baremetaltypes.Host{
+						{
+							Name: "test-host-1",
+							BMC:  baremetaltypes.BMC{Username: "u", Password: "test-bmc-password", Address: "ipmi://192.168.1.10"},
+							BGPPeers: []baremetaltypes.BGPPeerConfig{
+								{PeerAddress: "fd2e::1", PeerASN: 64514, Password: "test-bgp-host-password"}, //nolint:gosec // test fixture, not a credential
+							},
+						},
+						nil,
+					},
+				},
+			},
+		}
+	}
+
+	expectedConfig := createInstallConfig()
+	ic := createInstallConfig()
+	actualYaml, err := redactedInstallConfig(*ic)
+	if !assert.NoError(t, err, "unexpected error") {
+		return
+	}
+	out := string(actualYaml)
+	for _, secret := range []string{"test-bgp-default-password", "test-bgp-host-password", "test-bmc-password", "test-pull-secret"} {
+		assert.NotContains(t, out, secret)
+	}
+	// Peers themselves survive; only the password goes.
+	for _, kept := range []string{"peerAddress: 192.168.111.1", "peerAddress: 192.168.111.2", "peerAddress: fd2e::1", "localASN: 64512"} {
+		assert.Contains(t, out, kept)
+	}
+	assert.Equal(t, expectedConfig, ic, "install config was unexpectedly modified")
+}
