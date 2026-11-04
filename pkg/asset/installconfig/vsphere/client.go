@@ -2,17 +2,14 @@ package vsphere
 
 import (
 	"context"
-	"net/url"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -46,37 +43,16 @@ func NewFinder(client *vim25.Client, all ...bool) Finder {
 type ClientLogout func()
 
 // CreateVSphereClients creates the SOAP and REST client to access
-// different portions of the vSphere API
-// e.g. tags are only available in REST
+// different portions of the vSphere API.
+//
+// Deprecated: use NewSession instead, which provides unified session
+// management with caching, lifecycle management, and proper cleanup.
 func CreateVSphereClients(ctx context.Context, vcenter, username, password string) (*vim25.Client, *rest.Client, ClientLogout, error) {
-	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-
-	u, err := soap.ParseURL(vcenter)
+	sess, cleanup, err := NewSession(ctx, vcenter, username, password)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	u.User = url.UserPassword(username, password)
-	c, err := govmomi.NewClient(ctx, u, false)
-
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	restClient := rest.NewClient(c.Client)
-	err = restClient.Login(ctx, u.User)
-	if err != nil {
-		logoutErr := c.Logout(context.TODO())
-		if logoutErr != nil {
-			err = logoutErr
-		}
-		return nil, nil, nil, err
-	}
-
-	return c.Client, restClient, func() {
-		c.Logout(context.TODO())
-		restClient.Logout(context.TODO())
-	}, nil
+	return sess.vim25, sess.rest, cleanup, nil
 }
 
 // getNetworks returns a slice of Managed Object references for networks in the given vSphere Cluster.
