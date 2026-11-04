@@ -70,6 +70,13 @@ feature set.
     Valid values are `External` (the default) and `Internal`.
 * `pullSecret` (required string): The secret to use when pulling images.
 * `sshKey` (optional string): The public Secure Shell (SSH) key to provide access to instances.
+* `tlsProfileType` (optional string): The cluster-wide TLS security profile.
+    Valid values are:
+    * `Modern`: most secure, requires TLS 1.3 clients.
+    * `Intermediate`: balanced security and compatibility, requires at least TLS 1.2 clients.
+    * `Old`: maximum compatibility with legacy clients, requires at least TLS 1.0 clients.
+
+    When omitted, `Modern` is used.
 
 ### Capabilities
 

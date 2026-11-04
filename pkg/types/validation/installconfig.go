@@ -312,9 +312,26 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 
 	allErrs = append(allErrs, featureSetErrs...)
+	allErrs = append(allErrs, validateTLSProfileType(c)...)
 	allErrs = append(allErrs, validateOSImageStream(c)...)
 
 	return allErrs
+}
+
+// validateTLSProfileType ensures the configured TLS profile is one of the
+// supported predefined profiles. An empty value is allowed and is treated as
+// the Modern profile when rendered.
+func validateTLSProfileType(c *types.InstallConfig) field.ErrorList {
+	valid := []string{
+		string(configv1.TLSProfileModernType),
+		string(configv1.TLSProfileIntermediateType),
+		string(configv1.TLSProfileOldType),
+	}
+	if c.TLSProfileType == "" || slices.Contains(valid, c.TLSProfileType) {
+		return nil
+	}
+
+	return field.ErrorList{field.NotSupported(field.NewPath("tlsProfileType"), c.TLSProfileType, valid)}
 }
 
 const (
