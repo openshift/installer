@@ -398,7 +398,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		pullSecret = merged
 	}
 	konnectivityFeatureGateEnabled := (installConfig.Config.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) ||
-		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement))
+		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement) ||
+		installConfig.Config.Enabled(features.FeatureGateClusterAPIOperator))
 
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
