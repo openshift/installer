@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -89,19 +90,36 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		{name: "release-image", check: checkReleaseImageDownload, optional: false},
 		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
+	var missingServices []string
+	failureReported := false
 	for _, check := range analysisChecks {
-		a := serviceAnalyses[check.name]
+		a, ok := serviceAnalyses[check.name]
+		if !ok {
+			// Missing or unreadable records should not prevent checking other services.
+			if !check.optional && !slices.Contains(servicesFound, check.name) {
+				missingServices = append(missingServices, check.name)
+			}
+			continue
+		}
 		if a.starts == 0 {
 			if check.optional {
 				logrus.Infof("The bootstrap machine did not execute the %s.service systemd unit", check.name)
 				break
 			}
 			logrus.Errorf("The bootstrap machine did not execute the %s.service systemd unit", check.name)
+			failureReported = true
 			break
+		}
+		// Checks may report a failure while allowing analysis to continue.
+		if !a.successful {
+			failureReported = true
 		}
 		if !check.check(a) {
 			break
 		}
+	}
+	if !failureReported && len(missingServices) > 0 {
+		logrus.Warnf("Missing service records: %s", strings.Join(missingServices, ", "))
 	}
 
 	return nil

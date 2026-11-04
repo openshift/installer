@@ -81,6 +81,7 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			name: "release-image not started after node-image-pull succeeded",
 			files: map[string]string{
 				"log-bundle/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/release-image.json":   "[]",
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the release-image.service systemd unit"},
@@ -120,6 +121,59 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 				"log-bundle/bootstrap/services/release-image.json":   generateFailureOutput("pull-release-image"),
 			},
 			expectedOutput: failedReleaseImage(),
+		},
+		{
+			name: "release-image failed without node-image-pull record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/release-image.json": generateFailureOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/bootkube.json":      generateFailureOutput("check-api-url"),
+			},
+			expectedOutput: failedReleaseImage(),
+		},
+		{
+			name: "API Server URL failed without node-image-pull record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/bootkube.json":      generateFailureOutput("check-api-url"),
+			},
+			expectedOutput: failedBootkubeStage("check-api-url"),
+		},
+		{
+			name: "API Server URL failed without release-image record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/bootkube.json":        generateFailureOutput("check-api-url"),
+			},
+			expectedOutput: failedBootkubeStage("check-api-url"),
+		},
+		{
+			name: "successful services without node-image-pull record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/release-image.json": generateSuccessOutput("pull-release-image"),
+				"log-bundle/bootstrap/services/bootkube.json":      generateSuccessOutput("check-api-url"),
+			},
+			expectedOutput: []logrus.Entry{
+				{Level: logrus.WarnLevel, Message: "Missing service records: node-image-pull"},
+			},
+		},
+		{
+			name: "successful image pulls without bootkube record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/node-image-pull.json": generateSuccessOutput("node-image-pull"),
+				"log-bundle/bootstrap/services/release-image.json":   generateSuccessOutput("pull-release-image"),
+			},
+			expectedOutput: []logrus.Entry{
+				{Level: logrus.WarnLevel, Message: "Missing service records: bootkube"},
+			},
+		},
+		{
+			name: "release-image not started without node-image-pull record",
+			files: map[string]string{
+				"log-bundle/bootstrap/services/release-image.json": "[]",
+			},
+			expectedOutput: []logrus.Entry{
+				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the release-image.service systemd unit"},
+			},
 		},
 		{
 			name: "node-image-pull failed before release-image started",
@@ -188,7 +242,7 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the node-image-pull.service: service entries file does not begin with a token: EOF"},
-				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the node-image-pull.service systemd unit"},
+				{Level: logrus.WarnLevel, Message: "Missing service records: release-image, bootkube"},
 			},
 		},
 		{
@@ -200,7 +254,6 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the bootkube.service: service entries file does not begin with a token: EOF"},
-				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the bootkube.service systemd unit"},
 			},
 		},
 		{
@@ -210,7 +263,7 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the node-image-pull.service: service entries file does not begin with an array"},
-				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the node-image-pull.service systemd unit"},
+				{Level: logrus.WarnLevel, Message: "Missing service records: release-image, bootkube"},
 			},
 		},
 		{
@@ -222,7 +275,6 @@ func TestAnalyzeGatherBundle(t *testing.T) {
 			},
 			expectedOutput: []logrus.Entry{
 				{Level: logrus.InfoLevel, Message: "Could not analyze the bootkube.service: service entries file does not begin with an array"},
-				{Level: logrus.ErrorLevel, Message: "The bootstrap machine did not execute the bootkube.service systemd unit"},
 			},
 		},
 	}
