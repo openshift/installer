@@ -55,14 +55,14 @@ func (az *Cloud) GetVirtualMachineWithRetry(ctx context.Context, name types.Node
 	return machine, err
 }
 
-// ListVirtualMachines invokes az.ComputeClientFactory.GetVirtualMachineScaleSetClient().List with exponential backoff retry
+// ListVirtualMachines invokes az.ComputeClientFactory.GetVirtualMachineClient().List with exponential backoff retry
 func (az *Cloud) ListVirtualMachines(ctx context.Context, resourceGroup string) ([]*armcompute.VirtualMachine, error) {
 	allNodes, err := az.ComputeClientFactory.GetVirtualMachineClient().List(ctx, resourceGroup)
 	if err != nil {
-		klog.Errorf("ComputeClientFactory.GetVirtualMachineScaleSetClient().List(%v) failure with err=%v", resourceGroup, err)
+		klog.Errorf("ComputeClientFactory.GetVirtualMachineClient().List(%v) failure with err=%v", resourceGroup, err)
 		return nil, err
 	}
-	klog.V(6).Infof("ComputeClientFactory.GetVirtualMachineScaleSetClient().List(%v) success", resourceGroup)
+	klog.V(6).Infof("ComputeClientFactory.GetVirtualMachineClient().List(%v) success", resourceGroup)
 	return allNodes, nil
 }
 
@@ -148,7 +148,7 @@ func (az *Cloud) newVMCache() (azcache.Resource, error) {
 	if az.VMCacheTTLInSeconds == 0 {
 		az.VMCacheTTLInSeconds = vmCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedCache(time.Duration(az.VMCacheTTLInSeconds)*time.Second, getter, az.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(az.VMCacheTTLInSeconds)*time.Second, getter, az.DisableAPICallCache)
 }
 
 // getVirtualMachine calls 'ComputeClientFactory.GetVirtualMachineScaleSetClient().Get' with a timed cache

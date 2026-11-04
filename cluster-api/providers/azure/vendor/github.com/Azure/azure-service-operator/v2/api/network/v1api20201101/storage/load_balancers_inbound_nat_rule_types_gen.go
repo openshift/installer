@@ -4,7 +4,6 @@
 package storage
 
 import (
-	"fmt"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240101/storage"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
@@ -20,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -27,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20201101.LoadBalancersInboundNatRule
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/loadBalancer.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/loadBalancer.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/inboundNatRules/{inboundNatRuleName}
 type LoadBalancersInboundNatRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -52,22 +52,36 @@ var _ conversion.Convertible = &LoadBalancersInboundNatRule{}
 
 // ConvertFrom populates our LoadBalancersInboundNatRule from the provided hub LoadBalancersInboundNatRule
 func (rule *LoadBalancersInboundNatRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20240301s.LoadBalancersInboundNatRule)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20240301s.LoadBalancersInboundNatRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_LoadBalancersInboundNatRule(source)
+	err = rule.AssignProperties_From_LoadBalancersInboundNatRule(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub LoadBalancersInboundNatRule from our LoadBalancersInboundNatRule
 func (rule *LoadBalancersInboundNatRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20240301s.LoadBalancersInboundNatRule)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/LoadBalancersInboundNatRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20240301s.LoadBalancersInboundNatRule
+	err := rule.AssignProperties_To_LoadBalancersInboundNatRule(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_LoadBalancersInboundNatRule(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &LoadBalancersInboundNatRule{}
@@ -247,7 +261,7 @@ func (rule *LoadBalancersInboundNatRule) OriginalGVK() *schema.GroupVersionKind 
 // +kubebuilder:object:root=true
 // Storage version of v1api20201101.LoadBalancersInboundNatRule
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/loadBalancer.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/loadBalancer.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/loadBalancers/{loadBalancerName}/inboundNatRules/{inboundNatRuleName}
 type LoadBalancersInboundNatRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -951,8 +965,6 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_From_L
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -969,8 +981,6 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_From_L
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1012,8 +1022,6 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_To_Loa
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1030,8 +1038,6 @@ func (operator *LoadBalancersInboundNatRuleOperatorSpec) AssignProperties_To_Loa
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

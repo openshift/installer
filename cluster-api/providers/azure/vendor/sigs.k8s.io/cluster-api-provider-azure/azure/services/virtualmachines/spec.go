@@ -44,6 +44,7 @@ type VMSpec struct {
 	SSHKeyData                  string
 	Size                        string
 	AvailabilitySetID           string
+	VirtualMachineScaleSetID    string
 	Zone                        string
 	Identity                    infrav1.VMIdentity
 	OSDisk                      infrav1.OSDisk
@@ -79,7 +80,7 @@ func (s *VMSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the virtual machine.
-func (s *VMSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VMSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armcompute.VirtualMachine); !ok {
 			return nil, errors.Errorf("%T is not an armcompute.VirtualMachine", existing)
@@ -91,6 +92,10 @@ func (s *VMSpec) Parameters(_ context.Context, existing interface{}) (params int
 	// VM got deleted outside of capz, do not recreate it as Machines are immutable.
 	if s.ProviderID != "" {
 		return nil, azure.VMDeletedError{ProviderID: s.ProviderID}
+	}
+
+	if s.AvailabilitySetID != "" && s.VirtualMachineScaleSetID != "" {
+		return nil, azure.WithTerminalError(errors.New("availabilitySetID and virtualMachineScaleSetID cannot both be set"))
 	}
 
 	storageProfile, err := s.generateStorageProfile()
@@ -132,6 +137,7 @@ func (s *VMSpec) Parameters(_ context.Context, existing interface{}) (params int
 		Properties: &armcompute.VirtualMachineProperties{
 			AdditionalCapabilities: s.generateAdditionalCapabilities(),
 			AvailabilitySet:        s.getAvailabilitySet(),
+			VirtualMachineScaleSet: s.getVirtualMachineScaleSet(),
 			HardwareProfile: &armcompute.HardwareProfile{
 				VMSize: ptr.To(armcompute.VirtualMachineSizeTypes(s.Size)),
 			},
@@ -346,6 +352,14 @@ func (s *VMSpec) generateSecurityProfile(storageProfile *armcompute.StorageProfi
 			VTpmEnabled:       s.SecurityProfile.UefiSettings.VTpmEnabled,
 		}
 
+		if s.SecurityProfile.EncryptionAtHost != nil {
+			if !s.SKU.HasCapability(resourceskus.EncryptionAtHost) && *s.SecurityProfile.EncryptionAtHost {
+				return nil, azure.WithTerminalError(errors.Errorf("encryption at host is not supported for VM type %s", s.Size))
+			}
+
+			securityProfile.EncryptionAtHost = s.SecurityProfile.EncryptionAtHost
+		}
+
 		return securityProfile, nil
 	}
 
@@ -440,6 +454,14 @@ func (s *VMSpec) getAvailabilitySet() *armcompute.SubResource {
 		as = &armcompute.SubResource{ID: &s.AvailabilitySetID}
 	}
 	return as
+}
+
+func (s *VMSpec) getVirtualMachineScaleSet() *armcompute.SubResource {
+	var vmss *armcompute.SubResource
+	if s.VirtualMachineScaleSetID != "" {
+		vmss = &armcompute.SubResource{ID: &s.VirtualMachineScaleSetID}
+	}
+	return vmss
 }
 
 func (s *VMSpec) getZones() []*string {

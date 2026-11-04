@@ -21,13 +21,13 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20250801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/secret"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -54,7 +54,7 @@ type ManagedClusterScope interface {
 	aso.Scope
 	azure.Authorizer
 	ManagedClusterSpec() azure.ASOResourceSpecGetter[genruntime.MetaObject]
-	SetControlPlaneEndpoint(clusterv1.APIEndpoint)
+	SetControlPlaneEndpoint(clusterv1beta1.APIEndpoint)
 	MakeEmptyKubeConfigSecret() corev1.Secret
 	GetAdminKubeconfigData() []byte
 	SetAdminKubeconfigData([]byte)
@@ -92,14 +92,14 @@ func postCreateOrUpdateResourceHook(ctx context.Context, scope ManagedClusterSco
 	}
 
 	// Update control plane endpoint.
-	endpoint := clusterv1.APIEndpoint{
+	endpoint := clusterv1beta1.APIEndpoint{
 		Host: ptr.Deref(managedCluster.Status.Fqdn, ""),
 		Port: 443,
 	}
 	if managedCluster.Status.ApiServerAccessProfile != nil &&
 		ptr.Deref(managedCluster.Status.ApiServerAccessProfile.EnablePrivateCluster, false) &&
 		!ptr.Deref(managedCluster.Status.ApiServerAccessProfile.EnablePrivateClusterPublicFQDN, false) {
-		endpoint = clusterv1.APIEndpoint{
+		endpoint = clusterv1beta1.APIEndpoint{
 			Host: ptr.Deref(managedCluster.Status.PrivateFQDN, ""),
 			Port: 443,
 		}
