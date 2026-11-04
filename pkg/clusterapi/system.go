@@ -239,7 +239,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			if err != nil {
 				return errors.Wrap(err, fmt.Sprintf("could not serialize Azure %s endpoints", cloudName))
 			}
-			envFP = filepath.Join(c.componentDir, "azurestackcloud.json")
+			envFP = filepath.Join(c.componentDir, fmt.Sprintf("%s.json", strings.ToLower(string(cloudName))))
 			if err = os.WriteFile(envFP, b, 0600); err != nil {
 				return fmt.Errorf("failed to write Azure %s environment file: %w", cloudName, err)
 			}
@@ -302,6 +302,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
 					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
 					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.TokenAudience,
+					"AZURE_AUTHORITY_HOST":              session.Environment.ActiveDirectoryEndpoint,
 					"AZURE_ENVIRONMENT_FILEPATH":        envFP,
 				},
 			),
