@@ -376,6 +376,6 @@ replace k8s.io/apimachinery => k8s.io/apimachinery v0.32.1
 
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.9.6
 
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.48.0-sec.2
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.48.0-sec.4
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.50.0-sec.4
