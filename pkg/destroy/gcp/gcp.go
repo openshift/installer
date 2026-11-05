@@ -203,6 +203,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
 		{name: "Disks", execute: o.destroyDisks},
+		{name: "WIF Providers", execute: o.destroyWIFProviders},
 		{name: "Service accounts", execute: o.destroyServiceAccounts},
 		{name: "Images", execute: o.destroyImages},
 		{name: "DNS", execute: o.destroyDNS},
@@ -221,6 +222,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
 		{name: "Filestores", execute: o.destroyFilestores},
+		{name: "WIF Pools", execute: o.destroyWIFPools},
 	}}
 
 	// create the main Context, so all stages can accept and make context children

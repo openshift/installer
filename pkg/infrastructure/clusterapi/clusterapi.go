@@ -89,6 +89,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	workerIgnAsset := &machine.Worker{}
 	tfvarsAsset := &tfvars.TerraformVariables{}
 	rootCA := &tls.RootCA{}
+	boundSASigningKey := &tls.BoundSASigningKey{}
 	parents.Get(
 		manifestsAsset,
 		workersAsset,
@@ -103,6 +104,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		capiMachinesAsset,
 		tfvarsAsset,
 		rootCA,
+		boundSASigningKey,
 	)
 
 	var capiClusters []*clusterv1.Cluster
@@ -128,12 +130,13 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
-			InfraID:          clusterID.InfraID,
-			InstallConfig:    installConfig,
-			RhcosImage:       rhcosImage,
-			ManifestsAsset:   manifestsAsset,
-			MachineManifests: machineManifests,
-			WorkersAsset:     workersAsset,
+			InfraID:           clusterID.InfraID,
+			InstallConfig:     installConfig,
+			RhcosImage:        rhcosImage,
+			ManifestsAsset:    manifestsAsset,
+			MachineManifests:  machineManifests,
+			WorkersAsset:      workersAsset,
+			BoundSASigningKey: boundSASigningKey,
 		}
 		timer.StartTimer(preProvisionStage)
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {
