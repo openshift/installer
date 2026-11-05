@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -84,22 +85,41 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		check    func(analysis) bool
 		optional bool
 	}{
+		// Check services in startup order so the first failure is reported.
+		{name: "node-image-pull", check: checkNodeImagePull, optional: false},
 		{name: "release-image", check: checkReleaseImageDownload, optional: false},
 		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
+	var missingServices []string
+	failureReported := false
 	for _, check := range analysisChecks {
-		a := serviceAnalyses[check.name]
+		a, ok := serviceAnalyses[check.name]
+		if !ok {
+			// Missing or unreadable records should not prevent checking other services.
+			if !check.optional && !slices.Contains(servicesFound, check.name) {
+				missingServices = append(missingServices, check.name)
+			}
+			continue
+		}
 		if a.starts == 0 {
 			if check.optional {
 				logrus.Infof("The bootstrap machine did not execute the %s.service systemd unit", check.name)
 				break
 			}
 			logrus.Errorf("The bootstrap machine did not execute the %s.service systemd unit", check.name)
+			failureReported = true
 			break
+		}
+		// Checks may report a failure while allowing analysis to continue.
+		if !a.successful {
+			failureReported = true
 		}
 		if !check.check(a) {
 			break
 		}
+	}
+	if !failureReported && len(missingServices) > 0 {
+		logrus.Warnf("Missing service records: %s", strings.Join(missingServices, ", "))
 	}
 
 	return nil
@@ -110,7 +130,16 @@ func checkReleaseImageDownload(a analysis) bool {
 		return true
 	}
 	logrus.Error("The bootstrap machine failed to download the release image")
-	a.logLastError()
+	a.logLastError("release-image")
+	return false
+}
+
+func checkNodeImagePull(a analysis) bool {
+	if a.successful {
+		return true
+	}
+	logrus.Error("Node image pull failed on the bootstrap machine")
+	a.logLastError("node-image-pull")
 	return false
 }
 
@@ -130,7 +159,7 @@ func checkBootkubeService(a analysis) bool {
 	default:
 		logrus.Errorf("The bootkube service failed at stage %q", a.failingStage)
 	}
-	a.logLastError()
+	a.logLastError("bootkube")
 	return true
 }
 
@@ -189,7 +218,11 @@ func analyzeService(r io.Reader) (analysis, error) {
 	return a, nil
 }
 
-func (a analysis) logLastError() {
+func (a analysis) logLastError(serviceName string) {
+	if strings.TrimSpace(a.lastError) == "" {
+		logrus.Infof("See bootstrap/journals/%s.log in the log bundle for more details", serviceName)
+		return
+	}
 	for _, l := range strings.Split(a.lastError, "\n") {
 		logrus.Info(l)
 	}
