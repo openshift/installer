@@ -288,6 +288,11 @@ func (in *MetricAlertAction) DeepCopyInto(out *MetricAlertAction) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ActionGroupReference != nil {
+		in, out := &in.ActionGroupReference, &out.ActionGroupReference
+		*out = new(genruntime.ResourceReference)
+		**out = **in
+	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
 		*out = make(genruntime.PropertyBag, len(*in))
@@ -546,7 +551,7 @@ func (in *MetricAlertOperatorSpec) DeepCopyInto(out *MetricAlertOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -564,7 +569,7 @@ func (in *MetricAlertOperatorSpec) DeepCopyInto(out *MetricAlertOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

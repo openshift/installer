@@ -104,7 +104,9 @@ var fileShareProperties_RootSquash_Values = map[string]FileShareProperties_RootS
 type SignedIdentifier struct {
 	// AccessPolicy: Access policy
 	AccessPolicy *AccessPolicy `json:"accessPolicy,omitempty"`
-	Id           *string       `json:"id,omitempty"`
+
+	// Id: An unique identifier of the stored access policy.
+	Id *string `json:"id,omitempty"`
 }
 
 type AccessPolicy struct {

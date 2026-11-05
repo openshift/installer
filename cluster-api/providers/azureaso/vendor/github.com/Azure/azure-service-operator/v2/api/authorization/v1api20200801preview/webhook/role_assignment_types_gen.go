@@ -104,7 +104,12 @@ func (assignment *RoleAssignment) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (assignment *RoleAssignment) createValidations() []func(ctx context.Context, obj *v20200801p.RoleAssignment) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200801p.RoleAssignment) (admission.Warnings, error){assignment.validateResourceReferences, assignment.validateSecretDestinations, assignment.validateConfigMapDestinations, assignment.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20200801p.RoleAssignment) (admission.Warnings, error){
+		assignment.validateResourceReferences,
+		assignment.validateSecretDestinations,
+		assignment.validateConfigMapDestinations,
+		assignment.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

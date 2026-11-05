@@ -24,9 +24,9 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// CreateOrUpdateInterface invokes az.NetworkClientFactory.GetInterfaceClient().CreateOrUpdate with exponential backoff retry
+// CreateOrUpdateInterface invokes az.ComputeClientFactory.GetInterfaceClient().CreateOrUpdate with exponential backoff retry
 func (az *Cloud) CreateOrUpdateInterface(ctx context.Context, service *v1.Service, nic *armnetwork.Interface) error {
-	_, rerr := az.NetworkClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, az.ResourceGroup, *nic.Name, *nic)
+	_, rerr := az.ComputeClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, az.ResourceGroup, *nic.Name, *nic)
 	klog.V(10).Infof("InterfacesClient.CreateOrUpdate(%s): end", *nic.Name)
 	if rerr != nil {
 		klog.Errorf("InterfacesClient.CreateOrUpdate(%s) failed: %s", *nic.Name, rerr.Error())

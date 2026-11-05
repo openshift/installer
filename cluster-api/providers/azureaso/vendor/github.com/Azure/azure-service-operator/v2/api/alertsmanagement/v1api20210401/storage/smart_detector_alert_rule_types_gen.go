@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v20210401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -13,21 +15,19 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=alertsmanagement.azure.com,resources=smartdetectoralertrules,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=alertsmanagement.azure.com,resources={smartdetectoralertrules/status,smartdetectoralertrules/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,alertsmanagement}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20210401.SmartDetectorAlertRule
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2021-04-01/SmartDetectorAlertRulesApi.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/Legacy/stable/2021-04-01/SmartDetectorAlertRulesApi.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.alertsManagement/smartDetectorAlertRules/{alertRuleName}
 type SmartDetectorAlertRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -46,6 +46,28 @@ func (rule *SmartDetectorAlertRule) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (rule *SmartDetectorAlertRule) SetConditions(conditions conditions.Conditions) {
 	rule.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &SmartDetectorAlertRule{}
+
+// ConvertFrom populates our SmartDetectorAlertRule from the provided hub SmartDetectorAlertRule
+func (rule *SmartDetectorAlertRule) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.SmartDetectorAlertRule)
+	if !ok {
+		return fmt.Errorf("expected alertsmanagement/v20210401/storage/SmartDetectorAlertRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_From_SmartDetectorAlertRule(source)
+}
+
+// ConvertTo populates the provided hub SmartDetectorAlertRule from our SmartDetectorAlertRule
+func (rule *SmartDetectorAlertRule) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.SmartDetectorAlertRule)
+	if !ok {
+		return fmt.Errorf("expected alertsmanagement/v20210401/storage/SmartDetectorAlertRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_To_SmartDetectorAlertRule(destination)
 }
 
 var _ configmaps.Exporter = &SmartDetectorAlertRule{}
@@ -143,8 +165,75 @@ func (rule *SmartDetectorAlertRule) SetStatus(status genruntime.ConvertibleStatu
 	return nil
 }
 
-// Hub marks that this SmartDetectorAlertRule is the hub type for conversion
-func (rule *SmartDetectorAlertRule) Hub() {}
+// AssignProperties_From_SmartDetectorAlertRule populates our SmartDetectorAlertRule from the provided source SmartDetectorAlertRule
+func (rule *SmartDetectorAlertRule) AssignProperties_From_SmartDetectorAlertRule(source *storage.SmartDetectorAlertRule) error {
+
+	// ObjectMeta
+	rule.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec SmartDetectorAlertRule_Spec
+	err := spec.AssignProperties_From_SmartDetectorAlertRule_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_Spec() to populate field Spec")
+	}
+	rule.Spec = spec
+
+	// Status
+	var status SmartDetectorAlertRule_STATUS
+	err = status.AssignProperties_From_SmartDetectorAlertRule_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRule_STATUS() to populate field Status")
+	}
+	rule.Status = status
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SmartDetectorAlertRule populates the provided destination SmartDetectorAlertRule from our SmartDetectorAlertRule
+func (rule *SmartDetectorAlertRule) AssignProperties_To_SmartDetectorAlertRule(destination *storage.SmartDetectorAlertRule) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *rule.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.SmartDetectorAlertRule_Spec
+	err := rule.Spec.AssignProperties_To_SmartDetectorAlertRule_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.SmartDetectorAlertRule_STATUS
+	err = rule.Status.AssignProperties_To_SmartDetectorAlertRule_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRule_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (rule *SmartDetectorAlertRule) OriginalGVK() *schema.GroupVersionKind {
@@ -158,7 +247,7 @@ func (rule *SmartDetectorAlertRule) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20210401.SmartDetectorAlertRule
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2021-04-01/SmartDetectorAlertRulesApi.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/Legacy/stable/2021-04-01/SmartDetectorAlertRulesApi.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.alertsManagement/smartDetectorAlertRules/{alertRuleName}
 type SmartDetectorAlertRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -171,6 +260,11 @@ type SmartDetectorAlertRuleList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2021-04-01")
+
+type augmentConversionForSmartDetectorAlertRule interface {
+	AssignPropertiesFrom(src *storage.SmartDetectorAlertRule) error
+	AssignPropertiesTo(dst *storage.SmartDetectorAlertRule) error
+}
 
 // Storage version of v1api20210401.SmartDetectorAlertRule_Spec
 type SmartDetectorAlertRule_Spec struct {
@@ -203,20 +297,282 @@ var _ genruntime.ConvertibleSpec = &SmartDetectorAlertRule_Spec{}
 
 // ConvertSpecFrom populates our SmartDetectorAlertRule_Spec from the provided source
 func (rule *SmartDetectorAlertRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == rule {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.SmartDetectorAlertRule_Spec)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_SmartDetectorAlertRule_Spec(src)
 	}
 
-	return source.ConvertSpecTo(rule)
+	// Convert to an intermediate form
+	src = &storage.SmartDetectorAlertRule_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = rule.AssignProperties_From_SmartDetectorAlertRule_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our SmartDetectorAlertRule_Spec
 func (rule *SmartDetectorAlertRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == rule {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.SmartDetectorAlertRule_Spec)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_SmartDetectorAlertRule_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(rule)
+	// Convert to an intermediate form
+	dst = &storage.SmartDetectorAlertRule_Spec{}
+	err := rule.AssignProperties_To_SmartDetectorAlertRule_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SmartDetectorAlertRule_Spec populates our SmartDetectorAlertRule_Spec from the provided source SmartDetectorAlertRule_Spec
+func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAlertRule_Spec(source *storage.SmartDetectorAlertRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActionGroups
+	if source.ActionGroups != nil {
+		var actionGroup ActionGroupsInformation
+		err := actionGroup.AssignProperties_From_ActionGroupsInformation(source.ActionGroups)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation() to populate field ActionGroups")
+		}
+		rule.ActionGroups = &actionGroup
+	} else {
+		rule.ActionGroups = nil
+	}
+
+	// AzureName
+	rule.AzureName = source.AzureName
+
+	// Description
+	rule.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Detector
+	if source.Detector != nil {
+		var detector Detector
+		err := detector.AssignProperties_From_Detector(source.Detector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Detector() to populate field Detector")
+		}
+		rule.Detector = &detector
+	} else {
+		rule.Detector = nil
+	}
+
+	// Frequency
+	rule.Frequency = genruntime.ClonePointerToString(source.Frequency)
+
+	// Location
+	rule.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SmartDetectorAlertRuleOperatorSpec
+		err := operatorSpec.AssignProperties_From_SmartDetectorAlertRuleOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		rule.OperatorSpec = &operatorSpec
+	} else {
+		rule.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	rule.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		rule.Owner = &owner
+	} else {
+		rule.Owner = nil
+	}
+
+	// ScopeReferences
+	if source.ScopeReferences != nil {
+		scopeReferenceList := make([]genruntime.ResourceReference, len(source.ScopeReferences))
+		for scopeReferenceIndex, scopeReferenceItem := range source.ScopeReferences {
+			scopeReferenceList[scopeReferenceIndex] = scopeReferenceItem.Copy()
+		}
+		rule.ScopeReferences = scopeReferenceList
+	} else {
+		rule.ScopeReferences = nil
+	}
+
+	// Severity
+	rule.Severity = genruntime.ClonePointerToString(source.Severity)
+
+	// State
+	rule.State = genruntime.ClonePointerToString(source.State)
+
+	// Tags
+	rule.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Throttling
+	if source.Throttling != nil {
+		var throttling ThrottlingInformation
+		err := throttling.AssignProperties_From_ThrottlingInformation(source.Throttling)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ThrottlingInformation() to populate field Throttling")
+		}
+		rule.Throttling = &throttling
+	} else {
+		rule.Throttling = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SmartDetectorAlertRule_Spec populates the provided destination SmartDetectorAlertRule_Spec from our SmartDetectorAlertRule_Spec
+func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertRule_Spec(destination *storage.SmartDetectorAlertRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// ActionGroups
+	if rule.ActionGroups != nil {
+		var actionGroup storage.ActionGroupsInformation
+		err := rule.ActionGroups.AssignProperties_To_ActionGroupsInformation(&actionGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation() to populate field ActionGroups")
+		}
+		destination.ActionGroups = &actionGroup
+	} else {
+		destination.ActionGroups = nil
+	}
+
+	// AzureName
+	destination.AzureName = rule.AzureName
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(rule.Description)
+
+	// Detector
+	if rule.Detector != nil {
+		var detector storage.Detector
+		err := rule.Detector.AssignProperties_To_Detector(&detector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Detector() to populate field Detector")
+		}
+		destination.Detector = &detector
+	} else {
+		destination.Detector = nil
+	}
+
+	// Frequency
+	destination.Frequency = genruntime.ClonePointerToString(rule.Frequency)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(rule.Location)
+
+	// OperatorSpec
+	if rule.OperatorSpec != nil {
+		var operatorSpec storage.SmartDetectorAlertRuleOperatorSpec
+		err := rule.OperatorSpec.AssignProperties_To_SmartDetectorAlertRuleOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SmartDetectorAlertRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = rule.OriginalVersion
+
+	// Owner
+	if rule.Owner != nil {
+		owner := rule.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// ScopeReferences
+	if rule.ScopeReferences != nil {
+		scopeReferenceList := make([]genruntime.ResourceReference, len(rule.ScopeReferences))
+		for scopeReferenceIndex, scopeReferenceItem := range rule.ScopeReferences {
+			scopeReferenceList[scopeReferenceIndex] = scopeReferenceItem.Copy()
+		}
+		destination.ScopeReferences = scopeReferenceList
+	} else {
+		destination.ScopeReferences = nil
+	}
+
+	// Severity
+	destination.Severity = genruntime.ClonePointerToString(rule.Severity)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(rule.State)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(rule.Tags)
+
+	// Throttling
+	if rule.Throttling != nil {
+		var throttling storage.ThrottlingInformation
+		err := rule.Throttling.AssignProperties_To_ThrottlingInformation(&throttling)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ThrottlingInformation() to populate field Throttling")
+		}
+		destination.Throttling = &throttling
+	} else {
+		destination.Throttling = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210401.SmartDetectorAlertRule_STATUS
@@ -242,20 +598,238 @@ var _ genruntime.ConvertibleStatus = &SmartDetectorAlertRule_STATUS{}
 
 // ConvertStatusFrom populates our SmartDetectorAlertRule_STATUS from the provided source
 func (rule *SmartDetectorAlertRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == rule {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.SmartDetectorAlertRule_STATUS)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_SmartDetectorAlertRule_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(rule)
+	// Convert to an intermediate form
+	src = &storage.SmartDetectorAlertRule_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = rule.AssignProperties_From_SmartDetectorAlertRule_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our SmartDetectorAlertRule_STATUS
 func (rule *SmartDetectorAlertRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == rule {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.SmartDetectorAlertRule_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_SmartDetectorAlertRule_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(rule)
+	// Convert to an intermediate form
+	dst = &storage.SmartDetectorAlertRule_STATUS{}
+	err := rule.AssignProperties_To_SmartDetectorAlertRule_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SmartDetectorAlertRule_STATUS populates our SmartDetectorAlertRule_STATUS from the provided source SmartDetectorAlertRule_STATUS
+func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_From_SmartDetectorAlertRule_STATUS(source *storage.SmartDetectorAlertRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ActionGroups
+	if source.ActionGroups != nil {
+		var actionGroup ActionGroupsInformation_STATUS
+		err := actionGroup.AssignProperties_From_ActionGroupsInformation_STATUS(source.ActionGroups)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
+		}
+		rule.ActionGroups = &actionGroup
+	} else {
+		rule.ActionGroups = nil
+	}
+
+	// Conditions
+	rule.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Description
+	rule.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Detector
+	if source.Detector != nil {
+		var detector Detector_STATUS
+		err := detector.AssignProperties_From_Detector_STATUS(source.Detector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Detector_STATUS() to populate field Detector")
+		}
+		rule.Detector = &detector
+	} else {
+		rule.Detector = nil
+	}
+
+	// Frequency
+	rule.Frequency = genruntime.ClonePointerToString(source.Frequency)
+
+	// Id
+	rule.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	rule.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Scope
+	rule.Scope = genruntime.CloneSliceOfString(source.Scope)
+
+	// Severity
+	rule.Severity = genruntime.ClonePointerToString(source.Severity)
+
+	// State
+	rule.State = genruntime.ClonePointerToString(source.State)
+
+	// Tags
+	rule.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Throttling
+	if source.Throttling != nil {
+		var throttling ThrottlingInformation_STATUS
+		err := throttling.AssignProperties_From_ThrottlingInformation_STATUS(source.Throttling)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ThrottlingInformation_STATUS() to populate field Throttling")
+		}
+		rule.Throttling = &throttling
+	} else {
+		rule.Throttling = nil
+	}
+
+	// Type
+	rule.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SmartDetectorAlertRule_STATUS populates the provided destination SmartDetectorAlertRule_STATUS from our SmartDetectorAlertRule_STATUS
+func (rule *SmartDetectorAlertRule_STATUS) AssignProperties_To_SmartDetectorAlertRule_STATUS(destination *storage.SmartDetectorAlertRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// ActionGroups
+	if rule.ActionGroups != nil {
+		var actionGroup storage.ActionGroupsInformation_STATUS
+		err := rule.ActionGroups.AssignProperties_To_ActionGroupsInformation_STATUS(&actionGroup)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ActionGroupsInformation_STATUS() to populate field ActionGroups")
+		}
+		destination.ActionGroups = &actionGroup
+	} else {
+		destination.ActionGroups = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(rule.Conditions)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(rule.Description)
+
+	// Detector
+	if rule.Detector != nil {
+		var detector storage.Detector_STATUS
+		err := rule.Detector.AssignProperties_To_Detector_STATUS(&detector)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Detector_STATUS() to populate field Detector")
+		}
+		destination.Detector = &detector
+	} else {
+		destination.Detector = nil
+	}
+
+	// Frequency
+	destination.Frequency = genruntime.ClonePointerToString(rule.Frequency)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(rule.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(rule.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// Scope
+	destination.Scope = genruntime.CloneSliceOfString(rule.Scope)
+
+	// Severity
+	destination.Severity = genruntime.ClonePointerToString(rule.Severity)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(rule.State)
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(rule.Tags)
+
+	// Throttling
+	if rule.Throttling != nil {
+		var throttling storage.ThrottlingInformation_STATUS
+		err := rule.Throttling.AssignProperties_To_ThrottlingInformation_STATUS(&throttling)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ThrottlingInformation_STATUS() to populate field Throttling")
+		}
+		destination.Throttling = &throttling
+	} else {
+		destination.Throttling = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(rule.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSmartDetectorAlertRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210401.ActionGroupsInformation
@@ -267,6 +841,90 @@ type ActionGroupsInformation struct {
 	PropertyBag          genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ActionGroupsInformation populates our ActionGroupsInformation from the provided source ActionGroupsInformation
+func (information *ActionGroupsInformation) AssignProperties_From_ActionGroupsInformation(source *storage.ActionGroupsInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomEmailSubject
+	information.CustomEmailSubject = genruntime.ClonePointerToString(source.CustomEmailSubject)
+
+	// CustomWebhookPayload
+	information.CustomWebhookPayload = genruntime.ClonePointerToString(source.CustomWebhookPayload)
+
+	// GroupReferences
+	if source.GroupReferences != nil {
+		groupReferenceList := make([]genruntime.ResourceReference, len(source.GroupReferences))
+		for groupReferenceIndex, groupReferenceItem := range source.GroupReferences {
+			groupReferenceList[groupReferenceIndex] = groupReferenceItem.Copy()
+		}
+		information.GroupReferences = groupReferenceList
+	} else {
+		information.GroupReferences = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForActionGroupsInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForActionGroupsInformation); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ActionGroupsInformation populates the provided destination ActionGroupsInformation from our ActionGroupsInformation
+func (information *ActionGroupsInformation) AssignProperties_To_ActionGroupsInformation(destination *storage.ActionGroupsInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// CustomEmailSubject
+	destination.CustomEmailSubject = genruntime.ClonePointerToString(information.CustomEmailSubject)
+
+	// CustomWebhookPayload
+	destination.CustomWebhookPayload = genruntime.ClonePointerToString(information.CustomWebhookPayload)
+
+	// GroupReferences
+	if information.GroupReferences != nil {
+		groupReferenceList := make([]genruntime.ResourceReference, len(information.GroupReferences))
+		for groupReferenceIndex, groupReferenceItem := range information.GroupReferences {
+			groupReferenceList[groupReferenceIndex] = groupReferenceItem.Copy()
+		}
+		destination.GroupReferences = groupReferenceList
+	} else {
+		destination.GroupReferences = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForActionGroupsInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForActionGroupsInformation); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210401.ActionGroupsInformation_STATUS
 // The Action Groups information, used by the alert rule.
 type ActionGroupsInformation_STATUS struct {
@@ -276,12 +934,168 @@ type ActionGroupsInformation_STATUS struct {
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ActionGroupsInformation_STATUS populates our ActionGroupsInformation_STATUS from the provided source ActionGroupsInformation_STATUS
+func (information *ActionGroupsInformation_STATUS) AssignProperties_From_ActionGroupsInformation_STATUS(source *storage.ActionGroupsInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CustomEmailSubject
+	information.CustomEmailSubject = genruntime.ClonePointerToString(source.CustomEmailSubject)
+
+	// CustomWebhookPayload
+	information.CustomWebhookPayload = genruntime.ClonePointerToString(source.CustomWebhookPayload)
+
+	// GroupIds
+	information.GroupIds = genruntime.CloneSliceOfString(source.GroupIds)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForActionGroupsInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForActionGroupsInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ActionGroupsInformation_STATUS populates the provided destination ActionGroupsInformation_STATUS from our ActionGroupsInformation_STATUS
+func (information *ActionGroupsInformation_STATUS) AssignProperties_To_ActionGroupsInformation_STATUS(destination *storage.ActionGroupsInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// CustomEmailSubject
+	destination.CustomEmailSubject = genruntime.ClonePointerToString(information.CustomEmailSubject)
+
+	// CustomWebhookPayload
+	destination.CustomWebhookPayload = genruntime.ClonePointerToString(information.CustomWebhookPayload)
+
+	// GroupIds
+	destination.GroupIds = genruntime.CloneSliceOfString(information.GroupIds)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForActionGroupsInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForActionGroupsInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSmartDetectorAlertRule_Spec interface {
+	AssignPropertiesFrom(src *storage.SmartDetectorAlertRule_Spec) error
+	AssignPropertiesTo(dst *storage.SmartDetectorAlertRule_Spec) error
+}
+
+type augmentConversionForSmartDetectorAlertRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.SmartDetectorAlertRule_STATUS) error
+	AssignPropertiesTo(dst *storage.SmartDetectorAlertRule_STATUS) error
+}
+
 // Storage version of v1api20210401.Detector
 // The detector information. By default this is not populated, unless it's specified in expandDetector
 type Detector struct {
 	Id          *string                `json:"id,omitempty"`
 	Parameters  map[string]v1.JSON     `json:"parameters,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Detector populates our Detector from the provided source Detector
+func (detector *Detector) AssignProperties_From_Detector(source *storage.Detector) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	detector.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Parameters
+	if source.Parameters != nil {
+		parameterMap := make(map[string]v1.JSON, len(source.Parameters))
+		for parameterKey, parameterValue := range source.Parameters {
+			parameterMap[parameterKey] = *parameterValue.DeepCopy()
+		}
+		detector.Parameters = parameterMap
+	} else {
+		detector.Parameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		detector.PropertyBag = propertyBag
+	} else {
+		detector.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetector interface (if implemented) to customize the conversion
+	var detectorAsAny any = detector
+	if augmentedDetector, ok := detectorAsAny.(augmentConversionForDetector); ok {
+		err := augmentedDetector.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Detector populates the provided destination Detector from our Detector
+func (detector *Detector) AssignProperties_To_Detector(destination *storage.Detector) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(detector.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(detector.Id)
+
+	// Parameters
+	if detector.Parameters != nil {
+		parameterMap := make(map[string]v1.JSON, len(detector.Parameters))
+		for parameterKey, parameterValue := range detector.Parameters {
+			parameterMap[parameterKey] = *parameterValue.DeepCopy()
+		}
+		destination.Parameters = parameterMap
+	} else {
+		destination.Parameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetector interface (if implemented) to customize the conversion
+	var detectorAsAny any = detector
+	if augmentedDetector, ok := detectorAsAny.(augmentConversionForDetector); ok {
+		err := augmentedDetector.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210401.Detector_STATUS
@@ -298,12 +1112,282 @@ type Detector_STATUS struct {
 	SupportedResourceTypes []string                             `json:"supportedResourceTypes,omitempty"`
 }
 
+// AssignProperties_From_Detector_STATUS populates our Detector_STATUS from the provided source Detector_STATUS
+func (detector *Detector_STATUS) AssignProperties_From_Detector_STATUS(source *storage.Detector_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Description
+	detector.Description = genruntime.ClonePointerToString(source.Description)
+
+	// Id
+	detector.Id = genruntime.ClonePointerToString(source.Id)
+
+	// ImagePaths
+	detector.ImagePaths = genruntime.CloneSliceOfString(source.ImagePaths)
+
+	// Name
+	detector.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ParameterDefinitions
+	if source.ParameterDefinitions != nil {
+		parameterDefinitionList := make([]DetectorParameterDefinition_STATUS, len(source.ParameterDefinitions))
+		for parameterDefinitionIndex, parameterDefinitionItem := range source.ParameterDefinitions {
+			var parameterDefinition DetectorParameterDefinition_STATUS
+			err := parameterDefinition.AssignProperties_From_DetectorParameterDefinition_STATUS(&parameterDefinitionItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
+			}
+			parameterDefinitionList[parameterDefinitionIndex] = parameterDefinition
+		}
+		detector.ParameterDefinitions = parameterDefinitionList
+	} else {
+		detector.ParameterDefinitions = nil
+	}
+
+	// Parameters
+	if source.Parameters != nil {
+		parameterMap := make(map[string]v1.JSON, len(source.Parameters))
+		for parameterKey, parameterValue := range source.Parameters {
+			parameterMap[parameterKey] = *parameterValue.DeepCopy()
+		}
+		detector.Parameters = parameterMap
+	} else {
+		detector.Parameters = nil
+	}
+
+	// SupportedCadences
+	if source.SupportedCadences != nil {
+		supportedCadenceList := make([]int, len(source.SupportedCadences))
+		for supportedCadenceIndex, supportedCadenceItem := range source.SupportedCadences {
+			supportedCadenceList[supportedCadenceIndex] = supportedCadenceItem
+		}
+		detector.SupportedCadences = supportedCadenceList
+	} else {
+		detector.SupportedCadences = nil
+	}
+
+	// SupportedResourceTypes
+	detector.SupportedResourceTypes = genruntime.CloneSliceOfString(source.SupportedResourceTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		detector.PropertyBag = propertyBag
+	} else {
+		detector.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetector_STATUS interface (if implemented) to customize the conversion
+	var detectorAsAny any = detector
+	if augmentedDetector, ok := detectorAsAny.(augmentConversionForDetector_STATUS); ok {
+		err := augmentedDetector.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Detector_STATUS populates the provided destination Detector_STATUS from our Detector_STATUS
+func (detector *Detector_STATUS) AssignProperties_To_Detector_STATUS(destination *storage.Detector_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(detector.PropertyBag)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(detector.Description)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(detector.Id)
+
+	// ImagePaths
+	destination.ImagePaths = genruntime.CloneSliceOfString(detector.ImagePaths)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(detector.Name)
+
+	// ParameterDefinitions
+	if detector.ParameterDefinitions != nil {
+		parameterDefinitionList := make([]storage.DetectorParameterDefinition_STATUS, len(detector.ParameterDefinitions))
+		for parameterDefinitionIndex, parameterDefinitionItem := range detector.ParameterDefinitions {
+			var parameterDefinition storage.DetectorParameterDefinition_STATUS
+			err := parameterDefinitionItem.AssignProperties_To_DetectorParameterDefinition_STATUS(&parameterDefinition)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_DetectorParameterDefinition_STATUS() to populate field ParameterDefinitions")
+			}
+			parameterDefinitionList[parameterDefinitionIndex] = parameterDefinition
+		}
+		destination.ParameterDefinitions = parameterDefinitionList
+	} else {
+		destination.ParameterDefinitions = nil
+	}
+
+	// Parameters
+	if detector.Parameters != nil {
+		parameterMap := make(map[string]v1.JSON, len(detector.Parameters))
+		for parameterKey, parameterValue := range detector.Parameters {
+			parameterMap[parameterKey] = *parameterValue.DeepCopy()
+		}
+		destination.Parameters = parameterMap
+	} else {
+		destination.Parameters = nil
+	}
+
+	// SupportedCadences
+	if detector.SupportedCadences != nil {
+		supportedCadenceList := make([]int, len(detector.SupportedCadences))
+		for supportedCadenceIndex, supportedCadenceItem := range detector.SupportedCadences {
+			supportedCadenceList[supportedCadenceIndex] = supportedCadenceItem
+		}
+		destination.SupportedCadences = supportedCadenceList
+	} else {
+		destination.SupportedCadences = nil
+	}
+
+	// SupportedResourceTypes
+	destination.SupportedResourceTypes = genruntime.CloneSliceOfString(detector.SupportedResourceTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetector_STATUS interface (if implemented) to customize the conversion
+	var detectorAsAny any = detector
+	if augmentedDetector, ok := detectorAsAny.(augmentConversionForDetector_STATUS); ok {
+		err := augmentedDetector.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210401.SmartDetectorAlertRuleOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type SmartDetectorAlertRuleOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SmartDetectorAlertRuleOperatorSpec populates our SmartDetectorAlertRuleOperatorSpec from the provided source SmartDetectorAlertRuleOperatorSpec
+func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_From_SmartDetectorAlertRuleOperatorSpec(source *storage.SmartDetectorAlertRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSmartDetectorAlertRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SmartDetectorAlertRuleOperatorSpec populates the provided destination SmartDetectorAlertRuleOperatorSpec from our SmartDetectorAlertRuleOperatorSpec
+func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_To_SmartDetectorAlertRuleOperatorSpec(destination *storage.SmartDetectorAlertRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSmartDetectorAlertRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSmartDetectorAlertRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20210401.ThrottlingInformation
@@ -313,11 +1397,158 @@ type ThrottlingInformation struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ThrottlingInformation populates our ThrottlingInformation from the provided source ThrottlingInformation
+func (information *ThrottlingInformation) AssignProperties_From_ThrottlingInformation(source *storage.ThrottlingInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	information.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForThrottlingInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForThrottlingInformation); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ThrottlingInformation populates the provided destination ThrottlingInformation from our ThrottlingInformation
+func (information *ThrottlingInformation) AssignProperties_To_ThrottlingInformation(destination *storage.ThrottlingInformation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(information.Duration)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForThrottlingInformation interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForThrottlingInformation); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20210401.ThrottlingInformation_STATUS
 // Optional throttling information for the alert rule.
 type ThrottlingInformation_STATUS struct {
 	Duration    *string                `json:"duration,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ThrottlingInformation_STATUS populates our ThrottlingInformation_STATUS from the provided source ThrottlingInformation_STATUS
+func (information *ThrottlingInformation_STATUS) AssignProperties_From_ThrottlingInformation_STATUS(source *storage.ThrottlingInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	information.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		information.PropertyBag = propertyBag
+	} else {
+		information.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForThrottlingInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForThrottlingInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ThrottlingInformation_STATUS populates the provided destination ThrottlingInformation_STATUS from our ThrottlingInformation_STATUS
+func (information *ThrottlingInformation_STATUS) AssignProperties_To_ThrottlingInformation_STATUS(destination *storage.ThrottlingInformation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(information.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(information.Duration)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForThrottlingInformation_STATUS interface (if implemented) to customize the conversion
+	var informationAsAny any = information
+	if augmentedInformation, ok := informationAsAny.(augmentConversionForThrottlingInformation_STATUS); ok {
+		err := augmentedInformation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForActionGroupsInformation interface {
+	AssignPropertiesFrom(src *storage.ActionGroupsInformation) error
+	AssignPropertiesTo(dst *storage.ActionGroupsInformation) error
+}
+
+type augmentConversionForActionGroupsInformation_STATUS interface {
+	AssignPropertiesFrom(src *storage.ActionGroupsInformation_STATUS) error
+	AssignPropertiesTo(dst *storage.ActionGroupsInformation_STATUS) error
+}
+
+type augmentConversionForDetector interface {
+	AssignPropertiesFrom(src *storage.Detector) error
+	AssignPropertiesTo(dst *storage.Detector) error
+}
+
+type augmentConversionForDetector_STATUS interface {
+	AssignPropertiesFrom(src *storage.Detector_STATUS) error
+	AssignPropertiesTo(dst *storage.Detector_STATUS) error
+}
+
+type augmentConversionForSmartDetectorAlertRuleOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.SmartDetectorAlertRuleOperatorSpec) error
+	AssignPropertiesTo(dst *storage.SmartDetectorAlertRuleOperatorSpec) error
+}
+
+type augmentConversionForThrottlingInformation interface {
+	AssignPropertiesFrom(src *storage.ThrottlingInformation) error
+	AssignPropertiesTo(dst *storage.ThrottlingInformation) error
+}
+
+type augmentConversionForThrottlingInformation_STATUS interface {
+	AssignPropertiesFrom(src *storage.ThrottlingInformation_STATUS) error
+	AssignPropertiesTo(dst *storage.ThrottlingInformation_STATUS) error
 }
 
 // Storage version of v1api20210401.DetectorParameterDefinition_STATUS
@@ -329,6 +1560,101 @@ type DetectorParameterDefinition_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_DetectorParameterDefinition_STATUS populates our DetectorParameterDefinition_STATUS from the provided source DetectorParameterDefinition_STATUS
+func (definition *DetectorParameterDefinition_STATUS) AssignProperties_From_DetectorParameterDefinition_STATUS(source *storage.DetectorParameterDefinition_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Description
+	definition.Description = genruntime.ClonePointerToString(source.Description)
+
+	// DisplayName
+	definition.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
+
+	// IsMandatory
+	if source.IsMandatory != nil {
+		isMandatory := *source.IsMandatory
+		definition.IsMandatory = &isMandatory
+	} else {
+		definition.IsMandatory = nil
+	}
+
+	// Name
+	definition.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Type
+	definition.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		definition.PropertyBag = propertyBag
+	} else {
+		definition.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetectorParameterDefinition_STATUS interface (if implemented) to customize the conversion
+	var definitionAsAny any = definition
+	if augmentedDefinition, ok := definitionAsAny.(augmentConversionForDetectorParameterDefinition_STATUS); ok {
+		err := augmentedDefinition.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DetectorParameterDefinition_STATUS populates the provided destination DetectorParameterDefinition_STATUS from our DetectorParameterDefinition_STATUS
+func (definition *DetectorParameterDefinition_STATUS) AssignProperties_To_DetectorParameterDefinition_STATUS(destination *storage.DetectorParameterDefinition_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(definition.PropertyBag)
+
+	// Description
+	destination.Description = genruntime.ClonePointerToString(definition.Description)
+
+	// DisplayName
+	destination.DisplayName = genruntime.ClonePointerToString(definition.DisplayName)
+
+	// IsMandatory
+	if definition.IsMandatory != nil {
+		isMandatory := *definition.IsMandatory
+		destination.IsMandatory = &isMandatory
+	} else {
+		destination.IsMandatory = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(definition.Name)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(definition.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDetectorParameterDefinition_STATUS interface (if implemented) to customize the conversion
+	var definitionAsAny any = definition
+	if augmentedDefinition, ok := definitionAsAny.(augmentConversionForDetectorParameterDefinition_STATUS); ok {
+		err := augmentedDefinition.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDetectorParameterDefinition_STATUS interface {
+	AssignPropertiesFrom(src *storage.DetectorParameterDefinition_STATUS) error
+	AssignPropertiesTo(dst *storage.DetectorParameterDefinition_STATUS) error
 }
 
 func init() {

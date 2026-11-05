@@ -116,7 +116,12 @@ func (connection *DataConnection) ValidateUpdate(ctx context.Context, oldResourc
 
 // createValidations validates the creation of the resource
 func (connection *DataConnection) createValidations() []func(ctx context.Context, obj *v20230815.DataConnection) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230815.DataConnection) (admission.Warnings, error){connection.validateResourceReferences, connection.validateOwnerReference, connection.validateSecretDestinations, connection.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20230815.DataConnection) (admission.Warnings, error){
+		connection.validateResourceReferences,
+		connection.validateOwnerReference,
+		connection.validateSecretDestinations,
+		connection.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

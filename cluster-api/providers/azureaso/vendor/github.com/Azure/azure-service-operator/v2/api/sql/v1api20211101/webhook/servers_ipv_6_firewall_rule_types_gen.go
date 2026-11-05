@@ -116,7 +116,12 @@ func (rule *ServersIPV6FirewallRule) ValidateUpdate(ctx context.Context, oldReso
 
 // createValidations validates the creation of the resource
 func (rule *ServersIPV6FirewallRule) createValidations() []func(ctx context.Context, obj *v20211101.ServersIPV6FirewallRule) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersIPV6FirewallRule) (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersIPV6FirewallRule) (admission.Warnings, error){
+		rule.validateResourceReferences,
+		rule.validateOwnerReference,
+		rule.validateSecretDestinations,
+		rule.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

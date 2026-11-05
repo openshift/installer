@@ -1,6 +1,6 @@
 # Azure Identity Client Module for Go
 
-The Azure Identity module provides Microsoft Entra ID ([formerly Azure Active Directory](https://learn.microsoft.com/entra/fundamentals/new-name)) token authentication support across the Azure SDK. It includes a set of `TokenCredential` implementations, which can be used with Azure SDK clients supporting token authentication.
+The Azure Identity module provides [Microsoft Entra ID](https://learn.microsoft.com/entra/fundamentals/whatis) token-based authentication support across the Azure SDK. It includes a set of `TokenCredential` implementations, which can be used with Azure SDK clients supporting token authentication.
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/Azure/azure-sdk-for-go/sdk/azidentity)](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity)
 | [Microsoft Entra ID documentation](https://learn.microsoft.com/entra/identity/)
@@ -67,6 +67,25 @@ in any hosting environment which supports managed identities, such as (this list
 * [Azure Kubernetes Service](https://learn.microsoft.com/azure/aks/use-managed-identity)
 * [Azure Service Fabric](https://learn.microsoft.com/azure/service-fabric/concepts-managed-identity)
 * [Azure Virtual Machines](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/how-to-use-vm-token)
+
+### Azure Arc user-assigned identities
+
+On Azure Arc, `ManagedIdentityCredential` supports selecting a user-assigned identity by client,
+object, or resource ID through `ManagedIdentityCredentialOptions.ID`. `DefaultAzureCredential`
+supports selecting one by client ID through the `AZURE_CLIENT_ID` environment variable.
+The Azure Arc agent must support user-assigned
+identities and confirm the requested identity in its token response. Otherwise, token acquisition
+fails rather than authenticating the machine's system-assigned identity.
+
+### Service Fabric transport requirements
+
+On Service Fabric, `ManagedIdentityCredential` pins the endpoint certificate to
+`IDENTITY_SERVER_THUMBPRINT` and rejects redirects. Leave `ClientOptions.Transport` `nil` to use
+the default transport. A custom transport must be an `*http.Client` whose `Transport` is `nil` or
+an `*http.Transport` without custom TLS dialing or verification callbacks. The credential derives
+the pinned client without modifying the caller's client. Unsupported transports cause credential
+construction to fail. See the [troubleshooting guide](https://aka.ms/azsdk/go/identity/troubleshoot#azure-service-fabric-managed-identity)
+for configuration errors.
 
 ## Examples
 
@@ -153,6 +172,7 @@ client := armresources.NewResourceGroupsClient("subscription ID", chain, nil)
 |-|-
 |[AzureCLICredential](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureCLICredential)|Authenticate as the user signed in to the Azure CLI
 |[AzureDeveloperCLICredential](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzureDeveloperCLICredential)|Authenticates as the user signed in to the Azure Developer CLI
+|[AzurePowerShellCredential](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#AzurePowerShellCredential)|Authenticates as the user signed in to Azure PowerShell
 
 ## Environment Variables
 
@@ -243,5 +263,3 @@ additional questions or comments.
 <!-- LINKS -->
 [ctc_overview]: https://aka.ms/azsdk/go/identity/credential-chains#chainedtokencredential-overview
 [dac_overview]: https://aka.ms/azsdk/go/identity/credential-chains#defaultazurecredential-overview
-
-

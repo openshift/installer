@@ -43,7 +43,8 @@ func versionCommand(cmd *cobra.Command, args []string) error {
 		"%s %s %s\n",
 		filepath.Base(path),
 		ver,
-		runtime.GOOS)
+		runtime.GOOS,
+	)
 
 	return nil
 }

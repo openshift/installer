@@ -46,12 +46,15 @@ type BackendContractProperties struct {
 	// Properties: Backend Properties contract
 	Properties *BackendProperties `json:"properties,omitempty"`
 
-	// Protocol: Backend communication protocol.
+	// Protocol: Backend communication protocol. Required when backend type is 'Single'.
 	Protocol *BackendContractProperties_Protocol `json:"protocol,omitempty"`
 
 	// Proxy: Backend gateway Contract Properties
-	Proxy      *BackendProxyContract `json:"proxy,omitempty"`
-	ResourceId *string               `json:"resourceId,omitempty"`
+	Proxy *BackendProxyContract `json:"proxy,omitempty"`
+
+	// ResourceId: Management Uri of the Resource in External System. This URL can be the Arm Resource Id of Logic Apps,
+	// Function Apps or API Apps.
+	ResourceId *string `json:"resourceId,omitempty"`
 
 	// Title: Backend Title.
 	Title *string `json:"title,omitempty"`
@@ -62,7 +65,7 @@ type BackendContractProperties struct {
 	// Type: Type of the backend. A backend can be either Single or Pool.
 	Type *BackendContractProperties_Type `json:"type,omitempty"`
 
-	// Url: Runtime Url of the Backend.
+	// Url: Runtime Url of the Backend. Required when backend type is 'Single'.
 	Url *string `json:"url,omitempty"`
 }
 
@@ -165,6 +168,7 @@ type BackendAuthorizationHeaderCredentials struct {
 
 // Backend pool service information
 type BackendPoolItem struct {
+	// Id: The unique ARM id of the backend entity. The ARM id should refer to an already existing backend entity.
 	Id *string `json:"id,omitempty"`
 }
 

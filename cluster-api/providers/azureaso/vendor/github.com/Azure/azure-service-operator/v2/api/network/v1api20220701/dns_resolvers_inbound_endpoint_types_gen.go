@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/stable/2022-07-01/dnsresolver.json
+// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/DnsResolver/stable/2022-07-01/dnsresolver.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsResolvers/{dnsResolverName}/inboundEndpoints/{inboundEndpointName}
 type DnsResolversInboundEndpoint struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (endpoint *DnsResolversInboundEndpoint) OriginalGVK() *schema.GroupVersionK
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/stable/2022-07-01/dnsresolver.json
+// - Generated from: /dnsresolver/resource-manager/Microsoft.Network/DnsResolver/stable/2022-07-01/dnsresolver.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsResolvers/{dnsResolverName}/inboundEndpoints/{inboundEndpointName}
 type DnsResolversInboundEndpointList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -426,8 +427,6 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_From_DnsResol
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]IpConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration IpConfiguration
 			err := ipConfiguration.AssignProperties_From_IpConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -482,8 +481,6 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_To_DnsResolve
 	if endpoint.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.IpConfiguration, len(endpoint.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range endpoint.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.IpConfiguration
 			err := ipConfigurationItem.AssignProperties_To_IpConfiguration(&ipConfiguration)
 			if err != nil {
@@ -543,8 +540,6 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) Initialize_From_DnsResolversIn
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]IpConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration IpConfiguration
 			err := ipConfiguration.Initialize_From_IpConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -782,8 +777,6 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_From_DnsRes
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]IpConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration IpConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_IpConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -854,8 +847,6 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_To_DnsResol
 	if endpoint.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.IpConfiguration_STATUS, len(endpoint.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range endpoint.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.IpConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_IpConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -930,8 +921,6 @@ func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_From_D
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -948,8 +937,6 @@ func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_From_D
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -975,8 +962,6 @@ func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_To_Dns
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -993,8 +978,6 @@ func (operator *DnsResolversInboundEndpointOperatorSpec) AssignProperties_To_Dns
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1056,7 +1039,7 @@ func (configuration *IpConfiguration) ConvertToARM(resolved genruntime.ConvertTo
 
 	// Set property "Subnet":
 	if configuration.Subnet != nil {
-		subnet_ARM, err := (*configuration.Subnet).ConvertToARM(resolved)
+		subnet_ARM, err := configuration.Subnet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

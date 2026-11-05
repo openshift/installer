@@ -116,7 +116,13 @@ func (vault *Vault) ValidateUpdate(ctx context.Context, oldResource runtime.Obje
 
 // createValidations validates the creation of the resource
 func (vault *Vault) createValidations() []func(ctx context.Context, obj *v20210401p.Vault) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210401p.Vault) (admission.Warnings, error){vault.validateResourceReferences, vault.validateOwnerReference, vault.validateSecretDestinations, vault.validateConfigMapDestinations, vault.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20210401p.Vault) (admission.Warnings, error){
+		vault.validateResourceReferences,
+		vault.validateOwnerReference,
+		vault.validateSecretDestinations,
+		vault.validateConfigMapDestinations,
+		vault.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

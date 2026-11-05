@@ -120,14 +120,22 @@ type Site_Properties_Spec struct {
 
 	// ScmSiteAlsoStopped: <code>true</code> to stop SCM (KUDU) site when the app is stopped; otherwise, <code>false</code>.
 	// The default is <code>false</code>.
-	ScmSiteAlsoStopped *bool   `json:"scmSiteAlsoStopped,omitempty"`
-	ServerFarmId       *string `json:"serverFarmId,omitempty"`
+	ScmSiteAlsoStopped *bool `json:"scmSiteAlsoStopped,omitempty"`
+
+	// ServerFarmId: Resource ID of the associated App Service plan, formatted as:
+	// "/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
+	ServerFarmId *string `json:"serverFarmId,omitempty"`
 
 	// SiteConfig: Configuration of the app.
 	SiteConfig *SiteConfig `json:"siteConfig,omitempty"`
 
 	// StorageAccountRequired: Checks if Customer provided storage account is required
-	StorageAccountRequired *bool   `json:"storageAccountRequired,omitempty"`
+	StorageAccountRequired *bool `json:"storageAccountRequired,omitempty"`
+
+	// VirtualNetworkSubnetId: Azure Resource Manager ID of the Virtual network and subnet to be joined by Regional VNET
+	// Integration.
+	// This must be of the form
+	// /subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}
 	VirtualNetworkSubnetId *string `json:"virtualNetworkSubnetId,omitempty"`
 
 	// VnetContentShareEnabled: To enable accessing content over virtual network
@@ -165,11 +173,21 @@ type CloningInfo struct {
 	HostingEnvironment *string `json:"hostingEnvironment,omitempty"`
 
 	// Overwrite: <code>true</code> to overwrite destination app; otherwise, <code>false</code>.
-	Overwrite      *bool   `json:"overwrite,omitempty"`
+	Overwrite *bool `json:"overwrite,omitempty"`
+
+	// SourceWebAppId: ARM resource ID of the source app. App resource ID is of the form
+	// /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName} for production slots
+	// and
+	// /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{siteName}/slots/{slotName} for
+	// other slots.
 	SourceWebAppId *string `json:"sourceWebAppId,omitempty"`
 
 	// SourceWebAppLocation: Location of source app ex: West US or North Europe
-	SourceWebAppLocation    *string `json:"sourceWebAppLocation,omitempty"`
+	SourceWebAppLocation *string `json:"sourceWebAppLocation,omitempty"`
+
+	// TrafficManagerProfileId: ARM resource ID of the Traffic Manager profile to use, if it exists. Traffic Manager resource
+	// ID is of the form
+	// /subscriptions/{subId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/trafficManagerProfiles/{profileName}.
 	TrafficManagerProfileId *string `json:"trafficManagerProfileId,omitempty"`
 
 	// TrafficManagerProfileName: Name of Traffic Manager profile to create. This is only needed if Traffic Manager profile
@@ -476,6 +494,7 @@ type ApiDefinitionInfo struct {
 
 // Azure API management (APIM) configuration linked to the app.
 type ApiManagementConfig struct {
+	// Id: APIM-Api Identifier.
 	Id *string `json:"id,omitempty"`
 }
 
@@ -624,8 +643,10 @@ type IpSecurityRestriction struct {
 	SubnetTrafficTag *int `json:"subnetTrafficTag,omitempty"`
 
 	// Tag: Defines what this IP filter will be used for. This is to support IP filtering on proxies.
-	Tag                  *IpSecurityRestriction_Tag `json:"tag,omitempty"`
-	VnetSubnetResourceId *string                    `json:"vnetSubnetResourceId,omitempty"`
+	Tag *IpSecurityRestriction_Tag `json:"tag,omitempty"`
+
+	// VnetSubnetResourceId: Virtual network resource id
+	VnetSubnetResourceId *string `json:"vnetSubnetResourceId,omitempty"`
 
 	// VnetTrafficTag: (internal) Vnet traffic tag
 	VnetTrafficTag *int `json:"vnetTrafficTag,omitempty"`

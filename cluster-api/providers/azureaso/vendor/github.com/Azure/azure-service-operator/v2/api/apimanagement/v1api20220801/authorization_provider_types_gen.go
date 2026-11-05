@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}
 type AuthorizationProvider struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &AuthorizationProvider{}
 
 // ConvertFrom populates our AuthorizationProvider from the provided hub AuthorizationProvider
 func (provider *AuthorizationProvider) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.AuthorizationProvider)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvider but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvider
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return provider.AssignProperties_From_AuthorizationProvider(source)
+	err = provider.AssignProperties_From_AuthorizationProvider(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to provider")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub AuthorizationProvider from our AuthorizationProvider
 func (provider *AuthorizationProvider) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.AuthorizationProvider)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvider but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvider
+	err := provider.AssignProperties_To_AuthorizationProvider(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from provider")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return provider.AssignProperties_To_AuthorizationProvider(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvider{}
@@ -86,17 +101,6 @@ func (provider *AuthorizationProvider) SecretDestinationExpressions() []*core.De
 		return nil
 	}
 	return provider.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &AuthorizationProvider{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (provider *AuthorizationProvider) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*AuthorizationProvider_STATUS); ok {
-		return provider.Spec.Initialize_From_AuthorizationProvider_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type AuthorizationProvider_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &AuthorizationProvider{}
@@ -237,7 +241,7 @@ func (provider *AuthorizationProvider) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}
 type AuthorizationProviderList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -302,7 +306,7 @@ func (provider *AuthorizationProvider_Spec) ConvertToARM(resolved genruntime.Con
 		result.Properties.IdentityProvider = &identityProvider
 	}
 	if provider.Oauth2 != nil {
-		oauth2_ARM, err := (*provider.Oauth2).ConvertToARM(resolved)
+		oauth2_ARM, err := provider.Oauth2.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -523,31 +527,6 @@ func (provider *AuthorizationProvider_Spec) AssignProperties_To_AuthorizationPro
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AuthorizationProvider_STATUS populates our AuthorizationProvider_Spec from the provided source AuthorizationProvider_STATUS
-func (provider *AuthorizationProvider_Spec) Initialize_From_AuthorizationProvider_STATUS(source *AuthorizationProvider_STATUS) error {
-
-	// DisplayName
-	provider.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
-
-	// IdentityProvider
-	provider.IdentityProvider = genruntime.ClonePointerToString(source.IdentityProvider)
-
-	// Oauth2
-	if source.Oauth2 != nil {
-		var oauth2 AuthorizationProviderOAuth2Settings
-		err := oauth2.Initialize_From_AuthorizationProviderOAuth2Settings_STATUS(source.Oauth2)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AuthorizationProviderOAuth2Settings_STATUS() to populate field Oauth2")
-		}
-		provider.Oauth2 = &oauth2
-	} else {
-		provider.Oauth2 = nil
 	}
 
 	// No error
@@ -811,7 +790,7 @@ func (settings *AuthorizationProviderOAuth2Settings) ConvertToARM(resolved genru
 
 	// Set property "GrantTypes":
 	if settings.GrantTypes != nil {
-		grantTypes_ARM, err := (*settings.GrantTypes).ConvertToARM(resolved)
+		grantTypes_ARM, err := settings.GrantTypes.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -908,28 +887,6 @@ func (settings *AuthorizationProviderOAuth2Settings) AssignProperties_To_Authori
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AuthorizationProviderOAuth2Settings_STATUS populates our AuthorizationProviderOAuth2Settings from the provided source AuthorizationProviderOAuth2Settings_STATUS
-func (settings *AuthorizationProviderOAuth2Settings) Initialize_From_AuthorizationProviderOAuth2Settings_STATUS(source *AuthorizationProviderOAuth2Settings_STATUS) error {
-
-	// GrantTypes
-	if source.GrantTypes != nil {
-		var grantType AuthorizationProviderOAuth2GrantTypes
-		err := grantType.Initialize_From_AuthorizationProviderOAuth2GrantTypes_STATUS(source.GrantTypes)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AuthorizationProviderOAuth2GrantTypes_STATUS() to populate field GrantTypes")
-		}
-		settings.GrantTypes = &grantType
-	} else {
-		settings.GrantTypes = nil
-	}
-
-	// RedirectUrl
-	settings.RedirectUrl = genruntime.ClonePointerToString(source.RedirectUrl)
 
 	// No error
 	return nil
@@ -1048,8 +1005,6 @@ func (operator *AuthorizationProviderOperatorSpec) AssignProperties_From_Authori
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1066,8 +1021,6 @@ func (operator *AuthorizationProviderOperatorSpec) AssignProperties_From_Authori
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1093,8 +1046,6 @@ func (operator *AuthorizationProviderOperatorSpec) AssignProperties_To_Authoriza
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1111,8 +1062,6 @@ func (operator *AuthorizationProviderOperatorSpec) AssignProperties_To_Authoriza
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1248,13 +1197,6 @@ func (types *AuthorizationProviderOAuth2GrantTypes) AssignProperties_To_Authoriz
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AuthorizationProviderOAuth2GrantTypes_STATUS populates our AuthorizationProviderOAuth2GrantTypes from the provided source AuthorizationProviderOAuth2GrantTypes_STATUS
-func (types *AuthorizationProviderOAuth2GrantTypes) Initialize_From_AuthorizationProviderOAuth2GrantTypes_STATUS(source *AuthorizationProviderOAuth2GrantTypes_STATUS) error {
 
 	// No error
 	return nil

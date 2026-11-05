@@ -39,9 +39,10 @@ type (
 
 	// Client provides operations on Azure virtual machine resources.
 	Client interface {
-		Get(context.Context, azure.ResourceSpecGetter) (interface{}, error)
-		CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armcompute.VirtualMachinesClientCreateOrUpdateResponse], err error)
+		Get(context.Context, azure.ResourceSpecGetter) (any, error)
+		CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armcompute.VirtualMachinesClientCreateOrUpdateResponse], err error)
 		DeleteAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armcompute.VirtualMachinesClientDeleteResponse], err error)
+		ReapplyAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armcompute.VirtualMachinesClientReapplyResponse], err error)
 	}
 )
 
@@ -49,7 +50,7 @@ var _ Client = &AzureClient{}
 
 // NewClient creates a VMs client from an authorizer.
 func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualmachines client options")
 	}
@@ -61,7 +62,7 @@ func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClien
 }
 
 // Get retrieves information about the model view or the instance view of a virtual machine.
-func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.AzureClient.Get")
 	defer done()
 
@@ -75,7 +76,7 @@ func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a virtual machine asynchronously.
 // It sends a PUT request to Azure and if accepted without error, the func will return a Poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armcompute.VirtualMachinesClientCreateOrUpdateResponse], err error) {
+func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armcompute.VirtualMachinesClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.AzureClient.CreateOrUpdate")
 	defer done()
 
@@ -126,6 +127,34 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 	_, err = poller.PollUntilDone(ctx, pollOpts)
 	if err != nil {
 		// if an error occurs, return the Poller.
+		// this means the long-running operation didn't finish in the specified timeout.
+		return poller, err
+	}
+
+	// if the operation completed, return a nil poller.
+	return nil, err
+}
+
+// ReapplyAsync reapplies a virtual machine's state asynchronously.
+// It sends a POST request to Azure to reapply the VM, which is useful for recovering from failed provisioning states.
+// If accepted without error, the func will return a Poller which can be used to track the ongoing progress of the operation.
+func (ac *AzureClient) ReapplyAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armcompute.VirtualMachinesClientReapplyResponse], err error) {
+	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.AzureClient.Reapply")
+	defer done()
+
+	opts := &armcompute.VirtualMachinesClientBeginReapplyOptions{ResumeToken: resumeToken}
+	poller, err = ac.virtualmachines.BeginReapply(ctx, spec.ResourceGroupName(), spec.ResourceName(), opts)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
+	defer cancel()
+
+	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
+	_, err = poller.PollUntilDone(ctx, pollOpts)
+	if err != nil {
+		// if an error occurs, return the poller.
 		// this means the long-running operation didn't finish in the specified timeout.
 		return poller, err
 	}

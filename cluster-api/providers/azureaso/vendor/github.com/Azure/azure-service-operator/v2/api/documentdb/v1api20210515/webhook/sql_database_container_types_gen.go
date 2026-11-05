@@ -116,7 +116,12 @@ func (container *SqlDatabaseContainer) ValidateUpdate(ctx context.Context, oldRe
 
 // createValidations validates the creation of the resource
 func (container *SqlDatabaseContainer) createValidations() []func(ctx context.Context, obj *v20210515.SqlDatabaseContainer) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210515.SqlDatabaseContainer) (admission.Warnings, error){container.validateResourceReferences, container.validateOwnerReference, container.validateSecretDestinations, container.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210515.SqlDatabaseContainer) (admission.Warnings, error){
+		container.validateResourceReferences,
+		container.validateOwnerReference,
+		container.validateSecretDestinations,
+		container.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

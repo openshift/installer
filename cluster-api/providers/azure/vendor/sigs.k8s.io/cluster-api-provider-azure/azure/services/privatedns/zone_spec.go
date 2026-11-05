@@ -52,7 +52,7 @@ func (s ZoneSpec) ResourceGroupName() string {
 }
 
 // Parameters returns the parameters for the private dns zone.
-func (s ZoneSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s ZoneSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		_, ok := existing.(armprivatedns.PrivateZone)
 		if !ok {

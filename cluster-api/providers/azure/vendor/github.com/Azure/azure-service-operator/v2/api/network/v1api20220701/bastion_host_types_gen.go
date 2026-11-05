@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHost struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (host *BastionHost) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/bastionHost.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/bastionHost.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/bastionHosts/{bastionHostName}
 type BastionHostList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -366,7 +367,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 	// Set property "Sku":
 	if host.Sku != nil {
-		sku_ARM, err := (*host.Sku).ConvertToARM(resolved)
+		sku_ARM, err := host.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -615,8 +616,6 @@ func (host *BastionHost_Spec) AssignProperties_From_BastionHost_Spec(source *sto
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]BastionHostIPConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration BastionHostIPConfiguration
 			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -729,8 +728,6 @@ func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *
 	if host.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.BastionHostIPConfiguration, len(host.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.BastionHostIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration(&ipConfiguration)
 			if err != nil {
@@ -1125,8 +1122,6 @@ func (host *BastionHost_STATUS) AssignProperties_From_BastionHost_STATUS(source 
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]BastionHostIPConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration BastionHostIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_BastionHostIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -1240,8 +1235,6 @@ func (host *BastionHost_STATUS) AssignProperties_To_BastionHost_STATUS(destinati
 	if host.IpConfigurations != nil {
 		ipConfigurationList := make([]storage.BastionHostIPConfiguration_STATUS, len(host.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range host.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration storage.BastionHostIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_BastionHostIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -1345,7 +1338,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if configuration.PublicIPAddress != nil {
-		publicIPAddress_ARM, err := (*configuration.PublicIPAddress).ConvertToARM(resolved)
+		publicIPAddress_ARM, err := configuration.PublicIPAddress.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1353,7 +1346,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		result.Properties.PublicIPAddress = &publicIPAddress
 	}
 	if configuration.Subnet != nil {
-		subnet_ARM, err := (*configuration.Subnet).ConvertToARM(resolved)
+		subnet_ARM, err := configuration.Subnet.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1593,8 +1586,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperat
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1611,8 +1602,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperat
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1638,8 +1627,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperator
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1656,8 +1643,6 @@ func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperator
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

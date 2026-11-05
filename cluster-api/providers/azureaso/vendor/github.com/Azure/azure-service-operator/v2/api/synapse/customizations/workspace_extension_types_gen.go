@@ -4,8 +4,10 @@
 package customizations
 
 import (
-	v20210601 "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601"
-	storage "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
+	synapse_v1api20210601 "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601"
+	synapse_v1api20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
+	synapse_v20210601 "github.com/Azure/azure-service-operator/v2/api/synapse/v20210601"
+	synapse_v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -15,6 +17,8 @@ type WorkspaceExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *WorkspaceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20210601.Workspace{},
-		&storage.Workspace{}}
+		&synapse_v1api20210601.Workspace{},
+		&synapse_v1api20210601s.Workspace{},
+		&synapse_v20210601.Workspace{},
+		&synapse_v20210601s.Workspace{}}
 }

@@ -24,6 +24,11 @@ func (in *ARecord) DeepCopyInto(out *ARecord) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Ipv4AddressFromConfig != nil {
+		in, out := &in.Ipv4AddressFromConfig, &out.Ipv4AddressFromConfig
+		*out = new(genruntime.ConfigMapReference)
+		**out = **in
+	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
 		*out = make(genruntime.PropertyBag, len(*in))
@@ -76,6 +81,11 @@ func (in *AaaaRecord) DeepCopyInto(out *AaaaRecord) {
 	if in.Ipv6Address != nil {
 		in, out := &in.Ipv6Address, &out.Ipv6Address
 		*out = new(string)
+		**out = **in
+	}
+	if in.Ipv6AddressFromConfig != nil {
+		in, out := &in.Ipv6AddressFromConfig, &out.Ipv6AddressFromConfig
+		*out = new(genruntime.ConfigMapReference)
 		**out = **in
 	}
 	if in.PropertyBag != nil {
@@ -311,7 +321,7 @@ func (in *PrivateDnsZonesAAAARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -329,7 +339,7 @@ func (in *PrivateDnsZonesAAAARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -638,7 +648,7 @@ func (in *PrivateDnsZonesARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZonesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -656,7 +666,7 @@ func (in *PrivateDnsZonesARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZonesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -965,7 +975,7 @@ func (in *PrivateDnsZonesCNAMERecordOperatorSpec) DeepCopyInto(out *PrivateDnsZo
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -983,7 +993,7 @@ func (in *PrivateDnsZonesCNAMERecordOperatorSpec) DeepCopyInto(out *PrivateDnsZo
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1292,7 +1302,7 @@ func (in *PrivateDnsZonesMXRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZones
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1310,7 +1320,7 @@ func (in *PrivateDnsZonesMXRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZones
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1619,7 +1629,7 @@ func (in *PrivateDnsZonesPTRRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1637,7 +1647,7 @@ func (in *PrivateDnsZonesPTRRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1946,7 +1956,7 @@ func (in *PrivateDnsZonesSRVRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1964,7 +1974,7 @@ func (in *PrivateDnsZonesSRVRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2273,7 +2283,7 @@ func (in *PrivateDnsZonesTXTRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2291,7 +2301,7 @@ func (in *PrivateDnsZonesTXTRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2600,7 +2610,7 @@ func (in *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) DeepCopyInto(out *Priva
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2618,7 +2628,7 @@ func (in *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) DeepCopyInto(out *Priva
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

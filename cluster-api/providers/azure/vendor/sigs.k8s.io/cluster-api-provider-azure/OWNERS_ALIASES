@@ -15,12 +15,9 @@ aliases:
     - sbueringer
     - vincepri
   cluster-api-azure-maintainers:
+    - bryan-cox
     - jackfrancis
     - mboersma
     - nojnhuh
-    - Jont828
     - willie-yao
-    - nawazkh
-  cluster-api-azure-reviewers:
-    - jsturtevant
-    - marosset
+  cluster-api-azure-reviewers: []

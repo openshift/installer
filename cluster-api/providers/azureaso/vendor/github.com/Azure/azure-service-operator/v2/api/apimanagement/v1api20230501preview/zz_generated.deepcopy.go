@@ -457,7 +457,7 @@ func (in *ApiOperatorSpec) DeepCopyInto(out *ApiOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -468,7 +468,7 @@ func (in *ApiOperatorSpec) DeepCopyInto(out *ApiOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -683,7 +683,7 @@ func (in *ApiVersionSetOperatorSpec) DeepCopyInto(out *ApiVersionSetOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -694,7 +694,7 @@ func (in *ApiVersionSetOperatorSpec) DeepCopyInto(out *ApiVersionSetOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1415,7 +1415,7 @@ func (in *AuthorizationProviderOperatorSpec) DeepCopyInto(out *AuthorizationProv
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1426,7 +1426,7 @@ func (in *AuthorizationProviderOperatorSpec) DeepCopyInto(out *AuthorizationProv
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1603,7 +1603,7 @@ func (in *AuthorizationProvidersAuthorizationOperatorSpec) DeepCopyInto(out *Aut
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1614,7 +1614,7 @@ func (in *AuthorizationProvidersAuthorizationOperatorSpec) DeepCopyInto(out *Aut
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1803,7 +1803,7 @@ func (in *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) DeepCopy
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1814,7 +1814,7 @@ func (in *AuthorizationProvidersAuthorizationsAccessPolicyOperatorSpec) DeepCopy
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2219,7 +2219,7 @@ func (in *BackendOperatorSpec) DeepCopyInto(out *BackendOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2230,7 +2230,7 @@ func (in *BackendOperatorSpec) DeepCopyInto(out *BackendOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3424,7 +3424,7 @@ func (in *NamedValueOperatorSpec) DeepCopyInto(out *NamedValueOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3435,7 +3435,7 @@ func (in *NamedValueOperatorSpec) DeepCopyInto(out *NamedValueOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3764,7 +3764,7 @@ func (in *PolicyFragmentOperatorSpec) DeepCopyInto(out *PolicyFragmentOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3775,7 +3775,7 @@ func (in *PolicyFragmentOperatorSpec) DeepCopyInto(out *PolicyFragmentOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3930,7 +3930,7 @@ func (in *PolicyOperatorSpec) DeepCopyInto(out *PolicyOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3941,7 +3941,7 @@ func (in *PolicyOperatorSpec) DeepCopyInto(out *PolicyOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4165,7 +4165,7 @@ func (in *ProductApiOperatorSpec) DeepCopyInto(out *ProductApiOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4176,7 +4176,7 @@ func (in *ProductApiOperatorSpec) DeepCopyInto(out *ProductApiOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4281,7 +4281,7 @@ func (in *ProductOperatorSpec) DeepCopyInto(out *ProductOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4292,7 +4292,7 @@ func (in *ProductOperatorSpec) DeepCopyInto(out *ProductOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4377,7 +4377,7 @@ func (in *ProductPolicyOperatorSpec) DeepCopyInto(out *ProductPolicyOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4388,7 +4388,7 @@ func (in *ProductPolicyOperatorSpec) DeepCopyInto(out *ProductPolicyOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4737,7 +4737,7 @@ func (in *ServiceOperatorSpec) DeepCopyInto(out *ServiceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4748,7 +4748,7 @@ func (in *ServiceOperatorSpec) DeepCopyInto(out *ServiceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5283,12 +5283,12 @@ func (in *SubscriptionOperatorSecrets) DeepCopyInto(out *SubscriptionOperatorSec
 	if in.PrimaryKey != nil {
 		in, out := &in.PrimaryKey, &out.PrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryKey != nil {
 		in, out := &in.SecondaryKey, &out.SecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -5312,7 +5312,7 @@ func (in *SubscriptionOperatorSpec) DeepCopyInto(out *SubscriptionOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5323,7 +5323,7 @@ func (in *SubscriptionOperatorSpec) DeepCopyInto(out *SubscriptionOperatorSpec) 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

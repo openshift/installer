@@ -132,3 +132,49 @@ Factory: Resource
     ├── Type: *string
     └── Version: *string
 
+augmentConversionForCMKIdentityDefinition: Interface
+
+augmentConversionForCMKIdentityDefinition_STATUS: Interface
+
+augmentConversionForEncryptionConfiguration: Interface
+
+augmentConversionForEncryptionConfiguration_STATUS: Interface
+
+augmentConversionForFactory: Interface
+
+augmentConversionForFactoryGitHubConfiguration: Interface
+
+augmentConversionForFactoryGitHubConfiguration_STATUS: Interface
+
+augmentConversionForFactoryIdentity: Interface
+
+augmentConversionForFactoryIdentity_STATUS: Interface
+
+augmentConversionForFactoryOperatorSpec: Interface
+
+augmentConversionForFactoryRepoConfiguration: Interface
+
+augmentConversionForFactoryRepoConfiguration_STATUS: Interface
+
+augmentConversionForFactoryVSTSConfiguration: Interface
+
+augmentConversionForFactoryVSTSConfiguration_STATUS: Interface
+
+augmentConversionForFactory_STATUS: Interface
+
+augmentConversionForFactory_Spec: Interface
+
+augmentConversionForGitHubClientSecret: Interface
+
+augmentConversionForGitHubClientSecret_STATUS: Interface
+
+augmentConversionForGlobalParameterSpecification: Interface
+
+augmentConversionForGlobalParameterSpecification_STATUS: Interface
+
+augmentConversionForPurviewConfiguration: Interface
+
+augmentConversionForPurviewConfiguration_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+

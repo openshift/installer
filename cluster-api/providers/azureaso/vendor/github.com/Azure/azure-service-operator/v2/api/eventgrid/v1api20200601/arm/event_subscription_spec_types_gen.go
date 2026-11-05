@@ -465,8 +465,11 @@ type AzureFunctionEventSubscriptionDestinationProperties struct {
 	MaxEventsPerBatch *int `json:"maxEventsPerBatch,omitempty"`
 
 	// PreferredBatchSizeInKilobytes: Preferred batch size in Kilobytes.
-	PreferredBatchSizeInKilobytes *int    `json:"preferredBatchSizeInKilobytes,omitempty"`
-	ResourceId                    *string `json:"resourceId,omitempty"`
+	PreferredBatchSizeInKilobytes *int `json:"preferredBatchSizeInKilobytes,omitempty"`
+
+	// ResourceId: The Azure Resource Id that represents the endpoint of the Azure Function destination of an event
+	// subscription.
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 type BoolEqualsAdvancedFilter struct {
@@ -492,6 +495,7 @@ var eventHubEventSubscriptionDestination_EndpointType_Values = map[string]EventH
 
 // The properties for a event hub destination.
 type EventHubEventSubscriptionDestinationProperties struct {
+	// ResourceId: The Azure Resource Id that represents the endpoint of an Event Hub destination of an event subscription.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -507,6 +511,7 @@ var hybridConnectionEventSubscriptionDestination_EndpointType_Values = map[strin
 
 // The properties for a hybrid connection destination.
 type HybridConnectionEventSubscriptionDestinationProperties struct {
+	// ResourceId: The Azure Resource ID of an hybrid connection that is the destination of an event subscription.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -588,6 +593,7 @@ var serviceBusQueueEventSubscriptionDestination_EndpointType_Values = map[string
 
 // The properties that represent the Service Bus destination of an event subscription.
 type ServiceBusQueueEventSubscriptionDestinationProperties struct {
+	// ResourceId: The Azure Resource Id that represents the endpoint of the Service Bus destination of an event subscription.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -603,6 +609,8 @@ var serviceBusTopicEventSubscriptionDestination_EndpointType_Values = map[string
 
 // The properties that represent the Service Bus Topic destination of an event subscription.
 type ServiceBusTopicEventSubscriptionDestinationProperties struct {
+	// ResourceId: The Azure Resource Id that represents the endpoint of the Service Bus Topic destination of an event
+	// subscription.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -620,7 +628,9 @@ var storageBlobDeadLetterDestination_EndpointType_Values = map[string]StorageBlo
 type StorageBlobDeadLetterDestinationProperties struct {
 	// BlobContainerName: The name of the Storage blob container that is the destination of the deadletter events
 	BlobContainerName *string `json:"blobContainerName,omitempty"`
-	ResourceId        *string `json:"resourceId,omitempty"`
+
+	// ResourceId: The Azure Resource ID of the storage account that is the destination of the deadletter events
+	ResourceId *string `json:"resourceId,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"StorageQueue"}
@@ -636,7 +646,10 @@ var storageQueueEventSubscriptionDestination_EndpointType_Values = map[string]St
 // The properties for a storage queue destination.
 type StorageQueueEventSubscriptionDestinationProperties struct {
 	// QueueName: The name of the Storage queue under a storage account that is the destination of an event subscription.
-	QueueName  *string `json:"queueName,omitempty"`
+	QueueName *string `json:"queueName,omitempty"`
+
+	// ResourceId: The Azure Resource ID of the storage account that contains the queue that is the destination of an event
+	// subscription.
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 

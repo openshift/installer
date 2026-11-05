@@ -41,7 +41,7 @@ type AzureClient struct {
 
 // NewClient creates a new MSI client from an authorizer.
 func NewClient(auth azure.Authorizer) (Client, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create identities client options")
 	}
@@ -54,7 +54,7 @@ func NewClient(auth azure.Authorizer) (Client, error) {
 
 // NewClientBySub creates a new MSI client with a given subscriptionID.
 func NewClientBySub(auth azure.Authorizer, subscriptionID string) (Client, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create identities client options")
 	}

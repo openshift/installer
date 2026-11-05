@@ -116,7 +116,12 @@ func (record *DnsZonesPTRRecord) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (record *DnsZonesPTRRecord) createValidations() []func(ctx context.Context, obj *v20180501.DnsZonesPTRRecord) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20180501.DnsZonesPTRRecord) (admission.Warnings, error){record.validateResourceReferences, record.validateOwnerReference, record.validateSecretDestinations, record.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20180501.DnsZonesPTRRecord) (admission.Warnings, error){
+		record.validateResourceReferences,
+		record.validateOwnerReference,
+		record.validateSecretDestinations,
+		record.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventhub}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2021-11-01/eventhubs.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2021-11-01/eventhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}
 type NamespacesEventhub struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (eventhub *NamespacesEventhub) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/stable/2021-11-01/eventhubs.json
+// - Generated from: /eventhub/resource-manager/Microsoft.EventHub/Eventhub/stable/2021-11-01/eventhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}
 type NamespacesEventhubList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -296,7 +297,7 @@ func (eventhub *NamespacesEventhub_Spec) ConvertToARM(resolved genruntime.Conver
 		result.Properties = &arm.Namespaces_Eventhub_Properties_Spec{}
 	}
 	if eventhub.CaptureDescription != nil {
-		captureDescription_ARM, err := (*eventhub.CaptureDescription).ConvertToARM(resolved)
+		captureDescription_ARM, err := eventhub.CaptureDescription.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -940,7 +941,7 @@ func (description *CaptureDescription) ConvertToARM(resolved genruntime.ConvertT
 
 	// Set property "Destination":
 	if description.Destination != nil {
-		destination_ARM, err := (*description.Destination).ConvertToARM(resolved)
+		destination_ARM, err := description.Destination.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1385,8 +1386,6 @@ func (operator *NamespacesEventhubOperatorSpec) AssignProperties_From_Namespaces
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1403,8 +1402,6 @@ func (operator *NamespacesEventhubOperatorSpec) AssignProperties_From_Namespaces
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1430,8 +1427,6 @@ func (operator *NamespacesEventhubOperatorSpec) AssignProperties_To_NamespacesEv
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1448,8 +1443,6 @@ func (operator *NamespacesEventhubOperatorSpec) AssignProperties_To_NamespacesEv
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

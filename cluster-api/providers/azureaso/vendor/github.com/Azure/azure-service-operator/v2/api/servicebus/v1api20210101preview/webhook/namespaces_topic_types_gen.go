@@ -116,7 +116,12 @@ func (topic *NamespacesTopic) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (topic *NamespacesTopic) createValidations() []func(ctx context.Context, obj *v20210101p.NamespacesTopic) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20210101p.NamespacesTopic) (admission.Warnings, error){topic.validateResourceReferences, topic.validateOwnerReference, topic.validateSecretDestinations, topic.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20210101p.NamespacesTopic) (admission.Warnings, error){
+		topic.validateResourceReferences,
+		topic.validateOwnerReference,
+		topic.validateSecretDestinations,
+		topic.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

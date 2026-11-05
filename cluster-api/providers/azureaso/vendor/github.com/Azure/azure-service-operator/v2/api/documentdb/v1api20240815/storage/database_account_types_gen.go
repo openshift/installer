@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=documentdb.azure.com,resources={databaseaccounts/status,databaseaccounts/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240815.DatabaseAccount
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}
 type DatabaseAccount struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (account *DatabaseAccount) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240815.DatabaseAccount
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2024-08-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2024-08-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}
 type DatabaseAccountList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -186,7 +187,6 @@ type DatabaseAccount_Spec struct {
 	ConsistencyPolicy                  *ConsistencyPolicy             `json:"consistencyPolicy,omitempty"`
 	Cors                               []CorsPolicy                   `json:"cors,omitempty"`
 	CreateMode                         *string                        `json:"createMode,omitempty"`
-	CustomerManagedKeyStatus           *string                        `json:"customerManagedKeyStatus,omitempty"`
 	DatabaseAccountOfferType           *string                        `json:"databaseAccountOfferType,omitempty"`
 	DefaultIdentity                    *string                        `json:"defaultIdentity,omitempty"`
 	DisableKeyBasedMetadataWriteAccess *bool                          `json:"disableKeyBasedMetadataWriteAccess,omitempty"`

@@ -116,7 +116,13 @@ func (setting *AutoscaleSetting) ValidateUpdate(ctx context.Context, oldResource
 
 // createValidations validates the creation of the resource
 func (setting *AutoscaleSetting) createValidations() []func(ctx context.Context, obj *v20221001.AutoscaleSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20221001.AutoscaleSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20221001.AutoscaleSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateOwnerReference,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+		setting.validateOptionalSecretReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -140,6 +146,9 @@ func (setting *AutoscaleSetting) updateValidations() []func(ctx context.Context,
 		func(ctx context.Context, oldObj *v20221001.AutoscaleSetting, newObj *v20221001.AutoscaleSetting) (admission.Warnings, error) {
 			return setting.validateConfigMapDestinations(ctx, newObj)
 		},
+		func(ctx context.Context, oldObj *v20221001.AutoscaleSetting, newObj *v20221001.AutoscaleSetting) (admission.Warnings, error) {
+			return setting.validateOptionalSecretReferences(ctx, newObj)
+		},
 	}
 }
 
@@ -149,6 +158,15 @@ func (setting *AutoscaleSetting) validateConfigMapDestinations(ctx context.Conte
 		return nil, nil
 	}
 	return configmaps.ValidateDestinations(obj, nil, obj.Spec.OperatorSpec.ConfigMapExpressions)
+}
+
+// validateOptionalSecretReferences validates all optional secret reference pairs to ensure that at most 1 is set
+func (setting *AutoscaleSetting) validateOptionalSecretReferences(ctx context.Context, obj *v20221001.AutoscaleSetting) (admission.Warnings, error) {
+	refs, err := reflecthelpers.FindOptionalSecretReferences(&obj.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return secrets.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field

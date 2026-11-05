@@ -5,8 +5,7 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/storage/v20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -22,6 +21,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,storage}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -54,22 +54,36 @@ var _ conversion.Convertible = &StorageAccount{}
 
 // ConvertFrom populates our StorageAccount from the provided hub StorageAccount
 func (account *StorageAccount) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.StorageAccount)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccount but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.StorageAccount
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return account.AssignProperties_From_StorageAccount(source)
+	err = account.AssignProperties_From_StorageAccount(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to account")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccount from our StorageAccount
 func (account *StorageAccount) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.StorageAccount)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20230101/storage/StorageAccount but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.StorageAccount
+	err := account.AssignProperties_To_StorageAccount(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from account")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return account.AssignProperties_To_StorageAccount(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &StorageAccount{}
@@ -1094,13 +1108,6 @@ func (account *StorageAccount_STATUS) AssignProperties_From_StorageAccount_STATU
 	// AccessTier
 	account.AccessTier = genruntime.ClonePointerToString(source.AccessTier)
 
-	// AccountMigrationInProgress
-	if source.AccountMigrationInProgress != nil {
-		propertyBag.Add("AccountMigrationInProgress", *source.AccountMigrationInProgress)
-	} else {
-		propertyBag.Remove("AccountMigrationInProgress")
-	}
-
 	// AllowBlobPublicAccess
 	if source.AllowBlobPublicAccess != nil {
 		allowBlobPublicAccess := *source.AllowBlobPublicAccess
@@ -1284,13 +1291,6 @@ func (account *StorageAccount_STATUS) AssignProperties_From_StorageAccount_STATU
 		account.IsSftpEnabled = nil
 	}
 
-	// IsSkuConversionBlocked
-	if source.IsSkuConversionBlocked != nil {
-		propertyBag.Add("IsSkuConversionBlocked", *source.IsSkuConversionBlocked)
-	} else {
-		propertyBag.Remove("IsSkuConversionBlocked")
-	}
-
 	// KeyCreationTime
 	if source.KeyCreationTime != nil {
 		var keyCreationTime KeyCreationTime_STATUS
@@ -1364,8 +1364,6 @@ func (account *StorageAccount_STATUS) AssignProperties_From_StorageAccount_STATU
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1494,19 +1492,6 @@ func (account *StorageAccount_STATUS) AssignProperties_To_StorageAccount_STATUS(
 
 	// AccessTier
 	destination.AccessTier = genruntime.ClonePointerToString(account.AccessTier)
-
-	// AccountMigrationInProgress
-	if propertyBag.Contains("AccountMigrationInProgress") {
-		var accountMigrationInProgress bool
-		err := propertyBag.Pull("AccountMigrationInProgress", &accountMigrationInProgress)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'AccountMigrationInProgress' from propertyBag")
-		}
-
-		destination.AccountMigrationInProgress = &accountMigrationInProgress
-	} else {
-		destination.AccountMigrationInProgress = nil
-	}
 
 	// AllowBlobPublicAccess
 	if account.AllowBlobPublicAccess != nil {
@@ -1691,19 +1676,6 @@ func (account *StorageAccount_STATUS) AssignProperties_To_StorageAccount_STATUS(
 		destination.IsSftpEnabled = nil
 	}
 
-	// IsSkuConversionBlocked
-	if propertyBag.Contains("IsSkuConversionBlocked") {
-		var isSkuConversionBlocked bool
-		err := propertyBag.Pull("IsSkuConversionBlocked", &isSkuConversionBlocked)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'IsSkuConversionBlocked' from propertyBag")
-		}
-
-		destination.IsSkuConversionBlocked = &isSkuConversionBlocked
-	} else {
-		destination.IsSkuConversionBlocked = nil
-	}
-
 	// KeyCreationTime
 	if account.KeyCreationTime != nil {
 		var keyCreationTime storage.KeyCreationTime_STATUS
@@ -1777,8 +1749,6 @@ func (account *StorageAccount_STATUS) AssignProperties_To_StorageAccount_STATUS(
 	if account.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(account.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range account.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2983,29 +2953,8 @@ func (stats *GeoReplicationStats_STATUS) AssignProperties_From_GeoReplicationSta
 		stats.CanFailover = nil
 	}
 
-	// CanPlannedFailover
-	if source.CanPlannedFailover != nil {
-		propertyBag.Add("CanPlannedFailover", *source.CanPlannedFailover)
-	} else {
-		propertyBag.Remove("CanPlannedFailover")
-	}
-
 	// LastSyncTime
 	stats.LastSyncTime = genruntime.ClonePointerToString(source.LastSyncTime)
-
-	// PostFailoverRedundancy
-	if source.PostFailoverRedundancy != nil {
-		propertyBag.Add("PostFailoverRedundancy", *source.PostFailoverRedundancy)
-	} else {
-		propertyBag.Remove("PostFailoverRedundancy")
-	}
-
-	// PostPlannedFailoverRedundancy
-	if source.PostPlannedFailoverRedundancy != nil {
-		propertyBag.Add("PostPlannedFailoverRedundancy", *source.PostPlannedFailoverRedundancy)
-	} else {
-		propertyBag.Remove("PostPlannedFailoverRedundancy")
-	}
 
 	// Status
 	stats.Status = genruntime.ClonePointerToString(source.Status)
@@ -3043,47 +2992,8 @@ func (stats *GeoReplicationStats_STATUS) AssignProperties_To_GeoReplicationStats
 		destination.CanFailover = nil
 	}
 
-	// CanPlannedFailover
-	if propertyBag.Contains("CanPlannedFailover") {
-		var canPlannedFailover bool
-		err := propertyBag.Pull("CanPlannedFailover", &canPlannedFailover)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'CanPlannedFailover' from propertyBag")
-		}
-
-		destination.CanPlannedFailover = &canPlannedFailover
-	} else {
-		destination.CanPlannedFailover = nil
-	}
-
 	// LastSyncTime
 	destination.LastSyncTime = genruntime.ClonePointerToString(stats.LastSyncTime)
-
-	// PostFailoverRedundancy
-	if propertyBag.Contains("PostFailoverRedundancy") {
-		var postFailoverRedundancy string
-		err := propertyBag.Pull("PostFailoverRedundancy", &postFailoverRedundancy)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'PostFailoverRedundancy' from propertyBag")
-		}
-
-		destination.PostFailoverRedundancy = &postFailoverRedundancy
-	} else {
-		destination.PostFailoverRedundancy = nil
-	}
-
-	// PostPlannedFailoverRedundancy
-	if propertyBag.Contains("PostPlannedFailoverRedundancy") {
-		var postPlannedFailoverRedundancy string
-		err := propertyBag.Pull("PostPlannedFailoverRedundancy", &postPlannedFailoverRedundancy)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'PostPlannedFailoverRedundancy' from propertyBag")
-		}
-
-		destination.PostPlannedFailoverRedundancy = &postPlannedFailoverRedundancy
-	} else {
-		destination.PostPlannedFailoverRedundancy = nil
-	}
 
 	// Status
 	destination.Status = genruntime.ClonePointerToString(stats.Status)
@@ -3128,8 +3038,6 @@ func (identity *Identity) AssignProperties_From_Identity(source *storage.Identit
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -3174,8 +3082,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -3236,8 +3142,6 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserAssignedIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserAssignedIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -3288,8 +3192,6 @@ func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserAssignedIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserAssignedIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -3740,8 +3642,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule
 			err := ipRule.AssignProperties_From_IPRule(&ipRuleItem)
 			if err != nil {
@@ -3758,8 +3658,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 	if source.ResourceAccessRules != nil {
 		resourceAccessRuleList := make([]ResourceAccessRule, len(source.ResourceAccessRules))
 		for resourceAccessRuleIndex, resourceAccessRuleItem := range source.ResourceAccessRules {
-			// Shadow the loop variable to avoid aliasing
-			resourceAccessRuleItem := resourceAccessRuleItem
 			var resourceAccessRule ResourceAccessRule
 			err := resourceAccessRule.AssignProperties_From_ResourceAccessRule(&resourceAccessRuleItem)
 			if err != nil {
@@ -3776,8 +3674,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *stor
 	if source.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]VirtualNetworkRule, len(source.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range source.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule VirtualNetworkRule
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule(&virtualNetworkRuleItem)
 			if err != nil {
@@ -3825,8 +3721,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 	if ruleSet.IpRules != nil {
 		ipRuleList := make([]storage.IPRule, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule
 			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
 			if err != nil {
@@ -3843,8 +3737,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 	if ruleSet.ResourceAccessRules != nil {
 		resourceAccessRuleList := make([]storage.ResourceAccessRule, len(ruleSet.ResourceAccessRules))
 		for resourceAccessRuleIndex, resourceAccessRuleItem := range ruleSet.ResourceAccessRules {
-			// Shadow the loop variable to avoid aliasing
-			resourceAccessRuleItem := resourceAccessRuleItem
 			var resourceAccessRule storage.ResourceAccessRule
 			err := resourceAccessRuleItem.AssignProperties_To_ResourceAccessRule(&resourceAccessRule)
 			if err != nil {
@@ -3861,8 +3753,6 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *s
 	if ruleSet.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]storage.VirtualNetworkRule, len(ruleSet.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range ruleSet.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule storage.VirtualNetworkRule
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule(&virtualNetworkRule)
 			if err != nil {
@@ -3921,8 +3811,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 	if source.IpRules != nil {
 		ipRuleList := make([]IPRule_STATUS, len(source.IpRules))
 		for ipRuleIndex, ipRuleItem := range source.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule IPRule_STATUS
 			err := ipRule.AssignProperties_From_IPRule_STATUS(&ipRuleItem)
 			if err != nil {
@@ -3939,8 +3827,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 	if source.ResourceAccessRules != nil {
 		resourceAccessRuleList := make([]ResourceAccessRule_STATUS, len(source.ResourceAccessRules))
 		for resourceAccessRuleIndex, resourceAccessRuleItem := range source.ResourceAccessRules {
-			// Shadow the loop variable to avoid aliasing
-			resourceAccessRuleItem := resourceAccessRuleItem
 			var resourceAccessRule ResourceAccessRule_STATUS
 			err := resourceAccessRule.AssignProperties_From_ResourceAccessRule_STATUS(&resourceAccessRuleItem)
 			if err != nil {
@@ -3957,8 +3843,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 	if source.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]VirtualNetworkRule_STATUS, len(source.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range source.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule VirtualNetworkRule_STATUS
 			err := virtualNetworkRule.AssignProperties_From_VirtualNetworkRule_STATUS(&virtualNetworkRuleItem)
 			if err != nil {
@@ -4006,8 +3890,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 	if ruleSet.IpRules != nil {
 		ipRuleList := make([]storage.IPRule_STATUS, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
-			// Shadow the loop variable to avoid aliasing
-			ipRuleItem := ipRuleItem
 			var ipRule storage.IPRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
 			if err != nil {
@@ -4024,8 +3906,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 	if ruleSet.ResourceAccessRules != nil {
 		resourceAccessRuleList := make([]storage.ResourceAccessRule_STATUS, len(ruleSet.ResourceAccessRules))
 		for resourceAccessRuleIndex, resourceAccessRuleItem := range ruleSet.ResourceAccessRules {
-			// Shadow the loop variable to avoid aliasing
-			resourceAccessRuleItem := resourceAccessRuleItem
 			var resourceAccessRule storage.ResourceAccessRule_STATUS
 			err := resourceAccessRuleItem.AssignProperties_To_ResourceAccessRule_STATUS(&resourceAccessRule)
 			if err != nil {
@@ -4042,8 +3922,6 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 	if ruleSet.VirtualNetworkRules != nil {
 		virtualNetworkRuleList := make([]storage.VirtualNetworkRule_STATUS, len(ruleSet.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range ruleSet.VirtualNetworkRules {
-			// Shadow the loop variable to avoid aliasing
-			virtualNetworkRuleItem := virtualNetworkRuleItem
 			var virtualNetworkRule storage.VirtualNetworkRule_STATUS
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule_STATUS(&virtualNetworkRule)
 			if err != nil {
@@ -4634,8 +4512,6 @@ func (operator *StorageAccountOperatorSpec) AssignProperties_From_StorageAccount
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -4664,8 +4540,6 @@ func (operator *StorageAccountOperatorSpec) AssignProperties_From_StorageAccount
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -4719,8 +4593,6 @@ func (operator *StorageAccountOperatorSpec) AssignProperties_To_StorageAccountOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -4749,8 +4621,6 @@ func (operator *StorageAccountOperatorSpec) AssignProperties_To_StorageAccountOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -5439,8 +5309,6 @@ func (parameters *BlobRestoreParameters_STATUS) AssignProperties_From_BlobRestor
 	if source.BlobRanges != nil {
 		blobRangeList := make([]BlobRestoreRange_STATUS, len(source.BlobRanges))
 		for blobRangeIndex, blobRangeItem := range source.BlobRanges {
-			// Shadow the loop variable to avoid aliasing
-			blobRangeItem := blobRangeItem
 			var blobRange BlobRestoreRange_STATUS
 			err := blobRange.AssignProperties_From_BlobRestoreRange_STATUS(&blobRangeItem)
 			if err != nil {
@@ -5485,8 +5353,6 @@ func (parameters *BlobRestoreParameters_STATUS) AssignProperties_To_BlobRestoreP
 	if parameters.BlobRanges != nil {
 		blobRangeList := make([]storage.BlobRestoreRange_STATUS, len(parameters.BlobRanges))
 		for blobRangeIndex, blobRangeItem := range parameters.BlobRanges {
-			// Shadow the loop variable to avoid aliasing
-			blobRangeItem := blobRangeItem
 			var blobRange storage.BlobRestoreRange_STATUS
 			err := blobRangeItem.AssignProperties_To_BlobRestoreRange_STATUS(&blobRange)
 			if err != nil {
@@ -5990,9 +5856,10 @@ func (services *EncryptionServices_STATUS) AssignProperties_To_EncryptionService
 // Storage version of v1api20220901.IPRule
 // IP rule with specific IP or IP range in CIDR format.
 type IPRule struct {
-	Action      *string                `json:"action,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Value       *string                `json:"value,omitempty"`
+	Action          *string                        `json:"action,omitempty"`
+	PropertyBag     genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
+	Value           *string                        `json:"value,omitempty" optionalConfigMapPair:"Value"`
+	ValueFromConfig *genruntime.ConfigMapReference `json:"valueFromConfig,omitempty" optionalConfigMapPair:"Value"`
 }
 
 // AssignProperties_From_IPRule populates our IPRule from the provided source IPRule
@@ -6005,6 +5872,14 @@ func (rule *IPRule) AssignProperties_From_IPRule(source *storage.IPRule) error {
 
 	// Value
 	rule.Value = genruntime.ClonePointerToString(source.Value)
+
+	// ValueFromConfig
+	if source.ValueFromConfig != nil {
+		valueFromConfig := source.ValueFromConfig.Copy()
+		rule.ValueFromConfig = &valueFromConfig
+	} else {
+		rule.ValueFromConfig = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -6036,6 +5911,14 @@ func (rule *IPRule) AssignProperties_To_IPRule(destination *storage.IPRule) erro
 
 	// Value
 	destination.Value = genruntime.ClonePointerToString(rule.Value)
+
+	// ValueFromConfig
+	if rule.ValueFromConfig != nil {
+		valueFromConfig := rule.ValueFromConfig.Copy()
+		destination.ValueFromConfig = &valueFromConfig
+	} else {
+		destination.ValueFromConfig = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -6655,7 +6538,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// BlobEndpoint
 	if source.BlobEndpoint != nil {
-		blobEndpoint := source.BlobEndpoint.Copy()
+		blobEndpoint := *source.BlobEndpoint.DeepCopy()
 		maps.BlobEndpoint = &blobEndpoint
 	} else {
 		maps.BlobEndpoint = nil
@@ -6663,7 +6546,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// DfsEndpoint
 	if source.DfsEndpoint != nil {
-		dfsEndpoint := source.DfsEndpoint.Copy()
+		dfsEndpoint := *source.DfsEndpoint.DeepCopy()
 		maps.DfsEndpoint = &dfsEndpoint
 	} else {
 		maps.DfsEndpoint = nil
@@ -6671,7 +6554,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// FileEndpoint
 	if source.FileEndpoint != nil {
-		fileEndpoint := source.FileEndpoint.Copy()
+		fileEndpoint := *source.FileEndpoint.DeepCopy()
 		maps.FileEndpoint = &fileEndpoint
 	} else {
 		maps.FileEndpoint = nil
@@ -6679,7 +6562,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// QueueEndpoint
 	if source.QueueEndpoint != nil {
-		queueEndpoint := source.QueueEndpoint.Copy()
+		queueEndpoint := *source.QueueEndpoint.DeepCopy()
 		maps.QueueEndpoint = &queueEndpoint
 	} else {
 		maps.QueueEndpoint = nil
@@ -6687,7 +6570,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// TableEndpoint
 	if source.TableEndpoint != nil {
-		tableEndpoint := source.TableEndpoint.Copy()
+		tableEndpoint := *source.TableEndpoint.DeepCopy()
 		maps.TableEndpoint = &tableEndpoint
 	} else {
 		maps.TableEndpoint = nil
@@ -6695,7 +6578,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_From_StorageAccou
 
 	// WebEndpoint
 	if source.WebEndpoint != nil {
-		webEndpoint := source.WebEndpoint.Copy()
+		webEndpoint := *source.WebEndpoint.DeepCopy()
 		maps.WebEndpoint = &webEndpoint
 	} else {
 		maps.WebEndpoint = nil
@@ -6728,7 +6611,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// BlobEndpoint
 	if maps.BlobEndpoint != nil {
-		blobEndpoint := maps.BlobEndpoint.Copy()
+		blobEndpoint := *maps.BlobEndpoint.DeepCopy()
 		destination.BlobEndpoint = &blobEndpoint
 	} else {
 		destination.BlobEndpoint = nil
@@ -6736,7 +6619,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// DfsEndpoint
 	if maps.DfsEndpoint != nil {
-		dfsEndpoint := maps.DfsEndpoint.Copy()
+		dfsEndpoint := *maps.DfsEndpoint.DeepCopy()
 		destination.DfsEndpoint = &dfsEndpoint
 	} else {
 		destination.DfsEndpoint = nil
@@ -6744,7 +6627,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// FileEndpoint
 	if maps.FileEndpoint != nil {
-		fileEndpoint := maps.FileEndpoint.Copy()
+		fileEndpoint := *maps.FileEndpoint.DeepCopy()
 		destination.FileEndpoint = &fileEndpoint
 	} else {
 		destination.FileEndpoint = nil
@@ -6752,7 +6635,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// QueueEndpoint
 	if maps.QueueEndpoint != nil {
-		queueEndpoint := maps.QueueEndpoint.Copy()
+		queueEndpoint := *maps.QueueEndpoint.DeepCopy()
 		destination.QueueEndpoint = &queueEndpoint
 	} else {
 		destination.QueueEndpoint = nil
@@ -6760,7 +6643,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// TableEndpoint
 	if maps.TableEndpoint != nil {
-		tableEndpoint := maps.TableEndpoint.Copy()
+		tableEndpoint := *maps.TableEndpoint.DeepCopy()
 		destination.TableEndpoint = &tableEndpoint
 	} else {
 		destination.TableEndpoint = nil
@@ -6768,7 +6651,7 @@ func (maps *StorageAccountOperatorConfigMaps) AssignProperties_To_StorageAccount
 
 	// WebEndpoint
 	if maps.WebEndpoint != nil {
-		webEndpoint := maps.WebEndpoint.Copy()
+		webEndpoint := *maps.WebEndpoint.DeepCopy()
 		destination.WebEndpoint = &webEndpoint
 	} else {
 		destination.WebEndpoint = nil
@@ -6814,7 +6697,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// BlobEndpoint
 	if source.BlobEndpoint != nil {
-		blobEndpoint := source.BlobEndpoint.Copy()
+		blobEndpoint := *source.BlobEndpoint.DeepCopy()
 		secrets.BlobEndpoint = &blobEndpoint
 	} else {
 		secrets.BlobEndpoint = nil
@@ -6822,7 +6705,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// DfsEndpoint
 	if source.DfsEndpoint != nil {
-		dfsEndpoint := source.DfsEndpoint.Copy()
+		dfsEndpoint := *source.DfsEndpoint.DeepCopy()
 		secrets.DfsEndpoint = &dfsEndpoint
 	} else {
 		secrets.DfsEndpoint = nil
@@ -6830,7 +6713,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// FileEndpoint
 	if source.FileEndpoint != nil {
-		fileEndpoint := source.FileEndpoint.Copy()
+		fileEndpoint := *source.FileEndpoint.DeepCopy()
 		secrets.FileEndpoint = &fileEndpoint
 	} else {
 		secrets.FileEndpoint = nil
@@ -6838,7 +6721,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// Key1
 	if source.Key1 != nil {
-		key1 := source.Key1.Copy()
+		key1 := *source.Key1.DeepCopy()
 		secrets.Key1 = &key1
 	} else {
 		secrets.Key1 = nil
@@ -6846,7 +6729,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// Key2
 	if source.Key2 != nil {
-		key2 := source.Key2.Copy()
+		key2 := *source.Key2.DeepCopy()
 		secrets.Key2 = &key2
 	} else {
 		secrets.Key2 = nil
@@ -6854,7 +6737,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// QueueEndpoint
 	if source.QueueEndpoint != nil {
-		queueEndpoint := source.QueueEndpoint.Copy()
+		queueEndpoint := *source.QueueEndpoint.DeepCopy()
 		secrets.QueueEndpoint = &queueEndpoint
 	} else {
 		secrets.QueueEndpoint = nil
@@ -6862,7 +6745,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// TableEndpoint
 	if source.TableEndpoint != nil {
-		tableEndpoint := source.TableEndpoint.Copy()
+		tableEndpoint := *source.TableEndpoint.DeepCopy()
 		secrets.TableEndpoint = &tableEndpoint
 	} else {
 		secrets.TableEndpoint = nil
@@ -6870,7 +6753,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_From_StorageAccou
 
 	// WebEndpoint
 	if source.WebEndpoint != nil {
-		webEndpoint := source.WebEndpoint.Copy()
+		webEndpoint := *source.WebEndpoint.DeepCopy()
 		secrets.WebEndpoint = &webEndpoint
 	} else {
 		secrets.WebEndpoint = nil
@@ -6903,7 +6786,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// BlobEndpoint
 	if secrets.BlobEndpoint != nil {
-		blobEndpoint := secrets.BlobEndpoint.Copy()
+		blobEndpoint := *secrets.BlobEndpoint.DeepCopy()
 		destination.BlobEndpoint = &blobEndpoint
 	} else {
 		destination.BlobEndpoint = nil
@@ -6911,7 +6794,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// DfsEndpoint
 	if secrets.DfsEndpoint != nil {
-		dfsEndpoint := secrets.DfsEndpoint.Copy()
+		dfsEndpoint := *secrets.DfsEndpoint.DeepCopy()
 		destination.DfsEndpoint = &dfsEndpoint
 	} else {
 		destination.DfsEndpoint = nil
@@ -6919,7 +6802,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// FileEndpoint
 	if secrets.FileEndpoint != nil {
-		fileEndpoint := secrets.FileEndpoint.Copy()
+		fileEndpoint := *secrets.FileEndpoint.DeepCopy()
 		destination.FileEndpoint = &fileEndpoint
 	} else {
 		destination.FileEndpoint = nil
@@ -6927,7 +6810,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// Key1
 	if secrets.Key1 != nil {
-		key1 := secrets.Key1.Copy()
+		key1 := *secrets.Key1.DeepCopy()
 		destination.Key1 = &key1
 	} else {
 		destination.Key1 = nil
@@ -6935,7 +6818,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// Key2
 	if secrets.Key2 != nil {
-		key2 := secrets.Key2.Copy()
+		key2 := *secrets.Key2.DeepCopy()
 		destination.Key2 = &key2
 	} else {
 		destination.Key2 = nil
@@ -6943,7 +6826,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// QueueEndpoint
 	if secrets.QueueEndpoint != nil {
-		queueEndpoint := secrets.QueueEndpoint.Copy()
+		queueEndpoint := *secrets.QueueEndpoint.DeepCopy()
 		destination.QueueEndpoint = &queueEndpoint
 	} else {
 		destination.QueueEndpoint = nil
@@ -6951,7 +6834,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// TableEndpoint
 	if secrets.TableEndpoint != nil {
-		tableEndpoint := secrets.TableEndpoint.Copy()
+		tableEndpoint := *secrets.TableEndpoint.DeepCopy()
 		destination.TableEndpoint = &tableEndpoint
 	} else {
 		destination.TableEndpoint = nil
@@ -6959,7 +6842,7 @@ func (secrets *StorageAccountOperatorSecrets) AssignProperties_To_StorageAccount
 
 	// WebEndpoint
 	if secrets.WebEndpoint != nil {
-		webEndpoint := secrets.WebEndpoint.Copy()
+		webEndpoint := *secrets.WebEndpoint.DeepCopy()
 		destination.WebEndpoint = &webEndpoint
 	} else {
 		destination.WebEndpoint = nil

@@ -25,31 +25,32 @@ type Path struct {
 	Valid  bool
 }
 
+// ScanPath implements the [PathScanner] interface.
 func (path *Path) ScanPath(v Path) error {
 	*path = v
 	return nil
 }
 
+// PathValue implements the [PathValuer] interface.
 func (path Path) PathValue() (Path, error) {
 	return path, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (path *Path) Scan(src any) error {
 	if src == nil {
 		*path = Path{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToPathScanner{}.Scan([]byte(src), path)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (path Path) Value() (driver.Value, error) {
 	if !path.Valid {
 		return nil, nil
@@ -154,16 +155,13 @@ func (encodePlanPathCodecText) Encode(value any, buf []byte) (newBuf []byte, err
 }
 
 func (PathCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case PathScanner:
+		if _, ok := target.(PathScanner); ok {
 			return scanPlanBinaryPathToPathScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case PathScanner:
+		if _, ok := target.(PathScanner); ok {
 			return scanPlanTextAnyToPathScanner{}
 		}
 	}
@@ -194,7 +192,7 @@ func (scanPlanBinaryPathToPathScanner) Scan(src []byte, dst any) error {
 	}
 
 	points := make([]Vec2, pointCount)
-	for i := 0; i < len(points); i++ {
+	for i := range points {
 		x := binary.BigEndian.Uint64(src[rp:])
 		rp += 8
 		y := binary.BigEndian.Uint64(src[rp:])
@@ -225,29 +223,39 @@ func (scanPlanTextAnyToPathScanner) Scan(src []byte, dst any) error {
 	closed := src[0] == '('
 	points := make([]Vec2, 0)
 
-	str := string(src[2:])
+	// Expected format: ((x1,y1),...,(xn,yn)) or [(x1,y1),...,(xn,yn)]
+	str := string(src[1 : len(src)-1])
 
 	for {
-		end := strings.IndexByte(str, ',')
-		x, err := strconv.ParseFloat(str[:end], 64)
+		if len(str) == 0 || str[0] != '(' {
+			return fmt.Errorf("invalid format for Path")
+		}
+		body, rest, found := strings.Cut(str[1:], ")")
+		if !found {
+			return fmt.Errorf("invalid format for Path")
+		}
+
+		sx, sy, found := strings.Cut(body, ",")
+		if !found {
+			return fmt.Errorf("invalid format for Path")
+		}
+		x, err := strconv.ParseFloat(sx, 64)
 		if err != nil {
 			return err
 		}
-
-		str = str[end+1:]
-		end = strings.IndexByte(str, ')')
-
-		y, err := strconv.ParseFloat(str[:end], 64)
+		y, err := strconv.ParseFloat(sy, 64)
 		if err != nil {
 			return err
 		}
 
 		points = append(points, Vec2{x, y})
 
-		if end+3 < len(str) {
-			str = str[end+3:]
-		} else {
+		if rest == "" {
 			break
+		}
+		str, found = strings.CutPrefix(rest, ",")
+		if !found {
+			return fmt.Errorf("invalid format for Path")
 		}
 	}
 

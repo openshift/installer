@@ -14,6 +14,7 @@ type Flags struct {
 	MetricsAddr          string
 	ProfilingMetrics     bool
 	SecureMetrics        bool
+	MetricsCertDir       string
 	HealthAddr           string
 	WebhookPort          int
 	WebhookCertDir       string
@@ -24,16 +25,18 @@ type Flags struct {
 
 func (f Flags) String() string {
 	return fmt.Sprintf(
-		"MetricsAddr: %s, SecureMetrics: %t, ProfilingMetrics: %t, HealthAddr: %s, WebhookPort: %d, WebhookCertDir: %s, EnableLeaderElection: %t, CRDManagementMode: %s, CRDPatterns: %s",
+		"MetricsAddr: %s, SecureMetrics: %t, ProfilingMetrics: %t, MetricsCertDir: %s, HealthAddr: %s, WebhookPort: %d, WebhookCertDir: %s, EnableLeaderElection: %t, CRDManagementMode: %s, CRDPatterns: %s",
 		f.MetricsAddr,
 		f.SecureMetrics,
 		f.ProfilingMetrics,
+		f.MetricsCertDir,
 		f.HealthAddr,
 		f.WebhookPort,
 		f.WebhookCertDir,
 		f.EnableLeaderElection,
 		f.CRDManagementMode,
-		f.CRDPatterns)
+		f.CRDPatterns,
+	)
 }
 
 func InitFlags(flagSet *flag.FlagSet) *Flags {
@@ -43,6 +46,7 @@ func InitFlags(flagSet *flag.FlagSet) *Flags {
 	flagSet.StringVar(&result.MetricsAddr, "metrics-addr", "0", "The address the metric endpoint binds to.")
 	flagSet.BoolVar(&result.SecureMetrics, "secure-metrics", true, "Enable secure metrics. This secures the pprof and metrics endpoints via Kubernetes RBAC and HTTPS")
 	flagSet.BoolVar(&result.ProfilingMetrics, "profiling-metrics", false, "Enable pprof metrics, only enabled in conjunction with secure-metrics. This will enable serving pprof metrics endpoints")
+	flagSet.StringVar(&result.MetricsCertDir, "metrics-cert-dir", "", "The directory the metrics server's certs are stored.")
 	flagSet.StringVar(&result.HealthAddr, "health-addr", "", "The address the healthz endpoint binds to.")
 	flagSet.IntVar(&result.WebhookPort, "webhook-port", 9443, "The port the webhook endpoint binds to.")
 	flagSet.StringVar(&result.WebhookCertDir, "webhook-cert-dir", "", "The directory the webhook server's certs are stored.")

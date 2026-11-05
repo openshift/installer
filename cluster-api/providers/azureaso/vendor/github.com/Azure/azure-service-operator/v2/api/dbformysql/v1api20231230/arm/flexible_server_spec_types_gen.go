@@ -93,14 +93,16 @@ type ServerProperties struct {
 	ReplicationRole *ReplicationRole `json:"replicationRole,omitempty"`
 
 	// RestorePointInTime: Restore point creation time (ISO8601 format), specifying the time to restore from.
-	RestorePointInTime     *string `json:"restorePointInTime,omitempty"`
+	RestorePointInTime *string `json:"restorePointInTime,omitempty"`
+
+	// SourceServerResourceId: The source MySQL server id.
 	SourceServerResourceId *string `json:"sourceServerResourceId,omitempty"`
 
 	// Storage: Storage related properties of a server.
 	Storage *Storage `json:"storage,omitempty"`
 
 	// Version: Server version.
-	Version *ServerVersion `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Storage Profile properties of a server
@@ -118,11 +120,16 @@ type Backup struct {
 // The date encryption for cmk.
 type DataEncryption struct {
 	// GeoBackupKeyURI: Geo backup key uri as key vault can't cross region, need cmk in same region as geo backup
-	GeoBackupKeyURI                 *string `json:"geoBackupKeyURI,omitempty"`
+	GeoBackupKeyURI *string `json:"geoBackupKeyURI,omitempty"`
+
+	// GeoBackupUserAssignedIdentityId: Geo backup user identity resource id as identity can't cross region, need identity in
+	// same region as geo backup
 	GeoBackupUserAssignedIdentityId *string `json:"geoBackupUserAssignedIdentityId,omitempty"`
 
 	// PrimaryKeyURI: Primary key uri
-	PrimaryKeyURI                 *string `json:"primaryKeyURI,omitempty"`
+	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty"`
+
+	// PrimaryUserAssignedIdentityId: Primary user identity resource id
 	PrimaryUserAssignedIdentityId *string `json:"primaryUserAssignedIdentityId,omitempty"`
 
 	// Type: The key type, AzureKeyVault for enable cmk, SystemManaged for disable cmk.
@@ -196,8 +203,11 @@ var mySQLServerSku_Tier_Values = map[string]MySQLServerSku_Tier{
 
 // Network related properties of a server
 type Network struct {
+	// DelegatedSubnetResourceId: Delegated subnet resource id used to setup vnet for a server.
 	DelegatedSubnetResourceId *string `json:"delegatedSubnetResourceId,omitempty"`
-	PrivateDnsZoneResourceId  *string `json:"privateDnsZoneResourceId,omitempty"`
+
+	// PrivateDnsZoneResourceId: Private DNS zone resource id.
+	PrivateDnsZoneResourceId *string `json:"privateDnsZoneResourceId,omitempty"`
 
 	// PublicNetworkAccess: Whether or not public network access is allowed for this server. Value is 'Disabled' when server
 	// has VNet integration.
@@ -237,21 +247,6 @@ var serverProperties_CreateMode_Values = map[string]ServerProperties_CreateMode{
 	"georestore":         ServerProperties_CreateMode_GeoRestore,
 	"pointintimerestore": ServerProperties_CreateMode_PointInTimeRestore,
 	"replica":            ServerProperties_CreateMode_Replica,
-}
-
-// The version of a server.
-// +kubebuilder:validation:Enum={"5.7","8.0.21"}
-type ServerVersion string
-
-const (
-	ServerVersion_57   = ServerVersion("5.7")
-	ServerVersion_8021 = ServerVersion("8.0.21")
-)
-
-// Mapping from string to ServerVersion
-var serverVersion_Values = map[string]ServerVersion{
-	"5.7":    ServerVersion_57,
-	"8.0.21": ServerVersion_8021,
 }
 
 // Storage Profile properties of a server

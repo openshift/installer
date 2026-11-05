@@ -11,7 +11,7 @@ type FlexibleServersBackup_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Properties: The properties of a server backup.
+	// Properties: Properties of a backup.
 	Properties *ServerBackupProperties_STATUS `json:"properties,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -21,15 +21,15 @@ type FlexibleServersBackup_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// The properties of a server backup.
+// Properties of a backup.
 type ServerBackupProperties_STATUS struct {
-	// BackupType: Backup type.
+	// BackupType: Type of backup.
 	BackupType *ServerBackupProperties_BackupType_STATUS `json:"backupType,omitempty"`
 
-	// CompletedTime: Backup completed time (ISO8601 format).
+	// CompletedTime: Time(ISO8601 format) at which the backup was completed.
 	CompletedTime *string `json:"completedTime,omitempty"`
 
-	// Source: Backup source
+	// Source: Source of the backup.
 	Source *string `json:"source,omitempty"`
 }
 

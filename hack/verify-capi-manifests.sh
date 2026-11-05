@@ -32,6 +32,7 @@ generate_capi_manifest() {
 			"privateendpoints.network.azure.com"
 			"fleetsmembers.containerservice.azure.com"
 			"extensions.kubernetesconfiguration.azure.com"
+			"privatelinkservices.network.azure.com"
 		)
 
 		# Build the yq filter for allowed CRD names
@@ -40,7 +41,7 @@ generate_capi_manifest() {
 		for crd_name in "${aso_crds[@]}"; do
 			crd_filter="${crd_filter}.metadata.name == \"${crd_name}\" or "
 		done
-		crd_filter="${crd_filter}false"  # Add false at the end to close the OR chain
+		crd_filter="${crd_filter}false" # Add false at the end to close the OR chain
 		set -x
 
 		# Download operator manifests (namespace, deployment, webhooks, services)
@@ -48,9 +49,9 @@ generate_capi_manifest() {
 		echo "---" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 
 		# Download and filter CRDs to only include those needed by CAPZ
-		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" | \
-		    yq e ". | select(.kind != \"CustomResourceDefinition\" or (.kind == \"CustomResourceDefinition\" and (${crd_filter})))" - \
-			>>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" |
+			yq e ". | select(.kind != \"CustomResourceDefinition\" or (.kind == \"CustomResourceDefinition\" and (${crd_filter})))" - \
+				>>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	elif [ "${provider}" = "openstackorc" ]; then
 		# Just copy the CRD from upstream
 		curl -fSsL "https://github.com/k-orc/openstack-resource-controller/releases/download/${version}/install.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
@@ -76,6 +77,16 @@ generate_capi_manifest() {
 		case "${provider}" in
 		cluster-api)
 			cp out/cluster-api-components.yaml "${MANIFESTS_DIR}/core-components.yaml"
+			;;
+		azurestack)
+			# The Azure Stack CAPZ fork still bundles the ASO CRDs and webhooks of the
+			# ASO release it was built against, but ASO is installed from the azureaso
+			# manifest. Both are installed into the same local control plane, so keeping
+			# ASO's API surface here installs it twice: the CRD update is rejected once
+			# the two ASO releases disagree on a storage version, and the fork's ASO
+			# webhooks are left pointing at the CAPZ webhook server. Let azureaso own it.
+			yq e 'select(((.kind == "CustomResourceDefinition") and ((.spec.group // "") | test("\.azure\.com$"))) == false and (((.kind == "MutatingWebhookConfiguration") or (.kind == "ValidatingWebhookConfiguration")) and ((.metadata.name // "") | test("^azureserviceoperator-"))) == false)' \
+				out/infrastructure-components.yaml >"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 			;;
 		*)
 			cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"

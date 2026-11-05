@@ -37,7 +37,9 @@ type RoleAssignmentProperties struct {
 	Condition *string `json:"condition,omitempty"`
 
 	// ConditionVersion: Version of the condition. Currently the only accepted value is '2.0'
-	ConditionVersion                   *string `json:"conditionVersion,omitempty"`
+	ConditionVersion *string `json:"conditionVersion,omitempty"`
+
+	// DelegatedManagedIdentityResourceId: Id of the delegated managed identity resource
 	DelegatedManagedIdentityResourceId *string `json:"delegatedManagedIdentityResourceId,omitempty"`
 
 	// Description: Description of role assignment
@@ -47,8 +49,12 @@ type RoleAssignmentProperties struct {
 	PrincipalId *string `json:"principalId,omitempty" optionalConfigMapPair:"PrincipalId"`
 
 	// PrincipalType: The principal type of the assigned principal ID.
-	PrincipalType    *RoleAssignmentProperties_PrincipalType `json:"principalType,omitempty"`
-	RoleDefinitionId *string                                 `json:"roleDefinitionId,omitempty"`
+	PrincipalType *RoleAssignmentProperties_PrincipalType `json:"principalType,omitempty"`
+
+	// RoleDefinitionId: The role definition ID. This can be the ARM ID of a custom role definition, or the well-known name of
+	// a built-in role definition. See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles for
+	// well-known role definition names.
+	RoleDefinitionId *string `json:"roleDefinitionId,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"Device","ForeignGroup","Group","ServicePrincipal","User"}

@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,synapse}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -51,22 +52,36 @@ var _ conversion.Convertible = &Workspace{}
 
 // ConvertFrom populates our Workspace from the provided hub Workspace
 func (workspace *Workspace) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Workspace)
-	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601/storage/Workspace but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Workspace
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return workspace.AssignProperties_From_Workspace(source)
+	err = workspace.AssignProperties_From_Workspace(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to workspace")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Workspace from our Workspace
 func (workspace *Workspace) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Workspace)
-	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601/storage/Workspace but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Workspace
+	err := workspace.AssignProperties_To_Workspace(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from workspace")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return workspace.AssignProperties_To_Workspace(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Workspace{}
@@ -87,17 +102,6 @@ func (workspace *Workspace) SecretDestinationExpressions() []*core.DestinationEx
 		return nil
 	}
 	return workspace.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Workspace{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (workspace *Workspace) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Workspace_STATUS); ok {
-		return workspace.Spec.Initialize_From_Workspace_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Workspace_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Workspace{}
@@ -333,7 +337,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 	// Set property "Identity":
 	if workspace.Identity != nil {
-		identity_ARM, err := (*workspace.Identity).ConvertToARM(resolved)
+		identity_ARM, err := workspace.Identity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -372,7 +376,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.AzureADOnlyAuthentication = &azureADOnlyAuthentication
 	}
 	if workspace.CspWorkspaceAdminProperties != nil {
-		cspWorkspaceAdminProperties_ARM, err := (*workspace.CspWorkspaceAdminProperties).ConvertToARM(resolved)
+		cspWorkspaceAdminProperties_ARM, err := workspace.CspWorkspaceAdminProperties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +384,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.CspWorkspaceAdminProperties = &cspWorkspaceAdminProperties
 	}
 	if workspace.DefaultDataLakeStorage != nil {
-		defaultDataLakeStorage_ARM, err := (*workspace.DefaultDataLakeStorage).ConvertToARM(resolved)
+		defaultDataLakeStorage_ARM, err := workspace.DefaultDataLakeStorage.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -388,7 +392,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.DefaultDataLakeStorage = &defaultDataLakeStorage
 	}
 	if workspace.Encryption != nil {
-		encryption_ARM, err := (*workspace.Encryption).ConvertToARM(resolved)
+		encryption_ARM, err := workspace.Encryption.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -404,7 +408,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.ManagedVirtualNetwork = &managedVirtualNetwork
 	}
 	if workspace.ManagedVirtualNetworkSettings != nil {
-		managedVirtualNetworkSettings_ARM, err := (*workspace.ManagedVirtualNetworkSettings).ConvertToARM(resolved)
+		managedVirtualNetworkSettings_ARM, err := workspace.ManagedVirtualNetworkSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -418,7 +422,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if workspace.PurviewConfiguration != nil {
-		purviewConfiguration_ARM, err := (*workspace.PurviewConfiguration).ConvertToARM(resolved)
+		purviewConfiguration_ARM, err := workspace.PurviewConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +446,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.TrustedServiceBypassEnabled = &trustedServiceBypassEnabled
 	}
 	if workspace.VirtualNetworkProfile != nil {
-		virtualNetworkProfile_ARM, err := (*workspace.VirtualNetworkProfile).ConvertToARM(resolved)
+		virtualNetworkProfile_ARM, err := workspace.VirtualNetworkProfile.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -450,7 +454,7 @@ func (workspace *Workspace_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.VirtualNetworkProfile = &virtualNetworkProfile
 	}
 	if workspace.WorkspaceRepositoryConfiguration != nil {
-		workspaceRepositoryConfiguration_ARM, err := (*workspace.WorkspaceRepositoryConfiguration).ConvertToARM(resolved)
+		workspaceRepositoryConfiguration_ARM, err := workspace.WorkspaceRepositoryConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1085,148 +1089,6 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 	return nil
 }
 
-// Initialize_From_Workspace_STATUS populates our Workspace_Spec from the provided source Workspace_STATUS
-func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Workspace_STATUS) error {
-
-	// AzureADOnlyAuthentication
-	if source.AzureADOnlyAuthentication != nil {
-		azureADOnlyAuthentication := *source.AzureADOnlyAuthentication
-		workspace.AzureADOnlyAuthentication = &azureADOnlyAuthentication
-	} else {
-		workspace.AzureADOnlyAuthentication = nil
-	}
-
-	// CspWorkspaceAdminProperties
-	if source.CspWorkspaceAdminProperties != nil {
-		var cspWorkspaceAdminProperty CspWorkspaceAdminProperties
-		err := cspWorkspaceAdminProperty.Initialize_From_CspWorkspaceAdminProperties_STATUS(source.CspWorkspaceAdminProperties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CspWorkspaceAdminProperties_STATUS() to populate field CspWorkspaceAdminProperties")
-		}
-		workspace.CspWorkspaceAdminProperties = &cspWorkspaceAdminProperty
-	} else {
-		workspace.CspWorkspaceAdminProperties = nil
-	}
-
-	// DefaultDataLakeStorage
-	if source.DefaultDataLakeStorage != nil {
-		var defaultDataLakeStorage DataLakeStorageAccountDetails
-		err := defaultDataLakeStorage.Initialize_From_DataLakeStorageAccountDetails_STATUS(source.DefaultDataLakeStorage)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_DataLakeStorageAccountDetails_STATUS() to populate field DefaultDataLakeStorage")
-		}
-		workspace.DefaultDataLakeStorage = &defaultDataLakeStorage
-	} else {
-		workspace.DefaultDataLakeStorage = nil
-	}
-
-	// Encryption
-	if source.Encryption != nil {
-		var encryption EncryptionDetails
-		err := encryption.Initialize_From_EncryptionDetails_STATUS(source.Encryption)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_EncryptionDetails_STATUS() to populate field Encryption")
-		}
-		workspace.Encryption = &encryption
-	} else {
-		workspace.Encryption = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity ManagedIdentity
-		err := identity.Initialize_From_ManagedIdentity_STATUS(source.Identity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedIdentity_STATUS() to populate field Identity")
-		}
-		workspace.Identity = &identity
-	} else {
-		workspace.Identity = nil
-	}
-
-	// Location
-	workspace.Location = genruntime.ClonePointerToString(source.Location)
-
-	// ManagedResourceGroupName
-	workspace.ManagedResourceGroupName = genruntime.ClonePointerToString(source.ManagedResourceGroupName)
-
-	// ManagedVirtualNetwork
-	workspace.ManagedVirtualNetwork = genruntime.ClonePointerToString(source.ManagedVirtualNetwork)
-
-	// ManagedVirtualNetworkSettings
-	if source.ManagedVirtualNetworkSettings != nil {
-		var managedVirtualNetworkSetting ManagedVirtualNetworkSettings
-		err := managedVirtualNetworkSetting.Initialize_From_ManagedVirtualNetworkSettings_STATUS(source.ManagedVirtualNetworkSettings)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ManagedVirtualNetworkSettings_STATUS() to populate field ManagedVirtualNetworkSettings")
-		}
-		workspace.ManagedVirtualNetworkSettings = &managedVirtualNetworkSetting
-	} else {
-		workspace.ManagedVirtualNetworkSettings = nil
-	}
-
-	// PublicNetworkAccess
-	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), workspaceProperties_PublicNetworkAccess_Values)
-		workspace.PublicNetworkAccess = &publicNetworkAccess
-	} else {
-		workspace.PublicNetworkAccess = nil
-	}
-
-	// PurviewConfiguration
-	if source.PurviewConfiguration != nil {
-		var purviewConfiguration PurviewConfiguration
-		err := purviewConfiguration.Initialize_From_PurviewConfiguration_STATUS(source.PurviewConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
-		}
-		workspace.PurviewConfiguration = &purviewConfiguration
-	} else {
-		workspace.PurviewConfiguration = nil
-	}
-
-	// SqlAdministratorLogin
-	workspace.SqlAdministratorLogin = genruntime.ClonePointerToString(source.SqlAdministratorLogin)
-
-	// Tags
-	workspace.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// TrustedServiceBypassEnabled
-	if source.TrustedServiceBypassEnabled != nil {
-		trustedServiceBypassEnabled := *source.TrustedServiceBypassEnabled
-		workspace.TrustedServiceBypassEnabled = &trustedServiceBypassEnabled
-	} else {
-		workspace.TrustedServiceBypassEnabled = nil
-	}
-
-	// VirtualNetworkProfile
-	if source.VirtualNetworkProfile != nil {
-		var virtualNetworkProfile VirtualNetworkProfile
-		err := virtualNetworkProfile.Initialize_From_VirtualNetworkProfile_STATUS(source.VirtualNetworkProfile)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualNetworkProfile_STATUS() to populate field VirtualNetworkProfile")
-		}
-		workspace.VirtualNetworkProfile = &virtualNetworkProfile
-	} else {
-		workspace.VirtualNetworkProfile = nil
-	}
-
-	// WorkspaceRepositoryConfiguration
-	if source.WorkspaceRepositoryConfiguration != nil {
-		var workspaceRepositoryConfiguration WorkspaceRepositoryConfiguration
-		err := workspaceRepositoryConfiguration.Initialize_From_WorkspaceRepositoryConfiguration_STATUS(source.WorkspaceRepositoryConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WorkspaceRepositoryConfiguration_STATUS() to populate field WorkspaceRepositoryConfiguration")
-		}
-		workspace.WorkspaceRepositoryConfiguration = &workspaceRepositoryConfiguration
-	} else {
-		workspace.WorkspaceRepositoryConfiguration = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (workspace *Workspace_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -1723,8 +1585,6 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 	if source.ExtraProperties != nil {
 		extraPropertyMap := make(map[string]v1.JSON, len(source.ExtraProperties))
 		for extraPropertyKey, extraPropertyValue := range source.ExtraProperties {
-			// Shadow the loop variable to avoid aliasing
-			extraPropertyValue := extraPropertyValue
 			extraPropertyMap[extraPropertyKey] = *extraPropertyValue.DeepCopy()
 		}
 		workspace.ExtraProperties = extraPropertyMap
@@ -1775,8 +1635,6 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1817,8 +1675,6 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		workspace.Settings = settingMap
@@ -1936,8 +1792,6 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 	if workspace.ExtraProperties != nil {
 		extraPropertyMap := make(map[string]v1.JSON, len(workspace.ExtraProperties))
 		for extraPropertyKey, extraPropertyValue := range workspace.ExtraProperties {
-			// Shadow the loop variable to avoid aliasing
-			extraPropertyValue := extraPropertyValue
 			extraPropertyMap[extraPropertyKey] = *extraPropertyValue.DeepCopy()
 		}
 		destination.ExtraProperties = extraPropertyMap
@@ -1988,8 +1842,6 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 	if workspace.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(workspace.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range workspace.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -2029,8 +1881,6 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 	if workspace.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(workspace.Settings))
 		for settingKey, settingValue := range workspace.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -2162,16 +2012,6 @@ func (properties *CspWorkspaceAdminProperties) AssignProperties_To_CspWorkspaceA
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CspWorkspaceAdminProperties_STATUS populates our CspWorkspaceAdminProperties from the provided source CspWorkspaceAdminProperties_STATUS
-func (properties *CspWorkspaceAdminProperties) Initialize_From_CspWorkspaceAdminProperties_STATUS(source *CspWorkspaceAdminProperties_STATUS) error {
-
-	// InitialWorkspaceAdminObjectId
-	properties.InitialWorkspaceAdminObjectId = genruntime.ClonePointerToString(source.InitialWorkspaceAdminObjectId)
 
 	// No error
 	return nil
@@ -2422,35 +2262,6 @@ func (details *DataLakeStorageAccountDetails) AssignProperties_To_DataLakeStorag
 	return nil
 }
 
-// Initialize_From_DataLakeStorageAccountDetails_STATUS populates our DataLakeStorageAccountDetails from the provided source DataLakeStorageAccountDetails_STATUS
-func (details *DataLakeStorageAccountDetails) Initialize_From_DataLakeStorageAccountDetails_STATUS(source *DataLakeStorageAccountDetails_STATUS) error {
-
-	// AccountUrl
-	details.AccountUrl = genruntime.ClonePointerToString(source.AccountUrl)
-
-	// CreateManagedPrivateEndpoint
-	if source.CreateManagedPrivateEndpoint != nil {
-		createManagedPrivateEndpoint := *source.CreateManagedPrivateEndpoint
-		details.CreateManagedPrivateEndpoint = &createManagedPrivateEndpoint
-	} else {
-		details.CreateManagedPrivateEndpoint = nil
-	}
-
-	// Filesystem
-	details.Filesystem = genruntime.ClonePointerToString(source.Filesystem)
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		details.ResourceReference = &resourceReference
-	} else {
-		details.ResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Details of the data lake storage account associated with the workspace
 type DataLakeStorageAccountDetails_STATUS struct {
 	// AccountUrl: Account URL
@@ -2582,7 +2393,7 @@ func (details *EncryptionDetails) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Cmk":
 	if details.Cmk != nil {
-		cmk_ARM, err := (*details.Cmk).ConvertToARM(resolved)
+		cmk_ARM, err := details.Cmk.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2660,25 +2471,6 @@ func (details *EncryptionDetails) AssignProperties_To_EncryptionDetails(destinat
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_EncryptionDetails_STATUS populates our EncryptionDetails from the provided source EncryptionDetails_STATUS
-func (details *EncryptionDetails) Initialize_From_EncryptionDetails_STATUS(source *EncryptionDetails_STATUS) error {
-
-	// Cmk
-	if source.Cmk != nil {
-		var cmk CustomerManagedKeyDetails
-		err := cmk.Initialize_From_CustomerManagedKeyDetails_STATUS(source.Cmk)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_CustomerManagedKeyDetails_STATUS() to populate field Cmk")
-		}
-		details.Cmk = &cmk
-	} else {
-		details.Cmk = nil
 	}
 
 	// No error
@@ -2873,8 +2665,6 @@ func (identity *ManagedIdentity) AssignProperties_From_ManagedIdentity(source *s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2908,8 +2698,6 @@ func (identity *ManagedIdentity) AssignProperties_To_ManagedIdentity(destination
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2927,33 +2715,6 @@ func (identity *ManagedIdentity) AssignProperties_To_ManagedIdentity(destination
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedIdentity_STATUS populates our ManagedIdentity from the provided source ManagedIdentity_STATUS
-func (identity *ManagedIdentity) Initialize_From_ManagedIdentity_STATUS(source *ManagedIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), managedIdentity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -3048,8 +2809,6 @@ func (identity *ManagedIdentity_STATUS) AssignProperties_From_ManagedIdentity_ST
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]UserAssignedManagedIdentity_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity UserAssignedManagedIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedManagedIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -3089,8 +2848,6 @@ func (identity *ManagedIdentity_STATUS) AssignProperties_To_ManagedIdentity_STAT
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]storage.UserAssignedManagedIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity storage.UserAssignedManagedIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedManagedIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -3242,32 +2999,6 @@ func (settings *ManagedVirtualNetworkSettings) AssignProperties_To_ManagedVirtua
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedVirtualNetworkSettings_STATUS populates our ManagedVirtualNetworkSettings from the provided source ManagedVirtualNetworkSettings_STATUS
-func (settings *ManagedVirtualNetworkSettings) Initialize_From_ManagedVirtualNetworkSettings_STATUS(source *ManagedVirtualNetworkSettings_STATUS) error {
-
-	// AllowedAadTenantIdsForLinking
-	settings.AllowedAadTenantIdsForLinking = genruntime.CloneSliceOfString(source.AllowedAadTenantIdsForLinking)
-
-	// LinkedAccessCheckOnTargetResource
-	if source.LinkedAccessCheckOnTargetResource != nil {
-		linkedAccessCheckOnTargetResource := *source.LinkedAccessCheckOnTargetResource
-		settings.LinkedAccessCheckOnTargetResource = &linkedAccessCheckOnTargetResource
-	} else {
-		settings.LinkedAccessCheckOnTargetResource = nil
-	}
-
-	// PreventDataExfiltration
-	if source.PreventDataExfiltration != nil {
-		preventDataExfiltration := *source.PreventDataExfiltration
-		settings.PreventDataExfiltration = &preventDataExfiltration
-	} else {
-		settings.PreventDataExfiltration = nil
 	}
 
 	// No error
@@ -3526,21 +3257,6 @@ func (configuration *PurviewConfiguration) AssignProperties_To_PurviewConfigurat
 	return nil
 }
 
-// Initialize_From_PurviewConfiguration_STATUS populates our PurviewConfiguration from the provided source PurviewConfiguration_STATUS
-func (configuration *PurviewConfiguration) Initialize_From_PurviewConfiguration_STATUS(source *PurviewConfiguration_STATUS) error {
-
-	// PurviewResourceReference
-	if source.PurviewResourceId != nil {
-		purviewResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.PurviewResourceId)
-		configuration.PurviewResourceReference = &purviewResourceReference
-	} else {
-		configuration.PurviewResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Purview Configuration
 type PurviewConfiguration_STATUS struct {
 	// PurviewResourceId: Purview Resource ID
@@ -3674,16 +3390,6 @@ func (profile *VirtualNetworkProfile) AssignProperties_To_VirtualNetworkProfile(
 	return nil
 }
 
-// Initialize_From_VirtualNetworkProfile_STATUS populates our VirtualNetworkProfile from the provided source VirtualNetworkProfile_STATUS
-func (profile *VirtualNetworkProfile) Initialize_From_VirtualNetworkProfile_STATUS(source *VirtualNetworkProfile_STATUS) error {
-
-	// ComputeSubnetId
-	profile.ComputeSubnetId = genruntime.ClonePointerToString(source.ComputeSubnetId)
-
-	// No error
-	return nil
-}
-
 // Virtual Network Profile
 type VirtualNetworkProfile_STATUS struct {
 	// ComputeSubnetId: Subnet ID used for computes in workspace
@@ -3759,8 +3465,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_From_WorkspaceOperatorSp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3777,8 +3481,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_From_WorkspaceOperatorSp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -3804,8 +3506,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_To_WorkspaceOperatorSpec
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -3822,8 +3522,6 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_To_WorkspaceOperatorSpec
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -4117,40 +3815,6 @@ func (configuration *WorkspaceRepositoryConfiguration) AssignProperties_To_Works
 	return nil
 }
 
-// Initialize_From_WorkspaceRepositoryConfiguration_STATUS populates our WorkspaceRepositoryConfiguration from the provided source WorkspaceRepositoryConfiguration_STATUS
-func (configuration *WorkspaceRepositoryConfiguration) Initialize_From_WorkspaceRepositoryConfiguration_STATUS(source *WorkspaceRepositoryConfiguration_STATUS) error {
-
-	// AccountName
-	configuration.AccountName = genruntime.ClonePointerToString(source.AccountName)
-
-	// CollaborationBranch
-	configuration.CollaborationBranch = genruntime.ClonePointerToString(source.CollaborationBranch)
-
-	// HostName
-	configuration.HostName = genruntime.ClonePointerToString(source.HostName)
-
-	// LastCommitId
-	configuration.LastCommitId = genruntime.ClonePointerToString(source.LastCommitId)
-
-	// ProjectName
-	configuration.ProjectName = genruntime.ClonePointerToString(source.ProjectName)
-
-	// RepositoryName
-	configuration.RepositoryName = genruntime.ClonePointerToString(source.RepositoryName)
-
-	// RootFolder
-	configuration.RootFolder = genruntime.ClonePointerToString(source.RootFolder)
-
-	// TenantId
-	configuration.TenantId = genruntime.ClonePointerToString(source.TenantId)
-
-	// Type
-	configuration.Type = genruntime.ClonePointerToString(source.Type)
-
-	// No error
-	return nil
-}
-
 // Git integration settings
 type WorkspaceRepositoryConfiguration_STATUS struct {
 	// AccountName: Account name
@@ -4350,7 +4014,7 @@ func (details *CustomerManagedKeyDetails) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "KekIdentity":
 	if details.KekIdentity != nil {
-		kekIdentity_ARM, err := (*details.KekIdentity).ConvertToARM(resolved)
+		kekIdentity_ARM, err := details.KekIdentity.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4360,7 +4024,7 @@ func (details *CustomerManagedKeyDetails) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "Key":
 	if details.Key != nil {
-		key_ARM, err := (*details.Key).ConvertToARM(resolved)
+		key_ARM, err := details.Key.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -4473,37 +4137,6 @@ func (details *CustomerManagedKeyDetails) AssignProperties_To_CustomerManagedKey
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CustomerManagedKeyDetails_STATUS populates our CustomerManagedKeyDetails from the provided source CustomerManagedKeyDetails_STATUS
-func (details *CustomerManagedKeyDetails) Initialize_From_CustomerManagedKeyDetails_STATUS(source *CustomerManagedKeyDetails_STATUS) error {
-
-	// KekIdentity
-	if source.KekIdentity != nil {
-		var kekIdentity KekIdentityProperties
-		err := kekIdentity.Initialize_From_KekIdentityProperties_STATUS(source.KekIdentity)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KekIdentityProperties_STATUS() to populate field KekIdentity")
-		}
-		details.KekIdentity = &kekIdentity
-	} else {
-		details.KekIdentity = nil
-	}
-
-	// Key
-	if source.Key != nil {
-		var key WorkspaceKeyDetails
-		err := key.Initialize_From_WorkspaceKeyDetails_STATUS(source.Key)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_WorkspaceKeyDetails_STATUS() to populate field Key")
-		}
-		details.Key = &key
-	} else {
-		details.Key = nil
 	}
 
 	// No error
@@ -4804,7 +4437,7 @@ func (properties *KekIdentityProperties) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "UseSystemAssignedIdentity":
 	if properties.UseSystemAssignedIdentity != nil {
-		useSystemAssignedIdentity := *(*properties.UseSystemAssignedIdentity).DeepCopy()
+		useSystemAssignedIdentity := *properties.UseSystemAssignedIdentity.DeepCopy()
 		result.UseSystemAssignedIdentity = &useSystemAssignedIdentity
 	}
 
@@ -4834,7 +4467,7 @@ func (properties *KekIdentityProperties) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "UseSystemAssignedIdentity":
 	if typedInput.UseSystemAssignedIdentity != nil {
-		useSystemAssignedIdentity := *(*typedInput.UseSystemAssignedIdentity).DeepCopy()
+		useSystemAssignedIdentity := *typedInput.UseSystemAssignedIdentity.DeepCopy()
 		properties.UseSystemAssignedIdentity = &useSystemAssignedIdentity
 	}
 
@@ -4899,21 +4532,6 @@ func (properties *KekIdentityProperties) AssignProperties_To_KekIdentityProperti
 	return nil
 }
 
-// Initialize_From_KekIdentityProperties_STATUS populates our KekIdentityProperties from the provided source KekIdentityProperties_STATUS
-func (properties *KekIdentityProperties) Initialize_From_KekIdentityProperties_STATUS(source *KekIdentityProperties_STATUS) error {
-
-	// UseSystemAssignedIdentity
-	if source.UseSystemAssignedIdentity != nil {
-		useSystemAssignedIdentity := *source.UseSystemAssignedIdentity.DeepCopy()
-		properties.UseSystemAssignedIdentity = &useSystemAssignedIdentity
-	} else {
-		properties.UseSystemAssignedIdentity = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Key encryption key properties
 type KekIdentityProperties_STATUS struct {
 	// UseSystemAssignedIdentity: Boolean specifying whether to use system assigned identity or not
@@ -4939,7 +4557,7 @@ func (properties *KekIdentityProperties_STATUS) PopulateFromARM(owner genruntime
 
 	// Set property "UseSystemAssignedIdentity":
 	if typedInput.UseSystemAssignedIdentity != nil {
-		useSystemAssignedIdentity := *(*typedInput.UseSystemAssignedIdentity).DeepCopy()
+		useSystemAssignedIdentity := *typedInput.UseSystemAssignedIdentity.DeepCopy()
 		properties.UseSystemAssignedIdentity = &useSystemAssignedIdentity
 	}
 
@@ -5088,19 +4706,6 @@ func (details *WorkspaceKeyDetails) AssignProperties_To_WorkspaceKeyDetails(dest
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_WorkspaceKeyDetails_STATUS populates our WorkspaceKeyDetails from the provided source WorkspaceKeyDetails_STATUS
-func (details *WorkspaceKeyDetails) Initialize_From_WorkspaceKeyDetails_STATUS(source *WorkspaceKeyDetails_STATUS) error {
-
-	// KeyVaultUrl
-	details.KeyVaultUrl = genruntime.ClonePointerToString(source.KeyVaultUrl)
-
-	// Name
-	details.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil

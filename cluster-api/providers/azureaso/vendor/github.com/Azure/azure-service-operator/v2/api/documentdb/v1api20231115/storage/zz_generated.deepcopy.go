@@ -1442,17 +1442,17 @@ func (in *DatabaseAccountOperatorSecrets) DeepCopyInto(out *DatabaseAccountOpera
 	if in.DocumentEndpoint != nil {
 		in, out := &in.DocumentEndpoint, &out.DocumentEndpoint
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryMasterKey != nil {
 		in, out := &in.PrimaryMasterKey, &out.PrimaryMasterKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryReadonlyMasterKey != nil {
 		in, out := &in.PrimaryReadonlyMasterKey, &out.PrimaryReadonlyMasterKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -1464,12 +1464,12 @@ func (in *DatabaseAccountOperatorSecrets) DeepCopyInto(out *DatabaseAccountOpera
 	if in.SecondaryMasterKey != nil {
 		in, out := &in.SecondaryMasterKey, &out.SecondaryMasterKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryReadonlyMasterKey != nil {
 		in, out := &in.SecondaryReadonlyMasterKey, &out.SecondaryReadonlyMasterKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -1493,7 +1493,7 @@ func (in *DatabaseAccountOperatorSpec) DeepCopyInto(out *DatabaseAccountOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1511,7 +1511,7 @@ func (in *DatabaseAccountOperatorSpec) DeepCopyInto(out *DatabaseAccountOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1865,11 +1865,6 @@ func (in *DatabaseAccount_Spec) DeepCopyInto(out *DatabaseAccount_Spec) {
 	}
 	if in.CreateMode != nil {
 		in, out := &in.CreateMode, &out.CreateMode
-		*out = new(string)
-		**out = **in
-	}
-	if in.CustomerManagedKeyStatus != nil {
-		in, out := &in.CustomerManagedKeyStatus, &out.CustomerManagedKeyStatus
 		*out = new(string)
 		**out = **in
 	}
@@ -3275,7 +3270,7 @@ func (in *MongodbDatabaseCollectionOperatorSpec) DeepCopyInto(out *MongodbDataba
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3293,7 +3288,7 @@ func (in *MongodbDatabaseCollectionOperatorSpec) DeepCopyInto(out *MongodbDataba
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3378,7 +3373,7 @@ func (in *MongodbDatabaseCollectionThroughputSettingOperatorSpec) DeepCopyInto(o
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3396,7 +3391,7 @@ func (in *MongodbDatabaseCollectionThroughputSettingOperatorSpec) DeepCopyInto(o
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3684,7 +3679,7 @@ func (in *MongodbDatabaseOperatorSpec) DeepCopyInto(out *MongodbDatabaseOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3702,7 +3697,7 @@ func (in *MongodbDatabaseOperatorSpec) DeepCopyInto(out *MongodbDatabaseOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3787,7 +3782,7 @@ func (in *MongodbDatabaseThroughputSettingOperatorSpec) DeepCopyInto(out *Mongod
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3805,7 +3800,7 @@ func (in *MongodbDatabaseThroughputSettingOperatorSpec) DeepCopyInto(out *Mongod
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4767,7 +4762,7 @@ func (in *SqlDatabaseContainerOperatorSpec) DeepCopyInto(out *SqlDatabaseContain
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4785,7 +4780,7 @@ func (in *SqlDatabaseContainerOperatorSpec) DeepCopyInto(out *SqlDatabaseContain
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4870,7 +4865,7 @@ func (in *SqlDatabaseContainerStoredProcedureOperatorSpec) DeepCopyInto(out *Sql
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4888,7 +4883,7 @@ func (in *SqlDatabaseContainerStoredProcedureOperatorSpec) DeepCopyInto(out *Sql
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5088,7 +5083,7 @@ func (in *SqlDatabaseContainerThroughputSettingOperatorSpec) DeepCopyInto(out *S
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5106,7 +5101,7 @@ func (in *SqlDatabaseContainerThroughputSettingOperatorSpec) DeepCopyInto(out *S
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5301,7 +5296,7 @@ func (in *SqlDatabaseContainerTriggerOperatorSpec) DeepCopyInto(out *SqlDatabase
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5319,7 +5314,7 @@ func (in *SqlDatabaseContainerTriggerOperatorSpec) DeepCopyInto(out *SqlDatabase
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5519,7 +5514,7 @@ func (in *SqlDatabaseContainerUserDefinedFunctionOperatorSpec) DeepCopyInto(out 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5537,7 +5532,7 @@ func (in *SqlDatabaseContainerUserDefinedFunctionOperatorSpec) DeepCopyInto(out 
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5892,7 +5887,7 @@ func (in *SqlDatabaseOperatorSpec) DeepCopyInto(out *SqlDatabaseOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5910,7 +5905,7 @@ func (in *SqlDatabaseOperatorSpec) DeepCopyInto(out *SqlDatabaseOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6032,7 +6027,7 @@ func (in *SqlDatabaseThroughputSettingOperatorSpec) DeepCopyInto(out *SqlDatabas
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6050,7 +6045,7 @@ func (in *SqlDatabaseThroughputSettingOperatorSpec) DeepCopyInto(out *SqlDatabas
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6365,7 +6360,7 @@ func (in *SqlRoleAssignmentOperatorSpec) DeepCopyInto(out *SqlRoleAssignmentOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6383,7 +6378,7 @@ func (in *SqlRoleAssignmentOperatorSpec) DeepCopyInto(out *SqlRoleAssignmentOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

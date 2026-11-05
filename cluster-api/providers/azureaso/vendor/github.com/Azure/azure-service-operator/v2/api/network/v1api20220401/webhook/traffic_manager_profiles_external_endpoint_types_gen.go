@@ -116,7 +116,12 @@ func (endpoint *TrafficManagerProfilesExternalEndpoint) ValidateUpdate(ctx conte
 
 // createValidations validates the creation of the resource
 func (endpoint *TrafficManagerProfilesExternalEndpoint) createValidations() []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesExternalEndpoint) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesExternalEndpoint) (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220401.TrafficManagerProfilesExternalEndpoint) (admission.Warnings, error){
+		endpoint.validateResourceReferences,
+		endpoint.validateOwnerReference,
+		endpoint.validateSecretDestinations,
+		endpoint.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

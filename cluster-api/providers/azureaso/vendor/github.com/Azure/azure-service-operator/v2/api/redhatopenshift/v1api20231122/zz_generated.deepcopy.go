@@ -538,17 +538,17 @@ func (in *OpenShiftClusterOperatorSecrets) DeepCopyInto(out *OpenShiftClusterOpe
 	if in.AdminCredentials != nil {
 		in, out := &in.AdminCredentials, &out.AdminCredentials
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Password != nil {
 		in, out := &in.Password, &out.Password
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Username != nil {
 		in, out := &in.Username, &out.Username
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -572,7 +572,7 @@ func (in *OpenShiftClusterOperatorSpec) DeepCopyInto(out *OpenShiftClusterOperat
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -583,7 +583,7 @@ func (in *OpenShiftClusterOperatorSpec) DeepCopyInto(out *OpenShiftClusterOperat
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

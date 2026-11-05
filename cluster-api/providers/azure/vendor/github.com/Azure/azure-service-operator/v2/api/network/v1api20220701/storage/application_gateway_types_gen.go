@@ -20,6 +20,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={applicationgateways/status,applicationgateways/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -28,13 +29,13 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220701.ApplicationGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/applicationGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/applicationGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}
 type ApplicationGateway struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              ApplicationGateway_Spec                                          `json:"spec,omitempty"`
-	Status            ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              ApplicationGateway_Spec   `json:"spec,omitempty"`
+	Status            ApplicationGateway_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ApplicationGateway{}
@@ -112,7 +113,7 @@ func (gateway *ApplicationGateway) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (gateway *ApplicationGateway) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded{}
+	return &ApplicationGateway_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -128,13 +129,13 @@ func (gateway *ApplicationGateway) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (gateway *ApplicationGateway) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded); ok {
+	if st, ok := status.(*ApplicationGateway_STATUS); ok {
 		gateway.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
+	var st ApplicationGateway_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -159,7 +160,7 @@ func (gateway *ApplicationGateway) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20220701.ApplicationGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/applicationGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/applicationGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/applicationGateways/{applicationGatewayName}
 type ApplicationGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -245,9 +246,9 @@ func (gateway *ApplicationGateway_Spec) ConvertSpecTo(destination genruntime.Con
 	return destination.ConvertSpecFrom(gateway)
 }
 
-// Storage version of v1api20220701.ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
+// Storage version of v1api20220701.ApplicationGateway_STATUS
 // Application gateway resource.
-type ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded struct {
+type ApplicationGateway_STATUS struct {
 	AuthenticationCertificates          []ApplicationGatewayAuthenticationCertificate_STATUS                              `json:"authenticationCertificates,omitempty"`
 	AutoscaleConfiguration              *ApplicationGatewayAutoscaleConfiguration_STATUS                                  `json:"autoscaleConfiguration,omitempty"`
 	BackendAddressPools                 []ApplicationGatewayBackendAddressPool_STATUS                                     `json:"backendAddressPools,omitempty"`
@@ -295,24 +296,24 @@ type ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded struct {
 	Zones                               []string                                                                          `json:"zones,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &ApplicationGateway_STATUS{}
 
-// ConvertStatusFrom populates our ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded from the provided source
-func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
+// ConvertStatusFrom populates our ApplicationGateway_STATUS from the provided source
+func (gateway *ApplicationGateway_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == gateway {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(embedded)
+	return source.ConvertStatusTo(gateway)
 }
 
-// ConvertStatusTo populates the provided destination from our ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded
-func (embedded *ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
+// ConvertStatusTo populates the provided destination from our ApplicationGateway_STATUS
+func (gateway *ApplicationGateway_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == gateway {
 		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	return destination.ConvertStatusFrom(gateway)
 }
 
 // Storage version of v1api20220701.ApplicationGatewayAuthenticationCertificate
@@ -860,8 +861,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_From_ManagedServiceIden
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -906,8 +905,6 @@ func (identity *ManagedServiceIdentity) AssignProperties_To_ManagedServiceIdenti
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]v20240301s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity v20240301s.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -968,8 +965,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_From_ManagedServ
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]ManagedServiceIdentity_UserAssignedIdentities_STATUS, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentity.AssignProperties_From_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentityValue)
 			if err != nil {
@@ -1020,8 +1015,6 @@ func (identity *ManagedServiceIdentity_STATUS) AssignProperties_To_ManagedServic
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v20240301s.ManagedServiceIdentity_UserAssignedIdentities_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			var userAssignedIdentity v20240301s.ManagedServiceIdentity_UserAssignedIdentities_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_ManagedServiceIdentity_UserAssignedIdentities_STATUS(&userAssignedIdentity)
 			if err != nil {
@@ -1263,10 +1256,15 @@ type ApplicationGatewayLoadDistributionTarget struct {
 // Storage version of v1api20220701.ApplicationGatewayPathRule
 // Path rule of URL path map of an application gateway.
 type ApplicationGatewayPathRule struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
+	BackendAddressPool     *SubResource           `json:"backendAddressPool,omitempty"`
+	BackendHttpSettings    *SubResource           `json:"backendHttpSettings,omitempty"`
+	FirewallPolicy         *SubResource           `json:"firewallPolicy,omitempty"`
+	LoadDistributionPolicy *SubResource           `json:"loadDistributionPolicy,omitempty"`
+	Name                   *string                `json:"name,omitempty"`
+	Paths                  []string               `json:"paths,omitempty"`
+	PropertyBag            genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	RedirectConfiguration  *SubResource           `json:"redirectConfiguration,omitempty"`
+	RewriteRuleSet         *SubResource           `json:"rewriteRuleSet,omitempty"`
 }
 
 // Storage version of v1api20220701.ApplicationGatewayPrivateLinkIpConfiguration

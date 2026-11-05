@@ -31,17 +31,18 @@ import (
 
 // SubnetSpec defines the specification for a Subnet.
 type SubnetSpec struct {
-	Name              string
-	ResourceGroup     string
-	SubscriptionID    string
-	CIDRs             []string
-	VNetName          string
-	VNetResourceGroup string
-	IsVNetManaged     bool
-	RouteTableName    string
-	SecurityGroupName string
-	NatGatewayName    string
-	ServiceEndpoints  infrav1.ServiceEndpoints
+	Name                    string
+	ResourceGroup           string
+	SubscriptionID          string
+	CIDRs                   []string
+	VNetName                string
+	VNetResourceGroup       string
+	IsVNetManaged           bool
+	RouteTableName          string
+	SecurityGroupName       string
+	NatGatewayName          string
+	ServiceEndpoints        infrav1.ServiceEndpoints
+	UsedForPrivateLinkNATIP bool
 }
 
 // ResourceRef implements azure.ASOResourceSpecGetter.
@@ -72,6 +73,12 @@ func (s *SubnetSpec) Parameters(_ context.Context, existing *asonetworkv1.Virtua
 	// workaround needed to avoid SubscriptionNotRegisteredForFeature for feature Microsoft.Network/AllowMultipleAddressPrefixesOnSubnet.
 	if len(s.CIDRs) == 1 {
 		subnet.Spec.AddressPrefix = &s.CIDRs[0]
+	}
+
+	if s.UsedForPrivateLinkNATIP {
+		// Disable PrivateLinkServiceNetworkPolicies only if the subnet is used for private link NAT IP in the
+		// AzureCluster spec, otherwise do not set any value here so the existing settings is not affected.
+		subnet.Spec.PrivateLinkServiceNetworkPolicies = ptr.To(asonetworkv1.SubnetPropertiesFormat_PrivateLinkServiceNetworkPolicies_Disabled)
 	}
 
 	if s.RouteTableName != "" {

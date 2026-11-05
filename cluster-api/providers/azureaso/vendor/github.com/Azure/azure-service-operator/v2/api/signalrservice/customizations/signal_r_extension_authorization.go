@@ -45,7 +45,8 @@ func (ext *SignalRExtension) ExportKubernetesSecrets(
 	typedObj, ok := obj.(*signalr.SignalR)
 	if !ok {
 		return nil, eris.Errorf(
-			"cannot run on unknown resource type %T, expected *signalr.SignalR", obj)
+			"cannot run on unknown resource type %T, expected *signalr.SignalR", obj,
+		)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

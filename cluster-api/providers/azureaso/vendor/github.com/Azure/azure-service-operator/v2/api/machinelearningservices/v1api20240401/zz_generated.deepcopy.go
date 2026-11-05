@@ -5852,12 +5852,12 @@ func (in *RegistryOperatorConfigMaps) DeepCopyInto(out *RegistryOperatorConfigMa
 	if in.DiscoveryUrl != nil {
 		in, out := &in.DiscoveryUrl, &out.DiscoveryUrl
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.MlFlowRegistryUri != nil {
 		in, out := &in.MlFlowRegistryUri, &out.MlFlowRegistryUri
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -5881,7 +5881,7 @@ func (in *RegistryOperatorSpec) DeepCopyInto(out *RegistryOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5897,7 +5897,7 @@ func (in *RegistryOperatorSpec) DeepCopyInto(out *RegistryOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9352,37 +9352,37 @@ func (in *WorkspaceOperatorSecrets) DeepCopyInto(out *WorkspaceOperatorSecrets) 
 	if in.AppInsightsInstrumentationKey != nil {
 		in, out := &in.AppInsightsInstrumentationKey, &out.AppInsightsInstrumentationKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ContainerRegistryPassword != nil {
 		in, out := &in.ContainerRegistryPassword, &out.ContainerRegistryPassword
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ContainerRegistryPassword2 != nil {
 		in, out := &in.ContainerRegistryPassword2, &out.ContainerRegistryPassword2
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ContainerRegistryUserName != nil {
 		in, out := &in.ContainerRegistryUserName, &out.ContainerRegistryUserName
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryNotebookAccessKey != nil {
 		in, out := &in.PrimaryNotebookAccessKey, &out.PrimaryNotebookAccessKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryNotebookAccessKey != nil {
 		in, out := &in.SecondaryNotebookAccessKey, &out.SecondaryNotebookAccessKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.UserStorageKey != nil {
 		in, out := &in.UserStorageKey, &out.UserStorageKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -9406,7 +9406,7 @@ func (in *WorkspaceOperatorSpec) DeepCopyInto(out *WorkspaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9417,7 +9417,7 @@ func (in *WorkspaceOperatorSpec) DeepCopyInto(out *WorkspaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9909,7 +9909,7 @@ func (in *WorkspacesComputeOperatorSpec) DeepCopyInto(out *WorkspacesComputeOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9920,7 +9920,7 @@ func (in *WorkspacesComputeOperatorSpec) DeepCopyInto(out *WorkspacesComputeOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -10126,7 +10126,7 @@ func (in *WorkspacesConnectionOperatorSpec) DeepCopyInto(out *WorkspacesConnecti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -10137,7 +10137,7 @@ func (in *WorkspacesConnectionOperatorSpec) DeepCopyInto(out *WorkspacesConnecti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

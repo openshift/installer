@@ -111,6 +111,8 @@ type DataLakeStorageAccountDetails struct {
 
 	// Filesystem: Filesystem name
 	Filesystem *string `json:"filesystem,omitempty"`
+
+	// ResourceId: ARM resource Id of this storage account
 	ResourceId *string `json:"resourceId,omitempty"`
 }
 
@@ -150,6 +152,7 @@ type ManagedVirtualNetworkSettings struct {
 
 // Purview Configuration
 type PurviewConfiguration struct {
+	// PurviewResourceId: Purview Resource ID
 	PurviewResourceId *string `json:"purviewResourceId,omitempty"`
 }
 
@@ -220,7 +223,9 @@ type CustomerManagedKeyDetails struct {
 type KekIdentityProperties struct {
 	// UseSystemAssignedIdentity: Boolean specifying whether to use system assigned identity or not
 	UseSystemAssignedIdentity *v1.JSON `json:"useSystemAssignedIdentity,omitempty"`
-	UserAssignedIdentity      *string  `json:"userAssignedIdentity,omitempty"`
+
+	// UserAssignedIdentity: User assigned identity resource Id
+	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }
 
 // Details of the customer managed key associated with the workspace

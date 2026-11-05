@@ -4,7 +4,6 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -18,6 +17,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +25,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20220701.PrivateEndpointsPrivateDnsZoneGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/privateEndpoint.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/privateEndpoint.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateEndpoints/{privateEndpointName}/privateDnsZoneGroups/{privateDnsZoneGroupName}
 type PrivateEndpointsPrivateDnsZoneGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +50,36 @@ var _ conversion.Convertible = &PrivateEndpointsPrivateDnsZoneGroup{}
 
 // ConvertFrom populates our PrivateEndpointsPrivateDnsZoneGroup from the provided hub PrivateEndpointsPrivateDnsZoneGroup
 func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.PrivateEndpointsPrivateDnsZoneGroup
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(source)
+	err = group.AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to group")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub PrivateEndpointsPrivateDnsZoneGroup from our PrivateEndpointsPrivateDnsZoneGroup
 func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.PrivateEndpointsPrivateDnsZoneGroup
+	err := group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from group")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return group.AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &PrivateEndpointsPrivateDnsZoneGroup{}
@@ -245,7 +259,7 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) OriginalGVK() *schema.GroupVer
 // +kubebuilder:object:root=true
 // Storage version of v1api20220701.PrivateEndpointsPrivateDnsZoneGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2022-07-01/privateEndpoint.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2022-07-01/privateEndpoint.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateEndpoints/{privateEndpointName}/privateDnsZoneGroups/{privateDnsZoneGroupName}
 type PrivateEndpointsPrivateDnsZoneGroupList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -360,8 +374,6 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) AssignProperties_From_Pri
 	if source.PrivateDnsZoneConfigs != nil {
 		privateDnsZoneConfigList := make([]PrivateDnsZoneConfig, len(source.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range source.PrivateDnsZoneConfigs {
-			// Shadow the loop variable to avoid aliasing
-			privateDnsZoneConfigItem := privateDnsZoneConfigItem
 			var privateDnsZoneConfig PrivateDnsZoneConfig
 			err := privateDnsZoneConfig.AssignProperties_From_PrivateDnsZoneConfig(&privateDnsZoneConfigItem)
 			if err != nil {
@@ -429,8 +441,6 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup_Spec) AssignProperties_To_Priva
 	if group.PrivateDnsZoneConfigs != nil {
 		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig, len(group.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
-			// Shadow the loop variable to avoid aliasing
-			privateDnsZoneConfigItem := privateDnsZoneConfigItem
 			var privateDnsZoneConfig storage.PrivateDnsZoneConfig
 			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig(&privateDnsZoneConfig)
 			if err != nil {
@@ -545,8 +555,6 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) AssignProperties_From_P
 	if source.PrivateDnsZoneConfigs != nil {
 		privateDnsZoneConfigList := make([]PrivateDnsZoneConfig_STATUS, len(source.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range source.PrivateDnsZoneConfigs {
-			// Shadow the loop variable to avoid aliasing
-			privateDnsZoneConfigItem := privateDnsZoneConfigItem
 			var privateDnsZoneConfig PrivateDnsZoneConfig_STATUS
 			err := privateDnsZoneConfig.AssignProperties_From_PrivateDnsZoneConfig_STATUS(&privateDnsZoneConfigItem)
 			if err != nil {
@@ -603,8 +611,6 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup_STATUS) AssignProperties_To_Pri
 	if group.PrivateDnsZoneConfigs != nil {
 		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig_STATUS, len(group.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
-			// Shadow the loop variable to avoid aliasing
-			privateDnsZoneConfigItem := privateDnsZoneConfigItem
 			var privateDnsZoneConfig storage.PrivateDnsZoneConfig_STATUS
 			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig_STATUS(&privateDnsZoneConfig)
 			if err != nil {
@@ -756,8 +762,6 @@ func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_From_PrivateDnsZoneC
 	if source.RecordSets != nil {
 		recordSetList := make([]RecordSet_STATUS, len(source.RecordSets))
 		for recordSetIndex, recordSetItem := range source.RecordSets {
-			// Shadow the loop variable to avoid aliasing
-			recordSetItem := recordSetItem
 			var recordSet RecordSet_STATUS
 			err := recordSet.AssignProperties_From_RecordSet_STATUS(&recordSetItem)
 			if err != nil {
@@ -805,8 +809,6 @@ func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_To_PrivateDnsZoneCon
 	if config.RecordSets != nil {
 		recordSetList := make([]storage.RecordSet_STATUS, len(config.RecordSets))
 		for recordSetIndex, recordSetItem := range config.RecordSets {
-			// Shadow the loop variable to avoid aliasing
-			recordSetItem := recordSetItem
 			var recordSet storage.RecordSet_STATUS
 			err := recordSetItem.AssignProperties_To_RecordSet_STATUS(&recordSet)
 			if err != nil {
@@ -856,8 +858,6 @@ func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignPropertie
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -874,8 +874,6 @@ func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignPropertie
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -917,8 +915,6 @@ func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignPropertie
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -935,8 +931,6 @@ func (operator *PrivateEndpointsPrivateDnsZoneGroupOperatorSpec) AssignPropertie
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -116,7 +116,12 @@ func (server *Server) ValidateUpdate(ctx context.Context, oldResource runtime.Ob
 
 // createValidations validates the creation of the resource
 func (server *Server) createValidations() []func(ctx context.Context, obj *v20211101.Server) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.Server) (admission.Warnings, error){server.validateResourceReferences, server.validateOwnerReference, server.validateSecretDestinations, server.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.Server) (admission.Warnings, error){
+		server.validateResourceReferences,
+		server.validateOwnerReference,
+		server.validateSecretDestinations,
+		server.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

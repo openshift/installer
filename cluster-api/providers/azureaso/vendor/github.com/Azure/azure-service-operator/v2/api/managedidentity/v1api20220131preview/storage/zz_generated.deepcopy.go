@@ -85,7 +85,7 @@ func (in *FederatedIdentityCredentialOperatorSpec) DeepCopyInto(out *FederatedId
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (in *FederatedIdentityCredentialOperatorSpec) DeepCopyInto(out *FederatedId
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

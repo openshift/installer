@@ -7,15 +7,15 @@ import "github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 
 type DiskEncryptionSet_Spec struct {
 	// Identity: The managed identity for the disk encryption set. It should be given permission on the key vault before it can
-	// be used  to encrypt disks.
+	// be used to encrypt disks.
 	Identity *EncryptionSetIdentity `json:"identity,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location   *string                  `json:"location,omitempty"`
 	Name       string                   `json:"name,omitempty"`
 	Properties *EncryptionSetProperties `json:"properties,omitempty"`
 
-	// Tags: Resource tags
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
@@ -42,7 +42,7 @@ type EncryptionSetIdentity struct {
 	// Type: The type of Managed Identity used by the DiskEncryptionSet. Only SystemAssigned is supported for new creations.
 	// Disk Encryption Sets can be updated with Identity type None during migration of subscription to a new Azure Active
 	// Directory tenant; it will cause the encrypted resources to lose access to the keys.
-	Type                   *EncryptionSetIdentity_Type            `json:"type,omitempty"`
+	Type                   *DiskEncryptionSetIdentityType         `json:"type,omitempty"`
 	UserAssignedIdentities map[string]UserAssignedIdentityDetails `json:"userAssignedIdentities,omitempty"`
 }
 
@@ -62,6 +62,27 @@ type EncryptionSetProperties struct {
 	RotationToLatestKeyVersionEnabled *bool `json:"rotationToLatestKeyVersionEnabled,omitempty"`
 }
 
+// The type of Managed Identity used by the DiskEncryptionSet. Only SystemAssigned is supported for new creations. Disk
+// Encryption Sets can be updated with Identity type None during migration of subscription to a new Azure Active Directory
+// tenant; it will cause the encrypted resources to lose access to the keys.
+// +kubebuilder:validation:Enum={"None","SystemAssigned","SystemAssigned, UserAssigned","UserAssigned"}
+type DiskEncryptionSetIdentityType string
+
+const (
+	DiskEncryptionSetIdentityType_None                       = DiskEncryptionSetIdentityType("None")
+	DiskEncryptionSetIdentityType_SystemAssigned             = DiskEncryptionSetIdentityType("SystemAssigned")
+	DiskEncryptionSetIdentityType_SystemAssignedUserAssigned = DiskEncryptionSetIdentityType("SystemAssigned, UserAssigned")
+	DiskEncryptionSetIdentityType_UserAssigned               = DiskEncryptionSetIdentityType("UserAssigned")
+)
+
+// Mapping from string to DiskEncryptionSetIdentityType
+var diskEncryptionSetIdentityType_Values = map[string]DiskEncryptionSetIdentityType{
+	"none":                         DiskEncryptionSetIdentityType_None,
+	"systemassigned":               DiskEncryptionSetIdentityType_SystemAssigned,
+	"systemassigned, userassigned": DiskEncryptionSetIdentityType_SystemAssignedUserAssigned,
+	"userassigned":                 DiskEncryptionSetIdentityType_UserAssigned,
+}
+
 // The type of key used to encrypt the data of the disk.
 // +kubebuilder:validation:Enum={"ConfidentialVmEncryptedWithCustomerKey","EncryptionAtRestWithCustomerKey","EncryptionAtRestWithPlatformAndCustomerKeys"}
 type DiskEncryptionSetType string
@@ -77,24 +98,6 @@ var diskEncryptionSetType_Values = map[string]DiskEncryptionSetType{
 	"confidentialvmencryptedwithcustomerkey":      DiskEncryptionSetType_ConfidentialVmEncryptedWithCustomerKey,
 	"encryptionatrestwithcustomerkey":             DiskEncryptionSetType_EncryptionAtRestWithCustomerKey,
 	"encryptionatrestwithplatformandcustomerkeys": DiskEncryptionSetType_EncryptionAtRestWithPlatformAndCustomerKeys,
-}
-
-// +kubebuilder:validation:Enum={"None","SystemAssigned","SystemAssigned, UserAssigned","UserAssigned"}
-type EncryptionSetIdentity_Type string
-
-const (
-	EncryptionSetIdentity_Type_None                       = EncryptionSetIdentity_Type("None")
-	EncryptionSetIdentity_Type_SystemAssigned             = EncryptionSetIdentity_Type("SystemAssigned")
-	EncryptionSetIdentity_Type_SystemAssignedUserAssigned = EncryptionSetIdentity_Type("SystemAssigned, UserAssigned")
-	EncryptionSetIdentity_Type_UserAssigned               = EncryptionSetIdentity_Type("UserAssigned")
-)
-
-// Mapping from string to EncryptionSetIdentity_Type
-var encryptionSetIdentity_Type_Values = map[string]EncryptionSetIdentity_Type{
-	"none":                         EncryptionSetIdentity_Type_None,
-	"systemassigned":               EncryptionSetIdentity_Type_SystemAssigned,
-	"systemassigned, userassigned": EncryptionSetIdentity_Type_SystemAssignedUserAssigned,
-	"userassigned":                 EncryptionSetIdentity_Type_UserAssigned,
 }
 
 // Key Vault Key Url to be used for server side encryption of Managed Disks and Snapshots
@@ -115,5 +118,6 @@ type UserAssignedIdentityDetails struct {
 // The vault id is an Azure Resource Manager Resource id in the form
 // /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}
 type SourceVault struct {
+	// Id: Resource Id
 	Id *string `json:"id,omitempty"`
 }

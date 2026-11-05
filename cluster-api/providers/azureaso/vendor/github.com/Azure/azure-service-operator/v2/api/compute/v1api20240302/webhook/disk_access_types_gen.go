@@ -116,7 +116,12 @@ func (access *DiskAccess) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (access *DiskAccess) createValidations() []func(ctx context.Context, obj *v20240302.DiskAccess) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240302.DiskAccess) (admission.Warnings, error){access.validateResourceReferences, access.validateOwnerReference, access.validateSecretDestinations, access.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240302.DiskAccess) (admission.Warnings, error){
+		access.validateResourceReferences,
+		access.validateOwnerReference,
+		access.validateSecretDestinations,
+		access.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

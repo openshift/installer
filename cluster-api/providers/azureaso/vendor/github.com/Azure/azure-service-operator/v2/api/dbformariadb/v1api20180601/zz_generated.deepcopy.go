@@ -85,7 +85,7 @@ func (in *ConfigurationOperatorSpec) DeepCopyInto(out *ConfigurationOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func (in *ConfigurationOperatorSpec) DeepCopyInto(out *ConfigurationOperatorSpec
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -283,7 +283,7 @@ func (in *DatabaseOperatorSpec) DeepCopyInto(out *DatabaseOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -294,7 +294,7 @@ func (in *DatabaseOperatorSpec) DeepCopyInto(out *DatabaseOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -477,7 +477,7 @@ func (in *ServerOperatorSecrets) DeepCopyInto(out *ServerOperatorSecrets) {
 	if in.FullyQualifiedDomainName != nil {
 		in, out := &in.FullyQualifiedDomainName, &out.FullyQualifiedDomainName
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -501,7 +501,7 @@ func (in *ServerOperatorSpec) DeepCopyInto(out *ServerOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -512,7 +512,7 @@ func (in *ServerOperatorSpec) DeepCopyInto(out *ServerOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

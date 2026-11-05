@@ -98,7 +98,8 @@ func NewGenericClient(
 
 	rpRegistrationPolicy, err := NewRPRegistrationPolicy(
 		creds,
-		&opts.ClientOptions)
+		&opts.ClientOptions,
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "failed to create rp registration policy")
 	}
@@ -236,7 +237,7 @@ func (client *GenericClient) GetByID(
 		return retryAfter, err
 	}
 	if !runtime.HasStatusCode(resp, http.StatusOK) {
-		return retryAfter, runtime.NewResponseError(resp)
+		return retryAfter, client.handleError(resp)
 	}
 	return zeroDuration, client.getByIDHandleResponse(resp, resource)
 }
@@ -302,7 +303,7 @@ func (client *GenericClient) checkExistenceByIDImpl(
 		return retryAfter, err
 	}
 	if !runtime.HasStatusCode(resp, http.StatusNoContent, http.StatusNotFound) {
-		return retryAfter, runtime.NewResponseError(resp)
+		return retryAfter, client.handleError(resp)
 	}
 	return zeroDuration, nil
 }
@@ -362,7 +363,7 @@ func (p *listPageResponse[T]) NextPage(
 	}
 
 	if !runtime.HasStatusCode(resp, http.StatusOK) {
-		return nil, runtime.NewResponseError(resp)
+		return nil, client.handleError(resp)
 	}
 
 	newPage := listPageResponse[T]{}
@@ -401,7 +402,8 @@ func ListByContainerID[T any](
 
 				return *nextPage, nil
 			},
-		})
+		},
+	)
 
 	var result []T
 	for pager.More() {
@@ -479,7 +481,7 @@ func (client *GenericClient) deleteByID(ctx context.Context, resourceID string, 
 	}
 
 	if !runtime.HasStatusCode(resp, http.StatusOK, http.StatusAccepted, http.StatusNoContent) {
-		return nil, runtime.NewResponseError(resp)
+		return nil, client.handleError(resp)
 	}
 	return resp, nil
 }

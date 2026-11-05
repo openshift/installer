@@ -2157,7 +2157,7 @@ func (in *MaintenanceConfigurationOperatorSpec) DeepCopyInto(out *MaintenanceCon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2175,7 +2175,7 @@ func (in *MaintenanceConfigurationOperatorSpec) DeepCopyInto(out *MaintenanceCon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4504,7 +4504,12 @@ func (in *ManagedClusterOperatorConfigMaps) DeepCopyInto(out *ManagedClusterOper
 	if in.OIDCIssuerProfile != nil {
 		in, out := &in.OIDCIssuerProfile, &out.OIDCIssuerProfile
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
+	}
+	if in.PrincipalId != nil {
+		in, out := &in.PrincipalId, &out.PrincipalId
+		*out = new(genruntime.ConfigMapDestination)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -4531,7 +4536,7 @@ func (in *ManagedClusterOperatorSecrets) DeepCopyInto(out *ManagedClusterOperato
 	if in.AdminCredentials != nil {
 		in, out := &in.AdminCredentials, &out.AdminCredentials
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -4543,7 +4548,7 @@ func (in *ManagedClusterOperatorSecrets) DeepCopyInto(out *ManagedClusterOperato
 	if in.UserCredentials != nil {
 		in, out := &in.UserCredentials, &out.UserCredentials
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -4567,7 +4572,7 @@ func (in *ManagedClusterOperatorSpec) DeepCopyInto(out *ManagedClusterOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4590,7 +4595,7 @@ func (in *ManagedClusterOperatorSpec) DeepCopyInto(out *ManagedClusterOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6863,7 +6868,7 @@ func (in *ManagedClustersAgentPoolOperatorSpec) DeepCopyInto(out *ManagedCluster
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -6881,7 +6886,7 @@ func (in *ManagedClustersAgentPoolOperatorSpec) DeepCopyInto(out *ManagedCluster
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -8497,7 +8502,7 @@ func (in *TrustedAccessRoleBindingOperatorSpec) DeepCopyInto(out *TrustedAccessR
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -8515,7 +8520,7 @@ func (in *TrustedAccessRoleBindingOperatorSpec) DeepCopyInto(out *TrustedAccessR
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -8709,9 +8714,19 @@ func (in *UserAssignedIdentity) DeepCopyInto(out *UserAssignedIdentity) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ClientIdFromConfig != nil {
+		in, out := &in.ClientIdFromConfig, &out.ClientIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
+		**out = **in
+	}
 	if in.ObjectId != nil {
 		in, out := &in.ObjectId, &out.ObjectId
 		*out = new(string)
+		**out = **in
+	}
+	if in.ObjectIdFromConfig != nil {
+		in, out := &in.ObjectIdFromConfig, &out.ObjectIdFromConfig
+		*out = new(genruntime.ConfigMapReference)
 		**out = **in
 	}
 	if in.PropertyBag != nil {

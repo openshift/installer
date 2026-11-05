@@ -116,7 +116,12 @@ func (registry *Registry) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (registry *Registry) createValidations() []func(ctx context.Context, obj *v20240401.Registry) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240401.Registry) (admission.Warnings, error){registry.validateResourceReferences, registry.validateOwnerReference, registry.validateSecretDestinations, registry.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240401.Registry) (admission.Warnings, error){
+		registry.validateResourceReferences,
+		registry.validateOwnerReference,
+		registry.validateSecretDestinations,
+		registry.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

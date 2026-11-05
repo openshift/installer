@@ -20,13 +20,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,alertsmanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2021-04-01/SmartDetectorAlertRulesApi.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/Legacy/stable/2021-04-01/SmartDetectorAlertRulesApi.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.alertsManagement/smartDetectorAlertRules/{alertRuleName}
 type SmartDetectorAlertRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -51,22 +52,36 @@ var _ conversion.Convertible = &SmartDetectorAlertRule{}
 
 // ConvertFrom populates our SmartDetectorAlertRule from the provided hub SmartDetectorAlertRule
 func (rule *SmartDetectorAlertRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SmartDetectorAlertRule)
-	if !ok {
-		return fmt.Errorf("expected alertsmanagement/v1api20210401/storage/SmartDetectorAlertRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SmartDetectorAlertRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_SmartDetectorAlertRule(source)
+	err = rule.AssignProperties_From_SmartDetectorAlertRule(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SmartDetectorAlertRule from our SmartDetectorAlertRule
 func (rule *SmartDetectorAlertRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SmartDetectorAlertRule)
-	if !ok {
-		return fmt.Errorf("expected alertsmanagement/v1api20210401/storage/SmartDetectorAlertRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SmartDetectorAlertRule
+	err := rule.AssignProperties_To_SmartDetectorAlertRule(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_SmartDetectorAlertRule(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &SmartDetectorAlertRule{}
@@ -87,17 +102,6 @@ func (rule *SmartDetectorAlertRule) SecretDestinationExpressions() []*core.Desti
 		return nil
 	}
 	return rule.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &SmartDetectorAlertRule{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (rule *SmartDetectorAlertRule) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*SmartDetectorAlertRule_STATUS); ok {
-		return rule.Spec.Initialize_From_SmartDetectorAlertRule_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type SmartDetectorAlertRule_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &SmartDetectorAlertRule{}
@@ -238,7 +242,7 @@ func (rule *SmartDetectorAlertRule) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2021-04-01/SmartDetectorAlertRulesApi.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/Legacy/stable/2021-04-01/SmartDetectorAlertRulesApi.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/microsoft.alertsManagement/smartDetectorAlertRules/{alertRuleName}
 type SmartDetectorAlertRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -334,7 +338,7 @@ func (rule *SmartDetectorAlertRule_Spec) ConvertToARM(resolved genruntime.Conver
 		result.Properties = &arm.AlertRuleProperties{}
 	}
 	if rule.ActionGroups != nil {
-		actionGroups_ARM, err := (*rule.ActionGroups).ConvertToARM(resolved)
+		actionGroups_ARM, err := rule.ActionGroups.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +350,7 @@ func (rule *SmartDetectorAlertRule_Spec) ConvertToARM(resolved genruntime.Conver
 		result.Properties.Description = &description
 	}
 	if rule.Detector != nil {
-		detector_ARM, err := (*rule.Detector).ConvertToARM(resolved)
+		detector_ARM, err := rule.Detector.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -377,7 +381,7 @@ func (rule *SmartDetectorAlertRule_Spec) ConvertToARM(resolved genruntime.Conver
 		result.Properties.State = &state
 	}
 	if rule.Throttling != nil {
-		throttling_ARM, err := (*rule.Throttling).ConvertToARM(resolved)
+		throttling_ARM, err := rule.Throttling.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -633,8 +637,6 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_From_SmartDetectorAler
 	if source.ScopeReferences != nil {
 		scopeReferenceList := make([]genruntime.ResourceReference, len(source.ScopeReferences))
 		for scopeReferenceIndex, scopeReferenceItem := range source.ScopeReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopeReferenceItem := scopeReferenceItem
 			scopeReferenceList[scopeReferenceIndex] = scopeReferenceItem.Copy()
 		}
 		rule.ScopeReferences = scopeReferenceList
@@ -747,8 +749,6 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 	if rule.ScopeReferences != nil {
 		scopeReferenceList := make([]genruntime.ResourceReference, len(rule.ScopeReferences))
 		for scopeReferenceIndex, scopeReferenceItem := range rule.ScopeReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopeReferenceItem := scopeReferenceItem
 			scopeReferenceList[scopeReferenceIndex] = scopeReferenceItem.Copy()
 		}
 		destination.ScopeReferences = scopeReferenceList
@@ -792,77 +792,6 @@ func (rule *SmartDetectorAlertRule_Spec) AssignProperties_To_SmartDetectorAlertR
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SmartDetectorAlertRule_STATUS populates our SmartDetectorAlertRule_Spec from the provided source SmartDetectorAlertRule_STATUS
-func (rule *SmartDetectorAlertRule_Spec) Initialize_From_SmartDetectorAlertRule_STATUS(source *SmartDetectorAlertRule_STATUS) error {
-
-	// ActionGroups
-	if source.ActionGroups != nil {
-		var actionGroup ActionGroupsInformation
-		err := actionGroup.Initialize_From_ActionGroupsInformation_STATUS(source.ActionGroups)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ActionGroupsInformation_STATUS() to populate field ActionGroups")
-		}
-		rule.ActionGroups = &actionGroup
-	} else {
-		rule.ActionGroups = nil
-	}
-
-	// Description
-	rule.Description = genruntime.ClonePointerToString(source.Description)
-
-	// Detector
-	if source.Detector != nil {
-		var detector Detector
-		err := detector.Initialize_From_Detector_STATUS(source.Detector)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_Detector_STATUS() to populate field Detector")
-		}
-		rule.Detector = &detector
-	} else {
-		rule.Detector = nil
-	}
-
-	// Frequency
-	rule.Frequency = genruntime.ClonePointerToString(source.Frequency)
-
-	// Location
-	rule.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Severity
-	if source.Severity != nil {
-		severity := genruntime.ToEnum(string(*source.Severity), alertRuleProperties_Severity_Values)
-		rule.Severity = &severity
-	} else {
-		rule.Severity = nil
-	}
-
-	// State
-	if source.State != nil {
-		state := genruntime.ToEnum(string(*source.State), alertRuleProperties_State_Values)
-		rule.State = &state
-	} else {
-		rule.State = nil
-	}
-
-	// Tags
-	rule.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Throttling
-	if source.Throttling != nil {
-		var throttling ThrottlingInformation
-		err := throttling.Initialize_From_ThrottlingInformation_STATUS(source.Throttling)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_ThrottlingInformation_STATUS() to populate field Throttling")
-		}
-		rule.Throttling = &throttling
-	} else {
-		rule.Throttling = nil
 	}
 
 	// No error
@@ -1385,8 +1314,6 @@ func (information *ActionGroupsInformation) AssignProperties_From_ActionGroupsIn
 	if source.GroupReferences != nil {
 		groupReferenceList := make([]genruntime.ResourceReference, len(source.GroupReferences))
 		for groupReferenceIndex, groupReferenceItem := range source.GroupReferences {
-			// Shadow the loop variable to avoid aliasing
-			groupReferenceItem := groupReferenceItem
 			groupReferenceList[groupReferenceIndex] = groupReferenceItem.Copy()
 		}
 		information.GroupReferences = groupReferenceList
@@ -1413,8 +1340,6 @@ func (information *ActionGroupsInformation) AssignProperties_To_ActionGroupsInfo
 	if information.GroupReferences != nil {
 		groupReferenceList := make([]genruntime.ResourceReference, len(information.GroupReferences))
 		for groupReferenceIndex, groupReferenceItem := range information.GroupReferences {
-			// Shadow the loop variable to avoid aliasing
-			groupReferenceItem := groupReferenceItem
 			groupReferenceList[groupReferenceIndex] = groupReferenceItem.Copy()
 		}
 		destination.GroupReferences = groupReferenceList
@@ -1428,19 +1353,6 @@ func (information *ActionGroupsInformation) AssignProperties_To_ActionGroupsInfo
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ActionGroupsInformation_STATUS populates our ActionGroupsInformation from the provided source ActionGroupsInformation_STATUS
-func (information *ActionGroupsInformation) Initialize_From_ActionGroupsInformation_STATUS(source *ActionGroupsInformation_STATUS) error {
-
-	// CustomEmailSubject
-	information.CustomEmailSubject = genruntime.ClonePointerToString(source.CustomEmailSubject)
-
-	// CustomWebhookPayload
-	information.CustomWebhookPayload = genruntime.ClonePointerToString(source.CustomWebhookPayload)
 
 	// No error
 	return nil
@@ -1675,8 +1587,6 @@ func (detector *Detector) AssignProperties_From_Detector(source *storage.Detecto
 	if source.Parameters != nil {
 		parameterMap := make(map[string]v1.JSON, len(source.Parameters))
 		for parameterKey, parameterValue := range source.Parameters {
-			// Shadow the loop variable to avoid aliasing
-			parameterValue := parameterValue
 			parameterMap[parameterKey] = *parameterValue.DeepCopy()
 		}
 		detector.Parameters = parameterMap
@@ -1700,8 +1610,6 @@ func (detector *Detector) AssignProperties_To_Detector(destination *storage.Dete
 	if detector.Parameters != nil {
 		parameterMap := make(map[string]v1.JSON, len(detector.Parameters))
 		for parameterKey, parameterValue := range detector.Parameters {
-			// Shadow the loop variable to avoid aliasing
-			parameterValue := parameterValue
 			parameterMap[parameterKey] = *parameterValue.DeepCopy()
 		}
 		destination.Parameters = parameterMap
@@ -1714,29 +1622,6 @@ func (detector *Detector) AssignProperties_To_Detector(destination *storage.Dete
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Detector_STATUS populates our Detector from the provided source Detector_STATUS
-func (detector *Detector) Initialize_From_Detector_STATUS(source *Detector_STATUS) error {
-
-	// Id
-	detector.Id = genruntime.ClonePointerToString(source.Id)
-
-	// Parameters
-	if source.Parameters != nil {
-		parameterMap := make(map[string]v1.JSON, len(source.Parameters))
-		for parameterKey, parameterValue := range source.Parameters {
-			// Shadow the loop variable to avoid aliasing
-			parameterValue := parameterValue
-			parameterMap[parameterKey] = *parameterValue.DeepCopy()
-		}
-		detector.Parameters = parameterMap
-	} else {
-		detector.Parameters = nil
 	}
 
 	// No error
@@ -1858,8 +1743,6 @@ func (detector *Detector_STATUS) AssignProperties_From_Detector_STATUS(source *s
 	if source.ParameterDefinitions != nil {
 		parameterDefinitionList := make([]DetectorParameterDefinition_STATUS, len(source.ParameterDefinitions))
 		for parameterDefinitionIndex, parameterDefinitionItem := range source.ParameterDefinitions {
-			// Shadow the loop variable to avoid aliasing
-			parameterDefinitionItem := parameterDefinitionItem
 			var parameterDefinition DetectorParameterDefinition_STATUS
 			err := parameterDefinition.AssignProperties_From_DetectorParameterDefinition_STATUS(&parameterDefinitionItem)
 			if err != nil {
@@ -1876,8 +1759,6 @@ func (detector *Detector_STATUS) AssignProperties_From_Detector_STATUS(source *s
 	if source.Parameters != nil {
 		parameterMap := make(map[string]v1.JSON, len(source.Parameters))
 		for parameterKey, parameterValue := range source.Parameters {
-			// Shadow the loop variable to avoid aliasing
-			parameterValue := parameterValue
 			parameterMap[parameterKey] = *parameterValue.DeepCopy()
 		}
 		detector.Parameters = parameterMap
@@ -1889,8 +1770,6 @@ func (detector *Detector_STATUS) AssignProperties_From_Detector_STATUS(source *s
 	if source.SupportedCadences != nil {
 		supportedCadenceList := make([]int, len(source.SupportedCadences))
 		for supportedCadenceIndex, supportedCadenceItem := range source.SupportedCadences {
-			// Shadow the loop variable to avoid aliasing
-			supportedCadenceItem := supportedCadenceItem
 			supportedCadenceList[supportedCadenceIndex] = supportedCadenceItem
 		}
 		detector.SupportedCadences = supportedCadenceList
@@ -1926,8 +1805,6 @@ func (detector *Detector_STATUS) AssignProperties_To_Detector_STATUS(destination
 	if detector.ParameterDefinitions != nil {
 		parameterDefinitionList := make([]storage.DetectorParameterDefinition_STATUS, len(detector.ParameterDefinitions))
 		for parameterDefinitionIndex, parameterDefinitionItem := range detector.ParameterDefinitions {
-			// Shadow the loop variable to avoid aliasing
-			parameterDefinitionItem := parameterDefinitionItem
 			var parameterDefinition storage.DetectorParameterDefinition_STATUS
 			err := parameterDefinitionItem.AssignProperties_To_DetectorParameterDefinition_STATUS(&parameterDefinition)
 			if err != nil {
@@ -1944,8 +1821,6 @@ func (detector *Detector_STATUS) AssignProperties_To_Detector_STATUS(destination
 	if detector.Parameters != nil {
 		parameterMap := make(map[string]v1.JSON, len(detector.Parameters))
 		for parameterKey, parameterValue := range detector.Parameters {
-			// Shadow the loop variable to avoid aliasing
-			parameterValue := parameterValue
 			parameterMap[parameterKey] = *parameterValue.DeepCopy()
 		}
 		destination.Parameters = parameterMap
@@ -1957,8 +1832,6 @@ func (detector *Detector_STATUS) AssignProperties_To_Detector_STATUS(destination
 	if detector.SupportedCadences != nil {
 		supportedCadenceList := make([]int, len(detector.SupportedCadences))
 		for supportedCadenceIndex, supportedCadenceItem := range detector.SupportedCadences {
-			// Shadow the loop variable to avoid aliasing
-			supportedCadenceItem := supportedCadenceItem
 			supportedCadenceList[supportedCadenceIndex] = supportedCadenceItem
 		}
 		destination.SupportedCadences = supportedCadenceList
@@ -1996,8 +1869,6 @@ func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_From_SmartD
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2014,8 +1885,6 @@ func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_From_SmartD
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2041,8 +1910,6 @@ func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_To_SmartDet
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2059,8 +1926,6 @@ func (operator *SmartDetectorAlertRuleOperatorSpec) AssignProperties_To_SmartDet
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2154,16 +2019,6 @@ func (information *ThrottlingInformation) AssignProperties_To_ThrottlingInformat
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ThrottlingInformation_STATUS populates our ThrottlingInformation from the provided source ThrottlingInformation_STATUS
-func (information *ThrottlingInformation) Initialize_From_ThrottlingInformation_STATUS(source *ThrottlingInformation_STATUS) error {
-
-	// Duration
-	information.Duration = genruntime.ClonePointerToString(source.Duration)
 
 	// No error
 	return nil

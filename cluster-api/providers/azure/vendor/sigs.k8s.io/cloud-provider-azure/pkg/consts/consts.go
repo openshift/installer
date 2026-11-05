@@ -399,7 +399,7 @@ const (
 	// ParentResourceNotFoundMessageCode is the error code that the parent VMSS of the VM is not found.
 	ParentResourceNotFoundMessageCode = "ParentResourceNotFound"
 	// ResourceNotFoundMessageCode is the error code that the resource is not found.
-	ResourceNotFoundMessageCode = "ResourceNotFound"
+	ResourceNotFoundMessageCode = "NotFound"
 	// ConcurrentRequestConflictMessage is the error message that the request failed due to the conflict with another concurrent operation.
 	ConcurrentRequestConflictMessage = "The request failed due to conflict with a concurrent request."
 	// CannotUpdateVMBeingDeletedMessagePrefix is the prefix of the error message that the request failed due to delete a VM that is being deleted

@@ -70,7 +70,8 @@ func (ext *NamespaceExtension) ExportKubernetesSecrets(
 	clientFactory, err := armservicebus.NewClientFactory(
 		id.SubscriptionID,
 		armClient.Creds(),
-		armClient.ClientOptions())
+		armClient.ClientOptions(),
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "failed to create ARM servicebus client factory")
 	}
@@ -86,12 +87,14 @@ func (ext *NamespaceExtension) ExportKubernetesSecrets(
 		id.ResourceGroupName,
 		id.Name,
 		rootRuleName,
-		&options)
+		&options,
+	)
 	if err != nil {
 		return nil, eris.Wrapf(
 			err,
 			"failed to retrieve namespace management keys from authorization rule %q",
-			rootRuleName)
+			rootRuleName,
+		)
 	}
 
 	secretSlice, err := namespaceSecretsToWrite(namespace, response)
@@ -152,10 +155,11 @@ func namespaceSecretsToWrite(
 	obj *servicebus.Namespace,
 	response armservicebus.NamespacesClientListKeysResponse,
 ) ([]*v1.Secret, error) {
-	specSecrets := obj.Spec.OperatorSpec.Secrets
-	if specSecrets == nil {
+	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, nil
 	}
+
+	specSecrets := obj.Spec.OperatorSpec.Secrets
 
 	collector := secrets.NewCollector(obj.Namespace)
 	collector.AddValue(specSecrets.Endpoint, to.Value(obj.Status.ServiceBusEndpoint))

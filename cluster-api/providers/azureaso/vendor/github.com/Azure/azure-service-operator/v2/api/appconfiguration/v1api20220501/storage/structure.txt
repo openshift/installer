@@ -6,7 +6,7 @@ APIVersion: Enum (1 value)
 
 ConfigurationStore: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (16 properties)
+├── Spec: Object (15 properties)
 │   ├── AzureName: string
 │   ├── CreateMode: *string
 │   ├── DisableLocalAuth: *bool
@@ -50,14 +50,6 @@ ConfigurationStore: Resource
 │   │   ├── Name: *string
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── SoftDeleteRetentionInDays: *int
-│   ├── SystemData: *Object (7 properties)
-│   │   ├── CreatedAt: *string
-│   │   ├── CreatedBy: *string
-│   │   ├── CreatedByType: *string
-│   │   ├── LastModifiedAt: *string
-│   │   ├── LastModifiedBy: *string
-│   │   ├── LastModifiedByType: *string
-│   │   └── PropertyBag: genruntime.PropertyBag
 │   └── Tags: map[string]string
 └── Status: Object (20 properties)
     ├── Conditions: conditions.Condition[]
@@ -104,4 +96,38 @@ ConfigurationStore: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
+augmentConversionForConfigurationStore: Interface
+
+augmentConversionForConfigurationStoreOperatorSecrets: Interface
+
+augmentConversionForConfigurationStoreOperatorSpec: Interface
+
+augmentConversionForConfigurationStore_STATUS: Interface
+
+augmentConversionForConfigurationStore_Spec: Interface
+
+augmentConversionForEncryptionProperties: Interface
+
+augmentConversionForEncryptionProperties_STATUS: Interface
+
+augmentConversionForKeyVaultProperties: Interface
+
+augmentConversionForKeyVaultProperties_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnectionReference_STATUS: Interface
+
+augmentConversionForResourceIdentity: Interface
+
+augmentConversionForResourceIdentity_STATUS: Interface
+
+augmentConversionForSku: Interface
+
+augmentConversionForSku_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserIdentity_STATUS: Interface
 

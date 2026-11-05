@@ -104,7 +104,12 @@ func (setting *ServersDatabasesAdvancedThreatProtectionSetting) ValidateUpdate(c
 
 // createValidations validates the creation of the resource
 func (setting *ServersDatabasesAdvancedThreatProtectionSetting) createValidations() []func(ctx context.Context, obj *v20211101.ServersDatabasesAdvancedThreatProtectionSetting) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.ServersDatabasesAdvancedThreatProtectionSetting) (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.ServersDatabasesAdvancedThreatProtectionSetting) (admission.Warnings, error){
+		setting.validateResourceReferences,
+		setting.validateOwnerReference,
+		setting.validateSecretDestinations,
+		setting.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

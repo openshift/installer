@@ -37,21 +37,21 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) GetType() string {
 type EndpointProperties struct {
 	// AlwaysServe: If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in
 	// the traffic routing method.
-	AlwaysServe *EndpointProperties_AlwaysServe `json:"alwaysServe,omitempty"`
+	AlwaysServe *AlwaysServe `json:"alwaysServe,omitempty"`
 
 	// CustomHeaders: List of custom headers.
-	CustomHeaders []EndpointProperties_CustomHeaders `json:"customHeaders,omitempty"`
+	CustomHeaders []EndpointPropertiesCustomHeadersItem `json:"customHeaders,omitempty"`
 
 	// EndpointLocation: Specifies the location of the external or nested endpoints when using the 'Performance' traffic
 	// routing method.
 	EndpointLocation *string `json:"endpointLocation,omitempty"`
 
 	// EndpointMonitorStatus: The monitoring status of the endpoint.
-	EndpointMonitorStatus *EndpointProperties_EndpointMonitorStatus `json:"endpointMonitorStatus,omitempty"`
+	EndpointMonitorStatus *EndpointMonitorStatus `json:"endpointMonitorStatus,omitempty"`
 
 	// EndpointStatus: The status of the endpoint. If the endpoint is Enabled, it is probed for endpoint health and is included
 	// in the traffic routing method.
-	EndpointStatus *EndpointProperties_EndpointStatus `json:"endpointStatus,omitempty"`
+	EndpointStatus *EndpointStatus `json:"endpointStatus,omitempty"`
 
 	// GeoMapping: The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
 	// Please consult Traffic Manager Geographic documentation for a full list of accepted values.
@@ -78,32 +78,62 @@ type EndpointProperties struct {
 
 	// Subnets: The list of subnets, IP addresses, and/or address ranges mapped to this endpoint when using the 'Subnet'
 	// traffic routing method. An empty list will match all ranges not covered by other endpoints.
-	Subnets []EndpointProperties_Subnets `json:"subnets,omitempty"`
+	Subnets []EndpointPropertiesSubnetsItem `json:"subnets,omitempty"`
 
 	// Target: The fully-qualified DNS name or IP address of the endpoint. Traffic Manager returns this value in DNS responses
 	// to direct traffic to this endpoint.
-	Target           *string `json:"target,omitempty"`
+	Target *string `json:"target,omitempty"`
+
+	// TargetResourceId: The Azure Resource URI of the of the endpoint. Not applicable to endpoints of type 'ExternalEndpoints'.
 	TargetResourceId *string `json:"targetResourceId,omitempty"`
 
 	// Weight: The weight of this endpoint when using the 'Weighted' traffic routing method. Possible values are from 1 to 1000.
 	Weight *int `json:"weight,omitempty"`
 }
 
+// If Always Serve is enabled, probing for endpoint health will be disabled and endpoints will be included in the traffic
+// routing method.
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
-type EndpointProperties_AlwaysServe string
+type AlwaysServe string
 
 const (
-	EndpointProperties_AlwaysServe_Disabled = EndpointProperties_AlwaysServe("Disabled")
-	EndpointProperties_AlwaysServe_Enabled  = EndpointProperties_AlwaysServe("Enabled")
+	AlwaysServe_Disabled = AlwaysServe("Disabled")
+	AlwaysServe_Enabled  = AlwaysServe("Enabled")
 )
 
-// Mapping from string to EndpointProperties_AlwaysServe
-var endpointProperties_AlwaysServe_Values = map[string]EndpointProperties_AlwaysServe{
-	"disabled": EndpointProperties_AlwaysServe_Disabled,
-	"enabled":  EndpointProperties_AlwaysServe_Enabled,
+// Mapping from string to AlwaysServe
+var alwaysServe_Values = map[string]AlwaysServe{
+	"disabled": AlwaysServe_Disabled,
+	"enabled":  AlwaysServe_Enabled,
 }
 
-type EndpointProperties_CustomHeaders struct {
+// The monitoring status of the endpoint.
+// +kubebuilder:validation:Enum={"CheckingEndpoint","Degraded","Disabled","Inactive","Online","Stopped","Unmonitored"}
+type EndpointMonitorStatus string
+
+const (
+	EndpointMonitorStatus_CheckingEndpoint = EndpointMonitorStatus("CheckingEndpoint")
+	EndpointMonitorStatus_Degraded         = EndpointMonitorStatus("Degraded")
+	EndpointMonitorStatus_Disabled         = EndpointMonitorStatus("Disabled")
+	EndpointMonitorStatus_Inactive         = EndpointMonitorStatus("Inactive")
+	EndpointMonitorStatus_Online           = EndpointMonitorStatus("Online")
+	EndpointMonitorStatus_Stopped          = EndpointMonitorStatus("Stopped")
+	EndpointMonitorStatus_Unmonitored      = EndpointMonitorStatus("Unmonitored")
+)
+
+// Mapping from string to EndpointMonitorStatus
+var endpointMonitorStatus_Values = map[string]EndpointMonitorStatus{
+	"checkingendpoint": EndpointMonitorStatus_CheckingEndpoint,
+	"degraded":         EndpointMonitorStatus_Degraded,
+	"disabled":         EndpointMonitorStatus_Disabled,
+	"inactive":         EndpointMonitorStatus_Inactive,
+	"online":           EndpointMonitorStatus_Online,
+	"stopped":          EndpointMonitorStatus_Stopped,
+	"unmonitored":      EndpointMonitorStatus_Unmonitored,
+}
+
+// Custom header name and value.
+type EndpointPropertiesCustomHeadersItem struct {
 	// Name: Header name.
 	Name *string `json:"name,omitempty"`
 
@@ -111,45 +141,8 @@ type EndpointProperties_CustomHeaders struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// +kubebuilder:validation:Enum={"CheckingEndpoint","Degraded","Disabled","Inactive","Online","Stopped","Unmonitored"}
-type EndpointProperties_EndpointMonitorStatus string
-
-const (
-	EndpointProperties_EndpointMonitorStatus_CheckingEndpoint = EndpointProperties_EndpointMonitorStatus("CheckingEndpoint")
-	EndpointProperties_EndpointMonitorStatus_Degraded         = EndpointProperties_EndpointMonitorStatus("Degraded")
-	EndpointProperties_EndpointMonitorStatus_Disabled         = EndpointProperties_EndpointMonitorStatus("Disabled")
-	EndpointProperties_EndpointMonitorStatus_Inactive         = EndpointProperties_EndpointMonitorStatus("Inactive")
-	EndpointProperties_EndpointMonitorStatus_Online           = EndpointProperties_EndpointMonitorStatus("Online")
-	EndpointProperties_EndpointMonitorStatus_Stopped          = EndpointProperties_EndpointMonitorStatus("Stopped")
-	EndpointProperties_EndpointMonitorStatus_Unmonitored      = EndpointProperties_EndpointMonitorStatus("Unmonitored")
-)
-
-// Mapping from string to EndpointProperties_EndpointMonitorStatus
-var endpointProperties_EndpointMonitorStatus_Values = map[string]EndpointProperties_EndpointMonitorStatus{
-	"checkingendpoint": EndpointProperties_EndpointMonitorStatus_CheckingEndpoint,
-	"degraded":         EndpointProperties_EndpointMonitorStatus_Degraded,
-	"disabled":         EndpointProperties_EndpointMonitorStatus_Disabled,
-	"inactive":         EndpointProperties_EndpointMonitorStatus_Inactive,
-	"online":           EndpointProperties_EndpointMonitorStatus_Online,
-	"stopped":          EndpointProperties_EndpointMonitorStatus_Stopped,
-	"unmonitored":      EndpointProperties_EndpointMonitorStatus_Unmonitored,
-}
-
-// +kubebuilder:validation:Enum={"Disabled","Enabled"}
-type EndpointProperties_EndpointStatus string
-
-const (
-	EndpointProperties_EndpointStatus_Disabled = EndpointProperties_EndpointStatus("Disabled")
-	EndpointProperties_EndpointStatus_Enabled  = EndpointProperties_EndpointStatus("Enabled")
-)
-
-// Mapping from string to EndpointProperties_EndpointStatus
-var endpointProperties_EndpointStatus_Values = map[string]EndpointProperties_EndpointStatus{
-	"disabled": EndpointProperties_EndpointStatus_Disabled,
-	"enabled":  EndpointProperties_EndpointStatus_Enabled,
-}
-
-type EndpointProperties_Subnets struct {
+// Subnet first address, scope, and/or last address.
+type EndpointPropertiesSubnetsItem struct {
 	// First: First address in the subnet.
 	First *string `json:"first,omitempty"`
 
@@ -158,4 +151,20 @@ type EndpointProperties_Subnets struct {
 
 	// Scope: Block size (number of leading bits in the subnet mask).
 	Scope *int `json:"scope,omitempty"`
+}
+
+// The status of the endpoint. If the endpoint is Enabled, it is probed for endpoint health and is included in the traffic
+// routing method.
+// +kubebuilder:validation:Enum={"Disabled","Enabled"}
+type EndpointStatus string
+
+const (
+	EndpointStatus_Disabled = EndpointStatus("Disabled")
+	EndpointStatus_Enabled  = EndpointStatus("Enabled")
+)
+
+// Mapping from string to EndpointStatus
+var endpointStatus_Values = map[string]EndpointStatus{
+	"disabled": EndpointStatus_Disabled,
+	"enabled":  EndpointStatus_Enabled,
 }

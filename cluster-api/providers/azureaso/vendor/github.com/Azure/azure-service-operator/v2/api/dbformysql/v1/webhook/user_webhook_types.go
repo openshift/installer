@@ -111,7 +111,8 @@ func (webhook *User_Webhook) ValidateUpdate(ctx context.Context, oldObj runtime.
 		ctx,
 		oldResource,
 		newResource,
-		validations)
+		validations,
+	)
 }
 
 // createValidations validates the creation of the resource
@@ -151,7 +152,8 @@ func (webhook *User_Webhook) validateWriteOncePropertiesNotChanged(_ context.Con
 		err := eris.Errorf(
 			"updating 'AzureName' is not allowed for '%s : %s",
 			oldObj.GetObjectKind().GroupVersionKind(),
-			oldObj.GetName())
+			oldObj.GetName(),
+		)
 
 		errs = append(errs, err)
 	}
@@ -168,14 +170,16 @@ func (webhook *User_Webhook) validateWriteOncePropertiesNotChanged(_ context.Con
 		err := eris.Errorf(
 			"updating 'Owner.Name' is not allowed for '%s : %s",
 			oldObj.GetObjectKind().GroupVersionKind(),
-			oldObj.GetName())
+			oldObj.GetName(),
+		)
 
 		errs = append(errs, err)
 	} else if ownerRemoved {
 		err := eris.Errorf(
 			"removing 'Owner' is not allowed for '%s : %s",
 			oldObj.GetObjectKind().GroupVersionKind(),
-			oldObj.GetName())
+			oldObj.GetName(),
+		)
 
 		errs = append(errs, err)
 	}

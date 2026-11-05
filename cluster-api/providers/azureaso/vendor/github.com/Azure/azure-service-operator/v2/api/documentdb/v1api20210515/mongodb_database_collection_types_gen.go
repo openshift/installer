@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,documentdb}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2021-05-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2021-05-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbDatabases/{databaseName}/collections/{collectionName}
 type MongodbDatabaseCollection struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -240,7 +241,7 @@ func (collection *MongodbDatabaseCollection) OriginalGVK() *schema.GroupVersionK
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/stable/2021-05-15/cosmos-db.json
+// - Generated from: /cosmos-db/resource-manager/Microsoft.DocumentDB/DocumentDB/stable/2021-05-15/cosmos-db.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/mongodbDatabases/{databaseName}/collections/{collectionName}
 type MongodbDatabaseCollectionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -299,7 +300,7 @@ func (collection *MongodbDatabaseCollection_Spec) ConvertToARM(resolved genrunti
 		result.Properties = &arm.MongoDBCollectionCreateUpdateProperties{}
 	}
 	if collection.Options != nil {
-		options_ARM, err := (*collection.Options).ConvertToARM(resolved)
+		options_ARM, err := collection.Options.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +308,7 @@ func (collection *MongodbDatabaseCollection_Spec) ConvertToARM(resolved genrunti
 		result.Properties.Options = &options
 	}
 	if collection.Resource != nil {
-		resource_ARM, err := (*collection.Resource).ConvertToARM(resolved)
+		resource_ARM, err := collection.Resource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -950,8 +951,6 @@ func (resource *MongoDBCollectionGetProperties_Resource_STATUS) AssignProperties
 	if source.Indexes != nil {
 		indexList := make([]MongoIndex_STATUS, len(source.Indexes))
 		for index, indexItem := range source.Indexes {
-			// Shadow the loop variable to avoid aliasing
-			indexItem := indexItem
 			var indexLocal MongoIndex_STATUS
 			err := indexLocal.AssignProperties_From_MongoIndex_STATUS(&indexItem)
 			if err != nil {
@@ -1000,8 +999,6 @@ func (resource *MongoDBCollectionGetProperties_Resource_STATUS) AssignProperties
 	if resource.Indexes != nil {
 		indexList := make([]storage.MongoIndex_STATUS, len(resource.Indexes))
 		for index, indexItem := range resource.Indexes {
-			// Shadow the loop variable to avoid aliasing
-			indexItem := indexItem
 			var indexLocal storage.MongoIndex_STATUS
 			err := indexItem.AssignProperties_To_MongoIndex_STATUS(&indexLocal)
 			if err != nil {
@@ -1154,8 +1151,6 @@ func (resource *MongoDBCollectionResource) AssignProperties_From_MongoDBCollecti
 	if source.Indexes != nil {
 		indexList := make([]MongoIndex, len(source.Indexes))
 		for index, indexItem := range source.Indexes {
-			// Shadow the loop variable to avoid aliasing
-			indexItem := indexItem
 			var indexLocal MongoIndex
 			err := indexLocal.AssignProperties_From_MongoIndex(&indexItem)
 			if err != nil {
@@ -1190,8 +1185,6 @@ func (resource *MongoDBCollectionResource) AssignProperties_To_MongoDBCollection
 	if resource.Indexes != nil {
 		indexList := make([]storage.MongoIndex, len(resource.Indexes))
 		for index, indexItem := range resource.Indexes {
-			// Shadow the loop variable to avoid aliasing
-			indexItem := indexItem
 			var indexLocal storage.MongoIndex
 			err := indexItem.AssignProperties_To_MongoIndex(&indexLocal)
 			if err != nil {
@@ -1234,8 +1227,6 @@ func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_From_Mon
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1252,8 +1243,6 @@ func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_From_Mon
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1279,8 +1268,6 @@ func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_To_Mongo
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1297,8 +1284,6 @@ func (operator *MongodbDatabaseCollectionOperatorSpec) AssignProperties_To_Mongo
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1342,7 +1327,7 @@ func (index *MongoIndex) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "Key":
 	if index.Key != nil {
-		key_ARM, err := (*index.Key).ConvertToARM(resolved)
+		key_ARM, err := index.Key.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1352,7 +1337,7 @@ func (index *MongoIndex) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 	// Set property "Options":
 	if index.Options != nil {
-		options_ARM, err := (*index.Options).ConvertToARM(resolved)
+		options_ARM, err := index.Options.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

@@ -511,27 +511,27 @@ func (in *NamespaceOperatorSecrets) DeepCopyInto(out *NamespaceOperatorSecrets) 
 	if in.Endpoint != nil {
 		in, out := &in.Endpoint, &out.Endpoint
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryConnectionString != nil {
 		in, out := &in.PrimaryConnectionString, &out.PrimaryConnectionString
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryKey != nil {
 		in, out := &in.PrimaryKey, &out.PrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryConnectionString != nil {
 		in, out := &in.SecondaryConnectionString, &out.SecondaryConnectionString
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryKey != nil {
 		in, out := &in.SecondaryKey, &out.SecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -555,7 +555,7 @@ func (in *NamespaceOperatorSpec) DeepCopyInto(out *NamespaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -566,7 +566,7 @@ func (in *NamespaceOperatorSpec) DeepCopyInto(out *NamespaceOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -840,22 +840,22 @@ func (in *NamespacesAuthorizationRuleOperatorSecrets) DeepCopyInto(out *Namespac
 	if in.PrimaryConnectionString != nil {
 		in, out := &in.PrimaryConnectionString, &out.PrimaryConnectionString
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrimaryKey != nil {
 		in, out := &in.PrimaryKey, &out.PrimaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryConnectionString != nil {
 		in, out := &in.SecondaryConnectionString, &out.SecondaryConnectionString
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.SecondaryKey != nil {
 		in, out := &in.SecondaryKey, &out.SecondaryKey
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -879,7 +879,7 @@ func (in *NamespacesAuthorizationRuleOperatorSpec) DeepCopyInto(out *NamespacesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -890,7 +890,7 @@ func (in *NamespacesAuthorizationRuleOperatorSpec) DeepCopyInto(out *NamespacesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1062,7 +1062,7 @@ func (in *NamespacesQueueOperatorSpec) DeepCopyInto(out *NamespacesQueueOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1073,7 +1073,7 @@ func (in *NamespacesQueueOperatorSpec) DeepCopyInto(out *NamespacesQueueOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1415,7 +1415,7 @@ func (in *NamespacesTopicOperatorSpec) DeepCopyInto(out *NamespacesTopicOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1426,7 +1426,7 @@ func (in *NamespacesTopicOperatorSpec) DeepCopyInto(out *NamespacesTopicOperator
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1718,7 +1718,7 @@ func (in *NamespacesTopicsSubscriptionOperatorSpec) DeepCopyInto(out *Namespaces
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1729,7 +1729,7 @@ func (in *NamespacesTopicsSubscriptionOperatorSpec) DeepCopyInto(out *Namespaces
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2046,7 +2046,7 @@ func (in *NamespacesTopicsSubscriptionsRuleOperatorSpec) DeepCopyInto(out *Names
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2057,7 +2057,7 @@ func (in *NamespacesTopicsSubscriptionsRuleOperatorSpec) DeepCopyInto(out *Names
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

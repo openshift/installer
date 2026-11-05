@@ -4,7 +4,6 @@
 package storage
 
 import (
-	"fmt"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240101/storage"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
@@ -20,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -27,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20201101.VirtualNetworkGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetworkGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetworkGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}
 type VirtualNetworkGateway struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -52,22 +52,36 @@ var _ conversion.Convertible = &VirtualNetworkGateway{}
 
 // ConvertFrom populates our VirtualNetworkGateway from the provided hub VirtualNetworkGateway
 func (gateway *VirtualNetworkGateway) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20240301s.VirtualNetworkGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworkGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20240301s.VirtualNetworkGateway
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return gateway.AssignProperties_From_VirtualNetworkGateway(source)
+	err = gateway.AssignProperties_From_VirtualNetworkGateway(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to gateway")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualNetworkGateway from our VirtualNetworkGateway
 func (gateway *VirtualNetworkGateway) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20240301s.VirtualNetworkGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworkGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20240301s.VirtualNetworkGateway
+	err := gateway.AssignProperties_To_VirtualNetworkGateway(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from gateway")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return gateway.AssignProperties_To_VirtualNetworkGateway(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualNetworkGateway{}
@@ -181,9 +195,9 @@ func (gateway *VirtualNetworkGateway) AssignProperties_From_VirtualNetworkGatewa
 
 	// Status
 	var status VirtualNetworkGateway_STATUS
-	err = status.AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(&source.Status)
+	err = status.AssignProperties_From_VirtualNetworkGateway_STATUS(&source.Status)
 	if err != nil {
-		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkGateway_STATUS() to populate field Status")
 	}
 	gateway.Status = status
 
@@ -215,10 +229,10 @@ func (gateway *VirtualNetworkGateway) AssignProperties_To_VirtualNetworkGateway(
 	destination.Spec = spec
 
 	// Status
-	var status v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded
-	err = gateway.Status.AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(&status)
+	var status v20240301s.VirtualNetworkGateway_STATUS
+	err = gateway.Status.AssignProperties_To_VirtualNetworkGateway_STATUS(&status)
 	if err != nil {
-		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkGateway_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -247,7 +261,7 @@ func (gateway *VirtualNetworkGateway) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20201101.VirtualNetworkGateway
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetworkGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetworkGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworkGateways/{virtualNetworkGatewayName}
 type VirtualNetworkGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -501,8 +515,6 @@ func (gateway *VirtualNetworkGateway_Spec) AssignProperties_From_VirtualNetworkG
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualNetworkGatewayIPConfiguration, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualNetworkGatewayIPConfiguration
 			err := ipConfiguration.AssignProperties_From_VirtualNetworkGatewayIPConfiguration(&ipConfigurationItem)
 			if err != nil {
@@ -819,8 +831,6 @@ func (gateway *VirtualNetworkGateway_Spec) AssignProperties_To_VirtualNetworkGat
 	if gateway.IpConfigurations != nil {
 		ipConfigurationList := make([]v20240301s.VirtualNetworkGatewayIPConfiguration, len(gateway.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range gateway.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration v20240301s.VirtualNetworkGatewayIPConfiguration
 			err := ipConfigurationItem.AssignProperties_To_VirtualNetworkGatewayIPConfiguration(&ipConfiguration)
 			if err != nil {
@@ -994,21 +1004,21 @@ var _ genruntime.ConvertibleStatus = &VirtualNetworkGateway_STATUS{}
 
 // ConvertStatusFrom populates our VirtualNetworkGateway_STATUS from the provided source
 func (gateway *VirtualNetworkGateway_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded)
+	src, ok := source.(*v20240301s.VirtualNetworkGateway_STATUS)
 	if ok {
 		// Populate our instance from source
-		return gateway.AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(src)
+		return gateway.AssignProperties_From_VirtualNetworkGateway_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded{}
+	src = &v20240301s.VirtualNetworkGateway_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = gateway.AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(src)
+	err = gateway.AssignProperties_From_VirtualNetworkGateway_STATUS(src)
 	if err != nil {
 		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1018,15 +1028,15 @@ func (gateway *VirtualNetworkGateway_STATUS) ConvertStatusFrom(source genruntime
 
 // ConvertStatusTo populates the provided destination from our VirtualNetworkGateway_STATUS
 func (gateway *VirtualNetworkGateway_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded)
+	dst, ok := destination.(*v20240301s.VirtualNetworkGateway_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return gateway.AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(dst)
+		return gateway.AssignProperties_To_VirtualNetworkGateway_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded{}
-	err := gateway.AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(dst)
+	dst = &v20240301s.VirtualNetworkGateway_STATUS{}
+	err := gateway.AssignProperties_To_VirtualNetworkGateway_STATUS(dst)
 	if err != nil {
 		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1040,8 +1050,8 @@ func (gateway *VirtualNetworkGateway_STATUS) ConvertStatusTo(destination genrunt
 	return nil
 }
 
-// AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded populates our VirtualNetworkGateway_STATUS from the provided source VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded
-func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_From_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(source *v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded) error {
+// AssignProperties_From_VirtualNetworkGateway_STATUS populates our VirtualNetworkGateway_STATUS from the provided source VirtualNetworkGateway_STATUS
+func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_From_VirtualNetworkGateway_STATUS(source *v20240301s.VirtualNetworkGateway_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1208,8 +1218,6 @@ func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_From_VirtualNetwor
 	if source.IpConfigurations != nil {
 		ipConfigurationList := make([]VirtualNetworkGatewayIPConfiguration_STATUS, len(source.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration VirtualNetworkGatewayIPConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_VirtualNetworkGatewayIPConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
@@ -1314,8 +1322,8 @@ func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_From_VirtualNetwor
 	return nil
 }
 
-// AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded populates the provided destination VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded from our VirtualNetworkGateway_STATUS
-func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_To_VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded(destination *v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded) error {
+// AssignProperties_To_VirtualNetworkGateway_STATUS populates the provided destination VirtualNetworkGateway_STATUS from our VirtualNetworkGateway_STATUS
+func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_To_VirtualNetworkGateway_STATUS(destination *v20240301s.VirtualNetworkGateway_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(gateway.PropertyBag)
 
@@ -1524,8 +1532,6 @@ func (gateway *VirtualNetworkGateway_STATUS) AssignProperties_To_VirtualNetworkG
 	if gateway.IpConfigurations != nil {
 		ipConfigurationList := make([]v20240301s.VirtualNetworkGatewayIPConfiguration_STATUS, len(gateway.IpConfigurations))
 		for ipConfigurationIndex, ipConfigurationItem := range gateway.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
 			var ipConfiguration v20240301s.VirtualNetworkGatewayIPConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_VirtualNetworkGatewayIPConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
@@ -1654,8 +1660,8 @@ type augmentConversionForVirtualNetworkGateway_Spec interface {
 }
 
 type augmentConversionForVirtualNetworkGateway_STATUS interface {
-	AssignPropertiesFrom(src *v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded) error
-	AssignPropertiesTo(dst *v20240301s.VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded) error
+	AssignPropertiesFrom(src *v20240301s.VirtualNetworkGateway_STATUS) error
+	AssignPropertiesTo(dst *v20240301s.VirtualNetworkGateway_STATUS) error
 }
 
 // Storage version of v1api20201101.BgpSettings
@@ -1688,8 +1694,6 @@ func (settings *BgpSettings) AssignProperties_From_BgpSettings(source *v20240301
 	if source.BgpPeeringAddresses != nil {
 		bgpPeeringAddressList := make([]IPConfigurationBgpPeeringAddress, len(source.BgpPeeringAddresses))
 		for bgpPeeringAddressIndex, bgpPeeringAddressItem := range source.BgpPeeringAddresses {
-			// Shadow the loop variable to avoid aliasing
-			bgpPeeringAddressItem := bgpPeeringAddressItem
 			var bgpPeeringAddress IPConfigurationBgpPeeringAddress
 			err := bgpPeeringAddress.AssignProperties_From_IPConfigurationBgpPeeringAddress(&bgpPeeringAddressItem)
 			if err != nil {
@@ -1745,8 +1749,6 @@ func (settings *BgpSettings) AssignProperties_To_BgpSettings(destination *v20240
 	if settings.BgpPeeringAddresses != nil {
 		bgpPeeringAddressList := make([]v20240301s.IPConfigurationBgpPeeringAddress, len(settings.BgpPeeringAddresses))
 		for bgpPeeringAddressIndex, bgpPeeringAddressItem := range settings.BgpPeeringAddresses {
-			// Shadow the loop variable to avoid aliasing
-			bgpPeeringAddressItem := bgpPeeringAddressItem
 			var bgpPeeringAddress v20240301s.IPConfigurationBgpPeeringAddress
 			err := bgpPeeringAddressItem.AssignProperties_To_IPConfigurationBgpPeeringAddress(&bgpPeeringAddress)
 			if err != nil {
@@ -1812,8 +1814,6 @@ func (settings *BgpSettings_STATUS) AssignProperties_From_BgpSettings_STATUS(sou
 	if source.BgpPeeringAddresses != nil {
 		bgpPeeringAddressList := make([]IPConfigurationBgpPeeringAddress_STATUS, len(source.BgpPeeringAddresses))
 		for bgpPeeringAddressIndex, bgpPeeringAddressItem := range source.BgpPeeringAddresses {
-			// Shadow the loop variable to avoid aliasing
-			bgpPeeringAddressItem := bgpPeeringAddressItem
 			var bgpPeeringAddress IPConfigurationBgpPeeringAddress_STATUS
 			err := bgpPeeringAddress.AssignProperties_From_IPConfigurationBgpPeeringAddress_STATUS(&bgpPeeringAddressItem)
 			if err != nil {
@@ -1869,8 +1869,6 @@ func (settings *BgpSettings_STATUS) AssignProperties_To_BgpSettings_STATUS(desti
 	if settings.BgpPeeringAddresses != nil {
 		bgpPeeringAddressList := make([]v20240301s.IPConfigurationBgpPeeringAddress_STATUS, len(settings.BgpPeeringAddresses))
 		for bgpPeeringAddressIndex, bgpPeeringAddressItem := range settings.BgpPeeringAddresses {
-			// Shadow the loop variable to avoid aliasing
-			bgpPeeringAddressItem := bgpPeeringAddressItem
 			var bgpPeeringAddress v20240301s.IPConfigurationBgpPeeringAddress_STATUS
 			err := bgpPeeringAddressItem.AssignProperties_To_IPConfigurationBgpPeeringAddress_STATUS(&bgpPeeringAddress)
 			if err != nil {
@@ -2251,8 +2249,6 @@ func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_From_Virtual
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2269,8 +2265,6 @@ func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_From_Virtual
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2312,8 +2306,6 @@ func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_To_VirtualNe
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2330,8 +2322,6 @@ func (operator *VirtualNetworkGatewayOperatorSpec) AssignProperties_To_VirtualNe
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2519,7 +2509,7 @@ type VpnClientConfiguration struct {
 	AadTenant                    *string                       `json:"aadTenant,omitempty"`
 	PropertyBag                  genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	RadiusServerAddress          *string                       `json:"radiusServerAddress,omitempty"`
-	RadiusServerSecret           *string                       `json:"radiusServerSecret,omitempty"`
+	RadiusServerSecret           *genruntime.SecretReference   `json:"radiusServerSecret,omitempty"`
 	RadiusServers                []RadiusServer                `json:"radiusServers,omitempty"`
 	VpnAuthenticationTypes       []string                      `json:"vpnAuthenticationTypes,omitempty"`
 	VpnClientAddressPool         *AddressSpace                 `json:"vpnClientAddressPool,omitempty"`
@@ -2547,14 +2537,17 @@ func (configuration *VpnClientConfiguration) AssignProperties_From_VpnClientConf
 	configuration.RadiusServerAddress = genruntime.ClonePointerToString(source.RadiusServerAddress)
 
 	// RadiusServerSecret
-	configuration.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
+	if source.RadiusServerSecret != nil {
+		radiusServerSecret := source.RadiusServerSecret.Copy()
+		configuration.RadiusServerSecret = &radiusServerSecret
+	} else {
+		configuration.RadiusServerSecret = nil
+	}
 
 	// RadiusServers
 	if source.RadiusServers != nil {
 		radiusServerList := make([]RadiusServer, len(source.RadiusServers))
 		for radiusServerIndex, radiusServerItem := range source.RadiusServers {
-			// Shadow the loop variable to avoid aliasing
-			radiusServerItem := radiusServerItem
 			var radiusServer RadiusServer
 			err := radiusServer.AssignProperties_From_RadiusServer(&radiusServerItem)
 			if err != nil {
@@ -2593,8 +2586,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_From_VpnClientConf
 	if source.VpnClientIpsecPolicies != nil {
 		vpnClientIpsecPolicyList := make([]IpsecPolicy, len(source.VpnClientIpsecPolicies))
 		for vpnClientIpsecPolicyIndex, vpnClientIpsecPolicyItem := range source.VpnClientIpsecPolicies {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientIpsecPolicyItem := vpnClientIpsecPolicyItem
 			var vpnClientIpsecPolicy IpsecPolicy
 			err := vpnClientIpsecPolicy.AssignProperties_From_IpsecPolicy(&vpnClientIpsecPolicyItem)
 			if err != nil {
@@ -2614,8 +2605,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_From_VpnClientConf
 	if source.VpnClientRevokedCertificates != nil {
 		vpnClientRevokedCertificateList := make([]VpnClientRevokedCertificate, len(source.VpnClientRevokedCertificates))
 		for vpnClientRevokedCertificateIndex, vpnClientRevokedCertificateItem := range source.VpnClientRevokedCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRevokedCertificateItem := vpnClientRevokedCertificateItem
 			var vpnClientRevokedCertificate VpnClientRevokedCertificate
 			err := vpnClientRevokedCertificate.AssignProperties_From_VpnClientRevokedCertificate(&vpnClientRevokedCertificateItem)
 			if err != nil {
@@ -2632,8 +2621,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_From_VpnClientConf
 	if source.VpnClientRootCertificates != nil {
 		vpnClientRootCertificateList := make([]VpnClientRootCertificate, len(source.VpnClientRootCertificates))
 		for vpnClientRootCertificateIndex, vpnClientRootCertificateItem := range source.VpnClientRootCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRootCertificateItem := vpnClientRootCertificateItem
 			var vpnClientRootCertificate VpnClientRootCertificate
 			err := vpnClientRootCertificate.AssignProperties_From_VpnClientRootCertificate(&vpnClientRootCertificateItem)
 			if err != nil {
@@ -2684,14 +2671,17 @@ func (configuration *VpnClientConfiguration) AssignProperties_To_VpnClientConfig
 	destination.RadiusServerAddress = genruntime.ClonePointerToString(configuration.RadiusServerAddress)
 
 	// RadiusServerSecret
-	destination.RadiusServerSecret = genruntime.ClonePointerToString(configuration.RadiusServerSecret)
+	if configuration.RadiusServerSecret != nil {
+		radiusServerSecret := configuration.RadiusServerSecret.Copy()
+		destination.RadiusServerSecret = &radiusServerSecret
+	} else {
+		destination.RadiusServerSecret = nil
+	}
 
 	// RadiusServers
 	if configuration.RadiusServers != nil {
 		radiusServerList := make([]v20240301s.RadiusServer, len(configuration.RadiusServers))
 		for radiusServerIndex, radiusServerItem := range configuration.RadiusServers {
-			// Shadow the loop variable to avoid aliasing
-			radiusServerItem := radiusServerItem
 			var radiusServer v20240301s.RadiusServer
 			err := radiusServerItem.AssignProperties_To_RadiusServer(&radiusServer)
 			if err != nil {
@@ -2736,8 +2726,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_To_VpnClientConfig
 	if configuration.VpnClientIpsecPolicies != nil {
 		vpnClientIpsecPolicyList := make([]v20240301s.IpsecPolicy, len(configuration.VpnClientIpsecPolicies))
 		for vpnClientIpsecPolicyIndex, vpnClientIpsecPolicyItem := range configuration.VpnClientIpsecPolicies {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientIpsecPolicyItem := vpnClientIpsecPolicyItem
 			var vpnClientIpsecPolicy v20240301s.IpsecPolicy
 			err := vpnClientIpsecPolicyItem.AssignProperties_To_IpsecPolicy(&vpnClientIpsecPolicy)
 			if err != nil {
@@ -2757,8 +2745,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_To_VpnClientConfig
 	if configuration.VpnClientRevokedCertificates != nil {
 		vpnClientRevokedCertificateList := make([]v20240301s.VpnClientRevokedCertificate, len(configuration.VpnClientRevokedCertificates))
 		for vpnClientRevokedCertificateIndex, vpnClientRevokedCertificateItem := range configuration.VpnClientRevokedCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRevokedCertificateItem := vpnClientRevokedCertificateItem
 			var vpnClientRevokedCertificate v20240301s.VpnClientRevokedCertificate
 			err := vpnClientRevokedCertificateItem.AssignProperties_To_VpnClientRevokedCertificate(&vpnClientRevokedCertificate)
 			if err != nil {
@@ -2775,8 +2761,6 @@ func (configuration *VpnClientConfiguration) AssignProperties_To_VpnClientConfig
 	if configuration.VpnClientRootCertificates != nil {
 		vpnClientRootCertificateList := make([]v20240301s.VpnClientRootCertificate, len(configuration.VpnClientRootCertificates))
 		for vpnClientRootCertificateIndex, vpnClientRootCertificateItem := range configuration.VpnClientRootCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRootCertificateItem := vpnClientRootCertificateItem
 			var vpnClientRootCertificate v20240301s.VpnClientRootCertificate
 			err := vpnClientRootCertificateItem.AssignProperties_To_VpnClientRootCertificate(&vpnClientRootCertificate)
 			if err != nil {
@@ -2817,7 +2801,6 @@ type VpnClientConfiguration_STATUS struct {
 	AadTenant                    *string                              `json:"aadTenant,omitempty"`
 	PropertyBag                  genruntime.PropertyBag               `json:"$propertyBag,omitempty"`
 	RadiusServerAddress          *string                              `json:"radiusServerAddress,omitempty"`
-	RadiusServerSecret           *string                              `json:"radiusServerSecret,omitempty"`
 	RadiusServers                []RadiusServer_STATUS                `json:"radiusServers,omitempty"`
 	VpnAuthenticationTypes       []string                             `json:"vpnAuthenticationTypes,omitempty"`
 	VpnClientAddressPool         *AddressSpace_STATUS                 `json:"vpnClientAddressPool,omitempty"`
@@ -2844,15 +2827,10 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_From_VpnCli
 	// RadiusServerAddress
 	configuration.RadiusServerAddress = genruntime.ClonePointerToString(source.RadiusServerAddress)
 
-	// RadiusServerSecret
-	configuration.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
-
 	// RadiusServers
 	if source.RadiusServers != nil {
 		radiusServerList := make([]RadiusServer_STATUS, len(source.RadiusServers))
 		for radiusServerIndex, radiusServerItem := range source.RadiusServers {
-			// Shadow the loop variable to avoid aliasing
-			radiusServerItem := radiusServerItem
 			var radiusServer RadiusServer_STATUS
 			err := radiusServer.AssignProperties_From_RadiusServer_STATUS(&radiusServerItem)
 			if err != nil {
@@ -2891,8 +2869,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_From_VpnCli
 	if source.VpnClientIpsecPolicies != nil {
 		vpnClientIpsecPolicyList := make([]IpsecPolicy_STATUS, len(source.VpnClientIpsecPolicies))
 		for vpnClientIpsecPolicyIndex, vpnClientIpsecPolicyItem := range source.VpnClientIpsecPolicies {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientIpsecPolicyItem := vpnClientIpsecPolicyItem
 			var vpnClientIpsecPolicy IpsecPolicy_STATUS
 			err := vpnClientIpsecPolicy.AssignProperties_From_IpsecPolicy_STATUS(&vpnClientIpsecPolicyItem)
 			if err != nil {
@@ -2912,8 +2888,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_From_VpnCli
 	if source.VpnClientRevokedCertificates != nil {
 		vpnClientRevokedCertificateList := make([]VpnClientRevokedCertificate_STATUS, len(source.VpnClientRevokedCertificates))
 		for vpnClientRevokedCertificateIndex, vpnClientRevokedCertificateItem := range source.VpnClientRevokedCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRevokedCertificateItem := vpnClientRevokedCertificateItem
 			var vpnClientRevokedCertificate VpnClientRevokedCertificate_STATUS
 			err := vpnClientRevokedCertificate.AssignProperties_From_VpnClientRevokedCertificate_STATUS(&vpnClientRevokedCertificateItem)
 			if err != nil {
@@ -2930,8 +2904,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_From_VpnCli
 	if source.VpnClientRootCertificates != nil {
 		vpnClientRootCertificateList := make([]VpnClientRootCertificate_STATUS, len(source.VpnClientRootCertificates))
 		for vpnClientRootCertificateIndex, vpnClientRootCertificateItem := range source.VpnClientRootCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRootCertificateItem := vpnClientRootCertificateItem
 			var vpnClientRootCertificate VpnClientRootCertificate_STATUS
 			err := vpnClientRootCertificate.AssignProperties_From_VpnClientRootCertificate_STATUS(&vpnClientRootCertificateItem)
 			if err != nil {
@@ -2981,15 +2953,10 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_To_VpnClien
 	// RadiusServerAddress
 	destination.RadiusServerAddress = genruntime.ClonePointerToString(configuration.RadiusServerAddress)
 
-	// RadiusServerSecret
-	destination.RadiusServerSecret = genruntime.ClonePointerToString(configuration.RadiusServerSecret)
-
 	// RadiusServers
 	if configuration.RadiusServers != nil {
 		radiusServerList := make([]v20240301s.RadiusServer_STATUS, len(configuration.RadiusServers))
 		for radiusServerIndex, radiusServerItem := range configuration.RadiusServers {
-			// Shadow the loop variable to avoid aliasing
-			radiusServerItem := radiusServerItem
 			var radiusServer v20240301s.RadiusServer_STATUS
 			err := radiusServerItem.AssignProperties_To_RadiusServer_STATUS(&radiusServer)
 			if err != nil {
@@ -3034,8 +3001,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_To_VpnClien
 	if configuration.VpnClientIpsecPolicies != nil {
 		vpnClientIpsecPolicyList := make([]v20240301s.IpsecPolicy_STATUS, len(configuration.VpnClientIpsecPolicies))
 		for vpnClientIpsecPolicyIndex, vpnClientIpsecPolicyItem := range configuration.VpnClientIpsecPolicies {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientIpsecPolicyItem := vpnClientIpsecPolicyItem
 			var vpnClientIpsecPolicy v20240301s.IpsecPolicy_STATUS
 			err := vpnClientIpsecPolicyItem.AssignProperties_To_IpsecPolicy_STATUS(&vpnClientIpsecPolicy)
 			if err != nil {
@@ -3055,8 +3020,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_To_VpnClien
 	if configuration.VpnClientRevokedCertificates != nil {
 		vpnClientRevokedCertificateList := make([]v20240301s.VpnClientRevokedCertificate_STATUS, len(configuration.VpnClientRevokedCertificates))
 		for vpnClientRevokedCertificateIndex, vpnClientRevokedCertificateItem := range configuration.VpnClientRevokedCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRevokedCertificateItem := vpnClientRevokedCertificateItem
 			var vpnClientRevokedCertificate v20240301s.VpnClientRevokedCertificate_STATUS
 			err := vpnClientRevokedCertificateItem.AssignProperties_To_VpnClientRevokedCertificate_STATUS(&vpnClientRevokedCertificate)
 			if err != nil {
@@ -3073,8 +3036,6 @@ func (configuration *VpnClientConfiguration_STATUS) AssignProperties_To_VpnClien
 	if configuration.VpnClientRootCertificates != nil {
 		vpnClientRootCertificateList := make([]v20240301s.VpnClientRootCertificate_STATUS, len(configuration.VpnClientRootCertificates))
 		for vpnClientRootCertificateIndex, vpnClientRootCertificateItem := range configuration.VpnClientRootCertificates {
-			// Shadow the loop variable to avoid aliasing
-			vpnClientRootCertificateItem := vpnClientRootCertificateItem
 			var vpnClientRootCertificate v20240301s.VpnClientRootCertificate_STATUS
 			err := vpnClientRootCertificateItem.AssignProperties_To_VpnClientRootCertificate_STATUS(&vpnClientRootCertificate)
 			if err != nil {
@@ -3533,10 +3494,10 @@ func (policy *IpsecPolicy_STATUS) AssignProperties_To_IpsecPolicy_STATUS(destina
 // Storage version of v1api20201101.RadiusServer
 // Radius Server Settings.
 type RadiusServer struct {
-	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	RadiusServerAddress *string                `json:"radiusServerAddress,omitempty"`
-	RadiusServerScore   *int                   `json:"radiusServerScore,omitempty"`
-	RadiusServerSecret  *string                `json:"radiusServerSecret,omitempty"`
+	PropertyBag         genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
+	RadiusServerAddress *string                     `json:"radiusServerAddress,omitempty"`
+	RadiusServerScore   *int                        `json:"radiusServerScore,omitempty"`
+	RadiusServerSecret  *genruntime.SecretReference `json:"radiusServerSecret,omitempty"`
 }
 
 // AssignProperties_From_RadiusServer populates our RadiusServer from the provided source RadiusServer
@@ -3551,7 +3512,12 @@ func (server *RadiusServer) AssignProperties_From_RadiusServer(source *v20240301
 	server.RadiusServerScore = genruntime.ClonePointerToInt(source.RadiusServerScore)
 
 	// RadiusServerSecret
-	server.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
+	if source.RadiusServerSecret != nil {
+		radiusServerSecret := source.RadiusServerSecret.Copy()
+		server.RadiusServerSecret = &radiusServerSecret
+	} else {
+		server.RadiusServerSecret = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3585,7 +3551,12 @@ func (server *RadiusServer) AssignProperties_To_RadiusServer(destination *v20240
 	destination.RadiusServerScore = genruntime.ClonePointerToInt(server.RadiusServerScore)
 
 	// RadiusServerSecret
-	destination.RadiusServerSecret = genruntime.ClonePointerToString(server.RadiusServerSecret)
+	if server.RadiusServerSecret != nil {
+		radiusServerSecret := server.RadiusServerSecret.Copy()
+		destination.RadiusServerSecret = &radiusServerSecret
+	} else {
+		destination.RadiusServerSecret = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3613,7 +3584,6 @@ type RadiusServer_STATUS struct {
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RadiusServerAddress *string                `json:"radiusServerAddress,omitempty"`
 	RadiusServerScore   *int                   `json:"radiusServerScore,omitempty"`
-	RadiusServerSecret  *string                `json:"radiusServerSecret,omitempty"`
 }
 
 // AssignProperties_From_RadiusServer_STATUS populates our RadiusServer_STATUS from the provided source RadiusServer_STATUS
@@ -3626,9 +3596,6 @@ func (server *RadiusServer_STATUS) AssignProperties_From_RadiusServer_STATUS(sou
 
 	// RadiusServerScore
 	server.RadiusServerScore = genruntime.ClonePointerToInt(source.RadiusServerScore)
-
-	// RadiusServerSecret
-	server.RadiusServerSecret = genruntime.ClonePointerToString(source.RadiusServerSecret)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -3660,9 +3627,6 @@ func (server *RadiusServer_STATUS) AssignProperties_To_RadiusServer_STATUS(desti
 
 	// RadiusServerScore
 	destination.RadiusServerScore = genruntime.ClonePointerToInt(server.RadiusServerScore)
-
-	// RadiusServerSecret
-	destination.RadiusServerSecret = genruntime.ClonePointerToString(server.RadiusServerSecret)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

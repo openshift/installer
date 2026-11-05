@@ -11,7 +11,7 @@ type FlexibleServersAdvancedThreatProtectionSettings_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Properties: Advanced Threat Protection properties.
+	// Properties: Advanced threat protection properties.
 	Properties *ServerThreatProtectionProperties_STATUS `json:"properties,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -21,13 +21,13 @@ type FlexibleServersAdvancedThreatProtectionSettings_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// Properties of server Threat Protection state.
+// Properties of advanced threat protection state for a flexible server.
 type ServerThreatProtectionProperties_STATUS struct {
-	// CreationTime: Specifies the UTC creation time of the policy.
+	// CreationTime: Specifies the creation time (UTC) of the policy.
 	CreationTime *string `json:"creationTime,omitempty"`
 
-	// State: Specifies the state of the Threat Protection, whether it is enabled or disabled or a state has not been applied
-	// yet on the specific server.
+	// State: Specifies the state of the advanced threat protection, whether it is enabled, disabled, or a state has not been
+	// applied yet on the flexible server.
 	State *ServerThreatProtectionProperties_State_STATUS `json:"state,omitempty"`
 }
 

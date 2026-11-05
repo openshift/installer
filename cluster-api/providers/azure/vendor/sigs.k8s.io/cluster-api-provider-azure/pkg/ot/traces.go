@@ -42,7 +42,7 @@ func RegisterTracing(ctx context.Context, log logr.Logger) error {
 	otel.SetTracerProvider(tp)
 
 	// Give the tracer provider 5 seconds to shut down when the context closes.
-	go func() {
+	go func() { //nolint:gosec // G118: a fresh context is created below because the request context is already cancelled here.
 		<-ctx.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
