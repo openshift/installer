@@ -78,6 +78,16 @@ generate_capi_manifest() {
 		cluster-api)
 			cp out/cluster-api-components.yaml "${MANIFESTS_DIR}/core-components.yaml"
 			;;
+		azurestack)
+			# The Azure Stack CAPZ fork still bundles the ASO CRDs and webhooks of the
+			# ASO release it was built against, but ASO is installed from the azureaso
+			# manifest. Both are installed into the same local control plane, so keeping
+			# ASO's API surface here installs it twice: the CRD update is rejected once
+			# the two ASO releases disagree on a storage version, and the fork's ASO
+			# webhooks are left pointing at the CAPZ webhook server. Let azureaso own it.
+			yq e 'select(((.kind == "CustomResourceDefinition") and ((.spec.group // "") | test("\.azure\.com$"))) == false and (((.kind == "MutatingWebhookConfiguration") or (.kind == "ValidatingWebhookConfiguration")) and ((.metadata.name // "") | test("^azureserviceoperator-"))) == false)' \
+				out/infrastructure-components.yaml >"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+			;;
 		*)
 			cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 			;;

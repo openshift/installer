@@ -218,10 +218,16 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			return fmt.Errorf("unable to retrieve azure session: %w", err)
 		}
 		azProvider := Azure
+		azFeatureGates := "MachinePool=false"
 		var envFP string
 		if cloudName == azure.StackCloud {
 			// Set provider so that the Azure Stack (forked) controller and CRDs are used.
 			azProvider = AzureStack
+
+			// The AKS controllers behind ASOAPI are unused by the installer, and the
+			// forked provider watches ASO containerservice types at API versions the
+			// ASO release installed from the azureaso manifest no longer serves.
+			azFeatureGates += ",ASOAPI=false"
 
 			// Lay down the environment file so that cloud-provider-azure running in
 			// CAPZ & ASO controllers can load the environment.
@@ -266,7 +272,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
-					"--feature-gates=MachinePool=false",
+					fmt.Sprintf("--feature-gates=%s", azFeatureGates),
 				},
 				map[string]string{
 					"AZURE_ENVIRONMENT_FILEPATH": envFP,
