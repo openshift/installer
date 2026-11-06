@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 func defaultMachinePoolWithReplicaCount(name string, replicaCount int) *types.MachinePool {
@@ -305,6 +306,68 @@ func TestSetMachinePoolDefaultsGCPDefaultMachinePlatform(t *testing.T) {
 			config := &types.InstallConfig{}
 			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
 			assert.Equal(t, tc.expected, tc.pool.Platform.GCP)
+		})
+	}
+}
+
+func TestSetMachinePoolDefaultsIBMCloudDefaultMachinePlatform(t *testing.T) {
+	cases := []struct {
+		name     string
+		pool     *types.MachinePool
+		platform *types.Platform
+		expected *ibmcloud.MachinePool
+	}{
+		{
+			name: "defaultMachinePlatform applied to empty pool",
+			pool: &types.MachinePool{Name: "worker"},
+			platform: &types.Platform{
+				IBMCloud: &ibmcloud.Platform{
+					DefaultMachinePlatform: &ibmcloud.MachinePool{
+						InstanceType: "bx2-4x16",
+						Zones:        []string{"eu-de-1", "eu-de-2"},
+					},
+				},
+			},
+			expected: &ibmcloud.MachinePool{
+				InstanceType: "bx2-4x16",
+				Zones:        []string{"eu-de-1", "eu-de-2"},
+			},
+		},
+		{
+			name: "pool values take precedence over defaultMachinePlatform",
+			pool: &types.MachinePool{
+				Name: "master",
+				Platform: types.MachinePoolPlatform{
+					IBMCloud: &ibmcloud.MachinePool{
+						InstanceType: "bx2-8x32",
+					},
+				},
+			},
+			platform: &types.Platform{
+				IBMCloud: &ibmcloud.Platform{
+					DefaultMachinePlatform: &ibmcloud.MachinePool{
+						InstanceType: "bx2-4x16",
+						BootVolume:   &ibmcloud.BootVolume{EncryptionKey: "crn:v1:bluemix:public:kms:eu-de:a/accountid:instanceid:key:keyid"},
+					},
+				},
+			},
+			expected: &ibmcloud.MachinePool{
+				InstanceType: "bx2-8x32",
+				BootVolume:   &ibmcloud.BootVolume{EncryptionKey: "crn:v1:bluemix:public:kms:eu-de:a/accountid:instanceid:key:keyid"},
+			},
+		},
+		{
+			name:     "no defaultMachinePlatform leaves empty pool unset",
+			pool:     &types.MachinePool{Name: "worker"},
+			platform: &types.Platform{IBMCloud: &ibmcloud.Platform{}},
+			expected: nil,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &types.InstallConfig{}
+			SetMachinePoolDefaults(tc.pool, tc.platform, config.EnabledFeatureGates())
+			assert.Equal(t, tc.expected, tc.pool.Platform.IBMCloud)
 		})
 	}
 }
