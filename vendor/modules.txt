@@ -9051,7 +9051,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.33.0
+# golang.org/x/crypto v0.33.0 => github.com/openshift-sustaining/crypto v0.33.0-sec.5
 ## explicit; go 1.20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -9680,3 +9680,4 @@ sigs.k8s.io/yaml
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 # golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
+# golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.5
