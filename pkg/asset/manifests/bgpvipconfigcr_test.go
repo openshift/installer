@@ -16,6 +16,31 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
+func bgpInstallConfig() *installconfig.InstallConfig {
+	return installconfig.MakeAsset(&types.InstallConfig{
+		Platform: types.Platform{
+			BareMetal: &baremetal.Platform{
+				APIVIPs:     []string{"192.168.111.5"},
+				IngressVIPs: []string{"192.168.111.4"},
+				BGPVIPConfig: &baremetal.BGPVIPConfig{
+					LocalASN: 64512,
+					Peers: []baremetal.BGPPeerConfig{
+						{PeerAddress: "192.168.111.1", PeerASN: 64513},
+					},
+				},
+				Hosts: []*baremetal.Host{
+					{
+						Name: "master-0",
+						BGPPeers: []baremetal.BGPPeerConfig{
+							{PeerAddress: "192.168.1.1", PeerASN: 64513},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestBGPVIPConfigFromInstallConfig(t *testing.T) {
 	ic := &types.InstallConfig{Platform: types.Platform{BareMetal: &baremetal.Platform{
 		APIVIPs:     []string{"192.168.111.5"},
