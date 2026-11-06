@@ -15,6 +15,7 @@ import (
 
 	dnssvcsv1 "github.com/IBM/networking-go-sdk/dnssvcsv1"
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
+	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	powervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
@@ -488,6 +489,21 @@ func (m *MockAPI) ServiceInstanceGUIDToName(ctx context.Context, id string) (str
 func (mr *MockAPIMockRecorder) ServiceInstanceGUIDToName(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceGUIDToName", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceGUIDToName), ctx, id)
+}
+
+// GetResourceInstanceByCRN mocks base method.
+func (m *MockAPI) GetResourceInstanceByCRN(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceInstanceByCRN", ctx, crnstr)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourceInstanceByCRN indicates an expected call of GetResourceInstanceByCRN.
+func (mr *MockAPIMockRecorder) GetResourceInstanceByCRN(ctx, crnstr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstanceByCRN", reflect.TypeOf((*MockAPI)(nil).GetResourceInstanceByCRN), ctx, crnstr)
 }
 
 // ServiceInstanceNameToGUID mocks base method.

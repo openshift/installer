@@ -44,6 +44,7 @@ type provider struct {
 	PowerVSEndpointOverride  string `gcfg:"powerVSEndpointOverride"`
 	RcEndpointOverride       string `gcfg:"rcEndpointOverride"`
 	RmEndpointOverride       string `gcfg:"rmEndpointOverride"`
+	CosEndpointOverride      string `gcfg:"cosEndpointOverride"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
@@ -53,6 +54,7 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 	powerVSEndpointOverride := ""
 	vpcEndpointOverride := ""
 	rmEndpointOverride := ""
+	cosEndpointOverride := ""
 	for _, endpoint := range endpointOverrides {
 		switch endpoint.Name {
 		case string(configv1.IBMCloudServiceIAM):
@@ -65,6 +67,8 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			powerVSEndpointOverride = endpoint.URL
 		case string(configv1.IBMCloudServiceVPC):
 			vpcEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceCOS):
+			cosEndpointOverride = endpoint.URL
 		default:
 			logrus.Debugf("Ignoring unrecognized endpoint override for cloud provider config: %s", endpoint.Name)
 		}
@@ -95,6 +99,7 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			PowerVSEndpointOverride:  powerVSEndpointOverride,
 			RcEndpointOverride:       rcEndpointOverride,
 			RmEndpointOverride:       rmEndpointOverride,
+			CosEndpointOverride:      cosEndpointOverride,
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -128,4 +133,5 @@ iamEndpointOverride = {{.Provider.IamEndpointOverride}}
 powerVSEndpointOverride = {{.Provider.PowerVSEndpointOverride}}
 rcEndpointOverride = {{.Provider.RcEndpointOverride}}
 rmEndpointOverride = {{.Provider.RmEndpointOverride}}
+cosEndpointOverride = {{.Provider.CosEndpointOverride}}
 `
