@@ -274,6 +274,19 @@ func AvailableVPCZones(region string) ([]string, error) {
 	return knownRegion.VPCZones, nil
 }
 
+// VPCZonesForVPCRegion returns the known VPC zones for the specified VPC region.
+// Unlike AvailableVPCZones this is keyed by the VPC region itself, so it stays correct
+// when the user overrides platform.powervs.vpcRegion with a region other than the one
+// derived from the PowerVS region.
+func VPCZonesForVPCRegion(vpcRegion string) ([]string, error) {
+	for _, r := range Regions {
+		if r.VPCRegion == vpcRegion && len(r.VPCZones) > 0 {
+			return r.VPCZones, nil
+		}
+	}
+	return nil, fmt.Errorf("no VPC zones known for VPC region %s", vpcRegion)
+}
+
 // COSRegionForVPCRegion returns the corresponding COS region for the given VPC region.
 func COSRegionForVPCRegion(vpcRegion string) (string, error) {
 	for r := range Regions {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	gohttp "net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -17,9 +18,43 @@ const (
 	routingTableTypeName = "routingTable"
 )
 
+// listUserVPCID returns the ID of the VPC the user supplied in install-config.yaml, matched by
+// ID or name, or "" if there is none or it no longer exists. It is not limited to the cluster's
+// resource group, because a user VPC may live in another one.
+func (o *ClusterUninstaller) listUserVPCID(ctx context.Context) (string, error) {
+	if o.VPC == "" {
+		return "", nil
+	}
+
+	options := o.vpcSvc.NewListVpcsOptions()
+	for {
+		collection, response, err := o.vpcSvc.ListVpcsWithContext(ctx, options)
+		if err != nil {
+			return "", fmt.Errorf("failed to list VPCs: err = %w, response = %v", err, response)
+		}
+		for _, vpc := range collection.Vpcs {
+			if (vpc.ID != nil && *vpc.ID == o.VPC) || (vpc.Name != nil && *vpc.Name == o.VPC) {
+				return *vpc.ID, nil
+			}
+		}
+		if collection.Next == nil {
+			return "", nil
+		}
+		start, err := collection.GetNextStart()
+		if err != nil {
+			return "", fmt.Errorf("GetNextStart: %w", err)
+		}
+		if start == nil {
+			return "", nil
+		}
+		options.SetStart(*start)
+	}
+}
+
 // listRoutingTables lists VPC routing tables whose name contains the cluster's infra ID.
 // Routing tables are scoped to a VPC, so this function first resolves the cluster VPC ID(s)
-// via listVPCsByName and then queries routing tables for each VPC found.
+// via listVPCsByName, and the user-supplied VPC if there is one, and then queries routing
+// tables for each VPC found.
 func (o *ClusterUninstaller) listRoutingTables() (cloudResources, error) {
 	ctx, cancel := contextWithTimeout()
 	defer cancel()
@@ -28,6 +63,17 @@ func (o *ClusterUninstaller) listRoutingTables() (cloudResources, error) {
 	vpcIDs, err := o.listVPCsByName()
 	if err != nil {
 		return nil, fmt.Errorf("listRoutingTables: failed to list cluster VPCs: %w", err)
+	}
+
+	// A VPC the user supplied is not named after the infra ID, so listVPCsByName misses it,
+	// yet the installer creates a routing table in it. The VPC itself is left alone; only
+	// the routing tables named after the infra ID are deleted below.
+	userVPCID, err := o.listUserVPCID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listRoutingTables: failed to find user VPC %q: %w", o.VPC, err)
+	}
+	if userVPCID != "" && !slices.Contains(vpcIDs, userVPCID) {
+		vpcIDs = append(vpcIDs, userVPCID)
 	}
 	if len(vpcIDs) == 0 {
 		o.Logger.Debugf("listRoutingTables: no cluster VPC found, skipping routing table listing")
@@ -65,7 +111,7 @@ func (o *ClusterUninstaller) listRoutingTables() (cloudResources, error) {
 				if !strings.Contains(*rt.Name, o.InfraID) {
 					continue
 				}
-				o.Logger.Debugf("listRoutingTables: FOUND: %s (%s) in VPC %s", *rt.Name, *rt.ID, vpcID)
+				o.Logger.Debugf("listRoutingTables: FOUND: %s (%s)", *rt.Name, *rt.ID)
 
 				// Verify it still exists with a GET before adding to results.
 				getOptions := o.vpcSvc.NewGetVPCRoutingTableOptions(vpcID, *rt.ID)
@@ -133,7 +179,7 @@ func (o *ClusterUninstaller) deleteRoutingTable(item cloudResource) error {
 		return fmt.Errorf("failed to get routing table %s: err = %w, response = %v", item.name, err, getResponse)
 	}
 
-	o.Logger.Debugf("Deleting VPC routing table %q (%s) in VPC %s", item.name, item.id, vpcID)
+	o.Logger.Debugf("Deleting VPC routing table %q (%s)", item.name, item.id)
 
 	deleteOptions := o.vpcSvc.NewDeleteVPCRoutingTableOptions(vpcID, item.id)
 	response, err := o.vpcSvc.DeleteVPCRoutingTableWithContext(ctx, deleteOptions)

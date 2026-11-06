@@ -416,7 +416,7 @@ func (mr *MockAPIMockRecorder) GetVPCs(ctx, region any) *gomock.Call {
 }
 
 // GetVPCsInResourceGroup mocks base method.
-func (m *MockAPI) GetVPCsInResourceGroup(ctx context.Context, resourceGroupID string, region string) ([]vpcv1.VPC, error) {
+func (m *MockAPI) GetVPCsInResourceGroup(ctx context.Context, resourceGroupID, region string) ([]vpcv1.VPC, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVPCsInResourceGroup", ctx, resourceGroupID, region)
 	ret0, _ := ret[0].([]vpcv1.VPC)
@@ -428,6 +428,21 @@ func (m *MockAPI) GetVPCsInResourceGroup(ctx context.Context, resourceGroupID st
 func (mr *MockAPIMockRecorder) GetVPCsInResourceGroup(ctx, resourceGroupID, region any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCsInResourceGroup", reflect.TypeOf((*MockAPI)(nil).GetVPCsInResourceGroup), ctx, resourceGroupID, region)
+}
+
+// ListPublicGatewaysByVPC mocks base method.
+func (m *MockAPI) ListPublicGatewaysByVPC(ctx context.Context, vpcID, region string) ([]vpcv1.PublicGateway, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPublicGatewaysByVPC", ctx, vpcID, region)
+	ret0, _ := ret[0].([]vpcv1.PublicGateway)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPublicGatewaysByVPC indicates an expected call of ListPublicGatewaysByVPC.
+func (mr *MockAPIMockRecorder) ListPublicGatewaysByVPC(ctx, vpcID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublicGatewaysByVPC", reflect.TypeOf((*MockAPI)(nil).ListPublicGatewaysByVPC), ctx, vpcID, region)
 }
 
 // ListResourceGroups mocks base method.
@@ -473,6 +488,21 @@ func (m *MockAPI) ListServiceInstances(ctx context.Context) ([]string, error) {
 func (mr *MockAPIMockRecorder) ListServiceInstances(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceInstances", reflect.TypeOf((*MockAPI)(nil).ListServiceInstances), ctx)
+}
+
+// ListVPCRoutingTables mocks base method.
+func (m *MockAPI) ListVPCRoutingTables(ctx context.Context, vpcID, region string) ([]vpcv1.RoutingTable, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListVPCRoutingTables", ctx, vpcID, region)
+	ret0, _ := ret[0].([]vpcv1.RoutingTable)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListVPCRoutingTables indicates an expected call of ListVPCRoutingTables.
+func (mr *MockAPIMockRecorder) ListVPCRoutingTables(ctx, vpcID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVPCRoutingTables", reflect.TypeOf((*MockAPI)(nil).ListVPCRoutingTables), ctx, vpcID, region)
 }
 
 // ServiceInstanceGUIDToName mocks base method.
