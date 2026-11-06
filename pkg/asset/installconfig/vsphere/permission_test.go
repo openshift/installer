@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -97,7 +98,14 @@ func buildAuthManagerClient(ctx context.Context,
 				return nil, err
 			}
 			for _, cluster := range clusters {
-				buildPermissionGroup(t, authManagerClient, cluster.Reference(), username, group, groupName, overrideGroup, permissionsToRemoveFromResource)
+				// The mock account is sufficiently privileged for HostGroup
+				// failure domains, which require the cluster reconfiguration
+				// privilege on the compute cluster.
+				clusterGroup := PermissionGroupDefinition{
+					Permissions: append(append([]string(nil), group.Permissions...), "Host.Inventory.EditCluster"),
+					Description: group.Description,
+				}
+				buildPermissionGroup(t, authManagerClient, cluster.Reference(), username, clusterGroup, groupName, overrideGroup, permissionsToRemoveFromResource)
 			}
 		case permissionPortgroup:
 			networks, err := finder.NetworkList(ctx, "/...")
@@ -147,6 +155,424 @@ func validIPIMultiZoneInstallConfig() *types.InstallConfig {
 	installConfig.VSphere.FailureDomains = validMultiZonePlatform.FailureDomains
 
 	return installConfig
+}
+
+func TestComponentPermissionMatrix(t *testing.T) {
+	tests := []struct {
+		component      credentialComponent
+		group          permissionGroup
+		mustContain    []string
+		mustNotContain []string
+	}{
+		{
+			component:      componentStorage,
+			group:          permissionDatastore,
+			mustContain:    []string{"Datastore.FileManagement", "System.Read"},
+			mustNotContain: []string{"VirtualMachine.Provisioning.Clone"},
+		},
+		{
+			component:      componentCloudControllerManager,
+			group:          permissionVcenter,
+			mustContain:    []string{"System.Read"},
+			mustNotContain: []string{"InventoryService.Tagging.CreateTag", "VirtualMachine.Inventory.Delete"},
+		},
+		{
+			component:      componentVSphereProblemDetector,
+			group:          permissionDatastore,
+			mustContain:    []string{"Datastore.Browse"},
+			mustNotContain: []string{"Datastore.FileManagement", "VirtualMachine.Inventory.Delete"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(string(test.component)+"/"+string(test.group), func(t *testing.T) {
+			group, found := componentPermissionGroup(test.component, test.group)
+			if !found {
+				t.Fatalf("component permission group not found")
+			}
+			for _, privilege := range test.mustContain {
+				assert.Contains(t, group.Permissions, privilege)
+			}
+			for _, privilege := range test.mustNotContain {
+				assert.NotContains(t, group.Permissions, privilege)
+			}
+		})
+	}
+}
+
+func TestMachineManagementPermissions(t *testing.T) {
+	legacyCluster := permissions[permissionCluster]
+
+	withoutHostGroups := machineManagementPermissions(false)
+	assert.NotContains(t, withoutHostGroups[permissionCluster].Permissions, "Host.Inventory.EditCluster")
+	assert.ElementsMatch(t, withoutHostGroups[permissionCluster].Permissions, legacyCluster.Permissions)
+
+	withHostGroups := machineManagementPermissions(true)
+	assert.Contains(t, withHostGroups[permissionCluster].Permissions, "Host.Inventory.EditCluster")
+	for group, definition := range permissions {
+		if group == permissionCluster {
+			continue
+		}
+		assert.ElementsMatch(t, withHostGroups[group].Permissions, definition.Permissions, string(group))
+	}
+}
+
+func TestHostGroupTopologyUsed(t *testing.T) {
+	tests := []struct {
+		name           string
+		failureDomains []vsphere.FailureDomain
+		server         string
+		expected       bool
+	}{
+		{
+			name: "host group failure domain on the server",
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+			server:   "test-vcenter",
+			expected: true,
+		},
+		{
+			name: "host group failure domain on another server",
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "other-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+			server:   "test-vcenter",
+			expected: false,
+		},
+		{
+			name: "no zone type on the server",
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter"},
+			},
+			server:   "test-vcenter",
+			expected: false,
+		},
+		{
+			name:           "no failure domains",
+			failureDomains: nil,
+			server:         "test-vcenter",
+			expected:       false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, hostGroupTopologyUsed(test.failureDomains, test.server))
+		})
+	}
+}
+
+// TestMachineManagementValidation verifies that the machine-management
+// privilege matrix requires Host.Inventory.EditCluster for HostGroup failure
+// domains only when the component-scoped credentials feature gate is enabled;
+// with the gate disabled the matrix matches the legacy behavior that existing
+// global-credential install configs are validated against.
+func TestMachineManagementValidation(t *testing.T) {
+	tests := []struct {
+		name                     string
+		featureSet               v1.FeatureSet
+		failureDomains           []vsphere.FailureDomain
+		wantEditCluster          bool
+		wantReconfigurationCheck bool
+	}{
+		{
+			name:       "HostGroup topology with the gate disabled keeps the legacy matrix",
+			featureSet: v1.Default,
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+		},
+		{
+			name:       "HostGroup topology with the gate enabled requires EditCluster",
+			featureSet: v1.DevPreviewNoUpgrade,
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+			wantEditCluster:          true,
+			wantReconfigurationCheck: true,
+		},
+		{
+			name:       "compute cluster topology with the gate enabled keeps the legacy matrix",
+			featureSet: v1.DevPreviewNoUpgrade,
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.ComputeClusterFailureDomain},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ic := &types.InstallConfig{
+				FeatureSet: test.featureSet,
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						FailureDomains: test.failureDomains,
+					},
+				},
+			}
+			componentGroups, checkReconfiguration := machineManagementValidation(ic, "test-vcenter")
+			if test.wantEditCluster {
+				assert.Contains(t, componentGroups[permissionCluster].Permissions, "Host.Inventory.EditCluster")
+			} else {
+				assert.NotContains(t, componentGroups[permissionCluster].Permissions, "Host.Inventory.EditCluster")
+			}
+			assert.Equal(t, test.wantReconfigurationCheck, checkReconfiguration)
+		})
+	}
+}
+
+func TestMachineManagementClusterPrivileges(t *testing.T) {
+	ctx := context.TODO()
+	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
+	server, err := vs.StartSimulator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+
+	finder, err := mock.GetFinder(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cluster, err := finder.ClusterComputeResource(ctx, "/DC0/host/DC0_C0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	clusterRef := cluster.Reference()
+
+	legacyClusterPrivileges := append([]string(nil), permissions[permissionCluster].Permissions...)
+
+	tests := []struct {
+		name       string
+		hostGroups bool
+		privileges []string
+		expectErr  string
+	}{
+		{
+			name:       "host group topology without EditCluster fails",
+			hostGroups: true,
+			privileges: legacyClusterPrivileges,
+			expectErr:  "Host.Inventory.EditCluster",
+		},
+		{
+			name:       "host group topology with EditCluster passes",
+			hostGroups: true,
+			privileges: append(append([]string(nil), legacyClusterPrivileges...), "Host.Inventory.EditCluster"),
+		},
+		{
+			name:       "compute cluster topology does not require EditCluster",
+			hostGroups: false,
+			privileges: legacyClusterPrivileges,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			authManager := mock.NewMockAuthManager(mockCtrl)
+			authManager.EXPECT().FetchUserPrivilegeOnEntities(gomock.Any(), []vim25types.ManagedObjectReference{clusterRef}, "test-user").
+				Return([]vim25types.UserPrivilegeResult{{Privileges: test.privileges}}, nil).AnyTimes()
+
+			validationCtx := &validationContext{
+				AuthManager:     authManager,
+				Finder:          finder,
+				Username:        "test-user",
+				componentGroups: machineManagementPermissions(test.hostGroups),
+			}
+
+			errs := computeClusterExists(validationCtx, "/DC0/host/DC0_C0", field.NewPath("test").Child("computeCluster"), true, false)
+			if test.expectErr == "" {
+				assert.NoError(t, errs.ToAggregate())
+			} else {
+				assert.ErrorContains(t, errs.ToAggregate(), test.expectErr)
+			}
+		})
+	}
+}
+
+// TestValidateFailureDomainHostGroupResourcePool verifies that a HostGroup
+// failure domain using a custom resource pool still checks the cluster
+// reconfiguration privilege when the component-scoped credentials feature
+// gate is enabled: placement privileges move to the pool, but VM groups are
+// created by reconfiguring the compute cluster. With the gate disabled the
+// check must not run, keeping validation of existing global-credential
+// install configs unchanged.
+func TestValidateFailureDomainHostGroupResourcePool(t *testing.T) {
+	ctx := context.TODO()
+	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
+	server, err := vs.StartSimulator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+
+	client, _, err := mock.GetClient(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	finder, err := mock.GetFinder(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resourcePools, err := finder.ResourcePoolList(ctx, "/DC0/host/DC0_C0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := resourcePools[0].Create(ctx, "test-resourcepool", vim25types.DefaultResourceConfigSpec()); err != nil {
+		t.Fatal(err)
+	}
+
+	vmFolder, err := finder.Folder(ctx, "/DC0/vm")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := vmFolder.CreateFolder(ctx, "my-folder"); err != nil {
+		t.Fatal(err)
+	}
+
+	sessionMgr := session.NewManager(client)
+	userSession, err := sessionMgr.UserSession(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	failureDomain := validMultiVCenterPlatform().FailureDomains[0]
+	failureDomain.ZoneType = vsphere.HostGroupFailureDomain
+	failureDomain.Topology.HostGroup = "host-group-a"
+
+	tests := []struct {
+		name        string
+		featureSet  v1.FeatureSet
+		gateEnabled bool
+	}{
+		{
+			name:        "feature gate enabled",
+			featureSet:  v1.DevPreviewNoUpgrade,
+			gateEnabled: true,
+		},
+		{
+			name:       "feature gate disabled",
+			featureSet: v1.Default,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			// The mock account has every privilege the installer checks except
+			// Host.Inventory.EditCluster, which HostGroup failure domains with a
+			// custom resource pool must still require on the compute cluster
+			// when the feature gate is enabled.
+			authManager, err := buildAuthManagerClient(ctx, t, mockCtrl, finder, userSession.UserName, &permissionCluster, sets.NewString("Host.Inventory.EditCluster"), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			ic := &types.InstallConfig{
+				FeatureSet: test.featureSet,
+				Platform: types.Platform{
+					VSphere: &vsphere.Platform{
+						FailureDomains: []vsphere.FailureDomain{
+							{Server: failureDomain.Server, ZoneType: vsphere.HostGroupFailureDomain},
+						},
+					},
+				},
+			}
+			componentGroups, checkReconfiguration := machineManagementValidation(ic, failureDomain.Server)
+
+			validationCtx := &validationContext{
+				AuthManager:                 authManager,
+				Finder:                      finder,
+				Client:                      client,
+				Username:                    userSession.UserName,
+				Component:                   componentMachineManagement,
+				componentGroups:             componentGroups,
+				checkVMGroupReconfiguration: checkReconfiguration,
+			}
+
+			// The host group does not exist in the simulator, which adds an
+			// unrelated NotFound error; the assertion is whether the cluster
+			// reconfiguration privilege is checked despite the custom resource
+			// pool.
+			errs := validateFailureDomain(validationCtx, &failureDomain, false).ToAggregate()
+			if test.gateEnabled {
+				assert.ErrorContains(t, errs, "Host.Inventory.EditCluster")
+			} else {
+				assert.NotContains(t, errs.Error(), "Host.Inventory.EditCluster")
+			}
+		})
+	}
+}
+
+// TestValidateClusterReconfigurationPrivileges verifies the targeted
+// Host.Inventory.EditCluster check used for HostGroup failure domains with a
+// custom resource pool.
+func TestValidateClusterReconfigurationPrivileges(t *testing.T) {
+	ctx := context.TODO()
+	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
+	server, err := vs.StartSimulator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+
+	finder, err := mock.GetFinder(server)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cluster, err := finder.ClusterComputeResource(ctx, "/DC0/host/DC0_C0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	clusterRef := cluster.Reference()
+
+	tests := []struct {
+		name       string
+		privileges []string
+		expectErr  string
+	}{
+		{
+			name:      "missing EditCluster fails",
+			expectErr: "Host.Inventory.EditCluster",
+		},
+		{
+			name:       "EditCluster granted passes",
+			privileges: []string{"Host.Inventory.EditCluster"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			authManager := mock.NewMockAuthManager(mockCtrl)
+			authManager.EXPECT().FetchUserPrivilegeOnEntities(gomock.Any(), []vim25types.ManagedObjectReference{clusterRef}, "test-user").
+				Return([]vim25types.UserPrivilegeResult{{Privileges: tt.privileges}}, nil).AnyTimes()
+
+			validationCtx := &validationContext{
+				AuthManager: authManager,
+				Finder:      finder,
+				Username:    "test-user",
+			}
+
+			errs := validateClusterReconfigurationPrivileges(validationCtx, "/DC0/host/DC0_C0", field.NewPath("test").Child("computeCluster"))
+			if tt.expectErr == "" {
+				assert.NoError(t, errs.ToAggregate())
+			} else {
+				assert.ErrorContains(t, errs.ToAggregate(), tt.expectErr)
+			}
+		})
+	}
 }
 
 func TestPermissionValidate(t *testing.T) {

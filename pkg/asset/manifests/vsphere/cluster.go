@@ -21,6 +21,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	assetOutput := &capiutils.GenerateClusterAssetsOutput{}
 
 	for index, vcenter := range installConfig.Config.VSphere.VCenters {
+		credentials, err := installConfig.Config.VSphere.CredentialsForVCenter(vcenter.Server)
+		if err != nil {
+			return nil, err
+		}
 		vsphereCreds := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("vsphere-creds-%d", index),
@@ -30,8 +34,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 		vsphereCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 
-		vsphereCreds.Data["username"] = []byte(vcenter.Username)
-		vsphereCreds.Data["password"] = []byte(vcenter.Password)
+		vsphereCreds.Data["username"] = []byte(credentials.User)
+		vsphereCreds.Data["password"] = []byte(credentials.Password)
 
 		manifests = append(manifests, &asset.RuntimeFile{
 			Object: vsphereCreds,

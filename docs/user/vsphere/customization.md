@@ -84,3 +84,52 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+## vCenter credential types
+
+`platform.vSphere.credentialType` accepts `global` or `component-scoped`. If it is omitted, `global` is used for backward compatibility.
+
+`component-scoped` is protected by the `VSpherePerComponentScopedCreds` feature gate. Enable the gate through the `DevPreviewNoUpgrade` feature set or explicitly in a `CustomNoUpgrade` feature set before using component-scoped credentials. Component-scoped credentials also require `credentialsMode: Manual`: the installer rejects the combination otherwise, because the scoped credentials are only delivered to the cluster through the pre-created Secrets described below.
+
+With `global`, each `vcenters` entry must contain `user` and `password`; `componentCredentials` must not be set. These credentials are used by the installer and by the generated vSphere credential Secret.
+
+With `component-scoped`, `user` and `password` must be omitted from every `vcenters` entry. Each entry must contain complete credentials for `machineManagement`, `storage`, `cloudControllerManager`, and `vsphereProblemDetector`:
+
+```yaml
+platform:
+  vsphere:
+    credentialType: component-scoped
+    vcenters:
+    - server: vcenter.example.com
+      datacenters:
+      - DC1
+      componentCredentials:
+        machineManagement:
+          user: ocp-machine-api@vsphere.local
+          password: machine-api-password
+        storage:
+          user: ocp-csi@vsphere.local
+          password: csi-password
+        cloudControllerManager:
+          user: ocp-ccm@vsphere.local
+          password: ccm-password
+        vsphereProblemDetector:
+          user: ocp-diagnostics@vsphere.local
+          password: diagnostics-password
+```
+
+The `machineManagement` credential is used for installer-side vCenter operations, including VM provisioning and cleanup. Its privileges must therefore include the installer provisioning privileges described in [Privileges](privileges.md). Each component credential must have the privileges required by its corresponding OpenShift component; see the [candidate component privilege matrix](component-privileges.md) for a review and human-test checklist. Credentials are stored in the install configuration and generated Secrets; protect the install-config directory accordingly.
+
+The installer creates these five Secrets for component-scoped manual installations:
+
+| Component | Secret | Namespace |
+|---|---|---|
+| Machine API | `vsphere-cloud-credentials` | `openshift-machine-api` |
+| Machine Config Operator | `vsphere-cloud-credentials` | `openshift-machine-config-operator` |
+| vSphere CSI | `vmware-vsphere-cloud-credentials` | `openshift-cluster-csi-drivers` |
+| Cloud Controller Manager | `vsphere-cloud-credentials` | `openshift-cloud-controller-manager` |
+| Problem Detector | `vsphere-cloud-credentials` | `openshift-cluster-storage-operator` |
+
+Each Secret contains `<vcenter-server>.username` and `<vcenter-server>.password` keys for every configured vCenter, with the credentials selected for that component. These Secrets are created only for `credentialsMode: Manual`; the Cloud Credential Operator does not reconcile them in that mode.
+
+For converting an existing cluster to component-scoped credentials as a day-2 operation, see [Converting a vSphere cluster to component-scoped credentials](converting-to-component-credentials.md). For UPI installations with component-scoped credentials, see [Installing with component-scoped credentials](install_upi.md#installing-with-component-scoped-credentials).

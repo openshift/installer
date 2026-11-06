@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // GatedFeatures determines all of the vSphere install config fields that should
@@ -19,6 +20,11 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			FeatureGateName: features.FeatureGateOnPremDNSRecords,
 			Condition:       v.DNSRecordsType == configv1.DNSRecordsTypeExternal,
 			Field:           field.NewPath("platform", "vsphere", "dnsRecordsType"),
+		},
+		{
+			FeatureGateName: features.FeatureGateVSpherePerComponentScopedCreds,
+			Condition:       v.CredentialType == vspheretypes.CredentialTypeComponentScoped,
+			Field:           field.NewPath("platform", "vsphere", "credentialType"),
 		},
 	}
 }
