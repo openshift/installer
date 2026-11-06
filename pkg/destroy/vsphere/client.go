@@ -404,12 +404,15 @@ func (c *Client) GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.
 	}
 
 	cnsVolumes := make([]cnstypes.CnsVolume, 0, len(volumes.Volumes))
+	var errs []error
 
 	for _, v := range volumes.Volumes {
 		// This must be called to retrieve the ClusterId
 		result, err := c.cnsClient.QueryVolume(ctx, &cnstypes.CnsQueryFilter{VolumeIds: []cnstypes.CnsVolumeId{v.VolumeId}})
 		if err != nil {
-			return nil, err
+			c.logger.WithField("VolumeId", v.VolumeId.Id).Debug(err)
+			errs = append(errs, err)
+			continue
 		}
 
 		// Confirm that the cluster id matches the infraid
@@ -419,7 +422,7 @@ func (c *Client) GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.
 			}
 		}
 	}
-	return cnsVolumes, nil
+	return cnsVolumes, utilerrors.NewAggregate(errs)
 }
 
 // DeleteCnsVolumes deletes the CNS volume.
