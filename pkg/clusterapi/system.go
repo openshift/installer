@@ -225,12 +225,12 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		case azure.StackCloud:
 			// Set provider so that the Azure Stack (forked) controller and CRDs are used.
 			azProvider = AzureStack
-			fallthrough
 
 			// The AKS controllers behind ASOAPI are unused by the installer, and the
 			// forked provider watches ASO containerservice types at API versions the
 			// ASO release installed from the azureaso manifest no longer serves.
 			azFeatureGates += ",ASOAPI=false"
+			fallthrough
 
 		case azure.USSecCloud:
 			// Lay down the environment file so that cloud-provider-azure running in
