@@ -188,6 +188,17 @@ const (
 	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
 )
 
+// NestedVirtualizationPolicy represents the nested virtualization configuration for the instance.
+// +kubebuilder:validation:Enum=Disabled;Enabled
+type NestedVirtualizationPolicy string
+
+const (
+	// NestedVirtualizationDisabled explicitly disables nested virtualization.
+	NestedVirtualizationDisabled NestedVirtualizationPolicy = "Disabled"
+	// NestedVirtualizationEnabled enables hardware-assisted nested virtualization on the instance.
+	NestedVirtualizationEnabled NestedVirtualizationPolicy = "Enabled"
+)
+
 // CPUOptions defines CPU-related settings for the instance, including the confidential computing policy.
 // If provided, it must not be empty — at least one field must be set.
 // +kubebuilder:validation:MinProperties=1
@@ -206,6 +217,16 @@ type CPUOptions struct {
 	// which is subject to change without notice. The current default is Disabled.
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// NestedVirtualization specifies whether to enable nested virtualization on the EC2 instance,
+	// allowing hypervisors such as Hyper-V and KVM to run inside it and manage their own virtual machines.
+	// Valid values are: Disabled, Enabled, and omitted.
+	// When set to Enabled, ensure the selected instance type supports nested virtualization.
+	// When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+	// which is subject to change without notice. The current default is Disabled.
+	// More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+	// +optional
+	NestedVirtualization *NestedVirtualizationPolicy `json:"nestedVirtualization,omitempty"`
 }
 
 // HostPlacement is the type that will be used to configure the placement of AWS instances.

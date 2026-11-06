@@ -389,7 +389,7 @@ func TestValidateMachinePool(t *testing.T) {
 			} else if poolName == "" && tc.expected == "" {
 				poolName = types.MachinePoolComputeRoleName
 			}
-			err := ValidateMachinePool(platform, tc.pool, poolName, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(platform, tc.pool, poolName, types.MachineAPI, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
@@ -511,9 +511,11 @@ func Test_validateAMIID(t *testing.T) {
 
 func Test_validateCPUOptions(t *testing.T) {
 	cases := []struct {
-		name string
-		pool *aws.MachinePool
-		err  string
+		name       string
+		pool       *aws.MachinePool
+		poolName   string
+		management types.MachineManagementAPI
+		err        string
 	}{{
 		name: "confidential compute policy set to AMD SEV-SNP",
 		pool: &aws.MachinePool{
@@ -545,15 +547,151 @@ func Test_validateCPUOptions(t *testing.T) {
 		},
 		err: `^test-path.confidentialCompute: Unsupported value: "invalid": supported values: "Disabled", "AMDEncryptedVirtualizationNestedPaging"$`,
 	}, {
+		name: "nested virtualization policy set to EnAblEd",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("EnAblEd")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "EnAblEd": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "nested virtualization policy set to disabled",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("disabled")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "disabled": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "empty nested virtualization policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "invalid nested virtualization policy",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("invalid")),
+			},
+		},
+		err: `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "invalid": supported values: "Disabled", "Enabled"$`,
+	}, {
 		name: "empty cpu options",
 		pool: &aws.MachinePool{
 			CPUOptions: &aws.CPUOptions{},
 		},
 		err: `^test-path.cpuOptions: Invalid value: "{}": At least one field must be set if cpuOptions is provided$`,
+	}, {
+		name: "nested virtualization enabled on control plane",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+		poolName: types.MachinePoolControlPlaneRoleName,
+		err:      `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be set on Control Plane nodes; configure it on compute machine pools only$`,
+	}, {
+		name: "nested virtualization disabled on control plane",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+			},
+		},
+		poolName: types.MachinePoolControlPlaneRoleName,
+		err:      `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Disabled": NestedVirtualization cannot be set on Control Plane nodes; configure it on compute machine pools only$`,
+	}, {
+		name: "invalid nested virtualization policy on control plane",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationPolicy("invalid")),
+			},
+		},
+		poolName: types.MachinePoolControlPlaneRoleName,
+		err:      `^test-path.cpuOptions.nestedVirtualization: Unsupported value: "invalid": supported values: "Disabled", "Enabled"$`,
+	}, {
+		name: "nested virtualization enabled on defaultMachinePlatform",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+		poolName: types.MachinePoolDefaultConfig,
+		err:      `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization cannot be set in defaultMachinePlatform as it would be inherited by Control Plane nodes; configure it on compute machine pools only$`,
+	}, {
+		name: "nested virtualization disabled on defaultMachinePlatform",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+			},
+		},
+		poolName: types.MachinePoolDefaultConfig,
+		err:      `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Disabled": NestedVirtualization cannot be set in defaultMachinePlatform as it would be inherited by Control Plane nodes; configure it on compute machine pools only$`,
+	}, {
+		name: "nested virtualization enabled on compute pool under machine api",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+		poolName:   types.MachinePoolComputeRoleName,
+		management: types.MachineAPI,
+		err:        `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization can only be set when management is set to ClusterAPI$`,
+	}, {
+		name: "nested virtualization enabled on edge pool under machine api",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+		poolName:   types.MachinePoolEdgeRoleName,
+		management: types.MachineAPI,
+		err:        `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Enabled": NestedVirtualization can only be set when management is set to ClusterAPI$`,
+	}, {
+		name: "nested virtualization disabled on compute pool under machine api",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+			},
+		},
+		poolName:   types.MachinePoolComputeRoleName,
+		management: types.MachineAPI,
+		err:        `^test-path.cpuOptions.nestedVirtualization: Invalid value: "Disabled": NestedVirtualization can only be set when management is set to ClusterAPI$`,
+	}, {
+		// Both values are fine once the pool is provisioned through Cluster API.
+		name: "nested virtualization enabled on compute pool under cluster api",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationEnabled),
+			},
+		},
+		poolName:   types.MachinePoolComputeRoleName,
+		management: types.ClusterAPI,
+	}, {
+		name: "nested virtualization disabled on compute pool under cluster api",
+		pool: &aws.MachinePool{
+			CPUOptions: &aws.CPUOptions{
+				NestedVirtualization: new(aws.NestedVirtualizationDisabled),
+			},
+		},
+		poolName:   types.MachinePoolComputeRoleName,
+		management: types.ClusterAPI,
 	}}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateCPUOptions(tc.pool, field.NewPath("test-path")).ToAggregate()
+			poolName := tc.poolName
+			if poolName == "" {
+				poolName = types.MachinePoolComputeRoleName
+			}
+			management := tc.management
+			if management == "" {
+				management = types.MachineAPI
+			}
+
+			err := ValidateCPUOptions(tc.pool, poolName, management, field.NewPath("test-path")).ToAggregate()
 			if tc.err == "" {
 				assert.NoError(t, err)
 			} else {
