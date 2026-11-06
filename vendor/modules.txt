@@ -1120,8 +1120,8 @@ github.com/kballard/go-shellquote
 # github.com/kdomanski/iso9660 v0.2.1
 ## explicit; go 1.14
 github.com/kdomanski/iso9660
-# github.com/klauspost/compress v1.19.1
-## explicit; go 1.24
+# github.com/klauspost/compress v1.20.2
+## explicit; go 1.25
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
