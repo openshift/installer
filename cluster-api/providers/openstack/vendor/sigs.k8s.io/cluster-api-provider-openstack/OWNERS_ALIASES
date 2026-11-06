@@ -11,9 +11,8 @@ aliases:
   # operationally expedient:
   # Source:
   # https://github.com/kubernetes/org/blob/main/config/kubernetes/sig-cluster-lifecycle/teams.yaml
-  # correct as of 2023/05/10
+  # correct as of 2026/01/21
   sig-cluster-lifecycle-leads:
-    - CecileRobertMichon
     - fabriziopandini
     - justinsb
     - neolit123

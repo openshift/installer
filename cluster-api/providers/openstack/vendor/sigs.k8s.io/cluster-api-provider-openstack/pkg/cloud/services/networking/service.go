@@ -76,3 +76,23 @@ func (s *Service) replaceAllAttributesTags(eventObject runtime.Object, resourceT
 	record.Eventf(eventObject, "SuccessfulReplaceAllAttributeTags", "Replaced all attributestags for %s with tags %s", resourceID, tags)
 	return nil
 }
+
+// hasStandardAttrTagExtension checks whether the Neutron standard-attr-tag
+// extension is available. This extension provides the tag replacement API
+// used to apply user-provided tags to networking resources. Callers must
+// skip tag replacement rather than call it when this returns false, so that
+// CAPO remains usable against OpenStack deployments that don't advertise
+// this optional extension.
+func (s *Service) hasStandardAttrTagExtension() (bool, error) {
+	allExts, err := s.client.ListExtensions()
+	if err != nil {
+		return false, err
+	}
+
+	for _, ext := range allExts {
+		if ext.Alias == "standard-attr-tag" {
+			return true, nil
+		}
+	}
+	return false, nil
+}
