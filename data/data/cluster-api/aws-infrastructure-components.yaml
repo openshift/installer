@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -240,7 +240,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -588,7 +588,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -2461,6 +2461,44 @@ spec:
                   (https://coreos.github.io/ignition/) for bootstrapping (requires
                   BootstrapFormatIgnition feature flag to be enabled).
                 properties:
+                  additionalIAMRoles:
+                    description: |-
+                      AdditionalIAMRoles is a list of additional IAM roles
+                      with custom S3 prefixes for accessing bootstrap data.
+                      This is useful for custom node pools (e.g., Karpenter) that need access
+                      to bootstrap data stored under custom prefixes.
+                    items:
+                      description: |-
+                        AdditionalIAMRole defines an additional IAM role
+                        with a custom S3 prefix for accessing bootstrap data from S3 Bucket.
+                        This enables support for custom node pools (e.g., Karpenter) that need
+                        access to bootstrap data with custom S3 prefixes.
+                      properties:
+                        name:
+                          description: |-
+                            Name is the name of the IAM role that will be granted access.
+                            This must match the IAM role name (not the ARN).
+                          maxLength: 128
+                          minLength: 1
+                          pattern: ^[\w+=,.@-]+$
+                          type: string
+                        prefix:
+                          description: |-
+                            Prefix is the S3 object key prefix (path) this role is granted access to.
+                            It is appended to the bucket in the policy's resource ARN, so use a trailing "/*"
+                            for wildcard access to a path (e.g. "karpenter-nodes/*") or "*" for the whole bucket.
+                          maxLength: 512
+                          minLength: 1
+                          type: string
+                      required:
+                      - name
+                      - prefix
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    - prefix
+                    x-kubernetes-list-type: map
                   bestEffortDeleteObjects:
                     description: BestEffortDeleteObjects defines whether access/permission
                       errors during object deletion should be ignored.
@@ -2858,22 +2896,16 @@ spec:
                       Reservation into which the instance should be launched.
                     type: string
                   capacityReservationPreference:
-                    allOf:
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
                     description: |-
                       CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                       "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                       "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                       "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+                    enum:
+                    - ""
+                    - None
+                    - CapacityReservationsOnly
+                    - Open
                     type: string
                   cpuOptions:
                     description: |-
@@ -3866,6 +3898,74 @@ spec:
               ready:
                 default: false
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSCluster's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSCluster's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             required:
             - ready
             type: object
@@ -3879,7 +3979,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -4118,7 +4218,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -5579,6 +5679,44 @@ spec:
                           (https://coreos.github.io/ignition/) for bootstrapping (requires
                           BootstrapFormatIgnition feature flag to be enabled).
                         properties:
+                          additionalIAMRoles:
+                            description: |-
+                              AdditionalIAMRoles is a list of additional IAM roles
+                              with custom S3 prefixes for accessing bootstrap data.
+                              This is useful for custom node pools (e.g., Karpenter) that need access
+                              to bootstrap data stored under custom prefixes.
+                            items:
+                              description: |-
+                                AdditionalIAMRole defines an additional IAM role
+                                with a custom S3 prefix for accessing bootstrap data from S3 Bucket.
+                                This enables support for custom node pools (e.g., Karpenter) that need
+                                access to bootstrap data with custom S3 prefixes.
+                              properties:
+                                name:
+                                  description: |-
+                                    Name is the name of the IAM role that will be granted access.
+                                    This must match the IAM role name (not the ARN).
+                                  maxLength: 128
+                                  minLength: 1
+                                  pattern: ^[\w+=,.@-]+$
+                                  type: string
+                                prefix:
+                                  description: |-
+                                    Prefix is the S3 object key prefix (path) this role is granted access to.
+                                    It is appended to the bucket in the policy's resource ARN, so use a trailing "/*"
+                                    for wildcard access to a path (e.g. "karpenter-nodes/*") or "*" for the whole bucket.
+                                  maxLength: 512
+                                  minLength: 1
+                                  type: string
+                              required:
+                              - name
+                              - prefix
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            - prefix
+                            x-kubernetes-list-type: map
                           bestEffortDeleteObjects:
                             description: BestEffortDeleteObjects defines whether access/permission
                               errors during object deletion should be ignored.
@@ -5951,7 +6089,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -6386,7 +6524,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -7033,22 +7171,16 @@ spec:
                       Reservation into which the instance should be launched.
                     type: string
                   capacityReservationPreference:
-                    allOf:
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
                     description: |-
                       CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                       "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                       "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                       "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation
+                    enum:
+                    - ""
+                    - None
+                    - CapacityReservationsOnly
+                    - Open
                     type: string
                   enclaveOptions:
                     description: EnclaveOptions defines the options for Nitro Enclave
@@ -7783,6 +7915,74 @@ spec:
                 description: Replicas is the most recently observed number of replicas
                 format: int32
                 type: integer
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSMachinePool's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSMachinePool's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -7795,7 +7995,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -8465,22 +8665,16 @@ spec:
                   into which the instance should be launched.
                 type: string
               capacityReservationPreference:
-                allOf:
-                - enum:
-                  - ""
-                  - None
-                  - CapacityReservationsOnly
-                  - Open
-                - enum:
-                  - ""
-                  - None
-                  - CapacityReservationsOnly
-                  - Open
                 description: |-
                   CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                   "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                   "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                   "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+                enum:
+                - ""
+                - None
+                - CapacityReservationsOnly
+                - Open
                 type: string
               cloudInit:
                 description: |-
@@ -8981,6 +9175,16 @@ spec:
                   SecurityGroupOverrides is an optional set of security groups to use for the node.
                   This is optional - if not provided security groups from the cluster will be used.
                 type: object
+              sourceDestCheck:
+                description: |-
+                  SourceDestCheck configures source/destination checking on the instance's network interfaces.
+                  When set to "Disabled", the instance can forward traffic for which it is not the source or
+                  destination. This is required to use an AWS VPC Route Server with user-defined networking (UDN) and BGP.
+                  If left unset or set to "Enabled", AWS enforces its source/destination checks.
+                enum:
+                - Enabled
+                - Disabled
+                type: string
               spotMarketOptions:
                 description: SpotMarketOptions allows users to configure instances
                   to be run using AWS Spot instances.
@@ -9196,6 +9400,74 @@ spec:
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSMachine's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSMachine's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -9208,7 +9480,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -9797,22 +10069,16 @@ spec:
                           Reservation into which the instance should be launched.
                         type: string
                       capacityReservationPreference:
-                        allOf:
-                        - enum:
-                          - ""
-                          - None
-                          - CapacityReservationsOnly
-                          - Open
-                        - enum:
-                          - ""
-                          - None
-                          - CapacityReservationsOnly
-                          - Open
                         description: |-
                           CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                           "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                           "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                           "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+                        enum:
+                        - ""
+                        - None
+                        - CapacityReservationsOnly
+                        - Open
                         type: string
                       cloudInit:
                         description: |-
@@ -10318,6 +10584,16 @@ spec:
                           SecurityGroupOverrides is an optional set of security groups to use for the node.
                           This is optional - if not provided security groups from the cluster will be used.
                         type: object
+                      sourceDestCheck:
+                        description: |-
+                          SourceDestCheck configures source/destination checking on the instance's network interfaces.
+                          When set to "Disabled", the instance can forward traffic for which it is not the source or
+                          destination. This is required to use an AWS VPC Route Server with user-defined networking (UDN) and BGP.
+                          If left unset or set to "Enabled", AWS enforces its source/destination checks.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
                       spotMarketOptions:
                         description: SpotMarketOptions allows users to configure instances
                           to be run using AWS Spot instances.
@@ -10491,6 +10767,74 @@ spec:
                     - windows
                     type: string
                 type: object
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSMachineTemplate's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSMachineTemplate's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -10503,7 +10847,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -10655,6 +10999,74 @@ spec:
                 description: Ready is when the AWSManagedControlPlane has a API server
                   URL.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSManagedCluster's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSManagedCluster's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -10667,7 +11079,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -10753,7 +11165,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -12025,22 +12437,16 @@ spec:
                       Reservation into which the instance should be launched.
                     type: string
                   capacityReservationPreference:
-                    allOf:
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
                     description: |-
                       CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                       "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                       "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                       "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+                    enum:
+                    - ""
+                    - None
+                    - CapacityReservationsOnly
+                    - Open
                     type: string
                   cpuOptions:
                     description: |-
@@ -13236,7 +13642,9 @@ spec:
                       - hyperpod_linux
                       type: string
                     username:
-                      description: Username is the username for the access entry
+                      description: |-
+                        Username is the username for the access entry
+                        If left empty, EKS generates one and it is left unmanaged
                       type: string
                   required:
                   - principalARN
@@ -13347,6 +13755,27 @@ spec:
                     description: port is the port on which the API server is serving.
                     format: int32
                     type: integer
+                type: object
+              controlPlaneScalingConfig:
+                description: |-
+                  ControlPlaneScalingConfig specifies the scaling configuration for the EKS control plane.
+                  Enables selection of predefined scaling tiers to ensure consistent, high-performance operation of the cluster’s control plane.
+                  When omitted, EKS uses Standard mode (automatic scaling). See ControlPlaneScalingConfig in types.go for tier defaults.
+                  (Official AWS docs: https://docs.aws.amazon.com/eks/latest/userguide/eks-provisioned-control-plane.html)
+                properties:
+                  tier:
+                    default: standard
+                    description: |-
+                      Tier specifies the tier for the EKS control plane.
+                      Valid values are: standard, tier-xl, tier-2xl, tier-4xl.
+                    enum:
+                    - standard
+                    - tier-xl
+                    - tier-2xl
+                    - tier-4xl
+                    type: string
+                required:
+                - tier
                 type: object
               eksClusterName:
                 description: |-
@@ -14120,6 +14549,46 @@ spec:
                 description: Partition is the AWS security partition being used. Defaults
                   to "aws"
                 type: string
+              podIdentityAssociations:
+                description: |-
+                  PodIdentityAssociations map IAM roles to Kubernetes Service Accounts using EKS Pod Identities.
+                  The AWS EKS addon for Pod Identity must be installed in the cluster to use this feature.
+                items:
+                  description: |-
+                    PodIdentityAssociation represents an association between a Kubernetes
+                    Service Account in a namespace, and an AWS IAM role. This role must
+                    allow the service principal `pods.eks.amazonaws.com` in its trust policy.
+                  properties:
+                    roleARN:
+                      description: RoleARN is the ARN of an IAM role which the Service
+                        Account can assume.
+                      type: string
+                    serviceAccountName:
+                      description: |-
+                        ServiceAccountName is the name of the kubernetes Service Account
+                        within the namespace
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                    serviceAccountNamespace:
+                      default: default
+                      description: |-
+                        ServiceAccountNamespace is the kubernetes namespace, which the
+                        kubernetes Service Account resides in. Defaults to "default" namespace.
+                      maxLength: 63
+                      minLength: 1
+                      type: string
+                    targetRoleARN:
+                      description: |-
+                        TargetRoleARN will be assumed by the IAM role specified in RoleARN,
+                        allowing workloads to inherit the permissions attached to the target IAM role.
+                      type: string
+                  required:
+                  - roleARN
+                  - serviceAccountName
+                  - serviceAccountNamespace
+                  type: object
+                type: array
               region:
                 description: The AWS Region the cluster lives in.
                 type: string
@@ -14486,22 +14955,16 @@ spec:
                       Reservation into which the instance should be launched.
                     type: string
                   capacityReservationPreference:
-                    allOf:
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
                     description: |-
                       CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                       "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                       "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                       "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation. Note that this is incompatible with a MarketType of `Spot`
+                    enum:
+                    - ""
+                    - None
+                    - CapacityReservationsOnly
+                    - Open
                     type: string
                   cpuOptions:
                     description: |-
@@ -15545,6 +16008,74 @@ spec:
                   Ready denotes that the AWSManagedControlPlane API Server is ready to
                   receive requests and that the VPC infra is ready.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSManagedControlPlane's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSManagedControlPlane's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
               version:
                 description: |-
                   Version represents the minimum Kubernetes version for the control plane machines
@@ -15564,7 +16095,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -15726,8 +16257,9 @@ spec:
                               - hyperpod_linux
                               type: string
                             username:
-                              description: Username is the username for the access
-                                entry
+                              description: |-
+                                Username is the username for the access entry
+                                If left empty, EKS generates one and it is left unmanaged
                               type: string
                           required:
                           - principalARN
@@ -15842,6 +16374,27 @@ spec:
                               is serving.
                             format: int32
                             type: integer
+                        type: object
+                      controlPlaneScalingConfig:
+                        description: |-
+                          ControlPlaneScalingConfig specifies the scaling configuration for the EKS control plane.
+                          Enables selection of predefined scaling tiers to ensure consistent, high-performance operation of the cluster’s control plane.
+                          When omitted, EKS uses Standard mode (automatic scaling). See ControlPlaneScalingConfig in types.go for tier defaults.
+                          (Official AWS docs: https://docs.aws.amazon.com/eks/latest/userguide/eks-provisioned-control-plane.html)
+                        properties:
+                          tier:
+                            default: standard
+                            description: |-
+                              Tier specifies the tier for the EKS control plane.
+                              Valid values are: standard, tier-xl, tier-2xl, tier-4xl.
+                            enum:
+                            - standard
+                            - tier-xl
+                            - tier-2xl
+                            - tier-4xl
+                            type: string
+                        required:
+                        - tier
                         type: object
                       eksClusterName:
                         description: |-
@@ -16629,6 +17182,46 @@ spec:
                         description: Partition is the AWS security partition being
                           used. Defaults to "aws"
                         type: string
+                      podIdentityAssociations:
+                        description: |-
+                          PodIdentityAssociations map IAM roles to Kubernetes Service Accounts using EKS Pod Identities.
+                          The AWS EKS addon for Pod Identity must be installed in the cluster to use this feature.
+                        items:
+                          description: |-
+                            PodIdentityAssociation represents an association between a Kubernetes
+                            Service Account in a namespace, and an AWS IAM role. This role must
+                            allow the service principal `pods.eks.amazonaws.com` in its trust policy.
+                          properties:
+                            roleARN:
+                              description: RoleARN is the ARN of an IAM role which
+                                the Service Account can assume.
+                              type: string
+                            serviceAccountName:
+                              description: |-
+                                ServiceAccountName is the name of the kubernetes Service Account
+                                within the namespace
+                              maxLength: 253
+                              minLength: 1
+                              type: string
+                            serviceAccountNamespace:
+                              default: default
+                              description: |-
+                                ServiceAccountNamespace is the kubernetes namespace, which the
+                                kubernetes Service Account resides in. Defaults to "default" namespace.
+                              maxLength: 63
+                              minLength: 1
+                              type: string
+                            targetRoleARN:
+                              description: |-
+                                TargetRoleARN will be assumed by the IAM role specified in RoleARN,
+                                allowing workloads to inherit the permissions attached to the target IAM role.
+                              type: string
+                          required:
+                          - roleARN
+                          - serviceAccountName
+                          - serviceAccountNamespace
+                          type: object
+                        type: array
                       region:
                         description: The AWS Region the cluster lives in.
                         type: string
@@ -16908,7 +17501,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -17564,22 +18157,16 @@ spec:
                       Reservation into which the instance should be launched.
                     type: string
                   capacityReservationPreference:
-                    allOf:
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
-                    - enum:
-                      - ""
-                      - None
-                      - CapacityReservationsOnly
-                      - Open
                     description: |-
                       CapacityReservationPreference specifies the preference for use of Capacity Reservations by the instance. Valid values include:
                       "Open": The instance may make use of open Capacity Reservations that match its AZ and InstanceType
                       "None": The instance may not make use of any Capacity Reservations. This is to conserve open reservations for desired workloads
                       "CapacityReservationsOnly": The instance will only run if matched or targeted to a Capacity Reservation
+                    enum:
+                    - ""
+                    - None
+                    - CapacityReservationsOnly
+                    - Open
                     type: string
                   enclaveOptions:
                     description: EnclaveOptions defines the options for Nitro Enclave
@@ -18167,6 +18754,74 @@ spec:
                 description: Replicas is the most recently observed number of replicas.
                 format: int32
                 type: integer
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in AWSManagedMachinePool's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an AWSManagedMachinePool's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             required:
             - ready
             type: object
@@ -18181,7 +18836,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -18781,6 +19436,74 @@ spec:
                 description: Ready indicates the BootstrapData secret is ready to
                   be consumed
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in EKSConfig's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of an EKSConfig's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -18793,7 +19516,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -19262,7 +19985,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -19657,6 +20380,74 @@ spec:
                   Deprecated: This field will be removed with the CAPI v1beta2 transition
                   Ready indicates the BootstrapData secret is ready to be consumed.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in NodeadmConfig's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of a NodeadmConfig's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -19668,7 +20459,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -20016,7 +20807,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -20167,6 +20958,74 @@ spec:
               ready:
                 description: Ready is when the ROSAControlPlane has a API server URL.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in ROSACluster's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of a ROSACluster's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             type: object
         type: object
     served: true
@@ -20178,7 +21037,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -20395,6 +21254,37 @@ spec:
                         type: array
                     type: object
                 type: object
+              componentRoutes:
+                description: componentRoutes allows customizing the hostname and TLS
+                  certificate for console and downloads routes.
+                items:
+                  description: ComponentRouteSpec defines a custom hostname and TLS
+                    secret for a component route.
+                  properties:
+                    hostname:
+                      description: hostname is the custom domain for the component
+                        route (e.g. console.example.com).
+                      minLength: 1
+                      type: string
+                    name:
+                      description: name is the component route name. Valid values
+                        are "console" and "downloads".
+                      enum:
+                      - console
+                      - downloads
+                      type: string
+                    tlsSecretRef:
+                      description: tlsSecretRef is the name of the TLS secret in the
+                        openshift-config namespace on the hosted cluster.
+                      minLength: 1
+                      type: string
+                  required:
+                  - hostname
+                  - name
+                  - tlsSecretRef
+                  type: object
+                maxItems: 2
+                type: array
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
                   communicate with the control plane.
@@ -20459,6 +21349,16 @@ spec:
                     minimum: 75
                     type: integer
                 type: object
+              deleteProtection:
+                default: Disabled
+                description: |-
+                  DeleteProtection prevents accidental ROSA cluster deletion.
+                  When set to "Enabled", the ROSA cluster cannot be deleted through OCM.
+                  Defaults to "Disabled".
+                enum:
+                - Enabled
+                - Disabled
+                type: string
               domainPrefix:
                 description: |-
                   DomainPrefix is an optional prefix added to the cluster's domain name. It will be used
@@ -20470,6 +21370,20 @@ spec:
                 type: string
                 x-kubernetes-validations:
                 - message: domainPrefix is immutable
+                  rule: self == oldSelf
+              ec2MetadataHttpTokens:
+                description: |-
+                  Ec2MetadataHTTPTokens configures the use of IMDSv2 for EC2 instances.
+                  When set to "required", IMDSv2 is enforced and the older IMDSv1 is disabled.
+                  When set to "optional", both IMDSv1 and IMDSv2 are allowed.
+                  When omitted, the OCM default ("optional") is used.
+                  This field is immutable and cannot be changed after cluster creation.
+                enum:
+                - optional
+                - required
+                type: string
+                x-kubernetes-validations:
+                - message: ec2MetadataHttpTokens is immutable
                   rule: self == oldSelf
               enableExternalAuthProviders:
                 default: false
@@ -21248,6 +22162,74 @@ spec:
                 description: Ready denotes that the ROSAControlPlane API Server is
                   ready to receive requests.
                 type: boolean
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in ROSAControlPlane's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of a ROSAControlPlane's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
               version:
                 description: OpenShift semantic version, for example "4.14.5".
                 type: string
@@ -21264,7 +22246,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -21591,6 +22573,74 @@ spec:
                 description: Replicas is the most recently observed number of replicas.
                 format: int32
                 type: integer
+              v1beta2:
+                description: v1beta2 groups all the fields that will be added or modified
+                  in RosaMachinePool's status with the V1Beta2 version.
+                properties:
+                  conditions:
+                    description: conditions represents the observations of a ROSAMachinePool's
+                      current state.
+                    items:
+                      description: Condition contains details for one aspect of the
+                        current state of this API Resource.
+                      properties:
+                        lastTransitionTime:
+                          description: |-
+                            lastTransitionTime is the last time the condition transitioned from one status to another.
+                            This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                          format: date-time
+                          type: string
+                        message:
+                          description: |-
+                            message is a human readable message indicating details about the transition.
+                            This may be an empty string.
+                          maxLength: 32768
+                          type: string
+                        observedGeneration:
+                          description: |-
+                            observedGeneration represents the .metadata.generation that the condition was set based upon.
+                            For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                            with respect to the current state of the instance.
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        reason:
+                          description: |-
+                            reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                            Producers of specific condition types may define expected values and meanings for this field,
+                            and whether the values are considered a guaranteed API.
+                            The value should be a CamelCase string.
+                            This field may not be empty.
+                          maxLength: 1024
+                          minLength: 1
+                          pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                          type: string
+                        status:
+                          description: status of the condition, one of True, False,
+                            Unknown.
+                          enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                          type: string
+                        type:
+                          description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                          maxLength: 316
+                          pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                          type: string
+                      required:
+                      - lastTransitionTime
+                      - message
+                      - reason
+                      - status
+                      - type
+                      type: object
+                    maxItems: 32
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
+                type: object
             required:
             - ready
             type: object
@@ -21605,7 +22655,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -21841,8 +22891,205 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.22.0
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-aws
+    cluster.x-k8s.io/v1alpha3: v1alpha3
+    cluster.x-k8s.io/v1alpha4: v1alpha4
+    cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
+  name: rosaocmroleconfigs.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: ROSAOCMRoleConfig
+    listKind: ROSAOCMRoleConfigList
+    plural: rosaocmroleconfigs
+    shortNames:
+    - rosaocmrole
+    singular: rosaocmroleconfig
+  scope: Cluster
+  versions:
+  - name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: ROSAOCMRoleConfig is the Schema for the rosaocmroleconfigs API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ROSAOCMRoleConfigSpec defines the desired state of ROSAOCMRoleConfig
+            properties:
+              credentialsSecretRef:
+                description: CredentialsSecretRef references a secret with necessary
+                  credentials to connect to the OCM API.
+                properties:
+                  name:
+                    description: name is unique within a namespace to reference a
+                      secret resource.
+                    type: string
+                  namespace:
+                    description: namespace defines the space within which the secret
+                      name must be unique.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              deletionPolicy:
+                default: Delete
+                description: |-
+                  DeletionPolicy determines what happens to the OCM role when this CR is deleted.
+                  Delete will unlink and delete the OCM role.
+                  Retain will keep the OCM role intact.
+                  This is useful when reprovisioning management clusters to avoid disrupting users in the same organization.
+                enum:
+                - Delete
+                - Retain
+                type: string
+              identityRef:
+                description: |-
+                  IdentityRef is a reference to an identity to be used when reconciling the OCM Role Config.
+                  If no identity is specified, the default identity for this controller will be used.
+                properties:
+                  kind:
+                    description: Kind of the identity.
+                    enum:
+                    - AWSClusterControllerIdentity
+                    - AWSClusterRoleIdentity
+                    - AWSClusterStaticIdentity
+                    type: string
+                  name:
+                    description: Name of the identity.
+                    minLength: 1
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              path:
+                description: Path is the IAM path for the OCM role.
+                pattern: ^\/.*\/$
+                type: string
+              permissionsBoundaryARN:
+                description: PermissionsBoundaryARN is the ARN of the policy that
+                  is used to set the permissions boundary for the OCM role.
+                type: string
+              profile:
+                default: Standard
+                description: Profile defines the permission level for the OCM role.
+                enum:
+                - Standard
+                - Admin
+                - NoConsole
+                type: string
+                x-kubernetes-validations:
+                - message: profile is immutable
+                  rule: self == oldSelf
+              rolePrefix:
+                description: |-
+                  RolePrefix is the user-defined prefix for the OCM role name.
+                  The final role name will be: {RolePrefix}-OCM-Role-{ExternalID}
+                  where ExternalID is the organization's external identifier from OCM.
+                maxLength: 12
+                pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                type: string
+                x-kubernetes-validations:
+                - message: rolePrefix is immutable
+                  rule: self == oldSelf
+            required:
+            - profile
+            - rolePrefix
+            type: object
+          status:
+            description: ROSAOCMRoleConfigStatus defines the observed state of ROSAOCMRoleConfig
+            properties:
+              conditions:
+                description: Conditions specifies the ROSAOCMRoleConfig conditions
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              organizationID:
+                description: OrganizationID is the OCM organization ID that this role
+                  is linked to.
+                type: string
+              roleARN:
+                description: RoleARN is the ARN of the created OCM role.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     cert-manager.io/inject-ca-from: capa-system/capa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.22.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
@@ -22767,7 +24014,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.12.1
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.12.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
