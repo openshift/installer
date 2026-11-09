@@ -4,6 +4,7 @@ Wants=bootkube.service
 After=bootkube.service
 
 [Service]
+Environment=APPROVE_CSR_CLUSTER_DOMAIN={{.ClusterDomain}}
 Environment="APPROVE_CSR_MACHINE_NETWORKS={{.MachineNetworks}}"
 ExecStart=/usr/local/bin/approve-csr.sh /opt/openshift/auth/kubeconfig-loopback {{.ApproveCSRMaxNodes}}
 

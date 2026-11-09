@@ -19,6 +19,12 @@ MAX_NODES="${2:-0}"
 # addresses unchecked.
 MACHINE_NETWORKS="${APPROVE_CSR_MACHINE_NETWORKS:-}"
 
+# The domain the cluster answers on, passed by the installer through the unit.
+# A node is never reachable under one of the names the cluster serves under
+# that domain, so a serving request naming one is asking to stand in for the
+# cluster. An empty domain leaves the names unchecked.
+CLUSTER_DOMAIN="${APPROVE_CSR_CLUSTER_DOMAIN:-}"
+
 # Attributes shared by every kubelet client CSR that the machine-config-operator
 # bootstrapper issues on behalf of a node joining the cluster.
 readonly CLIENT_SIGNER="kubernetes.io/kube-apiserver-client-kubelet"
@@ -36,12 +42,15 @@ readonly NODE_ORG="system:nodes"
 
 # Networks a kubelet cannot be serving on, and what to call each one in the
 # report. Written as CIDRs so that ipcalc decides membership and nothing here
-# has to parse an address.
+# has to parse an address. Read in order, so the metadata service is
+# recognised before the wider link-local range that contains it.
 readonly REFUSED_NETWORKS="
 0.0.0.0/32 unspecified
 ::/128 unspecified
 127.0.0.0/8 loopback
 ::1/128 loopback
+169.254.169.254/32 metadata
+fd00:ec2::254/128 metadata
 169.254.0.0/16 link-local
 fe80::/10 link-local
 224.0.0.0/4 multicast
@@ -129,13 +138,18 @@ ip_address_class() {
 
     # openssl prints IPv6 expanded and in upper case, so ::1 arrives as
     # 0:0:0:0:0:0:0:1. ipcalc reads that and prints the canonical form, which
-    # is what the networks below are matched against.
+    # for an IPv4-mapped address is ::ffff:a.b.c.d. Unwrapping that leaves the
+    # IPv4 address it carries, so a loopback or metadata address cannot pass
+    # merely for being written in the 16 byte form.
     canonical="$(ipcalc --address "${address}" 2>/dev/null)"
     canonical="${canonical#ADDRESS=}"
     if [ -z "${canonical}" ]; then
         printf 'malformed'
         return 0
     fi
+    case "${canonical}" in
+        ::ffff:*.*.*.*) canonical="${canonical#::ffff:}" ;;
+    esac
 
     while read -r network class; do
         [ -n "${network}" ] || continue
@@ -190,6 +204,26 @@ is_machine_address() {
     return 1
 }
 
+# is_cluster_name reports whether a DNS name is one the cluster answers on
+# rather than the name of a node. The API is reached under api and api-int,
+# and every route under apps, so nothing beneath those is ever a node. A
+# wildcard for the domain itself is refused too. DNS names are case
+# insensitive and may carry a trailing root dot, so both are normalized
+# away before matching.
+#   1 - DNS name
+is_cluster_name() {
+    [ -n "${CLUSTER_DOMAIN}" ] || return 1
+    local name="${1,,}" domain="${CLUSTER_DOMAIN,,}"
+    name="${name%.}"
+    domain="${domain%.}"
+    case "${name}" in
+        "api.${domain}"|"api-int.${domain}") return 0 ;;
+        "apps.${domain}"|*".apps.${domain}") return 0 ;;
+        "*.${domain}") return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # node_is_listed reports whether a space delimited list of node names holds
 # one name. Node names are DNS names, so they never contain a space.
 #   1 - space delimited list   2 - name
@@ -227,7 +261,7 @@ is_node_client_request() {
 #   1 - PEM encoded certificate request   2 - requesting username
 #   3 - CSR name, used only to report the address that was refused
 is_node_serving_request() {
-    local pem="${1}" requester="${2}" name="${3}" common_name address
+    local pem="${1}" requester="${2}" name="${3}" common_name host address class
 
     common_name="$(node_common_name "${pem}")" || return 1
 
@@ -238,14 +272,25 @@ is_node_serving_request() {
     # kinds of subject alternative name carry identities a kubelet never needs.
     [ -z "$(san_field email "${pem}")$(san_field URI "${pem}")" ] || return 1
 
+    # A node is never reachable under one of the names the cluster answers on,
+    # whatever the platform calls its nodes, so a request naming one is asking
+    # to stand in for the cluster itself.
+    for host in $(san_field DNS "${pem}" | tr ',' ' '); do
+        if is_cluster_name "${host}"; then
+            echo "CSR ${name} names ${host}, which the cluster answers on"
+            return 1
+        fi
+    done
+
     # A kubelet serves on an address of the node it runs on, so an address no
     # node can hold whatever the install looks like names something other than
     # that node.
     for address in $(san_field 'IP Address' "${pem}" | tr ',' ' '); do
-        case "$(ip_address_class "${address}")" in
-            ''|link-local) ;;
-            *) return 1 ;;
-        esac
+        class="$(ip_address_class "${address}")"
+        if [ -n "${class}" ]; then
+            echo "CSR ${name} names ${address}, which is a ${class} address"
+            return 1
+        fi
 
         # An address outside the networks the machines are placed on is only
         # reported. The networks are not cross checked against the nodes on
