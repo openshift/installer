@@ -4,7 +4,7 @@ go 1.23.2
 
 toolchain go1.23.7
 
-require sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20250319131234-d3cc59096981
+require sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20260422073953-8064d488f9da
 
 require (
 	github.com/IBM-Cloud/power-go-client v1.11.0 // indirect
@@ -12,7 +12,7 @@ require (
 	github.com/IBM/ibm-cos-sdk-go v1.12.2 // indirect
 	github.com/IBM/networking-go-sdk v0.51.2 // indirect
 	github.com/IBM/platform-services-go-sdk v0.79.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.65.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.64.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/go-playground/validator/v10 v10.24.0 // indirect
 	github.com/gobuffalo/flect v1.0.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.20.1 // indirect
@@ -124,7 +124,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
-	sigs.k8s.io/cluster-api v1.9.5 // indirect
+	sigs.k8s.io/cluster-api v1.9.9 // indirect
 	sigs.k8s.io/controller-runtime v0.19.6 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
