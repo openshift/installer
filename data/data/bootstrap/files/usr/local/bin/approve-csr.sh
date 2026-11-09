@@ -20,6 +20,58 @@ readonly SERVING_USAGES="digital signature,server auth"
 
 readonly NODE_ORG="system:nodes"
 
+# Networks a kubelet cannot be serving on, and what to call each one in the
+# report. Written as CIDRs so that ipcalc decides membership and nothing here
+# has to parse an address.
+readonly REFUSED_NETWORKS="
+0.0.0.0/32 unspecified
+::/128 unspecified
+127.0.0.0/8 loopback
+::1/128 loopback
+169.254.0.0/16 link-local
+fe80::/10 link-local
+224.0.0.0/4 multicast
+ff00::/8 multicast
+"
+
+# ip_in_cidr reports whether an address falls inside a CIDR. The address is
+# masked to the prefix the CIDR carries and compared with the network the CIDR
+# itself describes, so a prefix that does not land on a nibble boundary
+# behaves like one that does, and an address openssl printed expanded matches
+# a CIDR the installer wrote compressed. ipcalc refuses a prefix the family
+# cannot hold, so an address never matches a CIDR of the other family.
+#   1 - address   2 - CIDR
+ip_in_cidr() {
+    local cidr="${2}" prefix masked network
+    case "${cidr}" in */*) ;; *) return 1 ;; esac
+    prefix="${cidr#*/}"
+    masked="$(ipcalc --network "${1}/${prefix}" 2>/dev/null)" || return 1
+    network="$(ipcalc --network "${cidr}" 2>/dev/null)" || return 1
+    [ -n "${masked}" ] && [ "${masked}" = "${network}" ]
+}
+
+# subnet_check_works reports whether ip_in_cidr answers correctly, for an
+# address inside the network and one outside it, in both families. That is not
+# the same question as whether ipcalc is installed: more than one program goes
+# by that name, and they do not agree on which options exist. Every refusal
+# below rests on a call that failed, so a check that always fails is a check
+# that always approves.
+subnet_check_works() {
+    ip_in_cidr 10.1.2.3 10.0.0.0/8 &&
+        ! ip_in_cidr 192.168.1.1 10.0.0.0/8 &&
+        ip_in_cidr fd00::1 fd00::/8 &&
+        ! ip_in_cidr 2600:1f14::a3 fd00::/8
+}
+
+# Every address check below is the subnet check deciding whether an address
+# falls in a network, so without a working one nothing could be judged and an
+# address a node cannot hold would read like one it can. Stop rather than
+# approve on a guess.
+if ! subnet_check_works; then
+    echo "approve-csr: no working subnet check, refusing to approve any CSR" >&2
+    exit 1
+fi
+
 # subject_field prints the values a PEM encoded certificate request carries for
 # one subject field, comma joined. Joining means a second value of the same
 # field cannot hide behind the first, which matters for the organization: every
@@ -51,6 +103,33 @@ san_field() {
         tr ',' '\n' |
         sed -n "s/^ *${1}://p" |
         paste -sd, -
+}
+
+# ip_address_class prints the class of an address that a kubelet cannot be
+# serving on, or nothing at all when the address is an ordinary unicast one.
+# An address ipcalc cannot read is called malformed rather than left to pass
+# as unicast, since nothing can be said about it.
+#   1 - address as openssl prints it
+ip_address_class() {
+    local address="${1}" canonical network class
+
+    # openssl prints IPv6 expanded and in upper case, so ::1 arrives as
+    # 0:0:0:0:0:0:0:1. ipcalc reads that and prints the canonical form, which
+    # is what the networks below are matched against.
+    canonical="$(ipcalc --address "${address}" 2>/dev/null)"
+    canonical="${canonical#ADDRESS=}"
+    if [ -z "${canonical}" ]; then
+        printf 'malformed'
+        return 0
+    fi
+
+    while read -r network class; do
+        [ -n "${network}" ] || continue
+        if ip_in_cidr "${canonical}" "${network}"; then
+            printf '%s' "${class}"
+            return 0
+        fi
+    done <<< "${REFUSED_NETWORKS}"
 }
 
 # node_common_name validates the parts of the subject that both kinds of
@@ -103,8 +182,9 @@ is_node_client_request() {
 # carries exactly the subject a kubelet serving certificate is allowed to have,
 # for the node that asked for it.
 #   1 - PEM encoded certificate request   2 - requesting username
+#   3 - CSR name, used only to report an address worth looking at
 is_node_serving_request() {
-    local pem="${1}" requester="${2}" common_name
+    local pem="${1}" requester="${2}" name="${3}" common_name address class
 
     common_name="$(node_common_name "${pem}")" || return 1
 
@@ -114,6 +194,22 @@ is_node_serving_request() {
     # A serving certificate legitimately names hosts and addresses. The other
     # kinds of subject alternative name carry identities a kubelet never needs.
     [ -z "$(san_field email "${pem}")$(san_field URI "${pem}")" ] || return 1
+
+    # A kubelet serves on the addresses of the node it runs on, so an address
+    # that cannot be one of those names something other than that node.
+    for address in $(san_field 'IP Address' "${pem}" | tr ',' ' '); do
+        class="$(ip_address_class "${address}")"
+        case "${class}" in
+            '') ;;
+            link-local)
+                # Reported rather than refused: the cluster network itself uses
+                # addresses out of 169.254.0.0/16, and it is not yet confirmed
+                # that none of them can reach a node's address list.
+                echo "CSR ${name} carries a ${class} address ${address}"
+                ;;
+            *) return 1 ;;
+        esac
+    done
 }
 
 echo "Approving kubelet CSR requests until bootstrapping is complete..."
@@ -140,7 +236,7 @@ do
                 fi
                 ;;
             serving)
-                if is_node_serving_request "${pem}" "${requester}"; then
+                if is_node_serving_request "${pem}" "${requester}" "${name}"; then
                     echo "Approving node serving CSR ${name}"
                     oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
                     continue
