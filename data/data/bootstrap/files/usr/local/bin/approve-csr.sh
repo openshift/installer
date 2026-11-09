@@ -5,6 +5,14 @@
 
 KUBECONFIG="${1}"
 
+# Largest number of kubelet client certificates this service will hand out,
+# zero meaning no limit. A CSR carries nothing that says whether the node
+# asking for it belongs to the control plane, so the control plane is bounded
+# by count instead: the installer passes the control plane and arbiter replica
+# count on the platforms where cluster-machine-approver takes over for the
+# workers, and zero on platform none, where nothing else would approve them.
+MAX_NODES="${2:-0}"
+
 # Attributes shared by every kubelet client CSR that the machine-config-operator
 # bootstrapper issues on behalf of a node joining the cluster.
 readonly CLIENT_SIGNER="kubernetes.io/kube-apiserver-client-kubelet"
@@ -163,6 +171,22 @@ node_common_name() {
     esac
 }
 
+# node_is_listed reports whether a space delimited list of node names holds
+# one name. Node names are DNS names, so they never contain a space.
+#   1 - space delimited list   2 - name
+node_is_listed() {
+    case "${1}" in
+        *" ${2} "*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# node_count prints how many names a space delimited list holds.
+#   1 - space delimited list
+node_count() {
+    printf '%s' "${1}" | wc -w
+}
+
 # is_node_client_request reports whether a PEM encoded certificate request
 # carries exactly the subject a kubelet client certificate is allowed to have.
 #   1 - PEM encoded certificate request
@@ -221,18 +245,49 @@ do
     # Approve only the kubelet client and serving requests that match every
     # expected attribute. Anything else is left pending for
     # cluster-machine-approver rather than approved here.
+    csrs="$(oc --kubeconfig="$KUBECONFIG" get csr -o json 2>/dev/null)"
+
+    # Names of the nodes already holding a client certificate. Read back from
+    # the cluster rather than carried in a variable, so that the budget
+    # survives the restart systemd performs when this service fails, and held
+    # as names rather than as a tally, so that a node which reboots and asks
+    # again does not take a second place.
+    approved_nodes=" "
+    while IFS= read -r approved_request
+    do
+        [ -n "${approved_request}" ] || continue
+        approved_name="$(node_common_name \
+            "$(printf '%s' "${approved_request}" | base64 --decode 2>/dev/null)")" || continue
+        node_is_listed "${approved_nodes}" "${approved_name}" ||
+            approved_nodes="${approved_nodes}${approved_name} "
+    done <<< "$(printf '%s' "${csrs}" | jq -r --arg signer "${CLIENT_SIGNER}" '
+        .items[]?
+        | select(.spec.signerName == $signer)
+        | select(((.status.conditions // []) | map(.type) | index("Approved")) != null)
+        | .spec.request // empty')"
+
     while IFS=$'\t' read -r name attributes signer requester request
     do
         [ -n "${name}" ] || continue
         [ "${request}" = "<none>" ] && request=""
         pem="$(printf '%s' "${request}" | base64 --decode 2>/dev/null)"
+        reason=""
 
         case "${attributes}" in
             client)
-                if is_node_client_request "${pem}"; then
+                client_name="$(node_common_name "${pem}")" || client_name=""
+                if ! is_node_client_request "${pem}"; then
+                    : # subject is unacceptable; reported below
+                elif node_is_listed "${approved_nodes}" "${client_name}" ||
+                    [ "${MAX_NODES}" -eq 0 ] ||
+                    [ "$(node_count "${approved_nodes}")" -lt "${MAX_NODES}" ]; then
                     echo "Approving node client CSR ${name}"
                     oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
+                    node_is_listed "${approved_nodes}" "${client_name}" ||
+                        approved_nodes="${approved_nodes}${client_name} "
                     continue
+                else
+                    reason="client certificates already issued to ${MAX_NODES} nodes"
                 fi
                 ;;
             serving)
@@ -249,8 +304,8 @@ do
             *" ${name} "*) continue ;;
             *) logged="${logged}${name} " ;;
         esac
-        echo "Leaving CSR ${name} pending: signer=${signer} requester=${requester}"
-    done <<< "$(oc --kubeconfig="$KUBECONFIG" get csr -o json 2>/dev/null | jq -r \
+        echo "Leaving CSR ${name} pending: signer=${signer} requester=${requester}${reason:+ (${reason})}"
+    done <<< "$(printf '%s' "${csrs}" | jq -r \
         --arg client_signer "${CLIENT_SIGNER}" \
         --arg client_requester "${CLIENT_REQUESTER}" \
         --arg client_groups "${CLIENT_GROUPS}" \
