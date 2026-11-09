@@ -22,7 +22,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	time "time"
 	unsafe "unsafe"
 
 	v1 "k8s.io/api/core/v1"
@@ -176,11 +175,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*AWSClusterStatus)(nil), (*v1beta2.AWSClusterStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_AWSClusterStatus_To_v1beta2_AWSClusterStatus(a.(*AWSClusterStatus), b.(*v1beta2.AWSClusterStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.AWSClusterStatus)(nil), (*AWSClusterStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(a.(*v1beta2.AWSClusterStatus), b.(*AWSClusterStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -529,6 +523,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*v1beta2.AWSClusterStatus)(nil), (*AWSClusterStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(a.(*v1beta2.AWSClusterStatus), b.(*AWSClusterStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*v1beta2.AWSLoadBalancerSpec)(nil), (*AWSLoadBalancerSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(a.(*v1beta2.AWSLoadBalancerSpec), b.(*AWSLoadBalancerSpec), scope)
 	}); err != nil {
@@ -603,8 +602,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1beta1_AMIReference_To_v1beta2_AMIReference(in *AMIReference, out *v1beta2.AMIReference, s conversion.Scope) error {
-	out.ID = (*string)(unsafe.Pointer(in.ID))
-	out.EKSOptimizedLookupType = (*v1beta2.EKSAMILookupType)(unsafe.Pointer(in.EKSOptimizedLookupType))
+	*out = *(*v1beta2.AMIReference)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -614,8 +612,7 @@ func Convert_v1beta1_AMIReference_To_v1beta2_AMIReference(in *AMIReference, out 
 }
 
 func autoConvert_v1beta2_AMIReference_To_v1beta1_AMIReference(in *v1beta2.AMIReference, out *AMIReference, s conversion.Scope) error {
-	out.ID = (*string)(unsafe.Pointer(in.ID))
-	out.EKSOptimizedLookupType = (*EKSAMILookupType)(unsafe.Pointer(in.EKSOptimizedLookupType))
+	*out = *(*AMIReference)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -705,9 +702,7 @@ func Convert_v1beta2_AWSClusterControllerIdentityList_To_v1beta1_AWSClusterContr
 }
 
 func autoConvert_v1beta1_AWSClusterControllerIdentitySpec_To_v1beta2_AWSClusterControllerIdentitySpec(in *AWSClusterControllerIdentitySpec, out *v1beta2.AWSClusterControllerIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta1_AWSClusterIdentitySpec_To_v1beta2_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
+	*out = *(*v1beta2.AWSClusterControllerIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -717,9 +712,7 @@ func Convert_v1beta1_AWSClusterControllerIdentitySpec_To_v1beta2_AWSClusterContr
 }
 
 func autoConvert_v1beta2_AWSClusterControllerIdentitySpec_To_v1beta1_AWSClusterControllerIdentitySpec(in *v1beta2.AWSClusterControllerIdentitySpec, out *AWSClusterControllerIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta2_AWSClusterIdentitySpec_To_v1beta1_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
+	*out = *(*AWSClusterControllerIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -729,7 +722,7 @@ func Convert_v1beta2_AWSClusterControllerIdentitySpec_To_v1beta1_AWSClusterContr
 }
 
 func autoConvert_v1beta1_AWSClusterIdentitySpec_To_v1beta2_AWSClusterIdentitySpec(in *AWSClusterIdentitySpec, out *v1beta2.AWSClusterIdentitySpec, s conversion.Scope) error {
-	out.AllowedNamespaces = (*v1beta2.AllowedNamespaces)(unsafe.Pointer(in.AllowedNamespaces))
+	*out = *(*v1beta2.AWSClusterIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -739,7 +732,7 @@ func Convert_v1beta1_AWSClusterIdentitySpec_To_v1beta2_AWSClusterIdentitySpec(in
 }
 
 func autoConvert_v1beta2_AWSClusterIdentitySpec_To_v1beta1_AWSClusterIdentitySpec(in *v1beta2.AWSClusterIdentitySpec, out *AWSClusterIdentitySpec, s conversion.Scope) error {
-	out.AllowedNamespaces = (*AllowedNamespaces)(unsafe.Pointer(in.AllowedNamespaces))
+	*out = *(*AWSClusterIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -839,14 +832,7 @@ func Convert_v1beta2_AWSClusterRoleIdentityList_To_v1beta1_AWSClusterRoleIdentit
 }
 
 func autoConvert_v1beta1_AWSClusterRoleIdentitySpec_To_v1beta2_AWSClusterRoleIdentitySpec(in *AWSClusterRoleIdentitySpec, out *v1beta2.AWSClusterRoleIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta1_AWSClusterIdentitySpec_To_v1beta2_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta1_AWSRoleSpec_To_v1beta2_AWSRoleSpec(&in.AWSRoleSpec, &out.AWSRoleSpec, s); err != nil {
-		return err
-	}
-	out.ExternalID = in.ExternalID
-	out.SourceIdentityRef = (*v1beta2.AWSIdentityReference)(unsafe.Pointer(in.SourceIdentityRef))
+	*out = *(*v1beta2.AWSClusterRoleIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -856,14 +842,7 @@ func Convert_v1beta1_AWSClusterRoleIdentitySpec_To_v1beta2_AWSClusterRoleIdentit
 }
 
 func autoConvert_v1beta2_AWSClusterRoleIdentitySpec_To_v1beta1_AWSClusterRoleIdentitySpec(in *v1beta2.AWSClusterRoleIdentitySpec, out *AWSClusterRoleIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta2_AWSClusterIdentitySpec_To_v1beta1_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1beta2_AWSRoleSpec_To_v1beta1_AWSRoleSpec(&in.AWSRoleSpec, &out.AWSRoleSpec, s); err != nil {
-		return err
-	}
-	out.ExternalID = in.ExternalID
-	out.SourceIdentityRef = (*AWSIdentityReference)(unsafe.Pointer(in.SourceIdentityRef))
+	*out = *(*AWSClusterRoleIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1000,10 +979,7 @@ func Convert_v1beta2_AWSClusterStaticIdentityList_To_v1beta1_AWSClusterStaticIde
 }
 
 func autoConvert_v1beta1_AWSClusterStaticIdentitySpec_To_v1beta2_AWSClusterStaticIdentitySpec(in *AWSClusterStaticIdentitySpec, out *v1beta2.AWSClusterStaticIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta1_AWSClusterIdentitySpec_To_v1beta2_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
-	out.SecretRef = in.SecretRef
+	*out = *(*v1beta2.AWSClusterStaticIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1013,10 +989,7 @@ func Convert_v1beta1_AWSClusterStaticIdentitySpec_To_v1beta2_AWSClusterStaticIde
 }
 
 func autoConvert_v1beta2_AWSClusterStaticIdentitySpec_To_v1beta1_AWSClusterStaticIdentitySpec(in *v1beta2.AWSClusterStaticIdentitySpec, out *AWSClusterStaticIdentitySpec, s conversion.Scope) error {
-	if err := Convert_v1beta2_AWSClusterIdentitySpec_To_v1beta1_AWSClusterIdentitySpec(&in.AWSClusterIdentitySpec, &out.AWSClusterIdentitySpec, s); err != nil {
-		return err
-	}
-	out.SecretRef = in.SecretRef
+	*out = *(*AWSClusterStaticIdentitySpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1065,12 +1038,8 @@ func autoConvert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(in *v1beta
 		out.Bastion = nil
 	}
 	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
+	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
-}
-
-// Convert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus is an autogenerated conversion function.
-func Convert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(in *v1beta2.AWSClusterStatus, out *AWSClusterStatus, s conversion.Scope) error {
-	return autoConvert_v1beta2_AWSClusterStatus_To_v1beta1_AWSClusterStatus(in, out, s)
 }
 
 func autoConvert_v1beta1_AWSClusterTemplate_To_v1beta2_AWSClusterTemplate(in *AWSClusterTemplate, out *v1beta2.AWSClusterTemplate, s conversion.Scope) error {
@@ -1192,8 +1161,7 @@ func Convert_v1beta2_AWSClusterTemplateSpec_To_v1beta1_AWSClusterTemplateSpec(in
 }
 
 func autoConvert_v1beta1_AWSIdentityReference_To_v1beta2_AWSIdentityReference(in *AWSIdentityReference, out *v1beta2.AWSIdentityReference, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Kind = v1beta2.AWSIdentityKind(in.Kind)
+	*out = *(*v1beta2.AWSIdentityReference)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1203,8 +1171,7 @@ func Convert_v1beta1_AWSIdentityReference_To_v1beta2_AWSIdentityReference(in *AW
 }
 
 func autoConvert_v1beta2_AWSIdentityReference_To_v1beta1_AWSIdentityReference(in *v1beta2.AWSIdentityReference, out *AWSIdentityReference, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Kind = AWSIdentityKind(in.Kind)
+	*out = *(*AWSIdentityReference)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1443,6 +1410,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	// WARNING: in.HostAffinity requires manual conversion: does not exist in peer-type
 	// WARNING: in.DynamicHostAllocation requires manual conversion: does not exist in peer-type
 	// WARNING: in.CapacityReservationPreference requires manual conversion: does not exist in peer-type
+	// WARNING: in.SourceDestCheck requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -1471,6 +1439,7 @@ func autoConvert_v1beta2_AWSMachineStatus_To_v1beta1_AWSMachineStatus(in *v1beta
 	out.FailureMessage = (*string)(unsafe.Pointer(in.FailureMessage))
 	out.Conditions = *(*corev1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	// WARNING: in.DedicatedHost requires manual conversion: does not exist in peer-type
+	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -1612,6 +1581,7 @@ func autoConvert_v1beta2_AWSMachineTemplateStatus_To_v1beta1_AWSMachineTemplateS
 	out.Capacity = *(*v1.ResourceList)(unsafe.Pointer(&in.Capacity))
 	// WARNING: in.NodeInfo requires manual conversion: does not exist in peer-type
 	// WARNING: in.Conditions requires manual conversion: does not exist in peer-type
+	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -1634,11 +1604,7 @@ func Convert_v1beta2_AWSResourceReference_To_v1beta1_AWSResourceReference(in *v1
 }
 
 func autoConvert_v1beta1_AWSRoleSpec_To_v1beta2_AWSRoleSpec(in *AWSRoleSpec, out *v1beta2.AWSRoleSpec, s conversion.Scope) error {
-	out.RoleArn = in.RoleArn
-	out.SessionName = in.SessionName
-	out.DurationSeconds = in.DurationSeconds
-	out.InlinePolicy = in.InlinePolicy
-	out.PolicyARNs = *(*[]string)(unsafe.Pointer(&in.PolicyARNs))
+	*out = *(*v1beta2.AWSRoleSpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1648,11 +1614,7 @@ func Convert_v1beta1_AWSRoleSpec_To_v1beta2_AWSRoleSpec(in *AWSRoleSpec, out *v1
 }
 
 func autoConvert_v1beta2_AWSRoleSpec_To_v1beta1_AWSRoleSpec(in *v1beta2.AWSRoleSpec, out *AWSRoleSpec, s conversion.Scope) error {
-	out.RoleArn = in.RoleArn
-	out.SessionName = in.SessionName
-	out.DurationSeconds = in.DurationSeconds
-	out.InlinePolicy = in.InlinePolicy
-	out.PolicyARNs = *(*[]string)(unsafe.Pointer(&in.PolicyARNs))
+	*out = *(*AWSRoleSpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1662,8 +1624,7 @@ func Convert_v1beta2_AWSRoleSpec_To_v1beta1_AWSRoleSpec(in *v1beta2.AWSRoleSpec,
 }
 
 func autoConvert_v1beta1_AllowedNamespaces_To_v1beta2_AllowedNamespaces(in *AllowedNamespaces, out *v1beta2.AllowedNamespaces, s conversion.Scope) error {
-	out.NamespaceList = *(*[]string)(unsafe.Pointer(&in.NamespaceList))
-	out.Selector = in.Selector
+	*out = *(*v1beta2.AllowedNamespaces)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1673,8 +1634,7 @@ func Convert_v1beta1_AllowedNamespaces_To_v1beta2_AllowedNamespaces(in *AllowedN
 }
 
 func autoConvert_v1beta2_AllowedNamespaces_To_v1beta1_AllowedNamespaces(in *v1beta2.AllowedNamespaces, out *AllowedNamespaces, s conversion.Scope) error {
-	out.NamespaceList = *(*[]string)(unsafe.Pointer(&in.NamespaceList))
-	out.Selector = in.Selector
+	*out = *(*AllowedNamespaces)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1684,11 +1644,7 @@ func Convert_v1beta2_AllowedNamespaces_To_v1beta1_AllowedNamespaces(in *v1beta2.
 }
 
 func autoConvert_v1beta1_Bastion_To_v1beta2_Bastion(in *Bastion, out *v1beta2.Bastion, s conversion.Scope) error {
-	out.Enabled = in.Enabled
-	out.DisableIngressRules = in.DisableIngressRules
-	out.AllowedCIDRBlocks = *(*v1beta2.CidrBlocks)(unsafe.Pointer(&in.AllowedCIDRBlocks))
-	out.InstanceType = in.InstanceType
-	out.AMI = in.AMI
+	*out = *(*v1beta2.Bastion)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1698,11 +1654,7 @@ func Convert_v1beta1_Bastion_To_v1beta2_Bastion(in *Bastion, out *v1beta2.Bastio
 }
 
 func autoConvert_v1beta2_Bastion_To_v1beta1_Bastion(in *v1beta2.Bastion, out *Bastion, s conversion.Scope) error {
-	out.Enabled = in.Enabled
-	out.DisableIngressRules = in.DisableIngressRules
-	out.AllowedCIDRBlocks = *(*[]string)(unsafe.Pointer(&in.AllowedCIDRBlocks))
-	out.InstanceType = in.InstanceType
-	out.AMI = in.AMI
+	*out = *(*Bastion)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1712,12 +1664,7 @@ func Convert_v1beta2_Bastion_To_v1beta1_Bastion(in *v1beta2.Bastion, out *Bastio
 }
 
 func autoConvert_v1beta1_BuildParams_To_v1beta2_BuildParams(in *BuildParams, out *v1beta2.BuildParams, s conversion.Scope) error {
-	out.Lifecycle = v1beta2.ResourceLifecycle(in.Lifecycle)
-	out.ClusterName = in.ClusterName
-	out.ResourceID = in.ResourceID
-	out.Name = (*string)(unsafe.Pointer(in.Name))
-	out.Role = (*string)(unsafe.Pointer(in.Role))
-	out.Additional = *(*v1beta2.Tags)(unsafe.Pointer(&in.Additional))
+	*out = *(*v1beta2.BuildParams)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1727,12 +1674,7 @@ func Convert_v1beta1_BuildParams_To_v1beta2_BuildParams(in *BuildParams, out *v1
 }
 
 func autoConvert_v1beta2_BuildParams_To_v1beta1_BuildParams(in *v1beta2.BuildParams, out *BuildParams, s conversion.Scope) error {
-	out.Lifecycle = ResourceLifecycle(in.Lifecycle)
-	out.ClusterName = in.ClusterName
-	out.ResourceID = in.ResourceID
-	out.Name = (*string)(unsafe.Pointer(in.Name))
-	out.Role = (*string)(unsafe.Pointer(in.Role))
-	out.Additional = *(*Tags)(unsafe.Pointer(&in.Additional))
+	*out = *(*BuildParams)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1742,10 +1684,7 @@ func Convert_v1beta2_BuildParams_To_v1beta1_BuildParams(in *v1beta2.BuildParams,
 }
 
 func autoConvert_v1beta1_CNIIngressRule_To_v1beta2_CNIIngressRule(in *CNIIngressRule, out *v1beta2.CNIIngressRule, s conversion.Scope) error {
-	out.Description = in.Description
-	out.Protocol = v1beta2.SecurityGroupProtocol(in.Protocol)
-	out.FromPort = in.FromPort
-	out.ToPort = in.ToPort
+	*out = *(*v1beta2.CNIIngressRule)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1755,10 +1694,7 @@ func Convert_v1beta1_CNIIngressRule_To_v1beta2_CNIIngressRule(in *CNIIngressRule
 }
 
 func autoConvert_v1beta2_CNIIngressRule_To_v1beta1_CNIIngressRule(in *v1beta2.CNIIngressRule, out *CNIIngressRule, s conversion.Scope) error {
-	out.Description = in.Description
-	out.Protocol = SecurityGroupProtocol(in.Protocol)
-	out.FromPort = in.FromPort
-	out.ToPort = in.ToPort
+	*out = *(*CNIIngressRule)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1768,7 +1704,7 @@ func Convert_v1beta2_CNIIngressRule_To_v1beta1_CNIIngressRule(in *v1beta2.CNIIng
 }
 
 func autoConvert_v1beta1_CNISpec_To_v1beta2_CNISpec(in *CNISpec, out *v1beta2.CNISpec, s conversion.Scope) error {
-	out.CNIIngressRules = *(*v1beta2.CNIIngressRules)(unsafe.Pointer(&in.CNIIngressRules))
+	*out = *(*v1beta2.CNISpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1778,7 +1714,7 @@ func Convert_v1beta1_CNISpec_To_v1beta2_CNISpec(in *CNISpec, out *v1beta2.CNISpe
 }
 
 func autoConvert_v1beta2_CNISpec_To_v1beta1_CNISpec(in *v1beta2.CNISpec, out *CNISpec, s conversion.Scope) error {
-	out.CNIIngressRules = *(*CNIIngressRules)(unsafe.Pointer(&in.CNIIngressRules))
+	*out = *(*CNISpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1788,8 +1724,7 @@ func Convert_v1beta2_CNISpec_To_v1beta1_CNISpec(in *v1beta2.CNISpec, out *CNISpe
 }
 
 func autoConvert_v1beta1_ClassicELBAttributes_To_v1beta2_ClassicELBAttributes(in *ClassicELBAttributes, out *v1beta2.ClassicELBAttributes, s conversion.Scope) error {
-	out.IdleTimeout = time.Duration(in.IdleTimeout)
-	out.CrossZoneLoadBalancing = in.CrossZoneLoadBalancing
+	*out = *(*v1beta2.ClassicELBAttributes)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1799,8 +1734,7 @@ func Convert_v1beta1_ClassicELBAttributes_To_v1beta2_ClassicELBAttributes(in *Cl
 }
 
 func autoConvert_v1beta2_ClassicELBAttributes_To_v1beta1_ClassicELBAttributes(in *v1beta2.ClassicELBAttributes, out *ClassicELBAttributes, s conversion.Scope) error {
-	out.IdleTimeout = time.Duration(in.IdleTimeout)
-	out.CrossZoneLoadBalancing = in.CrossZoneLoadBalancing
+	*out = *(*ClassicELBAttributes)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1810,11 +1744,7 @@ func Convert_v1beta2_ClassicELBAttributes_To_v1beta1_ClassicELBAttributes(in *v1
 }
 
 func autoConvert_v1beta1_ClassicELBHealthCheck_To_v1beta2_ClassicELBHealthCheck(in *ClassicELBHealthCheck, out *v1beta2.ClassicELBHealthCheck, s conversion.Scope) error {
-	out.Target = in.Target
-	out.Interval = time.Duration(in.Interval)
-	out.Timeout = time.Duration(in.Timeout)
-	out.HealthyThreshold = in.HealthyThreshold
-	out.UnhealthyThreshold = in.UnhealthyThreshold
+	*out = *(*v1beta2.ClassicELBHealthCheck)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1824,11 +1754,7 @@ func Convert_v1beta1_ClassicELBHealthCheck_To_v1beta2_ClassicELBHealthCheck(in *
 }
 
 func autoConvert_v1beta2_ClassicELBHealthCheck_To_v1beta1_ClassicELBHealthCheck(in *v1beta2.ClassicELBHealthCheck, out *ClassicELBHealthCheck, s conversion.Scope) error {
-	out.Target = in.Target
-	out.Interval = time.Duration(in.Interval)
-	out.Timeout = time.Duration(in.Timeout)
-	out.HealthyThreshold = in.HealthyThreshold
-	out.UnhealthyThreshold = in.UnhealthyThreshold
+	*out = *(*ClassicELBHealthCheck)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1838,10 +1764,7 @@ func Convert_v1beta2_ClassicELBHealthCheck_To_v1beta1_ClassicELBHealthCheck(in *
 }
 
 func autoConvert_v1beta1_ClassicELBListener_To_v1beta2_ClassicELBListener(in *ClassicELBListener, out *v1beta2.ClassicELBListener, s conversion.Scope) error {
-	out.Protocol = v1beta2.ELBProtocol(in.Protocol)
-	out.Port = in.Port
-	out.InstanceProtocol = v1beta2.ELBProtocol(in.InstanceProtocol)
-	out.InstancePort = in.InstancePort
+	*out = *(*v1beta2.ClassicELBListener)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1851,10 +1774,7 @@ func Convert_v1beta1_ClassicELBListener_To_v1beta2_ClassicELBListener(in *Classi
 }
 
 func autoConvert_v1beta2_ClassicELBListener_To_v1beta1_ClassicELBListener(in *v1beta2.ClassicELBListener, out *ClassicELBListener, s conversion.Scope) error {
-	out.Protocol = ClassicELBProtocol(in.Protocol)
-	out.Port = in.Port
-	out.InstanceProtocol = ClassicELBProtocol(in.InstanceProtocol)
-	out.InstancePort = in.InstancePort
+	*out = *(*ClassicELBListener)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1864,10 +1784,7 @@ func Convert_v1beta2_ClassicELBListener_To_v1beta1_ClassicELBListener(in *v1beta
 }
 
 func autoConvert_v1beta1_CloudInit_To_v1beta2_CloudInit(in *CloudInit, out *v1beta2.CloudInit, s conversion.Scope) error {
-	out.InsecureSkipSecretsManager = in.InsecureSkipSecretsManager
-	out.SecretCount = in.SecretCount
-	out.SecretPrefix = in.SecretPrefix
-	out.SecureSecretsBackend = v1beta2.SecretBackend(in.SecureSecretsBackend)
+	*out = *(*v1beta2.CloudInit)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1877,10 +1794,7 @@ func Convert_v1beta1_CloudInit_To_v1beta2_CloudInit(in *CloudInit, out *v1beta2.
 }
 
 func autoConvert_v1beta2_CloudInit_To_v1beta1_CloudInit(in *v1beta2.CloudInit, out *CloudInit, s conversion.Scope) error {
-	out.InsecureSkipSecretsManager = in.InsecureSkipSecretsManager
-	out.SecretCount = in.SecretCount
-	out.SecretPrefix = in.SecretPrefix
-	out.SecureSecretsBackend = SecretBackend(in.SecureSecretsBackend)
+	*out = *(*CloudInit)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1890,8 +1804,7 @@ func Convert_v1beta2_CloudInit_To_v1beta1_CloudInit(in *v1beta2.CloudInit, out *
 }
 
 func autoConvert_v1beta1_Filter_To_v1beta2_Filter(in *Filter, out *v1beta2.Filter, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Values = *(*[]string)(unsafe.Pointer(&in.Values))
+	*out = *(*v1beta2.Filter)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -1901,8 +1814,7 @@ func Convert_v1beta1_Filter_To_v1beta2_Filter(in *Filter, out *v1beta2.Filter, s
 }
 
 func autoConvert_v1beta2_Filter_To_v1beta1_Filter(in *v1beta2.Filter, out *Filter, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Values = *(*[]string)(unsafe.Pointer(&in.Values))
+	*out = *(*Filter)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2146,7 +2058,7 @@ func autoConvert_v1beta2_NetworkStatus_To_v1beta1_NetworkStatus(in *v1beta2.Netw
 }
 
 func autoConvert_v1beta1_RouteTable_To_v1beta2_RouteTable(in *RouteTable, out *v1beta2.RouteTable, s conversion.Scope) error {
-	out.ID = in.ID
+	*out = *(*v1beta2.RouteTable)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2156,7 +2068,7 @@ func Convert_v1beta1_RouteTable_To_v1beta2_RouteTable(in *RouteTable, out *v1bet
 }
 
 func autoConvert_v1beta2_RouteTable_To_v1beta1_RouteTable(in *v1beta2.RouteTable, out *RouteTable, s conversion.Scope) error {
-	out.ID = in.ID
+	*out = *(*RouteTable)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2180,6 +2092,7 @@ func Convert_v1beta1_S3Bucket_To_v1beta2_S3Bucket(in *S3Bucket, out *v1beta2.S3B
 func autoConvert_v1beta2_S3Bucket_To_v1beta1_S3Bucket(in *v1beta2.S3Bucket, out *S3Bucket, s conversion.Scope) error {
 	out.ControlPlaneIAMInstanceProfile = in.ControlPlaneIAMInstanceProfile
 	out.NodesIAMInstanceProfiles = *(*[]string)(unsafe.Pointer(&in.NodesIAMInstanceProfiles))
+	// WARNING: in.AdditionalIAMRoles requires manual conversion: does not exist in peer-type
 	// WARNING: in.PresignedURLDuration requires manual conversion: does not exist in peer-type
 	out.Name = in.Name
 	// WARNING: in.BestEffortDeleteObjects requires manual conversion: does not exist in peer-type
@@ -2233,7 +2146,7 @@ func Convert_v1beta2_SecurityGroup_To_v1beta1_SecurityGroup(in *v1beta2.Security
 }
 
 func autoConvert_v1beta1_SpotMarketOptions_To_v1beta2_SpotMarketOptions(in *SpotMarketOptions, out *v1beta2.SpotMarketOptions, s conversion.Scope) error {
-	out.MaxPrice = (*string)(unsafe.Pointer(in.MaxPrice))
+	*out = *(*v1beta2.SpotMarketOptions)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2243,7 +2156,7 @@ func Convert_v1beta1_SpotMarketOptions_To_v1beta2_SpotMarketOptions(in *SpotMark
 }
 
 func autoConvert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in *v1beta2.SpotMarketOptions, out *SpotMarketOptions, s conversion.Scope) error {
-	out.MaxPrice = (*string)(unsafe.Pointer(in.MaxPrice))
+	*out = *(*SpotMarketOptions)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2337,13 +2250,7 @@ func autoConvert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(in *v1beta2.VPCSpec, out *VP
 }
 
 func autoConvert_v1beta1_Volume_To_v1beta2_Volume(in *Volume, out *v1beta2.Volume, s conversion.Scope) error {
-	out.DeviceName = in.DeviceName
-	out.Size = in.Size
-	out.Type = v1beta2.VolumeType(in.Type)
-	out.IOPS = in.IOPS
-	out.Throughput = (*int64)(unsafe.Pointer(in.Throughput))
-	out.Encrypted = (*bool)(unsafe.Pointer(in.Encrypted))
-	out.EncryptionKey = in.EncryptionKey
+	*out = *(*v1beta2.Volume)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -2353,13 +2260,7 @@ func Convert_v1beta1_Volume_To_v1beta2_Volume(in *Volume, out *v1beta2.Volume, s
 }
 
 func autoConvert_v1beta2_Volume_To_v1beta1_Volume(in *v1beta2.Volume, out *Volume, s conversion.Scope) error {
-	out.DeviceName = in.DeviceName
-	out.Size = in.Size
-	out.Type = VolumeType(in.Type)
-	out.IOPS = in.IOPS
-	out.Throughput = (*int64)(unsafe.Pointer(in.Throughput))
-	out.Encrypted = (*bool)(unsafe.Pointer(in.Encrypted))
-	out.EncryptionKey = in.EncryptionKey
+	*out = *(*Volume)(unsafe.Pointer(in))
 	return nil
 }
 

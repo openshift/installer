@@ -47,6 +47,7 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.HostID = restored.Spec.HostID
 	dst.Spec.HostAffinity = restored.Spec.HostAffinity
 	dst.Spec.CapacityReservationPreference = restored.Spec.CapacityReservationPreference
+	dst.Spec.SourceDestCheck = restored.Spec.SourceDestCheck
 	dst.Spec.NetworkInterfaceType = restored.Spec.NetworkInterfaceType
 	dst.Spec.AssignPrimaryIPv6 = restored.Spec.AssignPrimaryIPv6
 	dst.Spec.CPUOptions = restored.Spec.CPUOptions
@@ -66,6 +67,8 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Status.DedicatedHost = restored.Status.DedicatedHost
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
 	return nil
 }
 
@@ -120,6 +123,7 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Template.Spec.HostID = restored.Spec.Template.Spec.HostID
 	dst.Spec.Template.Spec.HostAffinity = restored.Spec.Template.Spec.HostAffinity
 	dst.Spec.Template.Spec.CapacityReservationPreference = restored.Spec.Template.Spec.CapacityReservationPreference
+	dst.Spec.Template.Spec.SourceDestCheck = restored.Spec.Template.Spec.SourceDestCheck
 	dst.Spec.Template.Spec.NetworkInterfaceType = restored.Spec.Template.Spec.NetworkInterfaceType
 	dst.Spec.Template.Spec.AssignPrimaryIPv6 = restored.Spec.Template.Spec.AssignPrimaryIPv6
 	dst.Spec.Template.Spec.CPUOptions = restored.Spec.Template.Spec.CPUOptions
@@ -141,6 +145,7 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 	// Restore Status fields that don't exist in v1beta1.
 	dst.Status.NodeInfo = restored.Status.NodeInfo
 	dst.Status.Conditions = restored.Status.Conditions
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
 
 	return nil
 }

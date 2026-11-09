@@ -405,6 +405,20 @@ const (
 	PrimaryIPv6AssignmentStateDisabled = PrimaryIPv6AssignmentState("disabled")
 )
 
+// SourceDestCheck describes whether the source/destination check is enabled on
+// an instance's network interfaces.
+// +kubebuilder:validation:Enum=Enabled;Disabled
+type SourceDestCheck string
+
+const (
+	// SourceDestCheckEnabled enables the source/destination check, which is the AWS default.
+	SourceDestCheckEnabled SourceDestCheck = "Enabled"
+
+	// SourceDestCheckDisabled disables the source/destination check, allowing the instance
+	// to forward traffic for which it is not the source or destination.
+	SourceDestCheckDisabled SourceDestCheck = "Disabled"
+)
+
 // EnclaveOptions defines the options for Nitro Enclave support on the instance.
 type EnclaveOptions struct {
 	// Enabled enables the instance for AWS Nitro Enclaves.

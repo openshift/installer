@@ -289,6 +289,14 @@ type AWSMachineSpec struct {
 	// +kubebuilder:validation:Enum="";None;CapacityReservationsOnly;Open
 	// +optional
 	CapacityReservationPreference CapacityReservationPreference `json:"capacityReservationPreference,omitempty"`
+
+	// SourceDestCheck configures source/destination checking on the instance's network interfaces.
+	// When set to "Disabled", the instance can forward traffic for which it is not the source or
+	// destination. This is required to use an AWS VPC Route Server with user-defined networking (UDN) and BGP.
+	// If left unset or set to "Enabled", AWS enforces its source/destination checks.
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	SourceDestCheck SourceDestCheck `json:"sourceDestCheck,omitempty"`
 }
 
 // DynamicHostAllocationSpec defines the configuration for dynamic dedicated host allocation.
@@ -482,6 +490,21 @@ type AWSMachineStatus struct {
 	// This field is populated when DynamicHostAllocation is used.
 	// +optional
 	DedicatedHost *DedicatedHostStatus `json:"dedicatedHost,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in AWSMachine's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *AWSMachineV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// AWSMachineV1Beta2Status groups all the fields that will be added or modified in AWSMachine with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type AWSMachineV1Beta2Status struct {
+	// conditions represents the observations of an AWSMachine's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // DedicatedHostStatus defines the observed state of a dynamically allocated dedicated host
@@ -521,6 +544,22 @@ func (r *AWSMachine) GetConditions() clusterv1beta1.Conditions {
 // SetConditions sets the underlying service state of the AWSMachine to the predescribed clusterv1beta1.Conditions.
 func (r *AWSMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *AWSMachine) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *AWSMachine) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &AWSMachineV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

@@ -22,11 +22,16 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 )
 
+const (
+	defaultIPv4ZeroCIDR = "0.0.0.0/0"
+	defaultIPv6ZeroCIDR = "::/0"
+)
+
 // SetDefaults_Bastion is used by defaulter-gen.
 func SetDefaults_Bastion(obj *Bastion) { //nolint:golint,stylecheck
 	// Default to allow open access to the bastion host if no CIDR Blocks have been set
 	if len(obj.AllowedCIDRBlocks) == 0 && !obj.DisableIngressRules {
-		obj.AllowedCIDRBlocks = []string{"0.0.0.0/0", "::/0"}
+		obj.AllowedCIDRBlocks = []string{defaultIPv4ZeroCIDR, defaultIPv6ZeroCIDR}
 	}
 }
 

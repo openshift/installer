@@ -19,11 +19,16 @@ package v1beta2
 import (
 	"fmt"
 	"net"
+	"regexp"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 )
+
+// iamRoleNameRegex matches valid IAM role names and rejects ARNs, which contain a colon.
+var iamRoleNameRegex = regexp.MustCompile(`^[\w+=,.@-]+$`)
 
 // Validate validates S3Bucket fields.
 func (b *S3Bucket) Validate() []*field.Error {
@@ -59,6 +64,28 @@ func (b *S3Bucket) Validate() []*field.Error {
 				errs = append(errs,
 					field.Required(field.NewPath("spec", "s3Bucket", fmt.Sprintf("nodesIAMInstanceProfiles[%d]", i)), "can't be empty"))
 			}
+		}
+	}
+
+	// Validate additional IAM roles
+	for i, role := range b.AdditionalIAMRoles {
+		rolePath := field.NewPath("spec", "s3Bucket", fmt.Sprintf("additionalIAMRoles[%d]", i))
+
+		if role.Name == "" {
+			errs = append(errs, field.Required(rolePath.Child("name"), "can't be empty"))
+		} else if !iamRoleNameRegex.MatchString(role.Name) {
+			errs = append(errs, field.Invalid(rolePath.Child("name"), role.Name,
+				"must be an IAM role name, not an ARN or invalid name"))
+		}
+
+		if role.Prefix == "" {
+			errs = append(errs, field.Required(rolePath.Child("prefix"), "can't be empty"))
+		}
+
+		// Must not start with /
+		if role.Prefix != "" && strings.HasPrefix(role.Prefix, "/") {
+			errs = append(errs, field.Invalid(rolePath.Child("prefix"), role.Prefix,
+				"must not start with /"))
 		}
 	}
 
