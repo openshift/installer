@@ -105,6 +105,12 @@ type bootstrapTemplateData struct {
 	// ApproveCSRMaxNodes bounds how many kubelet client CSRs approve-csr.sh
 	// approves. Zero means no bound.
 	ApproveCSRMaxNodes int64
+	// MachineNetworks is the space separated list of CIDRs that a kubelet
+	// serving certificate may name an address out of: the machine networks,
+	// and on baremetal the provisioning network the nodes are also attached
+	// to. It holds an entry per IP family, so a dual stack install needs no
+	// special handling.
+	MachineNetworks string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -343,6 +349,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	if installConfig.Config.Platform.Name() != nonetypes.Name {
 		approveCSRMaxNodes = controlPlaneReplicas
 	}
+
+	machineNetworks := approveCSRNetworks(installConfig.Config)
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
@@ -440,6 +448,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
 		ApproveCSRMaxNodes:    approveCSRMaxNodes,
+		MachineNetworks:       strings.Join(machineNetworks, " "),
 		OSImageStream:         installConfig.Config.OSImageStream,
 		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
 	}
@@ -468,6 +477,31 @@ func mergeIRIAuthIntoPullSecret(pullSecret, username, password, registryHost str
 		return "", fmt.Errorf("failed to marshal merged pull secret: %w", err)
 	}
 	return string(mergedBytes), nil
+}
+
+// approveCSRNetworks returns the networks a kubelet serving certificate may
+// name an address out of. A kubelet serves on an address of the node it runs
+// on, so that is the machine networks, and on baremetal also the provisioning
+// network the nodes are attached to, which is deliberately kept outside the
+// machine networks and so would not otherwise be covered.
+func approveCSRNetworks(config *types.InstallConfig) []string {
+	if config == nil || config.Networking == nil {
+		return nil
+	}
+
+	networks := make([]string, 0, len(config.Networking.MachineNetwork)+1)
+	for _, network := range config.Networking.MachineNetwork {
+		networks = append(networks, network.CIDR.String())
+	}
+
+	// There is no provisioning network to allow for when it is disabled.
+	if bm := config.Platform.BareMetal; bm != nil &&
+		bm.ProvisioningNetwork != baremetaltypes.DisabledProvisioningNetwork &&
+		bm.ProvisioningNetworkCIDR != nil {
+		networks = append(networks, bm.ProvisioningNetworkCIDR.String())
+	}
+
+	return networks
 }
 
 // AddStorageFiles adds files to a Ignition config.
