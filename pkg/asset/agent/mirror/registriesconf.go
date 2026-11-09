@@ -160,14 +160,22 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		// Sources come from the live cluster, where ICSP and IDMS may coexist
-		// during migration. Convert and merge, letting MergedMirrorSets handle
-		// deduplication.
+		// during migration. Combine into one digest-source list, normalize
+		// policies per source (NeverContactSource wins), then let
+		// MergedMirrorSets union mirrors.
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
-		if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
+		switch {
+		case len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0:
 			imageDigestSources, deprecatedImageContentSources = mergeICSPIntoIDMS(imageDigestSources, deprecatedImageContentSources)
+		case len(deprecatedImageContentSources) != 0:
+			converted := bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
+			imageDigestSources = make([]types.ImageDigestSource, len(converted))
+			copy(imageDigestSources, converted)
+			deprecatedImageContentSources = nil
 		}
+		imageDigestSources = normalizeMirrorSourcePoliciesForAddNodes(imageDigestSources)
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -199,23 +207,41 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	return nil
 }
 
-// mergeICSPIntoIDMS converts ICSP entries to digest mirrors, appends them after
-// IDMS (so IDMS takes precedence for overlapping sources), and clears ICSP.
-// SourcePolicy from matching IDMS entries is preserved on the converted ICSP
-// rows. MergedMirrorSets later handles deduplication and mirror unioning.
+// mergeICSPIntoIDMS converts ICSP entries to digest mirror entries and appends
+// them after IDMS entries. The add-nodes caller normalizes policies per source
+// before generating the registry configuration.
 func mergeICSPIntoIDMS(idms []types.ImageDigestSource, icsp []types.ImageContentSource) ([]types.ImageDigestSource, []types.ImageContentSource) {
-	logrus.Warnf("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; merging with IDMS taking precedence")
-	idmsPolicy := make(map[string]configv1.MirrorSourcePolicy, len(idms))
-	for _, ids := range idms {
-		idmsPolicy[ids.Source] = ids.SourcePolicy
-	}
+	logrus.Warn("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; combining configurations")
 	convertedICSP := bootstrap.ContentSourceToDigestMirror(icsp)
-	for i := range convertedICSP {
-		if policy, ok := idmsPolicy[convertedICSP[i].Source]; ok {
-			convertedICSP[i].SourcePolicy = policy
+	out := make([]types.ImageDigestSource, 0, len(idms)+len(convertedICSP))
+	out = append(out, idms...)
+	out = append(out, convertedICSP...)
+	return out, nil
+}
+
+// normalizeMirrorSourcePoliciesForAddNodes applies per-source policy precedence
+// for add-nodes: if any entry for a source is NeverContactSource, all entries
+// for that source become NeverContactSource; otherwise the policy is cleared.
+// This matches the per-source policy precedence used when merging mirror
+// objects on the cluster, without changing bootstrap.MergedMirrorSets.
+func normalizeMirrorSourcePoliciesForAddNodes(sources []types.ImageDigestSource) []types.ImageDigestSource {
+	neverBySource := make(map[string]bool, len(sources))
+	for _, s := range sources {
+		if s.SourcePolicy == configv1.NeverContactSource {
+			neverBySource[s.Source] = true
 		}
 	}
-	return append(idms, convertedICSP...), nil
+
+	out := make([]types.ImageDigestSource, len(sources))
+	for i, s := range sources {
+		if neverBySource[s.Source] {
+			s.SourcePolicy = configv1.NeverContactSource
+		} else {
+			s.SourcePolicy = ""
+		}
+		out[i] = s
+	}
+	return out
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
