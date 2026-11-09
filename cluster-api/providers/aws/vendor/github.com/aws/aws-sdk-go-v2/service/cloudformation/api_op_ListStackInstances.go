@@ -5,14 +5,12 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Returns summary information about stack instances that are associated with the
-// specified stack set. You can filter for stack instances that are associated with
+// specified StackSet. You can filter for stack instances that are associated with
 // a specific Amazon Web Services account name or Region, or that have a specific
 // status.
 func (c *Client) ListStackInstances(ctx context.Context, params *ListStackInstancesInput, optFns ...func(*Options)) (*ListStackInstancesOutput, error) {
@@ -32,22 +30,28 @@ func (c *Client) ListStackInstances(ctx context.Context, params *ListStackInstan
 
 type ListStackInstancesInput struct {
 
-	// The name or unique ID of the stack set that you want to list stack instances
-	// for.
+	// The name or unique ID of the StackSet that you want to list stack instances for.
 	//
 	// This member is required.
 	StackSetName *string
 
 	// [Service-managed permissions] Specifies whether you are acting as an account
 	// administrator in the organization's management account or as a delegated
-	// administrator in a member account. By default, SELF is specified. Use SELF for
-	// stack sets with self-managed permissions.
+	// administrator in a member account.
+	//
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
+	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
+	//
 	//   - If you are signed in to a delegated administrator account, specify
-	//   DELEGATED_ADMIN . Your Amazon Web Services account must be registered as a
-	//   delegated administrator in the management account. For more information, see
-	//   Register a delegated administrator (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
-	//   in the CloudFormation User Guide.
+	//   DELEGATED_ADMIN .
+	//
+	// Your Amazon Web Services account must be registered as a delegated
+	//   administrator in the management account. For more information, see [Register a delegated administrator]in the
+	//   CloudFormation User Guide.
+	//
+	// [Register a delegated administrator]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html
 	CallAs types.CallAs
 
 	// The filter to apply to stack instances
@@ -59,11 +63,8 @@ type ListStackInstancesInput struct {
 	// set of results.
 	MaxResults *int32
 
-	// If the previous request didn't return all the remaining results, the response's
-	// NextToken parameter value is set to a token. To retrieve the next set of
-	// results, call ListStackInstances again and assign that token to the request
-	// object's NextToken parameter. If there are no remaining results, the previous
-	// response object's NextToken parameter is set to null .
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	// The name of the Amazon Web Services account that you want to list stack
@@ -95,9 +96,6 @@ type ListStackInstancesOutput struct {
 }
 
 func (c *Client) addOperationListStackInstancesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListStackInstances{}, middleware.After)
 	if err != nil {
 		return err
@@ -106,56 +104,20 @@ func (c *Client) addOperationListStackInstancesMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListStackInstances"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListStackInstancesValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListStackInstances(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -170,16 +132,11 @@ func (c *Client) addOperationListStackInstancesMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListStackInstancesAPIClient is a client that implements the ListStackInstances
-// operation.
-type ListStackInstancesAPIClient interface {
-	ListStackInstances(context.Context, *ListStackInstancesInput, ...func(*Options)) (*ListStackInstancesOutput, error)
-}
-
-var _ ListStackInstancesAPIClient = (*Client)(nil)
 
 // ListStackInstancesPaginatorOptions is the paginator options for
 // ListStackInstances
@@ -248,6 +205,9 @@ func (p *ListStackInstancesPaginator) NextPage(ctx context.Context, optFns ...fu
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListStackInstances(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -267,10 +227,10 @@ func (p *ListStackInstancesPaginator) NextPage(ctx context.Context, optFns ...fu
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListStackInstances(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListStackInstances",
-	}
+// ListStackInstancesAPIClient is a client that implements the ListStackInstances
+// operation.
+type ListStackInstancesAPIClient interface {
+	ListStackInstances(context.Context, *ListStackInstancesInput, ...func(*Options)) (*ListStackInstancesOutput, error)
 }
+
+var _ ListStackInstancesAPIClient = (*Client)(nil)

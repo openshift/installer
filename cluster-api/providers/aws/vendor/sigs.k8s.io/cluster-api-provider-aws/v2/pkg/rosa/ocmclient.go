@@ -64,6 +64,9 @@ type OCMClient interface {
 	UpdateLogForwarder(logForwarder *v1.LogForwarder, logForwarderID string, clusterID string) error
 	DeleteLogForwarder(clusterID string, logForwarderID string) error
 	GetLogForwarders(clusterID string) ([]*v1.LogForwarder, error)
+	UpdateClusterDeletionProtection(clusterID string, enabled bool) error
+	GetIngresses(clusterID string) ([]*v1.Ingress, error)
+	UpdateIngress(clusterID string, ingress *v1.Ingress) (*v1.Ingress, error)
 }
 
 func (c *ocmclient) AckVersionGate(clusterID string, gateID string) error {
@@ -182,6 +185,27 @@ func (c *ocmclient) GetLogForwarders(clusterID string) ([]*v1.LogForwarder, erro
 	return c.ocmClient.GetLogForwarders(clusterID)
 }
 
+func (c *ocmclient) UpdateClusterDeletionProtection(clusterID string, enabled bool) error {
+	body, err := v1.NewDeleteProtection().Enabled(enabled).Build()
+	if err != nil {
+		return fmt.Errorf("failed to build delete protection: %w", err)
+	}
+	return c.ocmClient.UpdateClusterDeletionProtection(clusterID, body)
+}
+
+func (c *ocmclient) GetIngresses(clusterID string) ([]*v1.Ingress, error) {
+	return c.ocmClient.GetIngresses(clusterID)
+}
+
+func (c *ocmclient) UpdateIngress(clusterID string, ingress *v1.Ingress) (*v1.Ingress, error) {
+	return c.ocmClient.UpdateIngress(clusterID, ingress)
+}
+
+// NewOCMClientFromRosaClient wraps a rosa ocm.Client as an OCMClient.
+func NewOCMClientFromRosaClient(client *ocm.Client) OCMClient {
+	return &ocmclient{ocmClient: client}
+}
+
 // NewMockOCMClient creates a new empty ocm.Client without any real connection.
 func NewMockOCMClient(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (OCMClient, error) {
 	return &ocmclient{ocmClient: &ocm.Client{}}, nil
@@ -191,11 +215,7 @@ func NewMockOCMClient(ctx context.Context, rosaScope *scope.ROSAControlPlaneScop
 func ConvertToRosaOcmClient(i OCMClient) (*ocm.Client, error) {
 	c, ok := i.(*ocmclient)
 	if !ok {
-		c, ok := i.(*ocm.Client)
-		if !ok {
-			return nil, fmt.Errorf("failed to convert to Rosa OCM Client")
-		}
-		return c, nil
+		return nil, fmt.Errorf("failed to convert to Rosa OCM Client")
 	}
 	return c.ocmClient, nil
 }

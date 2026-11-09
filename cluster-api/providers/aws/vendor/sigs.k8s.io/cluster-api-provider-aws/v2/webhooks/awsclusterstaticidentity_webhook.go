@@ -43,10 +43,9 @@ var (
 )
 
 func (w *AWSClusterStaticIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.AWSClusterStaticIdentity{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.AWSClusterStaticIdentity{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

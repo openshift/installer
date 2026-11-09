@@ -6,19 +6,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
 	"time"
 )
 
-// Retrieves information about the specified instance profile, including the
+//	Retrieves information about the specified instance profile, including the
+//
 // instance profile's path, GUID, ARN, and role. For more information about
-// instance profiles, see Using instance profiles (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html)
-// in the IAM User Guide.
+// instance profiles, see [Using instance profiles]in the IAM User Guide.
+//
+// [Using instance profiles]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
 func (c *Client) GetInstanceProfile(ctx context.Context, params *GetInstanceProfileInput, optFns ...func(*Options)) (*GetInstanceProfileOutput, error) {
 	if params == nil {
 		params = &GetInstanceProfileInput{}
@@ -36,10 +36,13 @@ func (c *Client) GetInstanceProfile(ctx context.Context, params *GetInstanceProf
 
 type GetInstanceProfileInput struct {
 
-	// The name of the instance profile to get information about. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
-	// of characters consisting of upper and lowercase alphanumeric characters with no
-	// spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the instance profile to get information about.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	InstanceProfileName *string
@@ -47,7 +50,9 @@ type GetInstanceProfileInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetInstanceProfile request.
+// Contains the response to a successful [GetInstanceProfile] request.
+//
+// [GetInstanceProfile]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetInstanceProfile.html
 type GetInstanceProfileOutput struct {
 
 	// A structure containing details about the instance profile.
@@ -62,9 +67,6 @@ type GetInstanceProfileOutput struct {
 }
 
 func (c *Client) addOperationGetInstanceProfileMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetInstanceProfile{}, middleware.After)
 	if err != nil {
 		return err
@@ -73,56 +75,20 @@ func (c *Client) addOperationGetInstanceProfileMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetInstanceProfile"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetInstanceProfileValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetInstanceProfile(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -137,16 +103,11 @@ func (c *Client) addOperationGetInstanceProfileMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetInstanceProfileAPIClient is a client that implements the GetInstanceProfile
-// operation.
-type GetInstanceProfileAPIClient interface {
-	GetInstanceProfile(context.Context, *GetInstanceProfileInput, ...func(*Options)) (*GetInstanceProfileOutput, error)
-}
-
-var _ GetInstanceProfileAPIClient = (*Client)(nil)
 
 // InstanceProfileExistsWaiterOptions are waiter options for
 // InstanceProfileExistsWaiter
@@ -182,12 +143,13 @@ type InstanceProfileExistsWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *GetInstanceProfileInput, *GetInstanceProfileOutput, error) (bool, error)
 }
 
@@ -264,7 +226,13 @@ func (w *InstanceProfileExistsWaiter) WaitForOutput(ctx context.Context, params 
 		}
 
 		out, err := w.client.GetInstanceProfile(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -313,13 +281,16 @@ func instanceProfileExistsStateRetryable(ctx context.Context, input *GetInstance
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
-func newServiceMetadataMiddleware_opGetInstanceProfile(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetInstanceProfile",
-	}
+// GetInstanceProfileAPIClient is a client that implements the GetInstanceProfile
+// operation.
+type GetInstanceProfileAPIClient interface {
+	GetInstanceProfile(context.Context, *GetInstanceProfileInput, ...func(*Options)) (*GetInstanceProfileOutput, error)
 }
+
+var _ GetInstanceProfileAPIClient = (*Client)(nil)

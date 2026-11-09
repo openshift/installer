@@ -4,11 +4,12 @@ package types
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/schemas"
 	smithy "github.com/aws/smithy-go"
 )
 
-// The target of the operation is currently being modified by a different request.
-// Try again later.
+// The request failed because the target of the operation is currently being
+// modified by a different request. Try again later.
 type ConcurrentModificationException struct {
 	Message *string
 
@@ -33,14 +34,35 @@ func (e *ConcurrentModificationException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *ConcurrentModificationException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+func (v *ConcurrentModificationException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ConcurrentModificationException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
 
-// The request was denied because performing this operation violates a constraint.
+func (v *ConcurrentModificationException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.ConcurrentModificationException_Message, *v.Message)
+	}
+}
+func (v *ConcurrentModificationException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ConcurrentModificationException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ConcurrentModificationException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.ConcurrentModificationException_Message, v.Message)
+		}
+		return nil
+	})
+}
+
+// The request failed because performing the operation would violate a constraint.
 //
 // Some of the reasons in the following list might not apply to this specific
 // operation.
 //
 //   - You must meet the prerequisites for using tag policies. For information,
-//     see [Prerequisites and Permissions for Using Tag Policies]in the Organizations User Guide.
+//     see [Prerequisites and permissions]in the Tagging Amazon Web Services resources and Tag Editor user guide.
 //
 //   - You must enable the tag policies service principal (
 //     tagpolicies.tag.amazonaws.com ) to integrate with Organizations For
@@ -50,7 +72,7 @@ func (e *ConcurrentModificationException) ErrorFault() smithy.ErrorFault { retur
 //     account.
 //
 // [EnableAWSServiceAccess]: https://docs.aws.amazon.com/organizations/latest/APIReference/API_EnableAWSServiceAccess.html
-// [Prerequisites and Permissions for Using Tag Policies]: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html
+// [Prerequisites and permissions]: https://docs.aws.amazon.com/tag-editor/latest/userguide/tag-policies-orgs.html#tag-policies-prereqs
 type ConstraintViolationException struct {
 	Message *string
 
@@ -75,6 +97,27 @@ func (e *ConstraintViolationException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *ConstraintViolationException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+func (v *ConstraintViolationException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ConstraintViolationException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ConstraintViolationException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.ConstraintViolationException_Message, *v.Message)
+	}
+}
+func (v *ConstraintViolationException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ConstraintViolationException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ConstraintViolationException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.ConstraintViolationException_Message, v.Message)
+		}
+		return nil
+	})
+}
 
 // The request processing failed because of an unknown error, exception, or
 // failure. You can retry the request.
@@ -102,21 +145,47 @@ func (e *InternalServiceException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *InternalServiceException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
+func (v *InternalServiceException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.InternalServiceException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
 
-// This error indicates one of the following:
+func (v *InternalServiceException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.InternalServiceException_Message, *v.Message)
+	}
+}
+func (v *InternalServiceException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.InternalServiceException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.InternalServiceException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.InternalServiceException_Message, v.Message)
+		}
+		return nil
+	})
+}
+
+// The request failed because of one of the following reasons:
 //
-//   - A parameter is missing.
+//   - A required parameter is missing.
 //
-//   - A malformed string was supplied for the request parameter.
+//   - A provided string parameter is malformed.
 //
-//   - An out-of-range value was supplied for the request parameter.
+//   - An provided parameter value is out of range.
 //
 //   - The target ID is invalid, unsupported, or doesn't exist.
 //
 //   - You can't access the Amazon S3 bucket for report storage. For more
-//     information, see [Additional Requirements for Organization-wide Tag Compliance Reports]in the Organizations User Guide.
+//     information, see [Amazon S3 bucket policy for report storage]in the Tagging Amazon Web Services resources and Tag Editor
+//     user guide.
 //
-// [Additional Requirements for Organization-wide Tag Compliance Reports]: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies-prereqs.html#bucket-policies-org-report
+//   - The partition specified in an ARN parameter in the request doesn't match
+//     the partition where you invoked the operation. The partition is specified by the
+//     second field of the ARN.
+//
+// [Amazon S3 bucket policy for report storage]: https://docs.aws.amazon.com/tag-editor/latest/userguide/tag-policies-orgs.html#bucket-policy
 type InvalidParameterException struct {
 	Message *string
 
@@ -141,9 +210,30 @@ func (e *InvalidParameterException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *InvalidParameterException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+func (v *InvalidParameterException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.InvalidParameterException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
 
-// A PaginationToken is valid for a maximum of 15 minutes. Your request was denied
-// because the specified PaginationToken has expired.
+func (v *InvalidParameterException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.InvalidParameterException_Message, *v.Message)
+	}
+}
+func (v *InvalidParameterException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.InvalidParameterException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.InvalidParameterException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.InvalidParameterException_Message, v.Message)
+		}
+		return nil
+	})
+}
+
+// The request failed because the specified PaginationToken has expired. A
+// PaginationToken is valid for a maximum of 15 minutes.
 type PaginationTokenExpiredException struct {
 	Message *string
 
@@ -168,8 +258,30 @@ func (e *PaginationTokenExpiredException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *PaginationTokenExpiredException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+func (v *PaginationTokenExpiredException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.PaginationTokenExpiredException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
 
-// The request was denied to limit the frequency of submitted requests.
+func (v *PaginationTokenExpiredException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.PaginationTokenExpiredException_Message, *v.Message)
+	}
+}
+func (v *PaginationTokenExpiredException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.PaginationTokenExpiredException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.PaginationTokenExpiredException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.PaginationTokenExpiredException_Message, v.Message)
+		}
+		return nil
+	})
+}
+
+// The request failed because it exceeded the allowed frequency of submitted
+// requests.
 type ThrottledException struct {
 	Message *string
 
@@ -194,3 +306,24 @@ func (e *ThrottledException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *ThrottledException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+func (v *ThrottledException) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ThrottledException)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ThrottledException) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Message != nil {
+		s.WriteString(schemas.ThrottledException_Message, *v.Message)
+	}
+}
+func (v *ThrottledException) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ThrottledException, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ThrottledException_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.ThrottledException_Message, v.Message)
+		}
+		return nil
+	})
+}

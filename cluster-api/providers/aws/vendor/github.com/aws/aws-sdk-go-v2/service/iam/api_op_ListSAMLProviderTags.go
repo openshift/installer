@@ -5,17 +5,18 @@ package iam
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Lists the tags that are attached to the specified Security Assertion Markup
 // Language (SAML) identity provider. The returned list of tags is sorted by tag
-// key. For more information, see About SAML 2.0-based federation (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml.html)
-// . For more information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-// in the IAM User Guide.
+// key. For more information, see [About SAML 2.0-based federation].
+//
+// For more information about tagging, see [Tagging IAM resources] in the IAM User Guide.
+//
+// [About SAML 2.0-based federation]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml.html
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) ListSAMLProviderTags(ctx context.Context, params *ListSAMLProviderTagsInput, optFns ...func(*Options)) (*ListSAMLProviderTagsOutput, error) {
 	if params == nil {
 		params = &ListSAMLProviderTagsInput{}
@@ -34,10 +35,13 @@ func (c *Client) ListSAMLProviderTags(ctx context.Context, params *ListSAMLProvi
 type ListSAMLProviderTagsInput struct {
 
 	// The ARN of the Security Assertion Markup Language (SAML) identity provider
-	// whose tags you want to see. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
-	// ) a string of characters consisting of upper and lowercase alphanumeric
-	// characters with no spaces. You can also include any of the following characters:
-	// _+=,.@-
+	// whose tags you want to see.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	SAMLProviderArn *string
@@ -50,11 +54,13 @@ type ListSAMLProviderTagsInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	MaxItems *int32
 
 	noSmithyDocumentSerde
@@ -89,9 +95,6 @@ type ListSAMLProviderTagsOutput struct {
 }
 
 func (c *Client) addOperationListSAMLProviderTagsMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListSAMLProviderTags{}, middleware.After)
 	if err != nil {
 		return err
@@ -100,56 +103,20 @@ func (c *Client) addOperationListSAMLProviderTagsMiddlewares(stack *middleware.S
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListSAMLProviderTags"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListSAMLProviderTagsValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSAMLProviderTags(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -164,27 +131,24 @@ func (c *Client) addOperationListSAMLProviderTagsMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListSAMLProviderTagsAPIClient is a client that implements the
-// ListSAMLProviderTags operation.
-type ListSAMLProviderTagsAPIClient interface {
-	ListSAMLProviderTags(context.Context, *ListSAMLProviderTagsInput, ...func(*Options)) (*ListSAMLProviderTagsOutput, error)
-}
-
-var _ ListSAMLProviderTagsAPIClient = (*Client)(nil)
 
 // ListSAMLProviderTagsPaginatorOptions is the paginator options for
 // ListSAMLProviderTags
 type ListSAMLProviderTagsPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -245,6 +209,9 @@ func (p *ListSAMLProviderTagsPaginator) NextPage(ctx context.Context, optFns ...
 	}
 	params.MaxItems = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListSAMLProviderTags(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -264,10 +231,10 @@ func (p *ListSAMLProviderTagsPaginator) NextPage(ctx context.Context, optFns ...
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListSAMLProviderTags(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListSAMLProviderTags",
-	}
+// ListSAMLProviderTagsAPIClient is a client that implements the
+// ListSAMLProviderTags operation.
+type ListSAMLProviderTagsAPIClient interface {
+	ListSAMLProviderTags(context.Context, *ListSAMLProviderTagsInput, ...func(*Options)) (*ListSAMLProviderTagsOutput, error)
 }
+
+var _ ListSAMLProviderTagsAPIClient = (*Client)(nil)

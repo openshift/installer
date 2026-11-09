@@ -710,6 +710,26 @@ func (m *validateOpGetPredictiveScalingForecast) HandleInitialize(ctx context.Co
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpLaunchInstances struct {
+}
+
+func (*validateOpLaunchInstances) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpLaunchInstances) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*LaunchInstancesInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpLaunchInstancesInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpPutLifecycleHook struct {
 }
 
@@ -1150,6 +1170,10 @@ func addOpGetPredictiveScalingForecastValidationMiddleware(stack *middleware.Sta
 	return stack.Initialize.Add(&validateOpGetPredictiveScalingForecast{}, middleware.After)
 }
 
+func addOpLaunchInstancesValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpLaunchInstances{}, middleware.After)
+}
+
 func addOpPutLifecycleHookValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutLifecycleHook{}, middleware.After)
 }
@@ -1517,6 +1541,21 @@ func validateMixedInstancesPolicy(v *types.MixedInstancesPolicy) error {
 		if err := validateLaunchTemplate(v.LaunchTemplate); err != nil {
 			invalidParams.AddNested("LaunchTemplate", err.(smithy.InvalidParamsError))
 		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOperator(v *types.Operator) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "Operator"}
+	if v.Principal == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Principal"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -2150,6 +2189,11 @@ func validateOpCreateAutoScalingGroupInput(v *CreateAutoScalingGroupInput) error
 			invalidParams.AddNested("TrafficSources", err.(smithy.InvalidParamsError))
 		}
 	}
+	if v.Operator != nil {
+		if err := validateOperator(v.Operator); err != nil {
+			invalidParams.AddNested("Operator", err.(smithy.InvalidParamsError))
+		}
+	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	} else {
@@ -2600,6 +2644,27 @@ func validateOpGetPredictiveScalingForecastInput(v *GetPredictiveScalingForecast
 	}
 }
 
+func validateOpLaunchInstancesInput(v *LaunchInstancesInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "LaunchInstancesInput"}
+	if v.AutoScalingGroupName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("AutoScalingGroupName"))
+	}
+	if v.RequestedCapacity == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("RequestedCapacity"))
+	}
+	if v.ClientToken == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ClientToken"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpPutLifecycleHookInput(v *PutLifecycleHookInput) error {
 	if v == nil {
 		return nil
@@ -2850,9 +2915,6 @@ func validateOpTerminateInstanceInAutoScalingGroupInput(v *TerminateInstanceInAu
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "TerminateInstanceInAutoScalingGroupInput"}
-	if v.InstanceId == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("InstanceId"))
-	}
 	if v.ShouldDecrementDesiredCapacity == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("ShouldDecrementDesiredCapacity"))
 	}

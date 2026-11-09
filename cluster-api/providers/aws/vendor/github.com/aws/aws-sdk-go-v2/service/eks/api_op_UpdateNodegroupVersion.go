@@ -5,10 +5,10 @@ package eks
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/eks/schemas"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Updates the Kubernetes version or AMI version of an Amazon EKS managed node
@@ -103,8 +103,9 @@ type UpdateNodegroupVersionInput struct {
 	// [Amazon EKS optimized Windows AMI versions]: https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-versions-windows.html
 	ReleaseVersion *string
 
-	// The Kubernetes version to update to. If no version is specified, then the
-	// Kubernetes version of the node group does not change. You can specify the
+	// The Kubernetes version to update to. If no version is specified, then the node
+	// group will be updated to match the cluster's current Kubernetes version, and the
+	// latest available AMI for that version will be used. You can also specify the
 	// Kubernetes version of the cluster to update the node group to the latest AMI
 	// version of the cluster's Kubernetes version. If you specify launchTemplate , and
 	// your launch template uses a custom AMI, then don't specify version , or the node
@@ -115,6 +116,38 @@ type UpdateNodegroupVersionInput struct {
 	Version *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *UpdateNodegroupVersionInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.UpdateNodegroupVersionRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *UpdateNodegroupVersionInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ClientRequestToken != nil {
+		s.WriteString(schemas.UpdateNodegroupVersionRequest_clientRequestToken, *v.ClientRequestToken)
+	}
+	if v.ClusterName != nil {
+		s.WriteString(schemas.UpdateNodegroupVersionRequest_clusterName, *v.ClusterName)
+	}
+	if v.Force != false {
+		s.WriteBool(schemas.UpdateNodegroupVersionRequest_force, v.Force)
+	}
+	if v.LaunchTemplate != nil {
+		s.WriteStruct(schemas.UpdateNodegroupVersionRequest_launchTemplate)
+		v.LaunchTemplate.SerializeMembers(s)
+		s.CloseStruct()
+	}
+	if v.NodegroupName != nil {
+		s.WriteString(schemas.UpdateNodegroupVersionRequest_nodegroupName, *v.NodegroupName)
+	}
+	if v.ReleaseVersion != nil {
+		s.WriteString(schemas.UpdateNodegroupVersionRequest_releaseVersion, *v.ReleaseVersion)
+	}
+	if v.Version != nil {
+		s.WriteString(schemas.UpdateNodegroupVersionRequest_version, *v.Version)
+	}
 }
 
 type UpdateNodegroupVersionOutput struct {
@@ -128,68 +161,44 @@ type UpdateNodegroupVersionOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *UpdateNodegroupVersionOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.UpdateNodegroupVersionResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *UpdateNodegroupVersionOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Update != nil {
+		s.WriteStruct(schemas.UpdateNodegroupVersionResponse_update)
+		v.Update.SerializeMembers(s)
+		s.CloseStruct()
+	}
+}
+func (v *UpdateNodegroupVersionOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.UpdateNodegroupVersionResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.UpdateNodegroupVersionResponse_update:
+			v.Update = &types.Update{}
+			return v.Update.Deserialize(d)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationUpdateNodegroupVersionMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.UpdateNodegroupVersion, schemas.UpdateNodegroupVersionRequest, schemas.UpdateNodegroupVersionResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsRestjson1_serializeOpUpdateNodegroupVersion{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.UpdateNodegroupVersion, schemas.UpdateNodegroupVersionRequest, schemas.UpdateNodegroupVersionResponse), output: &UpdateNodegroupVersionOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpUpdateNodegroupVersion{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "UpdateNodegroupVersion"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
@@ -199,12 +208,6 @@ func (c *Client) addOperationUpdateNodegroupVersionMiddlewares(stack *middleware
 		return err
 	}
 	if err = addOpUpdateNodegroupVersionValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateNodegroupVersion(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -219,16 +222,7 @@ func (c *Client) addOperationUpdateNodegroupVersionMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -265,12 +259,4 @@ func (m *idempotencyToken_initializeOpUpdateNodegroupVersion) HandleInitialize(c
 }
 func addIdempotencyToken_opUpdateNodegroupVersionMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpUpdateNodegroupVersion{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opUpdateNodegroupVersion(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "UpdateNodegroupVersion",
-	}
 }

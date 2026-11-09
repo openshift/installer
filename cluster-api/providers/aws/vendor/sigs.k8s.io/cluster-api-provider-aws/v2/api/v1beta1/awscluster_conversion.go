@@ -55,6 +55,9 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.S3Bucket = restored.Spec.S3Bucket
 	if restored.Status.Bastion != nil {
+		if dst.Status.Bastion == nil {
+			dst.Status.Bastion = &infrav1.Instance{}
+		}
 		dst.Status.Bastion.InstanceMetadataOptions = restored.Status.Bastion.InstanceMetadataOptions
 		dst.Status.Bastion.PlacementGroupName = restored.Status.Bastion.PlacementGroupName
 		dst.Status.Bastion.PlacementGroupPartition = restored.Status.Bastion.PlacementGroupPartition
@@ -75,8 +78,13 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 	dst.Spec.Partition = restored.Spec.Partition
 
-	for role, sg := range restored.Status.Network.SecurityGroups {
-		dst.Status.Network.SecurityGroups[role] = sg
+	if len(restored.Status.Network.SecurityGroups) > 0 {
+		if dst.Status.Network.SecurityGroups == nil {
+			dst.Status.Network.SecurityGroups = make(map[infrav1.SecurityGroupRole]infrav1.SecurityGroup, len(restored.Status.Network.SecurityGroups))
+		}
+		for role, sg := range restored.Status.Network.SecurityGroups {
+			dst.Status.Network.SecurityGroups[role] = sg
+		}
 	}
 	dst.Status.Network.NatGatewaysIPs = restored.Status.Network.NatGatewaysIPs
 
@@ -89,6 +97,9 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	if restored.Spec.NetworkSpec.VPC.IsIPv6Enabled() && restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPv6 == nil {
+			dst.Spec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{}
+		}
 		if dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool == nil {
 			dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool = &infrav1.IPAMPool{}
 		}
@@ -109,6 +120,9 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	if restored.Spec.NetworkSpec.VPC.IsIPv6Enabled() && restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPv6 == nil {
+			dst.Spec.NetworkSpec.VPC.IPv6 = &infrav1.IPv6{}
+		}
 		if dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool == nil {
 			dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool = &infrav1.IPAMPool{}
 		}
@@ -151,6 +165,8 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 			}
 		}
 	}
+
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
 
 	return nil
 }

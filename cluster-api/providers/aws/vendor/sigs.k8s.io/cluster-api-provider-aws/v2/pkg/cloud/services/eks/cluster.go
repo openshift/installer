@@ -39,7 +39,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/cidr"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/cmp"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/tristate"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
@@ -508,6 +507,8 @@ func (s *Service) createCluster(ctx context.Context, eksClusterName string) (*ek
 		}
 	}
 
+	controlPlaneScalingConfig := converters.ControlPlaneScalingConfigToSDK(s.scope.ControlPlane.Spec.ControlPlaneScalingConfig)
+
 	bootstrapAddon := s.scope.BootstrapSelfManagedAddons()
 	input := &eks.CreateClusterInput{
 		Name:                       aws.String(eksClusterName),
@@ -521,6 +522,7 @@ func (s *Service) createCluster(ctx context.Context, eksClusterName string) (*ek
 		KubernetesNetworkConfig:    netConfig,
 		BootstrapSelfManagedAddons: bootstrapAddon,
 		UpgradePolicy:              upgradePolicy,
+		ControlPlaneScalingConfig:  controlPlaneScalingConfig,
 	}
 
 	var out *eks.CreateClusterOutput
@@ -579,6 +581,11 @@ func (s *Service) reconcileClusterConfig(ctx context.Context, cluster *ekstypes.
 	if updateUpgradePolicy := s.reconcileUpgradePolicy(cluster.UpgradePolicy); updateUpgradePolicy != nil {
 		needsUpdate = true
 		input.UpgradePolicy = updateUpgradePolicy
+	}
+
+	if updateScalingConfig := s.reconcileScalingConfig(cluster.ControlPlaneScalingConfig); updateScalingConfig != nil {
+		needsUpdate = true
+		input.ControlPlaneScalingConfig = updateScalingConfig
 	}
 
 	if needsUpdate {
@@ -670,9 +677,14 @@ func (s *Service) reconcileLogging(ctx context.Context, logging *ekstypes.Loggin
 	return nil
 }
 
+const (
+	defaultIPv4ZeroCIDR = "0.0.0.0/0"
+	defaultIPv6ZeroCIDR = "::/0"
+)
+
 func publicAccessCIDRsEqual(as []string, bs []string) bool {
-	allV4 := "0.0.0.0/0"
-	allV6 := "::/0"
+	allV4 := defaultIPv4ZeroCIDR
+	allV6 := defaultIPv6ZeroCIDR
 	asDefault := false
 	bsDefault := false
 
@@ -780,10 +792,14 @@ func (s *Service) reconcileClusterVersion(ctx context.Context, cluster *ekstypes
 
 	clusterVersion := version.MustParseGeneric(*cluster.Version)
 
-	if specVersion != nil && clusterVersion.LessThan(specVersion) {
-		// NOTE: you can only upgrade increments of minor versions. If you want to upgrade 1.14 to 1.16 we
-		// need to go 1.14-> 1.15 and then 1.15 -> 1.16.
-		nextVersionString := versionToEKS(clusterVersion.WithMinor(clusterVersion.Minor() + 1))
+	if specVersion != nil && !clusterVersion.EqualTo(specVersion) {
+		nextVersion := specVersion
+		if clusterVersion.LessThan(specVersion) {
+			// NOTE: you can only upgrade increments of minor versions. If you want to upgrade 1.14 to 1.16 we
+			// need to go 1.14-> 1.15 and then 1.15 -> 1.16.
+			nextVersion = clusterVersion.WithMinor(clusterVersion.Minor() + 1)
+		}
+		nextVersionString := versionToEKS(nextVersion)
 
 		input := &eks.UpdateClusterVersionInput{
 			Name:    aws.String(s.scope.KubernetesClusterName()),
@@ -836,6 +852,24 @@ func (s *Service) reconcileUpgradePolicy(upgradePolicy *ekstypes.UpgradePolicyRe
 	return &ekstypes.UpgradePolicyRequest{
 		SupportType: converters.SupportTypeToSDK(s.scope.ControlPlane.Spec.UpgradePolicy),
 	}
+}
+
+func (s *Service) reconcileScalingConfig(scalingConfig *ekstypes.ControlPlaneScalingConfig) *ekstypes.ControlPlaneScalingConfig {
+	if s.scope.ControlPlane.Spec.ControlPlaneScalingConfig == nil {
+		return nil
+	}
+
+	desiredConfig := converters.ControlPlaneScalingConfigToSDK(s.scope.ControlPlane.Spec.ControlPlaneScalingConfig)
+	if desiredConfig == nil {
+		return nil
+	}
+
+	currentConfig := converters.ControlPlaneScalingConfigFromSDK(scalingConfig)
+	if s.scope.ControlPlane.Spec.ControlPlaneScalingConfig.Equal(currentConfig) {
+		return nil
+	}
+
+	return desiredConfig
 }
 
 func (s *Service) describeEKSCluster(ctx context.Context, eksClusterName string) (*ekstypes.Cluster, error) {
@@ -895,9 +929,6 @@ func compareEncryptionConfig(updatedEncryptionConfig, existingEncryptionConfig [
 		encryptionConfig := updatedEncryptionConfig[index]
 
 		if getKeyArn(encryptionConfig) != getKeyArn(existingEncryptionConfig[index]) {
-			return false
-		}
-		if !cmp.Equals(aws.StringSlice(encryptionConfig.Resources), aws.StringSlice(existingEncryptionConfig[index].Resources)) {
 			return false
 		}
 	}

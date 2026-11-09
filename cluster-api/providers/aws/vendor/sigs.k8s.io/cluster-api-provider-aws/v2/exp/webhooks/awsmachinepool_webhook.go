@@ -41,10 +41,9 @@ type AWSMachinePool struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the AWSMachinePool.
 func (w *AWSMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&expinfrav1.AWSMachinePool{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &expinfrav1.AWSMachinePool{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

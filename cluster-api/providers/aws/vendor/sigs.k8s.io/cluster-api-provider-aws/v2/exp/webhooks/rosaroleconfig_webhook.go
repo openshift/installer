@@ -20,10 +20,9 @@ type ROSARoleConfig struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the ROSARoleConfig.
 func (w *ROSARoleConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&expinfrav1.ROSARoleConfig{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &expinfrav1.ROSARoleConfig{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

@@ -417,6 +417,33 @@ func (e *ComplianceTypeCountLimitExceededException) ErrorFault() smithy.ErrorFau
 	return smithy.FaultClient
 }
 
+// An error occurred because of a conflict with a concurrent request or the
+// current state of the resource. Retry your request.
+type ConflictException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *ConflictException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *ConflictException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *ConflictException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ConflictException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *ConflictException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
 // You have exceeded the limit for custom schemas. Delete one or more custom
 // schemas and try again.
 type CustomSchemaCountLimitExceededException struct {
@@ -2328,6 +2355,32 @@ func (e *MaxDocumentSizeExceeded) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *MaxDocumentSizeExceeded) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The requested operation is no longer supported by Systems Manager.
+type NoLongerSupportedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *NoLongerSupportedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *NoLongerSupportedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *NoLongerSupportedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "NoLongerSupportedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *NoLongerSupportedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 // You don't have permission to view OpsItems in the specified account. Verify
 // that your account is configured either as a Systems Manager delegated

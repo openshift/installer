@@ -41,10 +41,9 @@ var _ webhook.CustomDefaulter = &AWSClusterTemplate{}
 var _ webhook.CustomValidator = &AWSClusterTemplate{}
 
 func (w *AWSClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.AWSClusterTemplate{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.AWSClusterTemplate{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

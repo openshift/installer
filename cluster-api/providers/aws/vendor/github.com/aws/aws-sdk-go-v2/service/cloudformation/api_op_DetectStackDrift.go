@@ -4,10 +4,7 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Detects whether a stack's actual configuration differs, or has drifted, from
@@ -17,19 +14,24 @@ import (
 // resource with its expected template configuration. Only resource properties
 // explicitly defined in the stack template are checked for drift. A stack is
 // considered to have drifted if one or more of its resources differ from their
-// expected template configurations. For more information, see Detecting
-// Unregulated Configuration Changes to Stacks and Resources (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html)
-// . Use DetectStackDrift to detect drift on all supported resources for a given
-// stack, or DetectStackResourceDrift to detect drift on individual resources. For
-// a list of stack resources that currently support drift detection, see Resources
-// that Support Drift Detection (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift-resource-list.html)
-// . DetectStackDrift can take up to several minutes, depending on the number of
-// resources contained within the stack. Use DescribeStackDriftDetectionStatus to
-// monitor the progress of a detect stack drift operation. Once the drift detection
-// operation has completed, use DescribeStackResourceDrifts to return drift
-// information about the stack and its resources. When detecting drift on a stack,
-// CloudFormation doesn't detect drift on any nested stacks belonging to that
-// stack. Perform DetectStackDrift directly on the nested stack itself.
+// expected template configurations. For more information, see [Detect unmanaged configuration changes to stacks and resources with drift detection].
+//
+// Use DetectStackDrift to detect drift on all supported resources for a given
+// stack, or DetectStackResourceDriftto detect drift on individual resources.
+//
+// For a list of stack resources that currently support drift detection, see [Resource type support for imports and drift detection].
+//
+// DetectStackDrift can take up to several minutes, depending on the number of
+// resources contained within the stack. Use DescribeStackDriftDetectionStatusto monitor the progress of a detect
+// stack drift operation. Once the drift detection operation has completed, use DescribeStackResourceDriftsto
+// return drift information about the stack and its resources.
+//
+// When detecting drift on a stack, CloudFormation doesn't detect drift on any
+// nested stacks belonging to that stack. Perform DetectStackDrift directly on the
+// nested stack itself.
+//
+// [Resource type support for imports and drift detection]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-import-supported-resources.html
+// [Detect unmanaged configuration changes to stacks and resources with drift detection]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html
 func (c *Client) DetectStackDrift(ctx context.Context, params *DetectStackDriftInput, optFns ...func(*Options)) (*DetectStackDriftOutput, error) {
 	if params == nil {
 		params = &DetectStackDriftInput{}
@@ -60,10 +62,11 @@ type DetectStackDriftInput struct {
 
 type DetectStackDriftOutput struct {
 
-	// The ID of the drift detection results of this operation. CloudFormation
-	// generates new results, with a new drift detection ID, each time this operation
-	// is run. However, the number of drift results CloudFormation retains for any
-	// given stack, and for how long, may vary.
+	// The ID of the drift detection results of this operation.
+	//
+	// CloudFormation generates new results, with a new drift detection ID, each time
+	// this operation is run. However, the number of drift results CloudFormation
+	// retains for any given stack, and for how long, may vary.
 	//
 	// This member is required.
 	StackDriftDetectionId *string
@@ -75,9 +78,6 @@ type DetectStackDriftOutput struct {
 }
 
 func (c *Client) addOperationDetectStackDriftMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDetectStackDrift{}, middleware.After)
 	if err != nil {
 		return err
@@ -86,56 +86,20 @@ func (c *Client) addOperationDetectStackDriftMiddlewares(stack *middleware.Stack
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DetectStackDrift"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetectStackDriftValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDetectStackDrift(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -150,13 +114,8 @@ func (c *Client) addOperationDetectStackDriftMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opDetectStackDrift(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DetectStackDrift",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

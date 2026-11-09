@@ -4,24 +4,28 @@ package secretsmanager
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Attaches a resource-based permission policy to a secret. A resource-based
-// policy is optional. For more information, see Authentication and access control
-// for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// For information about attaching a policy in the console, see Attach a
-// permissions policy to a secret (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-based-policies.html)
-// . Secrets Manager generates a CloudTrail log entry when you call this action. Do
+// policy is optional. For more information, see [Authentication and access control for Secrets Manager]
+//
+// For information about attaching a policy in the console, see [Attach a permissions policy to a secret].
+//
+// Secrets Manager generates a CloudTrail log entry when you call this action. Do
 // not include sensitive information in request parameters because it might be
-// logged. For more information, see Logging Secrets Manager events with CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html)
-// . Required permissions: secretsmanager:PutResourcePolicy . For more information,
-// see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
-// and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// .
+// logged. For more information, see [Logging Secrets Manager events with CloudTrail].
+//
+// Required permissions: secretsmanager:PutResourcePolicy . For more information,
+// see [IAM policy actions for Secrets Manager]and [Authentication and access control in Secrets Manager].
+//
+// [Authentication and access control in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
+// [Logging Secrets Manager events with CloudTrail]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html
+// [Attach a permissions policy to a secret]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-based-policies.html
+// [IAM policy actions for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions
+// [Authentication and access control for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
 func (c *Client) PutResourcePolicy(ctx context.Context, params *PutResourcePolicyInput, optFns ...func(*Options)) (*PutResourcePolicyOutput, error) {
 	if params == nil {
 		params = &PutResourcePolicyInput{}
@@ -40,37 +44,63 @@ func (c *Client) PutResourcePolicy(ctx context.Context, params *PutResourcePolic
 type PutResourcePolicyInput struct {
 
 	// A JSON-formatted string for an Amazon Web Services resource-based policy. For
-	// example policies, see Permissions policy examples (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples.html)
-	// .
+	// example policies, see [Permissions policy examples].
+	//
+	// [Permissions policy examples]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples.html
 	//
 	// This member is required.
 	ResourcePolicy *string
 
-	// The ARN or name of the secret to attach the resource-based policy. For an ARN,
-	// we recommend that you specify a complete ARN rather than a partial ARN. See
-	// Finding a secret from a partial ARN (https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen)
-	// .
+	// The ARN or name of the secret to attach the resource-based policy.
+	//
+	// For an ARN, we recommend that you specify a complete ARN rather than a partial
+	// ARN. See [Finding a secret from a partial ARN].
+	//
+	// [Finding a secret from a partial ARN]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen
 	//
 	// This member is required.
 	SecretId *string
 
 	// Specifies whether to block resource-based policies that allow broad access to
 	// the secret, for example those that use a wildcard for the principal. By default,
-	// public policies aren't blocked. Resource policy validation and the
-	// BlockPublicPolicy parameter help protect your resources by preventing public
-	// access from being granted through the resource policies that are directly
-	// attached to your secrets. In addition to using these features, carefully inspect
-	// the following policies to confirm that they do not grant public access:
+	// public policies aren't blocked.
+	//
+	// Resource policy validation and the BlockPublicPolicy parameter help protect
+	// your resources by preventing public access from being granted through the
+	// resource policies that are directly attached to your secrets. In addition to
+	// using these features, carefully inspect the following policies to confirm that
+	// they do not grant public access:
+	//
 	//   - Identity-based policies attached to associated Amazon Web Services
 	//   principals (for example, IAM roles)
+	//
 	//   - Resource-based policies attached to associated Amazon Web Services
 	//   resources (for example, Key Management Service (KMS) keys)
-	// To review permissions to your secrets, see Determine who has permissions to
-	// your secrets (https://docs.aws.amazon.com/secretsmanager/latest/userguide/determine-acccess_examine-iam-policies.html)
-	// .
+	//
+	// To review permissions to your secrets, see [Determine who has permissions to your secrets].
+	//
+	// [Determine who has permissions to your secrets]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/determine-acccess_examine-iam-policies.html
 	BlockPublicPolicy *bool
 
 	noSmithyDocumentSerde
+}
+
+func (v *PutResourcePolicyInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.PutResourcePolicyRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *PutResourcePolicyInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.BlockPublicPolicy != nil {
+		s.WriteBool(schemas.PutResourcePolicyRequest_BlockPublicPolicy, *v.BlockPublicPolicy)
+	}
+	if v.ResourcePolicy != nil {
+		s.WriteString(schemas.PutResourcePolicyRequest_ResourcePolicy, *v.ResourcePolicy)
+	}
+	if v.SecretId != nil {
+		s.WriteString(schemas.PutResourcePolicyRequest_SecretId, *v.SecretId)
+	}
 }
 
 type PutResourcePolicyOutput struct {
@@ -87,68 +117,54 @@ type PutResourcePolicyOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *PutResourcePolicyOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.PutResourcePolicyResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *PutResourcePolicyOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.PutResourcePolicyResponse_ARN, *v.ARN)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.PutResourcePolicyResponse_Name, *v.Name)
+	}
+}
+func (v *PutResourcePolicyOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.PutResourcePolicyResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.PutResourcePolicyResponse_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.PutResourcePolicyResponse_ARN, v.ARN)
+		case schemas.PutResourcePolicyResponse_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.PutResourcePolicyResponse_Name, v.Name)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationPutResourcePolicyMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.PutResourcePolicy, schemas.PutResourcePolicyRequest, schemas.PutResourcePolicyResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpPutResourcePolicy{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.PutResourcePolicy, schemas.PutResourcePolicyRequest, schemas.PutResourcePolicyResponse), output: &PutResourcePolicyOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpPutResourcePolicy{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "PutResourcePolicy"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutResourcePolicyValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutResourcePolicy(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -163,13 +179,8 @@ func (c *Client) addOperationPutResourcePolicyMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opPutResourcePolicy(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "PutResourcePolicy",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

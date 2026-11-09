@@ -6,12 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
 	"time"
 )
@@ -19,14 +17,22 @@ import (
 // Retrieves information about the specified managed policy, including the
 // policy's default version and the total number of IAM users, groups, and roles to
 // which the policy is attached. To retrieve the list of the specific users,
-// groups, and roles that the policy is attached to, use ListEntitiesForPolicy .
-// This operation returns metadata about the policy. To retrieve the actual policy
-// document for a specific version of the policy, use GetPolicyVersion . This
-// operation retrieves information about managed policies. To retrieve information
-// about an inline policy that is embedded with an IAM user, group, or role, use
-// GetUserPolicy , GetGroupPolicy , or GetRolePolicy . For more information about
-// policies, see Managed policies and inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
-// in the IAM User Guide.
+// groups, and roles that the policy is attached to, use [ListEntitiesForPolicy]. This operation returns
+// metadata about the policy. To retrieve the actual policy document for a specific
+// version of the policy, use [GetPolicyVersion].
+//
+// This operation retrieves information about managed policies. To retrieve
+// information about an inline policy that is embedded with an IAM user, group, or
+// role, use [GetUserPolicy], [GetGroupPolicy], or [GetRolePolicy].
+//
+// For more information about policies, see [Managed policies and inline policies] in the IAM User Guide.
+//
+// [ListEntitiesForPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListEntitiesForPolicy.html
+// [GetRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetRolePolicy.html
+// [GetPolicyVersion]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicyVersion.html
+// [GetGroupPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetGroupPolicy.html
+// [GetUserPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetUserPolicy.html
+// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
 func (c *Client) GetPolicy(ctx context.Context, params *GetPolicyInput, optFns ...func(*Options)) (*GetPolicyOutput, error) {
 	if params == nil {
 		params = &GetPolicyInput{}
@@ -45,8 +51,12 @@ func (c *Client) GetPolicy(ctx context.Context, params *GetPolicyInput, optFns .
 type GetPolicyInput struct {
 
 	// The Amazon Resource Name (ARN) of the managed policy that you want information
-	// about. For more information about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
-	// in the Amazon Web Services General Reference.
+	// about.
+	//
+	// For more information about ARNs, see [Amazon Resource Names (ARNs)] in the Amazon Web Services General
+	// Reference.
+	//
+	// [Amazon Resource Names (ARNs)]: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
 	//
 	// This member is required.
 	PolicyArn *string
@@ -54,7 +64,9 @@ type GetPolicyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetPolicy request.
+// Contains the response to a successful [GetPolicy] request.
+//
+// [GetPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicy.html
 type GetPolicyOutput struct {
 
 	// A structure containing details about the policy.
@@ -67,9 +79,6 @@ type GetPolicyOutput struct {
 }
 
 func (c *Client) addOperationGetPolicyMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetPolicy{}, middleware.After)
 	if err != nil {
 		return err
@@ -78,56 +87,20 @@ func (c *Client) addOperationGetPolicyMiddlewares(stack *middleware.Stack, optio
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetPolicy"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetPolicyValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetPolicy(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -142,15 +115,11 @@ func (c *Client) addOperationGetPolicyMiddlewares(stack *middleware.Stack, optio
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetPolicyAPIClient is a client that implements the GetPolicy operation.
-type GetPolicyAPIClient interface {
-	GetPolicy(context.Context, *GetPolicyInput, ...func(*Options)) (*GetPolicyOutput, error)
-}
-
-var _ GetPolicyAPIClient = (*Client)(nil)
 
 // PolicyExistsWaiterOptions are waiter options for PolicyExistsWaiter
 type PolicyExistsWaiterOptions struct {
@@ -184,12 +153,13 @@ type PolicyExistsWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *GetPolicyInput, *GetPolicyOutput, error) (bool, error)
 }
 
@@ -265,7 +235,13 @@ func (w *PolicyExistsWaiter) WaitForOutput(ctx context.Context, params *GetPolic
 		}
 
 		out, err := w.client.GetPolicy(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -319,13 +295,15 @@ func policyExistsStateRetryable(ctx context.Context, input *GetPolicyInput, outp
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
-func newServiceMetadataMiddleware_opGetPolicy(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetPolicy",
-	}
+// GetPolicyAPIClient is a client that implements the GetPolicy operation.
+type GetPolicyAPIClient interface {
+	GetPolicy(context.Context, *GetPolicyInput, ...func(*Options)) (*GetPolicyOutput, error)
 }
+
+var _ GetPolicyAPIClient = (*Client)(nil)

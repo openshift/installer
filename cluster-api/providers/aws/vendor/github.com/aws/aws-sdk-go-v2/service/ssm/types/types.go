@@ -182,6 +182,13 @@ type AssociationDescription struct {
 	// it. This parameter isn't supported for rate expressions.
 	ApplyOnlyAtCronInterval bool
 
+	// A role used by association to take actions on your behalf. State Manager will
+	// assume this role and call required APIs when dispatching configurations to
+	// nodes. If not specified, [service-linked role for Systems Manager]will be used by default.
+	//
+	// [service-linked role for Systems Manager]: https://docs.aws.amazon.com/systems-manager/latest/userguide/using-service-linked-roles.html
+	AssociationDispatchAssumeRole *string
+
 	// The association ID.
 	AssociationId *string
 
@@ -484,6 +491,13 @@ type AssociationVersionInfo struct {
 	// it. This parameter isn't supported for rate expressions.
 	ApplyOnlyAtCronInterval bool
 
+	// A role used by association to take actions on your behalf. State Manager will
+	// assume this role and call required APIs when dispatching configurations to
+	// nodes. If not specified, [service-linked role for Systems Manager]will be used by default.
+	//
+	// [service-linked role for Systems Manager]: https://docs.aws.amazon.com/systems-manager/latest/userguide/using-service-linked-roles.html
+	AssociationDispatchAssumeRole *string
+
 	// The ID created by the system when the association was created.
 	AssociationId *string
 
@@ -784,6 +798,10 @@ type AutomationExecution struct {
 	// Variables defined for the automation.
 	Variables map[string][]string
 
+	// A message that describes a non-critical issue that occurred during the
+	// automation execution.
+	WarningMessage *string
+
 	noSmithyDocumentSerde
 }
 
@@ -888,7 +906,8 @@ type AutomationExecutionMetadata struct {
 	// The time the execution started.
 	ExecutionStartTime *time.Time
 
-	// The list of execution outputs as defined in the Automation runbook.
+	// A message that describes a failure that occurred during the automation
+	// execution.
 	FailureMessage *string
 
 	// An S3 bucket where execution information is stored.
@@ -945,6 +964,10 @@ type AutomationExecutionMetadata struct {
 	// The CloudWatch alarm that was invoked by the automation.
 	TriggeredAlarms []AlarmStateInformation
 
+	// A message that describes a non-critical issue that occurred during the
+	// automation execution.
+	WarningMessage *string
+
 	noSmithyDocumentSerde
 }
 
@@ -979,6 +1002,47 @@ type AutomationExecutionPreview struct {
 	// Information about the Amazon Web Services accounts that were included in the
 	// execution preview.
 	TotalAccounts int32
+
+	noSmithyDocumentSerde
+}
+
+// The access details and targets for connecting to a Microsoft Azure tenant,
+// including the application registration used for authentication and the
+// subscriptions to target.
+type AzureConfiguration struct {
+
+	// The ID of the Azure application registration used for authentication.
+	//
+	// This member is required.
+	ApplicationId *string
+
+	// The ID of the Azure tenant.
+	//
+	// This member is required.
+	TenantId *string
+
+	// The display name of the Azure application registration.
+	ApplicationDisplayName *string
+
+	// The target Azure subscriptions for the cloud connector.
+	Targets ConfigurationTargets
+
+	// The display name of the Azure tenant.
+	TenantDisplayName *string
+
+	noSmithyDocumentSerde
+}
+
+// Information about an Azure subscription targeted by the cloud connector.
+type AzureSubscription struct {
+
+	// The ID of the Azure subscription.
+	//
+	// This member is required.
+	Id *string
+
+	// The display name of the Azure subscription.
+	DisplayName *string
 
 	noSmithyDocumentSerde
 }
@@ -1038,6 +1102,67 @@ type BaselineOverride struct {
 	// target operating systems and source repositories. Applies to Linux managed nodes
 	// only.
 	Sources []PatchSource
+
+	noSmithyDocumentSerde
+}
+
+// The configuration that provides access details and targets for connecting to a
+// third-party cloud environment.
+//
+// The following types satisfy this interface:
+//
+//	CloudConnectorConfigurationMemberAzureConfiguration
+type CloudConnectorConfiguration interface {
+	isCloudConnectorConfiguration()
+}
+
+// The access details and targets for connecting to a Microsoft Azure environment.
+type CloudConnectorConfigurationMemberAzureConfiguration struct {
+	Value AzureConfiguration
+
+	noSmithyDocumentSerde
+}
+
+func (*CloudConnectorConfigurationMemberAzureConfiguration) isCloudConnectorConfiguration() {}
+
+// A filter for listing cloud connectors.
+type CloudConnectorFilter struct {
+
+	// The name of the filter key.
+	FilterKey CloudConnectorFilterKey
+
+	// The filter values. Valid values for each filter key are as follows:
+	//
+	// SubscriptionId The Azure subscription ID to filter by. To return only
+	// tenant-level connectors, specify NONE .
+	//
+	// TenantId The Azure tenant ID to filter by. Filters the results to connectors
+	// that target the specified tenant.
+	FilterValues []string
+
+	noSmithyDocumentSerde
+}
+
+// Summary information about a cloud connector.
+type CloudConnectorSummary struct {
+
+	// The ID of the cloud connector.
+	CloudConnectorId *string
+
+	// The date and time the cloud connector was created.
+	CreatedAt *time.Time
+
+	// The description of the cloud connector.
+	Description *string
+
+	// The friendly name of the cloud connector.
+	DisplayName *string
+
+	// The ARN of the IAM role used by the cloud connector.
+	RoleArn *string
+
+	// The date and time the cloud connector was last updated.
+	UpdatedAt *time.Time
 
 	noSmithyDocumentSerde
 }
@@ -1550,6 +1675,12 @@ type ComplianceExecutionSummary struct {
 	// The time the execution ran as a datetime object that is saved in the following
 	// format: yyyy-MM-dd'T'HH:mm:ss'Z'
 	//
+	// For State Manager associations, this timestamp represents when the compliance
+	// status was captured and reported by the Systems Manager service, not when the
+	// underlying association was actually executed on the managed node. To track
+	// actual association execution times, use the DescribeAssociationExecutionTargetscommand or check the association
+	// execution history in the Systems Manager console.
+	//
 	// This member is required.
 	ExecutionTime *time.Time
 
@@ -1577,6 +1708,13 @@ type ComplianceItem struct {
 
 	// A summary for the compliance item. The summary includes an execution ID, the
 	// execution type (for example, command), and the execution time.
+	//
+	// For State Manager associations, the ExecutionTime value represents when the
+	// compliance status was captured and aggregated by the Systems Manager service,
+	// not necessarily when the underlying association was executed on the managed
+	// node. State Manager updates compliance status for all associations on an
+	// instance whenever any association executes, which means multiple associations
+	// may show the same execution time even if they were executed at different times.
 	ExecutionSummary *ComplianceExecutionSummary
 
 	// An ID for the compliance item. For example, if the compliance item is a Windows
@@ -1679,6 +1817,24 @@ type CompliantSummary struct {
 
 	noSmithyDocumentSerde
 }
+
+// The target resources in the third-party cloud environment.
+//
+// The following types satisfy this interface:
+//
+//	ConfigurationTargetsMemberSubscriptions
+type ConfigurationTargets interface {
+	isConfigurationTargets()
+}
+
+// A list of Azure subscriptions to target.
+type ConfigurationTargetsMemberSubscriptions struct {
+	Value []AzureSubscription
+
+	noSmithyDocumentSerde
+}
+
+func (*ConfigurationTargetsMemberSubscriptions) isConfigurationTargets() {}
 
 // Describes the association of a Amazon Web Services Systems Manager document
 // (SSM document) and a managed node.
@@ -2542,6 +2698,12 @@ type InstanceInfo struct {
 	// The version number of the agent installed on the node.
 	AgentVersion *string
 
+	// The Availability Zone where the managed node is located.
+	AvailabilityZone *string
+
+	// The Availability Zone ID where the managed node is located.
+	AvailabilityZoneId *string
+
 	// The fully qualified host name of the managed node.
 	ComputerName *string
 
@@ -2553,6 +2715,9 @@ type InstanceInfo struct {
 
 	// Indicates whether the node is managed by Systems Manager.
 	ManagedStatus ManagedStatus
+
+	// The name assigned to the managed node.
+	Name *string
 
 	// The name of the operating system platform running on your managed node.
 	PlatformName *string
@@ -2566,6 +2731,17 @@ type InstanceInfo struct {
 	// The type of instance, either an EC2 instance or another supported machine type
 	// in a hybrid fleet.
 	ResourceType ResourceType
+
+	// The ID of the source resource. For IoT Greengrass devices, SourceId is the
+	// Thing name.
+	SourceId *string
+
+	// The location of the source resource in the third-party cloud environment.
+	SourceLocation *string
+
+	// The type of the source resource. For IoT Greengrass devices, SourceType is
+	// AWS::IoT::Thing .
+	SourceType SourceType
 
 	noSmithyDocumentSerde
 }
@@ -2664,8 +2840,12 @@ type InstanceInformation struct {
 	// Thing name.
 	SourceId *string
 
+	// The location of the source resource in the third-party cloud environment.
+	SourceLocation *string
+
 	// The type of the source resource. For IoT Greengrass devices, SourceType is
-	// AWS::IoT::Thing .
+	// AWS::IoT::Thing . For Azure Virtual Machines, SourceType is
+	// Microsoft.Compute/virtualMachines .
 	SourceType SourceType
 
 	noSmithyDocumentSerde
@@ -2705,12 +2885,12 @@ type InstanceInformationStringFilter struct {
 	//   - Valid values for the PingStatus filter key: Online | ConnectionLost |
 	//   Inactive (deprecated)
 	//
-	//   - Valid values for the PlatformType filter key: Windows | Linux | MacOS
+	//   - Valid values for the PlatformTypes filter key: Windows | Linux | MacOS
 	//
 	//   - Valid values for the ResourceType filter key: EC2Instance | ManagedInstance
 	//
 	//   - Valid values for the SourceType filter key: AWS::EC2::Instance |
-	//   AWS::SSM::ManagedInstance | AWS::IoT::Thing
+	//   AWS::SSM::ManagedInstance | AWS::IoT::Thing | Microsoft.Compute/virtualMachines
 	//
 	//   - Valid tag examples: Key=tag-key,Values=Purpose | Key=tag:Purpose,Values=Test
 	//   .
@@ -2939,6 +3119,9 @@ type InstanceProperty struct {
 	// The status of the State Manager association applied to the managed node.
 	AssociationStatus *string
 
+	// The Availability Zone where the managed node is located.
+	AvailabilityZone *string
+
 	// The fully qualified host name of the managed node.
 	ComputerName *string
 
@@ -3005,7 +3188,11 @@ type InstanceProperty struct {
 	// The ID of the source resource.
 	SourceId *string
 
-	// The type of the source resource.
+	// The location of the source resource in the third-party cloud environment.
+	SourceLocation *string
+
+	// The type of the source resource. Valid values: AWS::EC2::Instance |
+	// AWS::SSM::ManagedInstance | AWS::IoT::Thing | Microsoft.Compute/virtualMachines .
 	SourceType SourceType
 
 	noSmithyDocumentSerde
@@ -3127,6 +3314,32 @@ type InventoryDeletionSummaryItem struct {
 }
 
 // One or more filters. Use a filter to return a more specific list of results.
+//
+// Example formats for the aws ssm get-inventory command:
+//
+//	--filters
+//	Key=AWS:InstanceInformation.AgentType,Values=amazon-ssm-agent,Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.AgentVersion,Values=3.3.2299.0,Type=Equal
+//
+//	--filters
+//	Key=AWS:InstanceInformation.ComputerName,Values=ip-192.0.2.0.us-east-2.compute.internal,Type=Equal
+//
+//	--filters
+//	Key=AWS:InstanceInformation.InstanceId,Values=i-0a4cd6ceffEXAMPLE,i-1a2b3c4d5e6EXAMPLE,Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.InstanceStatus,Values=Active,Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.IpAddress,Values=198.51.100.0,Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.PlatformName,Values="Amazon
+//	Linux",Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.PlatformType,Values=Linux,Type=Equal
+//
+//	--filters Key=AWS:InstanceInformation.PlatformVersion,Values=2023,Type=BeginWith
+//
+//	--filters Key=AWS:InstanceInformation.ResourceType,Values=EC2Instance,Type=Equal
 type InventoryFilter struct {
 
 	// The name of the filter key.
@@ -3134,9 +3347,7 @@ type InventoryFilter struct {
 	// This member is required.
 	Key *string
 
-	// Inventory filter values. Example: inventory filter where managed node IDs are
-	// specified as values Key=AWS:InstanceInformation.InstanceId,Values=
-	// i-a12b3c4d5e6g, i-1a2b3c4d5e6,Type=Equal .
+	// Inventory filter values.
 	//
 	// This member is required.
 	Values []string
@@ -3810,6 +4021,9 @@ type MaintenanceWindowTask struct {
 	// task types, TaskArn is the Amazon Web Services Systems Manager (SSM document)
 	// name or ARN. For LAMBDA tasks, it's the function name or ARN. For STEP_FUNCTIONS
 	// tasks, it's the state machine ARN.
+	//
+	// Maintenance Window does not validate the TaskArn when you register a task. A
+	// successful registration does not guarantee that the TaskArn is valid.
 	TaskArn *string
 
 	// The parameters that should be passed to the task when it is run.
@@ -5027,6 +5241,10 @@ type PatchRule struct {
 	// that the patch is marked as approved in the patch baseline. For example, a value
 	// of 7 means that patches are approved seven days after they are released.
 	//
+	// Patch Manager evaluates patch release dates using Coordinated Universal Time
+	// (UTC). If a patch is released at 2025-11-09T18:00:00Z and ApproveAfterDays is
+	// set to 7 , the patch will be approved after 2025-11-16T18:00:00Z .
+	//
 	// This parameter is marked as Required: No , but your request must include a value
 	// for either ApproveAfterDays or ApproveUntilDate .
 	//
@@ -5044,7 +5262,11 @@ type PatchRule struct {
 	// The cutoff date for auto approval of released patches. Any patches released on
 	// or before this date are installed automatically.
 	//
-	// Enter dates in the format YYYY-MM-DD . For example, 2024-12-31 .
+	// Enter dates in the format YYYY-MM-DD . For example, 2025-11-16 .
+	//
+	// Patch Manager evaluates patch release dates using Coordinated Universal Time
+	// (UTC). If you enter the date 2025-11-16 , patches released between
+	// 2025-11-16T00:00:00Z and 2025-11-16T23:59:59Z will be included in the approval.
 	//
 	// This parameter is marked as Required: No , but your request must include a value
 	// for either ApproveUntilDate or ApproveAfterDays .
@@ -5087,7 +5309,9 @@ type PatchRuleGroup struct {
 // only.
 type PatchSource struct {
 
-	// The value of the yum repo configuration. For example:
+	// The value of the repo configuration.
+	//
+	// Example for yum repositories
 	//
 	//     [main]
 	//
@@ -5098,9 +5322,22 @@ type PatchSource struct {
 	//     enabled=1
 	//
 	// For information about other options available for your yum repository
-	// configuration, see [dnf.conf(5)].
+	// configuration, see [dnf.conf(5)]on the man7.org website.
+	//
+	// Examples for Ubuntu Server and Debian Server
+	//
+	//     deb http://security.ubuntu.com/ubuntu jammy main
+	//
+	//     deb https://site.example.com/debian distribution component1 component2
+	//     component3
+	//
+	// Repo information for Ubuntu Server repositories must be specifed in a single
+	// line. For more examples and information, see [jammy (5) sources.list.5.gz]on the Ubuntu Server Manuals
+	// website and [sources.list format]on the Debian Wiki.
 	//
 	// [dnf.conf(5)]: https://man7.org/linux/man-pages/man5/dnf.conf.5.html
+	// [jammy (5) sources.list.5.gz]: https://manpages.ubuntu.com/manpages/jammy/man5/sources.list.5.html
+	// [sources.list format]: https://wiki.debian.org/SourcesList#sources.list_format
 	//
 	// This member is required.
 	Configuration *string
@@ -5615,6 +5852,12 @@ type ServiceSetting struct {
 // Information about a Session Manager connection to a managed node.
 type Session struct {
 
+	// Standard access type is the default for Session Manager sessions. JustInTime is
+	// the access type for [Just-in-time node access].
+	//
+	// [Just-in-time node access]: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-just-in-time-node-access.html
+	AccessType AccessType
+
 	// Reserved for future use.
 	Details *string
 
@@ -5831,6 +6074,10 @@ type StepExecution struct {
 	// add step:stepName to support the automation to go to another specific step.
 	ValidNextSteps []string
 
+	// A message that describes a non-critical issue that occurred during the step
+	// execution. Present only if the step status includes a warning.
+	WarningMessage *string
+
 	noSmithyDocumentSerde
 }
 
@@ -5973,10 +6220,12 @@ type TargetLocation struct {
 
 	// The maximum number of Amazon Web Services Regions and Amazon Web Services
 	// accounts allowed to run the Automation concurrently.
+	// TargetLocationMaxConcurrency has a default value of 1.
 	TargetLocationMaxConcurrency *string
 
 	// The maximum number of errors allowed before the system stops queueing
 	// additional Automation executions for the currently running Automation.
+	// TargetLocationMaxErrors has a default value of 0.
 	TargetLocationMaxErrors *string
 
 	// A list of key-value mappings to target resources. If you specify values for
@@ -6013,6 +6262,39 @@ type TargetPreview struct {
 	noSmithyDocumentSerde
 }
 
+// A validation finding from a cloud connector validation check.
+type ValidationFinding struct {
+
+	// A code that identifies the specific validation finding.
+	Code ValidationFindingCode
+
+	// A message that describes the validation finding.
+	Message *string
+
+	// A message from the third-party cloud provider related to the validation finding.
+	ProviderMessage *string
+
+	// The scope of the validation finding, identifying the specific resource affected.
+	Scope *ValidationFindingScope
+
+	// The type of the validation finding.
+	Type ValidationFindingType
+
+	noSmithyDocumentSerde
+}
+
+// Identifies the specific resource scope of a validation finding.
+type ValidationFindingScope struct {
+
+	// The ID of the resource within the scope.
+	Id *string
+
+	// The type of the resource scope.
+	Type ValidationFindingScopeType
+
+	noSmithyDocumentSerde
+}
+
 type noSmithyDocumentSerde = smithydocument.NoSerde
 
 // UnknownUnionMember is returned when a union member is returned over the wire,
@@ -6024,6 +6306,8 @@ type UnknownUnionMember struct {
 	noSmithyDocumentSerde
 }
 
-func (*UnknownUnionMember) isExecutionInputs()  {}
-func (*UnknownUnionMember) isExecutionPreview() {}
-func (*UnknownUnionMember) isNodeType()         {}
+func (*UnknownUnionMember) isCloudConnectorConfiguration() {}
+func (*UnknownUnionMember) isConfigurationTargets()        {}
+func (*UnknownUnionMember) isExecutionInputs()             {}
+func (*UnknownUnionMember) isExecutionPreview()            {}
+func (*UnknownUnionMember) isNodeType()                    {}

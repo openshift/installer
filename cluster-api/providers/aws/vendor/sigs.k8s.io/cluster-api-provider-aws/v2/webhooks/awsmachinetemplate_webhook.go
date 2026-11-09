@@ -34,9 +34,8 @@ import (
 )
 
 func (w *AWSMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.AWSMachineTemplate{}).
-		WithValidator(w).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.AWSMachineTemplate{}).
+		WithCustomValidator(w).
 		Complete()
 }
 
@@ -65,8 +64,9 @@ func (w *AWSMachineTemplate) validateRootVolume(r *infrav1.AWSMachineTemplate) f
 		if spec.RootVolume.Type != infrav1.VolumeTypeGP3 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.rootVolume.throughput"), "throughput is valid only for type 'gp3'"))
 		}
-		if *spec.RootVolume.Throughput < 0 {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.rootVolume.throughput"), "throughput must be nonnegative"))
+		// See https://aws.amazon.com/ebs/general-purpose/ for gp3 limits.
+		if *spec.RootVolume.Throughput < 125 || *spec.RootVolume.Throughput > 2000 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.rootVolume.throughput"), "throughput must be between 125 MiB/s and 2000 MiB/s"))
 		}
 	}
 

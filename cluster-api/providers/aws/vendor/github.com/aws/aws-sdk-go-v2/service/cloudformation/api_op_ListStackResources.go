@@ -5,15 +5,14 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns descriptions of all resources of the specified stack. For deleted
-// stacks, ListStackResources returns resource information for up to 90 days after
-// the stack has been deleted.
+// Returns descriptions of all resources of the specified stack.
+//
+// For deleted stacks, ListStackResources returns resource information for up to
+// 90 days after the stack has been deleted.
 func (c *Client) ListStackResources(ctx context.Context, params *ListStackResourcesInput, optFns ...func(*Options)) (*ListStackResourcesOutput, error) {
 	if params == nil {
 		params = &ListStackResourcesInput{}
@@ -34,16 +33,17 @@ type ListStackResourcesInput struct {
 
 	// The name or the unique stack ID that is associated with the stack, which aren't
 	// always interchangeable:
+	//
 	//   - Running stacks: You can specify either the stack's name or its unique stack
 	//   ID.
+	//
 	//   - Deleted stacks: You must specify the unique stack ID.
-	// Default: There is no default value.
 	//
 	// This member is required.
 	StackName *string
 
-	// A string that identifies the next page of stack resources that you want to
-	// retrieve.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -66,9 +66,6 @@ type ListStackResourcesOutput struct {
 }
 
 func (c *Client) addOperationListStackResourcesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListStackResources{}, middleware.After)
 	if err != nil {
 		return err
@@ -77,56 +74,20 @@ func (c *Client) addOperationListStackResourcesMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListStackResources"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListStackResourcesValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListStackResources(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -141,16 +102,11 @@ func (c *Client) addOperationListStackResourcesMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListStackResourcesAPIClient is a client that implements the ListStackResources
-// operation.
-type ListStackResourcesAPIClient interface {
-	ListStackResources(context.Context, *ListStackResourcesInput, ...func(*Options)) (*ListStackResourcesOutput, error)
-}
-
-var _ ListStackResourcesAPIClient = (*Client)(nil)
 
 // ListStackResourcesPaginatorOptions is the paginator options for
 // ListStackResources
@@ -204,6 +160,9 @@ func (p *ListStackResourcesPaginator) NextPage(ctx context.Context, optFns ...fu
 	params := *p.params
 	params.NextToken = p.nextToken
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListStackResources(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -223,10 +182,10 @@ func (p *ListStackResourcesPaginator) NextPage(ctx context.Context, optFns ...fu
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListStackResources(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListStackResources",
-	}
+// ListStackResourcesAPIClient is a client that implements the ListStackResources
+// operation.
+type ListStackResourcesAPIClient interface {
+	ListStackResources(context.Context, *ListStackResourcesInput, ...func(*Options)) (*ListStackResourcesOutput, error)
 }
+
+var _ ListStackResourcesAPIClient = (*Client)(nil)

@@ -76,7 +76,7 @@ func (s *Service) reconcileEgressOnlyInternetGateways() error {
 		}
 		return true, nil
 	}, awserrors.EgressOnlyInternetGatewayNotFound); err != nil {
-		record.Warnf(s.scope.InfraCluster(), "FailedTagEgressOnlyInternetGateway", "Failed to tag managed Egress Only Internet Gateway %q: %v", gateway.EgressOnlyInternetGatewayId, err)
+		record.Warnf(s.scope.InfraCluster(), "FailedTagEgressOnlyInternetGateway", "Failed to tag managed Egress Only Internet Gateway %q: %v", aws.ToString(gateway.EgressOnlyInternetGatewayId), err)
 		return errors.Wrapf(err, "failed to tag egress only internet gateway %q", *gateway.EgressOnlyInternetGatewayId)
 	}
 	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition)

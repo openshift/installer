@@ -10,6 +10,46 @@ import (
 	"github.com/aws/smithy-go/middleware"
 )
 
+type validateOpAcceptDelegationRequest struct {
+}
+
+func (*validateOpAcceptDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAcceptDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AcceptDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAcceptDelegationRequestInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpAcquireRole struct {
+}
+
+func (*validateOpAcquireRole) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAcquireRole) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AcquireRoleInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAcquireRoleInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpAddClientIDToOpenIDConnectProvider struct {
 }
 
@@ -65,6 +105,26 @@ func (m *validateOpAddUserToGroup) HandleInitialize(ctx context.Context, in midd
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpAddUserToGroupInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpAssociateDelegationRequest struct {
+}
+
+func (*validateOpAssociateDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAssociateDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AssociateDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAssociateDelegationRequestInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -170,6 +230,26 @@ func (m *validateOpCreateAccountAlias) HandleInitialize(ctx context.Context, in 
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpCreateDelegationRequest struct {
+}
+
+func (*validateOpCreateDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateDelegationRequestInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateGroup struct {
 }
 
@@ -205,26 +285,6 @@ func (m *validateOpCreateInstanceProfile) HandleInitialize(ctx context.Context, 
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpCreateInstanceProfileInput(input); err != nil {
-		return out, metadata, err
-	}
-	return next.HandleInitialize(ctx, in)
-}
-
-type validateOpCreateLoginProfile struct {
-}
-
-func (*validateOpCreateLoginProfile) ID() string {
-	return "OperationInputValidation"
-}
-
-func (m *validateOpCreateLoginProfile) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
-	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
-) {
-	input, ok := in.Parameters.(*CreateLoginProfileInput)
-	if !ok {
-		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
-	}
-	if err := validateOpCreateLoginProfileInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -525,26 +585,6 @@ func (m *validateOpDeleteInstanceProfile) HandleInitialize(ctx context.Context, 
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpDeleteInstanceProfileInput(input); err != nil {
-		return out, metadata, err
-	}
-	return next.HandleInitialize(ctx, in)
-}
-
-type validateOpDeleteLoginProfile struct {
-}
-
-func (*validateOpDeleteLoginProfile) ID() string {
-	return "OperationInputValidation"
-}
-
-func (m *validateOpDeleteLoginProfile) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
-	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
-) {
-	input, ok := in.Parameters.(*DeleteLoginProfileInput)
-	if !ok {
-		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
-	}
-	if err := validateOpDeleteLoginProfileInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -1050,6 +1090,26 @@ func (m *validateOpGetContextKeysForPrincipalPolicy) HandleInitialize(ctx contex
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetDelegationRequest struct {
+}
+
+func (*validateOpGetDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetDelegationRequestInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetGroup struct {
 }
 
@@ -1090,6 +1150,26 @@ func (m *validateOpGetGroupPolicy) HandleInitialize(ctx context.Context, in midd
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetHumanReadableSummary struct {
+}
+
+func (*validateOpGetHumanReadableSummary) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetHumanReadableSummary) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetHumanReadableSummaryInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetHumanReadableSummaryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetInstanceProfile struct {
 }
 
@@ -1105,26 +1185,6 @@ func (m *validateOpGetInstanceProfile) HandleInitialize(ctx context.Context, in 
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpGetInstanceProfileInput(input); err != nil {
-		return out, metadata, err
-	}
-	return next.HandleInitialize(ctx, in)
-}
-
-type validateOpGetLoginProfile struct {
-}
-
-func (*validateOpGetLoginProfile) ID() string {
-	return "OperationInputValidation"
-}
-
-func (m *validateOpGetLoginProfile) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
-	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
-) {
-	input, ok := in.Parameters.(*GetLoginProfileInput)
-	if !ok {
-		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
-	}
-	if err := validateOpGetLoginProfileInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -1265,6 +1325,26 @@ func (m *validateOpGetRolePolicy) HandleInitialize(ctx context.Context, in middl
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpGetRolePolicyInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpGetRoleTemplateVersion struct {
+}
+
+func (*validateOpGetRoleTemplateVersion) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetRoleTemplateVersion) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetRoleTemplateVersionInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetRoleTemplateVersionInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -1790,6 +1870,26 @@ func (m *validateOpListUserTags) HandleInitialize(ctx context.Context, in middle
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpPutAccountProperties struct {
+}
+
+func (*validateOpPutAccountProperties) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpPutAccountProperties) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*PutAccountPropertiesInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpPutAccountPropertiesInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpPutGroupPolicy struct {
 }
 
@@ -1890,6 +1990,26 @@ func (m *validateOpPutUserPolicy) HandleInitialize(ctx context.Context, in middl
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpRejectDelegationRequest struct {
+}
+
+func (*validateOpRejectDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpRejectDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*RejectDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpRejectDelegationRequestInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpRemoveClientIDFromOpenIDConnectProvider struct {
 }
 
@@ -1985,6 +2105,26 @@ func (m *validateOpResyncMFADevice) HandleInitialize(ctx context.Context, in mid
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpResyncMFADeviceInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpSendDelegationToken struct {
+}
+
+func (*validateOpSendDelegationToken) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpSendDelegationToken) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*SendDelegationTokenInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpSendDelegationTokenInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -2430,6 +2570,26 @@ func (m *validateOpUpdateAssumeRolePolicy) HandleInitialize(ctx context.Context,
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpUpdateDelegationRequest struct {
+}
+
+func (*validateOpUpdateDelegationRequest) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpUpdateDelegationRequest) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*UpdateDelegationRequestInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpUpdateDelegationRequestInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpUpdateGroup struct {
 }
 
@@ -2710,6 +2870,14 @@ func (m *validateOpUploadSSHPublicKey) HandleInitialize(ctx context.Context, in 
 	return next.HandleInitialize(ctx, in)
 }
 
+func addOpAcceptDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAcceptDelegationRequest{}, middleware.After)
+}
+
+func addOpAcquireRoleValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAcquireRole{}, middleware.After)
+}
+
 func addOpAddClientIDToOpenIDConnectProviderValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpAddClientIDToOpenIDConnectProvider{}, middleware.After)
 }
@@ -2720,6 +2888,10 @@ func addOpAddRoleToInstanceProfileValidationMiddleware(stack *middleware.Stack) 
 
 func addOpAddUserToGroupValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpAddUserToGroup{}, middleware.After)
+}
+
+func addOpAssociateDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAssociateDelegationRequest{}, middleware.After)
 }
 
 func addOpAttachGroupPolicyValidationMiddleware(stack *middleware.Stack) error {
@@ -2742,16 +2914,16 @@ func addOpCreateAccountAliasValidationMiddleware(stack *middleware.Stack) error 
 	return stack.Initialize.Add(&validateOpCreateAccountAlias{}, middleware.After)
 }
 
+func addOpCreateDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateDelegationRequest{}, middleware.After)
+}
+
 func addOpCreateGroupValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateGroup{}, middleware.After)
 }
 
 func addOpCreateInstanceProfileValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateInstanceProfile{}, middleware.After)
-}
-
-func addOpCreateLoginProfileValidationMiddleware(stack *middleware.Stack) error {
-	return stack.Initialize.Add(&validateOpCreateLoginProfile{}, middleware.After)
 }
 
 func addOpCreateOpenIDConnectProviderValidationMiddleware(stack *middleware.Stack) error {
@@ -2812,10 +2984,6 @@ func addOpDeleteGroupPolicyValidationMiddleware(stack *middleware.Stack) error {
 
 func addOpDeleteInstanceProfileValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteInstanceProfile{}, middleware.After)
-}
-
-func addOpDeleteLoginProfileValidationMiddleware(stack *middleware.Stack) error {
-	return stack.Initialize.Add(&validateOpDeleteLoginProfile{}, middleware.After)
 }
 
 func addOpDeleteOpenIDConnectProviderValidationMiddleware(stack *middleware.Stack) error {
@@ -2918,6 +3086,10 @@ func addOpGetContextKeysForPrincipalPolicyValidationMiddleware(stack *middleware
 	return stack.Initialize.Add(&validateOpGetContextKeysForPrincipalPolicy{}, middleware.After)
 }
 
+func addOpGetDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetDelegationRequest{}, middleware.After)
+}
+
 func addOpGetGroupValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetGroup{}, middleware.After)
 }
@@ -2926,12 +3098,12 @@ func addOpGetGroupPolicyValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetGroupPolicy{}, middleware.After)
 }
 
-func addOpGetInstanceProfileValidationMiddleware(stack *middleware.Stack) error {
-	return stack.Initialize.Add(&validateOpGetInstanceProfile{}, middleware.After)
+func addOpGetHumanReadableSummaryValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetHumanReadableSummary{}, middleware.After)
 }
 
-func addOpGetLoginProfileValidationMiddleware(stack *middleware.Stack) error {
-	return stack.Initialize.Add(&validateOpGetLoginProfile{}, middleware.After)
+func addOpGetInstanceProfileValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetInstanceProfile{}, middleware.After)
 }
 
 func addOpGetMFADeviceValidationMiddleware(stack *middleware.Stack) error {
@@ -2960,6 +3132,10 @@ func addOpGetRoleValidationMiddleware(stack *middleware.Stack) error {
 
 func addOpGetRolePolicyValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetRolePolicy{}, middleware.After)
+}
+
+func addOpGetRoleTemplateVersionValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetRoleTemplateVersion{}, middleware.After)
 }
 
 func addOpGetSAMLProviderValidationMiddleware(stack *middleware.Stack) error {
@@ -3066,6 +3242,10 @@ func addOpListUserTagsValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpListUserTags{}, middleware.After)
 }
 
+func addOpPutAccountPropertiesValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpPutAccountProperties{}, middleware.After)
+}
+
 func addOpPutGroupPolicyValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutGroupPolicy{}, middleware.After)
 }
@@ -3086,6 +3266,10 @@ func addOpPutUserPolicyValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutUserPolicy{}, middleware.After)
 }
 
+func addOpRejectDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpRejectDelegationRequest{}, middleware.After)
+}
+
 func addOpRemoveClientIDFromOpenIDConnectProviderValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpRemoveClientIDFromOpenIDConnectProvider{}, middleware.After)
 }
@@ -3104,6 +3288,10 @@ func addOpResetServiceSpecificCredentialValidationMiddleware(stack *middleware.S
 
 func addOpResyncMFADeviceValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpResyncMFADevice{}, middleware.After)
+}
+
+func addOpSendDelegationTokenValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpSendDelegationToken{}, middleware.After)
 }
 
 func addOpSetDefaultPolicyVersionValidationMiddleware(stack *middleware.Stack) error {
@@ -3194,6 +3382,10 @@ func addOpUpdateAssumeRolePolicyValidationMiddleware(stack *middleware.Stack) er
 	return stack.Initialize.Add(&validateOpUpdateAssumeRolePolicy{}, middleware.After)
 }
 
+func addOpUpdateDelegationRequestValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpUpdateDelegationRequest{}, middleware.After)
+}
+
 func addOpUpdateGroupValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdateGroup{}, middleware.After)
 }
@@ -3250,6 +3442,96 @@ func addOpUploadSSHPublicKeyValidationMiddleware(stack *middleware.Stack) error 
 	return stack.Initialize.Add(&validateOpUploadSSHPublicKey{}, middleware.After)
 }
 
+func validateInlinePolicyIdentifierType(v *types.InlinePolicyIdentifierType) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "InlinePolicyIdentifierType"}
+	if v.PolicyName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PolicyName"))
+	}
+	if len(v.AttachmentType) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("AttachmentType"))
+	}
+	if v.AttachmentName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("AttachmentName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateMapStringReplacementValueEntry(v map[string]types.ReplacementValueEntry) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "MapStringReplacementValueEntry"}
+	for key := range v {
+		value := v[key]
+		if err := validateReplacementValueEntry(&value); err != nil {
+			invalidParams.AddNested(fmt.Sprintf("[%q]", key), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validatePolicyExclusionsListType(v []types.PolicyIdentifier) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PolicyExclusionsListType"}
+	for i := range v {
+		if err := validatePolicyIdentifier(v[i]); err != nil {
+			invalidParams.AddNested(fmt.Sprintf("[%d]", i), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validatePolicyIdentifier(v types.PolicyIdentifier) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PolicyIdentifier"}
+	switch uv := v.(type) {
+	case *types.PolicyIdentifierMemberInlinePolicyIdentifier:
+		if err := validateInlinePolicyIdentifierType(&uv.Value); err != nil {
+			invalidParams.AddNested("[InlinePolicyIdentifier]", err.(smithy.InvalidParamsError))
+		}
+
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateReplacementValueEntry(v *types.ReplacementValueEntry) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ReplacementValueEntry"}
+	if v.Values == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Values"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateTag(v *types.Tag) error {
 	if v == nil {
 		return nil
@@ -3276,6 +3558,41 @@ func validateTagListType(v []types.Tag) error {
 	for i := range v {
 		if err := validateTag(&v[i]); err != nil {
 			invalidParams.AddNested(fmt.Sprintf("[%d]", i), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpAcceptDelegationRequestInput(v *AcceptDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AcceptDelegationRequestInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpAcquireRoleInput(v *AcquireRoleInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AcquireRoleInput"}
+	if v.TemplateArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("TemplateArn"))
+	}
+	if v.ReplacementValues != nil {
+		if err := validateMapStringReplacementValueEntry(v.ReplacementValues); err != nil {
+			invalidParams.AddNested("ReplacementValues", err.(smithy.InvalidParamsError))
 		}
 	}
 	if invalidParams.Len() > 0 {
@@ -3331,6 +3648,21 @@ func validateOpAddUserToGroupInput(v *AddUserToGroupInput) error {
 	}
 	if v.UserName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("UserName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpAssociateDelegationRequestInput(v *AssociateDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AssociateDelegationRequestInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -3426,6 +3758,33 @@ func validateOpCreateAccountAliasInput(v *CreateAccountAliasInput) error {
 	}
 }
 
+func validateOpCreateDelegationRequestInput(v *CreateDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateDelegationRequestInput"}
+	if v.Description == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Description"))
+	}
+	if v.Permissions == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Permissions"))
+	}
+	if v.RequestorWorkflowId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("RequestorWorkflowId"))
+	}
+	if v.NotificationChannel == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("NotificationChannel"))
+	}
+	if v.SessionDuration == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("SessionDuration"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpCreateGroupInput(v *CreateGroupInput) error {
 	if v == nil {
 		return nil
@@ -3453,24 +3812,6 @@ func validateOpCreateInstanceProfileInput(v *CreateInstanceProfileInput) error {
 		if err := validateTagListType(v.Tags); err != nil {
 			invalidParams.AddNested("Tags", err.(smithy.InvalidParamsError))
 		}
-	}
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	} else {
-		return nil
-	}
-}
-
-func validateOpCreateLoginProfileInput(v *CreateLoginProfileInput) error {
-	if v == nil {
-		return nil
-	}
-	invalidParams := smithy.InvalidParamsError{Context: "CreateLoginProfileInput"}
-	if v.UserName == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("UserName"))
-	}
-	if v.Password == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("Password"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -3664,9 +4005,6 @@ func validateOpDeactivateMFADeviceInput(v *DeactivateMFADeviceInput) error {
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "DeactivateMFADeviceInput"}
-	if v.UserName == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("UserName"))
-	}
 	if v.SerialNumber == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("SerialNumber"))
 	}
@@ -3747,21 +4085,6 @@ func validateOpDeleteInstanceProfileInput(v *DeleteInstanceProfileInput) error {
 	invalidParams := smithy.InvalidParamsError{Context: "DeleteInstanceProfileInput"}
 	if v.InstanceProfileName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("InstanceProfileName"))
-	}
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	} else {
-		return nil
-	}
-}
-
-func validateOpDeleteLoginProfileInput(v *DeleteLoginProfileInput) error {
-	if v == nil {
-		return nil
-	}
-	invalidParams := smithy.InvalidParamsError{Context: "DeleteLoginProfileInput"}
-	if v.UserName == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("UserName"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4175,6 +4498,21 @@ func validateOpGetContextKeysForPrincipalPolicyInput(v *GetContextKeysForPrincip
 	}
 }
 
+func validateOpGetDelegationRequestInput(v *GetDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetDelegationRequestInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetGroupInput(v *GetGroupInput) error {
 	if v == nil {
 		return nil
@@ -4208,13 +4546,13 @@ func validateOpGetGroupPolicyInput(v *GetGroupPolicyInput) error {
 	}
 }
 
-func validateOpGetInstanceProfileInput(v *GetInstanceProfileInput) error {
+func validateOpGetHumanReadableSummaryInput(v *GetHumanReadableSummaryInput) error {
 	if v == nil {
 		return nil
 	}
-	invalidParams := smithy.InvalidParamsError{Context: "GetInstanceProfileInput"}
-	if v.InstanceProfileName == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("InstanceProfileName"))
+	invalidParams := smithy.InvalidParamsError{Context: "GetHumanReadableSummaryInput"}
+	if v.EntityArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("EntityArn"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4223,13 +4561,13 @@ func validateOpGetInstanceProfileInput(v *GetInstanceProfileInput) error {
 	}
 }
 
-func validateOpGetLoginProfileInput(v *GetLoginProfileInput) error {
+func validateOpGetInstanceProfileInput(v *GetInstanceProfileInput) error {
 	if v == nil {
 		return nil
 	}
-	invalidParams := smithy.InvalidParamsError{Context: "GetLoginProfileInput"}
-	if v.UserName == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("UserName"))
+	invalidParams := smithy.InvalidParamsError{Context: "GetInstanceProfileInput"}
+	if v.InstanceProfileName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("InstanceProfileName"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4341,6 +4679,21 @@ func validateOpGetRolePolicyInput(v *GetRolePolicyInput) error {
 	}
 	if v.PolicyName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("PolicyName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpGetRoleTemplateVersionInput(v *GetRoleTemplateVersionInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetRoleTemplateVersionInput"}
+	if v.TemplateArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("TemplateArn"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4754,6 +5107,21 @@ func validateOpListUserTagsInput(v *ListUserTagsInput) error {
 	}
 }
 
+func validateOpPutAccountPropertiesInput(v *PutAccountPropertiesInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PutAccountPropertiesInput"}
+	if v.Properties == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Properties"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpPutGroupPolicyInput(v *PutGroupPolicyInput) error {
 	if v == nil {
 		return nil
@@ -4845,6 +5213,21 @@ func validateOpPutUserPolicyInput(v *PutUserPolicyInput) error {
 	}
 	if v.PolicyDocument == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("PolicyDocument"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpRejectDelegationRequestInput(v *RejectDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "RejectDelegationRequestInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4946,6 +5329,21 @@ func validateOpResyncMFADeviceInput(v *ResyncMFADeviceInput) error {
 	}
 }
 
+func validateOpSendDelegationTokenInput(v *SendDelegationTokenInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "SendDelegationTokenInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpSetDefaultPolicyVersionInput(v *SetDefaultPolicyVersionInput) error {
 	if v == nil {
 		return nil
@@ -5004,6 +5402,11 @@ func validateOpSimulatePrincipalPolicyInput(v *SimulatePrincipalPolicyInput) err
 	invalidParams := smithy.InvalidParamsError{Context: "SimulatePrincipalPolicyInput"}
 	if v.PolicySourceArn == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("PolicySourceArn"))
+	}
+	if v.PolicyExclusionList != nil {
+		if err := validatePolicyExclusionsListType(v.PolicyExclusionList); err != nil {
+			invalidParams.AddNested("PolicyExclusionList", err.(smithy.InvalidParamsError))
+		}
 	}
 	if v.ActionNames == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("ActionNames"))
@@ -5371,6 +5774,21 @@ func validateOpUpdateAssumeRolePolicyInput(v *UpdateAssumeRolePolicyInput) error
 	}
 }
 
+func validateOpUpdateDelegationRequestInput(v *UpdateDelegationRequestInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "UpdateDelegationRequestInput"}
+	if v.DelegationRequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DelegationRequestId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpUpdateGroupInput(v *UpdateGroupInput) error {
 	if v == nil {
 		return nil
@@ -5457,9 +5875,6 @@ func validateOpUpdateSAMLProviderInput(v *UpdateSAMLProviderInput) error {
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "UpdateSAMLProviderInput"}
-	if v.SAMLMetadataDocument == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("SAMLMetadataDocument"))
-	}
 	if v.SAMLProviderArn == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("SAMLProviderArn"))
 	}

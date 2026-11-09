@@ -503,7 +503,7 @@ func (s *Service) ResumeProcesses(name string, processes []string) error {
 }
 
 func mapToTags(input map[string]string, resourceID *string) []autoscalingtypes.Tag {
-	tags := make([]autoscalingtypes.Tag, 0)
+	tags := make([]autoscalingtypes.Tag, 0, len(input))
 	for k, v := range input {
 		tags = append(tags, autoscalingtypes.Tag{
 			Key:               aws.String(k),
@@ -559,7 +559,7 @@ func (s *Service) SubnetIDs(scope *scope.MachinePoolScope) ([]string, error) {
 
 		if len(subnetIDs) == 0 {
 			errMessage := fmt.Sprintf("failed to create ASG %q, no subnets available matching criteria %v", scope.Name(), inputFilters)
-			record.Warnf(scope.AWSMachinePool, "FailedCreate", errMessage)
+			record.Warnf(scope.AWSMachinePool, "FailedCreate", "%s", errMessage)
 			return subnetIDs, awserrors.NewFailedDependency(errMessage)
 		}
 	}

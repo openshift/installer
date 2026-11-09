@@ -57,7 +57,7 @@ type BuilderOption func(*Builder)
 // Builder is the interface for a tags builder.
 type Builder struct {
 	params    *infrav1.BuildParams
-	applyFunc func(params *infrav1.BuildParams) error
+	applyFunc func(params *infrav1.BuildParams, diff infrav1.Tags) error
 }
 
 // New creates a new TagsBuilder with the specified build parameters
@@ -74,28 +74,19 @@ func New(params *infrav1.BuildParams, opts ...BuilderOption) *Builder {
 	return builder
 }
 
-// Apply tags a resource with tags including the cluster tag.
-func (b *Builder) Apply() error {
+// Ensure applies the tags if the current tags differ from the params.
+// Only new or changed tags are passed to the apply function.
+func (b *Builder) Ensure(current infrav1.Tags) error {
 	if b.params == nil {
 		return ErrBuildParamsRequired
 	}
 	if b.applyFunc == nil {
 		return ErrApplyFuncRequired
 	}
-
-	if err := b.applyFunc(b.params); err != nil {
-		return fmt.Errorf("failed applying tags: %w", err)
-	}
-	return nil
-}
-
-// Ensure applies the tags if the current tags differ from the params.
-func (b *Builder) Ensure(current infrav1.Tags) error {
-	if b.params == nil {
-		return ErrBuildParamsRequired
-	}
 	if diff := computeDiff(current, *b.params); len(diff) > 0 {
-		return b.Apply()
+		if err := b.applyFunc(b.params, diff); err != nil {
+			return fmt.Errorf("failed applying tags: %w", err)
+		}
 	}
 	return nil
 }
@@ -103,13 +94,12 @@ func (b *Builder) Ensure(current infrav1.Tags) error {
 // WithEC2 is used to denote that the tags builder will be using EC2.
 func WithEC2(ec2client common.EC2API) BuilderOption {
 	return func(b *Builder) {
-		b.applyFunc = func(params *infrav1.BuildParams) error {
-			tags := infrav1.Build(*params)
-			awsTags := make([]ec2types.Tag, 0, len(tags))
+		b.applyFunc = func(params *infrav1.BuildParams, diff infrav1.Tags) error {
+			awsTags := make([]ec2types.Tag, 0, len(diff))
 
 			// For testing, we need sorted keys
-			sortedKeys := make([]string, 0, len(tags))
-			for k := range tags {
+			sortedKeys := make([]string, 0, len(diff))
+			for k := range diff {
 				// We want to filter out the tag keys that start with `aws:` as they are reserved for internal AWS use.
 				if !strings.HasPrefix(k, AwsInternalTagPrefix) {
 					sortedKeys = append(sortedKeys, k)
@@ -120,7 +110,7 @@ func WithEC2(ec2client common.EC2API) BuilderOption {
 			for _, key := range sortedKeys {
 				tag := ec2types.Tag{
 					Key:   aws.String(key),
-					Value: aws.String(tags[key]),
+					Value: aws.String(diff[key]),
 				}
 				awsTags = append(awsTags, tag)
 			}
@@ -139,10 +129,9 @@ func WithEC2(ec2client common.EC2API) BuilderOption {
 // WithEKS is used to specify that the tags builder will be targeting EKS.
 func WithEKS(ctx context.Context, eksclient eksClient) BuilderOption {
 	return func(b *Builder) {
-		b.applyFunc = func(params *infrav1.BuildParams) error {
-			tags := infrav1.Build(*params)
-			eksTags := make(map[string]*string, len(tags))
-			for k, v := range tags {
+		b.applyFunc = func(params *infrav1.BuildParams, diff infrav1.Tags) error {
+			eksTags := make(map[string]*string, len(diff))
+			for k, v := range diff {
 				// We want to filter out the tag keys that start with `aws:` as they are reserved for internal AWS use.
 				if !strings.HasPrefix(k, AwsInternalTagPrefix) {
 					eksTags[k] = aws.String(v)

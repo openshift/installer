@@ -61,7 +61,7 @@ func GenerateInitDocument(secretPrefix string, chunks int32, region string, secr
 
 	var buf bytes.Buffer
 	mpWriter := multipart.NewWriter(&buf)
-	buf.WriteString(fmt.Sprintf(multipartHeader, mpWriter.Boundary()))
+	fmt.Fprintf(&buf, multipartHeader, mpWriter.Boundary())
 	scriptWriter, err := mpWriter.CreatePart(boothookType)
 	if err != nil {
 		return []byte{}, err

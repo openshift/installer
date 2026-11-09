@@ -4,21 +4,20 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Adds or updates the policy that is specified as the IAM user's permissions
 // boundary. You can use an Amazon Web Services managed policy or a customer
 // managed policy to set the boundary for a user. Use the boundary to control the
 // maximum permissions that the user can have. Setting a permissions boundary is an
-// advanced feature that can affect the permissions for the user. Policies that are
-// used as permissions boundaries do not provide permissions. You must also attach
-// a permissions policy to the user. To learn how the effective permissions for a
-// user are evaluated, see IAM JSON policy evaluation logic (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
-// in the IAM User Guide.
+// advanced feature that can affect the permissions for the user.
+//
+// Policies that are used as permissions boundaries do not provide permissions.
+// You must also attach a permissions policy to the user. To learn how the
+// effective permissions for a user are evaluated, see [IAM JSON policy evaluation logic]in the IAM User Guide.
+//
+// [IAM JSON policy evaluation logic]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
 func (c *Client) PutUserPermissionsBoundary(ctx context.Context, params *PutUserPermissionsBoundaryInput, optFns ...func(*Options)) (*PutUserPermissionsBoundaryOutput, error) {
 	if params == nil {
 		params = &PutUserPermissionsBoundaryInput{}
@@ -37,14 +36,18 @@ func (c *Client) PutUserPermissionsBoundary(ctx context.Context, params *PutUser
 type PutUserPermissionsBoundaryInput struct {
 
 	// The ARN of the managed policy that is used to set the permissions boundary for
-	// the user. A permissions boundary policy defines the maximum permissions that
+	// the user.
+	//
+	// A permissions boundary policy defines the maximum permissions that
 	// identity-based policies can grant to an entity, but does not grant permissions.
 	// Permissions boundaries do not define the maximum permissions that a
-	// resource-based policy can grant to an entity. To learn more, see Permissions
-	// boundaries for IAM entities (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
-	// in the IAM User Guide. For more information about policy types, see Policy
-	// types  (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types)
-	// in the IAM User Guide.
+	// resource-based policy can grant to an entity. To learn more, see [Permissions boundaries for IAM entities]in the IAM
+	// User Guide.
+	//
+	// For more information about policy types, see [Policy types] in the IAM User Guide.
+	//
+	// [Policy types]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types
+	// [Permissions boundaries for IAM entities]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
 	//
 	// This member is required.
 	PermissionsBoundary *string
@@ -66,9 +69,6 @@ type PutUserPermissionsBoundaryOutput struct {
 }
 
 func (c *Client) addOperationPutUserPermissionsBoundaryMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpPutUserPermissionsBoundary{}, middleware.After)
 	if err != nil {
 		return err
@@ -77,56 +77,20 @@ func (c *Client) addOperationPutUserPermissionsBoundaryMiddlewares(stack *middle
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "PutUserPermissionsBoundary"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutUserPermissionsBoundaryValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutUserPermissionsBoundary(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -141,13 +105,8 @@ func (c *Client) addOperationPutUserPermissionsBoundaryMiddlewares(stack *middle
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opPutUserPermissionsBoundary(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "PutUserPermissionsBoundary",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

@@ -75,7 +75,7 @@ func (s *Service) reconcileCarrierGateway() error {
 		}
 		return true, nil
 	}, awserrors.InvalidCarrierGatewayNotFound); err != nil {
-		record.Warnf(s.scope.InfraCluster(), "FailedTagCarrierGateway", "Failed to tag managed Carrier Gateway %q: %v", cagw.CarrierGatewayId, err)
+		record.Warnf(s.scope.InfraCluster(), "FailedTagCarrierGateway", "Failed to tag managed Carrier Gateway %q: %v", aws.ToString(cagw.CarrierGatewayId), err)
 		return errors.Wrapf(err, "failed to tag carrier gateway %q", *cagw.CarrierGatewayId)
 	}
 	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition)

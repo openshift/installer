@@ -20,8 +20,8 @@ include $(ROOT_DIR_RELATIVE)/common.mk
 # https://suva.sh/posts/well-documented-makefiles
 
 # Go
-GO_VERSION ?=1.24.7
-GO_DIRECTIVE_VERSION ?= 1.24.0
+GO_VERSION ?=1.26.5
+GO_DIRECTIVE_VERSION ?= 1.26.0
 GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # Directories.
@@ -32,7 +32,7 @@ TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
 
 
 API_DIRS := cmd/clusterawsadm/api api exp/api controlplane/eks/api bootstrap/eks/api iam/api controlplane/rosa/api
-API_FILES := $(foreach dir, $(API_DIRS), $(call rwildcard,../../$(dir),*.go))
+API_FILES := $(foreach dir, $(API_DIRS), $(call rwildcard,$(dir),*.go))
 
 BIN_DIR := bin
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
@@ -159,8 +159,8 @@ E2E_SKIP_EKS_UPGRADE ?= "false"
 EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
 # set up `setup-envtest` to install kubebuilder dependency
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.34.0
-SETUP_ENVTEST_VER := release-0.22
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.35.0
+SETUP_ENVTEST_VER := release-0.23
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest

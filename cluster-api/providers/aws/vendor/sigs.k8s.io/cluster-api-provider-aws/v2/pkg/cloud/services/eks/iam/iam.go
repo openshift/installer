@@ -44,6 +44,10 @@ import (
 const (
 	// EKSFargateService is the service to trust for fargate pod execution roles.
 	EKSFargateService = "eks-fargate-pods.amazonaws.com"
+
+	iamPolicyVersion    = "2012-10-17"
+	iamEffectAllow      = "Allow"
+	iamActionAssumeRole = "sts:AssumeRole"
 )
 
 // IAMService defines the specs for an IAM service.
@@ -173,7 +177,7 @@ func (s *IAMService) EnsurePoliciesAttached(ctx context.Context, role *iamtypes.
 // RoleTags returns the tags for the given role.
 func RoleTags(key string, additionalTags infrav1.Tags) []iamtypes.Tag {
 	additionalTags[infrav1.ClusterAWSCloudProviderTagKey(key)] = string(infrav1.ResourceLifecycleOwned)
-	tags := []iamtypes.Tag{}
+	tags := make([]iamtypes.Tag, 0, len(additionalTags))
 	for k, v := range additionalTags {
 		tags = append(tags, iamtypes.Tag{
 			Key:   aws.String(k),
@@ -363,12 +367,12 @@ func ControlPlaneTrustRelationship(enableFargate bool) *iamv1.PolicyDocument {
 	}
 
 	policy := &iamv1.PolicyDocument{
-		Version: "2012-10-17",
+		Version: iamPolicyVersion,
 		Statement: []iamv1.StatementEntry{
 			{
-				Effect: "Allow",
+				Effect: iamEffectAllow,
 				Action: []string{
-					"sts:AssumeRole",
+					iamActionAssumeRole,
 				},
 				Principal: identity,
 			},
@@ -384,12 +388,12 @@ func FargateTrustRelationship() *iamv1.PolicyDocument {
 	identity["Service"] = []string{EKSFargateService}
 
 	policy := &iamv1.PolicyDocument{
-		Version: "2012-10-17",
+		Version: iamPolicyVersion,
 		Statement: []iamv1.StatementEntry{
 			{
-				Effect: "Allow",
+				Effect: iamEffectAllow,
 				Action: []string{
-					"sts:AssumeRole",
+					iamActionAssumeRole,
 				},
 				Principal: identity,
 			},
@@ -405,12 +409,12 @@ func NodegroupTrustRelationship() *iamv1.PolicyDocument {
 	identity["Service"] = []string{"ec2.amazonaws.com"}
 
 	policy := &iamv1.PolicyDocument{
-		Version: "2012-10-17",
+		Version: iamPolicyVersion,
 		Statement: []iamv1.StatementEntry{
 			{
-				Effect: "Allow",
+				Effect: iamEffectAllow,
 				Action: []string{
-					"sts:AssumeRole",
+					iamActionAssumeRole,
 				},
 				Principal: identity,
 			},

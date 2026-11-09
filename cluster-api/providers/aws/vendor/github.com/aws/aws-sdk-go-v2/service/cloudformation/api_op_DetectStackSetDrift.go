@@ -5,37 +5,39 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Detect drift on a stack set. When CloudFormation performs drift detection on a
-// stack set, it performs drift detection on the stack associated with each stack
-// instance in the stack set. For more information, see How CloudFormation
-// performs drift detection on a stack set (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-drift.html)
-// . DetectStackSetDrift returns the OperationId of the stack set drift detection
-// operation. Use this operation id with DescribeStackSetOperation to monitor the
-// progress of the drift detection operation. The drift detection operation may
-// take some time, depending on the number of stack instances included in the stack
-// set, in addition to the number of resources included in each stack. Once the
-// operation has completed, use the following actions to return drift information:
-//   - Use DescribeStackSet to return detailed information about the stack set,
-//     including detailed information about the last completed drift operation
-//     performed on the stack set. (Information about drift operations that are in
-//     progress isn't included.)
-//   - Use ListStackInstances to return a list of stack instances belonging to the
-//     stack set, including the drift status and last drift time checked of each
-//     instance.
-//   - Use DescribeStackInstance to return detailed information about a specific
-//     stack instance, including its drift status and last drift time checked.
+// Detect drift on a StackSet. When CloudFormation performs drift detection on a
+// StackSet, it performs drift detection on the stack associated with each stack
+// instance in the StackSet. For more information, see [Performing drift detection on CloudFormation StackSets].
 //
-// For more information about performing a drift detection operation on a stack
-// set, see Detecting unmanaged changes in stack sets (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-drift.html)
-// . You can only run a single drift detection operation on a given stack set at
-// one time. To stop a drift detection stack set operation, use
-// StopStackSetOperation .
+// DetectStackSetDrift returns the OperationId of the StackSet drift detection
+// operation. Use this operation id with DescribeStackSetOperationto monitor the progress of the drift
+// detection operation. The drift detection operation may take some time, depending
+// on the number of stack instances included in the StackSet, in addition to the
+// number of resources included in each stack.
+//
+// Once the operation has completed, use the following actions to return drift
+// information:
+//
+//   - Use DescribeStackSetto return detailed information about the stack set, including detailed
+//     information about the last completed drift operation performed on the StackSet.
+//     (Information about drift operations that are in progress isn't included.)
+//
+//   - Use ListStackInstancesto return a list of stack instances belonging to the StackSet,
+//     including the drift status and last drift time checked of each instance.
+//
+//   - Use DescribeStackInstanceto return detailed information about a specific stack instance,
+//     including its drift status and last drift time checked.
+//
+// You can only run a single drift detection operation on a given StackSet at one
+// time.
+//
+// To stop a drift detection StackSet operation, use StopStackSetOperation.
+//
+// [Performing drift detection on CloudFormation StackSets]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-drift.html
 func (c *Client) DetectStackSetDrift(ctx context.Context, params *DetectStackSetDriftInput, optFns ...func(*Options)) (*DetectStackSetDriftOutput, error) {
 	if params == nil {
 		params = &DetectStackSetDriftInput{}
@@ -53,30 +55,40 @@ func (c *Client) DetectStackSetDrift(ctx context.Context, params *DetectStackSet
 
 type DetectStackSetDriftInput struct {
 
-	// The name of the stack set on which to perform the drift detection operation.
+	// The name of the StackSet on which to perform the drift detection operation.
 	//
 	// This member is required.
 	StackSetName *string
 
 	// [Service-managed permissions] Specifies whether you are acting as an account
 	// administrator in the organization's management account or as a delegated
-	// administrator in a member account. By default, SELF is specified. Use SELF for
-	// stack sets with self-managed permissions.
+	// administrator in a member account.
+	//
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
+	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
+	//
 	//   - If you are signed in to a delegated administrator account, specify
-	//   DELEGATED_ADMIN . Your Amazon Web Services account must be registered as a
-	//   delegated administrator in the management account. For more information, see
-	//   Register a delegated administrator (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
-	//   in the CloudFormation User Guide.
+	//   DELEGATED_ADMIN .
+	//
+	// Your Amazon Web Services account must be registered as a delegated
+	//   administrator in the management account. For more information, see [Register a delegated administrator]in the
+	//   CloudFormation User Guide.
+	//
+	// [Register a delegated administrator]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html
 	CallAs types.CallAs
 
-	// The ID of the stack set operation.
+	//  The ID of the StackSet operation.
 	OperationId *string
 
-	// The user-specified preferences for how CloudFormation performs a stack set
-	// operation. For more information about maximum concurrent accounts and failure
-	// tolerance, see Stack set operation options (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options)
-	// .
+	// The user-specified preferences for how CloudFormation performs a StackSet
+	// operation.
+	//
+	// For more information about maximum concurrent accounts and failure tolerance,
+	// see [StackSet operation options].
+	//
+	// [StackSet operation options]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options
 	OperationPreferences *types.StackSetOperationPreferences
 
 	noSmithyDocumentSerde
@@ -84,8 +96,9 @@ type DetectStackSetDriftInput struct {
 
 type DetectStackSetDriftOutput struct {
 
-	// The ID of the drift detection stack set operation. You can use this operation
-	// ID with DescribeStackSetOperation to monitor the progress of the drift
+	// The ID of the drift detection StackSet operation.
+	//
+	// You can use this operation ID with DescribeStackSetOperation to monitor the progress of the drift
 	// detection operation.
 	OperationId *string
 
@@ -96,9 +109,6 @@ type DetectStackSetDriftOutput struct {
 }
 
 func (c *Client) addOperationDetectStackSetDriftMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDetectStackSetDrift{}, middleware.After)
 	if err != nil {
 		return err
@@ -107,59 +117,23 @@ func (c *Client) addOperationDetectStackSetDriftMiddlewares(stack *middleware.St
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DetectStackSetDrift"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opDetectStackSetDriftMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetectStackSetDriftValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDetectStackSetDrift(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -172,6 +146,9 @@ func (c *Client) addOperationDetectStackSetDriftMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -208,12 +185,4 @@ func (m *idempotencyToken_initializeOpDetectStackSetDrift) HandleInitialize(ctx 
 }
 func addIdempotencyToken_opDetectStackSetDriftMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpDetectStackSetDrift{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opDetectStackSetDrift(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DetectStackSetDrift",
-	}
 }

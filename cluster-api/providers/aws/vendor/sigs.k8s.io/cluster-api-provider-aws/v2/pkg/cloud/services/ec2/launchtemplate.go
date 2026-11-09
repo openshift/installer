@@ -34,7 +34,6 @@ import (
 	ignV3Types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -79,7 +78,7 @@ func (s *Service) ReconcileLaunchTemplate(
 ) (*ctrl.Result, error) {
 	bootstrapData, bootstrapDataFormat, bootstrapDataSecretKey, err := scope.GetRawBootstrapData()
 	if err != nil {
-		record.Eventf(scope.GetMachinePool(), corev1.EventTypeWarning, "FailedGetBootstrapData", err.Error())
+		record.Warnf(scope.GetMachinePool(), "FailedGetBootstrapData", "%s", err.Error())
 		return nil, err
 	}
 	scope.Info("checking for existing launch template")

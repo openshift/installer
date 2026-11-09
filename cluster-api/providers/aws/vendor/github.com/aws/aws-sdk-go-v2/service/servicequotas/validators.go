@@ -10,6 +10,26 @@ import (
 	"github.com/aws/smithy-go/middleware"
 )
 
+type validateOpCreateSupportCase struct {
+}
+
+func (*validateOpCreateSupportCase) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateSupportCase) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateSupportCaseInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateSupportCaseInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpDeleteServiceQuotaIncreaseRequestFromTemplate struct {
 }
 
@@ -45,6 +65,26 @@ func (m *validateOpGetAWSDefaultServiceQuota) HandleInitialize(ctx context.Conte
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpGetAWSDefaultServiceQuotaInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpGetQuotaUtilizationReport struct {
+}
+
+func (*validateOpGetQuotaUtilizationReport) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetQuotaUtilizationReport) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetQuotaUtilizationReportInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetQuotaUtilizationReportInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -230,6 +270,26 @@ func (m *validateOpRequestServiceQuotaIncrease) HandleInitialize(ctx context.Con
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpStartAutoManagement struct {
+}
+
+func (*validateOpStartAutoManagement) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpStartAutoManagement) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*StartAutoManagementInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpStartAutoManagementInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpTagResource struct {
 }
 
@@ -270,12 +330,20 @@ func (m *validateOpUntagResource) HandleInitialize(ctx context.Context, in middl
 	return next.HandleInitialize(ctx, in)
 }
 
+func addOpCreateSupportCaseValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateSupportCase{}, middleware.After)
+}
+
 func addOpDeleteServiceQuotaIncreaseRequestFromTemplateValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteServiceQuotaIncreaseRequestFromTemplate{}, middleware.After)
 }
 
 func addOpGetAWSDefaultServiceQuotaValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetAWSDefaultServiceQuota{}, middleware.After)
+}
+
+func addOpGetQuotaUtilizationReportValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetQuotaUtilizationReport{}, middleware.After)
 }
 
 func addOpGetRequestedServiceQuotaChangeValidationMiddleware(stack *middleware.Stack) error {
@@ -312,6 +380,10 @@ func addOpPutServiceQuotaIncreaseRequestIntoTemplateValidationMiddleware(stack *
 
 func addOpRequestServiceQuotaIncreaseValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpRequestServiceQuotaIncrease{}, middleware.After)
+}
+
+func addOpStartAutoManagementValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpStartAutoManagement{}, middleware.After)
 }
 
 func addOpTagResourceValidationMiddleware(stack *middleware.Stack) error {
@@ -357,6 +429,21 @@ func validateTag(v *types.Tag) error {
 	}
 }
 
+func validateOpCreateSupportCaseInput(v *CreateSupportCaseInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateSupportCaseInput"}
+	if v.RequestId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("RequestId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpDeleteServiceQuotaIncreaseRequestFromTemplateInput(v *DeleteServiceQuotaIncreaseRequestFromTemplateInput) error {
 	if v == nil {
 		return nil
@@ -388,6 +475,21 @@ func validateOpGetAWSDefaultServiceQuotaInput(v *GetAWSDefaultServiceQuotaInput)
 	}
 	if v.QuotaCode == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("QuotaCode"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpGetQuotaUtilizationReportInput(v *GetQuotaUtilizationReportInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetQuotaUtilizationReportInput"}
+	if v.ReportId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ReportId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -550,6 +652,24 @@ func validateOpRequestServiceQuotaIncreaseInput(v *RequestServiceQuotaIncreaseIn
 	}
 	if v.DesiredValue == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("DesiredValue"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpStartAutoManagementInput(v *StartAutoManagementInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "StartAutoManagementInput"}
+	if len(v.OptInLevel) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("OptInLevel"))
+	}
+	if len(v.OptInType) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("OptInType"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

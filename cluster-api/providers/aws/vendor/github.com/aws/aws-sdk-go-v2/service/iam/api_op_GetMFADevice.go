@@ -4,10 +4,7 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
@@ -30,8 +27,9 @@ func (c *Client) GetMFADevice(ctx context.Context, params *GetMFADeviceInput, op
 type GetMFADeviceInput struct {
 
 	// Serial number that uniquely identifies the MFA device. For this API, we only
-	// accept FIDO security key ARNs (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html)
-	// .
+	// accept FIDO security key [ARNs].
+	//
+	// [ARNs]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
 	//
 	// This member is required.
 	SerialNumber *string
@@ -45,15 +43,17 @@ type GetMFADeviceInput struct {
 type GetMFADeviceOutput struct {
 
 	// Serial number that uniquely identifies the MFA device. For this API, we only
-	// accept FIDO security key ARNs (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html)
-	// .
+	// accept FIDO security key [ARNs].
+	//
+	// [ARNs]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
 	//
 	// This member is required.
 	SerialNumber *string
 
 	// The certifications of a specified user's MFA device. We currently provide
-	// FIPS-140-2, FIPS-140-3, and FIDO certification levels obtained from FIDO
-	// Alliance Metadata Service (MDS) (https://fidoalliance.org/metadata/) .
+	// FIPS-140-2, FIPS-140-3, and FIDO certification levels obtained from [FIDO Alliance Metadata Service (MDS)].
+	//
+	// [FIDO Alliance Metadata Service (MDS)]: https://fidoalliance.org/metadata/
 	Certifications map[string]string
 
 	// The date that a specified user's MFA device was first enabled.
@@ -69,9 +69,6 @@ type GetMFADeviceOutput struct {
 }
 
 func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetMFADevice{}, middleware.After)
 	if err != nil {
 		return err
@@ -80,56 +77,20 @@ func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, op
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetMFADevice"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetMFADeviceValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetMFADevice(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -144,13 +105,8 @@ func (c *Client) addOperationGetMFADeviceMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opGetMFADevice(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetMFADevice",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

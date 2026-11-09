@@ -4,11 +4,10 @@ package resourcegroupstaggingapi
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/schemas"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Applies one or more tags to the specified resources. Note the following:
@@ -29,6 +28,13 @@ import (
 //     service that the resource belongs to as well as permissions for adding tags. For
 //     more information, see the documentation for each service.
 //
+//   - When you use the [Amazon Web Services Resource Groups Tagging API]to update tags for Amazon Web Services CloudFormation
+//     stack sets, Amazon Web Services calls the [Amazon Web Services CloudFormation UpdateStack]UpdateStack operation. This
+//     operation may initiate additional resource property updates in addition to the
+//     desired tag updates. To avoid unexpected resource updates, Amazon Web Services
+//     recommends that you only apply or update tags to your CloudFormation stack sets
+//     using Amazon Web Services CloudFormation.
+//
 // Do not store personally identifiable information (PII) or other confidential or
 // sensitive information in tags. We use tags to provide you with billing and
 // administration services. Tags are not intended to be used for private or
@@ -41,10 +47,18 @@ import (
 // resource. For example, to tag an Amazon EC2 instance using the TagResources
 // operation, you must have both of the following permissions:
 //
-//   - tag:TagResource
+//   - tag:TagResources
 //
 //   - ec2:CreateTags
 //
+// In addition, some services might have specific requirements for tagging some
+// types of resources. For example, to tag an Amazon S3 bucket, you must also have
+// the s3:GetBucketTagging permission. If the expected minimum permissions don't
+// work, check the documentation for that service's tagging APIs for more
+// information.
+//
+// [Amazon Web Services CloudFormation UpdateStack]: https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStack.html
+// [Amazon Web Services Resource Groups Tagging API]: https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html
 // [Services that support the Resource Groups Tagging API]: https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/supported-services.html
 // [Tag Naming and Usage Conventions]: https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html#tag-conventions
 func (c *Client) TagResources(ctx context.Context, params *TagResourcesInput, optFns ...func(*Options)) (*TagResourcesOutput, error) {
@@ -83,6 +97,17 @@ type TagResourcesInput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *TagResourcesInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.TagResourcesInput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *TagResourcesInput) SerializeMembers(s smithy.ShapeSerializer) {
+	serializeResourceARNListForTagUntag(s, schemas.TagResourcesInput_ResourceARNList, v.ResourceARNList)
+	serializeTagMap(s, schemas.TagResourcesInput_Tags, v.Tags)
+}
+
 type TagResourcesOutput struct {
 
 	// A map containing a key-value pair for each failed item that couldn't be tagged.
@@ -97,80 +122,45 @@ type TagResourcesOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *TagResourcesOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.TagResourcesOutput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *TagResourcesOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	serializeFailedResourcesMap(s, schemas.TagResourcesOutput_FailedResourcesMap, v.FailedResourcesMap)
+}
+func (v *TagResourcesOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.TagResourcesOutput, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.TagResourcesOutput_FailedResourcesMap:
+			return deserializeFailedResourcesMap(d, schemas.TagResourcesOutput_FailedResourcesMap, &v.FailedResourcesMap)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationTagResourcesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.TagResources, schemas.TagResourcesInput, schemas.TagResourcesOutput)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpTagResources{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.TagResources, schemas.TagResourcesInput, schemas.TagResourcesOutput), output: &TagResourcesOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpTagResources{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "TagResources"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpTagResourcesValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opTagResources(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -185,25 +175,8 @@ func (c *Client) addOperationTagResourcesMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opTagResources(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "TagResources",
-	}
 }

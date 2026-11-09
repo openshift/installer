@@ -59,6 +59,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ssm"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	otel "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/otel/tracing"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -164,6 +165,14 @@ func (r *AWSMachineReconciler) getObjectStoreService(scope scope.S3Scope) servic
 func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := logger.FromContext(ctx)
 
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awsmachine_controller",
+		"AWSMachineReconciler.Reconcile",
+	)
+	defer span.End()
+
 	// Fetch the AWSMachine instance.
 	awsMachine := &infrav1.AWSMachine{}
 	err := r.Get(ctx, req.NamespacedName, awsMachine)
@@ -258,7 +267,7 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		For(&infrav1.AWSMachine{}).
 		Watches(
 			&clusterv1.Machine{},
-			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("AWSMachine"))),
+			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind(kindAWSMachine))),
 		).
 		Watches(
 			&infrav1.AWSCluster{},
@@ -270,18 +279,29 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
 				// for AWSMachine resources only
 				UpdateFunc: func(e event.UpdateEvent) bool {
-					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != "AWSMachine" {
+					// Objects in watch events have no `TypeMeta`, so the kind can only be told from the Go type
+					oldAWSMachine, ok := e.ObjectOld.(*infrav1.AWSMachine)
+					if !ok {
+						return true
+					}
+					newAWSMachine, ok := e.ObjectNew.(*infrav1.AWSMachine)
+					if !ok {
 						return true
 					}
 
-					oldMachine := e.ObjectOld.(*infrav1.AWSMachine).DeepCopy()
-					newMachine := e.ObjectNew.(*infrav1.AWSMachine).DeepCopy()
+					oldMachine := oldAWSMachine.DeepCopy()
+					newMachine := newAWSMachine.DeepCopy()
 
 					oldMachine.Status = infrav1.AWSMachineStatus{}
 					newMachine.Status = infrav1.AWSMachineStatus{}
 
 					oldMachine.ObjectMeta.ResourceVersion = ""
 					newMachine.ObjectMeta.ResourceVersion = ""
+
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldMachine.ObjectMeta.ManagedFields = nil
+					newMachine.ObjectMeta.ManagedFields = nil
 
 					return !cmp.Equal(oldMachine, newMachine)
 				},
@@ -310,6 +330,14 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 func (r *AWSMachineReconciler) reconcileDelete(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
 	machineScope.Info("Handling deleted AWSMachine")
+
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awsmachine_controller",
+		"AWSMachineReconciler.reconcileDelete",
+	)
+	defer span.End()
 
 	ec2Service := r.getEC2Service(ec2Scope)
 
@@ -505,6 +533,13 @@ func (r *AWSMachineReconciler) findInstance(machineScope *scope.MachineScope, ec
 //nolint:gocyclo
 func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, ec2Scope scope.EC2Scope, elbScope scope.ELBScope, objectStoreScope scope.S3Scope) (ctrl.Result, error) {
 	machineScope.Trace("Reconciling AWSMachine")
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awsmachine_controller",
+		"AWSMachineReconciler.reconcileNormal",
+	)
+	defer span.End()
 
 	// If the AWSMachine is in an error state, return early.
 	if machineScope.HasFailed() {
@@ -579,6 +614,11 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 			machineScope.Error(err, "unable to create instance")
 			v1beta1conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionFailedReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
 			return ctrl.Result{}, err
+		}
+
+		if patchErr := machineScope.PatchObject(); patchErr != nil {
+			machineScope.Error(patchErr, "failed to patch providerID")
+			return ctrl.Result{}, patchErr
 		}
 	}
 
@@ -698,7 +738,7 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 
 	// tasks that can only take place during operational instance states
 	if machineScope.InstanceIsOperational() {
-		err := r.reconcileOperationalState(ec2svc, machineScope, instance)
+		err := r.reconcileOperationalState(ctx, ec2svc, machineScope, instance)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -712,7 +752,7 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 	return ctrl.Result{}, nil
 }
 
-func (r *AWSMachineReconciler) reconcileOperationalState(ec2svc services.EC2Interface, machineScope *scope.MachineScope, instance *infrav1.Instance) error {
+func (r *AWSMachineReconciler) reconcileOperationalState(ctx context.Context, ec2svc services.EC2Interface, machineScope *scope.MachineScope, instance *infrav1.Instance) error {
 	machineScope.SetAddresses(instance.Addresses)
 
 	existingSecurityGroups, err := ec2svc.GetInstanceSecurityGroups(*machineScope.GetInstanceID())
@@ -734,6 +774,17 @@ func (r *AWSMachineReconciler) reconcileOperationalState(ec2svc services.EC2Inte
 	if err != nil {
 		machineScope.Error(err, "failed to ensure instance metadata options")
 		return err
+	}
+
+	// Ensure the source/destination check on the instance's network interfaces matches
+	// the spec. This runs on every reconcile so that the setting is retried against the
+	// running instance rather than applied once at creation (when DescribeNetworkInterfaces
+	// may be briefly eventually consistent).
+	if setting := machineScope.AWSMachine.Spec.SourceDestCheck; setting != "" {
+		if err := ec2svc.ModifySourceDestCheck(ctx, instance.ID, setting); err != nil {
+			machineScope.Error(err, "failed to modify source/destination check")
+			return err
+		}
 	}
 
 	return nil
@@ -791,7 +842,7 @@ func (r *AWSMachineReconciler) createInstance(ctx context.Context, ec2svc servic
 func (r *AWSMachineReconciler) resolveUserData(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) ([]byte, string, error) {
 	userData, userDataFormat, err := machineScope.GetRawBootstrapDataWithFormat()
 	if err != nil {
-		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGetBootstrapData", err.Error())
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGetBootstrapData", "%s", err.Error())
 		return nil, "", err
 	}
 
@@ -842,13 +893,13 @@ func (r *AWSMachineReconciler) cloudInitUserData(machineScope *scope.MachineScop
 		return nil, err
 	}
 	if serviceErr != nil {
-		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedCreateAWSSecrets", serviceErr.Error())
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedCreateAWSSecrets", "%s", serviceErr.Error())
 		machineScope.Error(serviceErr, "Failed to create AWS Secret entry", "secretPrefix", prefix)
 		return nil, serviceErr
 	}
 	encryptedCloudInit, err := secretSvc.UserData(machineScope.GetSecretPrefix(), machineScope.GetSecretCount(), machineScope.InfraCluster.Region())
 	if err != nil {
-		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGenerateAWSSecretsCloudInit", err.Error())
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGenerateAWSSecretsCloudInit", "%s", err.Error())
 		return nil, err
 	}
 	return encryptedCloudInit, nil
@@ -977,7 +1028,7 @@ func (r *AWSMachineReconciler) deleteIgnitionBootstrapDataFromS3(ctx context.Con
 
 	_, userDataFormat, err := machineScope.GetRawBootstrapDataWithFormat()
 	if err != nil && !apierrors.IsNotFound(err) {
-		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGetBootstrapData", err.Error())
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedGetBootstrapData", "%s", err.Error())
 		return err
 	}
 
@@ -1209,7 +1260,7 @@ func (r *AWSMachineReconciler) requestsForCluster(log logger.Wrapper, namespace,
 	result := make([]ctrl.Request, 0, len(machineList.Items))
 	for _, m := range machineList.Items {
 		log.WithValues("machine", klog.KObj(&m))
-		if m.Spec.InfrastructureRef.Kind != "AWSMachine" {
+		if m.Spec.InfrastructureRef.Kind != kindAWSMachine {
 			log.Trace("Machine has an InfrastructureRef for a different type, will not add to reconciliation request.")
 			continue
 		}
@@ -1229,7 +1280,7 @@ func (r *AWSMachineReconciler) getInfraCluster(ctx context.Context, log *logger.
 	var managedControlPlaneScope *scope.ManagedControlPlaneScope
 	var err error
 
-	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == "AWSManagedControlPlane" {
+	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == AWSManagedControlPlaneRefKind {
 		controlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
 		controlPlaneName := client.ObjectKey{
 			Namespace: awsMachine.Namespace,

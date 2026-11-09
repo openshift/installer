@@ -4,24 +4,28 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Retrieves the specified inline policy document that is embedded in the
-// specified IAM user. Policies returned by this operation are URL-encoded
-// compliant with RFC 3986 (https://tools.ietf.org/html/rfc3986) . You can use a
-// URL decoding method to convert the policy back to plain JSON text. For example,
-// if you use Java, you can use the decode method of the java.net.URLDecoder
-// utility class in the Java SDK. Other languages and SDKs provide similar
-// functionality. An IAM user can also have managed policies attached to it. To
-// retrieve a managed policy document that is attached to a user, use GetPolicy to
-// determine the policy's default version. Then use GetPolicyVersion to retrieve
-// the policy document. For more information about policies, see Managed policies
-// and inline policies (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
-// in the IAM User Guide.
+// specified IAM user.
+//
+// Policies returned by this operation are URL-encoded compliant with [RFC 3986]. You can
+// use a URL decoding method to convert the policy back to plain JSON text. For
+// example, if you use Java, you can use the decode method of the
+// java.net.URLDecoder utility class in the Java SDK. Other languages and SDKs
+// provide similar functionality, and some SDKs do this decoding automatically.
+//
+// An IAM user can also have managed policies attached to it. To retrieve a
+// managed policy document that is attached to a user, use [GetPolicy]to determine the
+// policy's default version. Then use [GetPolicyVersion]to retrieve the policy document.
+//
+// For more information about policies, see [Managed policies and inline policies] in the IAM User Guide.
+//
+// [RFC 3986]: https://tools.ietf.org/html/rfc3986
+// [GetPolicyVersion]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicyVersion.html
+// [GetPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicy.html
+// [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
 func (c *Client) GetUserPolicy(ctx context.Context, params *GetUserPolicyInput, optFns ...func(*Options)) (*GetUserPolicyOutput, error) {
 	if params == nil {
 		params = &GetUserPolicyInput{}
@@ -39,18 +43,24 @@ func (c *Client) GetUserPolicy(ctx context.Context, params *GetUserPolicyInput, 
 
 type GetUserPolicyInput struct {
 
-	// The name of the policy document to get. This parameter allows (through its
-	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
-	// consisting of upper and lowercase alphanumeric characters with no spaces. You
-	// can also include any of the following characters: _+=,.@-
+	// The name of the policy document to get.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	PolicyName *string
 
-	// The name of the user who the policy is associated with. This parameter allows
-	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
-	// characters consisting of upper and lowercase alphanumeric characters with no
-	// spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the user who the policy is associated with.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	UserName *string
@@ -58,13 +68,16 @@ type GetUserPolicyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetUserPolicy request.
+// Contains the response to a successful [GetUserPolicy] request.
+//
+// [GetUserPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetUserPolicy.html
 type GetUserPolicyOutput struct {
 
-	// The policy document. IAM stores policies in JSON format. However, resources
-	// that were created using CloudFormation templates can be formatted in YAML.
-	// CloudFormation always converts a YAML policy to JSON format before submitting it
-	// to IAM.
+	// The policy document.
+	//
+	// IAM stores policies in JSON format. However, resources that were created using
+	// CloudFormation templates can be formatted in YAML. CloudFormation always
+	// converts a YAML policy to JSON format before submitting it to IAM.
 	//
 	// This member is required.
 	PolicyDocument *string
@@ -86,9 +99,6 @@ type GetUserPolicyOutput struct {
 }
 
 func (c *Client) addOperationGetUserPolicyMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetUserPolicy{}, middleware.After)
 	if err != nil {
 		return err
@@ -97,56 +107,20 @@ func (c *Client) addOperationGetUserPolicyMiddlewares(stack *middleware.Stack, o
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetUserPolicy"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetUserPolicyValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetUserPolicy(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -161,13 +135,8 @@ func (c *Client) addOperationGetUserPolicyMiddlewares(stack *middleware.Stack, o
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opGetUserPolicy(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetUserPolicy",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

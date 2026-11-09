@@ -4,10 +4,9 @@ package resourcegroupstaggingapi
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/schemas"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Generates a report that lists all tagged resources in the accounts across your
@@ -17,10 +16,22 @@ import (
 //
 // The generated report is saved to the following location:
 //
-//	s3://example-bucket/AwsTagPolicies/o-exampleorgid/YYYY-MM-ddTHH:mm:ssZ/report.csv
+//	s3://amzn-s3-demo-bucket/AwsTagPolicies/o-exampleorgid/YYYY-MM-ddTHH:mm:ssZ/report.csv
+//
+// For more information about evaluating resource compliance with tag policies,
+// including the required permissions, review [Permissions for evaluating organization-wide compliance]in the Tagging Amazon Web Services
+// Resources and Tag Editor user guide.
 //
 // You can call this operation only from the organization's management account and
 // from the us-east-1 Region.
+//
+// If the account associated with the identity used to call StartReportCreation is
+// different from the account that owns the Amazon S3 bucket, there must be a
+// bucket policy attached to the bucket to provide access. For more information,
+// review [Amazon S3 bucket policy for report storage]in the Tagging Amazon Web Services Resources and Tag Editor user guide.
+//
+// [Amazon S3 bucket policy for report storage]: https://docs.aws.amazon.com/tag-editor/latest/userguide/tag-policies-orgs.html#bucket-policy
+// [Permissions for evaluating organization-wide compliance]: https://docs.aws.amazon.com/tag-editor/latest/userguide/tag-policies-orgs.html#tag-policies-permissions-org
 func (c *Client) StartReportCreation(ctx context.Context, params *StartReportCreationInput, optFns ...func(*Options)) (*StartReportCreationOutput, error) {
 	if params == nil {
 		params = &StartReportCreationInput{}
@@ -40,15 +51,27 @@ type StartReportCreationInput struct {
 
 	// The name of the Amazon S3 bucket where the report will be stored; for example:
 	//
-	//     awsexamplebucket
+	//     amzn-s3-demo-bucket
 	//
 	// For more information on S3 bucket requirements, including an example bucket
-	// policy, see the example S3 bucket policy on this page.
+	// policy, see the example Amazon S3 bucket policy on this page.
 	//
 	// This member is required.
 	S3Bucket *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *StartReportCreationInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.StartReportCreationInput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *StartReportCreationInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.S3Bucket != nil {
+		s.WriteString(schemas.StartReportCreationInput_S3Bucket, *v.S3Bucket)
+	}
 }
 
 type StartReportCreationOutput struct {
@@ -58,80 +81,42 @@ type StartReportCreationOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *StartReportCreationOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.StartReportCreationOutput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *StartReportCreationOutput) SerializeMembers(s smithy.ShapeSerializer) {
+}
+func (v *StartReportCreationOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.StartReportCreationOutput, func(s *smithy.Schema) error {
+		switch s {
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationStartReportCreationMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.StartReportCreation, schemas.StartReportCreationInput, schemas.StartReportCreationOutput)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpStartReportCreation{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.StartReportCreation, schemas.StartReportCreationInput, schemas.StartReportCreationOutput), output: &StartReportCreationOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpStartReportCreation{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "StartReportCreation"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStartReportCreationValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opStartReportCreation(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -146,25 +131,8 @@ func (c *Client) addOperationStartReportCreationMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opStartReportCreation(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "StartReportCreation",
-	}
 }

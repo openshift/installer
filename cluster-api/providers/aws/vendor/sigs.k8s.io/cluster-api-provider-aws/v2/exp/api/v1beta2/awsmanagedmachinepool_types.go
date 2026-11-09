@@ -299,6 +299,21 @@ type AWSManagedMachinePoolStatus struct {
 	// Conditions defines current service state of the managed machine pool
 	// +optional
 	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in AWSManagedMachinePool's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *AWSManagedMachinePoolV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// AWSManagedMachinePoolV1Beta2Status groups all the fields that will be added or modified in AWSManagedMachinePool with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type AWSManagedMachinePoolV1Beta2Status struct {
+	// conditions represents the observations of an AWSManagedMachinePool's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // NodeRepairConfig defines the node auto repair configuration for managed node groups.
@@ -334,6 +349,22 @@ func (r *AWSManagedMachinePool) GetConditions() clusterv1beta1.Conditions {
 // SetConditions sets the underlying service state of the AWSManagedMachinePool to the predescribed clusterv1beta1.Conditions.
 func (r *AWSManagedMachinePool) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *AWSManagedMachinePool) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *AWSManagedMachinePool) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &AWSManagedMachinePoolV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

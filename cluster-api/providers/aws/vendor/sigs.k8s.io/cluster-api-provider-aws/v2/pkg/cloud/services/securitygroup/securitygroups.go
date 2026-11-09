@@ -1042,8 +1042,8 @@ func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) (in
 
 	for _, rule := range ingressRules {
 		if rule.NatGatewaysIPsSource { // if the rule has NatGatewaysIPsSource set to true, use the NAT Gateway IPs as the source
-			natGatewaysCidrs := []string{}
 			natGatewaysIPs := s.scope.GetNatGatewaysIPs()
+			natGatewaysCidrs := make([]string, 0, len(natGatewaysIPs))
 			for _, ip := range natGatewaysIPs {
 				natGatewaysCidrs = append(natGatewaysCidrs, fmt.Sprintf("%s/32", ip))
 			}

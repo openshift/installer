@@ -4,11 +4,8 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Validates a specified template. CloudFormation first checks if the template is
@@ -32,18 +29,19 @@ func (c *Client) ValidateTemplate(ctx context.Context, params *ValidateTemplateI
 // The input for ValidateTemplate action.
 type ValidateTemplateInput struct {
 
-	// Structure containing the template body with a minimum length of 1 byte and a
-	// maximum length of 51,200 bytes. For more information, go to Template Anatomy (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html)
-	// in the CloudFormation User Guide. Conditional: You must pass TemplateURL or
-	// TemplateBody . If both are passed, only TemplateBody is used.
+	// Structure that contains the template body with a minimum length of 1 byte and a
+	// maximum length of 51,200 bytes.
+	//
+	// Conditional: You must pass TemplateURL or TemplateBody . If both are passed,
+	// only TemplateBody is used.
 	TemplateBody *string
 
-	// Location of file containing the template body. The URL must point to a template
-	// (max size: 460,800 bytes) that is located in an Amazon S3 bucket or a Systems
-	// Manager document. For more information, go to Template Anatomy (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html)
-	// in the CloudFormation User Guide. The location for an Amazon S3 bucket must
-	// start with https:// . Conditional: You must pass TemplateURL or TemplateBody .
-	// If both are passed, only TemplateBody is used.
+	// The URL of a file that contains the template body. The URL must point to a
+	// template (max size: 1 MB) that is located in an Amazon S3 bucket or a Systems
+	// Manager document. The location for an Amazon S3 bucket must start with https:// .
+	//
+	// Conditional: You must pass TemplateURL or TemplateBody . If both are passed,
+	// only TemplateBody is used.
 	TemplateURL *string
 
 	noSmithyDocumentSerde
@@ -54,10 +52,12 @@ type ValidateTemplateOutput struct {
 
 	// The capabilities found within the template. If your template contains IAM
 	// resources, you must specify the CAPABILITY_IAM or CAPABILITY_NAMED_IAM value for
-	// this parameter when you use the CreateStack or UpdateStack actions with your
-	// template; otherwise, those actions return an InsufficientCapabilities error. For
-	// more information, see Acknowledging IAM Resources in CloudFormation Templates (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html#capabilities)
-	// .
+	// this parameter when you use the CreateStackor UpdateStack actions with your template; otherwise,
+	// those actions return an InsufficientCapabilities error.
+	//
+	// For more information, see [Acknowledging IAM resources in CloudFormation templates].
+	//
+	// [Acknowledging IAM resources in CloudFormation templates]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/control-access-with-iam.html#using-iam-capabilities
 	Capabilities []types.Capability
 
 	// The list of resources that generated the values in the Capabilities response
@@ -80,9 +80,6 @@ type ValidateTemplateOutput struct {
 }
 
 func (c *Client) addOperationValidateTemplateMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpValidateTemplate{}, middleware.After)
 	if err != nil {
 		return err
@@ -91,53 +88,17 @@ func (c *Client) addOperationValidateTemplateMiddlewares(stack *middleware.Stack
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ValidateTemplate"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opValidateTemplate(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -152,13 +113,8 @@ func (c *Client) addOperationValidateTemplateMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opValidateTemplate(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ValidateTemplate",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

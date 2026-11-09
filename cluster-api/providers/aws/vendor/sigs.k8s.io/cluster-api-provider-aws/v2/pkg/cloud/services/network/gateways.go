@@ -71,7 +71,7 @@ func (s *Service) reconcileInternetGateways() error {
 		}
 		return true, nil
 	}, awserrors.InternetGatewayNotFound); err != nil {
-		record.Warnf(s.scope.InfraCluster(), "FailedTagInternetGateway", "Failed to tag managed Internet Gateway %q: %v", gateway.InternetGatewayId, err)
+		record.Warnf(s.scope.InfraCluster(), "FailedTagInternetGateway", "Failed to tag managed Internet Gateway %q: %v", aws.ToString(gateway.InternetGatewayId), err)
 		return errors.Wrapf(err, "failed to tag internet gateway %q", *gateway.InternetGatewayId)
 	}
 	v1beta1conditions.MarkTrue(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition)

@@ -43,8 +43,13 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 )
 
-// AWSDefaultRegion is the default AWS region.
-const AWSDefaultRegion string = "us-east-1"
+const (
+	// AWSDefaultRegion is the default AWS region.
+	AWSDefaultRegion string = "us-east-1"
+
+	// s3ActionGetObject is the S3 IAM action for retrieving objects.
+	s3ActionGetObject = "s3:GetObject"
+)
 
 // Service holds a collection of interfaces.
 // The interfaces are broken down like this to group functions together.
@@ -545,7 +550,7 @@ func (s *Service) bucketPolicy(bucketName string) (string, error) {
 				Principal: map[iam.PrincipalType]iam.PrincipalID{
 					iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, bucket.ControlPlaneIAMInstanceProfile)},
 				},
-				Action:   []string{"s3:GetObject"},
+				Action:   []string{s3ActionGetObject},
 				Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/control-plane/*", partition, bucketName)},
 			})
 		}
@@ -559,7 +564,7 @@ func (s *Service) bucketPolicy(bucketName string) (string, error) {
 					Principal: map[iam.PrincipalType]iam.PrincipalID{
 						iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, iamInstanceProfile)},
 					},
-					Action:   []string{"s3:GetObject"},
+					Action:   []string{s3ActionGetObject},
 					Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/node/*", partition, bucketName)},
 				},
 				iam.StatementEntry{
@@ -568,9 +573,28 @@ func (s *Service) bucketPolicy(bucketName string) (string, error) {
 					Principal: map[iam.PrincipalType]iam.PrincipalID{
 						iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, iamInstanceProfile)},
 					},
-					Action:   []string{"s3:GetObject"},
+					Action:   []string{s3ActionGetObject},
 					Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/machine-pool/*", partition, bucketName)},
 				})
+		}
+
+		// Add statements for additional IAM roles with custom prefixes
+		for i, additionalRole := range bucket.AdditionalIAMRoles {
+			statements = append(statements, iam.StatementEntry{
+				Sid:    fmt.Sprintf("additional-%d", i),
+				Effect: iam.EffectAllow,
+				Principal: map[iam.PrincipalType]iam.PrincipalID{
+					iam.PrincipalAWS: []string{
+						fmt.Sprintf("arn:%s:iam::%s:role/%s",
+							partition, *accountID.Account, additionalRole.Name),
+					},
+				},
+				Action: []string{s3ActionGetObject},
+				Resource: []string{
+					fmt.Sprintf("arn:%s:s3:::%s/%s",
+						partition, bucketName, additionalRole.Prefix),
+				},
+			})
 		}
 	}
 

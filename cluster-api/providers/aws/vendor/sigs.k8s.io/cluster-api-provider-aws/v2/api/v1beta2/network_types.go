@@ -803,7 +803,7 @@ func (s Subnets) IDs() []string {
 
 // IDsWithEdge returns a slice of the subnet ids.
 func (s Subnets) IDsWithEdge() []string {
-	res := []string{}
+	res := make([]string, 0, len(s))
 	for _, subnet := range s {
 		res = append(res, subnet.GetResourceID())
 	}

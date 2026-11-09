@@ -3,18 +3,19 @@
 package types
 
 import (
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
+	smithy "github.com/aws/smithy-go"
 	smithydocument "github.com/aws/smithy-go/document"
 	"time"
 )
 
 // The error Secrets Manager encountered while retrieving an individual secret as
-// part of BatchGetSecretValue .
+// part of BatchGetSecretValue.
 type APIErrorType struct {
 
 	// The error Secrets Manager encountered while retrieving an individual secret as
-	// part of BatchGetSecretValue , for example ResourceNotFoundException ,
-	// InvalidParameterException , InvalidRequestException , DecryptionFailure , or
-	// AccessDeniedException .
+	// part of BatchGetSecretValue, for example ResourceNotFoundException , InvalidParameterException ,
+	// InvalidRequestException , DecryptionFailure , or AccessDeniedException .
 	ErrorCode *string
 
 	// A message describing the error.
@@ -26,27 +27,144 @@ type APIErrorType struct {
 	noSmithyDocumentSerde
 }
 
+func (v *APIErrorType) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.APIErrorType)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *APIErrorType) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ErrorCode != nil {
+		s.WriteString(schemas.APIErrorType_ErrorCode, *v.ErrorCode)
+	}
+	if v.Message != nil {
+		s.WriteString(schemas.APIErrorType_Message, *v.Message)
+	}
+	if v.SecretId != nil {
+		s.WriteString(schemas.APIErrorType_SecretId, *v.SecretId)
+	}
+}
+func (v *APIErrorType) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.APIErrorType, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.APIErrorType_ErrorCode:
+			v.ErrorCode = new(string)
+			return d.ReadString(schemas.APIErrorType_ErrorCode, v.ErrorCode)
+		case schemas.APIErrorType_Message:
+			v.Message = new(string)
+			return d.ReadString(schemas.APIErrorType_Message, v.Message)
+		case schemas.APIErrorType_SecretId:
+			v.SecretId = new(string)
+			return d.ReadString(schemas.APIErrorType_SecretId, v.SecretId)
+		}
+		return nil
+	})
+}
+
+// The metadata needed to successfully rotate a managed external secret. A list of
+// key value pairs in JSON format specified by the partner. For more information,
+// see [Managed external secret partners].
+//
+// [Managed external secret partners]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-partners.html
+type ExternalSecretRotationMetadataItem struct {
+
+	// The key that identifies the item.
+	Key *string
+
+	// The value of the specified item.
+	Value *string
+
+	noSmithyDocumentSerde
+}
+
+func (v *ExternalSecretRotationMetadataItem) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ExternalSecretRotationMetadataItem)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ExternalSecretRotationMetadataItem) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Key != nil {
+		s.WriteString(schemas.ExternalSecretRotationMetadataItem_Key, *v.Key)
+	}
+	if v.Value != nil {
+		s.WriteString(schemas.ExternalSecretRotationMetadataItem_Value, *v.Value)
+	}
+}
+func (v *ExternalSecretRotationMetadataItem) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ExternalSecretRotationMetadataItem, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ExternalSecretRotationMetadataItem_Key:
+			v.Key = new(string)
+			return d.ReadString(schemas.ExternalSecretRotationMetadataItem_Key, v.Key)
+		case schemas.ExternalSecretRotationMetadataItem_Value:
+			v.Value = new(string)
+			return d.ReadString(schemas.ExternalSecretRotationMetadataItem_Value, v.Value)
+		}
+		return nil
+	})
+}
+
 // Allows you to add filters when you use the search function in Secrets Manager.
-// For more information, see Find secrets in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_search-secret.html)
-// .
+// For more information, see [Find secrets in Secrets Manager].
+//
+// [Find secrets in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_search-secret.html
 type Filter struct {
 
 	// The following are keys you can use:
+	//
 	//   - description: Prefix match, not case-sensitive.
+	//
 	//   - name: Prefix match, case-sensitive.
+	//
 	//   - tag-key: Prefix match, case-sensitive.
+	//
 	//   - tag-value: Prefix match, case-sensitive.
+	//
 	//   - primary-region: Prefix match, case-sensitive.
+	//
 	//   - owning-service: Prefix match, case-sensitive.
+	//
 	//   - all: Breaks the filter value string into words and then searches all
 	//   attributes for matches. Not case-sensitive.
 	Key FilterNameStringType
 
-	// The keyword to filter for. You can prefix your search value with an exclamation
-	// mark ( ! ) in order to perform negation filters.
+	// The keyword to filter for.
+	//
+	// You can prefix your search value with an exclamation mark ( ! ) in order to
+	// perform negation filters.
 	Values []string
 
 	noSmithyDocumentSerde
+}
+
+func (v *Filter) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.Filter)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *Filter) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Key != "" {
+		s.WriteString(schemas.Filter_Key, string(v.Key))
+	}
+	serializeFilterValuesStringList(s, schemas.Filter_Values, v.Values)
+}
+func (v *Filter) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.Filter, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.Filter_Key:
+			var ev string
+			if err := d.ReadString(schemas.Filter_Key, &ev); err != nil {
+				return err
+			}
+			v.Key = FilterNameStringType(ev)
+			return nil
+		case schemas.Filter_Values:
+			return deserializeFilterValuesStringList(d, schemas.Filter_Values, &v.Values)
+		}
+		return nil
+	})
 }
 
 // A custom type that specifies a Region and the KmsKeyId for a replica secret.
@@ -56,11 +174,40 @@ type ReplicaRegionType struct {
 	// include this field, Secrets Manager uses aws/secretsmanager .
 	KmsKeyId *string
 
-	// A Region code. For a list of Region codes, see Name and code of Regions (https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints)
-	// .
+	// A Region code. For a list of Region codes, see [Name and code of Regions].
+	//
+	// [Name and code of Regions]: https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints
 	Region *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *ReplicaRegionType) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ReplicaRegionType)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ReplicaRegionType) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.KmsKeyId != nil {
+		s.WriteString(schemas.ReplicaRegionType_KmsKeyId, *v.KmsKeyId)
+	}
+	if v.Region != nil {
+		s.WriteString(schemas.ReplicaRegionType_Region, *v.Region)
+	}
+}
+func (v *ReplicaRegionType) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ReplicaRegionType, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ReplicaRegionType_KmsKeyId:
+			v.KmsKeyId = new(string)
+			return d.ReadString(schemas.ReplicaRegionType_KmsKeyId, v.KmsKeyId)
+		case schemas.ReplicaRegionType_Region:
+			v.Region = new(string)
+			return d.ReadString(schemas.ReplicaRegionType_Region, v.Region)
+		}
+		return nil
+	})
 }
 
 // A replication object consisting of a RegionReplicationStatus object and
@@ -86,6 +233,56 @@ type ReplicationStatusType struct {
 	noSmithyDocumentSerde
 }
 
+func (v *ReplicationStatusType) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ReplicationStatusType)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ReplicationStatusType) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.KmsKeyId != nil {
+		s.WriteString(schemas.ReplicationStatusType_KmsKeyId, *v.KmsKeyId)
+	}
+	if v.LastAccessedDate != nil {
+		s.WriteTime(schemas.ReplicationStatusType_LastAccessedDate, *v.LastAccessedDate)
+	}
+	if v.Region != nil {
+		s.WriteString(schemas.ReplicationStatusType_Region, *v.Region)
+	}
+	if v.Status != "" {
+		s.WriteString(schemas.ReplicationStatusType_Status, string(v.Status))
+	}
+	if v.StatusMessage != nil {
+		s.WriteString(schemas.ReplicationStatusType_StatusMessage, *v.StatusMessage)
+	}
+}
+func (v *ReplicationStatusType) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ReplicationStatusType, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ReplicationStatusType_KmsKeyId:
+			v.KmsKeyId = new(string)
+			return d.ReadString(schemas.ReplicationStatusType_KmsKeyId, v.KmsKeyId)
+		case schemas.ReplicationStatusType_LastAccessedDate:
+			v.LastAccessedDate = new(time.Time)
+			return d.ReadTime(schemas.ReplicationStatusType_LastAccessedDate, v.LastAccessedDate)
+		case schemas.ReplicationStatusType_Region:
+			v.Region = new(string)
+			return d.ReadString(schemas.ReplicationStatusType_Region, v.Region)
+		case schemas.ReplicationStatusType_Status:
+			var ev string
+			if err := d.ReadString(schemas.ReplicationStatusType_Status, &ev); err != nil {
+				return err
+			}
+			v.Status = StatusType(ev)
+			return nil
+		case schemas.ReplicationStatusType_StatusMessage:
+			v.StatusMessage = new(string)
+			return d.ReadString(schemas.ReplicationStatusType_StatusMessage, v.StatusMessage)
+		}
+		return nil
+	})
+}
+
 // A structure that defines the rotation configuration for the secret.
 type RotationRulesType struct {
 
@@ -94,11 +291,13 @@ type RotationRulesType struct {
 	// must be rotated. If you use this field to set the rotation schedule, Secrets
 	// Manager calculates the next rotation date based on the previous rotation.
 	// Manually updating the secret value by calling PutSecretValue or UpdateSecret is
-	// considered a valid rotation. In DescribeSecret and ListSecrets , this value is
-	// calculated from the rotation schedule after every successful rotation. In
-	// RotateSecret , you can set the rotation schedule in RotationRules with
-	// AutomaticallyAfterDays or ScheduleExpression , but not both. To set a rotation
-	// schedule in hours, use ScheduleExpression .
+	// considered a valid rotation.
+	//
+	// In DescribeSecret and ListSecrets , this value is calculated from the rotation
+	// schedule after every successful rotation. In RotateSecret , you can set the
+	// rotation schedule in RotationRules with AutomaticallyAfterDays or
+	// ScheduleExpression , but not both. To set a rotation schedule in hours, use
+	// ScheduleExpression .
 	AutomaticallyAfterDays *int64
 
 	// The length of the rotation window in hours, for example 3h for a three hour
@@ -107,39 +306,78 @@ type RotationRulesType struct {
 	// window starts according to the ScheduleExpression . If you don't specify a
 	// Duration , for a ScheduleExpression in hours, the window automatically closes
 	// after one hour. For a ScheduleExpression in days, the window automatically
-	// closes at the end of the UTC day. For more information, including examples, see
-	// Schedule expressions in Secrets Manager rotation (https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_schedule.html)
+	// closes at the end of the UTC day. For more information, including examples, see [Schedule expressions in Secrets Manager rotation]
 	// in the Secrets Manager Users Guide.
+	//
+	// [Schedule expressions in Secrets Manager rotation]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_schedule.html
 	Duration *string
 
 	// A cron() or rate() expression that defines the schedule for rotating your
 	// secret. Secrets Manager rotation schedules use UTC time zone. Secrets Manager
-	// rotates your secret any time during a rotation window. Secrets Manager rate()
-	// expressions represent the interval in hours or days that you want to rotate your
-	// secret, for example rate(12 hours) or rate(10 days) . You can rotate a secret as
-	// often as every four hours. If you use a rate() expression, the rotation window
-	// starts at midnight. For a rate in hours, the default rotation window closes
-	// after one hour. For a rate in days, the default rotation window closes at the
-	// end of the day. You can set the Duration to change the rotation window. The
-	// rotation window must not extend into the next UTC day or into the next rotation
-	// window. You can use a cron() expression to create a rotation schedule that is
-	// more detailed than a rotation interval. For more information, including
-	// examples, see Schedule expressions in Secrets Manager rotation (https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_schedule.html)
-	// in the Secrets Manager Users Guide. For a cron expression that represents a
+	// rotates your secret any time during a rotation window.
+	//
+	// Secrets Manager rate() expressions represent the interval in hours or days that
+	// you want to rotate your secret, for example rate(12 hours) or rate(10 days) .
+	// You can rotate a secret as often as every four hours. If you use a rate()
+	// expression, the rotation window starts at midnight. For a rate in hours, the
+	// default rotation window closes after one hour. For a rate in days, the default
+	// rotation window closes at the end of the day. You can set the Duration to
+	// change the rotation window. The rotation window must not extend into the next
+	// UTC day or into the next rotation window.
+	//
+	// You can use a cron() expression to create a rotation schedule that is more
+	// detailed than a rotation interval. For more information, including examples, see
+	// [Schedule expressions in Secrets Manager rotation]in the Secrets Manager Users Guide. For a cron expression that represents a
 	// schedule in hours, the default rotation window closes after one hour. For a cron
 	// expression that represents a schedule in days, the default rotation window
 	// closes at the end of the day. You can set the Duration to change the rotation
 	// window. The rotation window must not extend into the next UTC day or into the
 	// next rotation window.
+	//
+	// [Schedule expressions in Secrets Manager rotation]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_schedule.html
 	ScheduleExpression *string
 
 	noSmithyDocumentSerde
 }
 
+func (v *RotationRulesType) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.RotationRulesType)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *RotationRulesType) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.AutomaticallyAfterDays != nil {
+		s.WriteInt64(schemas.RotationRulesType_AutomaticallyAfterDays, *v.AutomaticallyAfterDays)
+	}
+	if v.Duration != nil {
+		s.WriteString(schemas.RotationRulesType_Duration, *v.Duration)
+	}
+	if v.ScheduleExpression != nil {
+		s.WriteString(schemas.RotationRulesType_ScheduleExpression, *v.ScheduleExpression)
+	}
+}
+func (v *RotationRulesType) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.RotationRulesType, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.RotationRulesType_AutomaticallyAfterDays:
+			v.AutomaticallyAfterDays = new(int64)
+			return d.ReadInt64(schemas.RotationRulesType_AutomaticallyAfterDays, v.AutomaticallyAfterDays)
+		case schemas.RotationRulesType_Duration:
+			v.Duration = new(string)
+			return d.ReadString(schemas.RotationRulesType_Duration, v.Duration)
+		case schemas.RotationRulesType_ScheduleExpression:
+			v.ScheduleExpression = new(string)
+			return d.ReadString(schemas.RotationRulesType_ScheduleExpression, v.ScheduleExpression)
+		}
+		return nil
+	})
+}
+
 // A structure that contains the details about a secret. It does not include the
-// encrypted SecretString and SecretBinary values. To get those values, use
-// GetSecretValue (https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html)
-// .
+// encrypted SecretString and SecretBinary values. To get those values, use [GetSecretValue] .
+//
+// [GetSecretValue]: https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
 type SecretListEntry struct {
 
 	// The Amazon Resource Name (ARN) of the secret.
@@ -150,13 +388,27 @@ type SecretListEntry struct {
 
 	// The date and time the deletion of the secret occurred. Not present on active
 	// secrets. The secret can be recovered until the number of days in the recovery
-	// window has passed, as specified in the RecoveryWindowInDays parameter of the
-	// DeleteSecret (https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html)
-	// operation.
+	// window has passed, as specified in the RecoveryWindowInDays parameter of the [DeleteSecret]
+	// DeleteSecret operation.
+	//
+	// [DeleteSecret]: https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html
 	DeletedDate *time.Time
 
 	// The user-provided description of the secret.
 	Description *string
+
+	// The metadata needed to successfully rotate a managed external secret. A list of
+	// key value pairs in JSON format specified by the partner. For more information
+	// about the required information, see [Managed external secrets partners].
+	//
+	// [Managed external secrets partners]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-partners.html
+	ExternalSecretRotationMetadata []ExternalSecretRotationMetadataItem
+
+	// The role that Secrets Manager assumes to call APIs required to perform the
+	// rotation. For more information about the required information, see [Managed external secrets partners].
+	//
+	// [Managed external secrets partners]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-partners.html
+	ExternalSecretRotationRoleArn *string
 
 	// The ARN of the KMS key that Secrets Manager uses to encrypt the secret value.
 	// If the secret is encrypted with the Amazon Web Services managed key
@@ -193,8 +445,9 @@ type SecretListEntry struct {
 
 	// The ARN of an Amazon Web Services Lambda function invoked by Secrets Manager to
 	// rotate and expire the secret either automatically per the schedule or manually
-	// by a call to RotateSecret (https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_RotateSecret.html)
-	// .
+	// by a call to [RotateSecret]RotateSecret .
+	//
+	// [RotateSecret]: https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_RotateSecret.html
 	RotationLambdaARN *string
 
 	// A structure that defines the rotation configuration for the secret.
@@ -202,18 +455,155 @@ type SecretListEntry struct {
 
 	// A list of all of the currently assigned SecretVersionStage staging labels and
 	// the SecretVersionId attached to each one. Staging labels are used to keep track
-	// of the different versions during the rotation process. A version that does not
-	// have any SecretVersionStage is considered deprecated and subject to deletion.
-	// Such versions are not included in this list.
+	// of the different versions during the rotation process.
+	//
+	// A version that does not have any SecretVersionStage is considered deprecated
+	// and subject to deletion. Such versions are not included in this list.
 	SecretVersionsToStages map[string][]string
 
 	// The list of user-defined tags associated with the secret. To add tags to a
-	// secret, use TagResource (https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_TagResource.html)
-	// . To remove tags, use UntagResource (https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_UntagResource.html)
-	// .
+	// secret, use [TagResource]TagResource . To remove tags, use [UntagResource]UntagResource .
+	//
+	// [TagResource]: https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_TagResource.html
+	// [UntagResource]: https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_UntagResource.html
 	Tags []Tag
 
+	// The exact string that identifies the third-party partner that holds the
+	// external secret. For more information, see [Managed external secret partners].
+	//
+	// [Managed external secret partners]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-partners.html
+	Type *string
+
 	noSmithyDocumentSerde
+}
+
+func (v *SecretListEntry) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.SecretListEntry)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *SecretListEntry) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.SecretListEntry_ARN, *v.ARN)
+	}
+	if v.CreatedDate != nil {
+		s.WriteTime(schemas.SecretListEntry_CreatedDate, *v.CreatedDate)
+	}
+	if v.DeletedDate != nil {
+		s.WriteTime(schemas.SecretListEntry_DeletedDate, *v.DeletedDate)
+	}
+	if v.Description != nil {
+		s.WriteString(schemas.SecretListEntry_Description, *v.Description)
+	}
+	serializeExternalSecretRotationMetadataType(s, schemas.SecretListEntry_ExternalSecretRotationMetadata, v.ExternalSecretRotationMetadata)
+	if v.ExternalSecretRotationRoleArn != nil {
+		s.WriteString(schemas.SecretListEntry_ExternalSecretRotationRoleArn, *v.ExternalSecretRotationRoleArn)
+	}
+	if v.KmsKeyId != nil {
+		s.WriteString(schemas.SecretListEntry_KmsKeyId, *v.KmsKeyId)
+	}
+	if v.LastAccessedDate != nil {
+		s.WriteTime(schemas.SecretListEntry_LastAccessedDate, *v.LastAccessedDate)
+	}
+	if v.LastChangedDate != nil {
+		s.WriteTime(schemas.SecretListEntry_LastChangedDate, *v.LastChangedDate)
+	}
+	if v.LastRotatedDate != nil {
+		s.WriteTime(schemas.SecretListEntry_LastRotatedDate, *v.LastRotatedDate)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.SecretListEntry_Name, *v.Name)
+	}
+	if v.NextRotationDate != nil {
+		s.WriteTime(schemas.SecretListEntry_NextRotationDate, *v.NextRotationDate)
+	}
+	if v.OwningService != nil {
+		s.WriteString(schemas.SecretListEntry_OwningService, *v.OwningService)
+	}
+	if v.PrimaryRegion != nil {
+		s.WriteString(schemas.SecretListEntry_PrimaryRegion, *v.PrimaryRegion)
+	}
+	if v.RotationEnabled != nil {
+		s.WriteBool(schemas.SecretListEntry_RotationEnabled, *v.RotationEnabled)
+	}
+	if v.RotationLambdaARN != nil {
+		s.WriteString(schemas.SecretListEntry_RotationLambdaARN, *v.RotationLambdaARN)
+	}
+	if v.RotationRules != nil {
+		s.WriteStruct(schemas.SecretListEntry_RotationRules)
+		v.RotationRules.SerializeMembers(s)
+		s.CloseStruct()
+	}
+	serializeSecretVersionsToStagesMapType(s, schemas.SecretListEntry_SecretVersionsToStages, v.SecretVersionsToStages)
+	serializeTagListType(s, schemas.SecretListEntry_Tags, v.Tags)
+	if v.Type != nil {
+		s.WriteString(schemas.SecretListEntry_Type, *v.Type)
+	}
+}
+func (v *SecretListEntry) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.SecretListEntry, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.SecretListEntry_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.SecretListEntry_ARN, v.ARN)
+		case schemas.SecretListEntry_CreatedDate:
+			v.CreatedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_CreatedDate, v.CreatedDate)
+		case schemas.SecretListEntry_DeletedDate:
+			v.DeletedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_DeletedDate, v.DeletedDate)
+		case schemas.SecretListEntry_Description:
+			v.Description = new(string)
+			return d.ReadString(schemas.SecretListEntry_Description, v.Description)
+		case schemas.SecretListEntry_ExternalSecretRotationMetadata:
+			return deserializeExternalSecretRotationMetadataType(d, schemas.SecretListEntry_ExternalSecretRotationMetadata, &v.ExternalSecretRotationMetadata)
+		case schemas.SecretListEntry_ExternalSecretRotationRoleArn:
+			v.ExternalSecretRotationRoleArn = new(string)
+			return d.ReadString(schemas.SecretListEntry_ExternalSecretRotationRoleArn, v.ExternalSecretRotationRoleArn)
+		case schemas.SecretListEntry_KmsKeyId:
+			v.KmsKeyId = new(string)
+			return d.ReadString(schemas.SecretListEntry_KmsKeyId, v.KmsKeyId)
+		case schemas.SecretListEntry_LastAccessedDate:
+			v.LastAccessedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_LastAccessedDate, v.LastAccessedDate)
+		case schemas.SecretListEntry_LastChangedDate:
+			v.LastChangedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_LastChangedDate, v.LastChangedDate)
+		case schemas.SecretListEntry_LastRotatedDate:
+			v.LastRotatedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_LastRotatedDate, v.LastRotatedDate)
+		case schemas.SecretListEntry_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.SecretListEntry_Name, v.Name)
+		case schemas.SecretListEntry_NextRotationDate:
+			v.NextRotationDate = new(time.Time)
+			return d.ReadTime(schemas.SecretListEntry_NextRotationDate, v.NextRotationDate)
+		case schemas.SecretListEntry_OwningService:
+			v.OwningService = new(string)
+			return d.ReadString(schemas.SecretListEntry_OwningService, v.OwningService)
+		case schemas.SecretListEntry_PrimaryRegion:
+			v.PrimaryRegion = new(string)
+			return d.ReadString(schemas.SecretListEntry_PrimaryRegion, v.PrimaryRegion)
+		case schemas.SecretListEntry_RotationEnabled:
+			v.RotationEnabled = new(bool)
+			return d.ReadBool(schemas.SecretListEntry_RotationEnabled, v.RotationEnabled)
+		case schemas.SecretListEntry_RotationLambdaARN:
+			v.RotationLambdaARN = new(string)
+			return d.ReadString(schemas.SecretListEntry_RotationLambdaARN, v.RotationLambdaARN)
+		case schemas.SecretListEntry_RotationRules:
+			v.RotationRules = &RotationRulesType{}
+			return v.RotationRules.Deserialize(d)
+		case schemas.SecretListEntry_SecretVersionsToStages:
+			return deserializeSecretVersionsToStagesMapType(d, schemas.SecretListEntry_SecretVersionsToStages, &v.SecretVersionsToStages)
+		case schemas.SecretListEntry_Tags:
+			return deserializeTagListType(d, schemas.SecretListEntry_Tags, &v.Tags)
+		case schemas.SecretListEntry_Type:
+			v.Type = new(string)
+			return d.ReadString(schemas.SecretListEntry_Type, v.Type)
+		}
+		return nil
+	})
 }
 
 // A structure that contains the secret value and other details for a secret.
@@ -230,7 +620,9 @@ type SecretValueEntry struct {
 
 	// The decrypted secret value, if the secret value was originally provided as
 	// binary data in the form of a byte array. The parameter represents the binary
-	// data as a base64-encoded (https://tools.ietf.org/html/rfc4648#section-4) string.
+	// data as a [base64-encoded]string.
+	//
+	// [base64-encoded]: https://tools.ietf.org/html/rfc4648#section-4
 	SecretBinary []byte
 
 	// The decrypted secret value, if the secret value was originally provided as a
@@ -245,6 +637,60 @@ type SecretValueEntry struct {
 	VersionStages []string
 
 	noSmithyDocumentSerde
+}
+
+func (v *SecretValueEntry) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.SecretValueEntry)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *SecretValueEntry) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.SecretValueEntry_ARN, *v.ARN)
+	}
+	if v.CreatedDate != nil {
+		s.WriteTime(schemas.SecretValueEntry_CreatedDate, *v.CreatedDate)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.SecretValueEntry_Name, *v.Name)
+	}
+	if v.SecretBinary != nil {
+		s.WriteBlob(schemas.SecretValueEntry_SecretBinary, v.SecretBinary)
+	}
+	if v.SecretString != nil {
+		s.WriteString(schemas.SecretValueEntry_SecretString, *v.SecretString)
+	}
+	if v.VersionId != nil {
+		s.WriteString(schemas.SecretValueEntry_VersionId, *v.VersionId)
+	}
+	serializeSecretVersionStagesType(s, schemas.SecretValueEntry_VersionStages, v.VersionStages)
+}
+func (v *SecretValueEntry) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.SecretValueEntry, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.SecretValueEntry_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.SecretValueEntry_ARN, v.ARN)
+		case schemas.SecretValueEntry_CreatedDate:
+			v.CreatedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretValueEntry_CreatedDate, v.CreatedDate)
+		case schemas.SecretValueEntry_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.SecretValueEntry_Name, v.Name)
+		case schemas.SecretValueEntry_SecretBinary:
+			return d.ReadBlob(schemas.SecretValueEntry_SecretBinary, &v.SecretBinary)
+		case schemas.SecretValueEntry_SecretString:
+			v.SecretString = new(string)
+			return d.ReadString(schemas.SecretValueEntry_SecretString, v.SecretString)
+		case schemas.SecretValueEntry_VersionId:
+			v.VersionId = new(string)
+			return d.ReadString(schemas.SecretValueEntry_VersionId, v.VersionId)
+		case schemas.SecretValueEntry_VersionStages:
+			return deserializeSecretVersionStagesType(d, schemas.SecretValueEntry_VersionStages, &v.VersionStages)
+		}
+		return nil
+	})
 }
 
 // A structure that contains information about one version of a secret.
@@ -270,6 +716,46 @@ type SecretVersionsListEntry struct {
 	noSmithyDocumentSerde
 }
 
+func (v *SecretVersionsListEntry) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.SecretVersionsListEntry)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *SecretVersionsListEntry) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.CreatedDate != nil {
+		s.WriteTime(schemas.SecretVersionsListEntry_CreatedDate, *v.CreatedDate)
+	}
+	serializeKmsKeyIdListType(s, schemas.SecretVersionsListEntry_KmsKeyIds, v.KmsKeyIds)
+	if v.LastAccessedDate != nil {
+		s.WriteTime(schemas.SecretVersionsListEntry_LastAccessedDate, *v.LastAccessedDate)
+	}
+	if v.VersionId != nil {
+		s.WriteString(schemas.SecretVersionsListEntry_VersionId, *v.VersionId)
+	}
+	serializeSecretVersionStagesType(s, schemas.SecretVersionsListEntry_VersionStages, v.VersionStages)
+}
+func (v *SecretVersionsListEntry) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.SecretVersionsListEntry, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.SecretVersionsListEntry_CreatedDate:
+			v.CreatedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretVersionsListEntry_CreatedDate, v.CreatedDate)
+		case schemas.SecretVersionsListEntry_KmsKeyIds:
+			return deserializeKmsKeyIdListType(d, schemas.SecretVersionsListEntry_KmsKeyIds, &v.KmsKeyIds)
+		case schemas.SecretVersionsListEntry_LastAccessedDate:
+			v.LastAccessedDate = new(time.Time)
+			return d.ReadTime(schemas.SecretVersionsListEntry_LastAccessedDate, v.LastAccessedDate)
+		case schemas.SecretVersionsListEntry_VersionId:
+			v.VersionId = new(string)
+			return d.ReadString(schemas.SecretVersionsListEntry_VersionId, v.VersionId)
+		case schemas.SecretVersionsListEntry_VersionStages:
+			return deserializeSecretVersionStagesType(d, schemas.SecretVersionsListEntry_VersionStages, &v.VersionStages)
+		}
+		return nil
+	})
+}
+
 // A structure that contains information about a tag.
 type Tag struct {
 
@@ -280,6 +766,34 @@ type Tag struct {
 	Value *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *Tag) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.Tag)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *Tag) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Key != nil {
+		s.WriteString(schemas.Tag_Key, *v.Key)
+	}
+	if v.Value != nil {
+		s.WriteString(schemas.Tag_Value, *v.Value)
+	}
+}
+func (v *Tag) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.Tag, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.Tag_Key:
+			v.Key = new(string)
+			return d.ReadString(schemas.Tag_Key, v.Key)
+		case schemas.Tag_Value:
+			v.Value = new(string)
+			return d.ReadString(schemas.Tag_Value, v.Value)
+		}
+		return nil
+	})
 }
 
 // Displays errors that occurred during validation of the resource policy.
@@ -293,6 +807,34 @@ type ValidationErrorsEntry struct {
 	ErrorMessage *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *ValidationErrorsEntry) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.ValidationErrorsEntry)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *ValidationErrorsEntry) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.CheckName != nil {
+		s.WriteString(schemas.ValidationErrorsEntry_CheckName, *v.CheckName)
+	}
+	if v.ErrorMessage != nil {
+		s.WriteString(schemas.ValidationErrorsEntry_ErrorMessage, *v.ErrorMessage)
+	}
+}
+func (v *ValidationErrorsEntry) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.ValidationErrorsEntry, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.ValidationErrorsEntry_CheckName:
+			v.CheckName = new(string)
+			return d.ReadString(schemas.ValidationErrorsEntry_CheckName, v.CheckName)
+		case schemas.ValidationErrorsEntry_ErrorMessage:
+			v.ErrorMessage = new(string)
+			return d.ReadString(schemas.ValidationErrorsEntry_ErrorMessage, v.ErrorMessage)
+		}
+		return nil
+	})
 }
 
 type noSmithyDocumentSerde = smithydocument.NoSerde

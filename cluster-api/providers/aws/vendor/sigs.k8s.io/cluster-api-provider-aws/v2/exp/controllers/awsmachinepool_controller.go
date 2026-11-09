@@ -62,6 +62,8 @@ import (
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
+const kindMachinePool = "MachinePool"
+
 // AWSMachinePoolReconciler reconciles a AWSMachinePool object.
 type AWSMachinePoolReconciler struct {
 	client.Client
@@ -240,20 +242,31 @@ func (r *AWSMachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ctr
 				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
 				// for AWSMachinePool resources only
 				UpdateFunc: func(e event.UpdateEvent) bool {
-					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != "AWSMachinePool" {
+					// Objects in watch events have no `TypeMeta`, so the kind can only be told from the Go type
+					oldAWSMachinePool, ok := e.ObjectOld.(*expinfrav1.AWSMachinePool)
+					if !ok {
+						return true
+					}
+					newAWSMachinePool, ok := e.ObjectNew.(*expinfrav1.AWSMachinePool)
+					if !ok {
 						return true
 					}
 
-					oldCluster := e.ObjectOld.(*expinfrav1.AWSMachinePool).DeepCopy()
-					newCluster := e.ObjectNew.(*expinfrav1.AWSMachinePool).DeepCopy()
+					oldPool := oldAWSMachinePool.DeepCopy()
+					newPool := newAWSMachinePool.DeepCopy()
 
-					oldCluster.Status = expinfrav1.AWSMachinePoolStatus{}
-					newCluster.Status = expinfrav1.AWSMachinePoolStatus{}
+					oldPool.Status = expinfrav1.AWSMachinePoolStatus{}
+					newPool.Status = expinfrav1.AWSMachinePoolStatus{}
 
-					oldCluster.ObjectMeta.ResourceVersion = ""
-					newCluster.ObjectMeta.ResourceVersion = ""
+					oldPool.ObjectMeta.ResourceVersion = ""
+					newPool.ObjectMeta.ResourceVersion = ""
 
-					return !cmp.Equal(oldCluster, newCluster)
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldPool.ObjectMeta.ManagedFields = nil
+					newPool.ObjectMeta.ManagedFields = nil
+
+					return !cmp.Equal(oldPool, newPool)
 				},
 			},
 		).
@@ -694,7 +707,7 @@ func diffASG(machinePoolScope *scope.MachinePoolScope, existingASG *expinfrav1.A
 // getOwnerMachinePool returns the MachinePool object owning the current resource.
 func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	for _, ref := range obj.OwnerReferences {
-		if ref.Kind != "MachinePool" {
+		if ref.Kind != kindMachinePool {
 			continue
 		}
 		gv, err := schema.ParseGroupVersion(ref.APIVersion)

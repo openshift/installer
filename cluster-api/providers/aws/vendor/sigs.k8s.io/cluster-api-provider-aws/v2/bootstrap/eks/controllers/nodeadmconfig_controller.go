@@ -152,7 +152,7 @@ func (r *NodeadmConfigReconciler) joinWorker(ctx context.Context, cluster *clust
 	log := logger.FromContext(ctx)
 
 	// only need to reconcile the secret for Machine kinds once, but MachinePools need updates for new launch templates
-	if config.Status.DataSecretName != nil && configOwner.GetKind() == "Machine" {
+	if config.Status.DataSecretName != nil && configOwner.GetKind() == kindMachine {
 		secretKey := client.ObjectKey{Namespace: config.Namespace, Name: *config.Status.DataSecretName}
 		log = log.WithValues("data-secret-name", secretKey.Name)
 		existingSecret := &corev1.Secret{}
@@ -168,7 +168,7 @@ func (r *NodeadmConfigReconciler) joinWorker(ctx context.Context, cluster *clust
 		}
 	}
 
-	if cluster.Spec.ControlPlaneRef.Kind != "AWSManagedControlPlane" {
+	if cluster.Spec.ControlPlaneRef.Kind != kindAWSManagedControlPlane {
 		return ctrl.Result{}, errors.New("Cluster's controlPlaneRef needs to be an AWSManagedControlPlane in order to use the EKS bootstrap provider")
 	}
 

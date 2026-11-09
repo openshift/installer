@@ -4,17 +4,15 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Adds one or more tags to an IAM instance profile. If a tag with the same key
-// name already exists, then that tag is overwritten with the new value. Each tag
-// consists of a key name and an associated value. By assigning tags to your
-// resources, you can do the following:
+// name already exists, then that tag is overwritten with the new value.
+//
+// Each tag consists of a key name and an associated value. By assigning tags to
+// your resources, you can do the following:
 //
 //   - Administrative grouping and discovery - Attach tags to resources to aid in
 //     organization and search. For example, you could search for all resources with
@@ -24,17 +22,18 @@ import (
 //   - Access control - Include tags in IAM user-based and resource-based
 //     policies. You can use tags to restrict access to only an IAM instance profile
 //     that has a specified tag attached. For examples of policies that show how to use
-//     tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//     in the IAM User Guide.
+//     tags to control access, see [Control access using IAM tags]in the IAM User Guide.
 //
 //   - If any one of the tags is invalid or if you exceed the allowed maximum
 //     number of tags, then the entire request fails and the resource is not created.
-//     For more information about tagging, see Tagging IAM resources (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
-//     in the IAM User Guide.
+//     For more information about tagging, see [Tagging IAM resources]in the IAM User Guide.
 //
 //   - Amazon Web Services always interprets the tag Value as a single string. If
 //     you need to store an array, you can store comma-separated values in the string.
 //     However, you must interpret the value in your code.
+//
+// [Control access using IAM tags]: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html
+// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
 func (c *Client) TagInstanceProfile(ctx context.Context, params *TagInstanceProfileInput, optFns ...func(*Options)) (*TagInstanceProfileOutput, error) {
 	if params == nil {
 		params = &TagInstanceProfileInput{}
@@ -52,10 +51,13 @@ func (c *Client) TagInstanceProfile(ctx context.Context, params *TagInstanceProf
 
 type TagInstanceProfileInput struct {
 
-	// The name of the IAM instance profile to which you want to add tags. This
-	// parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex) )
-	// a string of characters consisting of upper and lowercase alphanumeric characters
-	// with no spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM instance profile to which you want to add tags.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	InstanceProfileName *string
@@ -77,9 +79,6 @@ type TagInstanceProfileOutput struct {
 }
 
 func (c *Client) addOperationTagInstanceProfileMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpTagInstanceProfile{}, middleware.After)
 	if err != nil {
 		return err
@@ -88,56 +87,20 @@ func (c *Client) addOperationTagInstanceProfileMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "TagInstanceProfile"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpTagInstanceProfileValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opTagInstanceProfile(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -152,13 +115,8 @@ func (c *Client) addOperationTagInstanceProfileMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opTagInstanceProfile(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "TagInstanceProfile",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

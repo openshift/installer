@@ -4,19 +4,18 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Retrieves the specified SSH public key, including metadata about the key. The
-// SSH public key retrieved by this operation is used only for authenticating the
-// associated IAM user to an CodeCommit repository. For more information about
-// using SSH keys to authenticate to an CodeCommit repository, see Set up
-// CodeCommit for SSH connections (https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html)
-// in the CodeCommit User Guide.
+// Retrieves the specified SSH public key, including metadata about the key.
+//
+// The SSH public key retrieved by this operation is used only for authenticating
+// the associated IAM user to an CodeCommit repository. For more information about
+// using SSH keys to authenticate to an CodeCommit repository, see [Set up CodeCommit for SSH connections]in the
+// CodeCommit User Guide.
+//
+// [Set up CodeCommit for SSH connections]: https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html
 func (c *Client) GetSSHPublicKey(ctx context.Context, params *GetSSHPublicKeyInput, optFns ...func(*Options)) (*GetSSHPublicKeyOutput, error) {
 	if params == nil {
 		params = &GetSSHPublicKeyInput{}
@@ -41,17 +40,23 @@ type GetSSHPublicKeyInput struct {
 	// This member is required.
 	Encoding types.EncodingType
 
-	// The unique identifier for the SSH public key. This parameter allows (through
-	// its regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
-	// that can consist of any upper or lowercased letter or digit.
+	// The unique identifier for the SSH public key.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters that can consist of
+	// any upper or lowercased letter or digit.
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	SSHPublicKeyId *string
 
-	// The name of the IAM user associated with the SSH public key. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
-	// of characters consisting of upper and lowercase alphanumeric characters with no
-	// spaces. You can also include any of the following characters: _+=,.@-
+	// The name of the IAM user associated with the SSH public key.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	UserName *string
@@ -59,7 +64,9 @@ type GetSSHPublicKeyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetSSHPublicKey request.
+// Contains the response to a successful [GetSSHPublicKey] request.
+//
+// [GetSSHPublicKey]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetSSHPublicKey.html
 type GetSSHPublicKeyOutput struct {
 
 	// A structure containing details about the SSH public key.
@@ -72,9 +79,6 @@ type GetSSHPublicKeyOutput struct {
 }
 
 func (c *Client) addOperationGetSSHPublicKeyMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetSSHPublicKey{}, middleware.After)
 	if err != nil {
 		return err
@@ -83,56 +87,20 @@ func (c *Client) addOperationGetSSHPublicKeyMiddlewares(stack *middleware.Stack,
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetSSHPublicKey"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetSSHPublicKeyValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetSSHPublicKey(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -147,13 +115,8 @@ func (c *Client) addOperationGetSSHPublicKeyMiddlewares(stack *middleware.Stack,
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opGetSSHPublicKey(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetSSHPublicKey",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

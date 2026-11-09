@@ -119,6 +119,9 @@ type causer interface {
 // Cause unwraps error
 func (c *customError) Cause() error { return c.error }
 
+// Unwrap error
+func (c *customError) Unwrap() error { return c.error }
+
 // typed interface identifies error with a type
 type typed interface {
 	Type() ErrorType
@@ -395,4 +398,9 @@ func As(err error, target interface{}) bool {
 // and if so, sets target to that error value and returns true. Otherwise, it returns false.
 func Is(err error, target error) bool {
 	return goerrors.Is(err, target)
+}
+
+// Join returns an error that wraps the given errors into one.
+func Join(errs ...error) error {
+	return goerrors.Join(errs...)
 }

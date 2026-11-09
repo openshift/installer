@@ -17,10 +17,13 @@ aliases:
   cluster-api-aws-reviewers:
     - faiq
     - fiunchinho
+    - raykrueger
   # -----------------------------------------------------------
   # OWNER_ALIASES for ROSA Work
   # -----------------------------------------------------------
   cluster-api-aws-rosa-maintainers:
+    - andclt
     - serngawy
   cluster-api-aws-rosa-reviewers:
+    - andclt
     - serngawy

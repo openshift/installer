@@ -4,10 +4,9 @@ package secretsmanager
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
@@ -15,31 +14,41 @@ import (
 // during which you can restore the secret. The minimum recovery window is 7 days.
 // The default recovery window is 30 days. Secrets Manager attaches a DeletionDate
 // stamp to the secret that specifies the end of the recovery window. At the end of
-// the recovery window, Secrets Manager deletes the secret permanently. You can't
-// delete a primary secret that is replicated to other Regions. You must first
-// delete the replicas using RemoveRegionsFromReplication , and then delete the
-// primary secret. When you delete a replica, it is deleted immediately. You can't
-// directly delete a version of a secret. Instead, you remove all staging labels
-// from the version using UpdateSecretVersionStage . This marks the version as
-// deprecated, and then Secrets Manager can automatically delete the version in the
-// background. To determine whether an application still uses a secret, you can
-// create an Amazon CloudWatch alarm to alert you to any attempts to access a
-// secret during the recovery window. For more information, see Monitor secrets
-// scheduled for deletion (https://docs.aws.amazon.com/secretsmanager/latest/userguide/monitoring_cloudwatch_deleted-secrets.html)
-// . Secrets Manager performs the permanent secret deletion at the end of the
+// the recovery window, Secrets Manager deletes the secret permanently.
+//
+// You can't delete a primary secret that is replicated to other Regions. You must
+// first delete the replicas using RemoveRegionsFromReplication, and then delete the primary secret. When you
+// delete a replica, it is deleted immediately.
+//
+// You can't directly delete a version of a secret. Instead, you remove all
+// staging labels from the version using UpdateSecretVersionStage. This marks the version as deprecated,
+// and then Secrets Manager can automatically delete the version in the background.
+//
+// To determine whether an application still uses a secret, you can create an
+// Amazon CloudWatch alarm to alert you to any attempts to access a secret during
+// the recovery window. For more information, see [Monitor secrets scheduled for deletion].
+//
+// Secrets Manager performs the permanent secret deletion at the end of the
 // waiting period as a background task with low priority. There is no guarantee of
-// a specific time after the recovery window for the permanent delete to occur. At
-// any time before recovery window ends, you can use RestoreSecret to remove the
-// DeletionDate and cancel the deletion of the secret. When a secret is scheduled
-// for deletion, you cannot retrieve the secret value. You must first cancel the
-// deletion with RestoreSecret and then you can retrieve the secret. Secrets
-// Manager generates a CloudTrail log entry when you call this action. Do not
-// include sensitive information in request parameters because it might be logged.
-// For more information, see Logging Secrets Manager events with CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html)
-// . Required permissions: secretsmanager:DeleteSecret . For more information, see
-// IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
-// and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// .
+// a specific time after the recovery window for the permanent delete to occur.
+//
+// At any time before recovery window ends, you can use RestoreSecret to remove the DeletionDate
+// and cancel the deletion of the secret.
+//
+// When a secret is scheduled for deletion, you cannot retrieve the secret value.
+// You must first cancel the deletion with RestoreSecretand then you can retrieve the secret.
+//
+// Secrets Manager generates a CloudTrail log entry when you call this action. Do
+// not include sensitive information in request parameters because it might be
+// logged. For more information, see [Logging Secrets Manager events with CloudTrail].
+//
+// Required permissions: secretsmanager:DeleteSecret . For more information, see [IAM policy actions for Secrets Manager]
+// and [Authentication and access control in Secrets Manager].
+//
+// [Authentication and access control in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
+// [Logging Secrets Manager events with CloudTrail]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html
+// [Monitor secrets scheduled for deletion]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/monitoring_cloudwatch_deleted-secrets.html
+// [IAM policy actions for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions
 func (c *Client) DeleteSecret(ctx context.Context, params *DeleteSecretInput, optFns ...func(*Options)) (*DeleteSecretOutput, error) {
 	if params == nil {
 		params = &DeleteSecretInput{}
@@ -57,10 +66,12 @@ func (c *Client) DeleteSecret(ctx context.Context, params *DeleteSecretInput, op
 
 type DeleteSecretInput struct {
 
-	// The ARN or name of the secret to delete. For an ARN, we recommend that you
-	// specify a complete ARN rather than a partial ARN. See Finding a secret from a
-	// partial ARN (https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen)
-	// .
+	// The ARN or name of the secret to delete.
+	//
+	// For an ARN, we recommend that you specify a complete ARN rather than a partial
+	// ARN. See [Finding a secret from a partial ARN].
+	//
+	// [Finding a secret from a partial ARN]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen
 	//
 	// This member is required.
 	SecretId *string
@@ -68,17 +79,20 @@ type DeleteSecretInput struct {
 	// Specifies whether to delete the secret without any recovery window. You can't
 	// use both this parameter and RecoveryWindowInDays in the same call. If you don't
 	// use either, then by default Secrets Manager uses a 30 day recovery window.
+	//
 	// Secrets Manager performs the actual deletion with an asynchronous background
 	// process, so there might be a short delay before the secret is permanently
 	// deleted. If you delete a secret and then immediately create a secret with the
-	// same name, use appropriate back off and retry logic. If you forcibly delete an
-	// already deleted or nonexistent secret, the operation does not return
-	// ResourceNotFoundException . Use this parameter with caution. This parameter
-	// causes the operation to skip the normal recovery window before the permanent
-	// deletion that Secrets Manager would normally impose with the
-	// RecoveryWindowInDays parameter. If you delete a secret with the
-	// ForceDeleteWithoutRecovery parameter, then you have no opportunity to recover
-	// the secret. You lose the secret permanently.
+	// same name, use appropriate back off and retry logic.
+	//
+	// If you forcibly delete an already deleted or nonexistent secret, the operation
+	// does not return ResourceNotFoundException .
+	//
+	// Use this parameter with caution. This parameter causes the operation to skip
+	// the normal recovery window before the permanent deletion that Secrets Manager
+	// would normally impose with the RecoveryWindowInDays parameter. If you delete a
+	// secret with the ForceDeleteWithoutRecovery parameter, then you have no
+	// opportunity to recover the secret. You lose the secret permanently.
 	ForceDeleteWithoutRecovery *bool
 
 	// The number of days from 7 to 30 that Secrets Manager waits before permanently
@@ -88,6 +102,24 @@ type DeleteSecretInput struct {
 	RecoveryWindowInDays *int64
 
 	noSmithyDocumentSerde
+}
+
+func (v *DeleteSecretInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.DeleteSecretRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *DeleteSecretInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ForceDeleteWithoutRecovery != nil {
+		s.WriteBool(schemas.DeleteSecretRequest_ForceDeleteWithoutRecovery, *v.ForceDeleteWithoutRecovery)
+	}
+	if v.RecoveryWindowInDays != nil {
+		s.WriteInt64(schemas.DeleteSecretRequest_RecoveryWindowInDays, *v.RecoveryWindowInDays)
+	}
+	if v.SecretId != nil {
+		s.WriteString(schemas.DeleteSecretRequest_SecretId, *v.SecretId)
+	}
 }
 
 type DeleteSecretOutput struct {
@@ -109,68 +141,60 @@ type DeleteSecretOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *DeleteSecretOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.DeleteSecretResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *DeleteSecretOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.DeleteSecretResponse_ARN, *v.ARN)
+	}
+	if v.DeletionDate != nil {
+		s.WriteTime(schemas.DeleteSecretResponse_DeletionDate, *v.DeletionDate)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.DeleteSecretResponse_Name, *v.Name)
+	}
+}
+func (v *DeleteSecretOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.DeleteSecretResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.DeleteSecretResponse_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.DeleteSecretResponse_ARN, v.ARN)
+		case schemas.DeleteSecretResponse_DeletionDate:
+			v.DeletionDate = new(time.Time)
+			return d.ReadTime(schemas.DeleteSecretResponse_DeletionDate, v.DeletionDate)
+		case schemas.DeleteSecretResponse_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.DeleteSecretResponse_Name, v.Name)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationDeleteSecretMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.DeleteSecret, schemas.DeleteSecretRequest, schemas.DeleteSecretResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpDeleteSecret{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.DeleteSecret, schemas.DeleteSecretRequest, schemas.DeleteSecretResponse), output: &DeleteSecretOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpDeleteSecret{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DeleteSecret"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteSecretValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteSecret(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -185,13 +209,8 @@ func (c *Client) addOperationDeleteSecretMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opDeleteSecret(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DeleteSecret",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

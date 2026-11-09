@@ -5,17 +5,17 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Lists all stacks that are importing an exported output value. To modify or
 // remove an exported output value, first use this action to see which stacks are
-// using it. To see the exported output values in your account, see ListExports .
-// For more information about importing an exported output value, see the
-// Fn::ImportValue (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-importvalue.html)
+// using it. To see the exported output values in your account, see ListExports.
+//
+// For more information about importing an exported output value, see the [Fn::ImportValue]
 // function.
+//
+// [Fn::ImportValue]: https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-importvalue.html
 func (c *Client) ListImports(ctx context.Context, params *ListImportsInput, optFns ...func(*Options)) (*ListImportsOutput, error) {
 	if params == nil {
 		params = &ListImportsInput{}
@@ -39,8 +39,8 @@ type ListImportsInput struct {
 	// This member is required.
 	ExportName *string
 
-	// A string (provided by the ListImports response output) that identifies the next
-	// page of stacks that are importing the specified exported output value.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -62,9 +62,6 @@ type ListImportsOutput struct {
 }
 
 func (c *Client) addOperationListImportsMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListImports{}, middleware.After)
 	if err != nil {
 		return err
@@ -73,56 +70,20 @@ func (c *Client) addOperationListImportsMiddlewares(stack *middleware.Stack, opt
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListImports"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListImportsValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListImports(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -137,15 +98,11 @@ func (c *Client) addOperationListImportsMiddlewares(stack *middleware.Stack, opt
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListImportsAPIClient is a client that implements the ListImports operation.
-type ListImportsAPIClient interface {
-	ListImports(context.Context, *ListImportsInput, ...func(*Options)) (*ListImportsOutput, error)
-}
-
-var _ ListImportsAPIClient = (*Client)(nil)
 
 // ListImportsPaginatorOptions is the paginator options for ListImports
 type ListImportsPaginatorOptions struct {
@@ -198,6 +155,9 @@ func (p *ListImportsPaginator) NextPage(ctx context.Context, optFns ...func(*Opt
 	params := *p.params
 	params.NextToken = p.nextToken
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListImports(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -217,10 +177,9 @@ func (p *ListImportsPaginator) NextPage(ctx context.Context, optFns ...func(*Opt
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListImports(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListImports",
-	}
+// ListImportsAPIClient is a client that implements the ListImports operation.
+type ListImportsAPIClient interface {
+	ListImports(context.Context, *ListImportsInput, ...func(*Options)) (*ListImportsOutput, error)
 }
+
+var _ ListImportsAPIClient = (*Client)(nil)

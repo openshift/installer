@@ -22,10 +22,9 @@ type ROSAMachinePool struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the ROSAMachinePool.
 func (w *ROSAMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&expinfrav1.ROSAMachinePool{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &expinfrav1.ROSAMachinePool{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

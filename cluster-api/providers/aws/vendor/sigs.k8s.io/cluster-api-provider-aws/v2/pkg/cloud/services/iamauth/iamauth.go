@@ -25,11 +25,15 @@ import (
 const (
 	// EC2NodeUserName is the username required for EC2 nodes.
 	EC2NodeUserName = "system:node:{{EC2PrivateDNSName}}"
+
+	// systemBootstrappersGroup is the Kubernetes group for node bootstrappers.
+	systemBootstrappersGroup = "system:bootstrappers"
+	systemNodesGroup         = "system:nodes"
 )
 
 var (
 	// NodeGroups is the groups that are required for a node.
-	NodeGroups = []string{"system:bootstrappers", "system:nodes"}
+	NodeGroups = []string{systemBootstrappersGroup, systemNodesGroup}
 )
 
 // AuthenticatorBackend is the interface that represents an aws-iam-authenticator backend.

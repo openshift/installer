@@ -21,46 +21,53 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const (
+	infrastructureGroupName    = "infrastructure.cluster.x-k8s.io"
+	versionV1Beta2             = "v1beta2"
+	kindAWSCluster             = "AWSCluster"
+	kindAWSClusterRoleIdentity = "AWSClusterRoleIdentity"
+)
+
 // newTestRESTMapper creates a RESTMapper for tests that knows about CAPA resource types.
 func newTestRESTMapper() meta.RESTMapper {
 	rm := meta.NewDefaultRESTMapper([]schema.GroupVersion{
-		{Group: "infrastructure.cluster.x-k8s.io", Version: "v1beta2"},
+		{Group: infrastructureGroupName, Version: versionV1Beta2},
 		{Group: "", Version: "v1"},
 	})
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
-		Kind:    "AWSCluster",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
+		Kind:    kindAWSCluster,
 	}, meta.RESTScopeNamespace)
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
 		Kind:    "ROSANetwork",
 	}, meta.RESTScopeNamespace)
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
-		Kind:    "AWSClusterRoleIdentity",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
+		Kind:    kindAWSClusterRoleIdentity,
 	}, meta.RESTScopeRoot)
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
 		Kind:    "AWSClusterStaticIdentity",
 	}, meta.RESTScopeRoot)
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
 		Kind:    "AWSClusterControllerIdentity",
 	}, meta.RESTScopeRoot)
 
 	rm.Add(schema.GroupVersionKind{
-		Group:   "infrastructure.cluster.x-k8s.io",
-		Version: "v1beta2",
+		Group:   infrastructureGroupName,
+		Version: versionV1Beta2,
 		Kind:    "ROSAOCMRoleConfig",
 	}, meta.RESTScopeRoot)
 

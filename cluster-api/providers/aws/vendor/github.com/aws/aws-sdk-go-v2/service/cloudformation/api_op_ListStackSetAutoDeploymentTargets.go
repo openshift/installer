@@ -4,14 +4,11 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns summary information about deployment targets for a stack set.
+// Returns summary information about deployment targets for a StackSet.
 func (c *Client) ListStackSetAutoDeploymentTargets(ctx context.Context, params *ListStackSetAutoDeploymentTargetsInput, optFns ...func(*Options)) (*ListStackSetAutoDeploymentTargetsOutput, error) {
 	if params == nil {
 		params = &ListStackSetAutoDeploymentTargetsInput{}
@@ -29,22 +26,29 @@ func (c *Client) ListStackSetAutoDeploymentTargets(ctx context.Context, params *
 
 type ListStackSetAutoDeploymentTargetsInput struct {
 
-	// The name or unique ID of the stack set that you want to get automatic
-	// deployment targets for.
+	// The name or unique ID of the StackSet that you want to get automatic deployment
+	// targets for.
 	//
 	// This member is required.
 	StackSetName *string
 
 	// Specifies whether you are acting as an account administrator in the
 	// organization's management account or as a delegated administrator in a member
-	// account. By default, SELF is specified. Use SELF for StackSets with
-	// self-managed permissions.
+	// account.
+	//
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
+	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
+	//
 	//   - If you are signed in to a delegated administrator account, specify
-	//   DELEGATED_ADMIN . Your Amazon Web Services account must be registered as a
-	//   delegated administrator in the management account. For more information, see
-	//   Register a delegated administrator (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
-	//   in the CloudFormation User Guide.
+	//   DELEGATED_ADMIN .
+	//
+	// Your Amazon Web Services account must be registered as a delegated
+	//   administrator in the management account. For more information, see [Register a delegated administrator]in the
+	//   CloudFormation User Guide.
+	//
+	// [Register a delegated administrator]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html
 	CallAs types.CallAs
 
 	// The maximum number of results to be returned with a single call. If the number
@@ -53,8 +57,8 @@ type ListStackSetAutoDeploymentTargetsInput struct {
 	// set of results.
 	MaxResults *int32
 
-	// A string that identifies the next page of stack set deployment targets that you
-	// want to retrieve.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -63,13 +67,14 @@ type ListStackSetAutoDeploymentTargetsInput struct {
 type ListStackSetAutoDeploymentTargetsOutput struct {
 
 	// If the request doesn't return all the remaining results, NextToken is set to a
-	// token. To retrieve the next set of results, call
-	// ListStackSetAutoDeploymentTargets (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackSetAutoDeploymentTargets.html)
-	// again and use that value for the NextToken parameter. If the request returns
-	// all results, NextToken is set to an empty string.
+	// token. To retrieve the next set of results, call [ListStackSetAutoDeploymentTargets]again and use that value for
+	// the NextToken parameter. If the request returns all results, NextToken is set
+	// to an empty string.
+	//
+	// [ListStackSetAutoDeploymentTargets]: https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackSetAutoDeploymentTargets.html
 	NextToken *string
 
-	// An array of summaries of the deployment targets for the stack set.
+	// An array of summaries of the deployment targets for the StackSet.
 	Summaries []types.StackSetAutoDeploymentTargetSummary
 
 	// Metadata pertaining to the operation's result.
@@ -79,9 +84,6 @@ type ListStackSetAutoDeploymentTargetsOutput struct {
 }
 
 func (c *Client) addOperationListStackSetAutoDeploymentTargetsMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListStackSetAutoDeploymentTargets{}, middleware.After)
 	if err != nil {
 		return err
@@ -90,56 +92,20 @@ func (c *Client) addOperationListStackSetAutoDeploymentTargetsMiddlewares(stack 
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListStackSetAutoDeploymentTargets"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListStackSetAutoDeploymentTargetsValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListStackSetAutoDeploymentTargets(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -154,13 +120,8 @@ func (c *Client) addOperationListStackSetAutoDeploymentTargetsMiddlewares(stack 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opListStackSetAutoDeploymentTargets(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListStackSetAutoDeploymentTargets",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

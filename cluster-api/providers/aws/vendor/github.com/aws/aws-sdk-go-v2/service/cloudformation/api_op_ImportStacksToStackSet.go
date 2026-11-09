@@ -5,14 +5,12 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Import existing stacks into a new stack sets. Use the stack import operation to
-// import up to 10 stacks into a new stack set in the same account as the source
+// Import existing stacks into a new StackSets. Use the stack import operation to
+// import up to 10 stacks into a new StackSet in the same account as the source
 // stack or in a different administrator account and Region, by specifying the
 // stack ID of the stack you intend to import.
 func (c *Client) ImportStacksToStackSet(ctx context.Context, params *ImportStacksToStackSetInput, optFns ...func(*Options)) (*ImportStacksToStackSetOutput, error) {
@@ -32,37 +30,45 @@ func (c *Client) ImportStacksToStackSet(ctx context.Context, params *ImportStack
 
 type ImportStacksToStackSetInput struct {
 
-	// The name of the stack set. The name must be unique in the Region where you
-	// create your stack set.
+	// The name of the StackSet. The name must be unique in the Region where you
+	// create your StackSet.
 	//
 	// This member is required.
 	StackSetName *string
 
-	// By default, SELF is specified. Use SELF for stack sets with self-managed
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
 	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
-	//   - For service managed stack sets, specify DELEGATED_ADMIN .
+	//
+	//   - For service managed StackSets, specify DELEGATED_ADMIN .
 	CallAs types.CallAs
 
-	// A unique, user defined, identifier for the stack set operation.
+	// A unique, user defined, identifier for the StackSet operation.
 	OperationId *string
 
-	// The user-specified preferences for how CloudFormation performs a stack set
-	// operation. For more information about maximum concurrent accounts and failure
-	// tolerance, see Stack set operation options (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options)
-	// .
+	// The user-specified preferences for how CloudFormation performs a StackSet
+	// operation.
+	//
+	// For more information about maximum concurrent accounts and failure tolerance,
+	// see [StackSet operation options].
+	//
+	// [StackSet operation options]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html#stackset-ops-options
 	OperationPreferences *types.StackSetOperationPreferences
 
-	// The list of OU ID's to which the stacks being imported has to be mapped as
-	// deployment target.
+	// The list of OU ID's to which the imported stacks must be mapped as deployment
+	// targets.
 	OrganizationalUnitIds []string
 
-	// The IDs of the stacks you are importing into a stack set. You import up to 10
-	// stacks per stack set at a time. Specify either StackIds or StackIdsUrl .
+	// The IDs of the stacks you are importing into a StackSet. You import up to 10
+	// stacks per StackSet at a time.
+	//
+	// Specify either StackIds or StackIdsUrl .
 	StackIds []string
 
-	// The Amazon S3 URL which contains list of stack ids to be inputted. Specify
-	// either StackIds or StackIdsUrl .
+	// The Amazon S3 URL which contains list of stack ids to be inputted.
+	//
+	// Specify either StackIds or StackIdsUrl .
 	StackIdsUrl *string
 
 	noSmithyDocumentSerde
@@ -70,7 +76,7 @@ type ImportStacksToStackSetInput struct {
 
 type ImportStacksToStackSetOutput struct {
 
-	// The unique identifier for the stack set operation.
+	// The unique identifier for the StackSet operation.
 	OperationId *string
 
 	// Metadata pertaining to the operation's result.
@@ -80,9 +86,6 @@ type ImportStacksToStackSetOutput struct {
 }
 
 func (c *Client) addOperationImportStacksToStackSetMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpImportStacksToStackSet{}, middleware.After)
 	if err != nil {
 		return err
@@ -91,59 +94,23 @@ func (c *Client) addOperationImportStacksToStackSetMiddlewares(stack *middleware
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ImportStacksToStackSet"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opImportStacksToStackSetMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addOpImportStacksToStackSetValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opImportStacksToStackSet(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -156,6 +123,9 @@ func (c *Client) addOperationImportStacksToStackSetMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -192,12 +162,4 @@ func (m *idempotencyToken_initializeOpImportStacksToStackSet) HandleInitialize(c
 }
 func addIdempotencyToken_opImportStacksToStackSetMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpImportStacksToStackSet{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opImportStacksToStackSet(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ImportStacksToStackSet",
-	}
 }

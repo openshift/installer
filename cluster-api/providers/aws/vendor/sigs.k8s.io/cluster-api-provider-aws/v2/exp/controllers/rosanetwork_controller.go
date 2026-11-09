@@ -24,12 +24,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	cloudformationtypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go"
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
 	rosaCFNetwork "github.com/openshift/rosa/cmd/create/network"
 	rosaAWSClient "github.com/openshift/rosa/pkg/aws"
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
@@ -46,6 +48,11 @@ import (
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
+)
+
+const (
+	cfnResourceTypeSubnet = "AWS::EC2::Subnet"
+	validationError       = "ValidationError"
 )
 
 // ROSANetworkReconciler reconciles a ROSANetwork object.
@@ -96,7 +103,7 @@ func (r *ROSANetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	cfStack, err := awsClient.GetCFStack(ctx, rosaNetworkScope.ROSANetwork.Spec.StackName)
 	if err != nil {
 		var apiErr smithy.APIError // in case the stack does not exist, AWS returns ValidationError
-		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "ValidationError" {
+		if errors.As(err, &apiErr) && apiErr.ErrorCode() == validationError {
 			cfStack = nil
 		} else {
 			return ctrl.Result{}, fmt.Errorf("error fetching CF stack details: %w", err)
@@ -162,12 +169,12 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 			expinfrav1.ROSANetworkCreatingReason,
 			clusterv1beta1.ConditionSeverityInfo,
 			"")
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 	}
 	// The cloudformation stack already exists
 	if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork, awsClient); err != nil {
 		rosaNetScope.Info("error fetching CF stack resources: %w", err)
-		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 	}
 
 	switch cfStack.StackStatus {
@@ -178,7 +185,7 @@ func (r *ROSANetworkReconciler) reconcileNormal(ctx context.Context, rosaNetScop
 			expinfrav1.ROSANetworkCreatingReason,
 			clusterv1beta1.ConditionSeverityInfo,
 			"")
-		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 	case cloudformationtypes.StackStatusCreateComplete: // Create complete
 		if err := r.parseSubnets(rosaNetScope.ROSANetwork, awsClient); err != nil {
 			return ctrl.Result{}, fmt.Errorf("parsing stack subnets failed: %w", err)
@@ -213,12 +220,12 @@ func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScop
 	if cfStack != nil { // The CF stack still exists
 		if err := r.updateROSANetworkResources(ctx, rosaNetScope.ROSANetwork, awsClient); err != nil {
 			rosaNetScope.Info("error fetching CF stack resources: %w", err)
-			return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+			return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 		}
 
 		switch cfStack.StackStatus {
 		case cloudformationtypes.StackStatusDeleteInProgress: // Deletion in progress
-			return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+			return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 		case cloudformationtypes.StackStatusDeleteFailed: // Deletion failed
 			v1beta1conditions.MarkFalse(rosaNetScope.ROSANetwork,
 				expinfrav1.ROSANetworkReadyCondition,
@@ -242,7 +249,7 @@ func (r *ROSANetworkReconciler) reconcileDelete(ctx context.Context, rosaNetScop
 				expinfrav1.ROSANetworkDeletingReason,
 				clusterv1beta1.ConditionSeverityInfo,
 				"")
-			return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+			return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 		}
 	} else {
 		controllerutil.RemoveFinalizer(rosaNetScope.ROSANetwork, expinfrav1.ROSANetworkFinalizer)
@@ -275,7 +282,7 @@ func (r *ROSANetworkReconciler) parseSubnets(rosaNet *expinfrav1.ROSANetwork, aw
 	subnets := make(map[string]expinfrav1.ROSANetworkSubnet)
 
 	for _, resource := range rosaNet.Status.Resources {
-		if resource.ResourceType != "AWS::EC2::Subnet" {
+		if resource.ResourceType != cfnResourceTypeSubnet {
 			continue
 		}
 
@@ -321,6 +328,36 @@ func (r *ROSANetworkReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSANetwork objects.
+				// Without this, PatchObject() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldNet, ok := e.ObjectOld.(*expinfrav1.ROSANetwork)
+					if !ok {
+						return true
+					}
+					newNet, ok := e.ObjectNew.(*expinfrav1.ROSANetwork)
+					if !ok {
+						return true
+					}
+					oldNet = oldNet.DeepCopy()
+					newNet = newNet.DeepCopy()
+					oldNet.Status = expinfrav1.ROSANetworkStatus{}
+					newNet.Status = expinfrav1.ROSANetworkStatus{}
+					oldNet.ObjectMeta.ResourceVersion = ""
+					newNet.ObjectMeta.ResourceVersion = ""
+
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldNet.ObjectMeta.ManagedFields = nil
+					newNet.ObjectMeta.ManagedFields = nil
+
+					return !cmp.Equal(oldNet, newNet)
+				},
+			},
+		).
 		For(&expinfrav1.ROSANetwork{}).
 		Complete(r)
 }

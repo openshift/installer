@@ -180,19 +180,19 @@ func (s *Service) listAddons(ctx context.Context, eksClusterName string) ([]stri
 		ClusterName: &eksClusterName,
 	}
 
-	addons := []string{}
 	output, err := s.EKSClient.ListAddons(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("listing eks addons: %w", err)
 	}
 
+	addons := make([]string, 0, len(output.Addons))
 	addons = append(addons, output.Addons...)
 
 	return addons, nil
 }
 
 func (s *Service) translateAPIToAddon(addons []ekscontrolplanev1.Addon) []*eksaddons.EKSAddon {
-	converted := []*eksaddons.EKSAddon{}
+	converted := make([]*eksaddons.EKSAddon, 0, len(addons))
 
 	for i := range addons {
 		addon := addons[i]

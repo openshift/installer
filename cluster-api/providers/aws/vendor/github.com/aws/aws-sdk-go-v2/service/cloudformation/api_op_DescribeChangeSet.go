@@ -6,21 +6,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
 // Returns the inputs for the change set and a list of changes that CloudFormation
-// will make if you execute the change set. For more information, see Updating
-// Stacks Using Change Sets (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
-// in the CloudFormation User Guide.
+// will make if you execute the change set. For more information, see [Update CloudFormation stacks using change sets]in the
+// CloudFormation User Guide.
+//
+// [Update CloudFormation stacks using change sets]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html
 func (c *Client) DescribeChangeSet(ctx context.Context, params *DescribeChangeSetInput, optFns ...func(*Options)) (*DescribeChangeSetOutput, error) {
 	if params == nil {
 		params = &DescribeChangeSetInput{}
@@ -48,8 +46,8 @@ type DescribeChangeSetInput struct {
 	// If true , the returned changes include detailed changes in the property values.
 	IncludePropertyValues *bool
 
-	// A string (provided by the DescribeChangeSet response output) that identifies
-	// the next page of information that you want to retrieve.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	// If you specified the name of a change set, specify the stack name or ID (ARN)
@@ -79,6 +77,13 @@ type DescribeChangeSetOutput struct {
 	// The start time when the change set was created, in UTC.
 	CreationTime *time.Time
 
+	// The deployment configuration specified when the change set was created.
+	DeploymentConfig *types.DeploymentConfig
+
+	// The deployment mode specified when the change set was created. Valid value is
+	// REVERT_DRIFT . Only present for drift-aware change sets.
+	DeploymentMode types.DeploymentMode
+
 	// Information about the change set.
 	Description *string
 
@@ -88,11 +93,14 @@ type DescribeChangeSetOutput struct {
 	// creating it or in an OBSOLETE state because the stack was already updated.
 	ExecutionStatus types.ExecutionStatus
 
-	// Indicates if the change set imports resources that already exist. This
-	// parameter can only import resources that have custom names (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-name.html)
-	// in templates. To import resources that do not accept custom names, such as EC2
-	// instances, use the resource import (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-import.html)
+	// Indicates if the change set imports resources that already exist.
+	//
+	// This parameter can only import resources that have [custom names] in templates. To import
+	// resources that do not accept custom names, such as EC2 instances, use the [resource import]
 	// feature instead.
+	//
+	// [custom names]: https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-name.html
+	// [resource import]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-import.html
 	ImportExistingResources *bool
 
 	// Verifies if IncludeNestedStacks is set to True .
@@ -102,28 +110,32 @@ type DescribeChangeSetOutput struct {
 	// If there is no additional page, this value is null.
 	NextToken *string
 
-	// The ARNs of the Amazon Simple Notification Service (Amazon SNS) topics that
-	// will be associated with the stack if you execute the change set.
+	// The ARNs of the Amazon SNS topics that will be associated with the stack if you
+	// execute the change set.
 	NotificationARNs []string
 
 	// Determines what action will be taken if stack creation fails. When this
-	// parameter is specified, the DisableRollback parameter to the ExecuteChangeSet (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ExecuteChangeSet.html)
-	// API operation must not be specified. This must be one of these values:
+	// parameter is specified, the DisableRollback parameter to the [ExecuteChangeSet] API operation
+	// must not be specified. This must be one of these values:
+	//
 	//   - DELETE - Deletes the change set if the stack creation fails. This is only
 	//   valid when the ChangeSetType parameter is set to CREATE . If the deletion of
 	//   the stack fails, the status of the stack is DELETE_FAILED .
+	//
 	//   - DO_NOTHING - if the stack creation fails, do nothing. This is equivalent to
-	//   specifying true for the DisableRollback parameter to the ExecuteChangeSet (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ExecuteChangeSet.html)
-	//   API operation.
+	//   specifying true for the DisableRollback parameter to the [ExecuteChangeSet]API operation.
+	//
 	//   - ROLLBACK - if the stack creation fails, roll back the stack. This is
-	//   equivalent to specifying false for the DisableRollback parameter to the
-	//   ExecuteChangeSet (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ExecuteChangeSet.html)
-	//   API operation.
+	//   equivalent to specifying false for the DisableRollback parameter to the [ExecuteChangeSet]API
+	//   operation.
+	//
+	// [ExecuteChangeSet]: https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ExecuteChangeSet.html
 	OnStackFailure types.OnStackFailure
 
 	// A list of Parameter structures that describes the input parameters and their
-	// values used to create the change set. For more information, see the Parameter (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html)
-	// data type.
+	// values used to create the change set. For more information, see the [Parameter]data type.
+	//
+	// [Parameter]: https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html
 	Parameters []types.Parameter
 
 	// Specifies the change set ID of the parent change set in the current nested
@@ -138,6 +150,19 @@ type DescribeChangeSetOutput struct {
 	// set hierarchy.
 	RootChangeSetId *string
 
+	// The drift status of the stack when the change set was created. Valid values:
+	//
+	//   - DRIFTED – The stack has drifted from its last deployment.
+	//
+	//   - IN_SYNC – The stack is in sync with its last deployment.
+	//
+	//   - NOT_CHECKED – CloudFormation doesn’t currently return this value.
+	//
+	//   - UNKNOWN – The drift status could not be determined.
+	//
+	// Only present for drift-aware change sets.
+	StackDriftStatus types.StackDriftStatus
+
 	// The Amazon Resource Name (ARN) of the stack that's associated with the change
 	// set.
 	StackId *string
@@ -145,8 +170,8 @@ type DescribeChangeSetOutput struct {
 	// The name of the stack that's associated with the change set.
 	StackName *string
 
-	// The current status of the change set, such as CREATE_IN_PROGRESS ,
-	// CREATE_COMPLETE , or FAILED .
+	// The current status of the change set, such as CREATE_PENDING , CREATE_COMPLETE ,
+	// or FAILED .
 	Status types.ChangeSetStatus
 
 	// A description of the change set's status. For example, if your attempt to
@@ -163,9 +188,6 @@ type DescribeChangeSetOutput struct {
 }
 
 func (c *Client) addOperationDescribeChangeSetMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDescribeChangeSet{}, middleware.After)
 	if err != nil {
 		return err
@@ -174,56 +196,20 @@ func (c *Client) addOperationDescribeChangeSetMiddlewares(stack *middleware.Stac
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeChangeSet"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeChangeSetValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeChangeSet(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -238,16 +224,11 @@ func (c *Client) addOperationDescribeChangeSetMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeChangeSetAPIClient is a client that implements the DescribeChangeSet
-// operation.
-type DescribeChangeSetAPIClient interface {
-	DescribeChangeSet(context.Context, *DescribeChangeSetInput, ...func(*Options)) (*DescribeChangeSetOutput, error)
-}
-
-var _ DescribeChangeSetAPIClient = (*Client)(nil)
 
 // ChangeSetCreateCompleteWaiterOptions are waiter options for
 // ChangeSetCreateCompleteWaiter
@@ -283,12 +264,13 @@ type ChangeSetCreateCompleteWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeChangeSetInput, *DescribeChangeSetOutput, error) (bool, error)
 }
 
@@ -365,7 +347,13 @@ func (w *ChangeSetCreateCompleteWaiter) WaitForOutput(ctx context.Context, param
 		}
 
 		out, err := w.client.DescribeChangeSet(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -404,35 +392,21 @@ func (w *ChangeSetCreateCompleteWaiter) WaitForOutput(ctx context.Context, param
 func changeSetCreateCompleteStateRetryable(ctx context.Context, input *DescribeChangeSetInput, output *DescribeChangeSetOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
+		v1 := output.Status
 		expectedValue := "CREATE_COMPLETE"
-		value, ok := pathValue.(types.ChangeSetStatus)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected types.ChangeSetStatus value, got %T", pathValue)
-		}
-
-		if string(value) == expectedValue {
+		var pathValue string
+		pathValue = string(v1)
+		if pathValue == expectedValue {
 			return false, nil
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
+		v1 := output.Status
 		expectedValue := "FAILED"
-		value, ok := pathValue.(types.ChangeSetStatus)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected types.ChangeSetStatus value, got %T", pathValue)
-		}
-
-		if string(value) == expectedValue {
+		var pathValue string
+		pathValue = string(v1)
+		if pathValue == expectedValue {
 			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
@@ -449,13 +423,89 @@ func changeSetCreateCompleteStateRetryable(ctx context.Context, input *DescribeC
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
-func newServiceMetadataMiddleware_opDescribeChangeSet(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DescribeChangeSet",
+// DescribeChangeSetPaginatorOptions is the paginator options for DescribeChangeSet
+type DescribeChangeSetPaginatorOptions struct {
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeChangeSetPaginator is a paginator for DescribeChangeSet
+type DescribeChangeSetPaginator struct {
+	options   DescribeChangeSetPaginatorOptions
+	client    DescribeChangeSetAPIClient
+	params    *DescribeChangeSetInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeChangeSetPaginator returns a new DescribeChangeSetPaginator
+func NewDescribeChangeSetPaginator(client DescribeChangeSetAPIClient, params *DescribeChangeSetInput, optFns ...func(*DescribeChangeSetPaginatorOptions)) *DescribeChangeSetPaginator {
+	if params == nil {
+		params = &DescribeChangeSetInput{}
+	}
+
+	options := DescribeChangeSetPaginatorOptions{}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeChangeSetPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.NextToken,
 	}
 }
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeChangeSetPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeChangeSet page.
+func (p *DescribeChangeSetPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeChangeSetOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.NextToken = p.nextToken
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeChangeSet(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.NextToken
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeChangeSetAPIClient is a client that implements the DescribeChangeSet
+// operation.
+type DescribeChangeSetAPIClient interface {
+	DescribeChangeSet(context.Context, *DescribeChangeSetInput, ...func(*Options)) (*DescribeChangeSetOutput, error)
+}
+
+var _ DescribeChangeSetAPIClient = (*Client)(nil)

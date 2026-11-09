@@ -76,6 +76,12 @@ const (
 	// 4. a `-` followed by any additional characters.
 	DefaultAmiNameFormat = "capa-ami-{{.BaseOS}}-?{{.K8sVersion}}-*"
 
+	// amiStateAvailable is the state value for available AMIs.
+	amiStateAvailable = "available"
+
+	// virtualizationTypeHVM is the virtualization type for HVM AMIs.
+	virtualizationTypeHVM = "hvm"
+
 	// Amazon's AMI timestamp format.
 	createDateTimestampFormat = "2006-01-02T15:04:05.000Z"
 
@@ -219,11 +225,11 @@ func DefaultAMILookup(ec2Client common.EC2API, ownerID, baseOS, kubernetesVersio
 			},
 			{
 				Name:   aws.String("state"),
-				Values: []string{"available"},
+				Values: []string{amiStateAvailable},
 			},
 			{
 				Name:   aws.String("virtualization-type"),
-				Values: []string{"hvm"},
+				Values: []string{virtualizationTypeHVM},
 			},
 		},
 	}
@@ -293,15 +299,15 @@ func (s *Service) defaultBastionAMILookup() (string, error) {
 		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("architecture"),
-				Values: []string{"x86_64"},
+				Values: []string{Amd64ArchitectureTag},
 			},
 			{
 				Name:   aws.String("state"),
-				Values: []string{"available"},
+				Values: []string{amiStateAvailable},
 			},
 			{
 				Name:   aws.String("virtualization-type"),
-				Values: []string{"hvm"},
+				Values: []string{virtualizationTypeHVM},
 			},
 			{
 				Name:   aws.String("description"),

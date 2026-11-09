@@ -4,18 +4,17 @@ package iam
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Retrieves the status of your service-linked role deletion. After you use
-// DeleteServiceLinkedRole to submit a service-linked role for deletion, you can
-// use the DeletionTaskId parameter in GetServiceLinkedRoleDeletionStatus to check
-// the status of the deletion. If the deletion fails, this operation returns the
-// reason that it failed, if that information is returned by the service.
+// Retrieves the status of your service-linked role deletion. After you use [DeleteServiceLinkedRole] to
+// submit a service-linked role for deletion, you can use the DeletionTaskId
+// parameter in GetServiceLinkedRoleDeletionStatus to check the status of the
+// deletion. If the deletion fails, this operation returns the reason that it
+// failed, if that information is returned by the service.
+//
+// [DeleteServiceLinkedRole]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteServiceLinkedRole.html
 func (c *Client) GetServiceLinkedRoleDeletionStatus(ctx context.Context, params *GetServiceLinkedRoleDeletionStatusInput, optFns ...func(*Options)) (*GetServiceLinkedRoleDeletionStatusOutput, error) {
 	if params == nil {
 		params = &GetServiceLinkedRoleDeletionStatusInput{}
@@ -33,8 +32,10 @@ func (c *Client) GetServiceLinkedRoleDeletionStatus(ctx context.Context, params 
 
 type GetServiceLinkedRoleDeletionStatusInput struct {
 
-	// The deletion task identifier. This identifier is returned by the
-	// DeleteServiceLinkedRole operation in the format task/aws-service-role/// .
+	// The deletion task identifier. This identifier is returned by the [DeleteServiceLinkedRole] operation in
+	// the format task/aws-service-role/// .
+	//
+	// [DeleteServiceLinkedRole]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteServiceLinkedRole.html
 	//
 	// This member is required.
 	DeletionTaskId *string
@@ -59,9 +60,6 @@ type GetServiceLinkedRoleDeletionStatusOutput struct {
 }
 
 func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpGetServiceLinkedRoleDeletionStatus{}, middleware.After)
 	if err != nil {
 		return err
@@ -70,56 +68,20 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetServiceLinkedRoleDeletionStatus"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetServiceLinkedRoleDeletionStatusValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetServiceLinkedRoleDeletionStatus(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -134,13 +96,8 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opGetServiceLinkedRoleDeletionStatus(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetServiceLinkedRoleDeletionStatus",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

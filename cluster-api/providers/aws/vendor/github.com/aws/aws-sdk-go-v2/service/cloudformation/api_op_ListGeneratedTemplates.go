@@ -5,10 +5,8 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Lists your generated templates in this Region.
@@ -35,7 +33,8 @@ type ListGeneratedTemplatesInput struct {
 	// most 50 results in each response. The maximum value is 100.
 	MaxResults *int32
 
-	// A string that identifies the next page of resource scan results.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -59,9 +58,6 @@ type ListGeneratedTemplatesOutput struct {
 }
 
 func (c *Client) addOperationListGeneratedTemplatesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListGeneratedTemplates{}, middleware.After)
 	if err != nil {
 		return err
@@ -70,53 +66,17 @@ func (c *Client) addOperationListGeneratedTemplatesMiddlewares(stack *middleware
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListGeneratedTemplates"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListGeneratedTemplates(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -131,16 +91,11 @@ func (c *Client) addOperationListGeneratedTemplatesMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListGeneratedTemplatesAPIClient is a client that implements the
-// ListGeneratedTemplates operation.
-type ListGeneratedTemplatesAPIClient interface {
-	ListGeneratedTemplates(context.Context, *ListGeneratedTemplatesInput, ...func(*Options)) (*ListGeneratedTemplatesOutput, error)
-}
-
-var _ ListGeneratedTemplatesAPIClient = (*Client)(nil)
 
 // ListGeneratedTemplatesPaginatorOptions is the paginator options for
 // ListGeneratedTemplates
@@ -209,6 +164,9 @@ func (p *ListGeneratedTemplatesPaginator) NextPage(ctx context.Context, optFns .
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListGeneratedTemplates(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -228,10 +186,10 @@ func (p *ListGeneratedTemplatesPaginator) NextPage(ctx context.Context, optFns .
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListGeneratedTemplates(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListGeneratedTemplates",
-	}
+// ListGeneratedTemplatesAPIClient is a client that implements the
+// ListGeneratedTemplates operation.
+type ListGeneratedTemplatesAPIClient interface {
+	ListGeneratedTemplates(context.Context, *ListGeneratedTemplatesInput, ...func(*Options)) (*ListGeneratedTemplatesOutput, error)
 }
+
+var _ ListGeneratedTemplatesAPIClient = (*Client)(nil)

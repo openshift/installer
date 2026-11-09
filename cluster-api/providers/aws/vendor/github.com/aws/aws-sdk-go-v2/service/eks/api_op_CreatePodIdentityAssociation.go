@@ -5,28 +5,44 @@ package eks
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/eks/schemas"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Creates an EKS Pod Identity association between a service account in an Amazon
 // EKS cluster and an IAM role with EKS Pod Identity. Use EKS Pod Identity to give
-// temporary IAM credentials to pods and the credentials are rotated automatically.
+// temporary IAM credentials to Pods and the credentials are rotated automatically.
 //
 // Amazon EKS Pod Identity associations provide the ability to manage credentials
 // for your applications, similar to the way that Amazon EC2 instance profiles
 // provide credentials to Amazon EC2 instances.
 //
-// If a pod uses a service account that has an association, Amazon EKS sets
-// environment variables in the containers of the pod. The environment variables
+// If a Pod uses a service account that has an association, Amazon EKS sets
+// environment variables in the containers of the Pod. The environment variables
 // configure the Amazon Web Services SDKs, including the Command Line Interface, to
 // use the EKS Pod Identity credentials.
 //
-// Pod Identity is a simpler method than IAM roles for service accounts, as this
-// method doesn't use OIDC identity providers. Additionally, you can configure a
-// role for Pod Identity once, and reuse it across clusters.
+// EKS Pod Identity is a simpler method than IAM roles for service accounts, as
+// this method doesn't use OIDC identity providers. Additionally, you can configure
+// a role for EKS Pod Identity once, and reuse it across clusters.
+//
+// Similar to Amazon Web Services IAM behavior, EKS Pod Identity associations are
+// eventually consistent, and may take several seconds to be effective after the
+// initial API call returns successfully. You must design your applications to
+// account for these potential delays. We recommend that you don’t include
+// association create/updates in the critical, high-availability code paths of your
+// application. Instead, make changes in a separate initialization or setup routine
+// that you run less frequently.
+//
+// You can set a target IAM role in the same or a different account for advanced
+// scenarios. With a target role, EKS Pod Identity automatically performs two role
+// assumptions in sequence: first assuming the role in the association that is in
+// this account, then using those credentials to assume the target IAM role. This
+// process provides your Pod with temporary credentials that have the permissions
+// defined in the target role, allowing secure access to resources in another
+// Amazon Web Services account.
 func (c *Client) CreatePodIdentityAssociation(ctx context.Context, params *CreatePodIdentityAssociationInput, optFns ...func(*Options)) (*CreatePodIdentityAssociationOutput, error) {
 	if params == nil {
 		params = &CreatePodIdentityAssociationInput{}
@@ -44,21 +60,21 @@ func (c *Client) CreatePodIdentityAssociation(ctx context.Context, params *Creat
 
 type CreatePodIdentityAssociationInput struct {
 
-	// The name of the cluster to create the association in.
+	// The name of the cluster to create the EKS Pod Identity association in.
 	//
 	// This member is required.
 	ClusterName *string
 
-	// The name of the Kubernetes namespace inside the cluster to create the
-	// association in. The service account and the pods that use the service account
-	// must be in this namespace.
+	// The name of the Kubernetes namespace inside the cluster to create the EKS Pod
+	// Identity association in. The service account and the Pods that use the service
+	// account must be in this namespace.
 	//
 	// This member is required.
 	Namespace *string
 
 	// The Amazon Resource Name (ARN) of the IAM role to associate with the service
 	// account. The EKS Pod Identity agent manages credentials to assume this role for
-	// applications in the containers in the pods that use this service account.
+	// applications in the containers in the Pods that use this service account.
 	//
 	// This member is required.
 	RoleArn *string
@@ -72,6 +88,41 @@ type CreatePodIdentityAssociationInput struct {
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
 	// of the request.
 	ClientRequestToken *string
+
+	// Disable the automatic sessions tags that are appended by EKS Pod Identity.
+	//
+	// EKS Pod Identity adds a pre-defined set of session tags when it assumes the
+	// role. You can use these tags to author a single role that can work across
+	// resources by allowing access to Amazon Web Services resources based on matching
+	// tags. By default, EKS Pod Identity attaches six tags, including tags for cluster
+	// name, namespace, and service account name. For the list of tags added by EKS Pod
+	// Identity, see [List of session tags added by EKS Pod Identity]in the Amazon EKS User Guide.
+	//
+	// Amazon Web Services compresses inline session policies, managed policy ARNs,
+	// and session tags into a packed binary format that has a separate limit. If you
+	// receive a PackedPolicyTooLarge error indicating the packed binary format has
+	// exceeded the size limit, you can attempt to reduce the size by disabling the
+	// session tags added by EKS Pod Identity.
+	//
+	// [List of session tags added by EKS Pod Identity]: https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html#pod-id-abac-tags
+	DisableSessionTags *bool
+
+	// An optional IAM policy in JSON format (as an escaped string) that applies
+	// additional restrictions to this pod identity association beyond the IAM policies
+	// attached to the IAM role. This policy is applied as the intersection of the
+	// role's policies and this policy, allowing you to reduce the permissions that
+	// applications in the pods can use. Use this policy to enforce least privilege
+	// access while still leveraging a shared IAM role across multiple applications.
+	//
+	// Important considerations
+	//
+	//   - Session tags: When using this policy, disableSessionTags must be set to true
+	//   .
+	//
+	//   - Target role permissions: If you specify both a TargetRoleArn and a policy,
+	//   the policy restrictions apply only to the target role's permissions, not to the
+	//   initial role used for assuming the target role.
+	Policy *string
 
 	// Metadata that assists with categorization and organization. Each tag consists
 	// of a key and an optional value. You define both. Tags don't propagate to any
@@ -101,7 +152,59 @@ type CreatePodIdentityAssociationInput struct {
 	//   prefix do not count against your tags per resource limit.
 	Tags map[string]string
 
+	// The Amazon Resource Name (ARN) of the target IAM role to associate with the
+	// service account. This role is assumed by using the EKS Pod Identity association
+	// role, then the credentials for this role are injected into the Pod.
+	//
+	// When you run applications on Amazon EKS, your application might need to access
+	// Amazon Web Services resources from a different role that exists in the same or
+	// different Amazon Web Services account. For example, your application running in
+	// “Account A” might need to access resources, such as Amazon S3 buckets in
+	// “Account B” or within “Account A” itself. You can create a association to access
+	// Amazon Web Services resources in “Account B” by creating two IAM roles: a role
+	// in “Account A” and a role in “Account B” (which can be the same or different
+	// account), each with the necessary trust and permission policies. After you
+	// provide these roles in the IAM role and Target IAM role fields, EKS will perform
+	// role chaining to ensure your application gets the required permissions. This
+	// means Role A will assume Role B, allowing your Pods to securely access resources
+	// like S3 buckets in the target account.
+	TargetRoleArn *string
+
 	noSmithyDocumentSerde
+}
+
+func (v *CreatePodIdentityAssociationInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.CreatePodIdentityAssociationRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *CreatePodIdentityAssociationInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ClientRequestToken != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_clientRequestToken, *v.ClientRequestToken)
+	}
+	if v.ClusterName != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_clusterName, *v.ClusterName)
+	}
+	if v.DisableSessionTags != nil {
+		s.WriteBool(schemas.CreatePodIdentityAssociationRequest_disableSessionTags, *v.DisableSessionTags)
+	}
+	if v.Namespace != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_namespace, *v.Namespace)
+	}
+	if v.Policy != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_policy, *v.Policy)
+	}
+	if v.RoleArn != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_roleArn, *v.RoleArn)
+	}
+	if v.ServiceAccount != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_serviceAccount, *v.ServiceAccount)
+	}
+	serializeTagMap(s, schemas.CreatePodIdentityAssociationRequest_tags, v.Tags)
+	if v.TargetRoleArn != nil {
+		s.WriteString(schemas.CreatePodIdentityAssociationRequest_targetRoleArn, *v.TargetRoleArn)
+	}
 }
 
 type CreatePodIdentityAssociationOutput struct {
@@ -118,68 +221,44 @@ type CreatePodIdentityAssociationOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *CreatePodIdentityAssociationOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.CreatePodIdentityAssociationResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *CreatePodIdentityAssociationOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.Association != nil {
+		s.WriteStruct(schemas.CreatePodIdentityAssociationResponse_association)
+		v.Association.SerializeMembers(s)
+		s.CloseStruct()
+	}
+}
+func (v *CreatePodIdentityAssociationOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.CreatePodIdentityAssociationResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.CreatePodIdentityAssociationResponse_association:
+			v.Association = &types.PodIdentityAssociation{}
+			return v.Association.Deserialize(d)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationCreatePodIdentityAssociationMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.CreatePodIdentityAssociation, schemas.CreatePodIdentityAssociationRequest, schemas.CreatePodIdentityAssociationResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsRestjson1_serializeOpCreatePodIdentityAssociation{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.CreatePodIdentityAssociation, schemas.CreatePodIdentityAssociationRequest, schemas.CreatePodIdentityAssociationResponse), output: &CreatePodIdentityAssociationOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpCreatePodIdentityAssociation{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CreatePodIdentityAssociation"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
@@ -189,12 +268,6 @@ func (c *Client) addOperationCreatePodIdentityAssociationMiddlewares(stack *midd
 		return err
 	}
 	if err = addOpCreatePodIdentityAssociationValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreatePodIdentityAssociation(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -209,16 +282,7 @@ func (c *Client) addOperationCreatePodIdentityAssociationMiddlewares(stack *midd
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -255,12 +319,4 @@ func (m *idempotencyToken_initializeOpCreatePodIdentityAssociation) HandleInitia
 }
 func addIdempotencyToken_opCreatePodIdentityAssociationMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpCreatePodIdentityAssociation{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opCreatePodIdentityAssociation(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CreatePodIdentityAssociation",
-	}
 }

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/google/go-cmp/cmp"
 	accountroles "github.com/openshift/rosa/cmd/create/accountroles"
 	oidcconfig "github.com/openshift/rosa/cmd/create/oidcconfig"
 	oidcprovider "github.com/openshift/rosa/cmd/create/oidcprovider"
@@ -43,6 +44,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
@@ -78,6 +81,36 @@ func (r *ROSARoleConfigReconciler) SetupWithManager(ctx context.Context, mgr ctr
 		For(&expinfrav1.ROSARoleConfig{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSARoleConfig objects.
+				// Without this, PatchObject() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldRC, ok := e.ObjectOld.(*expinfrav1.ROSARoleConfig)
+					if !ok {
+						return true
+					}
+					newRC, ok := e.ObjectNew.(*expinfrav1.ROSARoleConfig)
+					if !ok {
+						return true
+					}
+					oldRC = oldRC.DeepCopy()
+					newRC = newRC.DeepCopy()
+					oldRC.Status = expinfrav1.ROSARoleConfigStatus{}
+					newRC.Status = expinfrav1.ROSARoleConfigStatus{}
+					oldRC.ObjectMeta.ResourceVersion = ""
+					newRC.ObjectMeta.ResourceVersion = ""
+
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldRC.ObjectMeta.ManagedFields = nil
+					newRC.ObjectMeta.ManagedFields = nil
+
+					return !cmp.Equal(oldRC, newRC)
+				},
+			},
+		).
 		Complete(r)
 }
 
@@ -173,18 +206,18 @@ func (r *ROSARoleConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 				Severity: clusterv1beta1.ConditionSeverityInfo,
 				Message:  "RosaRoleConfig is ready",
 			})
-	} else {
-		v1beta1conditions.Set(scope.RosaRoleConfig,
-			&clusterv1beta1.Condition{
-				Type:     expinfrav1.RosaRoleConfigReadyCondition,
-				Status:   corev1.ConditionFalse,
-				Reason:   expinfrav1.RosaRoleConfigCreatedReason,
-				Severity: clusterv1beta1.ConditionSeverityInfo,
-				Message:  "RosaRoleConfig not ready",
-			})
+		return ctrl.Result{}, nil
 	}
 
-	return ctrl.Result{}, nil
+	v1beta1conditions.Set(scope.RosaRoleConfig,
+		&clusterv1beta1.Condition{
+			Type:     expinfrav1.RosaRoleConfigReadyCondition,
+			Status:   corev1.ConditionFalse,
+			Reason:   expinfrav1.RosaRoleConfigCreatedReason,
+			Severity: clusterv1beta1.ConditionSeverityInfo,
+			Message:  "RosaRoleConfig not ready",
+		})
+	return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 }
 
 func (r *ROSARoleConfigReconciler) reconcileDelete(scope *scope.RosaRoleConfigScope, rt *rosacli.Runtime) error {
@@ -238,10 +271,20 @@ func (r *ROSARoleConfigReconciler) reconcileOperatorRoles(scope *scope.RosaRoleC
 	}
 
 	config := scope.RosaRoleConfig.Spec.OperatorRoleConfig
-	return operatorroles.CreateOperatorRoles(rt, rosa.GetOCMClientEnv(rt.OCMClient), config.PermissionsBoundaryARN,
+	if err := operatorroles.CreateOperatorRoles(rt, rosa.GetOCMClientEnv(rt.OCMClient), config.PermissionsBoundaryARN,
 		interactive.ModeAuto, policies, "", config.SharedVPCConfig.IsSharedVPC(), config.Prefix, true, installerRoleArn,
 		true, oidcConfigID, config.SharedVPCConfig.RouteRoleARN, ocm.DefaultChannelGroup,
-		config.SharedVPCConfig.VPCEndpointRoleARN)
+		config.SharedVPCConfig.VPCEndpointRoleARN); err != nil {
+		return err
+	}
+
+	operatorRolesRef, err = r.lookupOperatorRolesRef(rt, prefix)
+	if err != nil {
+		return err
+	}
+	scope.RosaRoleConfig.Status.OperatorRolesRef = operatorRolesRef
+
+	return nil
 }
 
 // lookupOperatorRolesRef fetches each operator role ARN by its exact name using GetRoleByName.
@@ -342,10 +385,20 @@ func (r *ROSARoleConfigReconciler) reconcileAccountRoles(scope *scope.RosaRoleCo
 		return err
 	}
 
-	return accountroles.CreateHCPRoles(rt, prefix, true, scope.RosaRoleConfig.Spec.AccountRoleConfig.PermissionsBoundaryARN,
+	if err := accountroles.CreateHCPRoles(rt, prefix, true, scope.RosaRoleConfig.Spec.AccountRoleConfig.PermissionsBoundaryARN,
 		rosa.GetOCMClientEnv(rt.OCMClient), policies, scope.RosaRoleConfig.Spec.AccountRoleConfig.Version, scope.RosaRoleConfig.Spec.AccountRoleConfig.Path,
 		scope.RosaRoleConfig.Spec.AccountRoleConfig.SharedVPCConfig.IsSharedVPC(), scope.RosaRoleConfig.Spec.AccountRoleConfig.SharedVPCConfig.RouteRoleARN,
-		scope.RosaRoleConfig.Spec.AccountRoleConfig.SharedVPCConfig.VPCEndpointRoleARN)
+		scope.RosaRoleConfig.Spec.AccountRoleConfig.SharedVPCConfig.VPCEndpointRoleARN); err != nil {
+		return err
+	}
+
+	accountRolesRef, err = r.lookupAccountRolesRef(rt, prefix)
+	if err != nil {
+		return err
+	}
+	scope.RosaRoleConfig.Status.AccountRolesRef = accountRolesRef
+
+	return nil
 }
 
 // lookupAccountRolesRef fetches each account role ARN by its exact name using GetRoleByName.

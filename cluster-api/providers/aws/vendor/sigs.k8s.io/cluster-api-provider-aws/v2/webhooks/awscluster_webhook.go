@@ -41,10 +41,9 @@ const (
 )
 
 func (w *AWSCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.AWSCluster{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.AWSCluster{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 
@@ -114,18 +113,24 @@ func (w *AWSCluster) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Ob
 		)
 	}
 
-	// Validate the control plane load balancers.
-	lbs := map[*infrav1.AWSLoadBalancerSpec]*infrav1.AWSLoadBalancerSpec{
-		oldC.Spec.ControlPlaneLoadBalancer:          r.Spec.ControlPlaneLoadBalancer,
-		oldC.Spec.SecondaryControlPlaneLoadBalancer: r.Spec.SecondaryControlPlaneLoadBalancer,
+	// Validate the control plane load balancers. Each entry carries its own field
+	// path so validation errors (including the immutability checks below) are
+	// attributed to the correct load balancer instead of always to the primary.
+	lbs := []struct {
+		old  *infrav1.AWSLoadBalancerSpec
+		new  *infrav1.AWSLoadBalancerSpec
+		path *field.Path
+	}{
+		{oldC.Spec.ControlPlaneLoadBalancer, r.Spec.ControlPlaneLoadBalancer, field.NewPath("spec", "controlPlaneLoadBalancer")},
+		{oldC.Spec.SecondaryControlPlaneLoadBalancer, r.Spec.SecondaryControlPlaneLoadBalancer, field.NewPath("spec", "secondaryControlPlaneLoadBalancer")},
 	}
 
-	for oldLB, newLB := range lbs {
-		if oldLB == nil && newLB == nil {
+	for _, lb := range lbs {
+		if lb.old == nil && lb.new == nil {
 			continue
 		}
 
-		allErrs = append(allErrs, w.validateControlPlaneLoadBalancerUpdate(oldLB, newLB)...)
+		allErrs = append(allErrs, w.validateControlPlaneLoadBalancerUpdate(lb.old, lb.new, lb.path)...)
 	}
 
 	if !cmp.Equal(oldC.Spec.ControlPlaneEndpoint, clusterv1beta1.APIEndpoint{}) &&
@@ -186,14 +191,25 @@ func (w *AWSCluster) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Ob
 	return allWarnings, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
 
-func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav1.AWSLoadBalancerSpec) field.ErrorList {
+func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav1.AWSLoadBalancerSpec, lbPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
+
+	// A previously-set control plane load balancer cannot be removed: the
+	// underlying AWS load balancer is not deleted by reconciliation, so allowing
+	// the removal would leak it. Reject the change with a clear, field-scoped
+	// error instead of dereferencing newlb below, which would panic when it is
+	// nil.
+	if oldlb != nil && newlb == nil {
+		allErrs = append(allErrs, field.Invalid(lbPath, newlb,
+			"control plane load balancer cannot be removed once set"))
+		return allErrs
+	}
 
 	if oldlb == nil {
 		// If old scheme was nil, the only value accepted here is the default value: internet-facing
 		if newlb.Scheme != nil && newlb.Scheme.String() != infrav1.ELBSchemeInternetFacing.String() {
 			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
+				field.Invalid(lbPath.Child("scheme"),
 					newlb.Scheme, "field is immutable, default value was set to internet-facing"),
 			)
 		}
@@ -204,14 +220,14 @@ func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav
 		if (oldlb.LoadBalancerType == infrav1.LoadBalancerTypeDisabled && newlb.LoadBalancerType != infrav1.LoadBalancerTypeDisabled) ||
 			(newlb.LoadBalancerType == infrav1.LoadBalancerTypeDisabled && oldlb.LoadBalancerType != infrav1.LoadBalancerTypeDisabled) {
 			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "type"),
+				field.Invalid(lbPath.Child("type"),
 					newlb.Scheme, "field is immutable when created of disabled type"),
 			)
 		}
 		// If old scheme was not nil, the new scheme should be the same.
 		if !cmp.Equal(oldlb.Scheme, newlb.Scheme) {
 			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
+				field.Invalid(lbPath.Child("scheme"),
 					newlb.Scheme, "field is immutable"),
 			)
 		}
@@ -220,7 +236,7 @@ func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav
 		// so the name remains nil. In either case, the name cannot be changed.
 		if !cmp.Equal(oldlb.Name, newlb.Name) {
 			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"),
+				field.Invalid(lbPath.Child("name"),
 					newlb.Name, "field is immutable"),
 			)
 		}
@@ -231,7 +247,7 @@ func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav
 		if oldlb.LoadBalancerType != infrav1.LoadBalancerTypeClassic {
 			if !cmp.Equal(newlb.HealthCheckProtocol, oldlb.HealthCheckProtocol) {
 				allErrs = append(allErrs,
-					field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"),
+					field.Invalid(lbPath.Child("healthCheckProtocol"),
 						newlb.HealthCheckProtocol, "field is immutable once set"),
 				)
 			}
@@ -240,7 +256,7 @@ func (w *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *infrav
 		// TargetGroupIPType is immutable after creation.
 		if !cmp.Equal(oldlb.TargetGroupIPType, newlb.TargetGroupIPType) {
 			allErrs = append(allErrs,
-				field.Forbidden(field.NewPath("spec", "controlPlaneLoadBalancer", "targetGroupIPType"),
+				field.Forbidden(lbPath.Child("targetGroupIPType"),
 					"field is immutable and cannot be changed after target group creation"),
 			)
 		}

@@ -172,7 +172,7 @@ func NewNodeadmUserdata(input *NodeadmInput) ([]byte, error) {
 	var buf bytes.Buffer
 
 	// Write MIME header
-	if _, err := buf.WriteString(fmt.Sprintf("MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary=%q\n\n", input.Boundary)); err != nil {
+	if _, err := fmt.Fprintf(&buf, "MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary=%q\n\n", input.Boundary); err != nil {
 		return nil, fmt.Errorf("failed to write MIME header: %v", err)
 	}
 

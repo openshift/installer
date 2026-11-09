@@ -56,7 +56,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
@@ -77,6 +79,7 @@ import (
 )
 
 const (
+	kubeSystemNamespace  = "kube-system"
 	rosaControlPlaneKind = "ROSAControlPlane"
 	// ROSAControlPlaneFinalizer allows the controller to clean up resources on delete.
 	ROSAControlPlaneFinalizer = "rosacontrolplane.controlplane.cluster.x-k8s.io"
@@ -92,6 +95,9 @@ const (
 
 	// credentialRefreshThreshold is how long before expiry a break-glass credential should be refreshed.
 	credentialRefreshThreshold = 1 * time.Hour
+
+	conditionRequeueInterval = 10 * time.Second
+	defaultRequeueInterval   = 60 * time.Second
 )
 
 // ROSAControlPlaneReconciler reconciles a ROSAControlPlane object.
@@ -116,6 +122,36 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 		For(rosaControlPlane).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSAControlPlane objects.
+				// Without this, Close() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldCP, ok := e.ObjectOld.(*rosacontrolplanev1.ROSAControlPlane)
+					if !ok {
+						return true
+					}
+					newCP, ok := e.ObjectNew.(*rosacontrolplanev1.ROSAControlPlane)
+					if !ok {
+						return true
+					}
+					oldCP = oldCP.DeepCopy()
+					newCP = newCP.DeepCopy()
+					oldCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+					newCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+					oldCP.ObjectMeta.ResourceVersion = ""
+					newCP.ObjectMeta.ResourceVersion = ""
+
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldCP.ObjectMeta.ManagedFields = nil
+					newCP.ObjectMeta.ManagedFields = nil
+
+					return !cmp.Equal(oldCP, newCP)
+				},
+			},
+		).
 		Build(r)
 	if err != nil {
 		return fmt.Errorf("failed setting up the ROSAControlPlane controller manager: %w", err)
@@ -177,8 +213,10 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	log = log.WithValues("cluster", klog.KObj(cluster))
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaControlPlane); err != nil || isPaused || conditionChanged {
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, rosaControlPlane); err != nil || isPaused {
 		return ctrl.Result{}, err
+	} else if conditionChanged {
+		return ctrl.Result{RequeueAfter: conditionRequeueInterval}, nil
 	}
 
 	rosaScope, err := scope.NewROSAControlPlaneScope(scope.ROSAControlPlaneScopeParams{
@@ -286,6 +324,11 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		rosaScope.ControlPlane.Status.Ready = false
 		rosaScope.ControlPlane.Status.Version = rosa.RawVersionID(cluster.Version())
 
+		if err := rosa.ReconcileDeleteProtection(rosaScope, ocmClient, cluster); err != nil {
+			rosaScope.Error(err, "failed to reconcile delete protection")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+
 		switch cluster.Status().State() {
 		case cmv1.ClusterStateReady:
 			v1beta1conditions.MarkTrue(rosaScope.ControlPlane, rosacontrolplanev1.ROSAControlPlaneReadyCondition)
@@ -298,7 +341,11 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 			rosaScope.ControlPlane.Spec.ControlPlaneEndpoint = *apiEndpoint
 
 			if err := r.reconcileLogForwarders(rosaScope, ocmClient, cluster); err != nil {
-				return ctrl.Result{RequeueAfter: time.Second * 60}, fmt.Errorf("failed to reconcile logForwarders: %w", err)
+				return ctrl.Result{RequeueAfter: defaultRequeueInterval}, fmt.Errorf("failed to reconcile logForwarders: %w", err)
+			}
+
+			if err := r.reconcileComponentRoutes(rosaScope, ocmClient, cluster); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to reconcile componentRoutes: %w", err)
 			}
 
 			if err := r.updateOCMCluster(rosaScope, ocmClient, cluster, creator); err != nil {
@@ -344,7 +391,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 
 		rosaScope.Info("waiting for cluster to become ready", "state", cluster.Status().State())
 		// Requeue so that status.ready is set to true when the cluster is fully created.
-		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 	}
 
 	rosaNet := &expinfrav1.ROSANetwork{}
@@ -386,7 +433,20 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 	rosaScope.Info("cluster created", "state", cluster.Status().State())
 	rosaScope.ControlPlane.Status.ID = cluster.ID()
 
-	return ctrl.Result{}, nil
+	if rosaScope.ControlPlane.Spec.DeleteProtection == rosacontrolplanev1.DeleteProtectionEnabled {
+		if err := rosa.UpdateClusterDeletionProtection(ocmClient, cluster.ID(), true); err != nil {
+			v1beta1conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+				rosacontrolplanev1.ReconciliationFailedReason,
+				clusterv1beta1.ConditionSeverityError,
+				"cluster '%s' was created but delete protection could not be enabled: %s",
+				cluster.ID(),
+				err.Error())
+			return ctrl.Result{}, fmt.Errorf("failed to enable delete protection for cluster '%s': %w", cluster.ID(), err)
+		}
+	}
+
+	return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 }
 
 func (r *ROSAControlPlaneReconciler) reconcileRosaRoleConfig(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (*expinfrav1.ROSARoleConfig, error) {
@@ -462,6 +522,13 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 		return ctrl.Result{}, nil
 	}
 
+	if rosa.IsDeleteProtectionBlocking(rosaScope, cluster) {
+		rosaScope.Info("Delete protection is enabled, removing finalizer without deleting the ROSA cluster")
+		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
+
+		return ctrl.Result{}, nil
+	}
+
 	bestEffort := false
 	if value, found := annotations.Get(rosaScope.ControlPlane, ROSAControlPlaneForceDeleteAnnotation); found && value != "false" {
 		bestEffort = true
@@ -488,7 +555,7 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 	rosaScope.ControlPlane.Status.Ready = false
 	rosaScope.Info("waiting for cluster to be deleted")
 	// Requeue to remove the finalizer when the cluster is fully deleted.
-	return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+	return ctrl.Result{RequeueAfter: defaultRequeueInterval}, nil
 }
 
 // deleteMachinePools check if the controlplane has related machinePools and delete them.
@@ -629,11 +696,93 @@ func findExistingLogForwarders(ocmClient rosa.OCMClient, clusterID string) (cwLo
 
 // buildGroups converts a slice of group IDs into LogForwarderGroupBuilder objects.
 func buildGroups(ids []string) []*cmv1.LogForwarderGroupBuilder {
-	groups := make([]*cmv1.LogForwarderGroupBuilder, 0)
+	groups := make([]*cmv1.LogForwarderGroupBuilder, 0, len(ids))
 	for _, id := range ids {
 		groups = append(groups, cmv1.NewLogForwarderGroup().ID(id))
 	}
 	return groups
+}
+
+func (r *ROSAControlPlaneReconciler) reconcileComponentRoutes(rosaScope *scope.ROSAControlPlaneScope, ocmClient rosa.OCMClient, cluster *cmv1.Cluster) error {
+	desiredRoutes := rosaScope.ControlPlane.Spec.ComponentRoutes
+
+	rosaScope.Info("reconcile componentRoutes")
+
+	ingresses, err := ocmClient.GetIngresses(cluster.ID())
+	if err != nil {
+		return fmt.Errorf("failed to get ingresses: %w", err)
+	}
+
+	var defaultIngress *cmv1.Ingress
+	for _, ing := range ingresses {
+		if ing.Default() {
+			defaultIngress = ing
+			break
+		}
+	}
+	if defaultIngress == nil {
+		return fmt.Errorf("default ingress not found for cluster %s", cluster.ID())
+	}
+
+	if componentRoutesEqual(defaultIngress.ComponentRoutes(), desiredRoutes) {
+		return nil
+	}
+
+	componentRoutes := resetComponentRoutes()
+	for _, route := range desiredRoutes {
+		componentRoutes[string(route.Name)] = cmv1.NewComponentRoute().
+			Hostname(route.Hostname).
+			TlsSecretRef(route.TLSSecretRef)
+	}
+
+	updatedIngress, err := cmv1.NewIngress().
+		ID(defaultIngress.ID()).
+		ComponentRoutes(componentRoutes).
+		Build()
+	if err != nil {
+		return fmt.Errorf("failed to build ingress: %w", err)
+	}
+
+	rosaScope.Info(fmt.Sprintf("updating ingress %s componentRoutes on cluster %s",
+		defaultIngress.ID(), cluster.ID()))
+	_, err = ocmClient.UpdateIngress(cluster.ID(), updatedIngress)
+	return err
+}
+
+func resetComponentRoutes() map[string]*cmv1.ComponentRouteBuilder {
+	keys := []rosacontrolplanev1.ComponentRouteKey{rosacontrolplanev1.ComponentRouteConsole, rosacontrolplanev1.ComponentRouteDownloads}
+	routes := make(map[string]*cmv1.ComponentRouteBuilder, len(keys))
+	for _, key := range keys {
+		routes[string(key)] = cmv1.NewComponentRoute().Hostname("").TlsSecretRef("")
+	}
+	return routes
+}
+
+func componentRoutesEqual(current map[string]*cmv1.ComponentRoute, desired []rosacontrolplanev1.ComponentRouteSpec) bool {
+	desiredMap := make(map[string]rosacontrolplanev1.ComponentRouteSpec, len(desired))
+	for _, route := range desired {
+		desiredMap[string(route.Name)] = route
+	}
+
+	keys := []rosacontrolplanev1.ComponentRouteKey{rosacontrolplanev1.ComponentRouteConsole, rosacontrolplanev1.ComponentRouteDownloads}
+	for _, key := range keys {
+		k := string(key)
+		desiredRoute, desiredExists := desiredMap[k]
+		currentRoute, currentExists := current[k]
+
+		if desiredExists {
+			if !currentExists {
+				return false
+			}
+			if currentRoute.Hostname() != desiredRoute.Hostname ||
+				currentRoute.TlsSecretRef() != desiredRoute.TLSSecretRef {
+				return false
+			}
+		} else if currentExists && (currentRoute.Hostname() != "" || currentRoute.TlsSecretRef() != "") {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, ocmClient rosa.OCMClient, cluster *cmv1.Cluster) error {
@@ -1265,6 +1414,10 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		ExternalID:                   roleConfig.Spec.AccountRoleConfig.TrustPolicyExternalID,
 	}
 
+	if controlPlaneSpec.Ec2MetadataHTTPTokens != "" {
+		ocmClusterSpec.Ec2MetadataHttpTokens = cmv1.Ec2MetadataHttpTokens(controlPlaneSpec.Ec2MetadataHTTPTokens)
+	}
+
 	if controlPlaneSpec.EndpointAccess == rosacontrolplanev1.Private {
 		ocmClusterSpec.Private = ptr.To(true)
 		ocmClusterSpec.PrivateLink = ptr.To(true)
@@ -1404,22 +1557,22 @@ func operatorIAMRoles(rolesRef rosacontrolplanev1.AWSRolesRef) []ocm.OperatorIAM
 		},
 		{
 			Name:      "kube-controller-manager",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.KubeCloudControllerARN,
 		},
 		{
 			Name:      "kms-provider",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.KMSProviderARN,
 		},
 		{
 			Name:      "control-plane-operator",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.ControlPlaneOperatorARN,
 		},
 		{
 			Name:      "capa-controller-manager",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.NodePoolManagementARN,
 		},
 	}

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/go-cmp/cmp"
 	rosaaws "github.com/openshift/rosa/pkg/aws"
 	rosalogging "github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/reporter"
@@ -33,6 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
@@ -65,6 +68,36 @@ func (r *ROSAOCMRoleConfigReconciler) SetupWithManager(ctx context.Context, mgr 
 		For(&expinfrav1.ROSAOCMRoleConfig{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSAOCMRoleConfig objects.
+				// Without this, PatchObject() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldRC, ok := e.ObjectOld.(*expinfrav1.ROSAOCMRoleConfig)
+					if !ok {
+						return true
+					}
+					newRC, ok := e.ObjectNew.(*expinfrav1.ROSAOCMRoleConfig)
+					if !ok {
+						return true
+					}
+					oldRC = oldRC.DeepCopy()
+					newRC = newRC.DeepCopy()
+					oldRC.Status = expinfrav1.ROSAOCMRoleConfigStatus{}
+					newRC.Status = expinfrav1.ROSAOCMRoleConfigStatus{}
+					oldRC.ObjectMeta.ResourceVersion = ""
+					newRC.ObjectMeta.ResourceVersion = ""
+
+					// A status write refreshes the timestamp of the writer's `managedFields` entry, so the metadata
+					// would otherwise always differ.
+					oldRC.ObjectMeta.ManagedFields = nil
+					newRC.ObjectMeta.ManagedFields = nil
+
+					return !cmp.Equal(oldRC, newRC)
+				},
+			},
+		).
 		Complete(r)
 }
 

@@ -48,10 +48,9 @@ const (
 var log = ctrl.Log.WithName("awsmachine-resource")
 
 func (w *AWSMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.AWSMachine{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.AWSMachine{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 
@@ -317,6 +316,7 @@ func (w *AWSMachine) validateIgnitionTLS(r *infrav1.AWSMachine) field.ErrorList 
 		u, err := url.Parse(string(source))
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "tls", "caSources"), source, "invalid URL"))
+			continue
 		}
 
 		switch u.Scheme {

@@ -103,18 +103,41 @@ func ScheduleNodePoolUpgrade(client OCMClient, clusterID string, nodePool *cmv1.
 // machinepools can be created with a minimal of two minor versions from the control plane.
 const minorVersionsAllowedDeviation = 2
 
-// MachinePoolSupportedVersionsRange returns the supported range of versions
-// for a machine pool based on the control plane version.
+// CoreVersion strips any prerelease and build qualifiers, leaving major.minor.patch.
+// The machine pool skew policy is expressed purely in terms of minor versions, and
+// semver sorts a prerelease below its own release ("5.0.0-rc.0" < "5.0.0"), so the
+// qualifiers have to be dropped before the lower-bound/skew comparison -- otherwise a
+// prerelease control plane falls outside the range derived from itself.
+func CoreVersion(version semver.Version) semver.Version {
+	return semver.Version{Major: version.Major, Minor: version.Minor, Patch: version.Patch}
+}
+
+// MachinePoolSupportedVersionsRange returns the supported version range for a
+// machine pool given the control plane version. Cross-major lower bound is
+// deliberately permissive -- OCM is authoritative for unsupported versions.
 func MachinePoolSupportedVersionsRange(controlPlaneVersion string) (*semver.Version, *semver.Version, error) {
-	maxVersion, err := semver.Parse(controlPlaneVersion)
+	parsed, err := semver.Parse(controlPlaneVersion)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	minVersion := semver.Version{
-		Major: maxVersion.Major,
-		Minor: max(0, maxVersion.Minor-minorVersionsAllowedDeviation),
-		Patch: 0,
+	// Preserve prerelease in the upper bound so a GA pool is rejected against an RC CP.
+	maxVersion := parsed
+
+	// Strip prerelease for the lower bound so an RC CP falls within its own range.
+	coreVersion := CoreVersion(parsed)
+
+	// Minor is uint64 -- subtraction underflows instead of clamping. Use min()
+	// on the subtrahend. Cross-major case admits the whole previous major series.
+	var minVersion semver.Version
+	if coreVersion.Minor < minorVersionsAllowedDeviation && coreVersion.Major > 0 {
+		minVersion = semver.Version{Major: coreVersion.Major - 1, Minor: 0, Patch: 0}
+	} else {
+		minVersion = semver.Version{
+			Major: coreVersion.Major,
+			Minor: coreVersion.Minor - min(coreVersion.Minor, minorVersionsAllowedDeviation),
+			Patch: 0,
+		}
 	}
 
 	if minVersion.LT(MinSupportedVersion) {

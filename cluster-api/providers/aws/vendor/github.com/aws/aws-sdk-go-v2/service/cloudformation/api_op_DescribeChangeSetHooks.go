@@ -4,14 +4,11 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns hook-related information for the change set and a list of changes that
+// Returns Hook-related information for the change set and a list of changes that
 // CloudFormation makes when you run the change set.
 func (c *Client) DescribeChangeSetHooks(ctx context.Context, params *DescribeChangeSetHooksInput, optFns ...func(*Options)) (*DescribeChangeSetHooksOutput, error) {
 	if params == nil {
@@ -36,11 +33,11 @@ type DescribeChangeSetHooksInput struct {
 	// This member is required.
 	ChangeSetName *string
 
-	// If specified, lists only the hooks related to the specified LogicalResourceId .
+	// If specified, lists only the Hooks related to the specified LogicalResourceId .
 	LogicalResourceId *string
 
-	// A string, provided by the DescribeChangeSetHooks response output, that
-	// identifies the next page of information that you want to retrieve.
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	// If you specified the name of a change set, specify the stack name or stack ID
@@ -58,7 +55,7 @@ type DescribeChangeSetHooksOutput struct {
 	// The change set name.
 	ChangeSetName *string
 
-	// List of hook objects.
+	// List of Hook objects.
 	Hooks []types.ChangeSetHook
 
 	// Pagination token, null or empty if no more results.
@@ -70,7 +67,7 @@ type DescribeChangeSetHooksOutput struct {
 	// The stack name.
 	StackName *string
 
-	// Provides the status of the change set hook.
+	// Provides the status of the change set Hook.
 	Status types.ChangeSetHooksStatus
 
 	// Metadata pertaining to the operation's result.
@@ -80,9 +77,6 @@ type DescribeChangeSetHooksOutput struct {
 }
 
 func (c *Client) addOperationDescribeChangeSetHooksMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDescribeChangeSetHooks{}, middleware.After)
 	if err != nil {
 		return err
@@ -91,56 +85,20 @@ func (c *Client) addOperationDescribeChangeSetHooksMiddlewares(stack *middleware
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeChangeSetHooks"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeChangeSetHooksValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeChangeSetHooks(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -155,13 +113,8 @@ func (c *Client) addOperationDescribeChangeSetHooksMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opDescribeChangeSetHooks(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DescribeChangeSetHooks",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

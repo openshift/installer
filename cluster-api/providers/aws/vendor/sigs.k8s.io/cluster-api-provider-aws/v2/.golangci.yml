@@ -339,6 +339,9 @@ linters:
       - path: _test\.go
         text: cyclomatic complexity
       - linters:
+          - prealloc
+        text: "Consider preallocating allErrs"
+      - linters:
           - unparam
         text: (.+) - g is unused
       - path: _test\.go
@@ -360,6 +363,34 @@ linters:
           - goconst
         path: (.+)_test\.go
       - linters:
+          - goconst
+        path: cmd/clusterawsadm/
+      - linters:
+          - goconst
+        path: pkg/cloud/services/network/enis.go
+      - linters:
+          - goconst
+        path: pkg/cloud/services/securitygroup/securitygroups.go
+      - linters:
+          - goconst
+        path: test/helpers/kubernetesversions/template.go
+      - linters:
+          - gosec
+        path: cmd/clusterawsadm/cloudformation/bootstrap/
+        text: "G101: Potential hardcoded credentials"
+      - linters:
+          - prealloc
+        path: _test\.go
+      - linters:
+          - prealloc
+        path: cmd/clusterawsadm/
+      - linters:
+          - prealloc
+        path: pkg/cloud/services/ec2/dedicatedhosts.go
+      - linters:
+          - prealloc
+        path: pkg/cloud/services/eks/cluster.go
+      - linters:
           - staticcheck
         text: 'SA1019: "sigs.k8s.io/cluster-api/(.*)" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
       - linters:
@@ -369,6 +400,34 @@ linters:
           - staticcheck
         path: bootstrap/eks/
         text: 'SA1019: (.*)EKSConfig is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: (.*)CustomValidator is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: (.*)CustomDefaulter is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: (.*)WithCustomValidator is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: (.*)WithCustomDefaulter is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: ctrl\.NewWebhookManagedBy'
+      - linters:
+          - staticcheck
+        text: 'SA1019: clusterv1\.(Condition|Conditions|ConditionType) is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: mgr\.GetEventRecorderFor is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019: scheme\.Builder is deprecated'
+      - linters:
+          - staticcheck
+        path: docs/book/cmd/amilist/
+        text: 'SA1019: .* is deprecated: superceded by feature/s3/transfermanager'
     paths:
       - third_party$
       - builtin$

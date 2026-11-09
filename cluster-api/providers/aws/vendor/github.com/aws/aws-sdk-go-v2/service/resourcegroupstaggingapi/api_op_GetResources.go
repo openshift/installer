@@ -5,10 +5,10 @@ package resourcegroupstaggingapi
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/schemas"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Returns all the tagged or previously tagged resources that are located in the
@@ -30,6 +30,12 @@ import (
 // you recieve a null value. A null value for PaginationToken indicates that there
 // are no more results waiting to be returned.
 //
+// GetResources does not return untagged resources.
+//
+// To find untagged resources in your account, use Amazon Web Services Resource
+// Explorer with a query that uses tag:none . For more information, see [Search query syntax reference for Resource Explorer].
+//
+// [Search query syntax reference for Resource Explorer]: https://docs.aws.amazon.com/resource-explorer/latest/userguide/using-search-query-syntax.html
 // [Tag Policies]: https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html
 func (c *Client) GetResources(ctx context.Context, params *GetResourcesInput, optFns ...func(*Options)) (*GetResourcesOutput, error) {
 	if params == nil {
@@ -67,9 +73,16 @@ type GetResourcesInput struct {
 	PaginationToken *string
 
 	// Specifies a list of ARNs of resources for which you want to retrieve tag data.
+	//
+	// You can't specify both this parameter and the ResourceTypeFilters parameter in
+	// the same request. If you do, you get an Invalid Parameter exception.
+	//
+	// You can't specify both this parameter and the TagFilters parameter in the same
+	// request. If you do, you get an Invalid Parameter exception.
+	//
 	// You can't specify both this parameter and any of the pagination parameters (
 	// ResourcesPerPage , TagsPerPage , PaginationToken ) in the same request. If you
-	// specify both, you get an Invalid Parameter exception.
+	// do, you get an Invalid Parameter exception.
 	//
 	// If a resource specified by this parameter doesn't exist, it doesn't generate an
 	// error; it simply isn't included in the response.
@@ -82,13 +95,21 @@ type GetResourcesInput struct {
 
 	// Specifies the resource types that you want included in the response. The format
 	// of each resource type is service[:resourceType] . For example, specifying a
-	// resource type of ec2 returns all Amazon EC2 resources (which includes EC2
-	// instances). Specifying a resource type of ec2:instance returns only EC2
-	// instances.
+	// service of ec2 returns all Amazon EC2 resources (which includes EC2 instances).
+	// Specifying a resource type of ec2:instance returns only EC2 instances.
+	//
+	// You can't specify both this parameter and the ResourceArnList parameter in the
+	// same request. If you do, you get an Invalid Parameter exception.
 	//
 	// The string for each service name and resource type is the same as that embedded
-	// in a resource's Amazon Resource Name (ARN). For the list of services whose
-	// resources you can use in this parameter, see [Services that support the Resource Groups Tagging API].
+	// in a resource's Amazon Resource Name (ARN).
+	//
+	// For the list of services whose resources you can tag using the Resource Groups
+	// Tagging API, see [Services that support the Resource Groups Tagging API]. If an Amazon Web Services service isn't listed on that page,
+	// you might still be able to tag that service's resources by using that service's
+	// native tagging operations instead of using Resource Groups Tagging API
+	// operations. All tagged resources, whether the tagging used the Resource Groups
+	// Tagging API or not, are returned by the Get* operation.
 	//
 	// You can specify multiple resource types by using an array. The array can
 	// include up to 100 items. Note that the length constraint requirement applies to
@@ -113,11 +134,15 @@ type GetResourcesInput struct {
 	// specified values. Each TagFilter must contain a key with values optional. A
 	// request can include up to 50 keys, and each key can include up to 20 values.
 	//
+	// You can't specify both this parameter and the ResourceArnList parameter in the
+	// same request. If you do, you get an Invalid Parameter exception.
+	//
 	// Note the following when deciding how to use TagFilters:
 	//
 	//   - If you don't specify a TagFilter , the response includes all resources that
-	//   are currently tagged or ever had a tag. Resources that currently don't have tags
-	//   are shown with an empty tag set, like this: "Tags": [] .
+	//   are currently tagged or ever had a tag. Resources that were previously tagged,
+	//   but do not currently have tags, are shown with an empty tag set, like this:
+	//   "Tags": [] .
 	//
 	//   - If you specify more than one filter in a single request, the response
 	//   returns only those resources that satisfy all filters.
@@ -128,8 +153,8 @@ type GetResourcesInput struct {
 	//   - If you don't specify a value for a key, the response returns all resources
 	//   that are tagged with that key, with any or no value.
 	//
-	// For example, for the following filters: filter1= {keyA,{value1}} ,
-	//   filter2={keyB,{value2,value3,value4}} , filter3= {keyC} :
+	// For example, for the following filters: filter1= {key1,{value1}} ,
+	//   filter2={key2,{value2,value3,value4}} , filter3= {key3} :
 	//
 	//   - GetResources({filter1}) returns resources tagged with key1=value1
 	//
@@ -166,6 +191,33 @@ type GetResourcesInput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *GetResourcesInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.GetResourcesInput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *GetResourcesInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ExcludeCompliantResources != nil {
+		s.WriteBool(schemas.GetResourcesInput_ExcludeCompliantResources, *v.ExcludeCompliantResources)
+	}
+	if v.IncludeComplianceDetails != nil {
+		s.WriteBool(schemas.GetResourcesInput_IncludeComplianceDetails, *v.IncludeComplianceDetails)
+	}
+	if v.PaginationToken != nil {
+		s.WriteString(schemas.GetResourcesInput_PaginationToken, *v.PaginationToken)
+	}
+	serializeResourceARNListForGet(s, schemas.GetResourcesInput_ResourceARNList, v.ResourceARNList)
+	serializeResourceTypeFilterList(s, schemas.GetResourcesInput_ResourceTypeFilters, v.ResourceTypeFilters)
+	if v.ResourcesPerPage != nil {
+		s.WriteInt32(schemas.GetResourcesInput_ResourcesPerPage, *v.ResourcesPerPage)
+	}
+	serializeTagFilterList(s, schemas.GetResourcesInput_TagFilters, v.TagFilters)
+	if v.TagsPerPage != nil {
+		s.WriteInt32(schemas.GetResourcesInput_TagsPerPage, *v.TagsPerPage)
+	}
+}
+
 type GetResourcesOutput struct {
 
 	// A string that indicates that there is more data available than this response
@@ -182,77 +234,48 @@ type GetResourcesOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *GetResourcesOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.GetResourcesOutput)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *GetResourcesOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.PaginationToken != nil {
+		s.WriteString(schemas.GetResourcesOutput_PaginationToken, *v.PaginationToken)
+	}
+	serializeResourceTagMappingList(s, schemas.GetResourcesOutput_ResourceTagMappingList, v.ResourceTagMappingList)
+}
+func (v *GetResourcesOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.GetResourcesOutput, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.GetResourcesOutput_PaginationToken:
+			v.PaginationToken = new(string)
+			return d.ReadString(schemas.GetResourcesOutput_PaginationToken, v.PaginationToken)
+		case schemas.GetResourcesOutput_ResourceTagMappingList:
+			return deserializeResourceTagMappingList(d, schemas.GetResourcesOutput_ResourceTagMappingList, &v.ResourceTagMappingList)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationGetResourcesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.GetResources, schemas.GetResourcesInput, schemas.GetResourcesOutput)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpGetResources{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.GetResources, schemas.GetResourcesInput, schemas.GetResourcesOutput), output: &GetResourcesOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpGetResources{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "GetResources"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetResources(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -267,16 +290,7 @@ func (c *Client) addOperationGetResourcesMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -377,11 +391,3 @@ type GetResourcesAPIClient interface {
 }
 
 var _ GetResourcesAPIClient = (*Client)(nil)
-
-func newServiceMetadataMiddleware_opGetResources(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "GetResources",
-	}
-}

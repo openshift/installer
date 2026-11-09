@@ -170,8 +170,10 @@ func (s *Service) releaseAddressesWithFilter(filters []types.Filter) error {
 // releaseAddresses is default cluster release flow, discoverying and releasing all
 // addresses associated and owned by the cluster tag.
 func (s *Service) releaseAddresses() error {
-	filters := []types.Filter{filter.EC2.Cluster(s.scope.Name())}
-	filters = append(filters, filter.EC2.ClusterOwned(s.scope.Name()))
+	filters := []types.Filter{
+		filter.EC2.Cluster(s.scope.Name()),
+		filter.EC2.ClusterOwned(s.scope.Name()),
+	}
 	return s.releaseAddressesWithFilter(filters)
 }
 
@@ -215,7 +217,7 @@ func (s *Service) setByoPublicIpv4(pool *infrav1.ElasticIPPool, alloc *ec2.Alloc
 	// check if pool has free IP.
 	ok, err := s.publicIpv4PoolHasAtLeastNFreeIPs(pool, 1)
 	if err != nil {
-		record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP from Public IPv4 pool %q: %w", *pool.PublicIpv4Pool, err)
+		record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP from Public IPv4 pool %q: %v", *pool.PublicIpv4Pool, err)
 		return fmt.Errorf("failed to update Elastic IP: %w", err)
 	}
 

@@ -58,3 +58,10 @@ const (
 	// EKSIdentityProviderConfiguredFailedReason used to report failures while reconciling the identity provider config association.
 	EKSIdentityProviderConfiguredFailedReason = "EKSIdentityProviderConfiguredFailed"
 )
+
+const (
+	// EKSPodIdentityAssociationConfiguredCondition condition reports on the successful reconciliation of EKS pod identity associations.
+	EKSPodIdentityAssociationConfiguredCondition clusterv1beta1.ConditionType = "EKSPodIdentityAssociationConfigured"
+	// EKSPodIdentityAssociationFailedReason is used to report failures while reconciling the EKS pod identity associations.
+	EKSPodIdentityAssociationFailedReason = "EKSPodIdentityAssociationConfigurationFailed"
+)

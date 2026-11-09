@@ -54,6 +54,8 @@ import (
 const (
 	// awsMachineTemplateKind is the Kind name for AWSMachineTemplate resources.
 	awsMachineTemplateKind = "AWSMachineTemplate"
+
+	kindKubeadmControlPlane = "KubeadmControlPlane"
 )
 
 // AWSMachineTemplateReconciler reconciles AWSMachineTemplate objects.
@@ -89,7 +91,7 @@ func (r *AWSMachineTemplateReconciler) SetupWithManager(ctx context.Context, mgr
 		)
 
 	// Watch KubeadmControlPlane if they exist.
-	if _, err := mgr.GetRESTMapper().RESTMapping(schema.GroupKind{Group: controlplanev1.GroupVersion.Group, Kind: "KubeadmControlPlane"}, controlplanev1.GroupVersion.Version); err == nil {
+	if _, err := mgr.GetRESTMapper().RESTMapping(schema.GroupKind{Group: controlplanev1.GroupVersion.Group, Kind: kindKubeadmControlPlane}, controlplanev1.GroupVersion.Version); err == nil {
 		b = b.Watches(&controlplanev1.KubeadmControlPlane{},
 			handler.EnqueueRequestsFromMapFunc(r.kubeadmControlPlaneToAWSMachineTemplate),
 			// Only emit events for creation to reconcile in case the KubeadmControlPlane got created after the AWSMachineTemplate was reconciled.
@@ -212,7 +214,7 @@ func (r *AWSMachineTemplateReconciler) getRegion(ctx context.Context, cluster *c
 	}
 
 	// Get region from AWSCluster (standard EC2-based cluster)
-	if cluster.Spec.InfrastructureRef.IsDefined() && cluster.Spec.InfrastructureRef.Kind == "AWSCluster" {
+	if cluster.Spec.InfrastructureRef.IsDefined() && cluster.Spec.InfrastructureRef.Kind == kindAWSCluster {
 		awsCluster := &infrav1.AWSCluster{}
 		if err := r.Get(ctx, client.ObjectKey{
 			Namespace: cluster.Namespace,
@@ -227,7 +229,7 @@ func (r *AWSMachineTemplateReconciler) getRegion(ctx context.Context, cluster *c
 	}
 
 	// Get region from AWSManagedControlPlane (EKS cluster)
-	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == "AWSManagedControlPlane" {
+	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == AWSManagedControlPlaneRefKind {
 		awsManagedCP := &ekscontrolplanev1.AWSManagedControlPlane{}
 		if err := r.Get(ctx, client.ObjectKey{
 			Namespace: cluster.Namespace,
@@ -455,7 +457,7 @@ func getParentListOptions(obj metav1.ObjectMeta) ([]client.ListOption, error) {
 	}
 
 	for _, ref := range obj.GetOwnerReferences() {
-		if ref.Kind != "Cluster" {
+		if ref.Kind != kindCluster {
 			continue
 		}
 		gv, err := schema.ParseGroupVersion(ref.APIVersion)

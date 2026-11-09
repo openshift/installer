@@ -66,7 +66,7 @@ func (s *Service) reconcileSubnets() error {
 		if unmanagedVPC {
 			// If we have a unmanaged VPC then subnets must be specified
 			errMsg := "no subnets specified, you must specify the subnets when using an umanaged vpc"
-			record.Warnf(s.scope.InfraCluster(), "FailedNoSubnets", errMsg)
+			record.Warnf(s.scope.InfraCluster(), "FailedNoSubnets", "%s", errMsg)
 			return errors.New(errMsg)
 		}
 
@@ -157,7 +157,7 @@ func (s *Service) reconcileSubnets() error {
 			}
 		} else if unmanagedVPC {
 			// If there is no existing subnet and we have an umanaged vpc report an error
-			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %d, cidr %q", sub.GetResourceID(), sub.CidrBlock)
+			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %s, cidr %q", sub.GetResourceID(), sub.CidrBlock)
 			return errors.New(fmt.Errorf("using unmanaged vpc and subnet %s (cidr %s) specified but it doesn't exist in vpc %s", sub.GetResourceID(), sub.CidrBlock, s.scope.VPC().ID).Error())
 		}
 	}

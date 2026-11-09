@@ -49,6 +49,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/s3"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/securitygroup"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	otel "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/otel/tracing"
 	infrautilconditions "sigs.k8s.io/cluster-api-provider-aws/v2/util/conditions"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
@@ -61,6 +62,10 @@ import (
 
 const (
 	deleteRequeueAfter = 20 * time.Second
+
+	kindAWSCluster = "AWSCluster"
+	kindAWSMachine = "AWSMachine"
+	kindCluster    = "Cluster"
 )
 
 var defaultAWSSecurityGroupRoles = []infrav1.SecurityGroupRole{
@@ -138,6 +143,14 @@ func (r *AWSClusterReconciler) getSecurityGroupService(scope scope.ClusterScope)
 func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := logger.FromContext(ctx)
 
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awscluster_controller",
+		"AWSClusterReconciler.Reconcile",
+	)
+	defer span.End()
+
 	// Fetch the AWSCluster instance
 	awsCluster := &infrav1.AWSCluster{}
 	err := r.Get(ctx, req.NamespacedName, awsCluster)
@@ -203,6 +216,14 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope) (ctrl.Result, error) {
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awscluster_controller",
+		"AWSClusterReconciler.reconcileDelete",
+	)
+	defer span.End()
+
 	if !controllerutil.ContainsFinalizer(clusterScope.AWSCluster, infrav1.ClusterFinalizer) {
 		clusterScope.Info("No finalizer on AWSCluster, skipping deletion reconciliation")
 		return reconcile.Result{}, nil
@@ -283,6 +304,14 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 }
 
 func (r *AWSClusterReconciler) reconcileLoadBalancer(ctx context.Context, clusterScope *scope.ClusterScope, awsCluster *infrav1.AWSCluster) (*time.Duration, error) {
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awscluster_controller",
+		"AWSClusterReconciler.reconcileLoadBalancer",
+	)
+	defer span.End()
+
 	retryAfterDuration := 15 * time.Second
 	if clusterScope.AWSCluster.Spec.ControlPlaneLoadBalancer.LoadBalancerType == infrav1.LoadBalancerTypeDisabled {
 		clusterScope.Debug("load balancer reconciliation shifted to external provider, checking external endpoint")
@@ -326,6 +355,13 @@ func (r *AWSClusterReconciler) reconcileLoadBalancer(ctx context.Context, cluste
 }
 
 func (r *AWSClusterReconciler) reconcileNormal(ctx context.Context, clusterScope *scope.ClusterScope) (reconcile.Result, error) {
+	// creating span using OpenTelemetry SDK
+	ctx, span := otel.StartSpan(
+		ctx,
+		"awscluster_controller",
+		"AWSClusterReconciler.reconcileNormal",
+	)
+	defer span.End()
 	clusterScope.Info("Reconciling AWSCluster")
 
 	awsCluster := clusterScope.AWSCluster
@@ -438,7 +474,7 @@ func (r *AWSClusterReconciler) requeueAWSClusterForUnpausedCluster(_ context.Con
 			return nil
 		}
 
-		if c.Spec.InfrastructureRef.Kind != "AWSCluster" {
+		if c.Spec.InfrastructureRef.Kind != kindAWSCluster {
 			log.Trace("Cluster has an InfrastructureRef for a different type, skipping mapping.")
 			return nil
 		}

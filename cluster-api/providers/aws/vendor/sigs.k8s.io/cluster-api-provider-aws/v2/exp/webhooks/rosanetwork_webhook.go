@@ -19,10 +19,9 @@ type ROSANetwork struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the ROSANetwork.
 func (w *ROSANetwork) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&expinfrav1.ROSANetwork{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &expinfrav1.ROSANetwork{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

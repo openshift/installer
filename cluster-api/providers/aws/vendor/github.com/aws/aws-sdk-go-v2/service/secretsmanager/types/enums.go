@@ -16,8 +16,9 @@ const (
 )
 
 // Values returns all known values for FilterNameStringType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (FilterNameStringType) Values() []FilterNameStringType {
 	return []FilterNameStringType{
 		"description",
@@ -30,6 +31,29 @@ func (FilterNameStringType) Values() []FilterNameStringType {
 	}
 }
 
+type SortByType string
+
+// Enum values for SortByType
+const (
+	SortByTypeCreatedDate      SortByType = "created-date"
+	SortByTypeLastAccessedDate SortByType = "last-accessed-date"
+	SortByTypeLastChangedDate  SortByType = "last-changed-date"
+	SortByTypeName             SortByType = "name"
+)
+
+// Values returns all known values for SortByType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SortByType) Values() []SortByType {
+	return []SortByType{
+		"created-date",
+		"last-accessed-date",
+		"last-changed-date",
+		"name",
+	}
+}
+
 type SortOrderType string
 
 // Enum values for SortOrderType
@@ -39,8 +63,9 @@ const (
 )
 
 // Values returns all known values for SortOrderType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (SortOrderType) Values() []SortOrderType {
 	return []SortOrderType{
 		"asc",
@@ -58,8 +83,9 @@ const (
 )
 
 // Values returns all known values for StatusType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (StatusType) Values() []StatusType {
 	return []StatusType{
 		"InSync",

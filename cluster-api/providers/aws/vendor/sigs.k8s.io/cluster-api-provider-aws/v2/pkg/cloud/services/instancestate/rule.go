@@ -32,8 +32,13 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 )
 
-// Ec2StateChangeNotification defines the EC2 instance's state change notification.
-const Ec2StateChangeNotification = "EC2 Instance State-change Notification"
+const (
+	// Ec2StateChangeNotification defines the EC2 instance's state change notification.
+	Ec2StateChangeNotification = "EC2 Instance State-change Notification"
+
+	// ec2EventSource is the EventBridge source for EC2 events.
+	ec2EventSource = "aws.ec2"
+)
 
 // reconcileRules creates rules and attaches the queue as a target.
 func (s Service) reconcileRules(ctx context.Context) error {
@@ -131,7 +136,7 @@ func (s Service) reconcileRules(ctx context.Context) error {
 
 func (s Service) createRule(ctx context.Context) error {
 	eventPattern := eventPattern{
-		Source:     []string{"aws.ec2"},
+		Source:     []string{ec2EventSource},
 		DetailType: []string{Ec2StateChangeNotification},
 		EventDetail: &eventDetail{
 			States: []infrav1.InstanceState{infrav1.InstanceStateShuttingDown, infrav1.InstanceStateTerminated},

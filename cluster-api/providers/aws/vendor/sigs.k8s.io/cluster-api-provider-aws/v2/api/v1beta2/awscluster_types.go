@@ -319,6 +319,41 @@ type AWSClusterStatus struct {
 	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
 	Bastion        *Instance                     `json:"bastion,omitempty"`
 	Conditions     clusterv1beta1.Conditions     `json:"conditions,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in AWSCluster's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *AWSClusterV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// AWSClusterV1Beta2Status groups all the fields that will be added or modified in AWSCluster with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type AWSClusterV1Beta2Status struct {
+	// conditions represents the observations of an AWSCluster's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+// AdditionalIAMRole defines an additional IAM role
+// with a custom S3 prefix for accessing bootstrap data from S3 Bucket.
+// This enables support for custom node pools (e.g., Karpenter) that need
+// access to bootstrap data with custom S3 prefixes.
+type AdditionalIAMRole struct {
+	// Name is the name of the IAM role that will be granted access.
+	// This must match the IAM role name (not the ARN).
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[\w+=,.@-]+$`
+	Name string `json:"name"`
+
+	// Prefix is the S3 object key prefix (path) this role is granted access to.
+	// It is appended to the bucket in the policy's resource ARN, so use a trailing "/*"
+	// for wildcard access to a path (e.g. "karpenter-nodes/*") or "*" for the whole bucket.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=512
+	Prefix string `json:"prefix"`
 }
 
 // S3Bucket defines a supporting S3 bucket for the cluster, currently can be optionally used for Ignition.
@@ -332,6 +367,16 @@ type S3Bucket struct {
 	// worker nodes bootstrap data from S3 Bucket.
 	// +optional
 	NodesIAMInstanceProfiles []string `json:"nodesIAMInstanceProfiles,omitempty"`
+
+	// AdditionalIAMRoles is a list of additional IAM roles
+	// with custom S3 prefixes for accessing bootstrap data.
+	// This is useful for custom node pools (e.g., Karpenter) that need access
+	// to bootstrap data stored under custom prefixes.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +listMapKey=prefix
+	AdditionalIAMRoles []AdditionalIAMRole `json:"additionalIAMRoles,omitempty"`
 
 	// PresignedURLDuration defines the duration for which presigned URLs are valid.
 	//
@@ -392,6 +437,22 @@ func (r *AWSCluster) GetConditions() clusterv1beta1.Conditions {
 // SetConditions sets the underlying service state of the AWSCluster to the predescribed clusterv1beta1.Conditions.
 func (r *AWSCluster) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *AWSCluster) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *AWSCluster) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &AWSClusterV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 func init() {

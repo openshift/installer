@@ -4,11 +4,8 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
@@ -58,20 +55,39 @@ type DescribeResourceScanOutput struct {
 	ResourceTypes []string
 
 	// The number of resources that were read. This is only available for scans with a
-	// Status set to COMPLETE , EXPIRED , or FAILED . This field may be 0 if the
-	// resource scan failed with a ResourceScanLimitExceededException .
+	// Status set to COMPLETE , EXPIRED , or FAILED .
+	//
+	// This field may be 0 if the resource scan failed with a
+	// ResourceScanLimitExceededException .
 	ResourcesRead *int32
 
 	// The number of resources that were listed. This is only available for scans with
 	// a Status set to COMPLETE , EXPIRED , or FAILED .
 	ResourcesScanned *int32
 
+	// The scan filters that were used.
+	ScanFilters []types.ScanFilter
+
 	// The time that the resource scan was started.
 	StartTime *time.Time
 
-	// Status of the resource scan. INPROGRESS The resource scan is still in progress.
-	// COMPLETE The resource scan is complete. EXPIRED The resource scan has expired.
-	// FAILED The resource scan has failed.
+	// Status of the resource scan.
+	//
+	// IN_PROGRESS
+	//
+	// The resource scan is still in progress.
+	//
+	// COMPLETE
+	//
+	// The resource scan is complete.
+	//
+	// EXPIRED
+	//
+	// The resource scan has expired.
+	//
+	// FAILED
+	//
+	// The resource scan has failed.
 	Status types.ResourceScanStatus
 
 	// The reason for the resource scan status, providing more information if a
@@ -85,9 +101,6 @@ type DescribeResourceScanOutput struct {
 }
 
 func (c *Client) addOperationDescribeResourceScanMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDescribeResourceScan{}, middleware.After)
 	if err != nil {
 		return err
@@ -96,56 +109,20 @@ func (c *Client) addOperationDescribeResourceScanMiddlewares(stack *middleware.S
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeResourceScan"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeResourceScanValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeResourceScan(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -160,13 +137,8 @@ func (c *Client) addOperationDescribeResourceScanMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opDescribeResourceScan(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DescribeResourceScan",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

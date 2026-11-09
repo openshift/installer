@@ -68,15 +68,18 @@ func NodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		}
 		spec.Taints = rosaTaints
 	}
+	spec.NodeDrainGracePeriod = &metav1.Duration{}
 	if nodePool.NodeDrainGracePeriod() != nil {
-		spec.NodeDrainGracePeriod = &metav1.Duration{
-			Duration: time.Minute * time.Duration(nodePool.NodeDrainGracePeriod().Value()),
-		}
+		spec.NodeDrainGracePeriod.Duration = time.Minute * time.Duration(nodePool.NodeDrainGracePeriod().Value())
+	}
+
+	spec.UpdateConfig = &expinfrav1.RosaUpdateConfig{
+		RollingUpdate: &expinfrav1.RollingUpdate{
+			MaxUnavailable: ptr.To(intstr.FromInt32(0)),
+			MaxSurge:       ptr.To(intstr.FromInt32(1)),
+		},
 	}
 	if nodePool.ManagementUpgrade() != nil {
-		spec.UpdateConfig = &expinfrav1.RosaUpdateConfig{
-			RollingUpdate: &expinfrav1.RollingUpdate{},
-		}
 		if nodePool.ManagementUpgrade().MaxSurge() != "" {
 			spec.UpdateConfig.RollingUpdate.MaxSurge = ptr.To(intstr.Parse(nodePool.ManagementUpgrade().MaxSurge()))
 		}

@@ -373,6 +373,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 	out.OIDCIdentityProviderConfig = (*OIDCIdentityProviderConfig)(unsafe.Pointer(in.OIDCIdentityProviderConfig))
 	// WARNING: in.AccessConfig requires manual conversion: does not exist in peer-type
 	// WARNING: in.AccessEntries requires manual conversion: does not exist in peer-type
+	// WARNING: in.PodIdentityAssociations requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta2_VpcCni_To_v1beta1_VpcCni(&in.VpcCni, &out.VpcCni, s); err != nil {
 		return err
 	}
@@ -382,6 +383,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 		return err
 	}
 	// WARNING: in.UpgradePolicy requires manual conversion: does not exist in peer-type
+	// WARNING: in.ControlPlaneScalingConfig requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -428,16 +430,12 @@ func autoConvert_v1beta2_AWSManagedControlPlaneStatus_To_v1beta1_AWSManagedContr
 	}
 	// WARNING: in.Version requires manual conversion: does not exist in peer-type
 	out.ObservedGeneration = in.ObservedGeneration
+	// WARNING: in.V1Beta2 requires manual conversion: does not exist in peer-type
 	return nil
 }
 
 func autoConvert_v1beta1_Addon_To_v1beta2_Addon(in *Addon, out *v1beta2.Addon, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Version = in.Version
-	out.Configuration = in.Configuration
-	out.ConflictResolution = (*v1beta2.AddonResolution)(unsafe.Pointer(in.ConflictResolution))
-	out.ServiceAccountRoleArn = (*string)(unsafe.Pointer(in.ServiceAccountRoleArn))
-	out.PreserveOnDelete = in.PreserveOnDelete
+	*out = *(*v1beta2.Addon)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -447,12 +445,7 @@ func Convert_v1beta1_Addon_To_v1beta2_Addon(in *Addon, out *v1beta2.Addon, s con
 }
 
 func autoConvert_v1beta2_Addon_To_v1beta1_Addon(in *v1beta2.Addon, out *Addon, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Version = in.Version
-	out.Configuration = in.Configuration
-	out.ConflictResolution = (*AddonResolution)(unsafe.Pointer(in.ConflictResolution))
-	out.ServiceAccountRoleArn = (*string)(unsafe.Pointer(in.ServiceAccountRoleArn))
-	out.PreserveOnDelete = in.PreserveOnDelete
+	*out = *(*Addon)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -462,9 +455,7 @@ func Convert_v1beta2_Addon_To_v1beta1_Addon(in *v1beta2.Addon, out *Addon, s con
 }
 
 func autoConvert_v1beta1_AddonIssue_To_v1beta2_AddonIssue(in *AddonIssue, out *v1beta2.AddonIssue, s conversion.Scope) error {
-	out.Code = (*string)(unsafe.Pointer(in.Code))
-	out.Message = (*string)(unsafe.Pointer(in.Message))
-	out.ResourceIDs = *(*[]string)(unsafe.Pointer(&in.ResourceIDs))
+	*out = *(*v1beta2.AddonIssue)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -474,9 +465,7 @@ func Convert_v1beta1_AddonIssue_To_v1beta2_AddonIssue(in *AddonIssue, out *v1bet
 }
 
 func autoConvert_v1beta2_AddonIssue_To_v1beta1_AddonIssue(in *v1beta2.AddonIssue, out *AddonIssue, s conversion.Scope) error {
-	out.Code = (*string)(unsafe.Pointer(in.Code))
-	out.Message = (*string)(unsafe.Pointer(in.Message))
-	out.ResourceIDs = *(*[]string)(unsafe.Pointer(&in.ResourceIDs))
+	*out = *(*AddonIssue)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -486,14 +475,7 @@ func Convert_v1beta2_AddonIssue_To_v1beta1_AddonIssue(in *v1beta2.AddonIssue, ou
 }
 
 func autoConvert_v1beta1_AddonState_To_v1beta2_AddonState(in *AddonState, out *v1beta2.AddonState, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Version = in.Version
-	out.ARN = in.ARN
-	out.ServiceAccountRoleArn = (*string)(unsafe.Pointer(in.ServiceAccountRoleArn))
-	out.CreatedAt = in.CreatedAt
-	out.ModifiedAt = in.ModifiedAt
-	out.Status = (*string)(unsafe.Pointer(in.Status))
-	out.Issues = *(*[]v1beta2.AddonIssue)(unsafe.Pointer(&in.Issues))
+	*out = *(*v1beta2.AddonState)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -503,14 +485,7 @@ func Convert_v1beta1_AddonState_To_v1beta2_AddonState(in *AddonState, out *v1bet
 }
 
 func autoConvert_v1beta2_AddonState_To_v1beta1_AddonState(in *v1beta2.AddonState, out *AddonState, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Version = in.Version
-	out.ARN = in.ARN
-	out.ServiceAccountRoleArn = (*string)(unsafe.Pointer(in.ServiceAccountRoleArn))
-	out.CreatedAt = in.CreatedAt
-	out.ModifiedAt = in.ModifiedAt
-	out.Status = (*string)(unsafe.Pointer(in.Status))
-	out.Issues = *(*[]AddonIssue)(unsafe.Pointer(&in.Issues))
+	*out = *(*AddonState)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -520,11 +495,7 @@ func Convert_v1beta2_AddonState_To_v1beta1_AddonState(in *v1beta2.AddonState, ou
 }
 
 func autoConvert_v1beta1_ControlPlaneLoggingSpec_To_v1beta2_ControlPlaneLoggingSpec(in *ControlPlaneLoggingSpec, out *v1beta2.ControlPlaneLoggingSpec, s conversion.Scope) error {
-	out.APIServer = in.APIServer
-	out.Audit = in.Audit
-	out.Authenticator = in.Authenticator
-	out.ControllerManager = in.ControllerManager
-	out.Scheduler = in.Scheduler
+	*out = *(*v1beta2.ControlPlaneLoggingSpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -534,11 +505,7 @@ func Convert_v1beta1_ControlPlaneLoggingSpec_To_v1beta2_ControlPlaneLoggingSpec(
 }
 
 func autoConvert_v1beta2_ControlPlaneLoggingSpec_To_v1beta1_ControlPlaneLoggingSpec(in *v1beta2.ControlPlaneLoggingSpec, out *ControlPlaneLoggingSpec, s conversion.Scope) error {
-	out.APIServer = in.APIServer
-	out.Audit = in.Audit
-	out.Authenticator = in.Authenticator
-	out.ControllerManager = in.ControllerManager
-	out.Scheduler = in.Scheduler
+	*out = *(*ControlPlaneLoggingSpec)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -548,8 +515,7 @@ func Convert_v1beta2_ControlPlaneLoggingSpec_To_v1beta1_ControlPlaneLoggingSpec(
 }
 
 func autoConvert_v1beta1_EncryptionConfig_To_v1beta2_EncryptionConfig(in *EncryptionConfig, out *v1beta2.EncryptionConfig, s conversion.Scope) error {
-	out.Provider = (*string)(unsafe.Pointer(in.Provider))
-	out.Resources = *(*[]*string)(unsafe.Pointer(&in.Resources))
+	*out = *(*v1beta2.EncryptionConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -559,8 +525,7 @@ func Convert_v1beta1_EncryptionConfig_To_v1beta2_EncryptionConfig(in *Encryption
 }
 
 func autoConvert_v1beta2_EncryptionConfig_To_v1beta1_EncryptionConfig(in *v1beta2.EncryptionConfig, out *EncryptionConfig, s conversion.Scope) error {
-	out.Provider = (*string)(unsafe.Pointer(in.Provider))
-	out.Resources = *(*[]*string)(unsafe.Pointer(&in.Resources))
+	*out = *(*EncryptionConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -570,9 +535,7 @@ func Convert_v1beta2_EncryptionConfig_To_v1beta1_EncryptionConfig(in *v1beta2.En
 }
 
 func autoConvert_v1beta1_EndpointAccess_To_v1beta2_EndpointAccess(in *EndpointAccess, out *v1beta2.EndpointAccess, s conversion.Scope) error {
-	out.Public = (*bool)(unsafe.Pointer(in.Public))
-	out.PublicCIDRs = *(*[]*string)(unsafe.Pointer(&in.PublicCIDRs))
-	out.Private = (*bool)(unsafe.Pointer(in.Private))
+	*out = *(*v1beta2.EndpointAccess)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -582,9 +545,7 @@ func Convert_v1beta1_EndpointAccess_To_v1beta2_EndpointAccess(in *EndpointAccess
 }
 
 func autoConvert_v1beta2_EndpointAccess_To_v1beta1_EndpointAccess(in *v1beta2.EndpointAccess, out *EndpointAccess, s conversion.Scope) error {
-	out.Public = (*bool)(unsafe.Pointer(in.Public))
-	out.PublicCIDRs = *(*[]*string)(unsafe.Pointer(&in.PublicCIDRs))
-	out.Private = (*bool)(unsafe.Pointer(in.Private))
+	*out = *(*EndpointAccess)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -594,8 +555,7 @@ func Convert_v1beta2_EndpointAccess_To_v1beta1_EndpointAccess(in *v1beta2.Endpoi
 }
 
 func autoConvert_v1beta1_IAMAuthenticatorConfig_To_v1beta2_IAMAuthenticatorConfig(in *IAMAuthenticatorConfig, out *v1beta2.IAMAuthenticatorConfig, s conversion.Scope) error {
-	out.RoleMappings = *(*[]v1beta2.RoleMapping)(unsafe.Pointer(&in.RoleMappings))
-	out.UserMappings = *(*[]v1beta2.UserMapping)(unsafe.Pointer(&in.UserMappings))
+	*out = *(*v1beta2.IAMAuthenticatorConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -605,8 +565,7 @@ func Convert_v1beta1_IAMAuthenticatorConfig_To_v1beta2_IAMAuthenticatorConfig(in
 }
 
 func autoConvert_v1beta2_IAMAuthenticatorConfig_To_v1beta1_IAMAuthenticatorConfig(in *v1beta2.IAMAuthenticatorConfig, out *IAMAuthenticatorConfig, s conversion.Scope) error {
-	out.RoleMappings = *(*[]RoleMapping)(unsafe.Pointer(&in.RoleMappings))
-	out.UserMappings = *(*[]UserMapping)(unsafe.Pointer(&in.UserMappings))
+	*out = *(*IAMAuthenticatorConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -616,8 +575,7 @@ func Convert_v1beta2_IAMAuthenticatorConfig_To_v1beta1_IAMAuthenticatorConfig(in
 }
 
 func autoConvert_v1beta1_IdentityProviderStatus_To_v1beta2_IdentityProviderStatus(in *IdentityProviderStatus, out *v1beta2.IdentityProviderStatus, s conversion.Scope) error {
-	out.ARN = in.ARN
-	out.Status = in.Status
+	*out = *(*v1beta2.IdentityProviderStatus)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -627,8 +585,7 @@ func Convert_v1beta1_IdentityProviderStatus_To_v1beta2_IdentityProviderStatus(in
 }
 
 func autoConvert_v1beta2_IdentityProviderStatus_To_v1beta1_IdentityProviderStatus(in *v1beta2.IdentityProviderStatus, out *IdentityProviderStatus, s conversion.Scope) error {
-	out.ARN = in.ARN
-	out.Status = in.Status
+	*out = *(*IdentityProviderStatus)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -638,7 +595,7 @@ func Convert_v1beta2_IdentityProviderStatus_To_v1beta1_IdentityProviderStatus(in
 }
 
 func autoConvert_v1beta1_KubeProxy_To_v1beta2_KubeProxy(in *KubeProxy, out *v1beta2.KubeProxy, s conversion.Scope) error {
-	out.Disable = in.Disable
+	*out = *(*v1beta2.KubeProxy)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -648,7 +605,7 @@ func Convert_v1beta1_KubeProxy_To_v1beta2_KubeProxy(in *KubeProxy, out *v1beta2.
 }
 
 func autoConvert_v1beta2_KubeProxy_To_v1beta1_KubeProxy(in *v1beta2.KubeProxy, out *KubeProxy, s conversion.Scope) error {
-	out.Disable = in.Disable
+	*out = *(*KubeProxy)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -658,8 +615,7 @@ func Convert_v1beta2_KubeProxy_To_v1beta1_KubeProxy(in *v1beta2.KubeProxy, out *
 }
 
 func autoConvert_v1beta1_KubernetesMapping_To_v1beta2_KubernetesMapping(in *KubernetesMapping, out *v1beta2.KubernetesMapping, s conversion.Scope) error {
-	out.UserName = in.UserName
-	out.Groups = *(*[]string)(unsafe.Pointer(&in.Groups))
+	*out = *(*v1beta2.KubernetesMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -669,8 +625,7 @@ func Convert_v1beta1_KubernetesMapping_To_v1beta2_KubernetesMapping(in *Kubernet
 }
 
 func autoConvert_v1beta2_KubernetesMapping_To_v1beta1_KubernetesMapping(in *v1beta2.KubernetesMapping, out *KubernetesMapping, s conversion.Scope) error {
-	out.UserName = in.UserName
-	out.Groups = *(*[]string)(unsafe.Pointer(&in.Groups))
+	*out = *(*KubernetesMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -680,15 +635,7 @@ func Convert_v1beta2_KubernetesMapping_To_v1beta1_KubernetesMapping(in *v1beta2.
 }
 
 func autoConvert_v1beta1_OIDCIdentityProviderConfig_To_v1beta2_OIDCIdentityProviderConfig(in *OIDCIdentityProviderConfig, out *v1beta2.OIDCIdentityProviderConfig, s conversion.Scope) error {
-	out.ClientID = in.ClientID
-	out.GroupsClaim = (*string)(unsafe.Pointer(in.GroupsClaim))
-	out.GroupsPrefix = (*string)(unsafe.Pointer(in.GroupsPrefix))
-	out.IdentityProviderConfigName = in.IdentityProviderConfigName
-	out.IssuerURL = in.IssuerURL
-	out.RequiredClaims = *(*map[string]string)(unsafe.Pointer(&in.RequiredClaims))
-	out.UsernameClaim = (*string)(unsafe.Pointer(in.UsernameClaim))
-	out.UsernamePrefix = (*string)(unsafe.Pointer(in.UsernamePrefix))
-	out.Tags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.Tags))
+	*out = *(*v1beta2.OIDCIdentityProviderConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -698,15 +645,7 @@ func Convert_v1beta1_OIDCIdentityProviderConfig_To_v1beta2_OIDCIdentityProviderC
 }
 
 func autoConvert_v1beta2_OIDCIdentityProviderConfig_To_v1beta1_OIDCIdentityProviderConfig(in *v1beta2.OIDCIdentityProviderConfig, out *OIDCIdentityProviderConfig, s conversion.Scope) error {
-	out.ClientID = in.ClientID
-	out.GroupsClaim = (*string)(unsafe.Pointer(in.GroupsClaim))
-	out.GroupsPrefix = (*string)(unsafe.Pointer(in.GroupsPrefix))
-	out.IdentityProviderConfigName = in.IdentityProviderConfigName
-	out.IssuerURL = in.IssuerURL
-	out.RequiredClaims = *(*map[string]string)(unsafe.Pointer(&in.RequiredClaims))
-	out.UsernameClaim = (*string)(unsafe.Pointer(in.UsernameClaim))
-	out.UsernamePrefix = (*string)(unsafe.Pointer(in.UsernamePrefix))
-	out.Tags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.Tags))
+	*out = *(*OIDCIdentityProviderConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -716,8 +655,7 @@ func Convert_v1beta2_OIDCIdentityProviderConfig_To_v1beta1_OIDCIdentityProviderC
 }
 
 func autoConvert_v1beta1_OIDCProviderStatus_To_v1beta2_OIDCProviderStatus(in *OIDCProviderStatus, out *v1beta2.OIDCProviderStatus, s conversion.Scope) error {
-	out.ARN = in.ARN
-	out.TrustPolicy = in.TrustPolicy
+	*out = *(*v1beta2.OIDCProviderStatus)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -727,8 +665,7 @@ func Convert_v1beta1_OIDCProviderStatus_To_v1beta2_OIDCProviderStatus(in *OIDCPr
 }
 
 func autoConvert_v1beta2_OIDCProviderStatus_To_v1beta1_OIDCProviderStatus(in *v1beta2.OIDCProviderStatus, out *OIDCProviderStatus, s conversion.Scope) error {
-	out.ARN = in.ARN
-	out.TrustPolicy = in.TrustPolicy
+	*out = *(*OIDCProviderStatus)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -738,10 +675,7 @@ func Convert_v1beta2_OIDCProviderStatus_To_v1beta1_OIDCProviderStatus(in *v1beta
 }
 
 func autoConvert_v1beta1_RoleMapping_To_v1beta2_RoleMapping(in *RoleMapping, out *v1beta2.RoleMapping, s conversion.Scope) error {
-	out.RoleARN = in.RoleARN
-	if err := Convert_v1beta1_KubernetesMapping_To_v1beta2_KubernetesMapping(&in.KubernetesMapping, &out.KubernetesMapping, s); err != nil {
-		return err
-	}
+	*out = *(*v1beta2.RoleMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -751,10 +685,7 @@ func Convert_v1beta1_RoleMapping_To_v1beta2_RoleMapping(in *RoleMapping, out *v1
 }
 
 func autoConvert_v1beta2_RoleMapping_To_v1beta1_RoleMapping(in *v1beta2.RoleMapping, out *RoleMapping, s conversion.Scope) error {
-	out.RoleARN = in.RoleARN
-	if err := Convert_v1beta2_KubernetesMapping_To_v1beta1_KubernetesMapping(&in.KubernetesMapping, &out.KubernetesMapping, s); err != nil {
-		return err
-	}
+	*out = *(*RoleMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -764,10 +695,7 @@ func Convert_v1beta2_RoleMapping_To_v1beta1_RoleMapping(in *v1beta2.RoleMapping,
 }
 
 func autoConvert_v1beta1_UserMapping_To_v1beta2_UserMapping(in *UserMapping, out *v1beta2.UserMapping, s conversion.Scope) error {
-	out.UserARN = in.UserARN
-	if err := Convert_v1beta1_KubernetesMapping_To_v1beta2_KubernetesMapping(&in.KubernetesMapping, &out.KubernetesMapping, s); err != nil {
-		return err
-	}
+	*out = *(*v1beta2.UserMapping)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -777,10 +705,7 @@ func Convert_v1beta1_UserMapping_To_v1beta2_UserMapping(in *UserMapping, out *v1
 }
 
 func autoConvert_v1beta2_UserMapping_To_v1beta1_UserMapping(in *v1beta2.UserMapping, out *UserMapping, s conversion.Scope) error {
-	out.UserARN = in.UserARN
-	if err := Convert_v1beta2_KubernetesMapping_To_v1beta1_KubernetesMapping(&in.KubernetesMapping, &out.KubernetesMapping, s); err != nil {
-		return err
-	}
+	*out = *(*UserMapping)(unsafe.Pointer(in))
 	return nil
 }
 

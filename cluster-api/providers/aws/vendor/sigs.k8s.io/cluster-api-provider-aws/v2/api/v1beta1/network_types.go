@@ -295,7 +295,7 @@ func (s Subnets) ToMap() map[string]*SubnetSpec {
 
 // IDs returns a slice of the subnet ids.
 func (s Subnets) IDs() []string {
-	res := []string{}
+	res := make([]string, 0, len(s))
 	for _, subnet := range s {
 		res = append(res, subnet.ID)
 	}

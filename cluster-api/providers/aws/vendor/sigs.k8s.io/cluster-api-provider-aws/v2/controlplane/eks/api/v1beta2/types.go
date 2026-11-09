@@ -293,6 +293,44 @@ func (e UpgradePolicy) String() string {
 	return string(e)
 }
 
+// ControlPlaneScalingConfig represents the configuration for EKS Control Plane scaling.
+// When omitted, EKS uses Standard mode (automatic scaling); no provisioning or tier selection is applied.
+type ControlPlaneScalingConfig struct {
+	// Tier specifies the tier for the EKS control plane.
+	// Valid values are: standard, tier-xl, tier-2xl, tier-4xl.
+	// +kubebuilder:default=standard
+	// +kubebuilder:validation:Enum=standard;tier-xl;tier-2xl;tier-4xl
+	Tier ControlPlaneScalingTier `json:"tier"`
+}
+
+// Equal returns true if the two ControlPlaneScalingConfig objects are equivalent.
+func (c *ControlPlaneScalingConfig) Equal(other *ControlPlaneScalingConfig) bool {
+	if c == nil && other == nil {
+		return true
+	}
+	if c == nil || other == nil {
+		return false
+	}
+	return c.Tier == other.Tier
+}
+
+// ControlPlaneScalingTier defines the scaling tier for the EKS control plane.
+type ControlPlaneScalingTier string
+
+var (
+	// ControlPlaneScalingTierStandard indicates standard scaling tier (default).
+	ControlPlaneScalingTierStandard = ControlPlaneScalingTier("standard")
+
+	// ControlPlaneScalingTierXL indicates XL tier.
+	ControlPlaneScalingTierXL = ControlPlaneScalingTier("tier-xl")
+
+	// ControlPlaneScalingTier2XL indicates 2XL tier.
+	ControlPlaneScalingTier2XL = ControlPlaneScalingTier("tier-2xl")
+
+	// ControlPlaneScalingTier4XL indicates 4XL tier.
+	ControlPlaneScalingTier4XL = ControlPlaneScalingTier("tier-4xl")
+)
+
 const (
 	// SecurityGroupCluster is the security group for communication between EKS
 	// control plane and managed node groups.
@@ -359,4 +397,29 @@ type OIDCIdentityProviderConfig struct {
 	// tags to apply to oidc identity provider association
 	// +optional
 	Tags infrav1.Tags `json:"tags,omitempty"`
+}
+
+// PodIdentityAssociation represents an association between a Kubernetes
+// Service Account in a namespace, and an AWS IAM role. This role must
+// allow the service principal `pods.eks.amazonaws.com` in its trust policy.
+type PodIdentityAssociation struct {
+	// ServiceAccountName is the name of the kubernetes Service Account
+	// within the namespace
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	ServiceAccountName string `json:"serviceAccountName"`
+	// ServiceAccountNamespace is the kubernetes namespace, which the
+	// kubernetes Service Account resides in. Defaults to "default" namespace.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=63
+	// +kubebuilder:default=default
+	ServiceAccountNamespace string `json:"serviceAccountNamespace"`
+	// RoleARN is the ARN of an IAM role which the Service Account can assume.
+	// +kubebuilder:validation:Required
+	RoleARN string `json:"roleARN"`
+	// TargetRoleARN will be assumed by the IAM role specified in RoleARN,
+	// allowing workloads to inherit the permissions attached to the target IAM role.
+	TargetRoleARN string `json:"targetRoleARN,omitempty"`
 }

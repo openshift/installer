@@ -4,10 +4,7 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Sets a stack policy for a specified stack.
@@ -34,17 +31,20 @@ type SetStackPolicyInput struct {
 	// This member is required.
 	StackName *string
 
-	// Structure containing the stack policy body. For more information, go to
-	// Prevent updates to stack resources (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html)
-	// in the CloudFormation User Guide. You can specify either the StackPolicyBody or
+	// Structure that contains the stack policy body. For more information, see [Prevent updates to stack resources] in
+	// the CloudFormation User Guide. You can specify either the StackPolicyBody or
 	// the StackPolicyURL parameter, but not both.
+	//
+	// [Prevent updates to stack resources]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html
 	StackPolicyBody *string
 
-	// Location of a file containing the stack policy. The URL must point to a policy
-	// (maximum size: 16 KB) located in an Amazon S3 bucket in the same Amazon Web
-	// Services Region as the stack. The location for an Amazon S3 bucket must start
-	// with https:// . You can specify either the StackPolicyBody or the StackPolicyURL
-	// parameter, but not both.
+	// Location of a file that contains the stack policy. The URL must point to a
+	// policy (maximum size: 16 KB) located in an Amazon S3 bucket in the same Amazon
+	// Web Services Region as the stack. The location for an Amazon S3 bucket must
+	// start with https:// . URLs from S3 static websites are not supported.
+	//
+	// You can specify either the StackPolicyBody or the StackPolicyURL parameter, but
+	// not both.
 	StackPolicyURL *string
 
 	noSmithyDocumentSerde
@@ -58,9 +58,6 @@ type SetStackPolicyOutput struct {
 }
 
 func (c *Client) addOperationSetStackPolicyMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpSetStackPolicy{}, middleware.After)
 	if err != nil {
 		return err
@@ -69,56 +66,20 @@ func (c *Client) addOperationSetStackPolicyMiddlewares(stack *middleware.Stack, 
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "SetStackPolicy"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSetStackPolicyValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opSetStackPolicy(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -133,13 +94,8 @@ func (c *Client) addOperationSetStackPolicyMiddlewares(stack *middleware.Stack, 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opSetStackPolicy(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "SetStackPolicy",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

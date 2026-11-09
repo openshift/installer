@@ -50,7 +50,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
-const eksConfigKind = "EKSConfig"
+const (
+	eksConfigKind              = "EKSConfig"
+	kindMachine                = "Machine"
+	kindAWSManagedControlPlane = "AWSManagedControlPlane"
+)
 
 // EKSConfigReconciler reconciles a EKSConfig object.
 type EKSConfigReconciler struct {
@@ -151,7 +155,7 @@ func (r *EKSConfigReconciler) joinWorker(ctx context.Context, cluster *clusterv1
 	log := logger.FromContext(ctx)
 
 	// only need to reconcile the secret for Machine kinds once, but MachinePools need updates for new launch templates
-	if config.Status.DataSecretName != nil && configOwner.GetKind() == "Machine" {
+	if config.Status.DataSecretName != nil && configOwner.GetKind() == kindMachine {
 		secretKey := client.ObjectKey{Namespace: config.Namespace, Name: *config.Status.DataSecretName}
 		log = log.WithValues("data-secret-name", secretKey.Name)
 		existingSecret := &corev1.Secret{}
@@ -168,7 +172,7 @@ func (r *EKSConfigReconciler) joinWorker(ctx context.Context, cluster *clusterv1
 		}
 	}
 
-	if !cluster.Spec.ControlPlaneRef.IsDefined() || cluster.Spec.ControlPlaneRef.Kind != "AWSManagedControlPlane" {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() || cluster.Spec.ControlPlaneRef.Kind != kindAWSManagedControlPlane {
 		return errors.New("Cluster's controlPlaneRef needs to be an AWSManagedControlPlane in order to use the EKS bootstrap provider")
 	}
 

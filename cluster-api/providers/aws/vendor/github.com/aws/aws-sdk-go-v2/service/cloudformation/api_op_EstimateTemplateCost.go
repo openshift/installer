@@ -4,11 +4,8 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Returns the estimated monthly cost of a template. The return value is an Amazon
@@ -35,18 +32,20 @@ type EstimateTemplateCostInput struct {
 	// A list of Parameter structures that specify input parameters.
 	Parameters []types.Parameter
 
-	// Structure containing the template body with a minimum length of 1 byte and a
-	// maximum length of 51,200 bytes. (For more information, go to Template Anatomy (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html)
-	// in the CloudFormation User Guide.) Conditional: You must pass TemplateBody or
-	// TemplateURL . If both are passed, only TemplateBody is used.
+	// Structure that contains the template body with a minimum length of 1 byte and a
+	// maximum length of 51,200 bytes.
+	//
+	// Conditional: You must pass TemplateBody or TemplateURL . If both are passed,
+	// only TemplateBody is used.
 	TemplateBody *string
 
-	// Location of file containing the template body. The URL must point to a template
-	// that's located in an Amazon S3 bucket or a Systems Manager document. For more
-	// information, go to Template Anatomy (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-anatomy.html)
-	// in the CloudFormation User Guide. The location for an Amazon S3 bucket must
-	// start with https:// . Conditional: You must pass TemplateURL or TemplateBody .
-	// If both are passed, only TemplateBody is used.
+	// The URL of a file that contains the template body. The URL must point to a
+	// template that's located in an Amazon S3 bucket or a Systems Manager document.
+	// The location for an Amazon S3 bucket must start with https:// . URLs from S3
+	// static websites are not supported.
+	//
+	// Conditional: You must pass TemplateURL or TemplateBody . If both are passed,
+	// only TemplateBody is used.
 	TemplateURL *string
 
 	noSmithyDocumentSerde
@@ -66,9 +65,6 @@ type EstimateTemplateCostOutput struct {
 }
 
 func (c *Client) addOperationEstimateTemplateCostMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpEstimateTemplateCost{}, middleware.After)
 	if err != nil {
 		return err
@@ -77,53 +73,17 @@ func (c *Client) addOperationEstimateTemplateCostMiddlewares(stack *middleware.S
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "EstimateTemplateCost"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opEstimateTemplateCost(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -138,13 +98,8 @@ func (c *Client) addOperationEstimateTemplateCostMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opEstimateTemplateCost(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "EstimateTemplateCost",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

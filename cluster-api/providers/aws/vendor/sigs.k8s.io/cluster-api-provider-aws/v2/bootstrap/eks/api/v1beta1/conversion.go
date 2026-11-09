@@ -63,6 +63,8 @@ func (r *EKSConfig) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.NTP = restored.Spec.NTP
 	}
 
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
 	return nil
 }
 
@@ -161,4 +163,10 @@ func (r *EKSConfigTemplateList) ConvertFrom(srcRaw conversion.Hub) error {
 // Convert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec converts a v1beta2 EKSConfigSpec receiver to a v1beta1 EKSConfigSpec.
 func Convert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec(in *v1beta2.EKSConfigSpec, out *EKSConfigSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_EKSConfigSpec_To_v1beta1_EKSConfigSpec(in, out, s)
+}
+
+// Convert_v1beta2_EKSConfigStatus_To_v1beta1_EKSConfigStatus converts a v1beta2 EKSConfigStatus to v1beta1 EKSConfigStatus.
+func Convert_v1beta2_EKSConfigStatus_To_v1beta1_EKSConfigStatus(in *v1beta2.EKSConfigStatus, out *EKSConfigStatus, s apiconversion.Scope) error {
+	// V1Beta2 field is not present in v1beta1, so it will be dropped during conversion
+	return autoConvert_v1beta2_EKSConfigStatus_To_v1beta1_EKSConfigStatus(in, out, s)
 }

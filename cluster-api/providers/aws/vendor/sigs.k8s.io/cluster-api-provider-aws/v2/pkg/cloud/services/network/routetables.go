@@ -18,6 +18,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -71,16 +72,13 @@ func (s *Service) reconcileRouteTables() error {
 			s.scope.Debug("Subnet is already associated with route table", "subnet-id", sn.GetResourceID(), "route-table-id", aws.ToString(rt.RouteTableId))
 			// TODO(vincepri): check that everything is in order, e.g. routes match the subnet type.
 
-			// For managed environments we need to reconcile the routes of our tables if there is a mistmatch.
-			// For example, a gateway can be deleted and our controller will re-create it, then we replace the route
-			// for the subnet to allow traffic to flow.
-			for _, currentRoute := range rt.Routes {
-				for i := range routes {
-					// Routes destination cidr blocks must be unique within a routing table.
-					// If there is a mistmatch, we replace the routing association.
-					if err := s.fixMismatchedRouting(routes[i], currentRoute, rt); err != nil {
-						return err
-					}
+			// For managed environments we reconcile every desired route. A route whose
+			// destination is missing gets created (e.g. for bring-your-own VPC that didn't have it),
+			// and a route whose destination matches but points at the wrong target gets
+			// replaced (e.g. a gateway that was deleted and re-created).
+			for _, route := range routes {
+				if err := s.reconcileRoute(route, rt); err != nil {
+					return err
 				}
 			}
 
@@ -126,48 +124,51 @@ func (s *Service) reconcileRouteTables() error {
 	return nil
 }
 
-func (s *Service) fixMismatchedRouting(specRoute *ec2.CreateRouteInput, currentRoute types.Route, rt types.RouteTable) error {
-	var input *ec2.ReplaceRouteInput
-	if specRoute.DestinationCidrBlock != nil {
-		if (currentRoute.DestinationCidrBlock != nil &&
-			aws.ToString(currentRoute.DestinationCidrBlock) == aws.ToString(specRoute.DestinationCidrBlock)) &&
-			((currentRoute.GatewayId != nil && aws.ToString(currentRoute.GatewayId) != aws.ToString(specRoute.GatewayId)) ||
-				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId))) {
-			input = &ec2.ReplaceRouteInput{
-				RouteTableId:         rt.RouteTableId,
-				DestinationCidrBlock: specRoute.DestinationCidrBlock,
-				GatewayId:            specRoute.GatewayId,
-				NatGatewayId:         specRoute.NatGatewayId,
-			}
+// reconcileRoute ensures a single desired route exists in the route table pointing
+// at the desired target.
+func (s *Service) reconcileRoute(specRoute *ec2.CreateRouteInput, rt types.RouteTable) error {
+	var current *types.Route
+	for i := range rt.Routes {
+		route := &rt.Routes[i]
+		if (specRoute.DestinationCidrBlock != nil && aws.ToString(route.DestinationCidrBlock) == aws.ToString(specRoute.DestinationCidrBlock)) ||
+			(specRoute.DestinationIpv6CidrBlock != nil && aws.ToString(route.DestinationIpv6CidrBlock) == aws.ToString(specRoute.DestinationIpv6CidrBlock)) {
+			current = route
+			break
 		}
 	}
-	if specRoute.DestinationIpv6CidrBlock != nil {
-		if (currentRoute.DestinationIpv6CidrBlock != nil &&
-			aws.ToString(currentRoute.DestinationIpv6CidrBlock) == aws.ToString(specRoute.DestinationIpv6CidrBlock)) &&
-			((currentRoute.GatewayId != nil && aws.ToString(currentRoute.GatewayId) != aws.ToString(specRoute.GatewayId)) ||
-				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId)) ||
-				(currentRoute.EgressOnlyInternetGatewayId != nil && aws.ToString(currentRoute.EgressOnlyInternetGatewayId) != aws.ToString(specRoute.EgressOnlyInternetGatewayId))) {
-			input = &ec2.ReplaceRouteInput{
-				RouteTableId:                rt.RouteTableId,
-				DestinationIpv6CidrBlock:    specRoute.DestinationIpv6CidrBlock,
-				DestinationPrefixListId:     specRoute.DestinationPrefixListId,
-				GatewayId:                   specRoute.GatewayId,
-				NatGatewayId:                specRoute.NatGatewayId,
-				EgressOnlyInternetGatewayId: specRoute.EgressOnlyInternetGatewayId,
-			}
-		}
+
+	if current != nil &&
+		aws.ToString(current.GatewayId) == aws.ToString(specRoute.GatewayId) &&
+		aws.ToString(current.NatGatewayId) == aws.ToString(specRoute.NatGatewayId) &&
+		aws.ToString(current.EgressOnlyInternetGatewayId) == aws.ToString(specRoute.EgressOnlyInternetGatewayId) &&
+		aws.ToString(current.CarrierGatewayId) == aws.ToString(specRoute.CarrierGatewayId) {
+		// The route already exists with the desired target, nothing to do
+		return nil
 	}
-	if input != nil {
-		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			if _, err := s.EC2Client.ReplaceRoute(context.TODO(), input); err != nil {
-				return false, err
-			}
-			return true, nil
-		}); err != nil {
-			record.Warnf(s.scope.InfraCluster(), "FailedReplaceRoute", "Failed to replace outdated route on managed RouteTable %q: %v", aws.ToString(rt.RouteTableId), err)
-			return errors.Wrapf(err, "failed to replace outdated route on route table %q", aws.ToString(rt.RouteTableId))
+
+	routeDesc := describeRoute(specRoute)
+	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+		if current == nil {
+			specRoute.RouteTableId = rt.RouteTableId
+			_, err := s.EC2Client.CreateRoute(context.TODO(), specRoute)
+			return err == nil, err
 		}
+		_, err := s.EC2Client.ReplaceRoute(context.TODO(), &ec2.ReplaceRouteInput{
+			RouteTableId:                rt.RouteTableId,
+			DestinationCidrBlock:        specRoute.DestinationCidrBlock,
+			DestinationIpv6CidrBlock:    specRoute.DestinationIpv6CidrBlock,
+			DestinationPrefixListId:     specRoute.DestinationPrefixListId,
+			GatewayId:                   specRoute.GatewayId,
+			NatGatewayId:                specRoute.NatGatewayId,
+			EgressOnlyInternetGatewayId: specRoute.EgressOnlyInternetGatewayId,
+			CarrierGatewayId:            specRoute.CarrierGatewayId,
+		})
+		return err == nil, err
+	}, awserrors.RouteTableNotFound, awserrors.NATGatewayNotFound, awserrors.GatewayNotFound); err != nil {
+		record.Warnf(s.scope.InfraCluster(), "FailedReconcileRoute", "Failed to reconcile route %s on managed RouteTable %q: %v", routeDesc, aws.ToString(rt.RouteTableId), err)
+		return errors.Wrapf(err, "failed to reconcile route %s on route table %q", routeDesc, aws.ToString(rt.RouteTableId))
 	}
+	record.Eventf(s.scope.InfraCluster(), "SuccessfulReconcileRoute", "Reconciled route %s on RouteTable %q", routeDesc, aws.ToString(rt.RouteTableId))
 	return nil
 }
 
@@ -285,14 +286,15 @@ func (s *Service) createRouteTableWithRoutes(routes []*ec2.CreateRouteInput, isP
 			}
 			return true, nil
 		}, awserrors.RouteTableNotFound, awserrors.NATGatewayNotFound, awserrors.GatewayNotFound); err != nil {
-			record.Warnf(s.scope.InfraCluster(), "FailedCreateRoute", "Failed to create route %s for RouteTable %q: %v", route, aws.ToString(out.RouteTable.RouteTableId), err)
+			routeDesc := describeRoute(route)
+			record.Warnf(s.scope.InfraCluster(), "FailedCreateRoute", "Failed to create route %s for RouteTable %q: %v", routeDesc, aws.ToString(out.RouteTable.RouteTableId), err)
 			errDel := s.deleteRouteTable(*out.RouteTable)
 			if errDel != nil {
 				record.Warnf(s.scope.InfraCluster(), "FailedDeleteRouteTable", "Failed to delete managed RouteTable %q: %v", aws.ToString(out.RouteTable.RouteTableId), errDel)
 			}
-			return nil, errors.Wrapf(err, "failed to create route in route table %q: %v", aws.ToString(out.RouteTable.RouteTableId), route)
+			return nil, errors.Wrapf(err, "failed to create route in route table %q: %s", aws.ToString(out.RouteTable.RouteTableId), routeDesc)
 		}
-		record.Eventf(s.scope.InfraCluster(), "SuccessfulCreateRoute", "Created route %s for RouteTable %q", route, aws.ToString(out.RouteTable.RouteTableId))
+		record.Eventf(s.scope.InfraCluster(), "SuccessfulCreateRoute", "Created route %s for RouteTable %q", describeRoute(route), aws.ToString(out.RouteTable.RouteTableId))
 	}
 
 	return &infrav1.RouteTable{
@@ -445,4 +447,25 @@ func (s *Service) getRoutesForSubnet(sn *infrav1.SubnetSpec) ([]*ec2.CreateRoute
 		return s.getRoutesToPublicSubnet(sn)
 	}
 	return s.getRoutesToPrivateSubnet(sn)
+}
+
+// describeRoute renders a CreateRouteInput as a human-readable string for logs and events.
+func describeRoute(route *ec2.CreateRouteInput) string {
+	if route == nil {
+		return "<nil>"
+	}
+	var parts []string
+	addPart := func(name string, value *string) {
+		if v := aws.ToString(value); v != "" {
+			parts = append(parts, fmt.Sprintf("%s=%s", name, v))
+		}
+	}
+	addPart("destinationCidrBlock", route.DestinationCidrBlock)
+	addPart("destinationIpv6CidrBlock", route.DestinationIpv6CidrBlock)
+	addPart("destinationPrefixListId", route.DestinationPrefixListId)
+	addPart("gatewayId", route.GatewayId)
+	addPart("natGatewayId", route.NatGatewayId)
+	addPart("egressOnlyInternetGatewayId", route.EgressOnlyInternetGatewayId)
+	addPart("carrierGatewayId", route.CarrierGatewayId)
+	return "{" + strings.Join(parts, ", ") + "}"
 }

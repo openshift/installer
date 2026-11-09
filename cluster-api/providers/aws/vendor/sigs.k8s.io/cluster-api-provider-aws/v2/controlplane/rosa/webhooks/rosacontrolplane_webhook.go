@@ -38,10 +38,9 @@ type ROSAControlPlane struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the ROSAControlPlane.
 func (w *ROSAControlPlane) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&rosacontrolplanev1.ROSAControlPlane{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &rosacontrolplanev1.ROSAControlPlane{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 
@@ -91,6 +90,8 @@ func (w *ROSAControlPlane) ValidateCreate(_ context.Context, obj runtime.Object)
 		allErrs = append(allErrs, err)
 	}
 
+	allErrs = append(allErrs, w.validateComponentRoutes(r)...)
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -121,6 +122,11 @@ func (w *ROSAControlPlane) ValidateUpdate(_ context.Context, oldObj, newObj runt
 		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", r)
 	}
 
+	oldRosaCP, ok := oldObj.(*rosacontrolplanev1.ROSAControlPlane)
+	if !ok {
+		return nil, fmt.Errorf("expected an ROSAControlPlane object but got %T", oldObj)
+	}
+
 	var allErrs field.ErrorList
 
 	if err := w.validateVersion(r); err != nil {
@@ -139,8 +145,13 @@ func (w *ROSAControlPlane) ValidateUpdate(_ context.Context, oldObj, newObj runt
 		allErrs = append(allErrs, err)
 	}
 
+	if err := w.validateEc2MetadataHTTPTokensImmutability(oldRosaCP, r); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	allErrs = append(allErrs, w.validateROSANetwork(r)...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+	allErrs = append(allErrs, w.validateComponentRoutes(r)...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -313,6 +324,32 @@ func (w *ROSAControlPlane) validateROSANetworkRef(r *rosacontrolplanev1.ROSACont
 		return field.Required(field.NewPath("spec.availabilityZones"), "spec.availabilityZones cannot be empty when spec.rosaNetworkRef is unspecified")
 	}
 
+	return nil
+}
+
+func (w *ROSAControlPlane) validateComponentRoutes(r *rosacontrolplanev1.ROSAControlPlane) field.ErrorList {
+	var errs field.ErrorList
+	basePath := field.NewPath("spec.componentRoutes")
+
+	routeNames := make(map[rosacontrolplanev1.ComponentRouteKey]bool)
+	for i, route := range r.Spec.ComponentRoutes {
+		indexPath := basePath.Index(i)
+		if routeNames[route.Name] {
+			errs = append(errs, field.Duplicate(
+				indexPath.Child("name"),
+				route.Name,
+			))
+		}
+		routeNames[route.Name] = true
+	}
+	return errs
+}
+
+func (w *ROSAControlPlane) validateEc2MetadataHTTPTokensImmutability(oldRosaCP, newRosaCP *rosacontrolplanev1.ROSAControlPlane) *field.Error {
+	if oldRosaCP.Spec.Ec2MetadataHTTPTokens != newRosaCP.Spec.Ec2MetadataHTTPTokens {
+		return field.Invalid(field.NewPath("spec.ec2MetadataHttpTokens"), newRosaCP.Spec.Ec2MetadataHTTPTokens,
+			"ec2MetadataHttpTokens is immutable and must be set at creation time")
+	}
 	return nil
 }
 

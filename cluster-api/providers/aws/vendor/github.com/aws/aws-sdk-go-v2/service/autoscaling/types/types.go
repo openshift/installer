@@ -131,37 +131,38 @@ type AutoScalingGroup struct {
 	// This member is required.
 	AutoScalingGroupName *string
 
-	// One or more Availability Zones for the group.
+	// One or more Availability Zones for the Auto Scaling group.
 	//
 	// This member is required.
 	AvailabilityZones []string
 
-	// The date and time the group was created.
+	// The date and time the Auto Scaling group was created.
 	//
 	// This member is required.
 	CreatedTime *time.Time
 
-	// The duration of the default cooldown period, in seconds.
+	// The duration of the default cooldown period, in seconds, for the Auto Scaling
+	// group.
 	//
 	// This member is required.
 	DefaultCooldown *int32
 
-	// The desired size of the group.
+	// The desired size of the Auto Scaling group.
 	//
 	// This member is required.
 	DesiredCapacity *int32
 
-	// A comma-separated value string of one or more health check types.
+	// One or more comma-separated health check types for the Auto Scaling group.
 	//
 	// This member is required.
 	HealthCheckType *string
 
-	// The maximum size of the group.
+	// The maximum size of the Auto Scaling group.
 	//
 	// This member is required.
 	MaxSize *int32
 
-	// The minimum size of the group.
+	// The minimum size of the Auto Scaling group.
 	//
 	// This member is required.
 	MinSize *int32
@@ -169,67 +170,84 @@ type AutoScalingGroup struct {
 	// The Amazon Resource Name (ARN) of the Auto Scaling group.
 	AutoScalingGroupARN *string
 
-	//  The instance capacity distribution across Availability Zones.
+	// The EC2 instance capacity distribution across Availability Zones for the Auto
+	// Scaling group.
 	AvailabilityZoneDistribution *AvailabilityZoneDistribution
 
-	//  The Availability Zone impairment policy.
+	//  The Availability Zone IDs where the Auto Scaling group can launch instances.
+	AvailabilityZoneIds []string
+
+	// The Availability Zone impairment policy for the Auto Scaling group.
 	AvailabilityZoneImpairmentPolicy *AvailabilityZoneImpairmentPolicy
 
 	// Indicates whether Capacity Rebalancing is enabled.
 	CapacityRebalance *bool
 
-	//  The capacity reservation specification.
+	// The capacity reservation specification for the Auto Scaling group.
 	CapacityReservationSpecification *CapacityReservationSpecification
 
 	// Reserved.
 	Context *string
 
-	// The duration of the default instance warmup, in seconds.
+	// The duration of the default EC2 instance warmup time, in seconds, for the Auto
+	// Scaling group.
 	DefaultInstanceWarmup *int32
+
+	// The deletion protection setting for the Auto Scaling group.
+	DeletionProtection DeletionProtection
 
 	// The unit of measurement for the value specified for desired capacity. Amazon
 	// EC2 Auto Scaling supports DesiredCapacityType for attribute-based instance type
 	// selection only.
 	DesiredCapacityType *string
 
-	// The metrics enabled for the group.
+	// The metrics enabled for the Auto Scaling group.
 	EnabledMetrics []EnabledMetric
 
-	// The duration of the health check grace period, in seconds.
+	// The duration of the health check grace period, in seconds, for the Auto Scaling
+	// group.
 	HealthCheckGracePeriod *int32
+
+	// The instance lifecycle policy for the Auto Scaling group.
+	InstanceLifecyclePolicy *InstanceLifecyclePolicy
 
 	// An instance maintenance policy.
 	InstanceMaintenancePolicy *InstanceMaintenancePolicy
 
-	// The EC2 instances associated with the group.
+	// The EC2 instances associated with the Auto Scaling group.
 	Instances []Instance
 
-	// The name of the associated launch configuration.
+	// The name of the associated launch configuration for the Auto Scaling group.
 	LaunchConfigurationName *string
 
-	// The launch template for the group.
+	// The launch template for the Auto Scaling group.
 	LaunchTemplate *LaunchTemplateSpecification
 
 	// One or more load balancers associated with the group.
 	LoadBalancerNames []string
 
-	// The maximum amount of time, in seconds, that an instance can be in service.
-	//
-	// Valid Range: Minimum value of 0.
+	// The maximum amount of time, in seconds, that an EC2 instance can be in service
+	// for the Auto Scaling group.
 	MaxInstanceLifetime *int32
 
 	// The mixed instances policy for the group.
 	MixedInstancesPolicy *MixedInstancesPolicy
 
-	// Indicates whether newly launched instances are protected from termination by
-	// Amazon EC2 Auto Scaling when scaling in. For more information about preventing
-	// instances from terminating on scale in, see [Use instance scale-in protection]in the Amazon EC2 Auto Scaling User
-	// Guide.
+	// Indicates whether newly launched EC2 instances are protected from termination
+	// when scaling in for the Auto Scaling group.
+	//
+	// For more information about preventing instances from terminating on scale in,
+	// see [Use instance scale-in protection]in the Amazon EC2 Auto Scaling User Guide.
 	//
 	// [Use instance scale-in protection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-instance-protection.html
 	NewInstancesProtectedFromScaleIn *bool
 
-	// The name of the placement group into which to launch your instances, if any.
+	// The entity that manages the Auto Scaling group, if applicable. When set, only
+	// the designated operator can make changes to the group configuration.
+	Operator *Operator
+
+	// The name of the placement group into which to launch EC2 instances for the Auto
+	// Scaling group.
 	PlacementGroup *string
 
 	// The predicted capacity of the group when it has a predictive scaling policy.
@@ -239,27 +257,27 @@ type AutoScalingGroup struct {
 	// group uses to call other Amazon Web Services on your behalf.
 	ServiceLinkedRoleARN *string
 
-	// The current state of the group when the [DeleteAutoScalingGroup] operation is in progress.
+	// The current state of the Auto Scaling group when the [DeleteAutoScalingGroup] operation is in progress.
 	//
 	// [DeleteAutoScalingGroup]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DeleteAutoScalingGroup.html
 	Status *string
 
-	// The suspended processes associated with the group.
+	// The suspended processes associated with the Auto Scaling group.
 	SuspendedProcesses []SuspendedProcess
 
-	// The tags for the group.
+	// The tags for the Auto Scaling group.
 	Tags []TagDescription
 
 	// The Amazon Resource Names (ARN) of the target groups for your load balancer.
 	TargetGroupARNs []string
 
-	// The termination policies for the group.
+	// The termination policies for the Auto Scaling group.
 	TerminationPolicies []string
 
 	// The traffic sources associated with this Auto Scaling group.
 	TrafficSources []TrafficSourceIdentifier
 
-	// One or more subnet IDs, if applicable, separated by commas.
+	// One or more comma-separated subnet IDs for the Auto Scaling group.
 	VPCZoneIdentifier *string
 
 	// The warm pool for the group.
@@ -301,10 +319,14 @@ type AutoScalingInstanceDetails struct {
 	// more information, see [Amazon EC2 Auto Scaling instance lifecycle]in the Amazon EC2 Auto Scaling User Guide.
 	//
 	// Valid values: Pending | Pending:Wait | Pending:Proceed | Quarantined | InService
-	// | Terminating | Terminating:Wait | Terminating:Proceed | Terminated | Detaching
-	// | Detached | EnteringStandby | Standby | Warmed:Pending | Warmed:Pending:Wait |
-	// Warmed:Pending:Proceed | Warmed:Terminating | Warmed:Terminating:Wait |
-	// Warmed:Terminating:Proceed | Warmed:Terminated | Warmed:Stopped | Warmed:Running
+	// | Terminating | Terminating:Wait | Terminating:Proceed | Terminating:Retained |
+	// Terminated | Detaching | Detached | EnteringStandby | Standby |
+	// ReplacingRootVolume | ReplacingRootVolume:Wait | ReplacingRootVolume:Proceed |
+	// RootVolumeReplaced | Warmed:Pending | Warmed:Pending:Wait |
+	// Warmed:Pending:Proceed | Warmed:Pending:Retained | Warmed:Terminating |
+	// Warmed:Terminating:Wait | Warmed:Terminating:Proceed |
+	// Warmed:Terminating:Retained | Warmed:Terminated | Warmed:Stopped |
+	// Warmed:Running | Warmed:Hibernated
 	//
 	// [Amazon EC2 Auto Scaling instance lifecycle]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-lifecycle.html
 	//
@@ -316,6 +338,27 @@ type AutoScalingInstanceDetails struct {
 	//
 	// This member is required.
 	ProtectedFromScaleIn *bool
+
+	//  The Availability Zone ID where the instance is located.
+	AvailabilityZoneId *string
+
+	//  The ID of the Amazon Machine Image (AMI) associated with the instance. This
+	// field shows the current AMI ID of the instance's root volume. It may differ from
+	// the original AMI used when the instance was first launched.
+	//
+	// This field appears for:
+	//
+	//   - Instances with root volume replacements through Instance Refresh
+	//
+	//   - Instances launched with AMI overrides
+	//
+	// This field won't appear for:
+	//
+	//   - Existing instances launched from Launch Templates without overrides
+	//
+	//   - Existing instances that didn’t have their root volume replaced through
+	//   Instance Refresh
+	ImageId *string
 
 	// The instance type of the EC2 instance.
 	InstanceType *string
@@ -348,6 +391,10 @@ type AvailabilityZoneDistribution struct {
 	//
 	//   - balanced-best-effort - If launches fail in an Availability Zone, Auto
 	//   Scaling will attempt to launch in another healthy Availability Zone instead.
+	//
+	//   - reservations-then-balanced - Auto Scaling will first attempt to launch into
+	//   your Capacity Reservations, and then balance any remaining capacity across
+	//   healthy Availability Zones.
 	CapacityDistributionStrategy CapacityDistributionStrategy
 
 	noSmithyDocumentSerde
@@ -410,7 +457,7 @@ type BaselinePerformanceFactorsRequest struct {
 type BlockDeviceMapping struct {
 
 	// The device name assigned to the volume (for example, /dev/sdh or xvdh ). For
-	// more information, see [Device naming on Linux instances]in the Amazon EC2 User Guide for Linux Instances.
+	// more information, see [Device naming on Linux instances]in the Amazon EC2 User Guide.
 	//
 	// To define a block device mapping, set the device name and exactly one of the
 	// following properties: Ebs , NoDevice , or VirtualName .
@@ -596,15 +643,40 @@ type DesiredConfiguration struct {
 	// [Launch templates]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-templates.html
 	LaunchTemplate *LaunchTemplateSpecification
 
-	// Use this structure to launch multiple instance types and On-Demand Instances
-	// and Spot Instances within a single Auto Scaling group.
+	// Use this structure to launch multiple instance types and configure how capacity
+	// is distributed across On-Demand, Spot, and supported Capacity Reservation types
+	// within a single Auto Scaling group.
 	//
 	// A mixed instances policy contains information that Amazon EC2 Auto Scaling can
-	// use to launch instances and help optimize your costs. For more information, see [Auto Scaling groups with multiple instance types and purchase options]
-	// in the Amazon EC2 Auto Scaling User Guide.
+	// use to launch instances, prioritize capacity types, and help optimize your
+	// costs. For more information, see [Auto Scaling groups with multiple instance types and purchase options]in the Amazon EC2 Auto Scaling User Guide.
 	//
 	// [Auto Scaling groups with multiple instance types and purchase options]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html
 	MixedInstancesPolicy *MixedInstancesPolicy
+
+	noSmithyDocumentSerde
+}
+
+// Use this structure to specify the capacity types that Amazon EC2 Auto Scaling
+// prioritizes when it launches instances.
+type DistributionSegment struct {
+
+	// The capacity types to prioritize, in order. Amazon EC2 Auto Scaling attempts to
+	// launch instances in the priority order of the capacity types, and within each
+	// capacity type, in the order of instance types listed in your launch template
+	// Overrides .
+	//
+	// The following lists the valid values:
+	//
+	// on-demand-capacity-reservation On-Demand Capacity Reservations.
+	//
+	// capacity-block Capacity Blocks.
+	//
+	// interruptible-capacity-reservation Interruptible Capacity Reservations.
+	//
+	// on-demand On-Demand capacity. Include this value to allow the group to fall
+	// back to On-Demand capacity when the preceding capacity types are unavailable.
+	TargetCapacityTypes []TargetCapacityType
 
 	noSmithyDocumentSerde
 }
@@ -779,9 +851,9 @@ type Filter struct {
 	// The name of the filter.
 	//
 	// The valid values for Name depend on which API operation you're using with the
-	// filter ([DescribeAutoScalingGroups] or [DescribeTags]).
+	// filter.
 	//
-	// DescribeAutoScalingGroups
+	// [DescribeAutoScalingGroups]
 	//
 	// Valid values for Name include the following:
 	//
@@ -796,7 +868,7 @@ type Filter struct {
 	//   information about the Auto Scaling groups associated with the specified
 	//   key/value combination.
 	//
-	// DescribeTags
+	// [DescribeTags]
 	//
 	// Valid values for Name include the following:
 	//
@@ -814,17 +886,50 @@ type Filter struct {
 	//   propagate to instances at launch. The results only include information about the
 	//   tags associated with the specified Boolean value.
 	//
+	// [DescribeScalingActivities]
+	//
+	// Valid values for Name include the following:
+	//
+	//   - StartTimeLowerBound - The earliest scaling activities to return based on the
+	//   activity start time. Scaling activities with a start time earlier than this
+	//   value are not included in the results. Only activities started within the last
+	//   six weeks can be returned regardless of the value specified.
+	//
+	//   - StartTimeUpperBound - The latest scaling activities to return based on the
+	//   activity start time. Scaling activities with a start time later than this value
+	//   are not included in the results. Only activities started within the last six
+	//   weeks can be returned regardless of the value specified.
+	//
+	//   - Status - The StatusCode value of the scaling activity. This filter can only
+	//   be used in combination with the AutoScalingGroupName parameter. For valid
+	//   StatusCode values, see [Activity]in the Amazon EC2 Auto Scaling API Reference.
+	//
+	// StartTimeLowerBound and StartTimeUpperBound accept ISO 8601 formatted
+	// timestamps. Timestamps without a timezone offset are assumed to be UTC.
+	//
+	//   - 2000-01-18T08:15:00Z
+	//
+	//   - 2000-01-18T16:15:00+08:00
+	//
 	// [DescribeAutoScalingGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html
 	// [DescribeTags]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeTags.html
+	// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
+	// [Activity]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_Activity.html
 	Name *string
 
 	// One or more filter values. Filter values are case-sensitive.
 	//
 	// If you specify multiple values for a filter, the values are automatically
 	// logically joined with an OR , and the request returns all results that match any
-	// of the specified values. For example, specify "tag:environment" for the filter
+	// of the specified values.
+	//
+	// DescribeAutoScalingGroups example: Specify "tag:environment" for the filter
 	// name and "production,development" for the filter values to find Auto Scaling
 	// groups with the tag "environment=production" or "environment=development".
+	//
+	// DescribeScalingActivities example: Specify "Status" for the filter name and
+	// "Successful,Failed" for the filter values to find scaling activities with a
+	// status of either "Successful" or "Failed".
 	Values []string
 
 	noSmithyDocumentSerde
@@ -865,6 +970,27 @@ type Instance struct {
 	// This member is required.
 	ProtectedFromScaleIn *bool
 
+	//  The Availability Zone ID where the instance was launched.
+	AvailabilityZoneId *string
+
+	//  The ID of the Amazon Machine Image (AMI) used for the instance's current root
+	// volume. This value reflects the most recent AMI applied to the instance,
+	// including updates made through root volume replacement operations.
+	//
+	// This field appears for:
+	//
+	//   - Instances with root volume replacements through Instance Refresh
+	//
+	//   - Instances launched with AMI overrides
+	//
+	// This field won't appear for:
+	//
+	//   - Existing instances launched from Launch Templates without overrides
+	//
+	//   - Existing instances that didn’t have their root volume replaced through
+	//   Instance Refresh
+	ImageId *string
+
 	// The instance type of the EC2 instance.
 	InstanceType *string
 
@@ -879,6 +1005,52 @@ type Instance struct {
 	//
 	// Valid Range: Minimum value of 1. Maximum value of 999.
 	WeightedCapacity *string
+
+	noSmithyDocumentSerde
+}
+
+//	Contains details about a collection of instances launched in the Auto Scaling
+//
+// group.
+type InstanceCollection struct {
+
+	//  The Availability Zone where the instances were launched.
+	AvailabilityZone *string
+
+	//  The Availability Zone ID where the instances in this collection were launched.
+	AvailabilityZoneId *string
+
+	//  A list of instance IDs for the successfully launched instances.
+	InstanceIds []string
+
+	//  The instance type of the launched instances.
+	InstanceType *string
+
+	//  The market type for the instances (On-Demand or Spot).
+	MarketType *string
+
+	//  The ID of the subnet where the instances were launched.
+	SubnetId *string
+
+	noSmithyDocumentSerde
+}
+
+//	The instance lifecycle policy for the Auto Scaling group. This policy controls
+//
+// instance behavior when an instance transitions through its lifecycle states.
+// Configure retention triggers to specify when instances should move to a Retained
+// state instead of automatic termination.
+//
+// For more information, see [Control instance retention with instance lifecycle policies] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Control instance retention with instance lifecycle policies]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/instance-lifecycle-policy.html
+type InstanceLifecyclePolicy struct {
+
+	//  Specifies the conditions that trigger instance retention behavior. These
+	// triggers determine when instances should move to a Retained state instead of
+	// automatic termination. This allows you to maintain control over instance
+	// management when lifecycles transition and operations fail.
+	RetentionTriggers *RetentionTriggers
 
 	noSmithyDocumentSerde
 }
@@ -1031,6 +1203,15 @@ type InstanceRefresh struct {
 	// The explanation for the specific status assigned to this operation.
 	StatusReason *string
 
+	//  The strategy to use for the instance refresh. This determines how instances in
+	// the Auto Scaling group are updated. Default is Rolling.
+	//
+	//   - Rolling – Terminates instances and launches replacements in batches
+	//
+	//   - ReplaceRootVolume – Updates instances by replacing only the root volume
+	//   without terminating the instance
+	Strategy RefreshStrategy
+
 	noSmithyDocumentSerde
 }
 
@@ -1104,7 +1285,7 @@ type InstanceRefreshWarmPoolProgress struct {
 //
 // For more information, see [Create a mixed instances group using attribute-based instance type selection] in the Amazon EC2 Auto Scaling User Guide. For help
 // determining which instance types match your attributes before you apply them to
-// your Auto Scaling group, see [Preview instance types with specified attributes]in the Amazon EC2 User Guide for Linux Instances.
+// your Auto Scaling group, see [Preview instance types with specified attributes]in the Amazon EC2 User Guide.
 //
 // [Preview instance types with specified attributes]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html#ec2fleet-get-instance-types-from-instance-requirements
 // [Create a mixed instances group using attribute-based instance type selection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-mixed-instances-group-attribute-based-instance-type-selection.html
@@ -1202,8 +1383,7 @@ type InstanceRequirements struct {
 	BareMetal BareMetal
 
 	// The minimum and maximum baseline bandwidth performance for an instance type, in
-	// Mbps. For more information, see [Amazon EBS–optimized instances]in the Amazon EC2 User Guide for Linux
-	// Instances.
+	// Mbps. For more information, see [Amazon EBS–optimized instances]in the Amazon EC2 User Guide.
 	//
 	// Default: No minimum or maximum limits
 	//
@@ -1214,8 +1394,7 @@ type InstanceRequirements struct {
 	BaselinePerformanceFactors *BaselinePerformanceFactorsRequest
 
 	// Indicates whether burstable performance instance types are included, excluded,
-	// or required. For more information, see [Burstable performance instances]in the Amazon EC2 User Guide for Linux
-	// Instances.
+	// or required. For more information, see [Burstable performance instances]in the Amazon EC2 User Guide.
 	//
 	// Default: excluded
 	//
@@ -1230,6 +1409,8 @@ type InstanceRequirements struct {
 	//
 	//   - For instance types with Amazon Web Services CPUs, specify
 	//   amazon-web-services .
+	//
+	//   - For instance types with Apple CPUs, specify apple .
 	//
 	// Don't confuse the CPU hardware manufacturer with the CPU hardware architecture.
 	// Instances will be launched with a compatible CPU architecture based on the
@@ -1257,7 +1438,7 @@ type InstanceRequirements struct {
 	//   - For current generation instance types, specify current . The current
 	//   generation includes EC2 instance types currently recommended for use. This
 	//   typically includes the latest two to three generations in each instance family.
-	//   For more information, see [Instance types]in the Amazon EC2 User Guide for Linux Instances.
+	//   For more information, see [Instance types]in the Amazon EC2 User Guide.
 	//
 	//   - For previous generation instance types, specify previous .
 	//
@@ -1267,8 +1448,7 @@ type InstanceRequirements struct {
 	InstanceGenerations []InstanceGeneration
 
 	// Indicates whether instance types with instance store volumes are included,
-	// excluded, or required. For more information, see [Amazon EC2 instance store]in the Amazon EC2 User Guide
-	// for Linux Instances.
+	// excluded, or required. For more information, see [Amazon EC2 instance store]in the Amazon EC2 User Guide.
 	//
 	// Default: included
 	//
@@ -1402,10 +1582,18 @@ type InstanceReusePolicy struct {
 	noSmithyDocumentSerde
 }
 
-// Use this structure to specify the distribution of On-Demand Instances and Spot
-// Instances and the allocation strategies used to fulfill On-Demand and Spot
-// capacities for a mixed instances policy.
+// Use this structure to specify how a mixed instances policy distributes capacity
+// across On-Demand, Spot, and supported Capacity Reservation types, and to specify
+// the allocation strategies that are used to fulfill the capacity.
 type InstancesDistribution struct {
+
+	// The Distribution Segments configuration. Each segment contains an ordered list
+	// of capacity types to prioritize.
+	//
+	// For more information, see [Use Distribution Segments to target multiple capacity types] in the Amazon EC2 Auto Scaling User Guide.
+	//
+	// [Use Distribution Segments to target multiple capacity types]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/use-distribution-segments.html
+	DistributionSegments []DistributionSegment
 
 	// The allocation strategy to apply to your On-Demand Instances when they are
 	// launched. Possible instance types are determined by the launch template
@@ -1518,7 +1706,7 @@ type LaunchConfiguration struct {
 	CreatedTime *time.Time
 
 	// The ID of the Amazon Machine Image (AMI) to use to launch your EC2 instances.
-	// For more information, see [Find a Linux AMI]in the Amazon EC2 User Guide for Linux Instances.
+	// For more information, see [Find a Linux AMI]in the Amazon EC2 User Guide.
 	//
 	// [Find a Linux AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html
 	//
@@ -1526,7 +1714,7 @@ type LaunchConfiguration struct {
 	ImageId *string
 
 	// The instance type for the instances. For information about available instance
-	// types, see [Available instance types]in the Amazon EC2 User Guide for Linux Instances.
+	// types, see [Available instance types]in the Amazon EC2 User Guide.
 	//
 	// [Available instance types]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#AvailableInstanceTypes
 	//
@@ -1552,7 +1740,7 @@ type LaunchConfiguration struct {
 	// The block device mapping entries that define the block devices to attach to the
 	// instances at launch. By default, the block devices specified in the block device
 	// mapping for the AMI are used. For more information, see [Block device mappings]in the Amazon EC2 User
-	// Guide for Linux Instances.
+	// Guide.
 	//
 	// [Block device mappings]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 	BlockDeviceMappings []BlockDeviceMapping
@@ -1564,8 +1752,7 @@ type LaunchConfiguration struct {
 	ClassicLinkVPCSecurityGroups []string
 
 	// Specifies whether the launch configuration is optimized for EBS I/O ( true ) or
-	// not ( false ). For more information, see [Amazon EBS-optimized instances] in the Amazon EC2 User Guide for
-	// Linux Instances.
+	// not ( false ). For more information, see [Amazon EBS-optimized instances] in the Amazon EC2 User Guide.
 	//
 	// [Amazon EBS-optimized instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html
 	EbsOptimized *bool
@@ -1590,7 +1777,7 @@ type LaunchConfiguration struct {
 
 	// The name of the key pair.
 	//
-	// For more information, see [Amazon EC2 key pairs and Amazon EC2 instances] in the Amazon EC2 User Guide for Linux Instances.
+	// For more information, see [Amazon EC2 key pairs and Amazon EC2 instances] in the Amazon EC2 User Guide.
 	//
 	// [Amazon EC2 key pairs and Amazon EC2 instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 	KeyName *string
@@ -1628,12 +1815,42 @@ type LaunchConfiguration struct {
 	SpotPrice *string
 
 	// The user data to make available to the launched EC2 instances. For more
-	// information, see [Instance metadata and user data](Linux) and [Instance metadata and user data] (Windows). If you are using a command line tool,
-	// base64-encoding is performed for you, and you can load the text from a file.
-	// Otherwise, you must provide base64-encoded text. User data is limited to 16 KB.
+	// information, see [Instance metadata and user data]in the Amazon EC2 User Guide. If you are using a command line
+	// tool, base64-encoding is performed for you, and you can load the text from a
+	// file. Otherwise, you must provide base64-encoded text. User data is limited to
+	// 16 KB.
 	//
-	// [Instance metadata and user data]: https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-instance-metadata.html
+	// [Instance metadata and user data]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 	UserData *string
+
+	noSmithyDocumentSerde
+}
+
+// Contains details about errors encountered during instance launch attempts.
+type LaunchInstancesError struct {
+
+	//  The Availability Zone where the instance launch was attempted.
+	AvailabilityZone *string
+
+	//  The Availability Zone ID where the launch error occurred.
+	AvailabilityZoneId *string
+
+	//  The error code representing the type of error encountered (e.g.,
+	// InsufficientInstanceCapacity).
+	ErrorCode *string
+
+	//  A descriptive message providing details about the error encountered during the
+	// launch attempt.
+	ErrorMessage *string
+
+	//  The instance type that failed to launch.
+	InstanceType *string
+
+	//  The market type (On-Demand or Spot) that encountered the launch error.
+	MarketType *string
+
+	//  The subnet ID where the instance launch was attempted.
+	SubnetId *string
 
 	noSmithyDocumentSerde
 }
@@ -1672,6 +1889,19 @@ type LaunchTemplate struct {
 // whether a new EC2 instance type can be used.
 type LaunchTemplateOverrides struct {
 
+	//  The ID of the Amazon Machine Image (AMI) to use for instances launched with
+	// this override. When using Instance Refresh with ReplaceRootVolume strategy,
+	// this specifies the AMI for root volume replacement operations.
+	//
+	// For ReplaceRootVolume operations:
+	//
+	//   - All overrides in the MixedInstancesPolicy must specify an ImageId
+	//
+	//   - The AMI must contain only a single root volume
+	//
+	//   - Root volume replacement doesn't support multi-volume AMIs
+	ImageId *string
+
 	// The instance requirements. Amazon EC2 Auto Scaling uses your specified
 	// requirements to identify instance types. Then, it uses your On-Demand and Spot
 	// allocation strategies to launch instances from these instance types.
@@ -1687,7 +1917,7 @@ type LaunchTemplateOverrides struct {
 
 	// The instance type, such as m3.xlarge . You must specify an instance type that is
 	// supported in your requested Region and Availability Zones. For more information,
-	// see [Instance types]in the Amazon EC2 User Guide for Linux Instances.
+	// see [Instance types]in the Amazon EC2 User Guide.
 	//
 	// You can specify up to 40 instance types per Auto Scaling group.
 	//
@@ -2182,21 +2412,25 @@ type MetricStat struct {
 	noSmithyDocumentSerde
 }
 
-// Use this structure to launch multiple instance types and On-Demand Instances
-// and Spot Instances within a single Auto Scaling group.
+// Use this structure to launch multiple instance types and configure how capacity
+// is distributed across On-Demand, Spot, and supported Capacity Reservation types
+// within a single Auto Scaling group.
 //
 // A mixed instances policy contains information that Amazon EC2 Auto Scaling can
-// use to launch instances and help optimize your costs. For more information, see [Auto Scaling groups with multiple instance types and purchase options]
-// in the Amazon EC2 Auto Scaling User Guide.
+// use to launch instances, prioritize capacity types, and help optimize your
+// costs. For more information, see [Auto Scaling groups with multiple instance types and purchase options]in the Amazon EC2 Auto Scaling User Guide. To
+// learn how to prioritize multiple capacity types, see [Use Distribution Segments to target multiple capacity types]in the Amazon EC2 Auto
+// Scaling User Guide.
 //
 // [Auto Scaling groups with multiple instance types and purchase options]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html
+// [Use Distribution Segments to target multiple capacity types]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/use-distribution-segments.html
 type MixedInstancesPolicy struct {
 
 	// The instances distribution.
 	InstancesDistribution *InstancesDistribution
 
 	// One or more launch templates and the instance types (overrides) that are used
-	// to launch EC2 instances to fulfill On-Demand and Spot capacities.
+	// to launch EC2 instances to fulfill the configured capacities.
 	LaunchTemplate *LaunchTemplate
 
 	noSmithyDocumentSerde
@@ -2209,7 +2443,7 @@ type MixedInstancesPolicy struct {
 // achieve the minimum bandwidth. Amazon EC2 will identify instance types that
 // support the specified minimum bandwidth, but the actual bandwidth of your
 // instance might go below the specified minimum at times. For more information,
-// see [Available instance bandwidth]in the Amazon EC2 User Guide for Linux Instances.
+// see [Available instance bandwidth]in the Amazon EC2 User Guide.
 //
 // [Available instance bandwidth]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html#available-instance-bandwidth
 // [InstanceRequirements]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstanceRequirements.html
@@ -2260,6 +2494,19 @@ type NotificationConfiguration struct {
 
 	// The Amazon Resource Name (ARN) of the Amazon SNS topic.
 	TopicARN *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the entity that manages an Auto Scaling group.
+type Operator struct {
+
+	// The service principal that is authorized to manage the Auto Scaling group. When
+	// an operator is specified, only the designated operator service principal can
+	// make mutating changes to the Auto Scaling group.
+	//
+	// This member is required.
+	Principal *string
 
 	noSmithyDocumentSerde
 }
@@ -2765,6 +3012,15 @@ type RefreshPreferences struct {
 	// If you do not specify this property, the default is 100 percent, or the
 	// percentage set in the instance maintenance policy for the Auto Scaling group, if
 	// defined.
+	//
+	// Explicitly setting MaxHealthyPercentage to 100 is not equivalent to omitting
+	// it. When MaxHealthyPercentage is explicitly set and it is mathematically
+	// impossible to replace instances while honoring both MinHealthyPercentage and
+	// MaxHealthyPercentage bounds simultaneously, Auto Scaling launches a new instance
+	// before terminating an old one (temporarily exceeding the desired capacity). When
+	// MaxHealthyPercentage is omitted, Auto Scaling terminates an instance and
+	// launches its replacement simultaneously. This behavioral difference can affect
+	// workflows that depend on instance replacement ordering.
 	MaxHealthyPercentage *int32
 
 	// Specifies the minimum percentage of the group to keep in service, healthy, and
@@ -2817,6 +3073,26 @@ type RefreshPreferences struct {
 	// Wait (default) Amazon EC2 Auto Scaling waits one hour for you to return the
 	// instances to service. Otherwise, the instance refresh will fail.
 	StandbyInstances StandbyInstances
+
+	noSmithyDocumentSerde
+}
+
+//	Defines the specific triggers that cause instances to be retained in a
+//
+// Retained state rather than terminated. Each trigger corresponds to a different
+// failure scenario during the instance lifecycle. This allows fine-grained control
+// over when to preserve instances for manual intervention.
+type RetentionTriggers struct {
+
+	//  Specifies the action when a termination lifecycle hook is abandoned due to
+	// failure, timeout, or explicit abandonment (calling CompleteLifecycleAction).
+	//
+	// Set to retain to move instances to a retained state. Set to terminate for
+	// default termination behavior.
+	//
+	// Retained instances don't count toward desired capacity and remain until you
+	// call TerminateInstanceInAutoScalingGroup .
+	TerminateHookAbandon RetentionAction
 
 	noSmithyDocumentSerde
 }

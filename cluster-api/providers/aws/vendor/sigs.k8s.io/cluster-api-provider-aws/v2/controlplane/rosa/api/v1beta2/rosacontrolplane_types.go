@@ -82,6 +82,30 @@ const (
 	FIPSDisabled FIPSState = "Disabled"
 )
 
+// DeleteProtectionState represents whether delete protection is enabled for the ROSA cluster.
+type DeleteProtectionState string
+
+const (
+	// DeleteProtectionEnabled indicates delete protection is enabled.
+	DeleteProtectionEnabled DeleteProtectionState = "Enabled"
+
+	// DeleteProtectionDisabled indicates delete protection is disabled.
+	DeleteProtectionDisabled DeleteProtectionState = "Disabled"
+)
+
+// Ec2MetadataHTTPTokens describes the state of the EC2 instance metadata service (IMDS) token requirement.
+// When set to "required", IMDSv2 is enforced and the older IMDSv1 is disabled, providing enhanced
+// security against SSRF attacks. When set to "optional", both IMDSv1 and IMDSv2 are allowed.
+type Ec2MetadataHTTPTokens string
+
+const (
+	// Ec2MetadataHTTPTokensOptional allows both IMDSv1 and IMDSv2.
+	Ec2MetadataHTTPTokensOptional Ec2MetadataHTTPTokens = "optional"
+
+	// Ec2MetadataHTTPTokensRequired enforces IMDSv2 only, disabling IMDSv1.
+	Ec2MetadataHTTPTokensRequired Ec2MetadataHTTPTokens = "required"
+)
+
 // AutoNodeMode specifies the AutoNode mode for the ROSA Control Plane.
 type AutoNodeMode string
 
@@ -91,6 +115,17 @@ const (
 
 	// AutoNodeModeDisabled Disabled AutoNode
 	AutoNodeModeDisabled AutoNodeMode = "Disabled"
+)
+
+// ComponentRouteKey specifies the name of a component route.
+type ComponentRouteKey string
+
+const (
+	// ComponentRouteConsole is the console component route.
+	ComponentRouteConsole ComponentRouteKey = "console"
+
+	// ComponentRouteDownloads is the downloads component route.
+	ComponentRouteDownloads ComponentRouteKey = "downloads"
 )
 
 // RosaControlPlaneSpec defines the desired state of ROSAControlPlane.
@@ -202,6 +237,15 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	EnableExternalAuthProviders bool `json:"enableExternalAuthProviders,omitempty"`
 
+	// DeleteProtection prevents accidental ROSA cluster deletion.
+	// When set to "Enabled", the ROSA cluster cannot be deleted through OCM.
+	// Defaults to "Disabled".
+	//
+	// +kubebuilder:default=Disabled
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	DeleteProtection DeleteProtectionState `json:"deleteProtection,omitempty"`
+
 	// ExternalAuthProviders are external OIDC identity providers that can issue tokens for this cluster.
 	// Can only be set if "enableExternalAuthProviders" is set to "True".
 	//
@@ -286,6 +330,18 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	EtcdEncryptionKMSARN string `json:"etcdEncryptionKMSARN,omitempty"`
 
+	// Ec2MetadataHTTPTokens configures the use of IMDSv2 for EC2 instances.
+	// When set to "required", IMDSv2 is enforced and the older IMDSv1 is disabled.
+	// When set to "optional", both IMDSv1 and IMDSv2 are allowed.
+	// When omitted, the OCM default ("optional") is used.
+	// This field is immutable and cannot be changed after cluster creation.
+	//
+	// +immutable
+	// +kubebuilder:validation:Enum=optional;required
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="ec2MetadataHttpTokens is immutable"
+	// +optional
+	Ec2MetadataHTTPTokens Ec2MetadataHTTPTokens `json:"ec2MetadataHttpTokens,omitempty"`
+
 	// AuditLogRoleARN defines the role that is used to forward audit logs to AWS CloudWatch.
 	// If not set, audit log forwarding is disabled.
 	// +optional
@@ -334,6 +390,11 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// s3LogForwarder set the AWS S3 log forward config for applications and groupVersions.
 	// +optional
 	S3LogForwarder *S3LogForwarderConfig `json:"s3LogForwarder,omitempty"`
+
+	// componentRoutes allows customizing the hostname and TLS certificate for console and downloads routes.
+	// +optional
+	// +kubebuilder:validation:MaxItems=2
+	ComponentRoutes []ComponentRouteSpec `json:"componentRoutes,omitempty"`
 }
 
 // CloudWatchLogForwarderConfig present the cloudWatch log forward config for applications and groupVersions.
@@ -372,6 +433,24 @@ type S3LogForwarderConfig struct {
 	// s3ConfigBucketPrefix is the prefix to use for objects stored in the S3 bucket.
 	// +optional
 	S3ConfigBucketPrefix string `json:"s3ConfigBucketPrefix,omitempty"`
+}
+
+// ComponentRouteSpec defines a custom hostname and TLS secret for a component route.
+type ComponentRouteSpec struct {
+	// name is the component route name. Valid values are "console" and "downloads".
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=console;downloads
+	Name ComponentRouteKey `json:"name"`
+
+	// hostname is the custom domain for the component route (e.g. console.example.com).
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Hostname string `json:"hostname"`
+
+	// tlsSecretRef is the name of the TLS secret in the openshift-config namespace on the hosted cluster.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	TLSSecretRef string `json:"tlsSecretRef"`
 }
 
 // AutoNode set the AutoNode mode and AutoNode role ARN.
@@ -925,6 +1004,21 @@ type RosaControlPlaneStatus struct {
 
 	// Available channels for the ROSA hosted control plane.
 	AvailableChannels []string `json:"availableChannels,omitempty"`
+
+	// v1beta2 groups all the fields that will be added or modified in ROSAControlPlane's status with the V1Beta2 version.
+	// +optional
+	V1Beta2 *RosaControlPlaneV1Beta2Status `json:"v1beta2,omitempty"`
+}
+
+// RosaControlPlaneV1Beta2Status groups all the fields that will be added or modified in ROSAControlPlane with the V1Beta2 version.
+// See https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20240916-improve-status-in-CAPI-resources.md for more context.
+type RosaControlPlaneV1Beta2Status struct {
+	// conditions represents the observations of a ROSAControlPlane's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +kubebuilder:validation:MaxItems=32
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -961,6 +1055,22 @@ func (r *ROSAControlPlane) GetConditions() clusterv1beta1.Conditions {
 // SetConditions sets the status conditions for the AWSManagedControlPlane.
 func (r *ROSAControlPlane) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+// GetV1Beta2Conditions returns the set of conditions for this object.
+func (r *ROSAControlPlane) GetV1Beta2Conditions() []metav1.Condition {
+	if r.Status.V1Beta2 == nil {
+		return nil
+	}
+	return r.Status.V1Beta2.Conditions
+}
+
+// SetV1Beta2Conditions sets conditions for an API object.
+func (r *ROSAControlPlane) SetV1Beta2Conditions(conditions []metav1.Condition) {
+	if r.Status.V1Beta2 == nil {
+		r.Status.V1Beta2 = &RosaControlPlaneV1Beta2Status{}
+	}
+	r.Status.V1Beta2.Conditions = conditions
 }
 
 func init() {

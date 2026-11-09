@@ -4,23 +4,27 @@ package secretsmanager
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Removes the link between the replica secret and the primary secret and promotes
-// the replica to a primary secret in the replica Region. You must call this
-// operation from the Region in which you want to promote the replica to a primary
-// secret. Secrets Manager generates a CloudTrail log entry when you call this
-// action. Do not include sensitive information in request parameters because it
-// might be logged. For more information, see Logging Secrets Manager events with
-// CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html)
-// . Required permissions: secretsmanager:StopReplicationToReplica . For more
-// information, see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
-// and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// .
+// the replica to a primary secret in the replica Region.
+//
+// You must call this operation from the Region in which you want to promote the
+// replica to a primary secret.
+//
+// Secrets Manager generates a CloudTrail log entry when you call this action. Do
+// not include sensitive information in request parameters because it might be
+// logged. For more information, see [Logging Secrets Manager events with CloudTrail].
+//
+// Required permissions: secretsmanager:StopReplicationToReplica . For more
+// information, see [IAM policy actions for Secrets Manager]and [Authentication and access control in Secrets Manager].
+//
+// [Authentication and access control in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
+// [Logging Secrets Manager events with CloudTrail]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html
+// [IAM policy actions for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions
 func (c *Client) StopReplicationToReplica(ctx context.Context, params *StopReplicationToReplicaInput, optFns ...func(*Options)) (*StopReplicationToReplicaOutput, error) {
 	if params == nil {
 		params = &StopReplicationToReplicaInput{}
@@ -38,12 +42,25 @@ func (c *Client) StopReplicationToReplica(ctx context.Context, params *StopRepli
 
 type StopReplicationToReplicaInput struct {
 
-	// The ARN of the primary secret.
+	// The name of the secret or the replica ARN. The replica ARN is the same as the
+	// original primary secret ARN expect the Region is changed to the replica Region.
 	//
 	// This member is required.
 	SecretId *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *StopReplicationToReplicaInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.StopReplicationToReplicaRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *StopReplicationToReplicaInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.SecretId != nil {
+		s.WriteString(schemas.StopReplicationToReplicaRequest_SecretId, *v.SecretId)
+	}
 }
 
 type StopReplicationToReplicaOutput struct {
@@ -58,68 +75,48 @@ type StopReplicationToReplicaOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *StopReplicationToReplicaOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.StopReplicationToReplicaResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *StopReplicationToReplicaOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.StopReplicationToReplicaResponse_ARN, *v.ARN)
+	}
+}
+func (v *StopReplicationToReplicaOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.StopReplicationToReplicaResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.StopReplicationToReplicaResponse_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.StopReplicationToReplicaResponse_ARN, v.ARN)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationStopReplicationToReplicaMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.StopReplicationToReplica, schemas.StopReplicationToReplicaRequest, schemas.StopReplicationToReplicaResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpStopReplicationToReplica{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.StopReplicationToReplica, schemas.StopReplicationToReplicaRequest, schemas.StopReplicationToReplicaResponse), output: &StopReplicationToReplicaOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpStopReplicationToReplica{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "StopReplicationToReplica"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStopReplicationToReplicaValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opStopReplicationToReplica(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -134,13 +131,8 @@ func (c *Client) addOperationStopReplicationToReplicaMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opStopReplicationToReplica(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "StopReplicationToReplica",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

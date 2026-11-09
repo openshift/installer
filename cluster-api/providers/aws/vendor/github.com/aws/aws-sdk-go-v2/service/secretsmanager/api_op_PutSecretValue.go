@@ -5,39 +5,53 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a new version with a new encrypted secret value and attaches it to the
-// secret. The version can contain a new SecretString value or a new SecretBinary
-// value. We recommend you avoid calling PutSecretValue at a sustained rate of
-// more than once every 10 minutes. When you update the secret value, Secrets
-// Manager creates a new version of the secret. Secrets Manager removes outdated
-// versions when there are more than 100, but it does not remove versions created
-// less than 24 hours ago. If you call PutSecretValue more than once every 10
-// minutes, you create more versions than Secrets Manager removes, and you will
-// reach the quota for secret versions. You can specify the staging labels to
-// attach to the new version in VersionStages . If you don't include VersionStages
-// , then Secrets Manager automatically moves the staging label AWSCURRENT to this
-// version. If this operation creates the first version for the secret, then
-// Secrets Manager automatically attaches the staging label AWSCURRENT to it. If
-// this operation moves the staging label AWSCURRENT from another version to this
-// version, then Secrets Manager also automatically moves the staging label
-// AWSPREVIOUS to the version that AWSCURRENT was removed from. This operation is
-// idempotent. If you call this operation with a ClientRequestToken that matches
-// an existing version's VersionId, and you specify the same secret data, the
-// operation succeeds but does nothing. However, if the secret data is different,
-// then the operation fails because you can't modify an existing version; you can
-// only create new ones. Secrets Manager generates a CloudTrail log entry when you
-// call this action. Do not include sensitive information in request parameters
-// except SecretBinary or SecretString because it might be logged. For more
-// information, see Logging Secrets Manager events with CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html)
-// . Required permissions: secretsmanager:PutSecretValue . For more information,
-// see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
-// and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// .
+// Creates a new version of your secret by creating a new encrypted value and
+// attaching it to the secret. version can contain a new SecretString value or a
+// new SecretBinary value.
+//
+// Do not call PutSecretValue at a sustained rate of more than once every 10
+// minutes. When you update the secret value, Secrets Manager creates a new version
+// of the secret. Secrets Manager keeps 100 of the most recent versions, but it
+// keeps all secret versions created in the last 24 hours. If you call
+// PutSecretValue more than once every 10 minutes, you will create more versions
+// than Secrets Manager removes, and you will reach the quota for secret versions.
+//
+// You can specify the staging labels to attach to the new version in VersionStages
+// . If you don't include VersionStages , then Secrets Manager automatically moves
+// the staging label AWSCURRENT to this version. If this operation creates the
+// first version for the secret, then Secrets Manager automatically attaches the
+// staging label AWSCURRENT to it. If this operation moves the staging label
+// AWSCURRENT from another version to this version, then Secrets Manager also
+// automatically moves the staging label AWSPREVIOUS to the version that AWSCURRENT
+// was removed from.
+//
+// This operation is idempotent. If you call this operation with a
+// ClientRequestToken that matches an existing version's VersionId, and you specify
+// the same secret data, the operation succeeds but does nothing. However, if the
+// secret data is different, then the operation fails because you can't modify an
+// existing version; you can only create new ones.
+//
+// Secrets Manager generates a CloudTrail log entry when you call this action. Do
+// not include sensitive information in request parameters except SecretBinary ,
+// SecretString , or RotationToken because it might be logged. For more
+// information, see [Logging Secrets Manager events with CloudTrail].
+//
+// Required permissions: secretsmanager:PutSecretValue . For more information, see [IAM policy actions for Secrets Manager]
+// and [Authentication and access control in Secrets Manager].
+//
+// When you enter commands in a command shell, there is a risk of the command
+// history being accessed or utilities having access to your command parameters.
+// This is a concern if the command includes the value of a secret. Learn how to [Mitigate the risks of using command-line tools to store Secrets Manager secrets].
+//
+// [Authentication and access control in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
+// [Logging Secrets Manager events with CloudTrail]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html
+// [Mitigate the risks of using command-line tools to store Secrets Manager secrets]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/security_cli-exposure-risks.html
+// [IAM policy actions for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions
 func (c *Client) PutSecretValue(ctx context.Context, params *PutSecretValueInput, optFns ...func(*Options)) (*PutSecretValueOutput, error) {
 	if params == nil {
 		params = &PutSecretValueInput{}
@@ -55,60 +69,130 @@ func (c *Client) PutSecretValue(ctx context.Context, params *PutSecretValueInput
 
 type PutSecretValueInput struct {
 
-	// The ARN or name of the secret to add a new version to. For an ARN, we recommend
-	// that you specify a complete ARN rather than a partial ARN. See Finding a secret
-	// from a partial ARN (https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen)
-	// . If the secret doesn't already exist, use CreateSecret instead.
+	// The ARN or name of the secret to add a new version to.
+	//
+	// For an ARN, we recommend that you specify a complete ARN rather than a partial
+	// ARN. See [Finding a secret from a partial ARN].
+	//
+	// If the secret doesn't already exist, use CreateSecret instead.
+	//
+	// [Finding a secret from a partial ARN]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen
 	//
 	// This member is required.
 	SecretId *string
 
-	// A unique identifier for the new version of the secret. If you use the Amazon
-	// Web Services CLI or one of the Amazon Web Services SDKs to call this operation,
-	// then you can leave this parameter empty. The CLI or SDK generates a random UUID
-	// for you and includes it as the value for this parameter in the request. If you
-	// generate a raw HTTP request to the Secrets Manager service endpoint, then you
-	// must generate a ClientRequestToken and include it in the request. This value
-	// helps ensure idempotency. Secrets Manager uses this value to prevent the
-	// accidental creation of duplicate versions if there are failures and retries
-	// during a rotation. We recommend that you generate a UUID-type (https://wikipedia.org/wiki/Universally_unique_identifier)
-	// value to ensure uniqueness of your versions within the specified secret.
+	// A unique identifier for the new version of the secret.
+	//
+	// If you use the Amazon Web Services CLI or one of the Amazon Web Services SDKs
+	// to call this operation, then you can leave this parameter empty. The CLI or SDK
+	// generates a random UUID for you and includes it as the value for this parameter
+	// in the request.
+	//
+	// If you generate a raw HTTP request to the Secrets Manager service endpoint,
+	// then you must generate a ClientRequestToken and include it in the request.
+	//
+	// This value helps ensure idempotency. Secrets Manager uses this value to prevent
+	// the accidental creation of duplicate versions if there are failures and retries
+	// during a rotation. We recommend that you generate a [UUID-type]value to ensure uniqueness
+	// of your versions within the specified secret.
+	//
 	//   - If the ClientRequestToken value isn't already associated with a version of
 	//   the secret then a new version of the secret is created.
+	//
 	//   - If a version with this value already exists and that version's SecretString
 	//   or SecretBinary values are the same as those in the request then the request
 	//   is ignored. The operation is idempotent.
+	//
 	//   - If a version with this value already exists and the version of the
 	//   SecretString and SecretBinary values are different from those in the request,
 	//   then the request fails because you can't modify a secret version. You can only
 	//   create new versions to store new secret values.
+	//
 	// This value becomes the VersionId of the new version.
+	//
+	// [UUID-type]: https://wikipedia.org/wiki/Universally_unique_identifier
 	ClientRequestToken *string
+
+	// A unique identifier that indicates the source of the request. Required for
+	// secret rotations using an IAM assumed role or cross-account rotation, in which
+	// you rotate a secret in one account by using a Lambda rotation function in
+	// another account. In both cases, the rotation function assumes an IAM role to
+	// call Secrets Manager, and then Secrets Manager validates the identity using the
+	// token. For more information, see [How rotation works]and [Rotation by Lambda functions].
+	//
+	// Sensitive: This field contains sensitive information, so the service does not
+	// include it in CloudTrail log entries. If you create your own log entries, you
+	// must also avoid logging the information in this field.
+	//
+	// [Rotation by Lambda functions]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_lambda
+	// [How rotation works]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html
+	RotationToken *string
 
 	// The binary data to encrypt and store in the new version of the secret. To use
 	// this parameter in the command-line tools, we recommend that you store your
-	// binary data in a file and then pass the contents of the file as a parameter. You
-	// must include SecretBinary or SecretString , but not both. You can't access this
-	// value from the Secrets Manager console.
+	// binary data in a file and then pass the contents of the file as a parameter.
+	//
+	// You must include SecretBinary or SecretString , but not both.
+	//
+	// You can't access this value from the Secrets Manager console.
+	//
+	// Sensitive: This field contains sensitive information, so the service does not
+	// include it in CloudTrail log entries. If you create your own log entries, you
+	// must also avoid logging the information in this field.
 	SecretBinary []byte
 
-	// The text to encrypt and store in the new version of the secret. You must
-	// include SecretBinary or SecretString , but not both. We recommend you create the
-	// secret string as JSON key/value pairs, as shown in the example.
+	// The text to encrypt and store in the new version of the secret.
+	//
+	// You must include SecretBinary or SecretString , but not both.
+	//
+	// We recommend you create the secret string as JSON key/value pairs, as shown in
+	// the example.
+	//
+	// Sensitive: This field contains sensitive information, so the service does not
+	// include it in CloudTrail log entries. If you create your own log entries, you
+	// must also avoid logging the information in this field.
 	SecretString *string
 
 	// A list of staging labels to attach to this version of the secret. Secrets
 	// Manager uses staging labels to track versions of a secret through the rotation
-	// process. If you specify a staging label that's already associated with a
-	// different version of the same secret, then Secrets Manager removes the label
-	// from the other version and attaches it to this version. If you specify
-	// AWSCURRENT , and it is already attached to another version, then Secrets Manager
-	// also moves the staging label AWSPREVIOUS to the version that AWSCURRENT was
-	// removed from. If you don't include VersionStages , then Secrets Manager
-	// automatically moves the staging label AWSCURRENT to this version.
+	// process.
+	//
+	// If you specify a staging label that's already associated with a different
+	// version of the same secret, then Secrets Manager removes the label from the
+	// other version and attaches it to this version. If you specify AWSCURRENT , and
+	// it is already attached to another version, then Secrets Manager also moves the
+	// staging label AWSPREVIOUS to the version that AWSCURRENT was removed from.
+	//
+	// If you don't include VersionStages , then Secrets Manager automatically moves
+	// the staging label AWSCURRENT to this version.
 	VersionStages []string
 
 	noSmithyDocumentSerde
+}
+
+func (v *PutSecretValueInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.PutSecretValueRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *PutSecretValueInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ClientRequestToken != nil {
+		s.WriteString(schemas.PutSecretValueRequest_ClientRequestToken, *v.ClientRequestToken)
+	}
+	if v.RotationToken != nil {
+		s.WriteString(schemas.PutSecretValueRequest_RotationToken, *v.RotationToken)
+	}
+	if v.SecretBinary != nil {
+		s.WriteBlob(schemas.PutSecretValueRequest_SecretBinary, v.SecretBinary)
+	}
+	if v.SecretId != nil {
+		s.WriteString(schemas.PutSecretValueRequest_SecretId, *v.SecretId)
+	}
+	if v.SecretString != nil {
+		s.WriteString(schemas.PutSecretValueRequest_SecretString, *v.SecretString)
+	}
+	serializeSecretVersionStagesType(s, schemas.PutSecretValueRequest_VersionStages, v.VersionStages)
 }
 
 type PutSecretValueOutput struct {
@@ -133,71 +217,66 @@ type PutSecretValueOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *PutSecretValueOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.PutSecretValueResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *PutSecretValueOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.PutSecretValueResponse_ARN, *v.ARN)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.PutSecretValueResponse_Name, *v.Name)
+	}
+	if v.VersionId != nil {
+		s.WriteString(schemas.PutSecretValueResponse_VersionId, *v.VersionId)
+	}
+	serializeSecretVersionStagesType(s, schemas.PutSecretValueResponse_VersionStages, v.VersionStages)
+}
+func (v *PutSecretValueOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.PutSecretValueResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.PutSecretValueResponse_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.PutSecretValueResponse_ARN, v.ARN)
+		case schemas.PutSecretValueResponse_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.PutSecretValueResponse_Name, v.Name)
+		case schemas.PutSecretValueResponse_VersionId:
+			v.VersionId = new(string)
+			return d.ReadString(schemas.PutSecretValueResponse_VersionId, v.VersionId)
+		case schemas.PutSecretValueResponse_VersionStages:
+			return deserializeSecretVersionStagesType(d, schemas.PutSecretValueResponse_VersionStages, &v.VersionStages)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationPutSecretValueMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.PutSecretValue, schemas.PutSecretValueRequest, schemas.PutSecretValueResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpPutSecretValue{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.PutSecretValue, schemas.PutSecretValueRequest, schemas.PutSecretValueResponse), output: &PutSecretValueOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpPutSecretValue{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "PutSecretValue"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opPutSecretValueMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutSecretValueValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutSecretValue(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -210,6 +289,9 @@ func (c *Client) addOperationPutSecretValueMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -246,12 +328,4 @@ func (m *idempotencyToken_initializeOpPutSecretValue) HandleInitialize(ctx conte
 }
 func addIdempotencyToken_opPutSecretValueMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpPutSecretValue{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opPutSecretValue(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "PutSecretValue",
-	}
 }

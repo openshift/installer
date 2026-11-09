@@ -44,6 +44,11 @@ import (
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
+const (
+	defaultRegion = "us-east-1"
+	nodeRole      = "node"
+)
+
 // GetRunningInstanceByTags returns the existing instance or nothing if it doesn't exist.
 func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.Instance, error) {
 	s.scope.Debug("Looking for existing machine instance by tags")
@@ -367,7 +372,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available matching criteria %v",
 				scope.Name(), criteria)
-			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
+			record.Warnf(scope.AWSMachine, "FailedCreate", "%s", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 
@@ -410,7 +415,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		if len(filtered) == 0 {
 			errMessage = fmt.Sprintf("failed to run machine %q, found %d subnets matching criteria but post-filtering failed.",
 				scope.Name(), len(subnets)) + errMessage
-			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
+			record.Warnf(scope.AWSMachine, "FailedCreate", "%s", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 		return *filtered[0].SubnetId, nil
@@ -420,7 +425,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			if len(subnets) == 0 {
 				errMessage := fmt.Sprintf("failed to run machine %q with public IP, no public subnets available in availability zone %q",
 					scope.Name(), failureDomain)
-				record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
+				record.Warnf(scope.AWSMachine, "FailedCreate", "%s", errMessage)
 				return "", awserrors.NewFailedDependency(errMessage)
 			}
 			return subnets[0].GetResourceID(), nil
@@ -430,7 +435,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available in availability zone %q",
 				scope.Name(), failureDomain)
-			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
+			record.Warnf(scope.AWSMachine, "FailedCreate", "%s", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 		return subnets[0].GetResourceID(), nil
@@ -438,7 +443,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		subnets := s.scope.Subnets().FilterPublic().FilterNonCni()
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q with public IP, no public subnets available", scope.Name())
-			record.Eventf(scope.AWSMachine, "FailedCreate", errMessage)
+			record.Eventf(scope.AWSMachine, "FailedCreate", "%s", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 		return subnets[0].GetResourceID(), nil
@@ -450,7 +455,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		sns := s.scope.Subnets().FilterPrivate().FilterNonCni()
 		if len(sns) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available", scope.Name())
-			record.Eventf(s.scope.InfraCluster(), "FailedCreateInstance", errMessage)
+			record.Eventf(s.scope.InfraCluster(), "FailedCreateInstance", "%s", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 		return sns[0].GetResourceID(), nil
@@ -490,7 +495,7 @@ func (s *Service) GetCoreSecurityGroups(scope *scope.MachineScope) ([]string, er
 	}
 
 	switch scope.Role() {
-	case "node":
+	case nodeRole:
 		// Just the common security groups above
 		if scope.IsEKSManaged() {
 			sgRoles = append(sgRoles, infrav1.SecurityGroupEKSNodeAdditional)
@@ -1010,7 +1015,13 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 		metadataOptions.HTTPEndpoint = infrav1.InstanceMetadataState(string(v.MetadataOptions.HttpEndpoint))
 		metadataOptions.HTTPTokens = infrav1.HTTPTokensState(string(v.MetadataOptions.HttpTokens))
 		metadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataState(string(v.MetadataOptions.InstanceMetadataTags))
-		metadataOptions.HTTPProtocolIPv6 = infrav1.InstanceMetadataState(v.MetadataOptions.HttpProtocolIpv6)
+		// AWS EUSC does not support IPv6 IMDS and omits this field entirely,
+		// so treat an empty value as disabled to match the spec default.
+		if v.MetadataOptions.HttpProtocolIpv6 == "" {
+			metadataOptions.HTTPProtocolIPv6 = infrav1.InstanceMetadataEndpointStateDisabled
+		} else {
+			metadataOptions.HTTPProtocolIPv6 = infrav1.InstanceMetadataState(v.MetadataOptions.HttpProtocolIpv6)
+		}
 		if v.MetadataOptions.HttpPutResponseHopLimit != nil {
 			metadataOptions.HTTPPutResponseHopLimit = int64(*v.MetadataOptions.HttpPutResponseHopLimit)
 		}
@@ -1153,6 +1164,49 @@ func (s *Service) DetachSecurityGroupsFromNetworkInterface(groups []string, inte
 	return nil
 }
 
+// ModifySourceDestCheck ensures the source/destination check on the instance's
+// CAPA-managed network interfaces matches the desired setting. It is safe to call on
+// every reconcile: interfaces already at the desired value are skipped, so a
+// steady-state reconcile performs no modifications. An empty setting is a no-op,
+// leaving the AWS default (source/destination checking enabled) in place.
+//
+// Interfaces that are not managed by CAPA (e.g. added by cilium) are left untouched,
+// matching the behaviour of UpdateInstanceSecurityGroups.
+func (s *Service) ModifySourceDestCheck(ctx context.Context, instanceID string, setting infrav1.SourceDestCheck) error {
+	if setting == "" {
+		return nil
+	}
+
+	interfaces, err := s.getInstanceENIs(instanceID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get ENIs for instance %q", instanceID)
+	}
+
+	enabled := setting == infrav1.SourceDestCheckEnabled
+	for _, eni := range interfaces {
+		// Only modify interfaces managed by CAPA; other components may attach ENIs we
+		// must not change.
+		if !slices.ContainsFunc(eni.TagSet, func(t types.Tag) bool {
+			return aws.ToString(t.Key) == infrav1.ClusterTagKey(s.scope.Name())
+		}) {
+			s.scope.Debug("Skipping ENI without cluster tag", "eni-id", aws.ToString(eni.NetworkInterfaceId))
+			continue
+		}
+		if eni.SourceDestCheck != nil && aws.ToBool(eni.SourceDestCheck) == enabled {
+			continue
+		}
+
+		input := &ec2.ModifyNetworkInterfaceAttributeInput{
+			NetworkInterfaceId: eni.NetworkInterfaceId,
+			SourceDestCheck:    &types.AttributeBooleanValue{Value: aws.Bool(enabled)},
+		}
+		if _, err := s.EC2Client.ModifyNetworkInterfaceAttribute(ctx, input); err != nil {
+			return errors.Wrapf(err, "failed to modify source/destination check on interface %q", aws.ToString(eni.NetworkInterfaceId))
+		}
+	}
+	return nil
+}
+
 // checkRootVolume checks the input root volume options against the requested AMI's defaults
 // and returns the AMI's root device name.
 func (s *Service) checkRootVolume(rootVolume *infrav1.Volume, imageID string) (*string, error) {
@@ -1228,8 +1282,8 @@ func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *str
 			}
 			domainName := dhcpConfig.Values[0].Value
 			// default domainName is 'ec2.internal' in us-east-1 and 'region.compute.internal' in the other regions.
-			if (s.scope.Region() == "us-east-1" && aws.ToString(domainName) == "ec2.internal") ||
-				(s.scope.Region() != "us-east-1" && aws.ToString(domainName) == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
+			if (s.scope.Region() == defaultRegion && aws.ToString(domainName) == "ec2.internal") ||
+				(s.scope.Region() != defaultRegion && aws.ToString(domainName) == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
 				return nil
 			}
 

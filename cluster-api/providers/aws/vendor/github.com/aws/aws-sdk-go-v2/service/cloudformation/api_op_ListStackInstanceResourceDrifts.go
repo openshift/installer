@@ -4,14 +4,12 @@ package cloudformation
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Returns drift information for resources in a stack instance.
+//
 // ListStackInstanceResourceDrifts returns drift information for the most recent
 // drift detection operation. If an operation is in progress, it may only return
 // partial results.
@@ -48,7 +46,7 @@ type ListStackInstanceResourceDriftsInput struct {
 	// This member is required.
 	StackInstanceRegion *string
 
-	// The name or unique ID of the stack set that you want to list drifted resources
+	// The name or unique ID of the StackSet that you want to list drifted resources
 	// for.
 	//
 	// This member is required.
@@ -56,14 +54,21 @@ type ListStackInstanceResourceDriftsInput struct {
 
 	// [Service-managed permissions] Specifies whether you are acting as an account
 	// administrator in the organization's management account or as a delegated
-	// administrator in a member account. By default, SELF is specified. Use SELF for
-	// stack sets with self-managed permissions.
+	// administrator in a member account.
+	//
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
+	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
+	//
 	//   - If you are signed in to a delegated administrator account, specify
-	//   DELEGATED_ADMIN . Your Amazon Web Services account must be registered as a
-	//   delegated administrator in the management account. For more information, see
-	//   Register a delegated administrator (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
-	//   in the CloudFormation User Guide.
+	//   DELEGATED_ADMIN .
+	//
+	// Your Amazon Web Services account must be registered as a delegated
+	//   administrator in the management account. For more information, see [Register a delegated administrator]in the
+	//   CloudFormation User Guide.
+	//
+	// [Register a delegated administrator]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html
 	CallAs types.CallAs
 
 	// The maximum number of results to be returned with a single call. If the number
@@ -72,20 +77,21 @@ type ListStackInstanceResourceDriftsInput struct {
 	// set of results.
 	MaxResults *int32
 
-	// If the previous paginated request didn't return all of the remaining results,
-	// the response object's NextToken parameter value is set to a token. To retrieve
-	// the next set of results, call this action again and assign that token to the
-	// request object's NextToken parameter. If there are no remaining results, the
-	// previous response object's NextToken parameter is set to null .
+	// The token for the next set of items to return. (You received this token from a
+	// previous call.)
 	NextToken *string
 
 	// The resource drift status of the stack instance.
+	//
 	//   - DELETED : The resource differs from its expected template configuration in
 	//   that the resource has been deleted.
+	//
 	//   - MODIFIED : One or more resource properties differ from their expected
 	//   template values.
+	//
 	//   - IN_SYNC : The resource's actual configuration matches its expected template
 	//   configuration.
+	//
 	//   - NOT_CHECKED : CloudFormation doesn't currently return this value.
 	StackInstanceResourceDriftStatuses []types.StackResourceDriftStatus
 
@@ -101,8 +107,8 @@ type ListStackInstanceResourceDriftsOutput struct {
 	// previous response object's NextToken parameter is set to null .
 	NextToken *string
 
-	// A list of StackInstanceResourceDriftSummary structures that contain information
-	// about the specified stack instances.
+	// A list of StackInstanceResourceDriftsSummary structures that contain
+	// information about the specified stack instances.
 	Summaries []types.StackInstanceResourceDriftsSummary
 
 	// Metadata pertaining to the operation's result.
@@ -112,9 +118,6 @@ type ListStackInstanceResourceDriftsOutput struct {
 }
 
 func (c *Client) addOperationListStackInstanceResourceDriftsMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListStackInstanceResourceDrifts{}, middleware.After)
 	if err != nil {
 		return err
@@ -123,56 +126,20 @@ func (c *Client) addOperationListStackInstanceResourceDriftsMiddlewares(stack *m
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListStackInstanceResourceDrifts"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListStackInstanceResourceDriftsValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListStackInstanceResourceDrifts(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -187,13 +154,8 @@ func (c *Client) addOperationListStackInstanceResourceDriftsMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opListStackInstanceResourceDrifts(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListStackInstanceResourceDrifts",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

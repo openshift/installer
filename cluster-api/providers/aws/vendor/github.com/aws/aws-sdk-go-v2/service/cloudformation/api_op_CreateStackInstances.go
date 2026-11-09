@@ -5,16 +5,25 @@ package cloudformation
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Creates stack instances for the specified accounts, within the specified Amazon
 // Web Services Regions. A stack instance refers to a stack in a specific account
 // and Region. You must specify at least one value for either Accounts or
 // DeploymentTargets , and you must specify at least one value for Regions .
+//
+// The maximum number of organizational unit (OUs) supported by a
+// CreateStackInstances operation is 50.
+//
+// If you need more than 50, consider the following options:
+//
+//   - Batch processing: If you don't want to expose your OU hierarchy, split up
+//     the operations into multiple calls with less than 50 OUs each.
+//
+//   - Parent OU strategy: If you don't mind exposing the OU hierarchy, target a
+//     parent OU that contains all desired child OUs.
 func (c *Client) CreateStackInstances(ctx context.Context, params *CreateStackInstancesInput, optFns ...func(*Options)) (*CreateStackInstancesOutput, error) {
 	if params == nil {
 		params = &CreateStackInstancesInput{}
@@ -38,65 +47,87 @@ type CreateStackInstancesInput struct {
 	// This member is required.
 	Regions []string
 
-	// The name or unique ID of the stack set that you want to create stack instances
+	// The name or unique ID of the StackSet that you want to create stack instances
 	// from.
 	//
 	// This member is required.
 	StackSetName *string
 
-	// [Self-managed permissions] The names of one or more Amazon Web Services
+	// [Self-managed permissions] The account IDs of one or more Amazon Web Services
 	// accounts that you want to create stack instances in the specified Region(s) for.
+	//
 	// You can specify Accounts or DeploymentTargets , but not both.
 	Accounts []string
 
 	// [Service-managed permissions] Specifies whether you are acting as an account
 	// administrator in the organization's management account or as a delegated
-	// administrator in a member account. By default, SELF is specified. Use SELF for
-	// stack sets with self-managed permissions.
+	// administrator in a member account.
+	//
+	// By default, SELF is specified. Use SELF for StackSets with self-managed
+	// permissions.
+	//
 	//   - If you are signed in to the management account, specify SELF .
+	//
 	//   - If you are signed in to a delegated administrator account, specify
-	//   DELEGATED_ADMIN . Your Amazon Web Services account must be registered as a
-	//   delegated administrator in the management account. For more information, see
-	//   Register a delegated administrator (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html)
-	//   in the CloudFormation User Guide.
+	//   DELEGATED_ADMIN .
+	//
+	// Your Amazon Web Services account must be registered as a delegated
+	//   administrator in the management account. For more information, see [Register a delegated administrator]in the
+	//   CloudFormation User Guide.
+	//
+	// [Register a delegated administrator]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-orgs-delegated-admin.html
 	CallAs types.CallAs
 
-	// [Service-managed permissions] The Organizations accounts for which to create
-	// stack instances in the specified Amazon Web Services Regions. You can specify
-	// Accounts or DeploymentTargets , but not both.
+	// [Service-managed permissions] The Organizations accounts in which to create
+	// stack instances in the specified Amazon Web Services Regions.
+	//
+	// You can specify Accounts or DeploymentTargets , but not both.
 	DeploymentTargets *types.DeploymentTargets
 
-	// The unique identifier for this stack set operation. The operation ID also
-	// functions as an idempotency token, to ensure that CloudFormation performs the
-	// stack set operation only once, even if you retry the request multiple times. You
-	// might retry stack set operation requests to ensure that CloudFormation
-	// successfully received them. If you don't specify an operation ID, the SDK
-	// generates one automatically. Repeating this stack set operation with a new
-	// operation ID retries all stack instances whose status is OUTDATED .
+	// The unique identifier for this StackSet operation.
+	//
+	// The operation ID also functions as an idempotency token, to ensure that
+	// CloudFormation performs the StackSet operation only once, even if you retry the
+	// request multiple times. You might retry StackSet operation requests to ensure
+	// that CloudFormation successfully received them.
+	//
+	// If you don't specify an operation ID, the SDK generates one automatically.
+	//
+	// Repeating this StackSet operation with a new operation ID retries all stack
+	// instances whose status is OUTDATED .
 	OperationId *string
 
-	// Preferences for how CloudFormation performs this stack set operation.
+	// Preferences for how CloudFormation performs this StackSet operation.
 	OperationPreferences *types.StackSetOperationPreferences
 
-	// A list of stack set parameters whose values you want to override in the
-	// selected stack instances. Any overridden parameter values will be applied to all
-	// stack instances in the specified accounts and Amazon Web Services Regions. When
-	// specifying parameters and their values, be aware of how CloudFormation sets
-	// parameter values during stack instance operations:
+	// A list of StackSet parameters whose values you want to override in the selected
+	// stack instances.
+	//
+	// Any overridden parameter values will be applied to all stack instances in the
+	// specified accounts and Amazon Web Services Regions. When specifying parameters
+	// and their values, be aware of how CloudFormation sets parameter values during
+	// stack instance operations:
+	//
 	//   - To override the current value for a parameter, include the parameter and
 	//   specify its value.
+	//
 	//   - To leave an overridden parameter set to its present value, include the
 	//   parameter and specify UsePreviousValue as true . (You can't specify both a
 	//   value and set UsePreviousValue to true .)
-	//   - To set an overridden parameter back to the value specified in the stack
-	//   set, specify a parameter list but don't include the parameter in the list.
+	//
+	//   - To set an overridden parameter back to the value specified in the StackSet,
+	//   specify a parameter list but don't include the parameter in the list.
+	//
 	//   - To leave all parameters set to their present values, don't specify this
 	//   property at all.
-	// During stack set updates, any parameter values overridden for a stack instance
-	// aren't updated, but retain their overridden value. You can only override the
-	// parameter values that are specified in the stack set; to add or delete a
-	// parameter itself, use UpdateStackSet (https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html)
-	// to update the stack set template.
+	//
+	// During StackSet updates, any parameter values overridden for a stack instance
+	// aren't updated, but retain their overridden value.
+	//
+	// You can only override the parameter values that are specified in the StackSet;
+	// to add or delete a parameter itself, use [UpdateStackSet]to update the StackSet template.
+	//
+	// [UpdateStackSet]: https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html
 	ParameterOverrides []types.Parameter
 
 	noSmithyDocumentSerde
@@ -104,7 +135,7 @@ type CreateStackInstancesInput struct {
 
 type CreateStackInstancesOutput struct {
 
-	// The unique identifier for this stack set operation.
+	// The unique identifier for this StackSet operation.
 	OperationId *string
 
 	// Metadata pertaining to the operation's result.
@@ -114,9 +145,6 @@ type CreateStackInstancesOutput struct {
 }
 
 func (c *Client) addOperationCreateStackInstancesMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpCreateStackInstances{}, middleware.After)
 	if err != nil {
 		return err
@@ -125,59 +153,23 @@ func (c *Client) addOperationCreateStackInstancesMiddlewares(stack *middleware.S
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CreateStackInstances"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateStackInstancesMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateStackInstancesValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateStackInstances(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -190,6 +182,9 @@ func (c *Client) addOperationCreateStackInstancesMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -226,12 +221,4 @@ func (m *idempotencyToken_initializeOpCreateStackInstances) HandleInitialize(ctx
 }
 func addIdempotencyToken_opCreateStackInstancesMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpCreateStackInstances{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opCreateStackInstances(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CreateStackInstances",
-	}
 }

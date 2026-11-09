@@ -1357,7 +1357,7 @@ func (s *Service) configureAttributes(ctx context.Context, name string, attribut
 }
 
 func (s *Service) configureLBAttributes(ctx context.Context, arn string, attributes map[string]*string) error {
-	attrs := make([]elbv2types.LoadBalancerAttribute, 0)
+	attrs := make([]elbv2types.LoadBalancerAttribute, 0, len(attributes))
 	for k, v := range attributes {
 		attrs = append(attrs, elbv2types.LoadBalancerAttribute{
 			Key:   aws.String(k),

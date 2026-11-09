@@ -4,23 +4,26 @@ package secretsmanager
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/schemas"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager/types"
+	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
 // Retrieves the details of a secret. It does not include the encrypted secret
 // value. Secrets Manager only returns fields that have a value in the response.
+//
 // Secrets Manager generates a CloudTrail log entry when you call this action. Do
 // not include sensitive information in request parameters because it might be
-// logged. For more information, see Logging Secrets Manager events with CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html)
-// . Required permissions: secretsmanager:DescribeSecret . For more information,
-// see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
-// and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html)
-// .
+// logged. For more information, see [Logging Secrets Manager events with CloudTrail].
+//
+// Required permissions: secretsmanager:DescribeSecret . For more information, see [IAM policy actions for Secrets Manager]
+// and [Authentication and access control in Secrets Manager].
+//
+// [Authentication and access control in Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html
+// [Logging Secrets Manager events with CloudTrail]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html
+// [IAM policy actions for Secrets Manager]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions
 func (c *Client) DescribeSecret(ctx context.Context, params *DescribeSecretInput, optFns ...func(*Options)) (*DescribeSecretOutput, error) {
 	if params == nil {
 		params = &DescribeSecretInput{}
@@ -38,14 +41,29 @@ func (c *Client) DescribeSecret(ctx context.Context, params *DescribeSecretInput
 
 type DescribeSecretInput struct {
 
-	// The ARN or name of the secret. For an ARN, we recommend that you specify a
-	// complete ARN rather than a partial ARN. See Finding a secret from a partial ARN (https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen)
-	// .
+	// The ARN or name of the secret.
+	//
+	// For an ARN, we recommend that you specify a complete ARN rather than a partial
+	// ARN. See [Finding a secret from a partial ARN].
+	//
+	// [Finding a secret from a partial ARN]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/troubleshoot.html#ARN_secretnamehyphen
 	//
 	// This member is required.
 	SecretId *string
 
 	noSmithyDocumentSerde
+}
+
+func (v *DescribeSecretInput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.DescribeSecretRequest)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *DescribeSecretInput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.SecretId != nil {
+		s.WriteString(schemas.DescribeSecretRequest_SecretId, *v.SecretId)
+	}
 }
 
 type DescribeSecretOutput struct {
@@ -60,13 +78,28 @@ type DescribeSecretOutput struct {
 	// deletion, this field is omitted. When you delete a secret, Secrets Manager
 	// requires a recovery window of at least 7 days before deleting the secret. Some
 	// time after the deleted date, Secrets Manager deletes the secret, including all
-	// of its versions. If a secret is scheduled for deletion, then its details,
-	// including the encrypted secret value, is not accessible. To cancel a scheduled
-	// deletion and restore access to the secret, use RestoreSecret .
+	// of its versions.
+	//
+	// If a secret is scheduled for deletion, then its details, including the
+	// encrypted secret value, is not accessible. To cancel a scheduled deletion and
+	// restore access to the secret, use RestoreSecret.
 	DeletedDate *time.Time
 
 	// The description of the secret.
 	Description *string
+
+	// The metadata needed to successfully rotate a managed external secret. A list of
+	// key value pairs in JSON format specified by the partner. For more information
+	// about the required information, see [Managed external secrets partners].
+	//
+	// [Managed external secrets partners]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-partners.html
+	ExternalSecretRotationMetadata []types.ExternalSecretRotationMetadataItem
+
+	// The Amazon Resource Name (ARN) of the role that allows Secrets Manager to
+	// rotate a secret held by a third-party partner. For more information, see [Security and permissions].
+	//
+	// [Security and permissions]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/mes-security.html
+	ExternalSecretRotationRoleArn *string
 
 	// The key ID or alias ARN of the KMS key that Secrets Manager uses to encrypt the
 	// secret value. If the secret is encrypted with the Amazon Web Services managed
@@ -93,15 +126,17 @@ type DescribeSecretOutput struct {
 	// isn't configured for rotation or rotation has been disabled, Secrets Manager
 	// returns null. If rotation fails, Secrets Manager retries the entire rotation
 	// process multiple times. If rotation is unsuccessful, this date may be in the
-	// past. This date represents the latest date that rotation will occur, but it is
-	// not an approximate rotation date. In some cases, for example if you turn off
-	// automatic rotation and then turn it back on, the next rotation may occur much
-	// sooner than this date.
+	// past.
+	//
+	// This date represents the latest date that rotation will occur, but it is not an
+	// approximate rotation date. In some cases, for example if you turn off automatic
+	// rotation and then turn it back on, the next rotation may occur much sooner than
+	// this date.
 	NextRotationDate *time.Time
 
-	// The ID of the service that created this secret. For more information, see
-	// Secrets managed by other Amazon Web Services services (https://docs.aws.amazon.com/secretsmanager/latest/userguide/service-linked-secrets.html)
-	// .
+	// The ID of the service that created this secret. For more information, see [Secrets managed by other Amazon Web Services services].
+	//
+	// [Secrets managed by other Amazon Web Services services]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/service-linked-secrets.html
 	OwningService *string
 
 	// The Region the secret is in. If a secret is replicated to other Regions, the
@@ -109,14 +144,19 @@ type DescribeSecretOutput struct {
 	PrimaryRegion *string
 
 	// A list of the replicas of this secret and their status:
+	//
 	//   - Failed , which indicates that the replica was not created.
+	//
 	//   - InProgress , which indicates that Secrets Manager is in the process of
 	//   creating the replica.
+	//
 	//   - InSync , which indicates that the replica was created.
 	ReplicationStatus []types.ReplicationStatusType
 
-	// Specifies whether automatic rotation is turned on for this secret. To turn on
-	// rotation, use RotateSecret . To turn off rotation, use CancelRotateSecret .
+	// Specifies whether automatic rotation is turned on for this secret. If the
+	// secret has never been configured for rotation, Secrets Manager returns null.
+	//
+	// To turn on rotation, use RotateSecret. To turn off rotation, use CancelRotateSecret.
 	RotationEnabled *bool
 
 	// The ARN of the Lambda function that Secrets Manager invokes to rotate the
@@ -129,25 +169,38 @@ type DescribeSecretOutput struct {
 	// rotation turned on, this field is omitted.
 	RotationRules *types.RotationRulesType
 
-	// The list of tags attached to the secret. To add tags to a secret, use
-	// TagResource . To remove tags, use UntagResource .
+	// The list of tags attached to the secret. To add tags to a secret, use TagResource. To
+	// remove tags, use UntagResource.
 	Tags []types.Tag
+
+	// The exact string that identifies the partner that holds the external secret.
+	// For more information, see [Using Secrets Manager managed external secrets].
+	//
+	// [Using Secrets Manager managed external secrets]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/managed-external-secrets.html
+	Type *string
 
 	// A list of the versions of the secret that have staging labels attached.
 	// Versions that don't have staging labels are considered deprecated and Secrets
-	// Manager can delete them. Secrets Manager uses staging labels to indicate the
-	// status of a secret version during rotation. The three staging labels for
-	// rotation are:
+	// Manager can delete them.
+	//
+	// Secrets Manager uses staging labels to indicate the status of a secret version
+	// during rotation. The three staging labels for rotation are:
+	//
 	//   - AWSCURRENT , which indicates the current version of the secret.
+	//
 	//   - AWSPENDING , which indicates the version of the secret that contains new
 	//   secret information that will become the next current version when rotation
-	//   finishes. During rotation, Secrets Manager creates an AWSPENDING version ID
-	//   before creating the new secret version. To check if a secret version exists,
-	//   call GetSecretValue .
+	//   finishes.
+	//
+	// During rotation, Secrets Manager creates an AWSPENDING version ID before
+	//   creating the new secret version. To check if a secret version exists, call GetSecretValue.
+	//
 	//   - AWSPREVIOUS , which indicates the previous current version of the secret.
 	//   You can use this as the last known good version.
-	// For more information about rotation and staging labels, see How rotation works (https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_how.html)
-	// .
+	//
+	// For more information about rotation and staging labels, see [How rotation works].
+	//
+	// [How rotation works]: https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_how.html
 	VersionIdsToStages map[string][]string
 
 	// Metadata pertaining to the operation's result.
@@ -156,68 +209,158 @@ type DescribeSecretOutput struct {
 	noSmithyDocumentSerde
 }
 
+func (v *DescribeSecretOutput) Serialize(s smithy.ShapeSerializer) {
+	s.WriteStruct(schemas.DescribeSecretResponse)
+	v.SerializeMembers(s)
+	s.CloseStruct()
+}
+
+func (v *DescribeSecretOutput) SerializeMembers(s smithy.ShapeSerializer) {
+	if v.ARN != nil {
+		s.WriteString(schemas.DescribeSecretResponse_ARN, *v.ARN)
+	}
+	if v.CreatedDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_CreatedDate, *v.CreatedDate)
+	}
+	if v.DeletedDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_DeletedDate, *v.DeletedDate)
+	}
+	if v.Description != nil {
+		s.WriteString(schemas.DescribeSecretResponse_Description, *v.Description)
+	}
+	serializeExternalSecretRotationMetadataType(s, schemas.DescribeSecretResponse_ExternalSecretRotationMetadata, v.ExternalSecretRotationMetadata)
+	if v.ExternalSecretRotationRoleArn != nil {
+		s.WriteString(schemas.DescribeSecretResponse_ExternalSecretRotationRoleArn, *v.ExternalSecretRotationRoleArn)
+	}
+	if v.KmsKeyId != nil {
+		s.WriteString(schemas.DescribeSecretResponse_KmsKeyId, *v.KmsKeyId)
+	}
+	if v.LastAccessedDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_LastAccessedDate, *v.LastAccessedDate)
+	}
+	if v.LastChangedDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_LastChangedDate, *v.LastChangedDate)
+	}
+	if v.LastRotatedDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_LastRotatedDate, *v.LastRotatedDate)
+	}
+	if v.Name != nil {
+		s.WriteString(schemas.DescribeSecretResponse_Name, *v.Name)
+	}
+	if v.NextRotationDate != nil {
+		s.WriteTime(schemas.DescribeSecretResponse_NextRotationDate, *v.NextRotationDate)
+	}
+	if v.OwningService != nil {
+		s.WriteString(schemas.DescribeSecretResponse_OwningService, *v.OwningService)
+	}
+	if v.PrimaryRegion != nil {
+		s.WriteString(schemas.DescribeSecretResponse_PrimaryRegion, *v.PrimaryRegion)
+	}
+	serializeReplicationStatusListType(s, schemas.DescribeSecretResponse_ReplicationStatus, v.ReplicationStatus)
+	if v.RotationEnabled != nil {
+		s.WriteBool(schemas.DescribeSecretResponse_RotationEnabled, *v.RotationEnabled)
+	}
+	if v.RotationLambdaARN != nil {
+		s.WriteString(schemas.DescribeSecretResponse_RotationLambdaARN, *v.RotationLambdaARN)
+	}
+	if v.RotationRules != nil {
+		s.WriteStruct(schemas.DescribeSecretResponse_RotationRules)
+		v.RotationRules.SerializeMembers(s)
+		s.CloseStruct()
+	}
+	serializeTagListType(s, schemas.DescribeSecretResponse_Tags, v.Tags)
+	if v.Type != nil {
+		s.WriteString(schemas.DescribeSecretResponse_Type, *v.Type)
+	}
+	serializeSecretVersionsToStagesMapType(s, schemas.DescribeSecretResponse_VersionIdsToStages, v.VersionIdsToStages)
+}
+func (v *DescribeSecretOutput) Deserialize(d smithy.ShapeDeserializer) error {
+	return smithy.ReadStruct(d, schemas.DescribeSecretResponse, func(s *smithy.Schema) error {
+		switch s {
+		case schemas.DescribeSecretResponse_ARN:
+			v.ARN = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_ARN, v.ARN)
+		case schemas.DescribeSecretResponse_CreatedDate:
+			v.CreatedDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_CreatedDate, v.CreatedDate)
+		case schemas.DescribeSecretResponse_DeletedDate:
+			v.DeletedDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_DeletedDate, v.DeletedDate)
+		case schemas.DescribeSecretResponse_Description:
+			v.Description = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_Description, v.Description)
+		case schemas.DescribeSecretResponse_ExternalSecretRotationMetadata:
+			return deserializeExternalSecretRotationMetadataType(d, schemas.DescribeSecretResponse_ExternalSecretRotationMetadata, &v.ExternalSecretRotationMetadata)
+		case schemas.DescribeSecretResponse_ExternalSecretRotationRoleArn:
+			v.ExternalSecretRotationRoleArn = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_ExternalSecretRotationRoleArn, v.ExternalSecretRotationRoleArn)
+		case schemas.DescribeSecretResponse_KmsKeyId:
+			v.KmsKeyId = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_KmsKeyId, v.KmsKeyId)
+		case schemas.DescribeSecretResponse_LastAccessedDate:
+			v.LastAccessedDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_LastAccessedDate, v.LastAccessedDate)
+		case schemas.DescribeSecretResponse_LastChangedDate:
+			v.LastChangedDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_LastChangedDate, v.LastChangedDate)
+		case schemas.DescribeSecretResponse_LastRotatedDate:
+			v.LastRotatedDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_LastRotatedDate, v.LastRotatedDate)
+		case schemas.DescribeSecretResponse_Name:
+			v.Name = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_Name, v.Name)
+		case schemas.DescribeSecretResponse_NextRotationDate:
+			v.NextRotationDate = new(time.Time)
+			return d.ReadTime(schemas.DescribeSecretResponse_NextRotationDate, v.NextRotationDate)
+		case schemas.DescribeSecretResponse_OwningService:
+			v.OwningService = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_OwningService, v.OwningService)
+		case schemas.DescribeSecretResponse_PrimaryRegion:
+			v.PrimaryRegion = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_PrimaryRegion, v.PrimaryRegion)
+		case schemas.DescribeSecretResponse_ReplicationStatus:
+			return deserializeReplicationStatusListType(d, schemas.DescribeSecretResponse_ReplicationStatus, &v.ReplicationStatus)
+		case schemas.DescribeSecretResponse_RotationEnabled:
+			v.RotationEnabled = new(bool)
+			return d.ReadBool(schemas.DescribeSecretResponse_RotationEnabled, v.RotationEnabled)
+		case schemas.DescribeSecretResponse_RotationLambdaARN:
+			v.RotationLambdaARN = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_RotationLambdaARN, v.RotationLambdaARN)
+		case schemas.DescribeSecretResponse_RotationRules:
+			v.RotationRules = &types.RotationRulesType{}
+			return v.RotationRules.Deserialize(d)
+		case schemas.DescribeSecretResponse_Tags:
+			return deserializeTagListType(d, schemas.DescribeSecretResponse_Tags, &v.Tags)
+		case schemas.DescribeSecretResponse_Type:
+			v.Type = new(string)
+			return d.ReadString(schemas.DescribeSecretResponse_Type, v.Type)
+		case schemas.DescribeSecretResponse_VersionIdsToStages:
+			return deserializeSecretVersionsToStagesMapType(d, schemas.DescribeSecretResponse_VersionIdsToStages, &v.VersionIdsToStages)
+		}
+		return nil
+	})
+}
 func (c *Client) addOperationDescribeSecretMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
+	if err := stack.Serialize.Add(&serializeRequestMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.DescribeSecret, schemas.DescribeSecretRequest, schemas.DescribeSecretResponse)}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsjson11_serializeOpDescribeSecret{}, middleware.After)
-	if err != nil {
+	if err := stack.Deserialize.Add(&deserializeResponseMiddleware{options: &options, operationSchema: smithy.NewOperationSchema(schemas.DescribeSecret, schemas.DescribeSecretRequest, schemas.DescribeSecretResponse), output: &DescribeSecretOutput{}}, middleware.After); err != nil {
 		return err
-	}
-	err = stack.Deserialize.Add(&awsAwsjson11_deserializeOpDescribeSecret{}, middleware.After)
-	if err != nil {
-		return err
-	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeSecret"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeSecretValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeSecret(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -232,13 +375,8 @@ func (c *Client) addOperationDescribeSecretMiddlewares(stack *middleware.Stack, 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	return nil
-}
-
-func newServiceMetadataMiddleware_opDescribeSecret(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DescribeSecret",
+	if err = addInterceptors(stack, options); err != nil {
+		return err
 	}
+	return nil
 }

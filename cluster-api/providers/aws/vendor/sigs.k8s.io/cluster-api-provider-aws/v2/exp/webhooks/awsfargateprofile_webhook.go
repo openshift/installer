@@ -44,10 +44,9 @@ type AWSFargateProfile struct{}
 
 // SetupWebhookWithManager will setup the webhooks for the AWSFargateProfile.
 func (w *AWSFargateProfile) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&expinfrav1.AWSFargateProfile{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &expinfrav1.AWSFargateProfile{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 

@@ -5,20 +5,22 @@ package iam
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Returns information about the SSH public keys associated with the specified IAM
-// user. If none exists, the operation returns an empty list. The SSH public keys
-// returned by this operation are used only for authenticating the IAM user to an
-// CodeCommit repository. For more information about using SSH keys to authenticate
-// to an CodeCommit repository, see Set up CodeCommit for SSH connections (https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html)
-// in the CodeCommit User Guide. Although each user is limited to a small number of
-// keys, you can still paginate the results using the MaxItems and Marker
-// parameters.
+// user. If none exists, the operation returns an empty list.
+//
+// The SSH public keys returned by this operation are used only for authenticating
+// the IAM user to an CodeCommit repository. For more information about using SSH
+// keys to authenticate to an CodeCommit repository, see [Set up CodeCommit for SSH connections]in the CodeCommit User
+// Guide.
+//
+// Although each user is limited to a small number of keys, you can still paginate
+// the results using the MaxItems and Marker parameters.
+//
+// [Set up CodeCommit for SSH connections]: https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html
 func (c *Client) ListSSHPublicKeys(ctx context.Context, params *ListSSHPublicKeysInput, optFns ...func(*Options)) (*ListSSHPublicKeysOutput, error) {
 	if params == nil {
 		params = &ListSSHPublicKeysInput{}
@@ -44,25 +46,32 @@ type ListSSHPublicKeysInput struct {
 
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	MaxItems *int32
 
 	// The name of the IAM user to list SSH public keys for. If none is specified, the
 	// UserName field is determined implicitly based on the Amazon Web Services access
-	// key used to sign the request. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
-	// ) a string of characters consisting of upper and lowercase alphanumeric
-	// characters with no spaces. You can also include any of the following characters:
-	// _+=,.@-
+	// key used to sign the request.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	UserName *string
 
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful ListSSHPublicKeys request.
+// Contains the response to a successful [ListSSHPublicKeys] request.
+//
+// [ListSSHPublicKeys]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListSSHPublicKeys.html
 type ListSSHPublicKeysOutput struct {
 
 	// A flag that indicates whether there are more items to return. If your results
@@ -87,9 +96,6 @@ type ListSSHPublicKeysOutput struct {
 }
 
 func (c *Client) addOperationListSSHPublicKeysMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpListSSHPublicKeys{}, middleware.After)
 	if err != nil {
 		return err
@@ -98,53 +104,17 @@ func (c *Client) addOperationListSSHPublicKeysMiddlewares(stack *middleware.Stac
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ListSSHPublicKeys"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
-	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
-		return err
-	}
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
-	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSSHPublicKeys(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -159,26 +129,23 @@ func (c *Client) addOperationListSSHPublicKeysMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptors(stack, options); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListSSHPublicKeysAPIClient is a client that implements the ListSSHPublicKeys
-// operation.
-type ListSSHPublicKeysAPIClient interface {
-	ListSSHPublicKeys(context.Context, *ListSSHPublicKeysInput, ...func(*Options)) (*ListSSHPublicKeysOutput, error)
-}
-
-var _ ListSSHPublicKeysAPIClient = (*Client)(nil)
 
 // ListSSHPublicKeysPaginatorOptions is the paginator options for ListSSHPublicKeys
 type ListSSHPublicKeysPaginatorOptions struct {
 	// Use this only when paginating results to indicate the maximum number of items
 	// you want in the response. If additional items exist beyond the maximum you
-	// specify, the IsTruncated response element is true . If you do not include this
-	// parameter, the number of items defaults to 100. Note that IAM might return fewer
-	// results, even when there are more results available. In that case, the
-	// IsTruncated response element returns true , and Marker contains a value to
-	// include in the subsequent call that tells the service where to continue from.
+	// specify, the IsTruncated response element is true .
+	//
+	// If you do not include this parameter, the number of items defaults to 100. Note
+	// that IAM might return fewer results, even when there are more results available.
+	// In that case, the IsTruncated response element returns true , and Marker
+	// contains a value to include in the subsequent call that tells the service where
+	// to continue from.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -239,6 +206,9 @@ func (p *ListSSHPublicKeysPaginator) NextPage(ctx context.Context, optFns ...fun
 	}
 	params.MaxItems = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListSSHPublicKeys(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -258,10 +228,10 @@ func (p *ListSSHPublicKeysPaginator) NextPage(ctx context.Context, optFns ...fun
 	return result, nil
 }
 
-func newServiceMetadataMiddleware_opListSSHPublicKeys(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ListSSHPublicKeys",
-	}
+// ListSSHPublicKeysAPIClient is a client that implements the ListSSHPublicKeys
+// operation.
+type ListSSHPublicKeysAPIClient interface {
+	ListSSHPublicKeys(context.Context, *ListSSHPublicKeysInput, ...func(*Options)) (*ListSSHPublicKeysOutput, error)
 }
+
+var _ ListSSHPublicKeysAPIClient = (*Client)(nil)

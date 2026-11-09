@@ -41,10 +41,9 @@ type AWSManagedControlPlaneTemplate struct{}
 
 // SetupWebhookWithManager sets up the webhook with the Manager.
 func (w *AWSManagedControlPlaneTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&ekscontrolplanev1.AWSManagedControlPlaneTemplate{}).
-		WithValidator(w).
-		WithDefaulter(w).
+	return ctrl.NewWebhookManagedBy(mgr, &ekscontrolplanev1.AWSManagedControlPlaneTemplate{}).
+		WithCustomValidator(w).
+		WithCustomDefaulter(w).
 		Complete()
 }
 
