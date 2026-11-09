@@ -13,6 +13,12 @@ KUBECONFIG="${1}"
 # workers, and zero on platform none, where nothing else would approve them.
 MAX_NODES="${2:-0}"
 
+# Networks the machines are placed on, passed by the installer through the
+# unit. A kubelet serves on an address of the node it runs on, so a serving
+# request may only name addresses out of these. An empty list leaves the
+# addresses unchecked.
+MACHINE_NETWORKS="${APPROVE_CSR_MACHINE_NETWORKS:-}"
+
 # Attributes shared by every kubelet client CSR that the machine-config-operator
 # bootstrapper issues on behalf of a node joining the cluster.
 readonly CLIENT_SIGNER="kubernetes.io/kube-apiserver-client-kubelet"
@@ -171,6 +177,19 @@ node_common_name() {
     esac
 }
 
+# is_machine_address reports whether an address falls inside one of the
+# networks the machines are placed on.
+#   1 - address
+is_machine_address() {
+    local network
+    for network in ${MACHINE_NETWORKS}; do
+        if ip_in_cidr "${1}" "${network}"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # node_is_listed reports whether a space delimited list of node names holds
 # one name. Node names are DNS names, so they never contain a space.
 #   1 - space delimited list   2 - name
@@ -206,9 +225,9 @@ is_node_client_request() {
 # carries exactly the subject a kubelet serving certificate is allowed to have,
 # for the node that asked for it.
 #   1 - PEM encoded certificate request   2 - requesting username
-#   3 - CSR name, used only to report an address worth looking at
+#   3 - CSR name, used only to report the address that was refused
 is_node_serving_request() {
-    local pem="${1}" requester="${2}" name="${3}" common_name address class
+    local pem="${1}" requester="${2}" name="${3}" common_name address
 
     common_name="$(node_common_name "${pem}")" || return 1
 
@@ -219,20 +238,22 @@ is_node_serving_request() {
     # kinds of subject alternative name carry identities a kubelet never needs.
     [ -z "$(san_field email "${pem}")$(san_field URI "${pem}")" ] || return 1
 
-    # A kubelet serves on the addresses of the node it runs on, so an address
-    # that cannot be one of those names something other than that node.
+    # A kubelet serves on an address of the node it runs on, so an address no
+    # node can hold whatever the install looks like names something other than
+    # that node.
     for address in $(san_field 'IP Address' "${pem}" | tr ',' ' '); do
-        class="$(ip_address_class "${address}")"
-        case "${class}" in
-            '') ;;
-            link-local)
-                # Reported rather than refused: the cluster network itself uses
-                # addresses out of 169.254.0.0/16, and it is not yet confirmed
-                # that none of them can reach a node's address list.
-                echo "CSR ${name} carries a ${class} address ${address}"
-                ;;
+        case "$(ip_address_class "${address}")" in
+            ''|link-local) ;;
             *) return 1 ;;
         esac
+
+        # An address outside the networks the machines are placed on is only
+        # reported. The networks are not cross checked against the nodes on
+        # every platform, so an address outside them is not yet proof that the
+        # request is wrong, and refusing it would leave a node unable to serve.
+        if [ -n "${MACHINE_NETWORKS}" ] && ! is_machine_address "${address}"; then
+            echo "CSR ${name} names ${address}, which is outside the machine networks"
+        fi
     done
 }
 
