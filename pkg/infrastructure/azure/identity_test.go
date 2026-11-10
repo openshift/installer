@@ -260,6 +260,7 @@ func (transport roleAssignmentTestTransport) Do(req *http.Request) (*http.Respon
 }
 
 func newTestRoleAssignmentsClient(t *testing.T, transport roleAssignmentTestTransport) *armauthorization.RoleAssignmentsClient {
+	t.Helper()
 	client, err := armauthorization.NewRoleAssignmentsClient("sub", testTokenCredential{}, &arm.ClientOptions{
 		ClientOptions: azpolicy.ClientOptions{
 			Retry:     azpolicy.RetryOptions{RetryDelay: time.Millisecond},
