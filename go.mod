@@ -342,6 +342,6 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.4
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.33.0-sec.6
 
 replace golang.org/x/net => github.com/openshift-sustaining/net v0.35.0-sec.4
