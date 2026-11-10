@@ -25,6 +25,7 @@ func TestCreateRoleAssignmentWithRetry(t *testing.T) {
 		{
 			name: "retries principal not found",
 			run: func(t *testing.T) {
+				t.Helper()
 				calls := 0
 				err := createRoleAssignmentWithRetry(context.Background(), time.Millisecond, time.Second, func(context.Context) error {
 					calls++
@@ -41,6 +42,7 @@ func TestCreateRoleAssignmentWithRetry(t *testing.T) {
 		{
 			name: "does not retry 429 outside the azure sdk",
 			run: func(t *testing.T) {
+				t.Helper()
 				calls := 0
 				tooManyRequestsErr := &azcore.ResponseError{StatusCode: http.StatusTooManyRequests}
 				err := createRoleAssignmentWithRetry(context.Background(), time.Millisecond, time.Second, func(context.Context) error {
@@ -55,6 +57,7 @@ func TestCreateRoleAssignmentWithRetry(t *testing.T) {
 		{
 			name: "returns forbidden without retrying",
 			run: func(t *testing.T) {
+				t.Helper()
 				calls := 0
 				forbiddenErr := &azcore.ResponseError{StatusCode: http.StatusForbidden, ErrorCode: "AuthorizationFailed"}
 				err := createRoleAssignmentWithRetry(context.Background(), time.Millisecond, time.Second, func(context.Context) error {
@@ -69,6 +72,7 @@ func TestCreateRoleAssignmentWithRetry(t *testing.T) {
 		{
 			name: "cancelled context stops retrying",
 			run: func(t *testing.T) {
+				t.Helper()
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
 				calls := 0
@@ -237,6 +241,7 @@ func TestShouldRetryRoleAssignmentError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
 			assert.Equal(t, tt.want, shouldRetryRoleAssignmentError(tt.err))
 		})
 	}
