@@ -319,7 +319,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.AWS != nil {
 		validate(aws.Name, p.AWS, func(f *field.Path) field.ErrorList {
-			return awsvalidation.ValidateMachinePool(platform.AWS, p.AWS, pool.Name, f)
+			return awsvalidation.ValidateMachinePool(platform.AWS, p.AWS, pool.Name, pool.Management, f)
 		})
 	}
 	if p.Azure != nil {

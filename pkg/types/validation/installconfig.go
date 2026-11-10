@@ -918,6 +918,7 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
+
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
 	allErrs = append(allErrs, validateFencingCredentialsAndPlatform(installConfig)...)
 	return allErrs
@@ -971,7 +972,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		}
 		poolNames[p.Name] = true
 		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
-			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heterogeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 
 		// We only allow multi arch on baremetal when the control plane is x86 and compute is arm64.
