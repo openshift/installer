@@ -145,8 +145,7 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
 func waitForInitializedCluster(ctx context.Context, config *rest.Config, extendTimeout bool) error {
-	// TODO revert this value back to 30 minutes.  It's currently at the end of 4.6 and we're trying to see if the
-	timeout := 40 * time.Minute
+	timeout := 30 * time.Minute
 
 	// Wait longer for baremetal, due to length of time it takes to boot
 	// Wait longer for AWS with userProvisionedDNS enabled.
