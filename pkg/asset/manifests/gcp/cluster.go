@@ -162,6 +162,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			LoadBalancer: capg.LoadBalancerSpec{
 				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
+				InternalLoadBalancer:              internalLoadBalancerFromPlatform(installConfig.Config.GCP),
 			},
 			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
 		},
@@ -279,4 +280,22 @@ func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg
 	}
 
 	return tags
+}
+
+// internalLoadBalancerFromPlatform maps install-config load balancer settings
+// onto the CAPG InternalLoadBalancer spec. Global client access is required
+// when the installer or other clients run in a different region than the
+// cluster.
+func internalLoadBalancerFromPlatform(platform *gcp.Platform) *capg.LoadBalancer {
+	if platform == nil || platform.LoadBalancer == nil {
+		return nil
+	}
+	switch platform.LoadBalancer.ClientAccess {
+	case gcp.ClientAccessGlobal:
+		return &capg.LoadBalancer{InternalAccess: capg.InternalAccessGlobal}
+	case gcp.ClientAccessLocal:
+		return &capg.LoadBalancer{InternalAccess: capg.InternalAccessRegional}
+	default:
+		return nil
+	}
 }
