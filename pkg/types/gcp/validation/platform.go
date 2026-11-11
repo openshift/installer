@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -145,6 +146,8 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
+	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+
 	if p.FirewallRulesManagement != "" {
 		supportedFirewallRulePolicies := sets.New(gcp.ManagedFirewallRules, gcp.UnmanagedFirewallRules)
 		if !supportedFirewallRulePolicies.Has(p.FirewallRulesManagement) {
@@ -193,4 +196,23 @@ func validateLabel(key, value string) error {
 		return fmt.Errorf("label key contains restricted prefix. Label key cannot have `kubernetes-io`, `openshift-io` prefixes")
 	}
 	return nil
+}
+
+func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ipFamily == "" {
+		return allErrs
+	}
+	validFamilies := []string{
+		string(network.IPv4),
+		string(network.DualStackIPv4Primary),
+		string(network.DualStackIPv6Primary),
+	}
+	switch ipFamily {
+	case network.IPv4, network.DualStackIPv4Primary, network.DualStackIPv6Primary:
+		// valid
+	default:
+		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validFamilies))
+	}
+	return allErrs
 }

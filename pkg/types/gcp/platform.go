@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 // FirewallRulesManagementPolicy defines the management policy for firewall rules in the cluster.
@@ -130,6 +131,18 @@ type Platform struct {
 	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+
+	// IPFamily specifies the IP address family for the cluster network.
+	// Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+	// with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+	// networking with IPv6 as the primary address family. When using dual-stack, the VPC
+	// and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+	//
+	// +kubebuilder:default:="IPv4"
+	// +default="IPv4"
+	// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
+	// +optional
+	IPFamily network.IPFamily `json:"ipFamily,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
