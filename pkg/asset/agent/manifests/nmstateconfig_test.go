@@ -27,6 +27,89 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		expectedError      string
 	}{
 		{
+			name: "OVE unconfigured-ignition - no install-config but agent-config with hosts",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getValidAgentHostsConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: true,
+			expectedConfig: []*aiv1beta1.NMStateConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "cluster-0",
+						Namespace: "cluster0",
+						Labels:    getNMStateConfigLabels("cluster"),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2s0",
+								MacAddress: "98:af:65:a5:8d:01",
+							},
+							{
+								Name:       "enp3s1",
+								MacAddress: "28:d2:44:d2:b2:1a",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "cluster-1",
+						Namespace: "cluster0",
+						Labels:    getNMStateConfigLabels("cluster"),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2t0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+						},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "cluster-2",
+						Namespace: "cluster0",
+						Labels:    getNMStateConfigLabels("cluster"),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2u0",
+								MacAddress: "98:af:65:a5:8d:03",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+						},
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
 			name: "add-nodes workflow",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
