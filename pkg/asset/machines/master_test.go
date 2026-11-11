@@ -598,6 +598,30 @@ func TestSupportedSNOPlatforms(t *testing.T) {
 			expectedError:       true,
 		},
 		{
+			name: "Baremetal platform with bootstrapInPlace",
+			platform: types.Platform{
+				BareMetal: &baremetal.Platform{
+					Hosts: []*baremetal.Host{
+						{
+							Name: "master-0",
+							Role: "master",
+							BMC: baremetal.BMC{
+								Username: "usr-0",
+								Password: "pwd-0",
+							},
+						},
+					},
+				},
+			},
+			bootstrapInPlace: &types.BootstrapInPlace{
+				InstallationDisk: "/dev/sda",
+			},
+			machinePoolPlatform: types.MachinePoolPlatform{
+				BareMetal: &baremetal.MachinePool{},
+			},
+			expectedError: false,
+		},
+		{
 			name: "Nutanix platform",
 			platform: types.Platform{
 				Nutanix: &nutanix.Platform{},
