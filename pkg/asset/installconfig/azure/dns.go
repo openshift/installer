@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
@@ -19,6 +21,7 @@ type DNSConfig struct {
 // ZonesGetter fetches the DNS zones available for the installer
 type ZonesGetter interface {
 	GetAllPublicZones() (map[string]string, error)
+	GetZone(rgName string, zoneName string) (*azdns.Zone, error)
 }
 
 // ZonesClient wraps the azure ZonesClient internal
@@ -95,6 +98,20 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 
 }
 
+// GetPublicDNSZone returns the public DNS zone zoneName in resource group rgName.
+func (config DNSConfig) GetPublicDNSZone(rgName string, zoneName string) (*Zone, error) {
+	zonesClient := newZonesClient(config.session)
+	zone, err := zonesClient.GetZone(rgName, zoneName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Zone{
+		ID:   to.String(zone.ID),
+		Name: to.String(zone.Name),
+	}, nil
+}
+
 // GetDNSRecordSet gets a record set for the zone identified by publicZoneID
 func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType azdns.RecordType) (*azdns.RecordSet, error) {
 	recordsetsClient := newRecordSetsClient(config.session)
@@ -139,6 +156,19 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 	return allZones, nil
 }
 
+// GetZone gets an Azure public DNS zone by resource group and zone name.
+func (client *ZonesClient) GetZone(rgName string, zoneName string) (*azdns.Zone, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	zone, err := client.azureClient.Get(ctx, rgName, zoneName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &zone, nil
+}
+
 // GetRecordSet gets an Azure DNS recordset by zone, name and recordset type
 func (client *RecordSetsClient) GetRecordSet(rgName string, zoneName string, relativeRecordSetName string, recordType azdns.RecordType) (*azdns.RecordSet, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -150,4 +180,13 @@ func (client *RecordSetsClient) GetRecordSet(rgName string, zoneName string, rel
 	}
 
 	return &recordset, nil
+}
+
+// isNotFound returns true when err is a 404.
+func isNotFound(err error) bool {
+	var detailedErr autorest.DetailedError
+	if errors.As(err, &detailedErr) {
+		return detailedErr.StatusCode == http.StatusNotFound
+	}
+	return false
 }
