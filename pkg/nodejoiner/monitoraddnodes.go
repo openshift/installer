@@ -20,13 +20,10 @@ func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) e
 		return err
 	}
 
-	// sshKey is not required parameter for monitor-add-nodes
-	sshKey := ""
-
 	clusters := []*agentpkg.Cluster{}
 	ctx := context.Background()
 	for _, ip := range ips {
-		cluster, err := agentpkg.NewCluster(ctx, assetStore, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
+		cluster, err := agentpkg.NewCluster(ctx, assetStore, ip, kubeconfigPath, workflow.AgentWorkflowTypeAddNodes)
 		if err != nil {
 			return err
 		}
