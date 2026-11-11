@@ -62,6 +62,12 @@ func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 			return nil, fmt.Errorf("failed to get vpc (%s): err = %w, response = %v", vpcID, err, response)
 		}
 
+		// A user-supplied VPC is never deleted, even if its name contains the infra ID.
+		if o.VPC != "" && ((vpc.ID != nil && *vpc.ID == o.VPC) || (vpc.Name != nil && *vpc.Name == o.VPC)) {
+			o.Logger.Debugf("listVPCs: skipping user-supplied VPC: %s, %s", *vpc.ID, *vpc.Name)
+			continue
+		}
+
 		result = append(result, cloudResource{
 			key:      *vpc.ID,
 			name:     *vpc.Name,
