@@ -382,7 +382,11 @@ func (m *Metadata) GetVPCRoutingTables(ctx context.Context, vpc *vpcv1.VPC) ([]v
 }
 
 // GetDNSServerIP gets the IP of a custom resolver for DNS use.
-func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, error) {
+func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcNameOrID string, vpcRegion string) (string, error) {
+	var (
+		vpc *vpcv1.VPC
+		err error
+	)
 	if m.dnsInstanceCRN == "" {
 		_, err := m.DNSInstanceCRN(ctx)
 		if err != nil {
@@ -401,15 +405,18 @@ func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, 
 	if err != nil {
 		return "", err
 	}
-	vpc, err := client.GetVPCByName(ctx, vpcName)
+	vpc, err = client.GetVPCByName(ctx, vpcNameOrID)
 	if err != nil {
-		return "", err
+		vpc, err = client.GetVPCByID(ctx, vpcNameOrID, vpcRegion)
+		if err != nil {
+			return "", fmt.Errorf("vpc %v is not a valid VPC name or id", vpcNameOrID)
+		}
 	}
 
 	dnsServerIP, err := client.GetDNSCustomResolverIP(ctx, dnsCRN.ServiceInstance, *vpc.ID)
 	if err != nil {
 		// There is no custom resolver, try to create one.
-		customResolverName := fmt.Sprintf("%s-custom-resolver", vpcName)
+		customResolverName := fmt.Sprintf("%s-custom-resolver", *vpc.Name)
 		customResolver, err := client.CreateDNSCustomResolver(ctx, customResolverName, dnsCRN.ServiceInstance, *vpc.ID)
 		if err != nil {
 			return "", err
