@@ -61,12 +61,12 @@ type MachinePool struct {
 	// GPUs is a list of GPU devices to attach to the machine's VM.
 	// +listType=set
 	// +optional
-	GPUs []machinev1.NutanixGPU `json:"gpus"`
+	GPUs []machinev1.NutanixGPU `json:"gpus,omitempty"`
 
 	// DataDisks holds information of the data disks to attach to the Machine's VM
 	// +listType=set
 	// +optional
-	DataDisks []DataDisk `json:"dataDisks"`
+	DataDisks []DataDisk `json:"dataDisks,omitempty"`
 
 	// FailureDomains optionally configures a list of failure domain names
 	// that will be applied to the MachinePool
