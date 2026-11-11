@@ -108,13 +108,57 @@ subject_field() {
         paste -sd, -
 }
 
-# request_sans prints the subject alternative names a PEM encoded certificate
-# request carries, or nothing at all when it carries none.
+# request_sans prints the lines openssl prints the subject alternative names
+# on, or nothing at all when the request carries none. Every name openssl
+# knows is matched, not only the line that follows the extension header: a
+# name holding a newline prints as a further line, and reading only the first
+# would hide every name after it. Matching them wherever they land means such
+# a request shows up as more than one line, which sans_are_unambiguous
+# refuses.
 #   1 - PEM encoded certificate request
 request_sans() {
     printf '%s' "${1}" |
         openssl req -noout -text 2>/dev/null |
-        sed -n '/X509v3 Subject Alternative Name/{n;p}'
+        sed -n '/^[[:space:]]*\(DNS\|IP Address\|email\|URI\|othername\|DirName\|Registered ID\):/p'
+}
+
+# san_count_printed prints how many subject alternative names the printed form
+# shows, counting every name on every line it was matched on.
+#   1 - PEM encoded certificate request
+san_count_printed() {
+    request_sans "${1}" |
+        tr ',' '\n' |
+        sed -n '/^[[:space:]]*\(DNS\|IP Address\|email\|URI\|othername\|DirName\|Registered ID\):/p' |
+        wc -l
+}
+
+# san_count_encoded prints how many subject alternative names the request
+# actually carries, read from the encoding rather than from the printed form.
+# asn1parse prints one line per name and never prints the names themselves, so
+# a name holding a newline cannot change the count.
+#   1 - PEM encoded certificate request
+san_count_encoded() {
+    local pem="${1}" offset
+    offset="$(printf '%s' "${pem}" | openssl asn1parse 2>/dev/null |
+        sed -n '/X509v3 Subject Alternative Name/{n;s/^ *\([0-9][0-9]*\):.*/\1/p}')"
+    if [ -z "${offset}" ]; then
+        printf '0'
+        return 0
+    fi
+    printf '%s' "$(printf '%s' "${pem}" |
+        openssl asn1parse -strparse "${offset}" 2>/dev/null |
+        sed -n '/^ *[0-9][0-9]*:d=1 /p' |
+        wc -l)"
+}
+
+# sans_are_unambiguous reports whether the printed form shows every subject
+# alternative name the request carries. It does unless a name holds a newline:
+# the names after it then print as further lines, where they are read as names
+# of their own or not read at all, and either way the count no longer agrees
+# with the encoding. No name a kubelet asks for holds one.
+#   1 - PEM encoded certificate request
+sans_are_unambiguous() {
+    [ "$(san_count_printed "${1}")" -eq "$(san_count_encoded "${1}")" ]
 }
 
 # san_field prints the subject alternative names of one type carried by a PEM
@@ -267,6 +311,15 @@ is_node_serving_request() {
 
     # A node may only ask for a serving certificate that names itself.
     [ "${common_name}" = "${requester}" ] || return 1
+
+    # Every check below reads the names openssl printed. If they do not all
+    # sit on one line then one of them holds a newline, and what follows it
+    # cannot be told from a name of its own, so nothing below can be trusted
+    # to have seen them all.
+    if ! sans_are_unambiguous "${pem}"; then
+        echo "CSR ${name} carries a subject alternative name holding a newline"
+        return 1
+    fi
 
     # A serving certificate legitimately names hosts and addresses. The other
     # kinds of subject alternative name carry identities a kubelet never needs.
