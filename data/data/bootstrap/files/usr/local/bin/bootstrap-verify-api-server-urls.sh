@@ -7,9 +7,9 @@
 # 1. name of the URL
 # 2. The value of the URL
 function lookup_url() {
-    unset IPS
-    unset IP
-    IPS=$(dig "${2}" +short)
+    local IPS
+    # dig prints errors like ";; connection timed out" to stdout, so skip them.
+    IPS=$( { dig "${2}" A +short; dig "${2}" AAAA +short; } | grep -v -e '^;' -e '^$' || true )
     if [[ -n "${IPS}" ]] ; then
         echo "Successfully resolved ${1} ${2}"
         return 0
