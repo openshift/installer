@@ -7,11 +7,13 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -1128,6 +1130,76 @@ func TestValidateServiceEndpoints(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateCOSInstance(t *testing.T) {
+	validCRN := "crn:v1:bluemix:public:cloud-object-storage:global:a/1234567890abcdef1234567890abcdef:instance-id::"
+	cosServiceIDVal := cosServiceID
+	wrongServiceIDVal := "wrong-service-id"
+
+	cases := []struct {
+		name     string
+		crn      string
+		mock     func(mockClient *mock.MockAPI)
+		errorMsg string
+	}{
+		{
+			name: "valid COS instance",
+			crn:  validCRN,
+			mock: func(mockClient *mock.MockAPI) {
+				mockClient.EXPECT().GetResourceInstance(gomock.Any(), validCRN).Return(&resourcecontrollerv2.ResourceInstance{
+					ResourceID: &cosServiceIDVal,
+				}, nil)
+			},
+		},
+		{
+			name:     "empty CRN",
+			crn:      "",
+			errorMsg: `platform\.ibmcloud\.cosInstanceCRN: Required value: COS instance CRN cannot be empty`,
+		},
+		{
+			name:     "invalid structure",
+			crn:      "invalid-crn",
+			errorMsg: `platform\.ibmcloud\.cosInstanceCRN: Invalid value: "invalid-crn": COS instance CRN must contain exactly 10 colon-separated segments`,
+		},
+		{
+			name: "client error",
+			crn:  validCRN,
+			mock: func(mockClient *mock.MockAPI) {
+				mockClient.EXPECT().GetResourceInstance(gomock.Any(), validCRN).Return(nil, errors.New("not found"))
+			},
+			errorMsg: `platform\.ibmcloud\.cosInstanceCRN: Invalid value: ".*": failed to verify COS instance: not found`,
+		},
+		{
+			name: "wrong resource ID",
+			crn:  validCRN,
+			mock: func(mockClient *mock.MockAPI) {
+				mockClient.EXPECT().GetResourceInstance(gomock.Any(), validCRN).Return(&resourcecontrollerv2.ResourceInstance{
+					ResourceID: &wrongServiceIDVal,
+				}, nil)
+			},
+			errorMsg: `platform\.ibmcloud\.cosInstanceCRN: Invalid value: ".*": CRN does not refer to a Cloud Object Storage instance`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockClient := mock.NewMockAPI(mockCtrl)
+			if tc.mock != nil {
+				tc.mock(mockClient)
+			}
+
+			errs := validateCOSInstanceCRN(mockClient, tc.crn, field.NewPath("platform", "ibmcloud", "cosInstanceCRN"))
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, errs.ToAggregate())
+			} else {
+				assert.Empty(t, errs)
 			}
 		})
 	}

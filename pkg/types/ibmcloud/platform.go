@@ -180,6 +180,13 @@ type Platform struct {
 	// There must only be one ServiceEndpoint for a service (no duplicates).
 	// +optional
 	ServiceEndpoints []configv1.IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
+
+	// COSInstanceCRN is the CRN of an existing IBM Cloud Object Storage instance
+	// to use for storing the RHCOS image and bootstrap ignition data.
+	// If not specified, a new COS instance will be created for the cluster.
+	// The CRN format is: crn:v1:bluemix:public:cloud-object-storage:global:a/<account_id>:<instance_id>::
+	// +optional
+	COSInstanceCRN string `json:"cosInstanceCRN,omitempty"`
 }
 
 // ClusterResourceGroupName returns the name of the resource group for the cluster.

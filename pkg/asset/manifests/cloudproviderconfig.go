@@ -314,7 +314,7 @@ NodeIPFamilies=ipv4
 			return err
 		}
 
-		client, err = powervsconfig.NewClient()
+		client, err = powervsconfig.NewClientWithEndpoints(installConfig.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return err
 		}
