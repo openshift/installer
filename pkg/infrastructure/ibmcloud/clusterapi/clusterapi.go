@@ -494,40 +494,27 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	bucketName := ibmcloudbootstrap.GetIgnitionBucketName(infraID)
 	// Get COS Instance ID
 	logrus.Debugf("bootstrap destroy check cos resources for %s/%s", cosInstanceName, bucketName)
+	var cosResourceNotFoundError *ibmcloudic.COSResourceNotFoundError
 	cosInstanceDetails, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
 	switch {
+	// The COS Instance already being gone is the desired result, so its cleanup can be skipped in that case.
+	case errors.As(err, &cosResourceNotFoundError):
+		logrus.Debugf("no cos instance found for the cluster as %s, skipping ignition bucket and cos instance cleanup", cosInstanceName)
 	case err != nil:
 		return fmt.Errorf("failed retrieving cos instance for destroy bootstrap: %w", err)
-	case cosInstanceDetails != nil:
+	case cosInstanceDetails == nil || cosInstanceDetails.ID == nil:
+		logrus.Debugf("no cos instance found for the cluster as %s, skipping ignition bucket and cos instance cleanup", cosInstanceName)
+	default:
 		err = cleanupIgnitionCOSBucket(ctx, client, *cosInstanceDetails.ID, bucketName, region)
 		if err != nil {
 			return fmt.Errorf("failed to cleanup bootstrap ignition cos bucket %s: %w", bucketName, err)
 		}
 		logrus.Debugf("cleaned up bootstrap ignition cos bucket: %s/%s", *cosInstanceDetails.ID, bucketName)
-	default:
-		logrus.Debugf("no cos instance found for the cluster as %s, skipping ignition bucket cleanup", cosInstanceName)
-	}
 
-	// If there are no additional Buckets within the COS Instance (specifically the Bucket used for the VSI Image), cleanup the COS Instance as well.
-	logrus.Debugf("checking whether cos instance should be cleaned up as well: %s", *cosInstanceDetails.ID)
-	cosBucketsOutput, err := client.ListCOSBuckets(ctx, *cosInstanceDetails.ID, region)
-	switch {
-	case err != nil:
-		return fmt.Errorf("failed listing cos buckets in cos instance %s: %w", *cosInstanceDetails.ID, err)
-	case cosBucketsOutput == nil || len(cosBucketsOutput.Buckets) == 0:
-		logrus.Debugf("no remaining buckets in cos instance %s, attempting to cleanup instance", *cosInstanceDetails.ID)
-		err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
-		if err != nil {
-			return fmt.Errorf("failed to delete empty cos instance %s: %w", *cosInstanceDetails.ID, err)
+		// If there are no additional Buckets within the COS Instance (specifically the Bucket used for the VSI Image), cleanup the COS Instance as well.
+		if err = cleanupIgnitionCOSInstance(ctx, client, *cosInstanceDetails.ID, bucketName, region); err != nil {
+			return err
 		}
-	case len(cosBucketsOutput.Buckets) == 1 && cosBucketsOutput.Buckets[0].Name != nil && *cosBucketsOutput.Buckets[0].Name == bucketName:
-		logrus.Debugf("bootstrap ignition cos bucket %s still listed in cos instance, proceeding to cleanup cos instance: %s", bucketName, *cosInstanceDetails.ID)
-		err := client.DeleteCOSInstance(ctx, *cosInstanceDetails.ID)
-		if err != nil {
-			return fmt.Errorf("failed to delete cos instance %s, with single bucket %s: %w", *cosInstanceDetails.ID, bucketName, err)
-		}
-	default:
-		logrus.Debugf("cos instance contains additional buckets, skipping cos instance %s cleanup", *cosInstanceDetails.ID)
 	}
 
 	// Cleanup the Security Group for the Bootstrap node.

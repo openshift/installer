@@ -663,7 +663,7 @@ func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, b
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s", bucketName, cosInstanceID)
+	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s: %w", bucketName, cosInstanceID, &COSResourceNotFoundError{})
 }
 
 // getCOSClient returns a new IBM Cloud COS client session.
@@ -696,13 +696,16 @@ func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*res
 
 	options := c.controllerAPI.NewListResourceInstancesOptions()
 	options.SetResourceID(cosServiceID)
+	// Filter on the name within the request, as the response is paginated and the COS Instance could be
+	// missed if the account contains enough COS Instances to push it beyond the first page of results.
+	options.SetName(cosName)
 
 	listResourceInstanceResponse, _, err := c.controllerAPI.ListResourceInstancesWithContext(localContext, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list cos instances: %w", err)
 	}
 	for _, instance := range listResourceInstanceResponse.Resources {
-		if *instance.Name == cosName {
+		if instance.Name != nil && *instance.Name == cosName {
 			return &instance, nil
 		}
 	}
