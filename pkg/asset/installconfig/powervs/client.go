@@ -1623,9 +1623,6 @@ func (c *Client) CreateSSHKey(ctx context.Context, serviceInstance string, zone 
 		return fmt.Errorf("createSSHKey: authenticator failed validate %w", err)
 	}
 
-	// Derive a per-region URL for the Power API from the zone and the endpoint override.
-	// Strip trailing digits: "dal12" → "dal" (mirrors ibmpisession.costructRegionFromZone).
-	powerRegion := strings.TrimRight(zone, "0123456789")
 	powerURL := powervstypes.EndpointURLForService("Power", c.ServiceEndpoints)
 	options = &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
@@ -1635,8 +1632,6 @@ func (c *Client) CreateSSHKey(ctx context.Context, serviceInstance string, zone 
 	}
 	if powerURL != "" {
 		options.URL = powerURL
-	} else {
-		options.URL = "https://" + powerRegion + ".power-iaas.cloud.ibm.com"
 	}
 
 	piSession, err = ibmpisession.NewIBMPISession(options)

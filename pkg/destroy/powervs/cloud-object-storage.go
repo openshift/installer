@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	gohttp "net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	cosaws "github.com/IBM/ibm-cos-sdk-go/aws"
+	cosawserr "github.com/IBM/ibm-cos-sdk-go/aws/awserr"
 	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
 	cossession "github.com/IBM/ibm-cos-sdk-go/aws/session"
 	ibms3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
@@ -52,6 +54,14 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		return nil, err
 	}
 
+	var userCOSInstanceGUID string
+	if o.cosInstanceCRN != "" {
+		parts := strings.Split(o.cosInstanceCRN, ":")
+		if len(parts) >= 8 {
+			userCOSInstanceGUID = parts[7]
+		}
+	}
+
 	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
@@ -72,6 +82,11 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to get COS instance (%s): err = %w, response = %v", cosID, err, response)
+		}
+
+		if userCOSInstanceGUID != "" && (instance.GUID != nil && *instance.GUID == userCOSInstanceGUID || instance.ID != nil && *instance.ID == o.cosInstanceCRN) {
+			o.Logger.Debugf("listCOSInstances: skipping user-provided COS instance %s (%s)", *instance.Name, *instance.GUID)
+			continue
 		}
 
 		result = append(result, cloudResource{
@@ -368,7 +383,11 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 	if endpoint == "" {
 		cosRegion, cosRegionErr := powervstypes.COSRegionForPowerVSRegion(o.Region)
 		if cosRegionErr != nil {
-			cosRegion = o.VPCRegion
+			if vpcCOSRegion, err := powervstypes.COSRegionForVPCRegion(o.VPCRegion); err == nil {
+				cosRegion = vpcCOSRegion
+			} else {
+				cosRegion = o.VPCRegion
+			}
 		}
 		endpoint = "https://s3." + cosRegion + ".cloud-object-storage.appdomain.cloud"
 	}
@@ -392,7 +411,7 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 	for {
 		listOutput, err := cosClient.ListObjectsWithContext(ctx, listInput)
 		if err != nil {
-			if strings.Contains(err.Error(), "NoSuchBucket") || strings.Contains(err.Error(), "404") {
+			if isCOSS3NotFound(err) {
 				o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone during list", bucketName)
 				return nil
 			}
@@ -405,10 +424,13 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 				Key:    obj.Key,
 			}
 			if _, err := cosClient.DeleteObjectWithContext(ctx, deleteObjInput); err != nil {
-				o.Logger.Debugf("destroyCOSInstanceBuckets: DeleteObject %q in %q: %v (ignoring)", *obj.Key, bucketName, err)
-			} else {
-				o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", *obj.Key, bucketName)
+				if isCOSS3NotFound(err) {
+					o.Logger.Debugf("destroyCOSInstanceBuckets: object %q already gone in %q", *obj.Key, bucketName)
+					continue
+				}
+				return fmt.Errorf("destroyCOSInstanceBuckets: failed to delete object %q from bucket %q: %w", *obj.Key, bucketName, err)
 			}
+			o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", *obj.Key, bucketName)
 		}
 
 		if listOutput.IsTruncated == nil || !*listOutput.IsTruncated {
@@ -427,8 +449,7 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 		Bucket: cosaws.String(bucketName),
 	}
 	if _, err := cosClient.DeleteBucketWithContext(ctx, deleteBucketInput); err != nil {
-		// A 404 (NoSuchBucket) means it was already deleted – not an error.
-		if strings.Contains(err.Error(), "NoSuchBucket") || strings.Contains(err.Error(), "404") {
+		if isCOSS3NotFound(err) {
 			o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone", bucketName)
 			return nil
 		}
@@ -439,15 +460,36 @@ func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
 	return nil
 }
 
+func isCOSS3NotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	var reqErr cosawserr.RequestFailure
+	if errors.As(err, &reqErr) && reqErr.StatusCode() == gohttp.StatusNotFound {
+		return true
+	}
+	var awsErr cosawserr.Error
+	if errors.As(err, &awsErr) {
+		switch awsErr.Code() {
+		case ibms3.ErrCodeNoSuchBucket, ibms3.ErrCodeNoSuchKey:
+			return true
+		}
+	}
+	return false
+}
+
 // destroyCOSInstances removes the COS service instance resources that have a
 // name prefixed with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCOSInstances() error {
 	// If the COS instance was preconfigured (user-provided via cosInstanceCRN),
-	// do not delete the instance itself; only clean up the buckets that were
-	// created during installation inside that instance.
+	// delete the installer-created buckets inside that instance. We do not
+	// delete the preconfigured instance itself, but still proceed to destroy
+	// any separate installer-created COS instances (such as -image-registry).
 	if o.cosInstanceCRN != "" {
-		o.Logger.Infof("COS instance was preconfigured (%s) - deleting installer-created buckets only", o.cosInstanceCRN)
-		return o.destroyCOSInstanceBuckets()
+		o.Logger.Infof("COS instance was preconfigured (%s) - deleting installer-created buckets", o.cosInstanceCRN)
+		if err := o.destroyCOSInstanceBuckets(); err != nil {
+			return err
+		}
 	}
 
 	firstPassList, err := o.listCOSInstances()
