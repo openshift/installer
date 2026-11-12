@@ -486,8 +486,9 @@ func TestDescribeRetryError(t *testing.T) {
 			err:      fmt.Errorf("wrapped: %w", respErr),
 			expected: "unexpected HTTP status 500",
 		},
-		// gophercloud's re-authentication errors embed the response error
-		// without implementing Unwrap, so errors.As does not reach it.
+		// Since gophercloud v2.15.0, ErrErrorAfterReauthentication
+		// implements Unwrap, so it must be checked before
+		// ErrUnexpectedResponseCode in describeRetryError.
 		{
 			name:     "error after re-authentication",
 			err:      &gophercloud.ErrErrorAfterReauthentication{ErrOriginal: respErr},
