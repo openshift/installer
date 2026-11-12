@@ -48,6 +48,7 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -101,6 +102,15 @@ type bootstrapTemplateData struct {
 	ClusterDomain         string
 	OSImageStream         types.OSImageStream
 	KonnectivityEnabled   bool
+	// ApproveCSRMaxNodes bounds how many kubelet client CSRs approve-csr.sh
+	// approves. Zero means no bound.
+	ApproveCSRMaxNodes int64
+	// MachineNetworks is the space separated list of CIDRs that a kubelet
+	// serving certificate may name an address out of: the machine networks,
+	// and on baremetal the provisioning network the nodes are also attached
+	// to. It holds an entry per IP family, so a dual stack install needs no
+	// special handling.
+	MachineNetworks string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -328,6 +338,19 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	if installConfig.Config.Arbiter != nil {
 		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
 	}
+
+	// A CSR says nothing about the role of the node that asked for it, so the
+	// bootstrap approver is held to a count rather than to a role. On platform
+	// none there is no machine-api, so cluster-machine-approver never takes
+	// over and the workers have to be approved here too; everywhere else it
+	// picks up the workers once it is running, and this service only has to
+	// cover the control plane and the arbiter.
+	approveCSRMaxNodes := int64(0)
+	if installConfig.Config.Platform.Name() != nonetypes.Name {
+		approveCSRMaxNodes = controlPlaneReplicas
+	}
+
+	machineNetworks := approveCSRNetworks(installConfig.Config)
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
@@ -424,6 +447,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		FeatureSet:            installConfig.Config.FeatureSet,
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
+		ApproveCSRMaxNodes:    approveCSRMaxNodes,
+		MachineNetworks:       strings.Join(machineNetworks, " "),
 		OSImageStream:         installConfig.Config.OSImageStream,
 		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
 	}
@@ -452,6 +477,31 @@ func mergeIRIAuthIntoPullSecret(pullSecret, username, password, registryHost str
 		return "", fmt.Errorf("failed to marshal merged pull secret: %w", err)
 	}
 	return string(mergedBytes), nil
+}
+
+// approveCSRNetworks returns the networks a kubelet serving certificate may
+// name an address out of. A kubelet serves on an address of the node it runs
+// on, so that is the machine networks, and on baremetal also the provisioning
+// network the nodes are attached to, which is deliberately kept outside the
+// machine networks and so would not otherwise be covered.
+func approveCSRNetworks(config *types.InstallConfig) []string {
+	if config == nil || config.Networking == nil {
+		return nil
+	}
+
+	networks := make([]string, 0, len(config.Networking.MachineNetwork)+1)
+	for _, network := range config.Networking.MachineNetwork {
+		networks = append(networks, network.CIDR.String())
+	}
+
+	// There is no provisioning network to allow for when it is disabled.
+	if bm := config.Platform.BareMetal; bm != nil &&
+		bm.ProvisioningNetwork != baremetaltypes.DisabledProvisioningNetwork &&
+		bm.ProvisioningNetworkCIDR != nil {
+		networks = append(networks, bm.ProvisioningNetworkCIDR.String())
+	}
+
+	return networks
 }
 
 // AddStorageFiles adds files to a Ignition config.
