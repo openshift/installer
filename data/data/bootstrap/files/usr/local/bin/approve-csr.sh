@@ -161,6 +161,20 @@ sans_are_unambiguous() {
     [ "$(san_count_printed "${1}")" -eq "$(san_count_encoded "${1}")" ]
 }
 
+# request_carries_san reports whether a PEM encoded certificate request
+# carries a subject alternative name extension, read from the encoding
+# rather than from the printed form. The form only shows the names of the
+# kinds request_sans matches, and openssl prints some kinds, X400Name and
+# EdiPartyName among them, with no prefix to match at all, so a request
+# whose names are all of such a kind would read as carrying none. Every
+# kind of name counts, whatever openssl would print for it.
+#   1 - PEM encoded certificate request
+request_carries_san() {
+    printf '%s' "${1}" |
+        openssl asn1parse 2>/dev/null |
+        grep -q 'OBJECT *:X509v3 Subject Alternative Name'
+}
+
 # san_field prints the subject alternative names of one type carried by a PEM
 # encoded certificate request, comma joined.
 #   1 - SAN type as openssl prints it: DNS, "IP Address", email or URI
@@ -295,8 +309,16 @@ is_node_client_request() {
     common_name="$(node_common_name "${pem}")" || return 1
 
     # A client certificate authenticates the kubelet, it never names a host,
-    # so it has no use for subject alternative names of any kind.
-    [ -z "$(request_sans "${pem}")" ] || return 1
+    # so it has no use for subject alternative names of any kind. The
+    # extension is looked for in the encoding rather than in the printed
+    # form, so that a name of a kind the form does not show, X400Name and
+    # EdiPartyName, which openssl prints with no prefix request_sans could
+    # match, cannot pass as no name at all. This runs before the approval
+    # and the MAX_NODES accounting below, so such a request is neither
+    # approved nor counted against the budget.
+    if request_carries_san "${pem}"; then
+        return 1
+    fi
 }
 
 # is_node_serving_request reports whether a PEM encoded certificate request
