@@ -303,6 +303,20 @@ node_count() {
     printf '%s' "${1}" | wc -w
 }
 
+# csr_token prints a short token standing in for the name of a CSR in the
+# reports below. They refuse and approve requests without carrying any
+# value read off one, the name of the request included, so that nothing
+# about the machines joining the cluster lands in the journal of the
+# bootstrap machine. The token is the head of the name's digest, so a
+# report can still be traced to the request it is about by anyone who can
+# list the requests and digest their names.
+#   1 - CSR name
+csr_token() {
+    local digest
+    digest="$(printf '%s' "${1}" | sha256sum)"
+    printf '%s' "${digest:0:8}"
+}
+
 # is_node_client_request reports whether a PEM encoded certificate request
 # carries exactly the subject a kubelet client certificate is allowed to have.
 #   1 - PEM encoded certificate request
@@ -330,9 +344,9 @@ is_node_client_request() {
 # carries exactly the subject a kubelet serving certificate is allowed to have,
 # for the node that asked for it.
 #   1 - PEM encoded certificate request   2 - requesting username
-#   3 - CSR name, used only to report the address that was refused
+#   3 - CSR token, printed with the refusals
 is_node_serving_request() {
-    local pem="${1}" requester="${2}" name="${3}" common_name host address class
+    local pem="${1}" requester="${2}" token="${3}" common_name host address class
 
     common_name="$(node_common_name "${pem}")" || return 1
 
@@ -344,7 +358,7 @@ is_node_serving_request() {
     # cannot be told from a name of its own, so nothing below can be trusted
     # to have seen them all.
     if ! sans_are_unambiguous "${pem}"; then
-        echo "CSR ${name} carries a subject alternative name holding a newline"
+        echo "serving CSR ${token} refused: subject alternative name holding a newline"
         return 1
     fi
 
@@ -357,7 +371,7 @@ is_node_serving_request() {
     # to stand in for the cluster itself.
     for host in $(san_field DNS "${pem}" | tr ',' ' '); do
         if is_cluster_name "${host}"; then
-            echo "CSR ${name} names ${host}, which the cluster answers on"
+            echo "serving CSR ${token} refused: cluster name"
             return 1
         fi
     done
@@ -368,7 +382,7 @@ is_node_serving_request() {
     for address in $(san_field 'IP Address' "${pem}" | tr ',' ' '); do
         class="$(ip_address_class "${address}")"
         if [ -n "${class}" ]; then
-            echo "CSR ${name} names ${address}, which is a ${class} address"
+            echo "serving CSR ${token} refused: ${class} address"
             return 1
         fi
 
@@ -377,7 +391,7 @@ is_node_serving_request() {
         # every platform, so an address outside them is not yet proof that the
         # request is wrong, and refusing it would leave a node unable to serve.
         if [ -n "${MACHINE_NETWORKS}" ] && ! is_machine_address "${address}"; then
-            echo "CSR ${name} names ${address}, which is outside the machine networks"
+            echo "serving CSR ${token} names an address outside the machine networks"
         fi
     done
 }
@@ -412,45 +426,46 @@ do
         | select(((.status.conditions // []) | map(.type) | index("Approved")) != null)
         | .spec.request // empty')"
 
-    while IFS=$'\t' read -r name attributes signer requester request
+    while IFS=$'\t' read -r name attributes requester request
     do
         [ -n "${name}" ] || continue
         [ "${request}" = "<none>" ] && request=""
         pem="$(printf '%s' "${request}" | base64 --decode 2>/dev/null)"
-        reason=""
+        token="$(csr_token "${name}")"
 
         case "${attributes}" in
             client)
                 client_name="$(node_common_name "${pem}")" || client_name=""
                 if ! is_node_client_request "${pem}"; then
-                    : # subject is unacceptable; reported below
+                    reason="client request refused"
                 elif node_is_listed "${approved_nodes}" "${client_name}" ||
                     [ "${MAX_NODES}" -eq 0 ] ||
                     [ "$(node_count "${approved_nodes}")" -lt "${MAX_NODES}" ]; then
-                    echo "Approving node client CSR ${name}"
+                    echo "Approving node client CSR ${token}"
                     oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
                     node_is_listed "${approved_nodes}" "${client_name}" ||
                         approved_nodes="${approved_nodes}${client_name} "
                     continue
                 else
-                    reason="client certificates already issued to ${MAX_NODES} nodes"
+                    reason="client certificate budget reached"
                 fi
                 ;;
             serving)
-                if is_node_serving_request "${pem}" "${requester}" "${name}"; then
-                    echo "Approving node serving CSR ${name}"
+                if is_node_serving_request "${pem}" "${requester}" "${token}"; then
+                    echo "Approving node serving CSR ${token}"
                     oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
                     continue
                 fi
+                reason="serving request refused"
                 ;;
-            *) ;;
+            *) reason="not a node request" ;;
         esac
 
         case "${logged}" in
             *" ${name} "*) continue ;;
             *) logged="${logged}${name} " ;;
         esac
-        echo "Leaving CSR ${name} pending: signer=${signer} requester=${requester}${reason:+ (${reason})}"
+        echo "Leaving CSR ${token} pending: ${reason}"
     done <<< "$(printf '%s' "${csrs}" | jq -r \
         --arg client_signer "${CLIENT_SIGNER}" \
         --arg client_requester "${CLIENT_REQUESTER}" \
@@ -492,7 +507,6 @@ do
                 and ($usages == $serving_usages or $usages == $serving_usages_rsa)
              then "serving"
              else "other" end),
-            (.spec.signerName | or_none),
             (.spec.username | or_none),
             (.spec.request | or_none)
           ]
