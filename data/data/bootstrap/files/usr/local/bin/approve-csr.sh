@@ -5,11 +5,512 @@
 
 KUBECONFIG="${1}"
 
-echo "Approving all CSR requests until bootstrapping is complete..."
+# Largest number of kubelet client certificates this service will hand out,
+# zero meaning no limit. A CSR carries nothing that says whether the node
+# asking for it belongs to the control plane, so the control plane is bounded
+# by count instead: the installer passes the control plane and arbiter replica
+# count on the platforms where cluster-machine-approver takes over for the
+# workers, and zero on platform none, where nothing else would approve them.
+MAX_NODES="${2:-0}"
+
+# Networks the machines are placed on, passed by the installer through the
+# unit. A kubelet serves on an address of the node it runs on, so a serving
+# request may only name addresses out of these. An empty list leaves the
+# addresses unchecked.
+MACHINE_NETWORKS="${APPROVE_CSR_MACHINE_NETWORKS:-}"
+
+# The domain the cluster answers on, passed by the installer through the unit.
+# A node is never reachable under one of the names the cluster serves under
+# that domain, so a serving request naming one is asking to stand in for the
+# cluster. An empty domain leaves the names unchecked.
+CLUSTER_DOMAIN="${APPROVE_CSR_CLUSTER_DOMAIN:-}"
+
+# Attributes shared by every kubelet client CSR that the machine-config-operator
+# bootstrapper issues on behalf of a node joining the cluster. A request for
+# an RSA key carries the key encipherment usage alongside the other two,
+# since such a key is able to encipher, so both usage sets are accepted.
+readonly CLIENT_SIGNER="kubernetes.io/kube-apiserver-client-kubelet"
+readonly CLIENT_REQUESTER="system:serviceaccount:openshift-machine-config-operator:node-bootstrapper"
+readonly CLIENT_GROUPS="system:authenticated,system:serviceaccounts,system:serviceaccounts:openshift-machine-config-operator"
+readonly CLIENT_USAGES="client auth,digital signature"
+readonly CLIENT_USAGES_RSA="client auth,digital signature,key encipherment"
+
+# Attributes shared by every kubelet serving CSR, which a node requests for
+# itself once it holds the client certificate issued above. The key
+# encipherment usage arrives for the same reason as in the client sets.
+readonly SERVING_SIGNER="kubernetes.io/kubelet-serving"
+readonly SERVING_GROUPS="system:authenticated,system:nodes"
+readonly SERVING_USAGES="digital signature,server auth"
+readonly SERVING_USAGES_RSA="digital signature,key encipherment,server auth"
+
+readonly NODE_ORG="system:nodes"
+
+# Networks a kubelet cannot be serving on, and what to call each one in the
+# report. Written as CIDRs so that ipcalc decides membership and nothing here
+# has to parse an address. Read in order, so the metadata service is
+# recognised before the wider link-local range that contains it.
+readonly REFUSED_NETWORKS="
+0.0.0.0/32 unspecified
+::/128 unspecified
+127.0.0.0/8 loopback
+::1/128 loopback
+169.254.169.254/32 metadata
+fd00:ec2::254/128 metadata
+169.254.0.0/16 link-local
+fe80::/10 link-local
+224.0.0.0/4 multicast
+ff00::/8 multicast
+"
+
+# ip_in_cidr reports whether an address falls inside a CIDR. The address is
+# masked to the prefix the CIDR carries and compared with the network the CIDR
+# itself describes, so a prefix that does not land on a nibble boundary
+# behaves like one that does, and an address openssl printed expanded matches
+# a CIDR the installer wrote compressed. ipcalc refuses a prefix the family
+# cannot hold, so an address never matches a CIDR of the other family.
+#   1 - address   2 - CIDR
+ip_in_cidr() {
+    local cidr="${2}" prefix masked network
+    case "${cidr}" in */*) ;; *) return 1 ;; esac
+    prefix="${cidr#*/}"
+    masked="$(ipcalc --network "${1}/${prefix}" 2>/dev/null)" || return 1
+    network="$(ipcalc --network "${cidr}" 2>/dev/null)" || return 1
+    [ -n "${masked}" ] && [ "${masked}" = "${network}" ]
+}
+
+# subnet_check_works reports whether ip_in_cidr answers correctly, for an
+# address inside the network and one outside it, in both families. That is not
+# the same question as whether ipcalc is installed: more than one program goes
+# by that name, and they do not agree on which options exist. Every refusal
+# below rests on a call that failed, so a check that always fails is a check
+# that always approves.
+subnet_check_works() {
+    ip_in_cidr 10.1.2.3 10.0.0.0/8 &&
+        ! ip_in_cidr 192.168.1.1 10.0.0.0/8 &&
+        ip_in_cidr fd00::1 fd00::/8 &&
+        ! ip_in_cidr 2600:1f14::a3 fd00::/8
+}
+
+# Every address check below is the subnet check deciding whether an address
+# falls in a network, so without a working one nothing could be judged and an
+# address a node cannot hold would read like one it can. Stop rather than
+# approve on a guess.
+if ! subnet_check_works; then
+    echo "approve-csr: no working subnet check, refusing to approve any CSR" >&2
+    exit 1
+fi
+
+# subject_field prints the values a PEM encoded certificate request carries for
+# one subject field, comma joined. Joining means a second value of the same
+# field cannot hide behind the first, which matters for the organization: every
+# organization becomes a group once the certificate is used.
+# esc_ctrl makes sure one field holding a newline is not read as two fields.
+#   1 - field name, e.g. CN or O   2 - PEM encoded certificate request
+subject_field() {
+    printf '%s' "${2}" |
+        openssl req -noout -subject -nameopt sep_multiline,esc_ctrl,utf8 2>/dev/null |
+        sed -n "s/^ *${1}=//p" |
+        paste -sd, -
+}
+
+# request_sans prints the lines openssl prints the subject alternative names
+# on, or nothing at all when the request carries none. Every name openssl
+# knows is matched, not only the line that follows the extension header: a
+# name holding a newline prints as a further line, and reading only the first
+# would hide every name after it. Matching them wherever they land means such
+# a request shows up as more than one line, which sans_are_unambiguous
+# refuses.
+#   1 - PEM encoded certificate request
+request_sans() {
+    printf '%s' "${1}" |
+        openssl req -noout -text 2>/dev/null |
+        sed -n '/^[[:space:]]*\(DNS\|IP Address\|email\|URI\|othername\|DirName\|Registered ID\):/p'
+}
+
+# san_count_printed prints how many subject alternative names the printed form
+# shows, counting every name on every line it was matched on.
+#   1 - PEM encoded certificate request
+san_count_printed() {
+    request_sans "${1}" |
+        tr ',' '\n' |
+        sed -n '/^[[:space:]]*\(DNS\|IP Address\|email\|URI\|othername\|DirName\|Registered ID\):/p' |
+        wc -l
+}
+
+# san_count_encoded prints how many subject alternative names the request
+# actually carries, read from the encoding rather than from the printed form.
+# asn1parse prints one line per name and never prints the names themselves, so
+# a name holding a newline cannot change the count.
+#   1 - PEM encoded certificate request
+san_count_encoded() {
+    local pem="${1}" offset
+    offset="$(printf '%s' "${pem}" | openssl asn1parse 2>/dev/null |
+        sed -n '/X509v3 Subject Alternative Name/{n;s/^ *\([0-9][0-9]*\):.*/\1/p}')"
+    if [ -z "${offset}" ]; then
+        printf '0'
+        return 0
+    fi
+    printf '%s' "$(printf '%s' "${pem}" |
+        openssl asn1parse -strparse "${offset}" 2>/dev/null |
+        sed -n '/^ *[0-9][0-9]*:d=1 /p' |
+        wc -l)"
+}
+
+# sans_are_unambiguous reports whether the printed form shows every subject
+# alternative name the request carries. It does unless a name holds a newline:
+# the names after it then print as further lines, where they are read as names
+# of their own or not read at all, and either way the count no longer agrees
+# with the encoding. No name a kubelet asks for holds one.
+#   1 - PEM encoded certificate request
+sans_are_unambiguous() {
+    [ "$(san_count_printed "${1}")" -eq "$(san_count_encoded "${1}")" ]
+}
+
+# request_carries_san reports whether a PEM encoded certificate request
+# carries a subject alternative name extension, read from the encoding
+# rather than from the printed form. The form only shows the names of the
+# kinds request_sans matches, and openssl prints some kinds, X400Name and
+# EdiPartyName among them, with no prefix to match at all, so a request
+# whose names are all of such a kind would read as carrying none. Every
+# kind of name counts, whatever openssl would print for it.
+#   1 - PEM encoded certificate request
+request_carries_san() {
+    printf '%s' "${1}" |
+        openssl asn1parse 2>/dev/null |
+        grep -q 'OBJECT *:X509v3 Subject Alternative Name'
+}
+
+# san_field prints the subject alternative names of one type carried by a PEM
+# encoded certificate request, comma joined.
+#   1 - SAN type as openssl prints it: DNS, "IP Address", email or URI
+#   2 - PEM encoded certificate request
+san_field() {
+    request_sans "${2}" |
+        tr ',' '\n' |
+        sed -n "s/^ *${1}://p" |
+        paste -sd, -
+}
+
+# ip_address_class prints the class of an address that a kubelet cannot be
+# serving on, or nothing at all when the address is an ordinary unicast one.
+# An address ipcalc cannot read is called malformed rather than left to pass
+# as unicast, since nothing can be said about it.
+#   1 - address as openssl prints it
+ip_address_class() {
+    local address="${1}" canonical network class
+
+    # openssl prints IPv6 expanded and in upper case, so ::1 arrives as
+    # 0:0:0:0:0:0:0:1. ipcalc reads that and prints the canonical form, which
+    # for an IPv4-mapped address is ::ffff:a.b.c.d. Unwrapping that leaves the
+    # IPv4 address it carries, so a loopback or metadata address cannot pass
+    # merely for being written in the 16 byte form.
+    canonical="$(ipcalc --address "${address}" 2>/dev/null)"
+    canonical="${canonical#ADDRESS=}"
+    if [ -z "${canonical}" ]; then
+        printf 'malformed'
+        return 0
+    fi
+    case "${canonical}" in
+        ::ffff:*.*.*.*) canonical="${canonical#::ffff:}" ;;
+    esac
+
+    while read -r network class; do
+        [ -n "${network}" ] || continue
+        if ip_in_cidr "${canonical}" "${network}"; then
+            printf '%s' "${class}"
+            return 0
+        fi
+    done <<< "${REFUSED_NETWORKS}"
+}
+
+# node_common_name validates the parts of the subject that both kinds of
+# kubelet request must carry and prints the common name. It fails when the
+# request does not parse, carries anything but system:nodes on its own as the
+# organization, names more than one node, or does not name a node.
+#   1 - PEM encoded certificate request
+node_common_name() {
+    local pem="${1}" common_name
+
+    # A request openssl cannot parse leaves every field below empty, which
+    # would otherwise read as a pass. Reject it instead.
+    [ -n "$(printf '%s' "${pem}" | openssl req -noout -subject 2>/dev/null)" ] || return 1
+
+    [ "$(subject_field O "${pem}")" = "${NODE_ORG}" ] || return 1
+
+    common_name="$(subject_field CN "${pem}")"
+    case "${common_name}" in
+        # subject_field joins repeated values with a comma, so a comma here
+        # means the subject carries more than one common name and there is no
+        # single name to act on. A node name never contains one, so the value
+        # is refused rather than guessed at: the prefix below would otherwise
+        # pass on the first name while a second travelled alongside it.
+        *,*) return 1 ;;
+        # esc_ctrl turns a control character into a backslash escape. A node
+        # name is a DNS name and never holds one, and the prefix test alone
+        # would pass a name whose tail is a newline.
+        *\\*) return 1 ;;
+        "system:node:"?*) printf '%s' "${common_name}" ;;
+        *) return 1 ;;
+    esac
+}
+
+# is_machine_address reports whether an address falls inside one of the
+# networks the machines are placed on.
+#   1 - address
+is_machine_address() {
+    local network
+    for network in ${MACHINE_NETWORKS}; do
+        if ip_in_cidr "${1}" "${network}"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# is_cluster_name reports whether a DNS name is one the cluster answers on
+# rather than the name of a node. The API is reached under api and api-int,
+# and every route under apps, so nothing beneath those is ever a node. A
+# wildcard for the domain itself is refused too. DNS names are case
+# insensitive and may carry a trailing root dot, so both are normalized
+# away before matching.
+#   1 - DNS name
+is_cluster_name() {
+    [ -n "${CLUSTER_DOMAIN}" ] || return 1
+    local name="${1,,}" domain="${CLUSTER_DOMAIN,,}"
+    name="${name%.}"
+    domain="${domain%.}"
+    case "${name}" in
+        "api.${domain}"|"api-int.${domain}") return 0 ;;
+        "apps.${domain}"|*".apps.${domain}") return 0 ;;
+        "*.${domain}") return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# node_is_listed reports whether a space delimited list of node names holds
+# one name. Node names are DNS names, so they never contain a space.
+#   1 - space delimited list   2 - name
+node_is_listed() {
+    case "${1}" in
+        *" ${2} "*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# node_count prints how many names a space delimited list holds.
+#   1 - space delimited list
+node_count() {
+    printf '%s' "${1}" | wc -w
+}
+
+# csr_token prints a short token standing in for the name of a CSR in the
+# reports below. They refuse and approve requests without carrying any
+# value read off one, the name of the request included, so that nothing
+# about the machines joining the cluster lands in the journal of the
+# bootstrap machine. The token is the head of the name's digest, so a
+# report can still be traced to the request it is about by anyone who can
+# list the requests and digest their names.
+#   1 - CSR name
+csr_token() {
+    local digest
+    digest="$(printf '%s' "${1}" | sha256sum)"
+    printf '%s' "${digest:0:8}"
+}
+
+# is_node_client_request reports whether a PEM encoded certificate request
+# carries exactly the subject a kubelet client certificate is allowed to have.
+#   1 - PEM encoded certificate request
+is_node_client_request() {
+    local pem="${1}" common_name
+
+    # Declared separately: `local name=$(...)` would return the status of
+    # local rather than of the command substitution.
+    common_name="$(node_common_name "${pem}")" || return 1
+
+    # A client certificate authenticates the kubelet, it never names a host,
+    # so it has no use for subject alternative names of any kind. The
+    # extension is looked for in the encoding rather than in the printed
+    # form, so that a name of a kind the form does not show, X400Name and
+    # EdiPartyName, which openssl prints with no prefix request_sans could
+    # match, cannot pass as no name at all. This runs before the approval
+    # and the MAX_NODES accounting below, so such a request is neither
+    # approved nor counted against the budget.
+    if request_carries_san "${pem}"; then
+        return 1
+    fi
+}
+
+# is_node_serving_request reports whether a PEM encoded certificate request
+# carries exactly the subject a kubelet serving certificate is allowed to have,
+# for the node that asked for it.
+#   1 - PEM encoded certificate request   2 - requesting username
+#   3 - CSR token, printed with the refusals
+is_node_serving_request() {
+    local pem="${1}" requester="${2}" token="${3}" common_name host address class
+
+    common_name="$(node_common_name "${pem}")" || return 1
+
+    # A node may only ask for a serving certificate that names itself.
+    [ "${common_name}" = "${requester}" ] || return 1
+
+    # Every check below reads the names openssl printed. If they do not all
+    # sit on one line then one of them holds a newline, and what follows it
+    # cannot be told from a name of its own, so nothing below can be trusted
+    # to have seen them all.
+    if ! sans_are_unambiguous "${pem}"; then
+        echo "serving CSR ${token} refused: subject alternative name holding a newline"
+        return 1
+    fi
+
+    # A serving certificate legitimately names hosts and addresses. The other
+    # kinds of subject alternative name carry identities a kubelet never needs.
+    [ -z "$(san_field email "${pem}")$(san_field URI "${pem}")" ] || return 1
+
+    # A node is never reachable under one of the names the cluster answers on,
+    # whatever the platform calls its nodes, so a request naming one is asking
+    # to stand in for the cluster itself.
+    for host in $(san_field DNS "${pem}" | tr ',' ' '); do
+        if is_cluster_name "${host}"; then
+            echo "serving CSR ${token} refused: cluster name"
+            return 1
+        fi
+    done
+
+    # A kubelet serves on an address of the node it runs on, so an address no
+    # node can hold whatever the install looks like names something other than
+    # that node.
+    for address in $(san_field 'IP Address' "${pem}" | tr ',' ' '); do
+        class="$(ip_address_class "${address}")"
+        if [ -n "${class}" ]; then
+            echo "serving CSR ${token} refused: ${class} address"
+            return 1
+        fi
+
+        # An address outside the networks the machines are placed on is only
+        # reported. The networks are not cross checked against the nodes on
+        # every platform, so an address outside them is not yet proof that the
+        # request is wrong, and refusing it would leave a node unable to serve.
+        if [ -n "${MACHINE_NETWORKS}" ] && ! is_machine_address "${address}"; then
+            echo "serving CSR ${token} names an address outside the machine networks"
+        fi
+    done
+}
+
+echo "Approving kubelet CSR requests until bootstrapping is complete..."
+# Names of the requests already reported as left pending, so that each one is
+# described once rather than on every pass.
+logged=" "
 while [ ! -f /opt/openshift/.bootkube.done ]
 do
-    oc --kubeconfig="$KUBECONFIG" get csr --no-headers | grep Pending | \
-        awk '{print $1}' | \
-        xargs --no-run-if-empty oc --kubeconfig="$KUBECONFIG" adm certificate approve
-	sleep 20
+    # Approve only the kubelet client and serving requests that match every
+    # expected attribute. Anything else is left pending for
+    # cluster-machine-approver rather than approved here.
+    csrs="$(oc --kubeconfig="$KUBECONFIG" get csr -o json 2>/dev/null)"
+
+    # Names of the nodes already holding a client certificate. Read back from
+    # the cluster rather than carried in a variable, so that the budget
+    # survives the restart systemd performs when this service fails, and held
+    # as names rather than as a tally, so that a node which reboots and asks
+    # again does not take a second place.
+    approved_nodes=" "
+    while IFS= read -r approved_request
+    do
+        [ -n "${approved_request}" ] || continue
+        approved_name="$(node_common_name \
+            "$(printf '%s' "${approved_request}" | base64 --decode 2>/dev/null)")" || continue
+        node_is_listed "${approved_nodes}" "${approved_name}" ||
+            approved_nodes="${approved_nodes}${approved_name} "
+    done <<< "$(printf '%s' "${csrs}" | jq -r --arg signer "${CLIENT_SIGNER}" '
+        .items[]?
+        | select(.spec.signerName == $signer)
+        | select(((.status.conditions // []) | map(.type) | index("Approved")) != null)
+        | .spec.request // empty')"
+
+    while IFS=$'\t' read -r name attributes requester request
+    do
+        [ -n "${name}" ] || continue
+        [ "${request}" = "<none>" ] && request=""
+        pem="$(printf '%s' "${request}" | base64 --decode 2>/dev/null)"
+        token="$(csr_token "${name}")"
+
+        case "${attributes}" in
+            client)
+                client_name="$(node_common_name "${pem}")" || client_name=""
+                if ! is_node_client_request "${pem}"; then
+                    reason="client request refused"
+                elif node_is_listed "${approved_nodes}" "${client_name}" ||
+                    [ "${MAX_NODES}" -eq 0 ] ||
+                    [ "$(node_count "${approved_nodes}")" -lt "${MAX_NODES}" ]; then
+                    echo "Approving node client CSR ${token}"
+                    oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
+                    node_is_listed "${approved_nodes}" "${client_name}" ||
+                        approved_nodes="${approved_nodes}${client_name} "
+                    continue
+                else
+                    reason="client certificate budget reached"
+                fi
+                ;;
+            serving)
+                if is_node_serving_request "${pem}" "${requester}" "${token}"; then
+                    echo "Approving node serving CSR ${token}"
+                    oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
+                    continue
+                fi
+                reason="serving request refused"
+                ;;
+            *) reason="not a node request" ;;
+        esac
+
+        case "${logged}" in
+            *" ${name} "*) continue ;;
+            *) logged="${logged}${name} " ;;
+        esac
+        echo "Leaving CSR ${token} pending: ${reason}"
+    done <<< "$(printf '%s' "${csrs}" | jq -r \
+        --arg client_signer "${CLIENT_SIGNER}" \
+        --arg client_requester "${CLIENT_REQUESTER}" \
+        --arg client_groups "${CLIENT_GROUPS}" \
+        --arg client_usages "${CLIENT_USAGES}" \
+        --arg client_usages_rsa "${CLIENT_USAGES_RSA}" \
+        --arg serving_signer "${SERVING_SIGNER}" \
+        --arg serving_groups "${SERVING_GROUPS}" \
+        --arg serving_usages "${SERVING_USAGES}" \
+        --arg serving_usages_rsa "${SERVING_USAGES_RSA}" '
+        # Tab is an IFS whitespace character, so an empty field would be
+        # swallowed by read and shift every field after it. Never emit one.
+        def or_none: if . == null or . == "" then "<none>" else . end;
+
+        # A CSR is pending when nothing has yet added an Approved or Denied
+        # condition to it.
+        .items[]?
+        | select(
+            ((.status.conditions // []) | map(.type)) as $types
+            | ($types | index("Approved")) == null and ($types | index("Denied")) == null
+          )
+        # The usages are sorted and joined once, then compared against both
+        # sets each kind of request may carry: the key encipherment usage
+        # rides along only on a request for an RSA key, which is able to
+        # encipher, so a valid request carries either the set with it or the
+        # set without. No usage set is shared between the client and serving
+        # kinds, so a request never matches the kind it is not.
+        | ((.spec.usages // []) | sort | join(",")) as $usages
+        | [
+            .metadata.name,
+            (if .spec.signerName == $client_signer
+                and .spec.username == $client_requester
+                and (((.spec.groups // []) | sort | join(",")) == $client_groups)
+                and ($usages == $client_usages or $usages == $client_usages_rsa)
+             then "client"
+             elif .spec.signerName == $serving_signer
+                and ((.spec.username // "") | startswith("system:node:"))
+                and (((.spec.groups // []) | sort | join(",")) == $serving_groups)
+                and ($usages == $serving_usages or $usages == $serving_usages_rsa)
+             then "serving"
+             else "other" end),
+            (.spec.username | or_none),
+            (.spec.request | or_none)
+          ]
+        | @tsv')"
+
+    sleep 20
 done
