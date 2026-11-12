@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,9 @@ const (
 	IRIRegistryUsername = "openshift"
 	// PasswordBytes is the number of random bytes to generate for the password (256-bit entropy).
 	PasswordBytes = 32
+	// IRIRegistryPort is the port the internal release image registry is
+	// served on, behind api-int, from the control plane machines.
+	IRIRegistryPort = 22625
 )
 
 // IRIRegistryCredentials is the asset for the IRI registry authentication credentials.
@@ -79,4 +83,37 @@ func (a *IRIRegistryCredentials) Generate(ctx context.Context, dependencies asse
 // Name returns the human-friendly name of the asset.
 func (a *IRIRegistryCredentials) Name() string {
 	return "IRI Registry Authentication"
+}
+
+// MergeIntoPullSecret returns the pull secret with an authentication entry
+// for the IRI registry merged into it, so that kubelet and CRI-O can
+// authenticate to the registry the control plane machines serve behind
+// api-int on the cluster domain. The secret is returned unchanged when this
+// asset generated no credentials, which happens when no internal release
+// image is being served.
+func (a *IRIRegistryCredentials) MergeIntoPullSecret(pullSecret, clusterDomain string) (string, error) {
+	if a.Password == "" {
+		return pullSecret, nil
+	}
+
+	var pullSecretMap map[string]interface{}
+	if err := json.Unmarshal([]byte(pullSecret), &pullSecretMap); err != nil {
+		return "", fmt.Errorf("failed to parse pull secret: %w", err)
+	}
+
+	auths, ok := pullSecretMap["auths"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("pull secret missing 'auths' field")
+	}
+
+	registryHost := fmt.Sprintf("api-int.%s:%d", clusterDomain, IRIRegistryPort)
+	auths[registryHost] = map[string]interface{}{
+		"auth": base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", a.Username, a.Password))),
+	}
+
+	merged, err := json.Marshal(pullSecretMap)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal merged pull secret: %w", err)
+	}
+	return string(merged), nil
 }
