@@ -26,17 +26,22 @@ MACHINE_NETWORKS="${APPROVE_CSR_MACHINE_NETWORKS:-}"
 CLUSTER_DOMAIN="${APPROVE_CSR_CLUSTER_DOMAIN:-}"
 
 # Attributes shared by every kubelet client CSR that the machine-config-operator
-# bootstrapper issues on behalf of a node joining the cluster.
+# bootstrapper issues on behalf of a node joining the cluster. A request for
+# an RSA key carries the key encipherment usage alongside the other two,
+# since such a key is able to encipher, so both usage sets are accepted.
 readonly CLIENT_SIGNER="kubernetes.io/kube-apiserver-client-kubelet"
 readonly CLIENT_REQUESTER="system:serviceaccount:openshift-machine-config-operator:node-bootstrapper"
 readonly CLIENT_GROUPS="system:authenticated,system:serviceaccounts,system:serviceaccounts:openshift-machine-config-operator"
 readonly CLIENT_USAGES="client auth,digital signature"
+readonly CLIENT_USAGES_RSA="client auth,digital signature,key encipherment"
 
 # Attributes shared by every kubelet serving CSR, which a node requests for
-# itself once it holds the client certificate issued above.
+# itself once it holds the client certificate issued above. The key
+# encipherment usage arrives for the same reason as in the client sets.
 readonly SERVING_SIGNER="kubernetes.io/kubelet-serving"
 readonly SERVING_GROUPS="system:authenticated,system:nodes"
 readonly SERVING_USAGES="digital signature,server auth"
+readonly SERVING_USAGES_RSA="digital signature,key encipherment,server auth"
 
 readonly NODE_ORG="system:nodes"
 
@@ -451,9 +456,11 @@ do
         --arg client_requester "${CLIENT_REQUESTER}" \
         --arg client_groups "${CLIENT_GROUPS}" \
         --arg client_usages "${CLIENT_USAGES}" \
+        --arg client_usages_rsa "${CLIENT_USAGES_RSA}" \
         --arg serving_signer "${SERVING_SIGNER}" \
         --arg serving_groups "${SERVING_GROUPS}" \
-        --arg serving_usages "${SERVING_USAGES}" '
+        --arg serving_usages "${SERVING_USAGES}" \
+        --arg serving_usages_rsa "${SERVING_USAGES_RSA}" '
         # Tab is an IFS whitespace character, so an empty field would be
         # swallowed by read and shift every field after it. Never emit one.
         def or_none: if . == null or . == "" then "<none>" else . end;
@@ -465,17 +472,24 @@ do
             ((.status.conditions // []) | map(.type)) as $types
             | ($types | index("Approved")) == null and ($types | index("Denied")) == null
           )
+        # The usages are sorted and joined once, then compared against both
+        # sets each kind of request may carry: the key encipherment usage
+        # rides along only on a request for an RSA key, which is able to
+        # encipher, so a valid request carries either the set with it or the
+        # set without. No usage set is shared between the client and serving
+        # kinds, so a request never matches the kind it is not.
+        | ((.spec.usages // []) | sort | join(",")) as $usages
         | [
             .metadata.name,
             (if .spec.signerName == $client_signer
                 and .spec.username == $client_requester
                 and (((.spec.groups // []) | sort | join(",")) == $client_groups)
-                and (((.spec.usages // []) | sort | join(",")) == $client_usages)
+                and ($usages == $client_usages or $usages == $client_usages_rsa)
              then "client"
              elif .spec.signerName == $serving_signer
                 and ((.spec.username // "") | startswith("system:node:"))
                 and (((.spec.groups // []) | sort | join(",")) == $serving_groups)
-                and (((.spec.usages // []) | sort | join(",")) == $serving_usages)
+                and ($usages == $serving_usages or $usages == $serving_usages_rsa)
              then "serving"
              else "other" end),
             (.spec.signerName | or_none),
