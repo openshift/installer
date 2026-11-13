@@ -529,6 +529,21 @@ func (mr *MockAPIMockRecorder) GetResourceGroups(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroups", reflect.TypeOf((*MockAPI)(nil).GetResourceGroups), ctx)
 }
 
+// GetResourceInstance mocks base method.
+func (m *MockAPI) GetResourceInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceInstance", ctx, crnstr)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourceInstance indicates an expected call of GetResourceInstance.
+func (mr *MockAPIMockRecorder) GetResourceInstance(ctx, crnstr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstance", reflect.TypeOf((*MockAPI)(nil).GetResourceInstance), ctx, crnstr)
+}
+
 // GetSSHKeyByPublicKey mocks base method.
 func (m *MockAPI) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error) {
 	m.ctrl.T.Helper()
@@ -679,19 +694,19 @@ func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
 }
 
-// GetResourceInstance mocks base method.
-func (m *MockAPI) GetResourceInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+// GetVolumeProfile mocks base method.
+func (m *MockAPI) GetVolumeProfile(ctx context.Context, name, region string) (*vpcv1.VolumeProfile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResourceInstance", ctx, crnstr)
-	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret := m.ctrl.Call(m, "GetVolumeProfile", ctx, name, region)
+	ret0, _ := ret[0].(*vpcv1.VolumeProfile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetResourceInstance indicates an expected call of GetResourceInstance.
-func (mr *MockAPIMockRecorder) GetResourceInstance(ctx, crnstr any) *gomock.Call {
+// GetVolumeProfile indicates an expected call of GetVolumeProfile.
+func (mr *MockAPIMockRecorder) GetVolumeProfile(ctx, name, region any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstance", reflect.TypeOf((*MockAPI)(nil).GetResourceInstance), ctx, crnstr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVolumeProfile", reflect.TypeOf((*MockAPI)(nil).GetVolumeProfile), ctx, name, region)
 }
 
 // ListCOSBuckets mocks base method.

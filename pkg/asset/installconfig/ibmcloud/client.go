@@ -80,6 +80,7 @@ type API interface {
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
+	GetVolumeProfile(ctx context.Context, name string, region string) (*vpcv1.VolumeProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
@@ -1210,6 +1211,29 @@ func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, e
 		return nil, errors.Wrapf(err, "failed to list vpc vsi profiles using: %s", c.vpcAPI.Service.Options.URL)
 	}
 	return profiles.Profiles, nil
+}
+
+// GetVolumeProfile gets the named block storage volume profile in a region,
+// whose iops, bandwidth and boot_capacity fields describe the values the
+// profile permits. It returns a VPCResourceNotFoundError if the profile is not
+// available in the region.
+func (c *Client) GetVolumeProfile(ctx context.Context, name string, region string) (*vpcv1.VolumeProfile, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	options := c.vpcAPI.NewGetVolumeProfileOptions(name)
+	profile, detailedResponse, err := c.vpcAPI.GetVolumeProfileWithContext(localContext, options)
+	if detailedResponse != nil && detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, &VPCResourceNotFoundError{}
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get volume profile %s using: %s", name, c.vpcAPI.Service.Options.URL)
+	}
+	return profile, nil
 }
 
 // GetVPC gets a VPC by its ID.

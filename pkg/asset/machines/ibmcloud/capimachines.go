@@ -44,13 +44,20 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 
 		// Generate the necessary machine data.
 
-		// Populate boot volume if an encryption key was provided (currently only supported boot volume option).
+		// Populate the boot volume if any boot volume option was provided.
 		var bootVolume *capibmcloud.VPCVolume
-		if providerSpec.BootVolume.EncryptionKey != "" {
+		if providerSpec.BootVolume != (ibmcloudprovider.IBMCloudMachineBootVolume{}) {
 			bootVolume = &capibmcloud.VPCVolume{
 				EncryptionKeyCRN: providerSpec.BootVolume.EncryptionKey,
-				// NOTE(cjschaef): We will need to make this option configurable, since it must be specified for CAPI Machines.
-				SizeGiB: int64(defaultMachineBootVolumeSizeGB),
+				Profile:          providerSpec.BootVolume.Profile,
+				Iops:             providerSpec.BootVolume.Iops,
+				Bandwidth:        providerSpec.BootVolume.Bandwidth,
+				// A size must always be specified for CAPI Machines, so fall
+				// back to the default when the user did not configure one.
+				SizeGiB: providerSpec.BootVolume.SizeGiB,
+			}
+			if bootVolume.SizeGiB == 0 {
+				bootVolume.SizeGiB = int64(defaultMachineBootVolumeSizeGB)
 			}
 		}
 

@@ -54,6 +54,34 @@ func TestValidatePlatform(t *testing.T) {
 			valid: true,
 		},
 		{
+			// Each pool is validated after the merge, against its effective profile.
+			name: "valid profile-less default boot volume iops",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.DefaultMachinePlatform = &ibmcloud.MachinePool{BootVolume: &ibmcloud.BootVolume{IOPS: 3000}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "valid profile-less default boot volume bandwidth",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.DefaultMachinePlatform = &ibmcloud.MachinePool{BootVolume: &ibmcloud.BootVolume{Bandwidth: 2000}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "invalid default boot volume profile",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.DefaultMachinePlatform = &ibmcloud.MachinePool{BootVolume: &ibmcloud.BootVolume{Profile: "not-a-profile"}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name: "valid vpc and subnets",
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
