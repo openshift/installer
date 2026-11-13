@@ -18,7 +18,9 @@ The steps for performing a UPI-based install are outlined here. Several [Terrafo
 
 7. Watching your installation (bootstrap_complete, cluster available)
 
-8. Example vSphere UPI deployment
+8. Installing with component-scoped credentials
+
+9. Example vSphere UPI deployment
 
 ## Compute
 
@@ -311,6 +313,115 @@ The administrators can use the `wait-for install-complete` command of the OpenSh
 $ openshift-install --dir test-vsphere wait-for install-complete
 INFO Waiting up to 30m0s for the cluster to initialize...
 ```
+
+## Installing with component-scoped credentials
+
+This section describes how to perform the steps above with component-scoped credentials, where each OpenShift component uses its own least-privilege vCenter account instead of sharing the single global account. See [vCenter credential types](customization.md#vcenter-credential-types) for the credential model and the [candidate component privilege matrix](component-privileges.md) for the privileges each component account requires. Component-scoped credentials are a Development Preview feature; they are not supported in production clusters and are excluded from upgrade guarantees.
+
+The rest of this document applies unchanged: the same load balancers, DNS records, VMs, and Ignition configuration are required. Only the install config, and the verification afterwards, differ.
+
+### Prerequisites
+
+* The four component accounts (`machineManagement`, `storage`, `cloudControllerManager`, `vsphereProblemDetector`) created in vCenter for every configured vCenter server, with the privileges described in the [candidate component privilege matrix](component-privileges.md). The accounts must exist before you run the installer: the installer connects to each vCenter with the machine-management account when it generates the manifests, and it checks the privileges of all four component accounts during installer-provisioned installations, reporting a wrong password as a connection failure attributed to that component and server. In a UPI installation the `storage`, `cloudControllerManager`, and `vsphereProblemDetector` accounts are first used by the cluster components themselves; verify them after the installation as described in [Verifying the installation](#verifying-the-installation).
+* An installer release that includes the `VSpherePerComponentScopedCreds` feature gate.
+
+### Setting up the install config
+
+In addition to the usual UPI install config, set `credentialsMode: Manual`, enable the feature gate, and provide the component credentials on each `vcenters` entry. The `user` and `password` fields must be omitted from every `vcenters` entry:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+compute:
+- name: worker
+  replicas: 1
+controlPlane:
+  name: master
+  replicas: 3
+metadata:
+  name: test
+featureSet: CustomNoUpgrade
+featureGates:
+- VSpherePerComponentScopedCreds=true
+credentialsMode: Manual
+platform:
+  vsphere:
+    credentialType: component-scoped
+    vcenters:
+    - server: vcenter.example.com
+      datacenters:
+      - DC1
+      componentCredentials:
+        machineManagement:
+          user: ocp-machine-api@vsphere.local
+          password: machine-management-password
+        storage:
+          user: ocp-csi@vsphere.local
+          password: storage-password
+        cloudControllerManager:
+          user: ocp-ccm@vsphere.local
+          password: ccm-password
+        vsphereProblemDetector:
+          user: ocp-diagnostics@vsphere.local
+          password: diagnostics-password
+    failureDomains:
+    - name: generated-failure-domain
+      server: vcenter.example.com
+      zone: generated-zone
+      region: generated-region
+      topology:
+        datacenter: DC1
+        computeCluster: /DC1/host/cluster-1
+        datastore: /DC1/datastore/datastore-1
+        networks:
+        - VM Network
+        resourcePool: /DC1/host/cluster-1/Resources
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+Notes on the credential-related fields:
+
+* The `VSpherePerComponentScopedCreds` gate is only read by the installer, when it validates the install config; nothing in the running cluster consumes it. The gate can be enabled either through the minimal `CustomNoUpgrade` feature set shown above, or through the `DevPreviewNoUpgrade` feature set, which enables the entire development preview set. As with any feature set, the value is also rendered into the cluster's FeatureGate manifest, so the cluster reports the feature set until it is changed.
+* `credentialsMode: Manual` is required: the installer rejects component-scoped credentials in any other mode, because the scoped credentials are delivered to the cluster through pre-created Secrets that the Cloud Credential Operator must not reconcile.
+* The `machineManagement` account backs the in-cluster Machine API and Machine Config Operator. The installer uses it to connect to each vCenter when generating the manifests, and validates its privileges against the installer provisioning privileges described in [Privileges](privileges.md) during installer-provisioned installations. Provisioning the UPI VMs themselves uses your own vCenter credentials, not any of the component accounts; for example, the Terraform example below takes `vsphere_user` and `vsphere_password` for the account that creates the VMs.
+
+### Generating the manifests
+
+Create the manifests as usual:
+
+```console
+$ openshift-install --dir test-vsphere create manifests
+```
+
+The installer connects to each configured vCenter with the machine-management account to generate the manifests: an unreachable vCenter, or a wrong password for that account, is reported at this step. The privileges of all four component accounts are validated only by `create cluster`, which a UPI installation does not run; the `storage`, `cloudControllerManager`, and `vsphereProblemDetector` accounts are first used by the cluster components themselves. Verify them after the installation as described in [Verifying the installation](#verifying-the-installation).
+
+Confirm that the component credential Secrets were generated:
+
+```console
+$ ls test-vsphere/openshift/ | grep vsphere
+99_vsphere-cloud-controller-credentials.yaml
+99_vsphere-csi-credentials.yaml
+99_vsphere-machine-api-credentials.yaml
+99_vsphere-machine-config-operator-credentials.yaml
+99_vsphere-problem-detector-credentials.yaml
+```
+
+Then [remove the machineset and master machine manifests](#remove-machines-and-machinesets) and [check the folder name in the cloud provider manifest](#check-folder-name-in-cloud-provider-manifest) as described above, and continue with `create ignition-configs`.
+
+The generated manifests, including the five credential Secrets, are embedded into the bootstrap Ignition config when you run `create ignition-configs`. The cluster therefore comes up with its component credentials already in place, and no post-installation Secret creation is needed.
+
+### Making the credential mode explicit
+
+The installer does not set the cluster's CloudCredential resource; it is created by the Cluster Version Operator in the default mode, which behaves as passthrough on vSphere. The cluster functions because the Cloud Credential Operator only propagates a root Secret that does not exist, but the mode does not reflect how the cluster is meant to be operated. Make it explicit:
+
+```console
+$ oc patch cloudcredential cluster --type merge -p '{"spec":{"credentialsMode":"Manual"}}'
+```
+
+### Verifying the installation
+
+Confirm the cluster operators are healthy as usual, and exercise each component with its account as described in [Verifying the conversion](converting-to-component-credentials.md#verify-the-conversion).
 
 ## Example vSphere UPI deployment
 
