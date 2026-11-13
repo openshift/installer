@@ -45,17 +45,17 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-logr/logr v1.4.4
 	github.com/go-openapi/errors v0.22.8
-	github.com/go-openapi/runtime v0.28.0
+	github.com/go-openapi/runtime v0.33.0
 	github.com/go-openapi/strfmt v0.27.2
 	github.com/go-openapi/swag v0.28.0
-	github.com/go-openapi/validate v0.24.0
+	github.com/go-openapi/validate v0.26.1
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.26.0
-	github.com/gophercloud/gophercloud/v2 v2.10.0
+	github.com/gophercloud/gophercloud/v2 v2.15.0
 	github.com/gophercloud/utils/v2 v2.0.0-20250212084022-725b94822eeb
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-multierror v1.1.1
@@ -89,7 +89,7 @@ require (
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.12
-	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/common v0.72.0
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
@@ -124,12 +124,12 @@ require (
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	libvirt.org/go/libvirtxml v1.10002.0
-	sigs.k8s.io/cluster-api v1.14.2
+	sigs.k8s.io/cluster-api v1.14.3
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.12.1
 	sigs.k8s.io/cluster-api-provider-azure v1.27.1-0.20261027185733-b40aeba7879b
 	sigs.k8s.io/cluster-api-provider-gcp v1.13.1-0.20261007182012-ab974db591c8
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.15.2
-	sigs.k8s.io/cluster-api-provider-openstack v0.14.6
+	sigs.k8s.io/cluster-api-provider-openstack v0.15.1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.17.0
 	sigs.k8s.io/controller-runtime v0.25.2
 	sigs.k8s.io/controller-tools v0.19.0
@@ -156,12 +156,15 @@ require (
 require github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
 
 require (
-	github.com/k-orc/openstack-resource-controller/v2 v2.4.0
+	github.com/k-orc/openstack-resource-controller/v2 v2.6.0
 	sigs.k8s.io/cluster-api-provider-vsphere/api v1.17.0
-	sigs.k8s.io/cluster-api/api v1.14.2
+	sigs.k8s.io/cluster-api/api v1.14.3
 )
 
-require go.opentelemetry.io/otel/log v1.47.0 // indirect
+require (
+	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
+	go.opentelemetry.io/otel/log v1.47.0 // indirect
+)
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -261,11 +264,11 @@ require (
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
-	github.com/go-openapi/analysis v0.23.0 // indirect
+	github.com/go-openapi/analysis v0.25.5 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v1.0.0 // indirect
-	github.com/go-openapi/loads v0.22.0 // indirect
-	github.com/go-openapi/spec v0.21.0 // indirect
+	github.com/go-openapi/loads v0.25.0 // indirect
+	github.com/go-openapi/spec v0.22.9 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gobuffalo/flect v1.0.3 // indirect
@@ -313,7 +316,6 @@ require (
 	github.com/opencontainers/runtime-spec v1.2.1 // indirect
 	github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87 // indirect
 	github.com/openshift/machine-api-operator v0.2.1-0.20251110092458-e0af0f3f44b8 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -327,7 +329,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.70.0 // indirect
 	go.opentelemetry.io/otel v1.47.0 // indirect
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect

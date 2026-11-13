@@ -1,6 +1,8 @@
 package providers
 
 import (
+	"context"
+
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/pagination"
 )
@@ -41,4 +43,80 @@ func List(c *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pager {
 	return pagination.NewPager(c, url, func(r pagination.PageResult) pagination.Page {
 		return ProviderPage{pagination.LinkedPageBase{PageResult: r}}
 	})
+}
+
+// ListFlavorCapabilitiesOptsBuilder allows extensions to add additional
+// parameters to the ListFlavorCapabilities request.
+type ListFlavorCapabilitiesOptsBuilder interface {
+	ToFlavorCapabilitiesListQuery() (string, error)
+}
+
+// ListFlavorCapabilitiesOpts allows the result of a ListFlavorCapabilities
+// request to be filtered.
+type ListFlavorCapabilitiesOpts struct {
+	// Fields is a list of attributes to return for each capability.
+	Fields []string `q:"fields"`
+}
+
+// ToFlavorCapabilitiesListQuery formats a ListFlavorCapabilitiesOpts into a
+// query string.
+func (opts ListFlavorCapabilitiesOpts) ToFlavorCapabilitiesListQuery() (string, error) {
+	q, err := gophercloud.BuildQueryString(opts)
+	return q.String(), err
+}
+
+// ListFlavorCapabilities lists the flavor capabilities of a provider.
+// This operation requires Octavia API version 2.6 or later.
+func ListFlavorCapabilities(ctx context.Context, c *gophercloud.ServiceClient, provider string, opts ListFlavorCapabilitiesOptsBuilder) (r ListFlavorCapabilitiesResult) {
+	url := flavorCapabilitiesURL(c, provider)
+	if opts != nil {
+		query, err := opts.ToFlavorCapabilitiesListQuery()
+		if err != nil {
+			r.Err = err
+			return
+		}
+		url += query
+	}
+
+	resp, err := c.Get(ctx, url, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// ListAvailabilityZoneCapabilitiesOptsBuilder allows extensions to add
+// additional parameters to the ListAvailabilityZoneCapabilities request.
+type ListAvailabilityZoneCapabilitiesOptsBuilder interface {
+	ToAvailabilityZoneCapabilitiesListQuery() (string, error)
+}
+
+// ListAvailabilityZoneCapabilitiesOpts allows the result of a
+// ListAvailabilityZoneCapabilities request to be filtered.
+type ListAvailabilityZoneCapabilitiesOpts struct {
+	// Fields is a list of attributes to return for each capability.
+	Fields []string `q:"fields"`
+}
+
+// ToAvailabilityZoneCapabilitiesListQuery formats a
+// ListAvailabilityZoneCapabilitiesOpts into a query string.
+func (opts ListAvailabilityZoneCapabilitiesOpts) ToAvailabilityZoneCapabilitiesListQuery() (string, error) {
+	q, err := gophercloud.BuildQueryString(opts)
+	return q.String(), err
+}
+
+// ListAvailabilityZoneCapabilities lists the availability zone capabilities
+// of a provider. This operation requires Octavia API version 2.14 or later.
+func ListAvailabilityZoneCapabilities(ctx context.Context, c *gophercloud.ServiceClient, provider string, opts ListAvailabilityZoneCapabilitiesOptsBuilder) (r ListAvailabilityZoneCapabilitiesResult) {
+	url := availabilityZoneCapabilitiesURL(c, provider)
+	if opts != nil {
+		query, err := opts.ToAvailabilityZoneCapabilitiesListQuery()
+		if err != nil {
+			r.Err = err
+			return
+		}
+		url += query
+	}
+
+	resp, err := c.Get(ctx, url, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
 }

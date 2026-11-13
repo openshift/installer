@@ -439,13 +439,12 @@ func waitForServersDeleted(ctx context.Context, c *clients, filter map[string]st
 // are no status-specific types such as ErrDefault404 or ErrDefault500 and no
 // StatusCodeError interface, so matching the concrete type is sufficient. The
 // only other errors that carry such a response are the re-authentication
-// errors; they embed it without implementing Unwrap, so they are looked at
-// explicitly.
+// wrappers; since gophercloud v2.15.0 they implement Unwrap, so they must be
+// checked before ErrUnexpectedResponseCode.
 func describeRetryError(err error) string {
-	var codeErr gophercloud.ErrUnexpectedResponseCode
-	if errors.As(err, &codeErr) {
-		return fmt.Sprintf("unexpected HTTP status %d", codeErr.GetStatusCode())
-	}
+	// Check wrappers first — since gophercloud v2.15.0,
+	// ErrErrorAfterReauthentication implements Unwrap(),
+	// so errors.As would otherwise see through it.
 	var afterReauth *gophercloud.ErrErrorAfterReauthentication
 	if errors.As(err, &afterReauth) && afterReauth.ErrOriginal != nil {
 		return "after re-authenticating: " + describeRetryError(afterReauth.ErrOriginal)
@@ -453,6 +452,10 @@ func describeRetryError(err error) string {
 	var unableToReauth *gophercloud.ErrUnableToReauthenticate
 	if errors.As(err, &unableToReauth) {
 		return "unable to re-authenticate"
+	}
+	var codeErr gophercloud.ErrUnexpectedResponseCode
+	if errors.As(err, &codeErr) {
+		return fmt.Sprintf("unexpected HTTP status %d", codeErr.GetStatusCode())
 	}
 	return err.Error()
 }

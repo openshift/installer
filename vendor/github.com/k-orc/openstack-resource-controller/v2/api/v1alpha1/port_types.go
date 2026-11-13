@@ -36,7 +36,37 @@ type PortFilter struct {
 	// +optional
 	ProjectRef *KubernetesNameRef `json:"projectRef,omitempty"`
 
+	// adminStateUp is the administrative state of the port,
+	// which is up (true) or down (false).
+	// +optional
+	AdminStateUp *bool `json:"adminStateUp,omitempty"`
+
+	// macAddress is the MAC address of the port.
+	// +kubebuilder:validation:MaxLength=32
+	// +optional
+	MACAddress string `json:"macAddress,omitempty"`
+
 	FilterByNeutronTags `json:",inline"`
+}
+
+// HostID specifies how to determine the host ID for port binding.
+// Exactly one of the fields must be set.
+// +kubebuilder:validation:MinProperties:=1
+// +kubebuilder:validation:MaxProperties:=1
+// +kubebuilder:validation:XValidation:rule="(has(self.id) && size(self.id) > 0) != (has(self.serverRef) && size(self.serverRef) > 0)",message="exactly one of id or serverRef must be set"
+type HostID struct {
+	// id is the literal host ID string to use for binding:host_id.
+	// This is mutually exclusive with serverRef.
+	// +kubebuilder:validation:MaxLength=36
+	// +optional
+	ID string `json:"id,omitempty"` //nolint:kubeapilinter // intentionally allow raw ID
+
+	// serverRef is a reference to an ORC Server resource from which to
+	// retrieve the hostID for port binding. The hostID will be read from
+	// the Server's status.resource.hostID field.
+	// This is mutually exclusive with id.
+	// +optional
+	ServerRef KubernetesNameRef `json:"serverRef,omitempty"`
 }
 
 type AllowedAddressPair struct {
@@ -126,12 +156,18 @@ type PortResourceSpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="addresses is immutable"
 	Addresses []Address `json:"addresses,omitempty"`
 
+	// adminStateUp is the administrative state of the port,
+	// which is up (true) or down (false). The default value is true.
+	// +kubebuilder:default:=true
+	// +optional
+	AdminStateUp *bool `json:"adminStateUp,omitempty"`
+
 	// securityGroupRefs are the names of the security groups associated
 	// with this port.
 	// +kubebuilder:validation:MaxItems:=64
 	// +listType=set
 	// +optional
-	SecurityGroupRefs []OpenStackName `json:"securityGroupRefs,omitempty"`
+	SecurityGroupRefs []OpenStackName `json:"securityGroupRefs,omitempty"` //nolint:kubeapilinter // https://github.com/k-orc/openstack-resource-controller/issues/438
 
 	// vnicType specifies the type of vNIC which this port should be
 	// attached to. This is used to determine which mechanism driver(s) to
@@ -159,6 +195,21 @@ type PortResourceSpec struct {
 	// +optional
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="projectRef is immutable"
 	ProjectRef *KubernetesNameRef `json:"projectRef,omitempty"`
+
+	// macAddress is the MAC address of the port.
+	// +kubebuilder:validation:MaxLength=32
+	// +optional
+	MACAddress string `json:"macAddress,omitempty"`
+
+	// hostID specifies the host where the port will be bound.
+	// Note that when the port is attached to a server, OpenStack may
+	// rebind the port to the server's actual compute host, which may
+	// differ from the specified hostID if no matching scheduler hint
+	// is used. In this case the port's status will reflect the actual
+	// binding host, not the value specified here.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="hostID is immutable"
+	HostID *HostID `json:"hostID,omitempty"` //nolint:kubeapilinter // HostID provides both raw ID and ServerRef options
 }
 
 type PortResourceStatus struct {
@@ -250,6 +301,11 @@ type PortResourceStatus struct {
 	// portSecurityEnabled indicates whether port security is enabled or not.
 	// +optional
 	PortSecurityEnabled *bool `json:"portSecurityEnabled,omitempty"`
+
+	// hostID is the ID of host where the port resides.
+	// +kubebuilder:validation:MaxLength=128
+	// +optional
+	HostID string `json:"hostID,omitempty"`
 
 	NeutronStatusMetadata `json:",inline"`
 }

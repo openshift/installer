@@ -1,15 +1,25 @@
 package data
 
 import (
-	"bytes"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 func TestUnpack(t *testing.T) {
+	const expected = "test asset\n"
+	originalAssets := Assets
+	t.Cleanup(func() {
+		Assets = originalAssets
+	})
+	Assets = http.FS(fstest.MapFS{
+		"nested/asset.txt": {Data: []byte(expected)},
+	})
+
 	path := t.TempDir()
 
 	err := Unpack(path, ".")
@@ -17,15 +27,13 @@ func TestUnpack(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := "# Bootstrap Module"
-	content, err := os.ReadFile(filepath.Join(path, "libvirt", "bootstrap", "README.md"))
+	content, err := os.ReadFile(filepath.Join(path, "nested", "asset.txt"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	firstLine := string(bytes.SplitN(content, []byte("\n"), 2)[0])
-	if firstLine != expected {
-		t.Fatalf("%q != %q", firstLine, expected)
+	if string(content) != expected {
+		t.Fatalf("%q != %q", content, expected)
 	}
 }
 

@@ -19,6 +19,7 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // OpenStackMachineTemplateSpec defines the desired state of OpenStackMachineTemplate.
@@ -35,6 +36,12 @@ type OpenStackMachineTemplateStatus struct {
 	Capacity corev1.ResourceList `json:"capacity,omitempty"`
 	// +optional
 	NodeInfo NodeInfo `json:"nodeInfo,omitempty,omitzero"`
+
+	// Conditions defines current service state of the OpenStackMachineTemplate.
+	// The Ready condition must surface issues during the entire lifecycle of the OpenStackMachineTemplate.
+	// (both during initial provisioning and after the initial provisioning is completed).
+	// +optional
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // NodeInfo contains information about the node's architecture and operating system.
@@ -48,7 +55,6 @@ type NodeInfo struct {
 
 // +genclient
 // +kubebuilder:object:root=true
-// +kubebuilder:storageversion
 // +kubebuilder:resource:path=openstackmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=osmt
 // +kubebuilder:subresource:status
 
@@ -80,4 +86,14 @@ func (r *OpenStackMachineTemplate) GetIdentityRef() (*string, *OpenStackIdentity
 		return &r.Namespace, r.Spec.Template.Spec.IdentityRef
 	}
 	return nil, nil
+}
+
+// GetConditions returns the observations of the operational state of the OpenStackMachineTemplate resource.
+func (r *OpenStackMachineTemplate) GetConditions() clusterv1beta1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the OpenStackMachineTemplate to the predescribed clusterv1.Conditions.
+func (r *OpenStackMachineTemplate) SetConditions(conditions clusterv1beta1.Conditions) {
+	r.Status.Conditions = conditions
 }
