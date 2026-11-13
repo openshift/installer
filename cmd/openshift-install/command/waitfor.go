@@ -68,7 +68,7 @@ type WaitOptions struct {
 	// VerifyFIPS verifies that FIPS mode is enabled on the cluster before completing.
 	VerifyFIPS bool
 	// ClusterInitTimeout overrides the default cluster initialization timeout.
-	// If zero, the default (30m) is used.
+	// If zero, the default (40m) is used.
 	ClusterInitTimeout time.Duration
 }
 
@@ -149,7 +149,7 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 // that the cluster has been initialized.
 func waitForInitializedCluster(ctx context.Context, config *rest.Config, options WaitOptions) error {
 	// Default cluster initialization timeout.
-	timeout := 30 * time.Minute
+	timeout := 40 * time.Minute
 	if options.ClusterInitTimeout > 0 {
 		timeout = options.ClusterInitTimeout
 	} else if options.ExtendTimeoutForBaremetal || options.UserProvisionedDNSEnabled {
