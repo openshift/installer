@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -9,15 +11,24 @@ import (
 
 type fileFetcher struct {
 	directory string
+	modCheck  modificationChecker
 }
 
 // FetchByName returns the file with the given name.
 func (f *fileFetcher) FetchByName(name string) (*asset.File, error) {
-	data, err := os.ReadFile(filepath.Join(f.directory, name))
+	path := filepath.Join(f.directory, name)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return &asset.File{Filename: name, Data: data}, nil
+	file := &asset.File{
+		Filename: name,
+		Data:     data,
+	}
+	if err := f.modCheck.CheckModified(path, file); err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 // FetchByPattern returns the files whose name match the given regexp.
@@ -39,10 +50,19 @@ func (f *fileFetcher) FetchByPattern(pattern string) (files []*asset.File, err e
 			return nil, err
 		}
 
-		files = append(files, &asset.File{
+		file := &asset.File{
 			Filename: filename,
 			Data:     data,
-		})
+		}
+
+		if err := f.modCheck.CheckModified(path, file); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, err
+		}
+
+		files = append(files, file)
 	}
 
 	return files, nil
