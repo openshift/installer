@@ -326,6 +326,21 @@ func (mr *MockAPIMockRecorder) GetPublicGatewayByVPC(ctx, vpcName any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicGatewayByVPC", reflect.TypeOf((*MockAPI)(nil).GetPublicGatewayByVPC), ctx, vpcName)
 }
 
+// GetResourceInstanceByCRN mocks base method.
+func (m *MockAPI) GetResourceInstanceByCRN(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceInstanceByCRN", ctx, crnstr)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourceInstanceByCRN indicates an expected call of GetResourceInstanceByCRN.
+func (mr *MockAPIMockRecorder) GetResourceInstanceByCRN(ctx, crnstr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstanceByCRN", reflect.TypeOf((*MockAPI)(nil).GetResourceInstanceByCRN), ctx, crnstr)
+}
+
 // GetSubnetByName mocks base method.
 func (m *MockAPI) GetSubnetByName(ctx context.Context, subnetName, region string) (*vpcv1.Subnet, error) {
 	m.ctrl.T.Helper()
@@ -521,21 +536,6 @@ func (mr *MockAPIMockRecorder) ServiceInstanceGUIDToName(ctx, id any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceGUIDToName", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceGUIDToName), ctx, id)
 }
 
-// GetResourceInstanceByCRN mocks base method.
-func (m *MockAPI) GetResourceInstanceByCRN(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetResourceInstanceByCRN", ctx, crnstr)
-	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetResourceInstanceByCRN indicates an expected call of GetResourceInstanceByCRN.
-func (mr *MockAPIMockRecorder) GetResourceInstanceByCRN(ctx, crnstr any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceInstanceByCRN", reflect.TypeOf((*MockAPI)(nil).GetResourceInstanceByCRN), ctx, crnstr)
-}
-
 // ServiceInstanceNameToGUID mocks base method.
 func (m *MockAPI) ServiceInstanceNameToGUID(ctx context.Context, name string) (string, error) {
 	m.ctrl.T.Helper()
@@ -549,6 +549,21 @@ func (m *MockAPI) ServiceInstanceNameToGUID(ctx context.Context, name string) (s
 func (mr *MockAPIMockRecorder) ServiceInstanceNameToGUID(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceNameToGUID", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceNameToGUID), ctx, name)
+}
+
+// SetVPCRoutingTableRouteNextHop mocks base method.
+func (m *MockAPI) SetVPCRoutingTableRouteNextHop(ctx context.Context, vpcID, region, routingTableID, routeName, nextHop string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetVPCRoutingTableRouteNextHop", ctx, vpcID, region, routingTableID, routeName, nextHop)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetVPCRoutingTableRouteNextHop indicates an expected call of SetVPCRoutingTableRouteNextHop.
+func (mr *MockAPIMockRecorder) SetVPCRoutingTableRouteNextHop(ctx, vpcID, region, routingTableID, routeName, nextHop any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVPCRoutingTableRouteNextHop", reflect.TypeOf((*MockAPI)(nil).SetVPCRoutingTableRouteNextHop), ctx, vpcID, region, routingTableID, routeName, nextHop)
 }
 
 // SetVPCServiceURLForRegion mocks base method.

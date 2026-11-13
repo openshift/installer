@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -113,5 +114,79 @@ func TestListVPCRoutingTables(t *testing.T) {
 		assert.False(t, *got[0].RouteTransitGatewayIngress)
 		assert.Equal(t, "rt-2", *got[1].ID)
 		assert.True(t, *got[1].RouteTransitGatewayIngress)
+	}
+}
+
+func TestSetVPCRoutingTableRouteNextHop(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		currentHop  string
+		routeName   string
+		secondPage  bool
+		listErr     bool
+		patchErr    bool
+		wantChanged bool
+		wantPatch   bool
+		wantErr     bool
+	}{
+		{name: "next hop differs", currentHop: "10.0.64.4", routeName: "rt-default", wantChanged: true, wantPatch: true},
+		{name: "next hop already correct", currentHop: "10.0.0.5", routeName: "rt-default"},
+		{name: "route missing", currentHop: "10.0.0.5", routeName: "other", wantErr: true},
+		{name: "route on second page", currentHop: "10.0.64.4", routeName: "rt-default", secondPage: true, wantChanged: true, wantPatch: true},
+		{name: "route list error", currentHop: "10.0.64.4", routeName: "rt-default", listErr: true, wantErr: true},
+		{name: "patch error", currentHop: "10.0.64.4", routeName: "rt-default", patchErr: true, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			patched := false
+			c := newTestVPCClient(t, func(baseURL string) map[string]http.HandlerFunc {
+				return map[string]http.HandlerFunc{
+					"/v1/vpcs/vpc-a/routing_tables/rt-1/routes": func(w http.ResponseWriter, r *http.Request) {
+						if tc.listErr {
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+						if tc.secondPage {
+							if r.URL.Query().Get("start") == "page2" {
+								writeJSON(t, w, fmt.Sprintf(`{"limit":1,"total_count":2,"routes":[
+								{"id":"route-1","name":"rt-default","action":"deliver","destination":"0.0.0.0/0","next_hop":{"address":%q}}]}`, tc.currentHop))
+								return
+							}
+							writeJSON(t, w, fmt.Sprintf(`{"limit":1,"total_count":2,
+							"next":{"href":"%s/v1/vpcs/vpc-a/routing_tables/rt-1/routes?start=page2"},
+							"routes":[{"id":"route-0","name":"rt-other","action":"deliver","destination":"1.1.1.0/24","next_hop":{"address":"10.0.64.1"}}]}`, baseURL))
+							return
+						}
+						writeJSON(t, w, fmt.Sprintf(`{"limit":50,"total_count":1,"routes":[
+						{"id":"route-1","name":"rt-default","action":"deliver","destination":"0.0.0.0/0","next_hop":{"address":%q}}]}`, tc.currentHop))
+					},
+					"/v1/vpcs/vpc-a/routing_tables/rt-1/routes/route-1": func(w http.ResponseWriter, r *http.Request) {
+						assert.Equal(t, http.MethodPatch, r.Method)
+						if tc.patchErr {
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+						var body struct {
+							NextHop struct {
+								Address string `json:"address"`
+							} `json:"next_hop"`
+						}
+						assert.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+						assert.Equal(t, "10.0.0.5", body.NextHop.Address)
+						patched = true
+						writeJSON(t, w, `{"id":"route-1","name":"rt-default"}`)
+					},
+				}
+			})
+
+			changed, err := c.SetVPCRoutingTableRouteNextHop(context.Background(), "vpc-a", "us-south", "rt-1", tc.routeName, "10.0.0.5")
+			if tc.wantErr {
+				assert.Error(t, err)
+				assert.False(t, changed)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantChanged, changed)
+			assert.Equal(t, tc.wantPatch, patched)
+		})
 	}
 }

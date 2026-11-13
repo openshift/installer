@@ -59,6 +59,7 @@ type API interface {
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 	ListPublicGatewaysByVPC(ctx context.Context, vpcID string, region string) ([]vpcv1.PublicGateway, error)
 	ListVPCRoutingTables(ctx context.Context, vpcID string, region string) ([]vpcv1.RoutingTable, error)
+	SetVPCRoutingTableRouteNextHop(ctx context.Context, vpcID, region, routingTableID, routeName, nextHop string) (bool, error)
 
 	// TG
 	TransitGatewayNameToID(ctx context.Context, name string) (string, error)
@@ -808,6 +809,69 @@ func (c *Client) ListVPCRoutingTables(ctx context.Context, vpcID string, region 
 		}
 		options.SetStart(*next)
 	}
+}
+
+// SetVPCRoutingTableRouteNextHop makes the named route in the routing table deliver to
+// nextHop. It returns true when the route was changed, and false when it already
+// pointed at nextHop.
+func (c *Client) SetVPCRoutingTableRouteNextHop(ctx context.Context, vpcID, region, routingTableID, routeName, nextHop string) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(ctx, region); err != nil {
+		return false, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	var route *vpcv1.Route
+	options := c.vpcAPI.NewListVPCRoutingTableRoutesOptions(vpcID, routingTableID)
+	for route == nil {
+		page, _, err := c.vpcAPI.ListVPCRoutingTableRoutesWithContext(ctx, options)
+		if err != nil {
+			return false, fmt.Errorf("failed to list routes of routing table %s: %w", routingTableID, err)
+		}
+		for i := range page.Routes {
+			if page.Routes[i].Name != nil && *page.Routes[i].Name == routeName {
+				route = &page.Routes[i]
+				break
+			}
+		}
+		next, err := page.GetNextStart()
+		if err != nil {
+			return false, err
+		}
+		if next == nil {
+			break
+		}
+		options.SetStart(*next)
+	}
+	if route == nil {
+		return false, fmt.Errorf("route %s not found in routing table %s", routeName, routingTableID)
+	}
+
+	// The SDK decodes next_hop into *RouteNextHop; *RouteNextHopIP is handled for completeness.
+	var currentHop *string
+	switch hop := route.NextHop.(type) {
+	case *vpcv1.RouteNextHop:
+		currentHop = hop.Address
+	case *vpcv1.RouteNextHopIP:
+		currentHop = hop.Address
+	}
+	if currentHop != nil && *currentHop == nextHop {
+		return false, nil
+	}
+
+	patch := &vpcv1.RoutePatch{
+		NextHop: &vpcv1.RouteNextHopPatchRouteNextHopIPRouteNextHopIPUnicastIP{Address: &nextHop},
+	}
+	patchMap, err := patch.AsPatch()
+	if err != nil {
+		return false, fmt.Errorf("failed to build route patch: %w", err)
+	}
+	if _, _, err := c.vpcAPI.UpdateVPCRoutingTableRouteWithContext(ctx,
+		c.vpcAPI.NewUpdateVPCRoutingTableRouteOptions(vpcID, routingTableID, *route.ID, patchMap)); err != nil {
+		return false, fmt.Errorf("failed to update route %s: %w", routeName, err)
+	}
+	return true, nil
 }
 
 // GetVPCSubnets retrieves all subnets in the given VPC.

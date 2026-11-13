@@ -172,6 +172,12 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to create DNS records for loadbalancers: %w", err)
 	}
 
+	// Step 1b: Make sure the default route of the cluster routing table delivers to the
+	// route-mode load balancer.
+	if err = ensureEgressRouteNextHop(ctx, in, powerVSCluster, vpcRegion); err != nil {
+		return fmt.Errorf("failed to set the egress route next hop: %w", err)
+	}
+
 	// Step 2: See which ports are already allowed.
 	missingPorts, err := findMissingSecurityGroupRules(ctx, in, powerVSCluster.Status.VPC.ID)
 	if err != nil {
@@ -250,6 +256,50 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
+// routeModeLoadBalancerIP returns the first private IP of the route-mode load balancer
+// declared in the cluster spec, or "" when there is none or it has no IP yet.
+func routeModeLoadBalancerIP(cluster *capibm.IBMPowerVSCluster) string {
+	for _, source := range cluster.Spec.LoadBalancers {
+		if source.Provision.RouteMode != capibm.PowerVSLoadBalancerRouteModeEnabled {
+			continue
+		}
+		for _, status := range cluster.Status.LoadBalancers {
+			if status.Name == source.Provision.Name && len(status.PrivateIPs) > 0 {
+				return status.PrivateIPs[0]
+			}
+		}
+	}
+	return ""
+}
+
+// ensureEgressRouteNextHop points the installer-provisioned default route at the
+// route-mode load balancer. The cluster-api provider fills the next hop in when it
+// creates the routing table, but never updates it afterwards. The table can be created
+// before the route-mode load balancer has an IP, in which case the provider falls back
+// to another load balancer and egress traffic is delivered to the wrong place.
+func ensureEgressRouteNextHop(ctx context.Context, in clusterapi.InfraReadyInput, cluster *capibm.IBMPowerVSCluster, vpcRegion string) error {
+	nextHop := routeModeLoadBalancerIP(cluster)
+	if nextHop == "" {
+		return nil
+	}
+
+	rtName := fmt.Sprintf("%s-rt", in.InfraID)
+	for _, rt := range cluster.Status.VPCRoutingTables {
+		if rt.Name != rtName {
+			continue
+		}
+		routeName := fmt.Sprintf("%s-default", rtName)
+		changed, err := in.InstallConfig.PowerVS.SetVPCRoutingTableRouteNextHop(ctx, cluster.Status.VPC.ID, vpcRegion, rt.ID, routeName, nextHop)
+		if err != nil {
+			return err
+		}
+		if changed {
+			logrus.Infof("Updated route %s in routing table %s to use next hop %s", routeName, rtName, nextHop)
+		}
+		return nil
+	}
+	return nil
+}
 func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyInput, loadBalancers []capibm.LoadBalancerStatus) error {
 	lbExtExp := regexp.MustCompile(`\b-loadbalancer\b$`)
 	lbIntExp := regexp.MustCompile(`\b-loadbalancer-int\b$`)

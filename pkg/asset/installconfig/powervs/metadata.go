@@ -386,6 +386,20 @@ func (m *Metadata) GetVPCRoutingTables(ctx context.Context, vpc *vpcv1.VPC) ([]v
 	return client.ListVPCRoutingTables(ctx, *vpc.ID, region)
 }
 
+// SetVPCRoutingTableRouteNextHop points the named route of a routing table at nextHop.
+// It returns true if the route was changed.
+func (m *Metadata) SetVPCRoutingTableRouteNextHop(ctx context.Context, vpcID, region, routingTableID, routeName, nextHop string) (bool, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return false, err
+	}
+
+	return client.SetVPCRoutingTableRouteNextHop(ctx, vpcID, region, routingTableID, routeName, nextHop)
+}
+
 // GetDNSServerIP gets the IP of a custom resolver for DNS use.
 func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, error) {
 	if m.dnsInstanceCRN == "" {
