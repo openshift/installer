@@ -3,6 +3,7 @@ package azure
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"testing"
 
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
@@ -10,6 +11,7 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	armcompute "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -22,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/network"
 )
 
@@ -2119,4 +2122,123 @@ func TestValidateFamilyIsolatedEbdsv5Allowed(t *testing.T) {
 			assert.Contains(t, errs.ToAggregate().Error(), "currently only supported on Windows")
 		}
 	})
+}
+
+type fakePublicDNSZoneGetter struct {
+	zone *Zone
+	err  error
+}
+
+func (f fakePublicDNSZoneGetter) GetPublicDNSZone(rgName string, zoneName string) (*Zone, error) {
+	return f.zone, f.err
+}
+
+func TestValidatePublicDNSZone(t *testing.T) {
+	notFound := autorest.DetailedError{
+		StatusCode: http.StatusNotFound,
+		Original:   fmt.Errorf("ResourceNotFound"),
+	}
+	forbidden := autorest.DetailedError{
+		StatusCode: http.StatusForbidden,
+		Original:   fmt.Errorf("AuthorizationFailed"),
+	}
+
+	cases := []struct {
+		name     string
+		getter   fakePublicDNSZoneGetter
+		expected string
+	}{{
+		name:   "zone exists",
+		getter: fakePublicDNSZoneGetter{zone: &Zone{Name: "example.com"}},
+	}, {
+		name:     "zone does not exist",
+		getter:   fakePublicDNSZoneGetter{err: notFound},
+		expected: `^baseDomain: Not found: "public DNS zone \\"example.com\\" in resource group \\"base-domain-rg\\""$`,
+	}, {
+		name:     "zone cannot be retrieved",
+		getter:   fakePublicDNSZoneGetter{err: forbidden},
+		expected: `^baseDomain: Internal error: failed to retrieve public DNS zone "example.com" in resource group "base-domain-rg"`,
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validatePublicDNSZone(tc.getter, "base-domain-rg", "example.com").ToAggregate()
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestUsesPublicDNSZone(t *testing.T) {
+	installConfig := func(edits ...func(ic *types.InstallConfig)) *types.InstallConfig {
+		ic := &types.InstallConfig{
+			Publish: types.ExternalPublishingStrategy,
+			Platform: types.Platform{
+				Azure: &azure.Platform{
+					CloudName: azure.PublicCloud,
+				},
+			},
+		}
+		for _, edit := range edits {
+			edit(ic)
+		}
+		return ic
+	}
+
+	cases := []struct {
+		name     string
+		ic       *types.InstallConfig
+		expected bool
+	}{{
+		name:     "external cluster",
+		ic:       installConfig(),
+		expected: true,
+	}, {
+		name: "internal cluster",
+		ic: installConfig(func(ic *types.InstallConfig) {
+			ic.Publish = types.InternalPublishingStrategy
+		}),
+		expected: false,
+	}, {
+		name: "mixed cluster with external ingress",
+		ic: installConfig(func(ic *types.InstallConfig) {
+			ic.Publish = types.MixedPublishingStrategy
+			ic.OperatorPublishingStrategy = &types.OperatorPublishingStrategy{
+				APIServer: "Internal",
+				Ingress:   "External",
+			}
+		}),
+		expected: true,
+	}, {
+		name: "mixed cluster with internal api and ingress",
+		ic: installConfig(func(ic *types.InstallConfig) {
+			ic.Publish = types.MixedPublishingStrategy
+			ic.OperatorPublishingStrategy = &types.OperatorPublishingStrategy{
+				APIServer: "Internal",
+				Ingress:   "Internal",
+			}
+		}),
+		expected: false,
+	}, {
+		name: "user-provisioned dns",
+		ic: installConfig(func(ic *types.InstallConfig) {
+			ic.Azure.UserProvisionedDNS = dnstypes.UserProvisionedDNSEnabled
+		}),
+		expected: false,
+	}, {
+		name: "azure stack hub",
+		ic: installConfig(func(ic *types.InstallConfig) {
+			ic.Azure.CloudName = azure.StackCloud
+		}),
+		expected: false,
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, usesPublicDNSZone(tc.ic))
+		})
+	}
 }
