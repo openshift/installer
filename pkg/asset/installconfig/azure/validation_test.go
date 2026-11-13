@@ -363,6 +363,123 @@ var (
 		}
 	}
 
+	validCapacityReservationGroupSubscriptionID = "test-capacity-reservation-subscription-id"
+	validCapacityReservationGroupResourceGroup  = "test-capacity-reservation-resource-group"
+	validCapacityReservationGroupName           = "test-capacity-reservation-group"
+	invalidCapacityReservationGroupName         = "invalid-capacity-reservation-group"
+	wrongRegionCapacityReservationGroupName     = "wrong-region-capacity-reservation-group"
+	validCapacityReservationGroupConfig         = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           validCapacityReservationGroupName,
+		}
+	}
+	invalidCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           invalidCapacityReservationGroupName,
+		}
+	}
+	wrongRegionCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           wrongRegionCapacityReservationGroupName,
+		}
+	}
+
+	validCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	validCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	validCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = validCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	invalidCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = invalidCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+	wrongRegionCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = wrongRegionCapacityReservationGroupConfig()
+	}
+
+	// A group created without zones; it backs only regional reservations.
+	regionalCapacityReservationGroupName   = "regional-capacity-reservation-group"
+	regionalCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           regionalCapacityReservationGroupName,
+		}
+	}
+	regionalCapacityReservationGroupDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+	regionalCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+	regionalCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = regionalCapacityReservationGroupConfig()
+	}
+
+	zonedCapacityReservationGroupName   = "zoned-capacity-reservation-group"
+	zonedCapacityReservationGroupConfig = func() *azure.CapacityReservationGroup {
+		return &azure.CapacityReservationGroup{
+			SubscriptionID: validCapacityReservationGroupSubscriptionID,
+			ResourceGroup:  validCapacityReservationGroupResourceGroup,
+			Name:           zonedCapacityReservationGroupName,
+		}
+	}
+	zonedCapacityReservationGroupControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.CapacityReservationGroup = zonedCapacityReservationGroupConfig()
+	}
+	zonedCapacityReservationGroupCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.CapacityReservationGroup = zonedCapacityReservationGroupConfig()
+	}
+	zonesDefaultMachinePlatform = func(zones ...string) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.Azure.DefaultMachinePlatform.Zones = zones
+		}
+	}
+	zonesControlPlane = func(zones ...string) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.ControlPlane.Platform.Azure.Zones = zones
+		}
+	}
+	zonesCompute = func(zones ...string) func(*types.InstallConfig) {
+		return func(ic *types.InstallConfig) {
+			ic.Compute[0].Platform.Azure.Zones = zones
+		}
+	}
+
+	// An instance type that zone discovery reports as having no availability
+	// zones, so machines using it are placed in an availability set.
+	unzonedInstanceType          = "Standard_Unzoned_Instance_Type"
+	unzonedInstanceTypeComputeIC = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.InstanceType = unzonedInstanceType
+	}
+	unzonedInstanceTypeControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.InstanceType = unzonedInstanceType
+	}
+	azureStackCloud = func(ic *types.InstallConfig) {
+		ic.Azure.CloudName = azure.StackCloud
+	}
+
 	validOSImagePublisher            = "test-publisher"
 	validOSImageOffer                = "test-offer"
 	validOSImageSKU                  = "test-sku"
@@ -1062,6 +1179,200 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestAzureCapacityReservationGroup(t *testing.T) {
+	// Groups eligible in every zone discovery reports, so that pools which omit
+	// zones are compatible with them.
+	validResult := &azenc.CapacityReservationGroup{
+		Location: to.StringPtr(validRegion),
+		Zones:    &[]string{"1", "2", "3"},
+	}
+	wrongRegion := "westus"
+	wrongRegionResult := &azenc.CapacityReservationGroup{
+		Location: to.StringPtr(wrongRegion),
+		Zones:    &[]string{"1", "2", "3"},
+	}
+	// Eligible in a subset of the discovered zones, for partial-overlap cases.
+	zonedResult := &azenc.CapacityReservationGroup{
+		Location: to.StringPtr(validRegion),
+		Zones:    &[]string{"1", "2"},
+	}
+	// A group created without zones backs only regional reservations.
+	regionalResult := &azenc.CapacityReservationGroup{Location: to.StringPtr(validRegion)}
+
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{name: "valid default machine platform", edits: editFunctions{validCapacityReservationGroupDefaultMachinePlatform}},
+		{name: "valid control plane", edits: editFunctions{validCapacityReservationGroupControlPlane}},
+		{name: "valid compute", edits: editFunctions{validCapacityReservationGroupCompute}},
+		{
+			name:     "missing default machine platform group",
+			edits:    editFunctions{invalidCapacityReservationGroupDefaultMachinePlatform},
+			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "missing control plane group",
+			edits:    editFunctions{invalidCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "missing compute group",
+			edits:    editFunctions{invalidCapacityReservationGroupCompute},
+			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: failed to get capacity reservation group$`,
+		},
+		{
+			name:     "wrong region default machine platform group",
+			edits:    editFunctions{wrongRegionCapacityReservationGroupDefaultMachinePlatform},
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+		{
+			name:     "wrong region control plane group",
+			edits:    editFunctions{wrongRegionCapacityReservationGroupControlPlane},
+			errorMsg: fmt.Sprintf(`^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+		{
+			name:     "wrong region compute group",
+			edits:    editFunctions{wrongRegionCapacityReservationGroupCompute},
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group is in %s, but the cluster region is %s$`, wrongRegion, validRegion),
+		},
+		{
+			name:  "zoned control plane with a zoned group",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("1")},
+		},
+		{
+			name:  "zoned compute with a zoned group",
+			edits: editFunctions{zonedCapacityReservationGroupCompute, zonesCompute("2")},
+		},
+		{
+			// Discovery gives the pool zones 1-3; a regional group serves none
+			// of them.
+			name:     "unzoned control plane with a regional group",
+			edits:    editFunctions{regionalCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 2, 3$`,
+		},
+		{
+			// Discovered zones take part in the partial-overlap check: the pool
+			// omits zones and so spreads over 1-3, but the group covers 1-2.
+			name:     "unzoned control plane partially outside the group's eligible zones",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 3, it is eligible in zone\(s\) 1, 2$`,
+		},
+		{
+			// Machine generation only runs zone discovery for an absent zone
+			// list, so an explicit empty entry leaves the machine unzoned.
+			name:     "control plane with an empty zone and a regional group",
+			edits:    editFunctions{validCapacityReservationGroupControlPlane, zonesControlPlane("")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(zone list contains an entry with no zone\)$`,
+		},
+		{
+			// Some machines land in zone 1, the rest in an availability set.
+			name:     "control plane mixing a named and an empty zone",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("1", "")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(zone list contains an entry with no zone\)$`,
+		},
+		{
+			name:     "control plane in a zone the group is not eligible in",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("3")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 3, it is eligible in zone\(s\) 1, 2$`,
+		},
+		{
+			name:     "compute partially outside the group's eligible zones",
+			edits:    editFunctions{zonedCapacityReservationGroupCompute, zonesCompute("2", "4")},
+			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones in zone\(s\) 4, it is eligible in zone\(s\) 1, 2$`,
+		},
+		{
+			name:  "control plane in all of the group's eligible zones",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane, zonesControlPlane("1", "2")},
+		},
+		{
+			name:     "zoned control plane with a regional group",
+			edits:    editFunctions{regionalCapacityReservationGroupControlPlane, zonesControlPlane("1", "3")},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 3$`,
+		},
+		{
+			name:     "zoned compute with a regional group",
+			edits:    editFunctions{regionalCapacityReservationGroupCompute, zonesCompute("2")},
+			errorMsg: `^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 2$`,
+		},
+		{
+			name:     "zoned default machine platform with a regional group",
+			edits:    editFunctions{regionalCapacityReservationGroupDefaultMachinePlatform, zonesDefaultMachinePlatform("1")},
+			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1$`,
+		},
+		{
+			// The pools inherit the default group, so the group is fetched and
+			// reported once, against the union of the zones they ask for.
+			name:     "inherited regional group with zoned pools",
+			edits:    editFunctions{regionalCapacityReservationGroupDefaultMachinePlatform, zonesControlPlane("1"), zonesCompute("2")},
+			errorMsg: `^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1, 2$`,
+		},
+		{
+			// The pool overrides the group but inherits the default zones.
+			name:     "pool group with inherited default zones",
+			edits:    editFunctions{zonesDefaultMachinePlatform("1"), regionalCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: capacity reservation group has no eligible availability zones, but it is used by machine pools in zone\(s\) 1$`,
+		},
+		{
+			name:     "group on a control plane placed in an availability set",
+			edits:    editFunctions{zonedCapacityReservationGroupControlPlane, unzonedInstanceTypeControlPlane},
+			errorMsg: fmt.Sprintf(`^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
+		{
+			name:     "group on compute placed in an availability set",
+			edits:    editFunctions{zonedCapacityReservationGroupCompute, unzonedInstanceTypeComputeIC},
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: compute\[0\].platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
+		{
+			// Azure Stack has no availability zones at all, so the control plane
+			// is always placed in an availability set.
+			name:     "group on Azure Stack",
+			edits:    editFunctions{azureStackCloud, zonedCapacityReservationGroupControlPlane},
+			errorMsg: `^controlPlane.platform.azure.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: controlPlane.platform.azure.capacityReservationGroup \(Azure Stack does not support availability zones\)$`,
+		},
+		{
+			// An explicit zone wins over the unzoned instance type, so there is
+			// no availability set.
+			name:  "zoned pool with an unzoned instance type",
+			edits: editFunctions{zonedCapacityReservationGroupControlPlane, unzonedInstanceTypeControlPlane, zonesControlPlane("1")},
+		},
+		{
+			// Both pools inherit the default group; only the unzoned one is
+			// reported, and the group is still reported once.
+			name:     "inherited group with one pool in an availability set",
+			edits:    editFunctions{validCapacityReservationGroupDefaultMachinePlatform, unzonedInstanceTypeComputeIC},
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.capacityReservationGroup: Invalid value: .+: machines without an availability zone are placed in an availability set, which Azure does not support together with a capacity reservation group: compute\[0\].platform.azure.capacityReservationGroup \(instance type %s has no availability zones in %s\)$`, unzonedInstanceType, validRegion),
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	azureClient := mock.NewMockAPI(mockCtrl)
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, validCapacityReservationGroupName).Return(validResult, nil).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, invalidCapacityReservationGroupName).Return(nil, fmt.Errorf("failed to get capacity reservation group")).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, wrongRegionCapacityReservationGroupName).Return(wrongRegionResult, nil).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, zonedCapacityReservationGroupName).Return(zonedResult, nil).AnyTimes()
+	azureClient.EXPECT().GetCapacityReservationGroup(gomock.Any(), validCapacityReservationGroupSubscriptionID, validCapacityReservationGroupResourceGroup, regionalCapacityReservationGroupName).Return(regionalResult, nil).AnyTimes()
+	// Declared before the catch-all so that the unzoned instance type matches it first.
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), unzonedInstanceType).Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ic := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(ic)
+			}
+			err := ValidateCapacityReservationGroup(azureClient, ic).ToAggregate()
+			if tc.errorMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.errorMsg, err)
 			}
 		})
 	}
