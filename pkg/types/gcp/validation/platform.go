@@ -150,6 +150,13 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		if !supportedFirewallRulePolicies.Has(p.FirewallRulesManagement) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("firewallRulesManagement"), p.FirewallRulesManagement, sets.List(supportedFirewallRulePolicies)))
 		}
+
+		// When FirewallRulesManagement is empty, the policy is dynamically determined by whether or not
+		// the user has permissions to create firewall rules (unless this is a shared vpc install).
+		if p.FirewallRulesManagement == gcp.ManagedFirewallRules && p.NetworkProjectID != "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("firewallRulesManagement"), p.FirewallRulesManagement,
+				fmt.Sprintf("firewallRulesManagement must be set to %s when networkProjectID is set", string(gcp.UnmanagedFirewallRules))))
+		}
 	}
 
 	return allErrs

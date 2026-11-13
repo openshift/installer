@@ -242,6 +242,47 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "invalid firewall management shared vpc",
+			platform: &gcp.Platform{
+				FirewallRulesManagement: gcp.ManagedFirewallRules,
+				Region:                  "us-east1",
+				ProjectID:               "valid-project",
+				NetworkProjectID:        "valid-project-2",
+				Network:                 "valid-vpc",
+				ComputeSubnet:           "valid-compute-subnet",
+				ControlPlaneSubnet:      "valid-cp-subnet",
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           false,
+		},
+		{
+			name: "valid firewall management shared vpc",
+			platform: &gcp.Platform{
+				FirewallRulesManagement: gcp.UnmanagedFirewallRules,
+				Region:                  "us-east1",
+				ProjectID:               "valid-project",
+				NetworkProjectID:        "valid-project-2",
+				Network:                 "valid-vpc",
+				ComputeSubnet:           "valid-compute-subnet",
+				ControlPlaneSubnet:      "valid-cp-subnet",
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           true,
+		},
+		{
+			name: "valid no firewall management specified with shared vpc",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				ProjectID:          "valid-project",
+				NetworkProjectID:   "valid-project-2",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+			},
+			credentialsMode: types.PassthroughCredentialsMode,
+			valid:           true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
