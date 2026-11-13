@@ -3951,6 +3951,23 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `pki\.signerCertificates\.key\.rsa\.keySize: Invalid value: 1024`,
 		},
+		{
+			name: "valid intermediate TLS profile type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.TLSProfileType = string(configv1.TLSProfileIntermediateType)
+				return c
+			}(),
+		},
+		{
+			name: "unsupported TLS profile type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.TLSProfileType = "bogus"
+				return c
+			}(),
+			expectedError: `tlsProfileType: Unsupported value: "bogus"`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

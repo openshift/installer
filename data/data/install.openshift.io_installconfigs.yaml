@@ -9273,6 +9273,20 @@ spec:
             description: SSHKey is the public Secure Shell (SSH) key to provide access
               to instances.
             type: string
+          tlsProfileType:
+            description: |-
+              TLSProfileType sets the cluster-wide TLS security profile. The profiles
+              follow the Mozilla Server Side TLS recommendations
+              (https://wiki.mozilla.org/Security/Server_Side_TLS). Valid values are:
+                - "Modern":       most secure, newest clients only.
+                - "Intermediate": balanced security and compatibility.
+                - "Old":          maximum compatibility with legacy clients.
+              When omitted, "Modern" is used.
+            enum:
+            - Modern
+            - Intermediate
+            - Old
+            type: string
         required:
         - baseDomain
         - metadata

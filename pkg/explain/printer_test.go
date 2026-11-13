@@ -164,7 +164,17 @@ When no strategy is specified, the strategy is "External".
       PullSecret is the secret to use when pulling images.
 
     sshKey <string>
-      SSHKey is the public Secure Shell (SSH) key to provide access to instances.`,
+      SSHKey is the public Secure Shell (SSH) key to provide access to instances.
+
+    tlsProfileType <string>
+      Valid Values: "Modern","Intermediate","Old"
+      TLSProfileType sets the cluster-wide TLS security profile. The profiles
+follow the Mozilla Server Side TLS recommendations
+(https://wiki.mozilla.org/Security/Server_Side_TLS). Valid values are:
+  - "Modern":       most secure, newest clients only.
+  - "Intermediate": balanced security and compatibility.
+  - "Old":          maximum compatibility with legacy clients.
+When omitted, "Modern" is used.`,
 	}, {
 		path: []string{"publish"},
 		desc: ``,
