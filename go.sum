@@ -1846,8 +1846,8 @@ github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwy
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
 github.com/opencontainers/selinux v1.10.1/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
-github.com/openshift-sustaining/crypto v0.33.0-sec.5 h1:KZGfnIsQWLUgO9AGjqTjt9DRqY6KFNKFTg/800C0IRk=
-github.com/openshift-sustaining/crypto v0.33.0-sec.5/go.mod h1:bVdXmD7IV/4GdElGPozy6U7lWdRXA4qyRVGJV57uQ5M=
+github.com/openshift-sustaining/crypto v0.33.0-sec.6 h1:UUpSy0PUv0Hss9S7lSm55b42sFuquwZqHm2Kb3+iGzs=
+github.com/openshift-sustaining/crypto v0.33.0-sec.6/go.mod h1:bVdXmD7IV/4GdElGPozy6U7lWdRXA4qyRVGJV57uQ5M=
 github.com/openshift-sustaining/net v0.35.0-sec.4 h1:Iby7f5aipaxoDnCzIaMGfVDjy4Qopq2L12fDzjcSx1U=
 github.com/openshift-sustaining/net v0.35.0-sec.4/go.mod h1:EglIi67kWsHKlRzzVMUD93VMSWGFOMSZgxFjparz1Qk=
 github.com/openshift/api v0.0.0-20200326160804-ecb9283fe820/go.mod h1:RKMJ5CBnljLfnej+BJ/xnOWc3kZDvJUaIAEq2oKSPtE=
