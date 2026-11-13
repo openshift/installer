@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -94,7 +95,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 }
 
 func newWaitForInstallCompleteCmd() *cobra.Command {
-	return &cobra.Command{
+	var clusterInitTimeout time.Duration
+
+	cmd := &cobra.Command{
 		Use:   "install-complete",
 		Short: "Wait until the cluster is ready",
 		Args:  cobra.ExactArgs(0),
@@ -123,6 +126,9 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 
 			options := getWaitOptionsFromInstallConfig(ic)
+			if cmd.Flags().Changed("cluster-init-timeout") {
+				options.ClusterInitTimeout = clusterInitTimeout
+			}
 
 			err = command.WaitForInstallComplete(ctx, config, options)
 			if err != nil {
@@ -137,4 +143,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			timer.LogSummary()
 		},
 	}
+	cmd.Flags().DurationVar(&clusterInitTimeout, "cluster-init-timeout", 0,
+		"Override the default timeout for waiting for the cluster to initialize (e.g., 45m, 1h)")
+
+	return cmd
 }
