@@ -192,7 +192,7 @@ func (mw *azureMachineWebhook) ValidateUpdate(_ context.Context, oldObj, newObj 
 		old.Spec.SetNetworkInterfacesDefaults()
 
 		// The reconciler will populate the SubnetName on the first interface if the user left it blank.
-		if old.Spec.NetworkInterfaces[0].SubnetName == "" && m.Spec.NetworkInterfaces[0].SubnetName != "" {
+		if len(old.Spec.NetworkInterfaces) > 0 && len(m.Spec.NetworkInterfaces) > 0 && old.Spec.NetworkInterfaces[0].SubnetName == "" && m.Spec.NetworkInterfaces[0].SubnetName != "" {
 			old.Spec.NetworkInterfaces[0].SubnetName = m.Spec.NetworkInterfaces[0].SubnetName
 		}
 

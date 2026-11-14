@@ -305,7 +305,7 @@ func convertToSemver(ver string) string {
 	if segments := strings.Split(ver, "."); len(segments[0]) == 1 {
 		semV := fmt.Sprintf("v%s", ver)
 		return semV
-	} else if len(segments[0]) == 3 {
+	} else if len(segments[0]) == 3 && len(segments) > 2 {
 		combinedXY := segments[0]
 		semV := fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
 		return semV
@@ -359,7 +359,12 @@ func matchesRHELMajor(ver string, rhelMajor int) bool {
 
 func checkIfNewer(candidate, release string) bool {
 	mm := semver.MajorMinor(candidate)
-	imgMajor, err := strconv.Atoi(strings.TrimPrefix(strings.Split(mm, ".")[0], "v"))
+	mmParts := strings.Split(mm, ".")
+	if len(mmParts) < 2 {
+		logrus.Infof("Error converting minor version to int with version %s", candidate)
+		return true
+	}
+	imgMajor, err := strconv.Atoi(strings.TrimPrefix(mmParts[0], "v"))
 	if err != nil {
 		logrus.Infof("Error converting major version to int with version %s", candidate)
 		return true
@@ -369,12 +374,16 @@ func checkIfNewer(candidate, release string) bool {
 	if imgMajor == 9 || imgMajor == 10 {
 		return false
 	}
-	imgMinor, err := strconv.Atoi(strings.Split(mm, ".")[1])
+	imgMinor, err := strconv.Atoi(mmParts[1])
 	if err != nil {
 		logrus.Infof("Error converting minor version to int with version %s", candidate)
 		return true
 	}
 	relParts := strings.Split(release, ".")
+	if len(relParts) < 2 {
+		logrus.Infof("Error converting minor version to int with version %s", release)
+		return true
+	}
 	relMajor, err := strconv.Atoi(relParts[0])
 	if err != nil {
 		logrus.Infof("Error converting major version to int with version %s", release)
