@@ -19,6 +19,8 @@ import (
 	"github.com/pkg/diff"
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/vincent-petithory/dataurl"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // Command				   | Short description																	   | Usage example
@@ -42,6 +44,8 @@ import (
 // UnconfiguredIgnContains | check if the specified file is stored within the unconfigured ignition Storage Files  | unconfiguredIgnContains /etc/assisted/manifests/infraenv.yaml
 // IgnitionStorageContains | check if the specified file is stored within the ignition Storage Files               | - (note: works directly on a ignition file)
 // UnconfiguredIgnCmp      | check that the content extracted from the unconfigured ignition configuration file    | unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+// IgnExtractFile          | extracts the contents of a file stored in an ignition configuration                   | ignExtractFile bootstrap.ign /root/.docker/config.json config.json
+// DockerConfigContains    | checks that a docker config, plain or Secret-wrapped, holds an auth entry for a host  | dockerConfigContains config.json quay.io
 //                         | matches the content of the local file                                                 |
 // IsoContains             | check if the specified is stored within the ISO                                       | isoContains imagebasedconfig.iso /cluster-configuration/manifest.json
 
@@ -303,6 +307,75 @@ func ExpandFile(ts *testscript.TestScript, neg bool, args []string) {
 		newData := expand(ts, data)
 		err = os.WriteFile(fileName, []byte(newData), 0)
 		ts.Check(err)
+	}
+}
+
+// IgnExtractFile `ignPath` `filePath` `destFile` extracts the contents of
+// the file `filePath` stored in the ignition configuration `ignPath` into
+// the local file `destFile`, so that the contents can be inspected with
+// the other commands.
+func IgnExtractFile(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 3 {
+		ts.Fatalf("usage: ignExtractFile ignPath filePath destFile")
+	}
+
+	workDir := ts.Getenv("WORK")
+	config, err := readIgnition(ts, filepath.Join(workDir, args[0]))
+	ts.Check(err)
+
+	data, err := readFileFromIgnitionCfg(&config, args[1])
+	ts.Check(err)
+
+	destPath := filepath.Join(workDir, args[2])
+	ts.Check(os.MkdirAll(filepath.Dir(destPath), 0o755))
+	ts.Check(os.WriteFile(destPath, data, 0o600))
+}
+
+// DockerConfigContains `file` `host` checks that the docker configuration
+// stored in `file` — either a plain config.json, or a Secret manifest whose
+// .dockerconfigjson entry carries it — holds an auth entry for `host`, and
+// that the entry is not empty.
+func DockerConfigContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: dockerConfigContains file host")
+	}
+
+	workDir := ts.Getenv("WORK")
+	data, err := os.ReadFile(filepath.Join(workDir, args[0]))
+	ts.Check(err)
+
+	// A docker configuration wrapped in a Secret manifest is base64-encoded
+	// once more, under the .dockerconfigjson key.
+	var secret corev1.Secret
+	if err := yaml.Unmarshal(data, &secret); err == nil && secret.Type == corev1.SecretTypeDockerConfigJson {
+		wrapped, ok := secret.Data[corev1.DockerConfigJsonKey]
+		if !ok || len(wrapped) == 0 {
+			ts.Fatalf("%s carries a docker config secret with no %s entry", args[0], corev1.DockerConfigJsonKey)
+		}
+		data = wrapped
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(data, &config); err != nil {
+		ts.Fatalf("%s does not carry a docker configuration: %v", args[0], err)
+	}
+	auths, ok := config["auths"].(map[string]interface{})
+	if !ok {
+		ts.Fatalf("%s carries a docker configuration with no auths", args[0])
+	}
+
+	entry, found := auths[args[1]].(map[string]interface{})
+	if neg {
+		if found {
+			ts.Fatalf("%s unexpectedly carries an auth entry for %s", args[0], args[1])
+		}
+		return
+	}
+	if !found {
+		ts.Fatalf("%s carries no auth entry for %s", args[0], args[1])
+	}
+	if auth, ok := entry["auth"].(string); !ok || auth == "" {
+		ts.Fatalf("%s carries an empty auth entry for %s", args[0], args[1])
 	}
 }
 
