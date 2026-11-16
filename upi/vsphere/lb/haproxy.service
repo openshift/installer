@@ -11,9 +11,10 @@ ExecStartPre=/bin/podman pull quay.io/openshift/origin-haproxy-router
 ExecStart=/bin/podman run --name haproxy \
   --net=host \
   --privileged \
-  --entrypoint=/usr/sbin/haproxy \
+  --entrypoint=/bin/sh \
   -v /etc/haproxy/haproxy.conf:/var/lib/haproxy/conf/haproxy.conf:Z \
-  quay.io/openshift/origin-haproxy-router -f /var/lib/haproxy/conf/haproxy.conf
+  quay.io/openshift/origin-haproxy-router \
+  -c 'exec "$(command -v haproxy || echo /usr/sbin/haproxy)" -f /var/lib/haproxy/conf/haproxy.conf'
 ExecStop=/bin/podman rm -f haproxy
 
 [Install]
