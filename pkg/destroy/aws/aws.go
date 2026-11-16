@@ -242,19 +242,15 @@ func (o *ClusterUninstaller) ValidateOwnedSubnets(ctx context.Context) error {
 	return nil
 }
 
-// endpointsForRegion returns the user-provided custom service endpoints
-// adjusted for the target region. When the target region matches the install
-// region, all endpoints are returned as-is. When the target region differs,
-// the tagging endpoint is filtered out because it is region-specific
-// (ServiceEndpoint has no region dimension) and would cause a SigV4
-// signing-region / URL mismatch. Other endpoints such as STS are preserved
-// because they are used for credential resolution from the installer's
-// location and must remain reachable in restricted-network setups.
+// endpointsForRegion returns custom service endpoints for the target region.
+// If the region differs from the install region, the region-specific tagging
+// endpoint is omitted to prevent SigV4 mismatches, while others (like STS)
+// are preserved for credential resolution.
 func (o *ClusterUninstaller) endpointsForRegion(region string) []awstypes.ServiceEndpoint {
 	if region == o.Region {
 		return o.endpoints
 	}
-	var filtered []awstypes.ServiceEndpoint
+	filtered := make([]awstypes.ServiceEndpoint, 0, len(o.endpoints))
 	for _, ep := range o.endpoints {
 		if ep.Name == "tagging" || ep.Name == resourcegroupstaggingapi.ServiceID {
 			continue

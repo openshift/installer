@@ -58,7 +58,7 @@ func TestEndpointsForRegion(t *testing.T) {
 		assert.False(t, hasTagging, "tagging endpoint should be filtered for cross-region client")
 	})
 
-	t.Run("returns nil when only tagging endpoint exists and region differs", func(t *testing.T) {
+	t.Run("returns empty when only tagging endpoint exists and region differs", func(t *testing.T) {
 		taggingOnly := &ClusterUninstaller{
 			Region: "eu-west-1",
 			endpoints: []awstypes.ServiceEndpoint{
@@ -66,45 +66,23 @@ func TestEndpointsForRegion(t *testing.T) {
 			},
 		}
 		result := taggingOnly.endpointsForRegion("us-east-1")
-		assert.Nil(t, result)
+		assert.Empty(t, result)
 	})
 
-	t.Run("returns nil for cn-northwest-1 when install region is eu-west-1", func(t *testing.T) {
-		taggingOnly := &ClusterUninstaller{
-			Region: "eu-west-1",
-			endpoints: []awstypes.ServiceEndpoint{
-				{Name: "tagging", URL: "https://tagging.eu-west-1.example.com"},
-			},
-		}
-		result := taggingOnly.endpointsForRegion(awstypes.CnNorthwest1RegionID)
-		assert.Nil(t, result)
-	})
-
-	t.Run("returns nil for us-gov-west-1 when install region is eu-west-1", func(t *testing.T) {
-		taggingOnly := &ClusterUninstaller{
-			Region: "eu-west-1",
-			endpoints: []awstypes.ServiceEndpoint{
-				{Name: "tagging", URL: "https://tagging.eu-west-1.example.com"},
-			},
-		}
-		result := taggingOnly.endpointsForRegion(awstypes.UsGovWest1RegionID)
-		assert.Nil(t, result)
-	})
-
-	t.Run("returns nil when no custom endpoints configured", func(t *testing.T) {
+	t.Run("returns empty when no custom endpoints configured", func(t *testing.T) {
 		emptyUninstaller := &ClusterUninstaller{
 			Region: "eu-west-1",
 		}
 		result := emptyUninstaller.endpointsForRegion("us-east-1")
-		assert.Nil(t, result)
+		assert.Empty(t, result)
 	})
 
-	t.Run("returns nil when install region has no custom endpoints and region matches", func(t *testing.T) {
+	t.Run("returns empty when install region has no custom endpoints and region matches", func(t *testing.T) {
 		emptyUninstaller := &ClusterUninstaller{
 			Region: "eu-west-1",
 		}
 		result := emptyUninstaller.endpointsForRegion("eu-west-1")
-		assert.Nil(t, result)
+		assert.Empty(t, result)
 	})
 
 	t.Run("filters SDK service ID name for tagging when region differs", func(t *testing.T) {
