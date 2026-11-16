@@ -140,11 +140,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 			Data:     kubeSysConfigData,
 		},
 	}
-	bootkubeFiles, err := m.generateBootKubeManifests(dependencies)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate bootkube manifests")
-	}
-	m.FileList = append(m.FileList, bootkubeFiles...)
+	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
 	m.FileList = append(m.FileList, generateMCOManifest(installConfig.Config, mcoCfgTemplate.Files())...)
 
 	m.FileList = append(m.FileList, ingress.Files()...)
@@ -170,7 +166,7 @@ func (m *Manifests) Files() []*asset.File {
 	return m.FileList
 }
 
-func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) ([]*asset.File, error) {
+func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	mcsCertKey := &tls.MCSCertKey{}
@@ -185,16 +181,13 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) ([]*as
 	versionInfo := versioninfo.GetInfo()
 	cvoChannel := fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
 
-	// Merge the IRI registry credentials into the global pull secret, so
-	// that kubelet and CRI-O can authenticate to the registry the control
-	// plane machines serve while bootstrapping. The secret is left as it is
-	// when no internal release image is being served.
+	// The global pull secret with the IRI registry credentials merged in
+	// during generation, so that kubelet and CRI-O can authenticate to the
+	// registry the control plane machines serve while bootstrapping. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
 	iriAuth := &tls.IRIRegistryCredentials{}
 	dependencies.Get(iriAuth)
-	pullSecret, err := iriAuth.MergeIntoPullSecret(installConfig.Config.PullSecret, installConfig.Config.ClusterDomain())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to merge IRI registry credentials into the pull secret")
-	}
 
 	templateData := &bootkubeTemplateData{
 		CVOCapabilities:       installConfig.Config.Capabilities,
@@ -202,7 +195,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) ([]*as
 		CVOClusterID:          clusterID.UUID,
 		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(pullSecret)),
+		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(iriAuth.MergedPullSecret)),
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
@@ -264,7 +257,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) ([]*as
 		files = append(files, appendIRIRegistryCredentials(dependencies))
 	}
 
-	return files, nil
+	return files
 }
 
 func appendIRIcerts(dependencies asset.Parents) *asset.File {

@@ -403,19 +403,14 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 
 	openshiftInstallInvoker := os.Getenv("OPENSHIFT_INSTALL_INVOKER")
 
-	pullSecret := installConfig.Config.PullSecret
-
-	// Merge IRI registry credentials into pull secret if available.
-	// IRIRegistryCredentials generates credentials when an InternalReleaseImage
-	// manifest is present. This ensures kubelet/CRI-O on bootstrap and cluster
-	// nodes can authenticate to the IRI registry on master nodes.
+	// The pull secret with the IRI registry credentials merged in during
+	// generation, so that kubelet and CRI-O on the bootstrap and cluster
+	// nodes can authenticate to the IRI registry on the master nodes. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
 	iriAuth := &tls.IRIRegistryCredentials{}
 	dependencies.Get(iriAuth)
-	merged, err := iriAuth.MergeIntoPullSecret(pullSecret, installConfig.Config.ClusterDomain())
-	if err != nil {
-		logrus.Fatalf("Failed to merge IRI registry credentials into pull secret: %v", err)
-	}
-	pullSecret = merged
+	pullSecret := iriAuth.MergedPullSecret
 	konnectivityFeatureGateEnabled := (installConfig.Config.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) ||
 		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement) ||
 		installConfig.Config.Enabled(features.FeatureGateClusterAPIOperator))

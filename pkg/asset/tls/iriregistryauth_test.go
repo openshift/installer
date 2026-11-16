@@ -37,6 +37,11 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 		},
 	}
 
+	// The pull secret the merged form of which the asset carries: an entry
+	// for the IRI registry is added to it when credentials are generated,
+	// and it is carried unchanged when they are not.
+	existingPullSecret := `{"auths":{"quay.io":{"auth":"dGVzdDp0ZXN0"}}}`
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create install config with feature gate
@@ -70,6 +75,7 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 								APIVIPs: []string{"192.168.111.5"},
 							},
 						},
+						PullSecret: existingPullSecret,
 					},
 				},
 			}

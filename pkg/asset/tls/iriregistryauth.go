@@ -37,6 +37,11 @@ type IRIRegistryCredentials struct {
 	Username        string
 	Password        string //nolint:gosec // this is a credential holder, not a hardcoded secret
 	HtpasswdContent string
+	// MergedPullSecret is the cluster pull secret with the IRI registry
+	// authentication merged into it: the pull secret of the install config
+	// as it is when no internal release image is being served, and one
+	// carrying an entry for the registry behind api-int when it is.
+	MergedPullSecret string
 }
 
 var _ asset.Asset = (*IRIRegistryCredentials)(nil)
@@ -55,8 +60,11 @@ func (a *IRIRegistryCredentials) Generate(ctx context.Context, dependencies asse
 	iri := &manifests.InternalReleaseImage{}
 	dependencies.Get(installConfig, iri)
 
-	// Skip if InternalReleaseImage manifest wasn't found
+	// Skip if InternalReleaseImage manifest wasn't found. There are no
+	// credentials to serve then, and the pull secret is left exactly as
+	// the install config carries it.
 	if len(iri.FileList) == 0 {
+		a.MergedPullSecret = installConfig.Config.PullSecret
 		return nil
 	}
 
@@ -77,6 +85,12 @@ func (a *IRIRegistryCredentials) Generate(ctx context.Context, dependencies asse
 	// Create htpasswd format: username:bcrypt-hash
 	a.HtpasswdContent = fmt.Sprintf("%s:%s\n", a.Username, string(hash))
 
+	merged, err := a.mergeIntoPullSecret(installConfig.Config.PullSecret, installConfig.Config.ClusterDomain())
+	if err != nil {
+		return fmt.Errorf("failed to merge IRI registry credentials into the pull secret: %w", err)
+	}
+	a.MergedPullSecret = merged
+
 	return nil
 }
 
@@ -85,17 +99,12 @@ func (a *IRIRegistryCredentials) Name() string {
 	return "IRI Registry Authentication"
 }
 
-// MergeIntoPullSecret returns the pull secret with an authentication entry
+// mergeIntoPullSecret returns the pull secret with an authentication entry
 // for the IRI registry merged into it, so that kubelet and CRI-O can
 // authenticate to the registry the control plane machines serve behind
-// api-int on the cluster domain. The secret is returned unchanged when this
-// asset generated no credentials, which happens when no internal release
-// image is being served.
-func (a *IRIRegistryCredentials) MergeIntoPullSecret(pullSecret, clusterDomain string) (string, error) {
-	if a.Password == "" {
-		return pullSecret, nil
-	}
-
+// api-int on the cluster domain. It is only called for credentials that were
+// generated, so the pull secret it is handed always gains the entry.
+func (a *IRIRegistryCredentials) mergeIntoPullSecret(pullSecret, clusterDomain string) (string, error) {
 	var pullSecretMap map[string]interface{}
 	if err := json.Unmarshal([]byte(pullSecret), &pullSecretMap); err != nil {
 		return "", fmt.Errorf("failed to parse pull secret: %w", err)
