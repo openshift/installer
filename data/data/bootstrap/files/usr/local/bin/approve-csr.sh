@@ -442,10 +442,17 @@ do
                     [ "${MAX_NODES}" -eq 0 ] ||
                     [ "$(node_count "${approved_nodes}")" -lt "${MAX_NODES}" ]; then
                     echo "Approving node client CSR ${token}"
-                    oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"
-                    node_is_listed "${approved_nodes}" "${client_name}" ||
-                        approved_nodes="${approved_nodes}${client_name} "
-                    continue
+                    # Only count the node against the budget after a
+                    # successful approval. A failed approval leaves the
+                    # CSR pending and the budget slot free, so the next
+                    # pass can retry instead of wasting a slot on a node
+                    # that never received its certificate.
+                    if oc --kubeconfig="$KUBECONFIG" adm certificate approve "${name}"; then
+                        node_is_listed "${approved_nodes}" "${client_name}" ||
+                            approved_nodes="${approved_nodes}${client_name} "
+                        continue
+                    fi
+                    reason="approval failed"
                 else
                     reason="client certificate budget reached"
                 fi
