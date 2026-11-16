@@ -100,6 +100,7 @@ func InstanceTypes(region string, arch types.Architecture, topology configv1.Top
 	case types.ArchitectureARM64:
 		return []string{
 			fmt.Sprintf("m6g.%s", instanceSize),
+			fmt.Sprintf("m7g.%s", instanceSize),
 		}
 	default:
 		return []string{
@@ -111,6 +112,7 @@ func InstanceTypes(region string, arch types.Architecture, topology configv1.Top
 			"m5.2xlarge",
 			"c5d.2xlarge",
 			"r5.2xlarge",
+			fmt.Sprintf("m7i.%s", instanceSize),
 		}
 	}
 }
