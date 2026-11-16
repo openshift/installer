@@ -1927,6 +1927,44 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking.clusterNetwork: Invalid value: "fd01::/48": clusterNetwork must use the same IP family as serviceNetwork`,
 		},
 		{
+			name: "invalid dual-stack configuration, missing service network, no cluster network error",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: 23,
+					},
+					{
+						CIDR:       *ipnet.MustParseCIDR("fd01::/48"),
+						HostPrefix: 64,
+					},
+				}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
+			name: "invalid single-stack IPv4 configuration, dual-stack cluster network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: 23,
+					},
+					{
+						CIDR:       *ipnet.MustParseCIDR("fd01::/48"),
+						HostPrefix: 64,
+					},
+				}
+				return c
+			}(),
+			expectedError: `^networking.clusterNetwork: Invalid value: "10.128.0.0/14, fd01::/48": clusterNetwork must use the same IP family as serviceNetwork$`,
+		},
+		{
 			name: "invalid dual-stack configuration, machine has no IPv6",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

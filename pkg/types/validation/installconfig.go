@@ -509,7 +509,9 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 	// On a single-stack cluster the cluster network must use the same IP family
 	// as the service network. The cluster network operator rejects anything
 	// else, but only once the cluster is already being installed.
-	if hasIPv4 != hasIPv6 && len(n.ClusterNetwork) > 0 {
+	// AWS dual-stack with one service network is already reported above.
+	awsDualStack := p.AWS != nil && p.AWS.IPFamily.DualStackEnabled()
+	if hasIPv4 != hasIPv6 && len(n.ClusterNetwork) > 0 && !awsDualStack {
 		if cn := presence[networkTypeCluster]; cn.IPv4 != hasIPv4 || cn.IPv6 != hasIPv6 {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", networkTypeCluster), strings.Join(ipnetworksToStrings(addresses[networkTypeCluster]), ", "), "clusterNetwork must use the same IP family as serviceNetwork"))
 		}
