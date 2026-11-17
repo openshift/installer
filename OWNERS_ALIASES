@@ -112,13 +112,13 @@ aliases:
     - mmartinv
     - bkhizgiy
   ibmcloud-approvers:
-    - bobbyradford
+    - TwoDCube
+    - Pacho20
     - hasueki
-    - rvanderp3
   ibmcloud-reviewers:
-    - bobbyradford
+    - TwoDCube
+    - Pacho20
     - hasueki
-    - rvanderp3
   nutanix-approvers:
     - adiantum
     - rvanderp3
