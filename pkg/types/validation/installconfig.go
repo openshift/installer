@@ -510,16 +510,23 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		// we should have a validation error for no specified machineNetwork, serviceNetwork, or clusterNetwork
 	}
 
-	// Single-stack clusterNetwork must match the serviceNetwork family.
-	// AWS and Azure dual-stack with one service network are reported above.
-	dualStack := (p.AWS != nil && p.AWS.IPFamily.DualStackEnabled()) || (p.Azure != nil && p.Azure.IPFamily.DualStackEnabled())
-	if hasIPv4 != hasIPv6 && len(n.ClusterNetwork) > 0 && !dualStack {
-		if cn := presence[networkTypeCluster]; cn.IPv4 != hasIPv4 || cn.IPv6 != hasIPv6 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", networkTypeCluster), strings.Join(ipnetworksToStrings(addresses[networkTypeCluster]), ", "), "clusterNetwork must use the same IP family as serviceNetwork"))
-		}
-	}
+	allErrs = append(allErrs, validateClusterNetworkIPFamily(p, hasIPv4, hasIPv6, presence[networkTypeCluster], addresses[networkTypeCluster])...)
 
 	return allErrs
+}
+
+// validateClusterNetworkIPFamily checks the clusterNetwork family on single-stack clusters.
+func validateClusterNetworkIPFamily(p *types.Platform, hasIPv4, hasIPv6 bool, cn ipAddressType, clusterNetworks []ipnet.IPNet) field.ErrorList {
+	// AWS and Azure dual-stack are reported by the caller.
+	awsDualStack := p.AWS != nil && p.AWS.IPFamily.DualStackEnabled()
+	azureDualStack := p.Azure != nil && p.Azure.IPFamily.DualStackEnabled()
+	if hasIPv4 == hasIPv6 || len(clusterNetworks) == 0 || awsDualStack || azureDualStack {
+		return nil
+	}
+	if cn.IPv4 != hasIPv4 || cn.IPv6 != hasIPv6 {
+		return field.ErrorList{field.Invalid(field.NewPath("networking", networkTypeCluster), strings.Join(ipnetworksToStrings(clusterNetworks), ", "), "clusterNetwork must use the same IP family as serviceNetwork")}
+	}
+	return nil
 }
 
 // validateNetworkEntryOrder ensures the order of CIDR entries is correct in networking configurations.
