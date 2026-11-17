@@ -2177,6 +2177,44 @@ func TestValidateInstallConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "azure: invalid IPv4-primary dual-stack, missing service network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
+			name: "azure: invalid IPv6-primary dual-stack, missing service network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{*ipnet.MustParseCIDR("ffd1::/112")}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
+				t.Helper()
+				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
+				return func() {}
+			},
+		},
+		{
 			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
