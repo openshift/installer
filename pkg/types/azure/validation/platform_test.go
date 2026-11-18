@@ -343,6 +343,68 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^test-path\.armEndpoint: Invalid value: "http://management.azure.microsoft.scloud": invalid scheme "http", only https is allowed$`,
 		},
 		{
+			name: "USSec missing ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USSecCloud
+				p.ClusterOSImage = "https://example.blob.core.microsoft.scloud/vhd/rhcos.vhd"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Required value: ARM endpoint must be provided when installing on AzureUSSecCloud$`,
+		},
+		{
+			name: "USSec missing clusterOSImage",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USSecCloud
+				p.ARMEndpoint = "https://management.azure.microsoft.scloud"
+				return p
+			}(),
+			expected: `^test-path\.clusterOSImage: Required value: a VHD URL must be provided when installing on AzureUSSecCloud$`,
+		},
+		{
+			name: "USSec valid",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USSecCloud
+				p.ARMEndpoint = "https://management.azure.microsoft.scloud"
+				p.ClusterOSImage = "https://example.blob.core.microsoft.scloud/vhd/rhcos.vhd"
+				return p
+			}(),
+			expected: "",
+		},
+		{
+			name: "USNat missing ARM endpoint",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USNatCloud
+				p.ClusterOSImage = "https://example.blob.core.eaglex.ic.gov/vhd/rhcos.vhd"
+				return p
+			}(),
+			expected: `^test-path\.armEndpoint: Required value: ARM endpoint must be provided when installing on AzureUSNatCloud$`,
+		},
+		{
+			name: "USNat missing clusterOSImage",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USNatCloud
+				p.ARMEndpoint = "https://management.azure.eaglex.ic.gov"
+				return p
+			}(),
+			expected: `^test-path\.clusterOSImage: Required value: a VHD URL must be provided when installing on AzureUSNatCloud$`,
+		},
+		{
+			name: "USNat valid",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.USNatCloud
+				p.ARMEndpoint = "https://management.azure.eaglex.ic.gov"
+				p.ClusterOSImage = "https://example.blob.core.eaglex.ic.gov/vhd/rhcos.vhd"
+				return p
+			}(),
+			expected: "",
+		},
+		{
 			name:     "no machine networks specified",
 			platform: validPlatform(),
 			ic: &types.InstallConfig{

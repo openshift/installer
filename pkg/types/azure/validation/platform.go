@@ -24,6 +24,7 @@ var (
 		azure.GermanCloud:       true,
 		azure.StackCloud:        true,
 		azure.USSecCloud:        true,
+		azure.USNatCloud:        true,
 	}
 
 	validCloudNameValues = func() []string {
@@ -60,10 +61,12 @@ var (
 const maxUserTagLimit = 10
 
 // isUserTagsAllowed returns true if the cloud environment supports userTags.
-// userTags are supported on PublicCloud and USGovernmentCloud.
+// userTags are supported on PublicCloud, USGovernmentCloud, USSecCloud, and USNatCloud.
 func isUserTagsAllowed(cloudName azure.CloudEnvironment) bool {
 	return cloudName == azure.PublicCloud ||
-		cloudName == azure.USGovernmentCloud
+		cloudName == azure.USGovernmentCloud ||
+		cloudName == azure.USSecCloud ||
+		cloudName == azure.USNatCloud
 }
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -156,6 +159,8 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	switch cloud := p.CloudName; cloud {
 	case azure.StackCloud:
 		allErrs = append(allErrs, validateAzureStack(p, fldPath)...)
+	case azure.USSecCloud, azure.USNatCloud:
+		allErrs = append(allErrs, validateAzureSecretCloud(p, fldPath)...)
 	default:
 		if p.ARMEndpoint != "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must not be set when the cloud name is %s", cloud)))
@@ -428,13 +433,13 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 func validateAzureSecretCloud(p *azure.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.ARMEndpoint == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be provided when installing on Azure Government Secret Cloud"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must be provided when installing on %s", p.CloudName)))
 	} else {
 		allErrs = append(allErrs, validateARMEndpoint(p.ARMEndpoint, fldPath.Child("armEndpoint"))...)
 	}
 
 	if p.ClusterOSImage == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), "a VHD URL must be provided when installing on Azure Government Secret Cloud"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("a VHD URL must be provided when installing on %s", p.CloudName)))
 	}
 	return allErrs
 }
