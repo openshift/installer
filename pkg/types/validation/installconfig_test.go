@@ -2136,11 +2136,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "172.30.0.0/16, ffd1::/112": DualStackIPv6Primary requires an IPv6 network first in this list\E$`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: valid dual-stack with DualStackIPv4Primary",
@@ -2153,11 +2148,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: valid dual-stack with DualStackIPv6Primary",
@@ -2170,11 +2160,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: invalid IPv4-primary dual-stack, missing service network",
@@ -2189,11 +2174,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: invalid IPv6-primary dual-stack, missing service network",
@@ -2208,11 +2188,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
@@ -2226,11 +2201,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list\E`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "invalid IPv6 hostprefix",
