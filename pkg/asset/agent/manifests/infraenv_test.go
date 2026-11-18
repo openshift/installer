@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/external"
 )
 
 func TestInfraEnv_Generate(t *testing.T) {
@@ -222,6 +223,74 @@ func TestInfraEnv_Generate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "fips enabled",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getOptionalInstallConfigWithKargs(true, ""),
+				getValidAgentConfig(),
+			},
+			expectedConfig: getExpectedInfraEnvWithKargs("fips=1"),
+		},
+		{
+			name: "oci external platform",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getOptionalInstallConfigWithKargs(false, agent.ExternalPlatformNameOci),
+				getValidAgentConfig(),
+			},
+			expectedConfig: getExpectedInfraEnvWithKargs("console=ttyS0"),
+		},
+		{
+			name: "oci external platform with fips enabled",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getOptionalInstallConfigWithKargs(true, agent.ExternalPlatformNameOci),
+				getValidAgentConfig(),
+			},
+			expectedConfig: getExpectedInfraEnvWithKargs("console=ttyS0", "fips=1"),
+		},
+		{
+			name: "add-nodes command with fips enabled",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ClusterName: "agent-cluster",
+					Namespace:   "agent-ns",
+					FIPS:        true,
+				},
+				&agent.OptionalInstallConfig{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "agent-cluster",
+					Namespace: "agent-ns",
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      "agent-cluster",
+						Namespace: "agent-ns",
+					},
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName("agent-cluster"),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels("agent-cluster"),
+					},
+					KernelArguments: []aiv1beta1.KernelArgument{
+						{Operation: "append", Value: "fips=1"},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -249,4 +318,50 @@ func TestInfraEnv_Generate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getOptionalInstallConfigWithKargs(fips bool, externalPlatformName string) *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.FIPS = fips
+	if externalPlatformName != "" {
+		installConfig.Config.Platform = types.Platform{
+			External: &external.Platform{
+				PlatformName: externalPlatformName,
+			},
+		}
+	}
+	return installConfig
+}
+
+func getExpectedInfraEnvWithKargs(kargs ...string) *aiv1beta1.InfraEnv {
+	infraEnv := &aiv1beta1.InfraEnv{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "InfraEnv",
+			APIVersion: "agent-install.openshift.io/v1beta1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      getValidOptionalInstallConfig().ClusterName(),
+			Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+		},
+		Spec: aiv1beta1.InfraEnvSpec{
+			ClusterRef: &aiv1beta1.ClusterReference{
+				Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
+				Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+			},
+			SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
+			PullSecretRef: &corev1.LocalObjectReference{
+				Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
+			},
+			NMStateConfigLabelSelector: metav1.LabelSelector{
+				MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
+			},
+		},
+	}
+	for _, karg := range kargs {
+		infraEnv.Spec.KernelArguments = append(infraEnv.Spec.KernelArguments, aiv1beta1.KernelArgument{
+			Operation: "append",
+			Value:     karg,
+		})
+	}
+	return infraEnv
 }
