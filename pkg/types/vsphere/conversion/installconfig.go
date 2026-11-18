@@ -195,7 +195,11 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	fixNoVCentersScenario(platform)
 	finders := make(map[string]*find.Finder)
 	for _, vcenter := range platform.VCenters {
-		finder, err := GetFinder(vcenter.Server, vcenter.Username, vcenter.Password)
+		credentials, err := platform.CredentialsForVCenter(vcenter.Server)
+		if err != nil {
+			return fmt.Errorf("unable to select credentials for vCenter %s: %w", vcenter.Server, err)
+		}
+		finder, err := GetFinder(vcenter.Server, credentials.User, credentials.Password)
 		if err != nil {
 			return err
 		}

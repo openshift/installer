@@ -128,15 +128,11 @@ platform:
     vcenters:
     - datacenters:
       - test-datacenter-1
-      password: ""
       server: test-server-1
-      user: ""
     - datacenters:
       - test-datacenter-2
       - test-datacenter-3
-      password: ""
       server: test-server-2
-      user: ""
 pullSecret: ""
 sshKey: test-ssh-key
 `
