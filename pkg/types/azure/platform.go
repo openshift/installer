@@ -193,6 +193,9 @@ const (
 
 	// USSecCloud is the Azure cloud environment for US Government Secret (IL6) workloads.
 	USSecCloud CloudEnvironment = "AzureUSSecCloud"
+
+	// USNatCloud is the Azure cloud environment for US Government Top Secret (IL7) workloads.
+	USNatCloud CloudEnvironment = "AzureUSNatCloud"
 )
 
 // Name returns name that Azure uses for the cloud environment.
