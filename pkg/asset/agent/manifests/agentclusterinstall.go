@@ -134,6 +134,11 @@ type agentClusterInstallInstallConfigOverrides struct {
 	FeatureGates []string `json:"featureGates,omitempty"`
 	// OSImageStream is the OS Image Stream to be used for all machines in the cluster
 	OSImageStream *types.OSImageStream `json:"osImageStream,omitempty"`
+	// TLSProfileType holds the cluster-wide TLS security profile. Valid values are:
+	// "Modern" (most secure, requires TLS 1.3 clients), "Intermediate" (balanced
+	// security and compatibility, requires at least TLS 1.2 clients), and "Old"
+	// (maximum compatibility with legacy clients, requires at least TLS 1.0 clients).
+	TLSProfileType string `json:"tlsProfileType,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -428,6 +433,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if installConfig.Config.OSImageStream != rhcos.GetDefaultOSImageStream(installConfig.Config) {
 			icOverridden = true
 			icOverrides.OSImageStream = &installConfig.Config.OSImageStream
+		}
+
+		if installConfig.Config.TLSProfileType != "" {
+			icOverridden = true
+			icOverrides.TLSProfileType = installConfig.Config.TLSProfileType
 		}
 
 		if icOverridden {
