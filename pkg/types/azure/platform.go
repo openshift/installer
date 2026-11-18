@@ -40,7 +40,7 @@ type Platform struct {
 	// Region specifies the Azure region where the cluster will be created.
 	Region string `json:"region"`
 
-	// ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack.
+	// ARMEndpoint is the endpoint for the Azure API when installing on Azure Stack, AzureUSSecCloud, or AzureUSNatCloud.
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
 
 	// ClusterOSImage is the url of a storage blob in the Azure environment containing an RHCOS VHD.
@@ -172,7 +172,7 @@ type CustomerManagedKey struct {
 }
 
 // CloudEnvironment is the name of the Azure cloud environment
-// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud;AzureUSSecCloud
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud;AzureStackCloud;AzureUSSecCloud;AzureUSNatCloud
 type CloudEnvironment string
 
 const (

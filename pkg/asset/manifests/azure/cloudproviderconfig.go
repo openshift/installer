@@ -68,11 +68,12 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		config.UserAssignedIdentityID = ""
 	}
 
-	if params.CloudName == azure.StackCloud || params.CloudName == azure.USSecCloud {
+	switch params.CloudName {
+	case azure.StackCloud:
+		config.UseInstanceMetadata = false
+		fallthrough
+	case azure.USSecCloud, azure.USNatCloud:
 		config.authConfig.ResourceManagerEndpoint = params.ResourceManagerEndpoint
-		if params.CloudName == azure.StackCloud {
-			config.UseInstanceMetadata = false
-		}
 	}
 
 	buff := &bytes.Buffer{}

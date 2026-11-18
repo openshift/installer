@@ -119,10 +119,10 @@ func DiscoverEndpointsFromURL(cloudName azure.CloudEnvironment, armEndpoint stri
 // ResolveCloudEndpoints returns the CloudEndpoints for the given cloud name. For
 // clouds with well-known endpoints (Public, Government, China) it uses the
 // built-in SDK definitions. For clouds that require dynamic discovery (Stack,
-// USSec) it calls DiscoverEndpointsFromURL with the provided ARM endpoint.
+// USSec, USNat) it calls DiscoverEndpointsFromURL with the provided ARM endpoint.
 func ResolveCloudEndpoints(cloudName azure.CloudEnvironment, armEndpoint string) (*CloudEndpoints, error) {
 	switch cloudName {
-	case azure.StackCloud, azure.USSecCloud:
+	case azure.StackCloud, azure.USSecCloud, azure.USNatCloud:
 		return DiscoverEndpointsFromURL(cloudName, armEndpoint)
 	default:
 		return resolveWellKnownEndpoints(cloudName)
