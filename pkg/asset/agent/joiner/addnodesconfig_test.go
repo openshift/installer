@@ -48,6 +48,26 @@ sshKey: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAklOUpkDHrfHY17SbrmTIpNLTGK9Tjom/BWD
 sshKey: "not a valid ssh key"`,
 			expectedError: "sshKey: Invalid value: \"not a valid ssh key\": ssh: no key found; last parsing error for ignored line: illegal base64 data at input byte 4",
 		},
+		{
+			name: "role field not supported",
+			nodesConfigData: `hosts:
+- hostname: master-0
+  role: ""
+  interfaces:
+  - name: eth0
+    macAddress: 00:ef:29:72:b9:771`,
+			expectedError: "failed to unmarshal nodes-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"role\"",
+		},
+		{
+			name: "unknown field not supported",
+			nodesConfigData: `hosts:
+- hostname: master-0
+  invalidField: value
+  interfaces:
+  - name: eth0
+    macAddress: 00:ef:29:72:b9:771`,
+			expectedError: "failed to unmarshal nodes-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\"",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

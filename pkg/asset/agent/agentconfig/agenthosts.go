@@ -100,7 +100,13 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 		a.populateFencingCredentialHosts(installConfig)
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		a.Hosts = append(a.Hosts, addNodesConfig.Config.Hosts...)
+		for _, host := range addNodesConfig.Config.Hosts {
+			agentHost := host.ToAgentHost()
+			if agentHost.Role == "" {
+				agentHost.Role = "worker"
+			}
+			a.Hosts = append(a.Hosts, agentHost)
+		}
 		for i, host := range a.Hosts {
 			warnInterfaceNamesNotInNetworkConfig(host, i)
 		}
