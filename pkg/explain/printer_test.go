@@ -333,7 +333,7 @@ Needs the permission "Storage Blob Data Contributor" in azure.
       BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
 
     cloudName <string>
-      Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud","AzureUSSecCloud"
+      Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud","AzureUSSecCloud","AzureUSNatCloud"
       cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
 with the appropriate Azure API endpoints.
 If empty, the value is equal to "AzurePublicCloud".
