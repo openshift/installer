@@ -1897,6 +1897,74 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
 		},
 		{
+			name: "invalid single-stack IPv6 configuration, IPv4 cluster network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: 23,
+					},
+				}
+				return c
+			}(),
+			expectedError: `networking.clusterNetwork: Invalid value: "10.128.0.0/14": clusterNetwork must use the same IP family as serviceNetwork`,
+		},
+		{
+			name: "invalid single-stack IPv4 configuration, IPv6 cluster network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("fd01::/48"),
+						HostPrefix: 64,
+					},
+				}
+				return c
+			}(),
+			expectedError: `networking.clusterNetwork: Invalid value: "fd01::/48": clusterNetwork must use the same IP family as serviceNetwork`,
+		},
+		{
+			name: "invalid dual-stack configuration, missing service network, no cluster network error",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: 23,
+					},
+					{
+						CIDR:       *ipnet.MustParseCIDR("fd01::/48"),
+						HostPrefix: 64,
+					},
+				}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
+			name: "invalid single-stack IPv4 configuration, dual-stack cluster network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: 23,
+					},
+					{
+						CIDR:       *ipnet.MustParseCIDR("fd01::/48"),
+						HostPrefix: 64,
+					},
+				}
+				return c
+			}(),
+			expectedError: `^networking.clusterNetwork: Invalid value: "10.128.0.0/14, fd01::/48": clusterNetwork must use the same IP family as serviceNetwork$`,
+		},
+		{
 			name: "invalid dual-stack configuration, machine has no IPv6",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -2068,11 +2136,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^\Qnetworking.serviceNetwork: Invalid value: "172.30.0.0/16, ffd1::/112": DualStackIPv6Primary requires an IPv6 network first in this list\E$`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: valid dual-stack with DualStackIPv4Primary",
@@ -2085,11 +2148,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "azure: valid dual-stack with DualStackIPv6Primary",
@@ -2102,11 +2160,34 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validPrimaryV6DualStackNetworkingConfig()
 				return c
 			}(),
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
+		},
+		{
+			name: "azure: invalid IPv4-primary dual-stack, missing service network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
+			name: "azure: invalid IPv6-primary dual-stack, missing service network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform.Azure.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"AzureDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{*ipnet.MustParseCIDR("ffd1::/112")}
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
 		},
 		{
 			name: "azure: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
@@ -2120,11 +2201,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list\E`,
-			restoreFnFactory: func(t *testing.T, _ *types.InstallConfig) func() {
-				t.Helper()
-				t.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK", "true")
-				return func() {}
-			},
 		},
 		{
 			name: "invalid IPv6 hostprefix",
