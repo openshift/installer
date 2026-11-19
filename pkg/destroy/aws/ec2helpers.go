@@ -668,6 +668,18 @@ func deleteEC2NetworkInterface(ctx context.Context, client *ec2v2.Client, id str
 		if HandleErrorCode(err) == "InvalidNetworkInterfaceID.NotFound" {
 			return nil
 		}
+		if HandleErrorCode(err) == "UnauthorizedOperation" {
+			_, describeErr := client.DescribeNetworkInterfaces(ctx, &ec2v2.DescribeNetworkInterfacesInput{
+				NetworkInterfaceIds: []string{id},
+			})
+			if HandleErrorCode(describeErr) == "InvalidNetworkInterfaceID.NotFound" {
+				logger.Info("Not found or already deleted")
+				return nil
+			}
+			if describeErr != nil {
+				return fmt.Errorf("deleting network interface %s failed: %w; confirming its existence failed: %v", id, err, describeErr)
+			}
+		}
 		return err
 	}
 
