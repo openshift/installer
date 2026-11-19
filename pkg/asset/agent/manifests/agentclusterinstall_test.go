@@ -116,6 +116,26 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodCPUPartitioningACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"cpuPartitioningMode":"AllNodes"}`,
 	})
+	installConfigWithTLSProfileModern := getValidOptionalInstallConfig()
+	installConfigWithTLSProfileModern.Config.TLSProfileType = "Modern"
+	goodTLSProfileModernACI := getGoodACI()
+	goodTLSProfileModernACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"tlsProfileType":"Modern"}`,
+	})
+
+	installConfigWithTLSProfileIntermediate := getValidOptionalInstallConfig()
+	installConfigWithTLSProfileIntermediate.Config.TLSProfileType = "Intermediate"
+	goodTLSProfileIntermediateACI := getGoodACI()
+	goodTLSProfileIntermediateACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"tlsProfileType":"Intermediate"}`,
+	})
+
+	installConfigWithTLSProfileOld := getValidOptionalInstallConfig()
+	installConfigWithTLSProfileOld.Config.TLSProfileType = "Old"
+	goodTLSProfileOldACI := getGoodACI()
+	goodTLSProfileOldACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"tlsProfileType":"Old"}`,
+	})
 
 	installConfigWExternalPlatform := getValidOptionalInstallConfig()
 	installConfigWExternalPlatform.Config.Platform = types.Platform{
@@ -351,6 +371,36 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodCPUPartitioningACI,
+		},
+		{
+			name: "valid configuration with TLSProfileType Modern",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithTLSProfileModern,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodTLSProfileModernACI,
+		},
+		{
+			name: "valid configuration with TLSProfileType Intermediate",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithTLSProfileIntermediate,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodTLSProfileIntermediateACI,
+		},
+		{
+			name: "valid configuration with TLSProfileType Old",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithTLSProfileOld,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodTLSProfileOldACI,
 		},
 		{
 			name: "valid configuration external generic platform",
