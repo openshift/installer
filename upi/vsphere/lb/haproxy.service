@@ -5,17 +5,26 @@ Wants=network-online.target
 
 [Service]
 TimeoutStartSec=0
+# These VMs are only reachable through CI, and the journal cannot be collected
+# from them after the fact. Mirror everything this unit emits -- podman, and
+# therefore the container's own stdout/stderr -- onto the console so failures
+# are visible in the CI console log.
+StandardOutput=journal+console
+StandardError=journal+console
 ExecStartPre=-/bin/podman kill haproxy
 ExecStartPre=-/bin/podman rm haproxy
-ExecStartPre=/bin/podman pull quay.io/openshift/origin-haproxy-router
+ExecStartPre=/bin/podman pull registry.access.redhat.com/hi/haproxy:latest
+ExecStartPre=-/bin/sh -c 'podman image inspect --format "haproxy: using image {{.Id}} ({{.Digest}})" registry.access.redhat.com/hi/haproxy:latest || echo "haproxy: image is not present, pull failed"'
 ExecStart=/bin/podman run --name haproxy \
   --net=host \
   --privileged \
-  --entrypoint=/usr/sbin/haproxy \
+  --user 0 \
   -v /etc/haproxy/haproxy.conf:/var/lib/haproxy/conf/haproxy.conf:Z \
-  quay.io/openshift/origin-haproxy-router -f /var/lib/haproxy/conf/haproxy.conf
-ExecStop=/bin/podman rm -f haproxy
+  registry.access.redhat.com/hi/haproxy:latest \
+  -f /var/lib/haproxy/conf/haproxy.conf
+# Dump whatever the container managed to say, whether we are stopping cleanly or
+# the start failed, before throwing the container away.
+ExecStopPost=-/bin/sh -c 'podman logs --tail 200 haproxy 2>&1; podman rm -f haproxy 2>&1'
 
 [Install]
 WantedBy=multi-user.target
-

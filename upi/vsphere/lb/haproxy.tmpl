@@ -1,7 +1,7 @@
 defaults
   maxconn 20000
   mode    tcp
-  log     /var/run/haproxy/haproxy-log.sock local0
+  log     stdout format raw local0
   option  dontlognull
   retries 3
   timeout http-request 10s
