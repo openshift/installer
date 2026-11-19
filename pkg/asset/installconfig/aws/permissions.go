@@ -499,22 +499,15 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionKMSEncryptionKeys)
 	}
 
-	isSecretRegion, err := IsSecretRegion(ic.AWS.Region)
-	if err != nil {
-		logrus.Warnf("Unable to determine if AWS region is secret: %v", err)
-		return permissionGroups
+	// Add delete permissions
+	permissionGroups = append(permissionGroups, PermissionDeleteBase)
+	if usingExistingVPC {
+		permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
+	} else {
+		permissionGroups = append(permissionGroups, PermissionDeleteNetworking)
 	}
-	// Add delete permissions for non-C2S installs.
-	if !isSecretRegion {
-		permissionGroups = append(permissionGroups, PermissionDeleteBase)
-		if usingExistingVPC {
-			permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
-		} else {
-			permissionGroups = append(permissionGroups, PermissionDeleteNetworking)
-		}
-		if !usingExistingPrivateZone {
-			permissionGroups = append(permissionGroups, PermissionDeleteHostedZone)
-		}
+	if !usingExistingPrivateZone {
+		permissionGroups = append(permissionGroups, PermissionDeleteHostedZone)
 	}
 
 	if ic.AWS.PublicIpv4Pool != "" {
