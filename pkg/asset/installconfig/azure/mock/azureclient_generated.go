@@ -119,6 +119,21 @@ func (mr *MockAPIMockRecorder) GetAvailabilityZones(ctx, region, instanceType an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailabilityZones", reflect.TypeOf((*MockAPI)(nil).GetAvailabilityZones), ctx, region, instanceType)
 }
 
+// GetCapacityReservationGroup mocks base method.
+func (m *MockAPI) GetCapacityReservationGroup(ctx context.Context, subscriptionID, groupName, capacityReservationGroupName string) (*compute.CapacityReservationGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCapacityReservationGroup", ctx, subscriptionID, groupName, capacityReservationGroupName)
+	ret0, _ := ret[0].(*compute.CapacityReservationGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCapacityReservationGroup indicates an expected call of GetCapacityReservationGroup.
+func (mr *MockAPIMockRecorder) GetCapacityReservationGroup(ctx, subscriptionID, groupName, capacityReservationGroupName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCapacityReservationGroup", reflect.TypeOf((*MockAPI)(nil).GetCapacityReservationGroup), ctx, subscriptionID, groupName, capacityReservationGroupName)
+}
+
 // GetComputeSubnet mocks base method.
 func (m *MockAPI) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*network.Subnet, error) {
 	m.ctrl.T.Helper()

@@ -176,18 +176,31 @@ func (a *InstallConfig) finishAzure() error {
 		defaultConfig.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
 		a.Config.Azure.DefaultMachinePlatform.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
 	}
+	if defaultConfig != nil && defaultConfig.CapacityReservationGroup != nil &&
+		defaultConfig.CapacityReservationGroup.SubscriptionID == "" {
+		a.Config.Azure.DefaultMachinePlatform.CapacityReservationGroup.SubscriptionID = session.Credentials.SubscriptionID
+	}
 
-	if a.Config.ControlPlane != nil && a.Config.ControlPlane.Platform.Azure != nil &&
-		a.Config.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet != nil {
-		if a.Config.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
-			a.Config.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+	if a.Config.ControlPlane != nil && a.Config.ControlPlane.Platform.Azure != nil {
+		controlPlane := a.Config.ControlPlane.Platform.Azure
+		if controlPlane.OSDisk.DiskEncryptionSet != nil && controlPlane.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
+			controlPlane.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+		}
+		if controlPlane.CapacityReservationGroup != nil && controlPlane.CapacityReservationGroup.SubscriptionID == "" {
+			controlPlane.CapacityReservationGroup.SubscriptionID = session.Credentials.SubscriptionID
 		}
 	}
 
 	for _, compute := range a.Config.Compute {
-		if compute.Platform.Azure != nil && compute.Platform.Azure.OSDisk.DiskEncryptionSet != nil &&
-			compute.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
-			compute.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+		if compute.Platform.Azure != nil {
+			if compute.Platform.Azure.OSDisk.DiskEncryptionSet != nil &&
+				compute.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
+				compute.Platform.Azure.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
+			}
+			if compute.Platform.Azure.CapacityReservationGroup != nil &&
+				compute.Platform.Azure.CapacityReservationGroup.SubscriptionID == "" {
+				compute.Platform.Azure.CapacityReservationGroup.SubscriptionID = session.Credentials.SubscriptionID
+			}
 		}
 	}
 	return nil

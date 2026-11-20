@@ -162,6 +162,43 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
+// unzonedPlacement reports whether any machine in a pool with these zones is
+// created without a failure domain. CAPZ places such a machine in an
+// availability set, which Azure does not allow to be combined with a capacity
+// reservation group.
+func unzonedPlacement(zones []string) bool {
+	if len(zones) == 0 {
+		return true
+	}
+	for _, zone := range zones {
+		if strings.TrimSpace(zone) == "" {
+			return true
+		}
+	}
+	return false
+}
+
+// capacityReservationGroupID builds the Azure resource ID of the capacity
+// reservation group, falling back to defaultSubscriptionID when the group does
+// not name a subscription of its own. The install-config defaulting in
+// finishAzure normally fills SubscriptionID in, but machine generation is also
+// reachable with a machine pool that has not been through it, and an ID with an
+// empty subscription segment would be silently rejected by Azure. Returns the
+// empty string when no group is configured.
+func capacityReservationGroupID(group *azure.CapacityReservationGroup, defaultSubscriptionID string) string {
+	if group == nil {
+		return ""
+	}
+	if group.SubscriptionID == "" {
+		// Copy rather than mutate: the group is shared with the install-config
+		// asset.
+		withDefault := *group
+		withDefault.SubscriptionID = defaultSubscriptionID
+		return withDefault.ToID()
+	}
+	return group.ToID()
+}
+
 func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, session *icazure.Session, networkResourceGroup, virtualNetwork, subnet string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az string
 	if len(mpool.Zones) > 0 && azIdx != nil {
@@ -253,6 +290,8 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		dataDisks = append(dataDisks, dataDisk)
 	}
 
+	reservationGroupID := capacityReservationGroupID(mpool.CapacityReservationGroup, session.Credentials.SubscriptionID)
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -272,18 +311,19 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				SecurityProfile:    diskSecurityProfile,
 			},
 		},
-		SecurityProfile:       securityProfile,
-		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
-		Subnet:                subnet,
-		ManagedIdentity:       managedIdentity,
-		Vnet:                  virtualNetwork,
-		ResourceGroup:         rg,
-		NetworkResourceGroup:  networkResourceGroup,
-		PublicLoadBalancer:    publicLB,
-		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
-		Tags:                  platform.UserTags,
-		DataDisks:             dataDisks,
+		SecurityProfile:            securityProfile,
+		UltraSSDCapability:         ultraSSDCapability,
+		Zone:                       az,
+		Subnet:                     subnet,
+		ManagedIdentity:            managedIdentity,
+		Vnet:                       virtualNetwork,
+		ResourceGroup:              rg,
+		NetworkResourceGroup:       networkResourceGroup,
+		PublicLoadBalancer:         publicLB,
+		AcceleratedNetworking:      getVMNetworkingType(mpool.VMNetworkingType),
+		Tags:                       platform.UserTags,
+		DataDisks:                  dataDisks,
+		CapacityReservationGroupID: reservationGroupID,
 	}
 	var bootDiagnostics *machineapi.AzureDiagnostics
 	if platform.DefaultMachinePlatform != nil {
@@ -299,6 +339,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	if platform.CloudName == azure.StackCloud {
 		spec.AvailabilitySet = fmt.Sprintf("%s_control-plane-as", clusterID)
+	}
+
+	if spec.AvailabilitySet != "" && spec.CapacityReservationGroupID != "" {
+		return nil, fmt.Errorf("machine in availability set %s cannot also use capacity reservation group %s: Azure does not support combining the two",
+			spec.AvailabilitySet, spec.CapacityReservationGroupID)
 	}
 
 	return spec, nil
