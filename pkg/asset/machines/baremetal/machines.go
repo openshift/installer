@@ -87,6 +87,13 @@ func hostSelectorForStream(stream types.OSImageStream) baremetalprovider.HostSel
 			exclude = append(exclude, string(s))
 		}
 	}
+	// When there are no other streams to exclude (e.g. OKD/SCOS, which only
+	// has centos-10), return an empty selector that matches any host. A NotIn
+	// requirement with an empty values list is invalid and would be rejected
+	// by the machine controller.
+	if len(exclude) == 0 {
+		return baremetalprovider.HostSelector{}
+	}
 	return baremetalprovider.HostSelector{
 		MatchExpressions: []baremetalprovider.HostSelectorRequirement{
 			{
