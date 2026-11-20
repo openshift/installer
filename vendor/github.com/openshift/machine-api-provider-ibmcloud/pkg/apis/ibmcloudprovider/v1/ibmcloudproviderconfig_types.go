@@ -92,10 +92,39 @@ type IBMCloudMachineProviderSpec struct {
 }
 
 // IBMCloudMachineBootVolume contains details for the machine's boot volume.
+// The boot volume configuration is only applied when the instance is created,
+// changes to the fields of an existing instance's boot volume are not reconciled.
 type IBMCloudMachineBootVolume struct {
 	// EncryptionKey is the IBM Cloud encryption key CRN to use when encrypting the boot volume.
 	// CRN's for IBM Cloud Key Protect keys or IBM Cloud Hyper Protect keys are accepted.
 	EncryptionKey string `json:"encryptionKey"`
+
+	// Profile is the volume profile for the boot volume, refer
+	// https://cloud.ibm.com/docs/vpc?topic=vpc-block-storage-profiles for more information.
+	// Accepted values are `general-purpose`, `5iops-tier`, `10iops-tier`, `custom` and the
+	// second-generation `sdp` profile.
+	// When omitted, `general-purpose` is used.
+	// (optional)
+	Profile string `json:"profile,omitempty"`
+
+	// SizeGiB is the size of the boot volume in GiB.
+	// The specified value must be at least the image's minimum provisioned size, at most
+	// 250 GiB for first-generation volume profiles and at most 32,000 GiB for the `sdp` profile.
+	// When omitted, IBM Cloud's default boot volume capacity is used.
+	// (optional)
+	SizeGiB int64 `json:"sizeGiB,omitempty"`
+
+	// Iops is the maximum I/O operations per second (IOPS) to use for the boot volume. Applicable
+	// only to volumes using the `custom` profile or the second-generation `sdp` profile.
+	// When omitted, the IOPS is determined by the volume profile.
+	// (optional)
+	Iops int64 `json:"iops,omitempty"`
+
+	// Bandwidth is the maximum bandwidth (in megabits per second) for the boot volume. Applicable
+	// only to volumes using the second-generation `sdp` profile.
+	// When omitted, it will be computed from the volume's iops and capacity.
+	// (optional)
+	Bandwidth int64 `json:"bandwidth,omitempty"`
 }
 
 // NetworkInterface struct

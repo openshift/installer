@@ -12,6 +12,8 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
+	ibmclouddefaults "github.com/openshift/installer/pkg/types/ibmcloud/defaults"
 )
 
 // SetMachinePoolDefaults sets the defaults for the machine pool.
@@ -65,6 +67,11 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform, fgat
 		}
 		gcpdefaults.Apply(platform.GCP.DefaultMachinePlatform, p.Platform.GCP)
 		gcpdefaults.SetMachinePoolDefaults(platform, p.Platform.GCP)
+	case ibmcloud.Name:
+		if p.Platform.IBMCloud == nil && platform.IBMCloud.DefaultMachinePlatform != nil {
+			p.Platform.IBMCloud = &ibmcloud.MachinePool{}
+		}
+		ibmclouddefaults.Apply(platform.IBMCloud.DefaultMachinePlatform, p.Platform.IBMCloud)
 	default:
 	}
 }

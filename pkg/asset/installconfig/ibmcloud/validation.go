@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -55,12 +56,44 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 	}
 
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, validateMachinePool(client, ic.IBMCloud, ic.Platform.IBMCloud.DefaultMachinePlatform, path)...)
+		allErrs = append(allErrs, validateDefaultMachinePool(client, ic.IBMCloud, ic.Platform.IBMCloud.DefaultMachinePlatform, path.Child("defaultMachinePlatform"))...)
 	}
 	return allErrs
 }
 
+// validateMachinePool validates a control plane or compute pool against IBM
+// Cloud. Pools reach validation already merged with defaultMachinePlatform, so
+// the boot volume is also checked against its effective volume profile. The
+// profile is fetched once and reused for the availability and range checks.
 func validateMachinePool(client API, platform *ibmcloud.Platform, machinePool *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
+	allErrs := validateMachinePoolCommon(client, platform, machinePool, path)
+	if machinePool.BootVolume != nil {
+		profile, errs := validateBootVolumeProfileAvailability(client, *machinePool.BootVolume, platform.Region, path.Child("bootVolume"))
+		allErrs = append(allErrs, errs...)
+		if profile != nil {
+			allErrs = append(allErrs, validateBootVolumeProfileRanges(profile, *machinePool.BootVolume, path.Child("bootVolume"))...)
+		}
+	}
+	return allErrs
+}
+
+// validateDefaultMachinePool validates defaultMachinePlatform on its own. It
+// skips the volume profile range checks: a default without a profile can be
+// completed by each pool, and every pool is validated after the merge.
+func validateDefaultMachinePool(client API, platform *ibmcloud.Platform, machinePool *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
+	allErrs := validateMachinePoolCommon(client, platform, machinePool, path)
+	if machinePool.BootVolume != nil {
+		_, errs := validateBootVolumeProfileAvailability(client, *machinePool.BootVolume, platform.Region, path.Child("bootVolume"))
+		allErrs = append(allErrs, errs...)
+	}
+	return allErrs
+}
+
+// validateMachinePoolCommon validates the machine pool properties that require
+// querying IBM Cloud and hold for any pool, including defaultMachinePlatform
+// before it is merged: instance type, zones, boot volume encryption key, and
+// dedicated hosts. The boot volume profile is checked by the callers.
+func validateMachinePoolCommon(client API, platform *ibmcloud.Platform, machinePool *ibmcloud.MachinePool, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if machinePool.InstanceType != "" {
@@ -72,7 +105,7 @@ func validateMachinePool(client API, platform *ibmcloud.Platform, machinePool *i
 	}
 
 	if machinePool.BootVolume != nil {
-		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path.Child("bootVolume"))...)
+		allErrs = append(allErrs, validateBootVolumeEncryptionKey(client, *machinePool.BootVolume, path.Child("bootVolume"))...)
 	}
 
 	if len(machinePool.DedicatedHosts) > 0 {
@@ -169,6 +202,7 @@ func validateMachinePoolType(client API, machineType string, path *field.Path) f
 	return field.ErrorList{field.NotFound(path, machineType)}
 }
 
+// validateMachinePoolZones checks that every zone is available in the region.
 func validateMachinePoolZones(client API, region string, zones []string, path *field.Path) field.ErrorList {
 	regionalZones, err := client.GetVPCZonesForRegion(context.TODO(), region)
 	if err != nil {
@@ -184,7 +218,9 @@ func validateMachinePoolZones(client API, region string, zones []string, path *f
 	return nil
 }
 
-func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
+// validateBootVolumeEncryptionKey checks that the boot volume encryption key
+// exists, matches the requested CRN, is enabled and has not been deleted.
+func validateBootVolumeEncryptionKey(client API, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if bootVolume.EncryptionKey == "" {
@@ -214,6 +250,105 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	}
 
 	return allErrs
+}
+
+// effectiveBootVolumeProfile returns the volume profile the boot volume will
+// use: the selected one, or the IBM Cloud default when none is selected.
+func effectiveBootVolumeProfile(bootVolume ibmcloud.BootVolume) string {
+	if bootVolume.Profile != "" {
+		return bootVolume.Profile
+	}
+	return ibmcloud.DefaultBootVolumeProfile
+}
+
+// validateBootVolumeProfileAvailability checks that the volume profile the boot
+// volume will use, the selected one or the default, is available in the region.
+// It runs on every pool, including defaultMachinePlatform, and returns the
+// fetched profile, or nil when it could not be fetched, so callers can reuse it.
+func validateBootVolumeProfileAvailability(client API, bootVolume ibmcloud.BootVolume, region string, path *field.Path) (*vpcv1.VolumeProfile, field.ErrorList) {
+	profileName := effectiveBootVolumeProfile(bootVolume)
+	profile, err := client.GetVolumeProfile(context.TODO(), profileName, region)
+	if err != nil {
+		var notFound *VPCResourceNotFoundError
+		if !errors.As(err, &notFound) {
+			return nil, field.ErrorList{field.InternalError(path.Child("profile"), fmt.Errorf("failed to fetch volume profile %s: %w", profileName, err))}
+		}
+		msg := fmt.Sprintf("volume profile %s is not available in region %s", profileName, region)
+		if bootVolume.Profile == "" {
+			msg = fmt.Sprintf("the default volume profile %s is not available in region %s", profileName, region)
+		}
+		return nil, field.ErrorList{field.Invalid(path.Child("profile"), bootVolume.Profile, msg)}
+	}
+	return profile, nil
+}
+
+// validateBootVolumeProfileRanges checks the user-set iops, bandwidth and size
+// against the live ranges the effective volume profile advertises, so the
+// numeric limits are never hardcoded and stay correct as IBM Cloud evolves
+// them. The structural rules (which field applies to which profile) are
+// enforced offline; this only checks the values that were actually set. The
+// profile is the one validateBootVolumeProfileAvailability already fetched.
+func validateBootVolumeProfileRanges(profile *vpcv1.VolumeProfile, bootVolume ibmcloud.BootVolume, path *field.Path) field.ErrorList {
+	profileName := effectiveBootVolumeProfile(bootVolume)
+	allErrs := field.ErrorList{}
+	// The SDK decodes each field into its generic struct, whose Type tells the
+	// variant apart; see validateAgainstProfile for how each one is checked.
+	if bootVolume.IOPS != 0 {
+		if iops, ok := profile.Iops.(*vpcv1.VolumeProfileIops); ok {
+			allErrs = append(allErrs, validateAgainstProfile(bootVolume.IOPS, iops.Type, iops.Value, iops.Min, iops.Max, iops.Values, path.Child("iops"), "iops", profileName)...)
+		}
+	}
+	if bootVolume.Bandwidth != 0 {
+		if bandwidth, ok := profile.Bandwidth.(*vpcv1.VolumeProfileBandwidth); ok {
+			allErrs = append(allErrs, validateAgainstProfile(bootVolume.Bandwidth, bandwidth.Type, bandwidth.Value, bandwidth.Min, bandwidth.Max, bandwidth.Values, path.Child("bandwidth"), "bandwidth", profileName)...)
+		}
+	}
+	if bootVolume.SizeGiB != 0 {
+		if capacity, ok := profile.BootCapacity.(*vpcv1.VolumeProfileBootCapacity); ok {
+			allErrs = append(allErrs, validateAgainstProfile(bootVolume.SizeGiB, capacity.Type, capacity.Value, capacity.Min, capacity.Max, capacity.Values, path.Child("sizeGiB"), "sizeGiB", profileName)...)
+		}
+	}
+	return allErrs
+}
+
+// validateAgainstProfile checks a user-set value against what the volume
+// profile advertises for the field. The type names are shared by iops,
+// bandwidth and boot_capacity. For a dependent_range the actual limits depend
+// on the volume's other values, so min and max are the outer bounds. Step
+// alignment is left to IBM Cloud, and an unknown type is not checked, so a
+// value is never rejected on a guess.
+func validateAgainstProfile(value int64, fieldType *string, fixed, minimum, maximum *int64, values []int64, path *field.Path, fieldName, profileName string) field.ErrorList {
+	if fieldType == nil {
+		return nil
+	}
+	switch *fieldType {
+	case vpcv1.VolumeProfileIopsRangeTypeRangeConst, vpcv1.VolumeProfileIopsDependentRangeTypeDependentRangeConst:
+		return validateInProfileRange(value, minimum, maximum, path, fieldName, profileName)
+	case vpcv1.VolumeProfileIopsFixedTypeFixedConst:
+		if fixed != nil && value != *fixed {
+			return field.ErrorList{field.Invalid(path, value, fmt.Sprintf("%s for the %s profile is fixed at %d", fieldName, profileName, *fixed))}
+		}
+	case vpcv1.VolumeProfileIopsEnumTypeEnumConst:
+		if len(values) > 0 && !slices.Contains(values, value) {
+			return field.ErrorList{field.Invalid(path, value, fmt.Sprintf("%s for the %s profile must be one of %v", fieldName, profileName, values))}
+		}
+	case vpcv1.VolumeProfileBandwidthDependentTypeDependentConst:
+		return field.ErrorList{field.Invalid(path, value, fmt.Sprintf("%s is computed by IBM Cloud for the %s profile and cannot be set", fieldName, profileName))}
+	}
+	return nil
+}
+
+// validateInProfileRange checks a value falls within a profile's advertised
+// min/max. Only the bounds are checked; a step misalignment is left to IBM
+// Cloud to report, rather than risk rejecting a valid value on a guessed rule.
+func validateInProfileRange(value int64, minimum, maximum *int64, path *field.Path, fieldName, profileName string) field.ErrorList {
+	if minimum == nil || maximum == nil {
+		return nil
+	}
+	if value < *minimum || value > *maximum {
+		return field.ErrorList{field.Invalid(path, value, fmt.Sprintf("%s for the %s profile must be between %d and %d", fieldName, profileName, *minimum, *maximum))}
+	}
+	return nil
 }
 
 func validateResourceGroup(client API, resourceGroupName string, platformField string, path *field.Path) field.ErrorList {
