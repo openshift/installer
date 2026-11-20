@@ -4,11 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
-
-	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -16,8 +12,7 @@ import (
 
 // Kargs is an Asset that generates the additional kernel args.
 type Kargs struct {
-	consoleArgs string
-	fips        bool
+	kargs []string
 }
 
 // Dependencies returns the assets on which the Kargs asset depends.
@@ -38,15 +33,14 @@ func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
-		a.fips = agentClusterInstall.FIPSEnabled()
-		// Add kernel args for external oci platform
-		if agentClusterInstall.GetExternalPlatformName() == agent.ExternalPlatformNameOci {
-			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, agent.ExternalPlatformNameOci)
-			a.consoleArgs = " console=ttyS0"
+		fips := false
+		if agentClusterInstall.Config != nil {
+			fips = agentClusterInstall.FIPSEnabled()
 		}
+		a.kargs = manifests.GetAdditionalKernelArgs(fips, agentClusterInstall.GetExternalPlatformName())
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		a.fips = clusterInfo.FIPS
+		a.kargs = manifests.GetAdditionalKernelArgs(clusterInfo.FIPS, "")
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -62,9 +56,9 @@ func (a *Kargs) Name() string {
 
 // KernelCmdLine returns the data to be appended to the kernel arguments.
 func (a *Kargs) KernelCmdLine() string {
-	cmdLine := a.consoleArgs
-	if a.fips {
-		cmdLine += " fips=1"
+	cmdLine := ""
+	for _, karg := range a.kargs {
+		cmdLine += " " + karg
 	}
 	return cmdLine
 }

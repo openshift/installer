@@ -39,6 +39,9 @@ spec:
     namespace: cluster0
   cpuArchitecture: x86_64
   ipxeScriptType: ""
+  kernelArguments:
+  - operation: append
+    value: fips=1
   nmStateConfigLabelSelector:
     matchLabels:
       infraenvs.agent-install.openshift.io: ostest
