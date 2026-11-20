@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -679,11 +680,44 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region))}
 }
 
-// ValidatePublicDNS checks DNS for CNAME, A, and AAA records for
-// api.zoneName. If a record exists, it's likely a cluster already exists.
+// publicDNSZoneGetter fetches the public DNS zone of the base domain.
+type publicDNSZoneGetter interface {
+	GetPublicDNSZone(rgName string, zoneName string) (*Zone, error)
+}
+
+// usesPublicDNSZone returns true when the installer writes records into the
+// public DNS zone of the base domain. Azure Stack Hub is excluded because its
+// DNS resources require a different API version.
+func usesPublicDNSZone(ic *types.InstallConfig) bool {
+	if ic.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
+		return false
+	}
+	if ic.Azure.CloudName == aztypes.StackCloud {
+		return false
+	}
+	return ic.PublicAPI() || ic.PublicIngress()
+}
+
+// validatePublicDNSZone ensures the public DNS zone of the base domain exists
+// in the base domain resource group.
+func validatePublicDNSZone(azureDNS publicDNSZoneGetter, rgName string, zoneName string) field.ErrorList {
+	allErrs := field.ErrorList{}
+	fieldPath := field.NewPath("baseDomain")
+
+	if _, err := azureDNS.GetPublicDNSZone(rgName, zoneName); err != nil {
+		if isNotFound(err) {
+			return append(allErrs, field.NotFound(fieldPath, fmt.Sprintf("public DNS zone %q in resource group %q", zoneName, rgName)))
+		}
+		return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to retrieve public DNS zone %q in resource group %q: %w", zoneName, rgName, err)))
+	}
+
+	return allErrs
+}
+
+// ValidatePublicDNS checks that the public DNS zone of the base domain exists
+// and holds no CNAME, A, or AAAA records for api.zoneName.
 func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
-	// If this is an internal cluster, this check is not necessary
-	if ic.Publish == types.InternalPublishingStrategy {
+	if !usesPublicDNSZone(ic) {
 		return nil
 	}
 
@@ -692,6 +726,14 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	rgName := ic.Azure.BaseDomainResourceGroupName
 	zoneName := ic.BaseDomain
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
+
+	if errs := validatePublicDNSZone(azureDNS, rgName, zoneName); len(errs) > 0 {
+		return errs.ToAggregate()
+	}
+
+	if !ic.PublicAPI() {
+		return nil
+	}
 
 	// Look for an existing CNAME first
 	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
