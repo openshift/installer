@@ -10,20 +10,25 @@ import (
 
 const loadBalancerTypeName = "load balancer"
 
-// listLoadBalancers lists subnets in the vpc
+// listLoadBalancers lists load balancers in the vpc.
 func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 	o.Logger.Debugf("Listing load balancers")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
 	options := o.vpcSvc.NewListLoadBalancersOptions()
-	resources, _, err := o.vpcSvc.ListLoadBalancersWithContext(ctx, options)
+	lbPager, err := o.vpcSvc.NewLoadBalancersPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create load balancers pager")
+	}
+
+	loadBalancers, err := lbPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list load balancers")
 	}
 
 	result := []cloudResource{}
-	for _, loadbalancer := range resources.LoadBalancers {
+	for _, loadbalancer := range loadBalancers {
 		if strings.Contains(*loadbalancer.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *loadbalancer.ID,
