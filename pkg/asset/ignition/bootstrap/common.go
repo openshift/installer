@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"bytes"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -404,22 +403,14 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 
 	openshiftInstallInvoker := os.Getenv("OPENSHIFT_INSTALL_INVOKER")
 
-	pullSecret := installConfig.Config.PullSecret
-
-	// Merge IRI registry credentials into pull secret if available.
-	// IRIRegistryCredentials generates credentials when an InternalReleaseImage
-	// manifest is present. This ensures kubelet/CRI-O on bootstrap and cluster
-	// nodes can authenticate to the IRI registry on master nodes.
+	// The pull secret with the IRI registry credentials merged in during
+	// generation, so that kubelet and CRI-O on the bootstrap and cluster
+	// nodes can authenticate to the IRI registry on the master nodes. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
 	iriAuth := &tls.IRIRegistryCredentials{}
 	dependencies.Get(iriAuth)
-	if iriAuth.Password != "" {
-		iriRegistryHost := fmt.Sprintf("api-int.%s:22625", installConfig.Config.ClusterDomain())
-		merged, err := mergeIRIAuthIntoPullSecret(pullSecret, iriAuth.Username, iriAuth.Password, iriRegistryHost)
-		if err != nil {
-			logrus.Fatalf("Failed to merge IRI registry credentials into pull secret: %v", err)
-		}
-		pullSecret = merged
-	}
+	pullSecret := iriAuth.MergedPullSecret
 	konnectivityFeatureGateEnabled := (installConfig.Config.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) ||
 		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement) ||
 		installConfig.Config.Enabled(features.FeatureGateClusterAPIOperator))
@@ -451,31 +442,6 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		OSImageStream:         installConfig.Config.OSImageStream,
 		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
 	}
-}
-
-// mergeIRIAuthIntoPullSecret merges IRI registry authentication credentials
-// into the pull secret so that kubelet/CRI-O can authenticate to the IRI registry.
-func mergeIRIAuthIntoPullSecret(pullSecret, username, password, registryHost string) (string, error) {
-	var pullSecretMap map[string]interface{}
-	if err := json.Unmarshal([]byte(pullSecret), &pullSecretMap); err != nil {
-		return "", fmt.Errorf("failed to parse pull secret: %w", err)
-	}
-
-	auths, ok := pullSecretMap["auths"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("pull secret missing 'auths' field")
-	}
-
-	authValue := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-	auths[registryHost] = map[string]interface{}{
-		"auth": authValue,
-	}
-
-	mergedBytes, err := json.Marshal(pullSecretMap)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal merged pull secret: %w", err)
-	}
-	return string(mergedBytes), nil
 }
 
 // approveCSRNetworks returns the networks a kubelet serving certificate may

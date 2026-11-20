@@ -181,13 +181,21 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	versionInfo := versioninfo.GetInfo()
 	cvoChannel := fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
 
+	// The global pull secret with the IRI registry credentials merged in
+	// during generation, so that kubelet and CRI-O can authenticate to the
+	// registry the control plane machines serve while bootstrapping. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
+	iriAuth := &tls.IRIRegistryCredentials{}
+	dependencies.Get(iriAuth)
+
 	templateData := &bootkubeTemplateData{
 		CVOCapabilities:       installConfig.Config.Capabilities,
 		CVOChannel:            cvoChannel,
 		CVOClusterID:          clusterID.UUID,
 		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(iriAuth.MergedPullSecret)),
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),

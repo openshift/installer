@@ -144,6 +144,8 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"isoIgnitionContains":     tshelpers.IsoIgnitionContains,
 			"isoSizeMin":              tshelpers.IsoSizeMin,
 			"isoSizeMax":              tshelpers.IsoSizeMax,
+			"ignExtractFile":          tshelpers.IgnExtractFile,
+			"dockerConfigContains":    tshelpers.DockerConfigContains,
 		},
 	})
 }
