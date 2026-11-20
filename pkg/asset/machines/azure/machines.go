@@ -163,8 +163,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, session *icazure.Session, networkResourceGroup, virtualNetwork, subnet string) (*machineapi.AzureMachineProviderSpec, error) {
+	if platform == nil || mpool == nil {
+		return nil, fmt.Errorf("missing Azure machine pool configuration")
+	}
+	if session == nil {
+		return nil, fmt.Errorf("missing Azure session credentials")
+	}
 	var az string
-	if len(mpool.Zones) > 0 && azIdx != nil {
+	if azIdx != nil && *azIdx >= 0 && *azIdx < len(mpool.Zones) {
 		az = mpool.Zones[*azIdx]
 	}
 	hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
@@ -195,9 +201,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 
 	managedIdentity := ""
-	if len(mpool.Identity.UserAssignedIdentities) > 0 {
+	if mpool.Identity != nil && len(mpool.Identity.UserAssignedIdentities) > 0 {
 		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
-	} else if mpool.Identity.Type == capz.VMIdentityUserAssigned {
+	} else if mpool.Identity != nil && mpool.Identity.Type == capz.VMIdentityUserAssigned {
 		// In this case, the installer will create the user-assigned identity.
 		managedIdentity = fmt.Sprintf("%s-identity", clusterID)
 	}
