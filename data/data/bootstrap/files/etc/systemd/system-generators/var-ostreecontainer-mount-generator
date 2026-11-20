@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+UNIT_DIR="${1:-/tmp}"
+
+# On ppc64le the kernel is uncompressed, so the ostree repo import in node-image-pull.sh exceeds 5G.
+case "$(uname -m)" in
+ppc64le)
+    mkdir -p "${UNIT_DIR}/var-ostreecontainer.mount.d"
+    cat > "${UNIT_DIR}/var-ostreecontainer.mount.d/10-vm-size.conf" <<EOF
+[Mount]
+Options=size=6G
+EOF
+    echo "Altered the mount to 6G for tmpfs"
+    ;;
+esac
