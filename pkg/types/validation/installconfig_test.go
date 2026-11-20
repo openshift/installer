@@ -2280,13 +2280,14 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "valid manual credentials mode for vSphere",
+			name: "manual credentials mode is rejected for global vSphere credentials",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{VSphere: validVSpherePlatform()}
 				c.CredentialsMode = types.ManualCredentialsMode
 				return c
 			}(),
+			expectedError: `^credentialsMode: Invalid value: "Manual": cannot be set when using the "vsphere" platform$`,
 		},
 		{
 			name: "invalidly set cloud credentials mode",
@@ -4052,6 +4053,41 @@ func TestValidateInstallConfig(t *testing.T) {
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
 			}
+		})
+	}
+}
+
+// TestValidateCloudCredentialsModeVSphereManual verifies that Manual
+// credentials mode is accepted for vSphere only with component-scoped
+// credentials. With global credentials the installer generates the vSphere
+// credential Secret, so Manual mode would leave the cluster without vCenter
+// credentials.
+func TestValidateCloudCredentialsModeVSphereManual(t *testing.T) {
+	tests := []struct {
+		name           string
+		credentialType vsphere.CredentialType
+		expectedError  string
+	}{
+		{
+			name:           "global credentials reject Manual",
+			credentialType: vsphere.CredentialTypeGlobal,
+			expectedError:  `credentialsMode: Invalid value: "Manual": cannot be set when using the "vsphere" platform`,
+		},
+		{
+			name:           "component-scoped credentials allow Manual",
+			credentialType: vsphere.CredentialTypeComponentScoped,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			platform := types.Platform{VSphere: &vsphere.Platform{CredentialType: test.credentialType}}
+			errs := validateCloudCredentialsMode(types.ManualCredentialsMode, field.NewPath("credentialsMode"), platform)
+			if test.expectedError == "" {
+				assert.Empty(t, errs)
+				return
+			}
+			assert.Contains(t, errs.ToAggregate().Error(), test.expectedError)
 		})
 	}
 }

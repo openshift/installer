@@ -77,7 +77,11 @@ func TestFeatureGates(t *testing.T) {
 				c.VSphere.CredentialType = vsphere.CredentialTypeComponentScoped
 				return c
 			}(),
-			expected: `^platform.vsphere.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through either the DevPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			// Assert only the stable prefix: the feature-set names in the
+			// message are derived from the vendored openshift/api, so an API
+			// update that enables this gate in another feature set must not
+			// fail this test for a reason unrelated to vSphere.
+			expected: `platform\.vsphere\.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through`,
 		},
 		{
 			name: "vSphere component-scoped credentials are allowed with DevPreviewNoUpgrade",
@@ -113,7 +117,11 @@ func TestFeatureGates(t *testing.T) {
 				c.FeatureGates = []string{"VSpherePerComponentScopedCreds=false"}
 				return c
 			}(),
-			expected: `^platform.vsphere.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through either the DevPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			// Assert only the stable prefix: the feature-set names in the
+			// message are derived from the vendored openshift/api, so an API
+			// update that enables this gate in another feature set must not
+			// fail this test for a reason unrelated to vSphere.
+			expected: `platform\.vsphere\.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through`,
 		},
 		{
 			name: "vSphere hosts is allowed with custom Feature Gates",
