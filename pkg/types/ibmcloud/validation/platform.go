@@ -5,11 +5,21 @@ import (
 	"net/url"
 	"regexp"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
+
+// maxSubnetsPerALB is the maximum number of subnets supported by an IBM Cloud VPC Application Load Balancer.
+// Both controlPlaneSubnets and computeSubnets are merged into the g2VpcSubnetNames field of the
+// cloud-provider-config ConfigMap. The in-cluster cloud-controller-manager reads this field, looks up
+// each subnet by name via the VPC API (which returns unique objects), and passes each distinct subnet
+// once to VPC load balancers (e.g. the ingress router-default service LB). The combined distinct count
+// must therefore not exceed this limit.
+// See https://cloud.ibm.com/docs/vpc?topic=vpc-load-balancer-faqs#max-number-subnets-alb
+const maxSubnetsPerALB = 15
 
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList {
@@ -25,6 +35,17 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 		}
 		if p.ComputeSubnets == nil {
 			allErrs = append(allErrs, field.Required(fldPath.Child("computeSubnets"), "must provide at least one compute subnet when a VPC is specified"))
+		}
+		cpCount := len(p.ControlPlaneSubnets)
+		computeCount := len(p.ComputeSubnets)
+		subnetUnion := sets.New[string](p.ControlPlaneSubnets...).Union(sets.New[string](p.ComputeSubnets...))
+		totalSubnetCount := subnetUnion.Len()
+		if totalSubnetCount > maxSubnetsPerALB {
+			allErrs = append(allErrs, field.Forbidden(
+				fldPath,
+				fmt.Sprintf("the combined controlPlaneSubnets (%d) and computeSubnets (%d) contain %d distinct subnets, exceeding the IBM Cloud VPC LB maximum of %d",
+					cpCount, computeCount, totalSubnetCount, maxSubnetsPerALB),
+			))
 		}
 	} else if p.ControlPlaneSubnets != nil || p.ComputeSubnets != nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("vpcName"), "must provide a VPC name when supplying subnets"))
