@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -22,6 +23,8 @@ var (
 		azure.ChinaCloud:        true,
 		azure.GermanCloud:       true,
 		azure.StackCloud:        true,
+		azure.USSecCloud:        true,
+		azure.USNatCloud:        true,
 	}
 
 	validCloudNameValues = func() []string {
@@ -58,9 +61,12 @@ var (
 const maxUserTagLimit = 10
 
 // isUserTagsAllowed returns true if the cloud environment supports userTags.
-// userTags are supported on PublicCloud and USGovernmentCloud.
+// userTags are supported on PublicCloud, USGovernmentCloud, USSecCloud, and USNatCloud.
 func isUserTagsAllowed(cloudName azure.CloudEnvironment) bool {
-	return cloudName == azure.PublicCloud || cloudName == azure.USGovernmentCloud
+	return cloudName == azure.PublicCloud ||
+		cloudName == azure.USGovernmentCloud ||
+		cloudName == azure.USSecCloud ||
+		cloudName == azure.USNatCloud
 }
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -153,6 +159,8 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	switch cloud := p.CloudName; cloud {
 	case azure.StackCloud:
 		allErrs = append(allErrs, validateAzureStack(p, fldPath)...)
+	case azure.USSecCloud, azure.USNatCloud:
+		allErrs = append(allErrs, validateAzureSecretCloud(p, fldPath)...)
 	default:
 		if p.ARMEndpoint != "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must not be set when the cloud name is %s", cloud)))
@@ -410,6 +418,8 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	var allErrs field.ErrorList
 	if p.ARMEndpoint == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be set when installing on Azure Stack"))
+	} else {
+		allErrs = append(allErrs, validateARMEndpoint(p.ARMEndpoint, fldPath.Child("armEndpoint"))...)
 	}
 	if p.OutboundType != azure.LoadbalancerOutboundType {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support this routing currently"))
@@ -417,5 +427,41 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	if p.UserProvisionedDNS != "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "userProvisionedDNS is not supported on Azure Stack Hub"))
 	}
+	return allErrs
+}
+
+func validateAzureSecretCloud(p *azure.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if p.ARMEndpoint == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), fmt.Sprintf("ARM endpoint must be provided when installing on %s", p.CloudName)))
+	} else {
+		allErrs = append(allErrs, validateARMEndpoint(p.ARMEndpoint, fldPath.Child("armEndpoint"))...)
+	}
+
+	if p.ClusterOSImage == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterOSImage"), fmt.Sprintf("a VHD URL must be provided when installing on %s", p.CloudName)))
+	}
+	return allErrs
+}
+
+// validateARMEndpoint checks that the ARM endpoint is an https URL with a
+// hostname and no path or request parameters.
+func validateARMEndpoint(endpoint string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("failed to parse ARM endpoint: %v", err)))
+	}
+	if s := u.Scheme; s != "https" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("invalid scheme %q, only https is allowed", s)))
+	}
+	if u.Hostname() == "" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, "host cannot be empty, empty host provided"))
+	}
+	if r := u.RequestURI(); r != "/" {
+		return append(allErrs, field.Invalid(fldPath, endpoint, fmt.Sprintf("no path or request parameters must be provided, %q was provided", r)))
+	}
+
 	return allErrs
 }

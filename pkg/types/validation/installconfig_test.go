@@ -77,7 +77,7 @@ func validAzurePlatform() *azure.Platform {
 func validAzureStackPlatform() *azure.Platform {
 	return &azure.Platform{
 		Region:                      "test-region",
-		ARMEndpoint:                 "http://test-endpoint.com",
+		ARMEndpoint:                 "https://test-endpoint.com",
 		BaseDomainResourceGroupName: "test-basedomain-rg",
 		CloudName:                   azure.StackCloud,
 		OutboundType:                "Loadbalancer",
