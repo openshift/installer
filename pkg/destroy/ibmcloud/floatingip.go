@@ -17,14 +17,18 @@ func (o *ClusterUninstaller) listFloatingIPs() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListFloatingIpsOptions()
-	resources, _, err := o.vpcSvc.ListFloatingIpsWithContext(ctx, options)
+	floatingIPsPager, err := o.vpcSvc.NewFloatingIpsPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create floating IP pager")
+	}
 
+	floatingIPList, err := floatingIPsPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list floating IPs")
 	}
 
 	result := []cloudResource{}
-	for _, floatingIPs := range resources.FloatingIps {
+	for _, floatingIPs := range floatingIPList {
 		if strings.Contains(*floatingIPs.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *floatingIPs.ID,

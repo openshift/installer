@@ -21,13 +21,18 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListSecurityGroupsOptions()
-	resources, _, err := o.vpcSvc.ListSecurityGroupsWithContext(ctx, options)
+	securityGroupsPager, err := o.vpcSvc.NewSecurityGroupsPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to create security group pager")
+	}
+
+	securityGroups, err := securityGroupsPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list security groups")
 	}
 
 	result := []cloudResource{}
-	for _, securityGroup := range resources.SecurityGroups {
+	for _, securityGroup := range securityGroups {
 		if strings.Contains(*securityGroup.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *securityGroup.ID,

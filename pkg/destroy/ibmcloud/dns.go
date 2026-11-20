@@ -25,9 +25,11 @@ func (o *ClusterUninstaller) listCISDNSRecords() (cloudResources, error) {
 	defer cancel()
 
 	result := []cloudResource{}
+	page := int64(1)
 	moreData := true
 	for moreData {
 		options := o.dnsRecordsSvc.NewListAllDnsRecordsOptions()
+		options.SetPage(page)
 		resources, _, err := o.dnsRecordsSvc.ListAllDnsRecordsWithContext(ctx, options)
 
 		if err != nil {
@@ -51,7 +53,8 @@ func (o *ClusterUninstaller) listCISDNSRecords() (cloudResources, error) {
 		}
 
 		resultInfo := *resources.ResultInfo
-		moreData = (*resultInfo.PerPage * *resultInfo.Page) < *resultInfo.Count
+		moreData = (*resultInfo.PerPage * *resultInfo.Page) < *resultInfo.TotalCount
+		page++
 	}
 
 	return cloudResources{}.insert(result...), nil

@@ -17,13 +17,18 @@ func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListImagesOptions()
-	resources, _, err := o.vpcSvc.ListImagesWithContext(ctx, options)
+	imagesPager, err := o.vpcSvc.NewImagesPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create image pager")
+	}
+
+	images, err := imagesPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list images")
 	}
 
 	result := []cloudResource{}
-	for _, image := range resources.Images {
+	for _, image := range images {
 		if strings.Contains(*image.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *image.ID,
