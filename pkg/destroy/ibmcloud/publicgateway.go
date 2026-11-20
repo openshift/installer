@@ -17,13 +17,18 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListPublicGatewaysOptions()
-	resources, _, err := o.vpcSvc.ListPublicGatewaysWithContext(ctx, options)
+	publicGatewaysPager, err := o.vpcSvc.NewPublicGatewaysPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create public gateway pager")
+	}
+
+	publicGateways, err := publicGatewaysPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list public gateways")
 	}
 
 	result := []cloudResource{}
-	for _, publicGateway := range resources.PublicGateways {
+	for _, publicGateway := range publicGateways {
 		if strings.Contains(*publicGateway.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *publicGateway.ID,
