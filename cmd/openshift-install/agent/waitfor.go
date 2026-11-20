@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -86,7 +87,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 }
 
 func newWaitForInstallCompleteCmd() *cobra.Command {
-	return &cobra.Command{
+	var clusterInitTimeout time.Duration
+
+	cmd := &cobra.Command{
 		Use:   "install-complete",
 		Short: "Wait until the cluster installation is complete",
 		Args:  cobra.ExactArgs(0),
@@ -134,6 +137,9 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			options := command.WaitOptions{
 				VerifyFIPS: fipsEnabled,
 			}
+			if cmd.Flags().Changed("cluster-init-timeout") {
+				options.ClusterInitTimeout = clusterInitTimeout
+			}
 
 			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, options); err != nil {
 				logrus.Error(err)
@@ -147,4 +153,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().DurationVar(&clusterInitTimeout, "cluster-init-timeout", 0,
+		"Override the default timeout for waiting for the cluster to initialize (e.g., 45m, 1h)")
+
+	return cmd
 }
