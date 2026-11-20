@@ -18,13 +18,18 @@ func (o *ClusterUninstaller) listIAMAuthorizations() (cloudResources, error) {
 
 	options := o.iamPolicyManagementSvc.NewListPoliciesOptions(o.AccountID)
 	options.SetType("authorization")
-	resources, _, err := o.iamPolicyManagementSvc.ListPoliciesWithContext(ctx, options)
+	policiesPager, err := o.iamPolicyManagementSvc.NewPoliciesPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to create IAM authorizations pager")
+	}
+
+	policies, err := policiesPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to list IAM authorizations")
 	}
 
 	result := []cloudResource{}
-	for _, policy := range resources.Policies {
+	for _, policy := range policies {
 		if o.policyMatches(policy) {
 			result = append(result, cloudResource{
 				key:      *policy.ID,
