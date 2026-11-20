@@ -1,0 +1,17 @@
+# A nonempty config missing apiVersion is not wiped after a failed load.
+! exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'failed to fetch Agent Config'
+stderr 'no version was provided'
+
+cmp $WORK/agent-config.yaml $WORK/expected/agent-config.yaml
+
+-- agent-config.yaml --
+# intentionally invalid: missing apiVersion
+kind: AgentConfig
+metadata:
+  name: broken
+-- expected/agent-config.yaml --
+# intentionally invalid: missing apiVersion
+kind: AgentConfig
+metadata:
+  name: broken

@@ -1,11 +1,14 @@
 package agentconfig
 
 import (
+	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -153,6 +156,138 @@ rendezvousIP: 192.168.111.80`,
 			}
 		})
 	}
+}
+
+func TestAgentConfig_PersistToFile(t *testing.T) {
+	validCustomConfig := `# custom comment
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: test-cluster
+rendezvousIP: 192.168.1.100
+`
+
+	missingAPIVersionConfig := `# intentionally invalid: missing apiVersion
+kind: AgentConfig
+metadata:
+  name: broken
+`
+
+	t.Run("generated asset persists File.Data with apiVersion", func(t *testing.T) {
+		dir := t.TempDir()
+		a := &AgentConfig{}
+		require.NoError(t, a.Generate(context.Background(), asset.Parents{}))
+		require.NotNil(t, a.File)
+		require.Contains(t, string(a.File.Data), "apiVersion:")
+
+		require.NoError(t, a.PersistToFile(dir))
+
+		got, err := os.ReadFile(filepath.Join(dir, agentConfigFilename))
+		require.NoError(t, err)
+		assert.Equal(t, a.File.Data, got)
+	})
+
+	t.Run("loaded custom config leaves Template empty and persists File.Data", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, agentConfigFilename)
+		require.NoError(t, os.WriteFile(path, []byte(validCustomConfig), 0600))
+
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+		fileFetcher.EXPECT().FetchByName(agentConfigFilename).Return(
+			&asset.File{Filename: agentConfigFilename, Data: []byte(validCustomConfig)},
+			nil,
+		)
+
+		a := &AgentConfig{}
+		found, err := a.Load(fileFetcher)
+		require.NoError(t, err)
+		require.True(t, found)
+		assert.Empty(t, a.Template)
+		require.NotNil(t, a.File)
+		assert.Equal(t, []byte(validCustomConfig), a.File.Data)
+
+		require.NoError(t, a.PersistToFile(dir))
+
+		got, err := os.ReadFile(path)
+		require.NoError(t, err)
+		assert.Equal(t, validCustomConfig, string(got))
+	})
+
+	t.Run("nil File does not create or change files", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, agentConfigFilename)
+		existing := []byte("existing-content\n")
+		require.NoError(t, os.WriteFile(path, existing, 0600))
+
+		a := &AgentConfig{}
+		require.NoError(t, a.PersistToFile(dir))
+
+		got, err := os.ReadFile(path)
+		require.NoError(t, err)
+		assert.Equal(t, existing, got)
+
+		emptyDir := t.TempDir()
+		require.NoError(t, a.PersistToFile(emptyDir))
+		_, err = os.Stat(filepath.Join(emptyDir, agentConfigFilename))
+		assert.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("empty config load fails and PersistToFile leaves file unchanged", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, agentConfigFilename)
+		emptyContent := []byte("")
+		require.NoError(t, os.WriteFile(path, emptyContent, 0600))
+
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+		fileFetcher.EXPECT().FetchByName(agentConfigFilename).Return(
+			&asset.File{Filename: agentConfigFilename, Data: emptyContent},
+			nil,
+		)
+
+		a := &AgentConfig{}
+		found, err := a.Load(fileFetcher)
+		assert.False(t, found)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "apiVersion")
+		assert.Nil(t, a.File)
+
+		require.NoError(t, a.PersistToFile(dir))
+
+		got, err := os.ReadFile(path)
+		require.NoError(t, err)
+		assert.Equal(t, emptyContent, got)
+	})
+
+	t.Run("nonempty missing apiVersion load fails and PersistToFile leaves file unchanged", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, agentConfigFilename)
+		require.NoError(t, os.WriteFile(path, []byte(missingAPIVersionConfig), 0600))
+
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+		fileFetcher.EXPECT().FetchByName(agentConfigFilename).Return(
+			&asset.File{Filename: agentConfigFilename, Data: []byte(missingAPIVersionConfig)},
+			nil,
+		)
+
+		a := &AgentConfig{}
+		found, err := a.Load(fileFetcher)
+		assert.False(t, found)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "apiVersion")
+		assert.Nil(t, a.File)
+
+		require.NoError(t, a.PersistToFile(dir))
+
+		got, err := os.ReadFile(path)
+		require.NoError(t, err)
+		assert.Equal(t, missingAPIVersionConfig, string(got))
+	})
 }
 
 // AgentConfigBuilder it's a builder class to make it easier creating agent.Config instance

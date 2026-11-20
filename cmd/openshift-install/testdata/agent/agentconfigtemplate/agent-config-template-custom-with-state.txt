@@ -1,0 +1,26 @@
+# Preserve custom config while creating and then reusing installer state.
+! exists $WORK/.openshift_install_state.json
+
+exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'level=info msg=Agent-Config-Template created in:'
+cmp $WORK/agent-config.yaml $WORK/expected/agent-config.yaml
+exists $WORK/.openshift_install_state.json
+
+exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'level=info msg=Agent-Config-Template created in:'
+cmp $WORK/agent-config.yaml $WORK/expected/agent-config.yaml
+
+-- agent-config.yaml --
+# custom comment preserved
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: test-cluster
+rendezvousIP: 192.168.1.100
+-- expected/agent-config.yaml --
+# custom comment preserved
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: test-cluster
+rendezvousIP: 192.168.1.100

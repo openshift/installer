@@ -1,0 +1,13 @@
+# Rerunning with the unedited sample must not wipe the file.
+exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'level=info msg=Agent-Config-Template created in:'
+exists $WORK/agent-config.yaml
+
+cp $WORK/agent-config.yaml $WORK/original-agent-config.yaml
+exists $WORK/.openshift_install_state.json
+
+! exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'failed to fetch Agent Config'
+stderr 'rendezvousIP'
+
+cmp $WORK/agent-config.yaml $WORK/original-agent-config.yaml
