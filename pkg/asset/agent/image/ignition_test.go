@@ -499,6 +499,7 @@ func commonFiles() []string {
 		"/usr/local/bin/start-agent.sh",
 		"/usr/local/bin/start-cluster-installation.sh",
 		"/usr/local/bin/wait-for-assisted-service.sh",
+		"/usr/local/bin/wait-for-service-active.sh",
 		"/usr/local/bin/set-node-zero.sh",
 		"/usr/local/share/assisted-service/assisted-db.env",
 		"/usr/local/share/assisted-service/assisted-service.env",
