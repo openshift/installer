@@ -817,7 +817,7 @@ unqualified-search-registries = []
 `,
 		},
 		{
-			name: "install command - conflicting IDMS policies are not normalized by add-nodes logic",
+			name: "install command - conflicting IDMS policies for the same source merge to one blocked registry",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&joiner.ClusterInfo{},
@@ -850,8 +850,10 @@ unqualified-search-registries = []
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			// Install path does not apply add-nodes per-source policy normalization, so
-			// MergedMirrorSets keeps Never and unset as separate groups.
+			// A user-authored install-config with NeverContactSource and an unset
+			// policy for the same source must produce one blocked registry entry;
+			// two entries with conflicting blocked settings are rejected by
+			// containers/image.
 			expectedConfig: `additional-layer-store-auth-helper = ""
 credential-helpers = []
 short-name-mode = ""
@@ -865,11 +867,6 @@ unqualified-search-registries = []
 
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/m1"
-
-[[registry]]
-  location = "registry.ci.openshift.org/ocp/release"
-  mirror-by-digest-only = true
-  prefix = ""
 
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/m2"
@@ -919,29 +916,6 @@ func TestMergeICSPIntoIDMSPreservesInput(t *testing.T) {
 	assert.Equal(t, icspCopy, icsp)
 	assert.Equal(t, configv1.NeverContactSource, out[0].SourcePolicy)
 	assert.Equal(t, configv1.MirrorSourcePolicy(""), out[1].SourcePolicy)
-}
-
-func TestNormalizeMirrorSourcePoliciesForAddNodesPreservesInput(t *testing.T) {
-	in := []types.ImageDigestSource{
-		{
-			Source:       "registry.example.com/src",
-			Mirrors:      []string{"mirror.example.com/m1"},
-			SourcePolicy: configv1.NeverContactSource,
-		},
-		{
-			Source:  "registry.example.com/src",
-			Mirrors: []string{"mirror.example.com/m2"},
-		},
-	}
-	inCopy := append([]types.ImageDigestSource(nil), in...)
-
-	out := normalizeMirrorSourcePoliciesForAddNodes(in)
-	assert.Equal(t, inCopy, in)
-	assert.Len(t, out, 2)
-	assert.Equal(t, configv1.NeverContactSource, out[0].SourcePolicy)
-	assert.Equal(t, configv1.NeverContactSource, out[1].SourcePolicy)
-	assert.Equal(t, []string{"mirror.example.com/m1"}, out[0].Mirrors)
-	assert.Equal(t, []string{"mirror.example.com/m2"}, out[1].Mirrors)
 }
 
 func TestRegistries_LoadedFromDisk(t *testing.T) {

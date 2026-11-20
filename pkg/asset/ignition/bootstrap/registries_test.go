@@ -134,15 +134,57 @@ func TestMergedMirrorSets(t *testing.T) {
 		}},
 		expected: []types.ImageDigestSource{{
 			Source:       "a",
-			Mirrors:      []string{"ma"},
+			Mirrors:      []string{"ma", "mb"},
 			SourcePolicy: configv1.NeverContactSource,
 		}, {
 			Source:       "b",
 			Mirrors:      []string{"md", "mc"},
 			SourcePolicy: configv1.NeverContactSource,
+		}},
+	}, {
+		name: "NeverContactSource and unset policy for the same source merge to NeverContactSource",
+		input: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"ma"},
+			SourcePolicy: configv1.NeverContactSource,
+		}, {
+			Source:  "a",
+			Mirrors: []string{"mb"},
+		}},
+		expected: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"ma", "mb"},
+			SourcePolicy: configv1.NeverContactSource,
+		}},
+	}, {
+		name: "NeverContactSource wins regardless of order",
+		input: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"mb"},
+			SourcePolicy: configv1.AllowContactingSource,
 		}, {
 			Source:       "a",
+			Mirrors:      []string{"ma"},
+			SourcePolicy: configv1.NeverContactSource,
+		}},
+		expected: []types.ImageDigestSource{{
+			Source:       "a",
 			Mirrors:      []string{"mb", "ma"},
+			SourcePolicy: configv1.NeverContactSource,
+		}},
+	}, {
+		name: "unset and AllowContactingSource for the same source merge to AllowContactingSource",
+		input: []types.ImageDigestSource{{
+			Source:  "a",
+			Mirrors: []string{"ma"},
+		}, {
+			Source:       "a",
+			Mirrors:      []string{"mb"},
+			SourcePolicy: configv1.AllowContactingSource,
+		}},
+		expected: []types.ImageDigestSource{{
+			Source:       "a",
+			Mirrors:      []string{"ma", "mb"},
 			SourcePolicy: configv1.AllowContactingSource,
 		}},
 	}}
