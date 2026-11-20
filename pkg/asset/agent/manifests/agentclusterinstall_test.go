@@ -43,6 +43,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"fips":true}`,
 	})
 
+	installConfigWithTLSProfileType := getValidOptionalInstallConfig()
+	installConfigWithTLSProfileType.Config.TLSProfileType = "Intermediate"
+	goodTLSProfileTypeACI := getGoodACI()
+	goodTLSProfileTypeACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"tlsProfileType":"Intermediate"}`,
+	})
+
 	_, machineNetCidr, _ := net.ParseCIDR("192.168.122.0/16") //nolint:errcheck
 	machineNetwork := []types.MachineNetworkEntry{
 		{
@@ -431,6 +438,16 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodVSphereUserManagedLBACI,
+		},
+		{
+			name: "valid configuration with TLSProfileType annotation",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithTLSProfileType,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodTLSProfileTypeACI,
 		},
 	}
 	for _, tc := range cases {

@@ -415,9 +415,7 @@ func TestGenerateDefaultIngressController(t *testing.T) {
 
 				assert.Equal(t, "default", actualIngressCtrl.Name)
 				assert.Equal(t, "openshift-ingress-operator", actualIngressCtrl.Namespace)
-				if assert.NotNil(t, actualIngressCtrl.Spec.TLSSecurityProfile) {
-					assert.Equal(t, configv1.TLSProfileModernType, actualIngressCtrl.Spec.TLSSecurityProfile.Type)
-				}
+				assert.Nil(t, actualIngressCtrl.Spec.TLSSecurityProfile)
 				assert.Equal(t, operatorv1.LoadBalancerServiceStrategyType, actualIngressCtrl.Spec.EndpointPublishingStrategy.Type)
 				assert.Equal(t, tc.expectedScope, actualIngressCtrl.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)
 
