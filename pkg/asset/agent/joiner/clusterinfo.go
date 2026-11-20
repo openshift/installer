@@ -229,7 +229,7 @@ func filterCaBundleData(userCaBundle string) string {
 	filteredCerts := []string{}
 filtering:
 	for _, c := range certs {
-		if _, match := coreOS92CaCerts[strings.TrimLeft(c, "\n")]; !match {
+		if _, match := coreOS92CaCerts[strings.TrimLeft(c, "\n")]; !match && strings.TrimSpace(c) != "" {
 			// Ignore duplicates
 			for _, fc := range filteredCerts {
 				if strings.TrimSpace(fc) == strings.TrimSpace(c) {
