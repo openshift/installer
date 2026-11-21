@@ -345,7 +345,7 @@ type NetworkDeviceSpec struct {
 	// nameservers is a list of IPv4 and/or IPv6 addresses used as DNS nameservers, for example,
 	// 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the
 	// source of IP addresses for this network device, nameservers should include a valid nameserver.
-	// +kubebuilder:validation:Format=ip
+	// +kubebuilder:validation:items:Format=ip
 	// +kubebuilder:example=`8.8.8.8`
 	Nameservers []string `json:"nameservers,omitempty"`
 }

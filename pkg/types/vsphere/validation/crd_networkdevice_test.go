@@ -53,8 +53,8 @@ func networkDeviceSchemaProps(t *testing.T, crd *apiextensionsv1.CustomResourceD
 
 // TestCRDNetworkDeviceSpecFormats guards against controller-gen collapsing dual
 // Format=ipv4/Format=ipv6 markers into format: ipv6 (openshift/installer#10377).
-// gateway and nameservers must use format: ip; ipAddrs must not use an IP format
-// because entries are CIDRs.
+// gateway must use format: ip. nameserver entries must use items.format: ip.
+// ipAddrs must not use an IP format because entries are CIDRs.
 func TestCRDNetworkDeviceSpecFormats(t *testing.T) {
 	props := networkDeviceSchemaProps(t, loadInstallConfigCRD(t))
 
@@ -72,6 +72,9 @@ func TestCRDNetworkDeviceSpecFormats(t *testing.T) {
 			return
 		}
 		assert.Empty(t, ip.Format, "ipAddrs must not set format; values are CIDRs not bare IPs")
+		if ip.Items != nil && ip.Items.Schema != nil {
+			assert.Empty(t, ip.Items.Schema.Format, "ipAddrs items are CIDRs, not bare IPs")
+		}
 	})
 
 	t.Run("nameservers", func(t *testing.T) {
@@ -79,6 +82,9 @@ func TestCRDNetworkDeviceSpecFormats(t *testing.T) {
 		if !assert.True(t, ok, "nameservers property must exist") {
 			return
 		}
-		assert.Equal(t, "ip", ns.Format, "nameservers must use format: ip to accept IPv4 and IPv6")
+		assert.Empty(t, ns.Format, "format belongs on each nameserver, not the array")
+		if assert.NotNil(t, ns.Items) && assert.NotNil(t, ns.Items.Schema) {
+			assert.Equal(t, "ip", ns.Items.Schema.Format, "each nameserver must accept IPv4 and IPv6")
+		}
 	})
 }

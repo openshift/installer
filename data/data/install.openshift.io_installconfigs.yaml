@@ -8665,8 +8665,8 @@ spec:
                                 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the
                                 source of IP addresses for this network device, nameservers should include a valid nameserver.
                               example: 8.8.8.8
-                              format: ip
                               items:
+                                format: ip
                                 type: string
                               type: array
                           required:
