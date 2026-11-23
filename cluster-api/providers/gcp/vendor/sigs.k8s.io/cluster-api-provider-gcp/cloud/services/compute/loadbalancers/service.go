@@ -121,7 +121,7 @@ func New(scope Scope) *Service {
 		backendservices:         scope.Cloud().BackendServices(),
 		regionalbackendservices: scope.Cloud().RegionBackendServices(),
 		forwardingrules:         scope.Cloud().GlobalForwardingRules(),
-		regionalforwardingrules: cloudScope.ForwardingRules(),
+		regionalforwardingrules: scope.Cloud().ForwardingRules(),
 		healthchecks:            scope.Cloud().HealthChecks(),
 		regionalhealthchecks:    scope.Cloud().RegionHealthChecks(),
 		instancegroups:          scope.Cloud().InstanceGroups(),
