@@ -192,7 +192,7 @@ func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fl
 		if failureDomain.RegionType == vsphere.ComputeClusterFailureDomain {
 			if failureDomain.ZoneType != vsphere.HostGroupFailureDomain {
 				allErrs = append(allErrs, field.Required(fldPath.Child("regionType"), "zoneType must be HostGroup"))
-				allErrs = append(allErrs, field.Required(fldPath.Child("zoneType"), "something something..."))
+				allErrs = append(allErrs, field.Required(fldPath.Child("zoneType"), "zoneType must be HostGroup when regionType is ComputeCluster"))
 				return allErrs
 			}
 		}

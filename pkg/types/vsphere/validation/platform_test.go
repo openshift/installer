@@ -657,7 +657,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.FailureDomains[0].ZoneType = vsphere.ComputeClusterFailureDomain
 				return p
 			}(),
-			expectedError: `test-path\.failureDomains\.regionType: Required value: zoneType must be HostGroup`,
+			expectedError: `test-path\.failureDomains\.regionType: Required value: zoneType must be HostGroup, test-path\.failureDomains\.zoneType: Required value: zoneType must be HostGroup when regionType is ComputeCluster`,
 		},
 		{
 			name:     "allowed load balancer field with OpenShift managed default",
