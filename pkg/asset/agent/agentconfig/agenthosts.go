@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -130,10 +131,15 @@ func (a *AgentHosts) validateAgentHosts() field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	macs := make(map[string]bool)
+	seenIPs := make(map[string]struct{})
 	for i, host := range a.Hosts {
 		hostPath := field.NewPath("hosts").Index(i)
 
 		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+
+		if err := a.validateHostIPs(hostPath, host, seenIPs); err != nil {
 			allErrs = append(allErrs, err...)
 		}
 
@@ -180,6 +186,36 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 		macs[mac] = true
 	}
 
+	return allErrs
+}
+
+// validateHostIPs rejects the same static address on more than one host.
+// Empty networkConfig is valid for DHCP hosts. Unparsable networkConfig is
+// ignored here so host generation keeps its existing non-fatal behavior.
+func (a *AgentHosts) validateHostIPs(hostPath *field.Path, host agent.Host, seen map[string]struct{}) field.ErrorList {
+	if len(host.NetworkConfig.Raw) == 0 {
+		return nil
+	}
+
+	hostIPs, err := agentAsset.GetAllHostIPs(host.NetworkConfig)
+	if err != nil {
+		return nil
+	}
+
+	addrs := make([]string, 0, len(hostIPs))
+	for ip := range hostIPs {
+		addrs = append(addrs, ip)
+	}
+	sort.Strings(addrs)
+
+	var allErrs field.ErrorList
+	for _, ip := range addrs {
+		if _, ok := seen[ip]; ok {
+			allErrs = append(allErrs, field.Invalid(hostPath.Child("networkConfig"), ip, "duplicate IP address found"))
+			continue
+		}
+		seen[ip] = struct{}{}
+	}
 	return allErrs
 }
 
