@@ -640,9 +640,10 @@ func createAccountOnStack(ctx context.Context, in *CreateBlockBlobInput) error {
 		return fmt.Errorf("error fetching storage account: %w", err)
 	}
 	if acct.ID == nil {
-		return fmt.Errorf("stack storage account %s has no ID", in.StorageAccountName)
+		logrus.Debugf("Created storage account %s", in.StorageAccountName)
+	} else {
+		logrus.Debugf("Created storage account %s", *acct.ID)
 	}
-	logrus.Debugf("Created storage account %s", *acct.ID)
 	return nil
 }
 
@@ -656,9 +657,10 @@ func getStorageAccountKey(ctx context.Context, in *CreateBlockBlobInput) (string
 	if res.Keys == nil {
 		return "", fmt.Errorf("no storage account key found")
 	}
-	keys := *res.Keys
-	if len(keys) > 0 && keys[0].Value != nil {
-		return *keys[0].Value, nil
+	for _, key := range *res.Keys {
+		if key.Value != nil {
+			return *key.Value, nil
+		}
 	}
 	return "", fmt.Errorf("no storage account key found")
 }

@@ -533,51 +533,54 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 		if vm.Properties == nil || vm.Properties.NetworkProfile == nil {
 			return fmt.Errorf("vm %s has no network profile", vmName)
 		}
-		if nics := vm.Properties.NetworkProfile.NetworkInterfaces; len(nics) == 1 && nics[0] != nil && nics[0].ID != nil {
-			nicRef := nics[0]
+		nics := vm.Properties.NetworkProfile.NetworkInterfaces
+		if len(nics) != 1 {
+			return fmt.Errorf("vm %s has %d network interfaces, expected exactly one", vmName, len(nics))
+		}
+		if nics[0] == nil || nics[0].ID == nil {
+			return fmt.Errorf("vm %s has a network interface reference without an ID", vmName)
+		}
+		nicRef := nics[0]
 
-			nicName := path.Base(*nicRef.ID)
-			nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
-			if err != nil {
-				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
+		nicName := path.Base(*nicRef.ID)
+		nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
+		}
+		if nic.Properties == nil {
+			return fmt.Errorf("nic %s has no properties", nicName)
+		}
+		for _, ipconfig := range nic.Properties.IPConfigurations {
+			if ipconfig == nil || ipconfig.Properties == nil {
+				continue
 			}
-			if nic.Properties == nil {
-				return fmt.Errorf("nic %s has no properties", nicName)
+			ipversion := armnetwork.IPVersionIPv4
+			if ipconfig.Properties.PrivateIPAddressVersion != nil {
+				ipversion = *ipconfig.Properties.PrivateIPAddressVersion
 			}
-			for _, ipconfig := range nic.Properties.IPConfigurations {
-				if ipconfig == nil || ipconfig.Properties == nil {
+			for _, pool := range in.backendAddressPools {
+				if pool == nil {
 					continue
 				}
-				ipversion := armnetwork.IPVersionIPv4
-				if ipconfig.Properties.PrivateIPAddressVersion != nil {
-					ipversion = *ipconfig.Properties.PrivateIPAddressVersion
+				poolAddressVersion := armnetwork.IPVersionIPv4
+				if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
+					poolAddressVersion = armnetwork.IPVersionIPv6
 				}
-				for _, pool := range in.backendAddressPools {
-					if pool == nil {
-						continue
-					}
-					poolAddressVersion := armnetwork.IPVersionIPv4
-					if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
-						poolAddressVersion = armnetwork.IPVersionIPv6
-					}
-					if ipversion == poolAddressVersion {
-						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
-							ipconfig.Properties.LoadBalancerBackendAddressPools,
-							pool,
-						)
-					}
+				if ipversion == poolAddressVersion {
+					ipconfig.Properties.LoadBalancerBackendAddressPools = append(
+						ipconfig.Properties.LoadBalancerBackendAddressPools,
+						pool,
+					)
 				}
 			}
-			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
-			if err != nil {
-				return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
-			}
-			_, err = pollerResp.PollUntilDone(ctx, nil)
-			if err != nil {
-				return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
-			}
-		} else {
-			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
+		}
+		pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
+		}
+		_, err = pollerResp.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
 		}
 	}
 	return nil

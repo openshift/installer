@@ -15,19 +15,36 @@ func FuzzConvertToSemver(f *testing.F) {
 	f.Add("10.0.1")
 	f.Add("418")
 	f.Add("418.94")
+	f.Add("4.17")
+	f.Add("9.4")
+	f.Add("9.")
+	f.Add("100.2.3")
+	f.Add("010..10")
+	f.Add("010..0.\n")
 	f.Add("")
+
+	expectedConversions := map[string]string{
+		"4.17.2024101109": "v4.17.2024101109",
+		"418.94.20250122": "v4.18.20250122",
+		"9.4.20250122":    "v9.4.20250122",
+		"10.0.1":          "v10.0.1",
+		"418":             "",
+		"418.94":          "",
+		"4.17":            "v4.17",
+		"9.4":             "v9.4",
+		"9.":              "",
+		"100.2.3":         "",
+		"010..10":         "v0.10.10",
+		"010..0.\n":       "v0.10.0",
+		"":                "",
+	}
 
 	f.Fuzz(func(t *testing.T, ver string) {
 		got := convertToSemver(ver)
-		segments := strings.Split(ver, ".")
-		want := ""
-		switch {
-		case segments[0] == "9" || segments[0] == "10" || len(segments[0]) == 1:
-			want = "v" + ver
-		case len(segments[0]) == 3 && len(segments) > 2:
-			want = "v" + segments[0][:1] + "." + segments[0][1:] + "." + segments[2]
+		if got != "" && !semver.IsValid(got) {
+			t.Fatalf("convertToSemver(%q) = %q, want a valid semantic version or empty", ver, got)
 		}
-		if got != want {
+		if want, ok := expectedConversions[ver]; ok && got != want {
 			t.Fatalf("convertToSemver(%q) = %q, want %q", ver, got, want)
 		}
 	})

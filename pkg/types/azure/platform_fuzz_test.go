@@ -6,24 +6,35 @@ import (
 )
 
 func FuzzSetBaseDomain(f *testing.F) {
-	f.Add("/subscriptions/sub/resourceGroups/rg-name/providers/Microsoft.Network/dnszones/example.com")
+	f.Add("rg-name")
 	f.Add("")
-	f.Add("no-slashes")
-	f.Add("/subscriptions/sub")
-	f.Add("/subscriptions/sub/resourceGroups/")
+	f.Add("rg/name")
 
-	f.Fuzz(func(t *testing.T, zoneID string) {
+	f.Fuzz(func(t *testing.T, resourceGroup string) {
+		// Arbitrary malformed IDs must not panic.
+		malformedPlatform := &Platform{BaseDomainResourceGroupName: "unchanged"}
+		if err := malformedPlatform.SetBaseDomain(resourceGroup); err != nil && malformedPlatform.BaseDomainResourceGroupName != "unchanged" {
+			t.Fatalf("SetBaseDomain(%q) changed the platform on error: %q", resourceGroup, malformedPlatform.BaseDomainResourceGroupName)
+		}
+
+		component := strings.ReplaceAll(resourceGroup, "/", "_")
+		zoneID := "/subscriptions/sub/resourceGroups/" + component + "/providers/Microsoft.Network/dnszones/example.com"
 		platform := &Platform{BaseDomainResourceGroupName: "unchanged"}
 		err := platform.SetBaseDomain(zoneID)
-		parts := strings.Split(zoneID, "/")
-		if len(parts) < 5 || parts[4] == "" {
+		if component == "" {
 			if err == nil || platform.BaseDomainResourceGroupName != "unchanged" {
 				t.Fatalf("SetBaseDomain(%q) = %v, group %q", zoneID, err, platform.BaseDomainResourceGroupName)
 			}
 			return
 		}
-		if err != nil || platform.BaseDomainResourceGroupName != parts[4] {
-			t.Fatalf("SetBaseDomain(%q) = %v, group %q, want %q", zoneID, err, platform.BaseDomainResourceGroupName, parts[4])
+		if err != nil || platform.BaseDomainResourceGroupName != component {
+			t.Fatalf("SetBaseDomain(%q) = %v, group %q, want %q", zoneID, err, platform.BaseDomainResourceGroupName, component)
+		}
+		for _, malformedID := range []string{"", "no-slashes", "/subscriptions/sub", "/subscriptions/sub/resourceGroups/"} {
+			invalidPlatform := &Platform{BaseDomainResourceGroupName: "unchanged"}
+			if err := invalidPlatform.SetBaseDomain(malformedID); err == nil || invalidPlatform.BaseDomainResourceGroupName != "unchanged" {
+				t.Fatalf("SetBaseDomain(%q) = %v, group %q, want error without mutation", malformedID, err, invalidPlatform.BaseDomainResourceGroupName)
+			}
 		}
 	})
 }

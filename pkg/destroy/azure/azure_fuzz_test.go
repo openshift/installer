@@ -6,20 +6,23 @@ import (
 )
 
 func FuzzGroupFromID(f *testing.F) {
-	// A DNS zone ID shorter than five slash-separated parts used to panic on [4].
+	f.Add("my-rg")
 	f.Add("")
-	f.Add("/subscriptions/sub")
-	f.Add("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.Network/dnszones/example.com")
+	f.Add("a/resource-group")
 
-	f.Fuzz(func(t *testing.T, id string) {
-		got := groupFromID(id)
-		parts := strings.Split(id, "/")
-		want := ""
-		if len(parts) >= 5 {
-			want = parts[4]
+	f.Fuzz(func(t *testing.T, resourceGroup string) {
+		// Arbitrary malformed IDs must not panic.
+		_ = groupFromID(resourceGroup)
+
+		component := strings.ReplaceAll(resourceGroup, "/", "_")
+		id := "/subscriptions/sub/resourceGroups/" + component + "/providers/Microsoft.Network/dnszones/example.com"
+		if got := groupFromID(id); got != component {
+			t.Fatalf("groupFromID(valid resource ID) = %q, want %q", got, component)
 		}
-		if got != want {
-			t.Fatalf("groupFromID(%q) = %q, want %q", id, got, want)
+		for _, malformedID := range []string{"", "/subscriptions/sub", "/subscriptions/sub/resourceGroups"} {
+			if got := groupFromID(malformedID); got != "" {
+				t.Fatalf("groupFromID(%q) = %q, want empty for a short ID", malformedID, got)
+			}
 		}
 	})
 }

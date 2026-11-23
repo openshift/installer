@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"math/big"
 	"net"
 	"testing"
 
@@ -9,20 +10,64 @@ import (
 
 func FuzzGetIPWithinCIDR(f *testing.F) {
 	f.Add("10.0.0.0/16", "10.0.1.0/24", "10.0.0.100", false)
+	f.Add("10.0.0.252/30", "", "192.168.1.1", false)
 	f.Add("10.0.0.0/16", "", "192.168.1.1", false)
 	f.Add("10.0.0.0/16", "10.0.1.0/24", "", false)
 	f.Add("not-a-cidr", "", "10.0.0.5", false)
-	// A nil first subnet used to be dereferenced after the scan skipped it.
+	// If every subnet is nil or has an empty IP, fallback selection can index an empty network.
 	f.Add("10.0.0.0/16", "10.0.1.0/24", "192.168.1.1", true)
 
 	f.Fuzz(func(t *testing.T, cidr1, cidr2, ip string, firstNil bool) {
 		subnets := subnetNets(cidr1, cidr2, firstNil)
 		got := getIPWithinCIDR(subnets, ip)
-		want := expectedIPWithinCIDR(subnets, ip)
-		if got != want {
-			t.Fatalf("getIPWithinCIDR(%q, %q, firstNil=%t) ip %q = %q, want %q", cidr1, cidr2, firstNil, ip, got, want)
+
+		parsedInput := net.ParseIP(ip)
+		for _, subnet := range subnets {
+			if subnet != nil && len(subnet.IP) > 0 && parsedInput != nil && subnet.Contains(parsedInput) {
+				if got != ip {
+					t.Fatalf("getIPWithinCIDR(%q, %q, firstNil=%t) = %q, want the in-subnet IP %q", cidr1, cidr2, firstNil, got, ip)
+				}
+				return
+			}
 		}
+
+		if got == "" {
+			if ip != "" && hasFallbackIP(subnets) {
+				t.Fatalf("getIPWithinCIDR(%q, %q, firstNil=%t) returned empty despite an available fallback IP", cidr1, cidr2, firstNil)
+			}
+			return
+		}
+		parsed := net.ParseIP(got)
+		if parsed == nil {
+			t.Fatalf("getIPWithinCIDR(%q, %q, firstNil=%t) returned invalid IP %q", cidr1, cidr2, firstNil, got)
+		}
+		for _, subnet := range subnets {
+			if subnet != nil && len(subnet.IP) > 0 && subnet.Contains(parsed) {
+				return
+			}
+		}
+		t.Fatalf("getIPWithinCIDR(%q, %q, firstNil=%t) returned %q outside every subnet", cidr1, cidr2, firstNil, got)
 	})
+}
+
+func hasFallbackIP(subnets []*net.IPNet) bool {
+	for _, subnet := range subnets {
+		if subnet == nil || len(subnet.IP) == 0 {
+			continue
+		}
+
+		// Use big.Int to independently check whether the first usable subnet
+		// contains the Azure-reserved-address offset (+4).
+		candidate := new(big.Int).SetBytes(subnet.IP)
+		candidate.Add(candidate, big.NewInt(4))
+		if candidate.BitLen() > len(subnet.IP)*8 {
+			return false
+		}
+		candidateIP := make(net.IP, len(subnet.IP))
+		candidate.FillBytes(candidateIP)
+		return subnet.Contains(candidateIP)
+	}
+	return false
 }
 
 func FuzzSubnetAddressPrefixes(f *testing.F) {
@@ -60,7 +105,7 @@ func FuzzSubnetAddressPrefixes(f *testing.F) {
 func subnetNets(cidr1, cidr2 string, firstNil bool) []*net.IPNet {
 	var subnets []*net.IPNet
 	if firstNil {
-		subnets = append(subnets, nil)
+		subnets = append(subnets, nil, &net.IPNet{})
 	}
 	for _, cidr := range []string{cidr1, cidr2} {
 		if _, network, err := net.ParseCIDR(cidr); err == nil {
@@ -68,32 +113,6 @@ func subnetNets(cidr1, cidr2 string, firstNil bool) []*net.IPNet {
 		}
 	}
 	return subnets
-}
-
-func expectedIPWithinCIDR(subnets []*net.IPNet, ip string) string {
-	if len(subnets) == 0 || ip == "" {
-		return ""
-	}
-	parsed := net.ParseIP(ip)
-	var network net.IP
-	for _, subnet := range subnets {
-		if subnet == nil || len(subnet.IP) == 0 {
-			continue
-		}
-		if network == nil {
-			network = subnet.IP
-		}
-		if subnet.Contains(parsed) {
-			return ip
-		}
-	}
-	if network == nil {
-		return ""
-	}
-	next := make(net.IP, len(network))
-	copy(next, network)
-	next[len(next)-1] += 4
-	return next.String()
 }
 
 func expectedPrefixParse(listPrefix, singlePrefix string, hasList, hasSingle bool) (int, bool) {

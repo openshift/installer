@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -779,7 +780,16 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 
 	var errorList []error
 	for _, sp := range servicePrincipals {
-		appID := *sp.GetAppId()
+		if isNilInterface(sp) {
+			logger.Warn("Skipping nil Service Principal entry while deleting Application registrations")
+			continue
+		}
+		appIDValue := sp.GetAppId()
+		if appIDValue == nil {
+			logger.Warn("Skipping Service Principal without an AppID while deleting Application registrations")
+			continue
+		}
+		appID := *appIDValue
 		logger := logger.WithField("appID", appID)
 
 		filter := fmt.Sprintf("appId eq '%s'", appID)
@@ -796,17 +806,20 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 		}
 		// msgraphsdk can return a `nil` response even if no errors occurred
 		if resp == nil {
-			logger.Debugf("Empty response getting Application from Service Principal %s", *sp.GetDisplayName())
+			logger.Debug("Empty response getting Application from Service Principal")
 			continue
 		}
 		apps := resp.GetValue()
-		if len(apps) != 1 {
-			err = fmt.Errorf("expected one matching AppID, got %d", len(apps))
-			errorList = append(errorList, err)
+		if len(apps) == 0 {
+			logger.Debug("No Application found for Service Principal; nothing to delete")
 			continue
 		}
-		if apps[0] == nil || apps[0].GetId() == nil {
-			err = fmt.Errorf("matching app entry is nil or has no ID")
+		if len(apps) > 1 {
+			err = fmt.Errorf("expected one matching AppID, got %d", len(apps))
+			errorList = append(errorList, err)
+		}
+		if isNilInterface(apps[0]) || apps[0].GetId() == nil {
+			err = errors.New("matching app entry is nil or has no ID")
 			errorList = append(errorList, err)
 			continue
 		}
@@ -819,6 +832,19 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 	}
 
 	return utilerrors.NewAggregate(errorList)
+}
+
+func isNilInterface(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return reflected.IsNil()
+	default:
+		return false
+	}
 }
 
 func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {

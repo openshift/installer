@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
+	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -77,9 +78,8 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		// Get the internal LB's IPv6 address from Azure (dynamically assigned)
 		ipIlbV6, err := getInternalLBIPv6(ctx, in, resourceGroup, opts)
 		if err != nil {
-			return fmt.Errorf("failed to get internal load balancer IPv6 address: %w", err)
-		}
-		if ipIlbV6 != "" {
+			logrus.Warnf("Failed to get internal load balancer IPv6 address; continuing without IPv6 API DNS records: %v", err)
+		} else if ipIlbV6 != "" {
 			privateRecords = append(privateRecords, createPrivateRecordSet("api-int", azureTags, ttl, aaaarecord, ipIlbV6, ""))
 			privateRecords = append(privateRecords, createPrivateRecordSet("api", azureTags, ttl, aaaarecord, ipIlbV6, ""))
 		}

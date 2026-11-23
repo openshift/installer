@@ -297,20 +297,23 @@ func getClient() (*armcompute.VirtualMachineImagesClient, error) {
 // ARO combines xy into what should be the x, and includes the RHEL version in y; e.g. 418.94.20250122.
 // Paid marketplace images use a correct semantic version (well, they use a timestamp for z, but good enough): 4.17.2024101109.
 func convertToSemver(ver string) string {
-	// Using RHEL versioning
-	if major := strings.Split(ver, ".")[0]; major == "9" || major == "10" {
-		return fmt.Sprintf("v%s", ver)
-	}
+	segments := strings.Split(ver, ".")
+	var semVer string
 
-	if segments := strings.Split(ver, "."); len(segments[0]) == 1 {
-		semV := fmt.Sprintf("v%s", ver)
-		return semV
+	// Using RHEL versioning
+	if segments[0] == "9" || segments[0] == "10" {
+		semVer = fmt.Sprintf("v%s", ver)
+	} else if len(segments[0]) == 1 {
+		semVer = fmt.Sprintf("v%s", ver)
 	} else if len(segments[0]) == 3 && len(segments) > 2 {
 		combinedXY := segments[0]
-		semV := fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
-		return semV
+		semVer = fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
 	}
-	return ""
+
+	if !semver.IsValid(semVer) {
+		return ""
+	}
+	return semVer
 }
 
 // FillMissing copies any nil image types from fallback into target.
