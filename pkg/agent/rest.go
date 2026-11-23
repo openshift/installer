@@ -82,7 +82,7 @@ func FindRendezvousIPAndSSHKeyFromAssetStore(assetStore asset.Store) (string, st
 		logrus.Debug(errors.Wrapf(installConfigError, "failed to load %s", installConfigAsset.Name()))
 	}
 	if agentHostsError != nil {
-		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentHostsAsset.Name()))
+		logrus.Debug(errors.Wrapf(agentHostsError, "failed to load %s", agentHostsAsset.Name()))
 	}
 	if agentConfigError != nil || manifestError != nil || installConfigError != nil || agentHostsError != nil {
 		return "", "", errors.New("failed to load AgentConfig, NMStateConfig, InstallConfig, or AgentHosts")
