@@ -301,11 +301,12 @@ func convertToSemver(ver string) string {
 	var semVer string
 
 	// Using RHEL versioning
-	if segments[0] == "9" || segments[0] == "10" {
+	switch {
+	case segments[0] == "9" || segments[0] == "10":
 		semVer = fmt.Sprintf("v%s", ver)
-	} else if len(segments[0]) == 1 {
+	case len(segments[0]) == 1:
 		semVer = fmt.Sprintf("v%s", ver)
-	} else if len(segments[0]) == 3 && len(segments) > 2 {
+	case len(segments[0]) == 3 && len(segments) > 2:
 		combinedXY := segments[0]
 		semVer = fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
 	}
