@@ -117,9 +117,9 @@ func New(scope Scope) *Service {
 	return &Service{
 		scope:                   scope,
 		addresses:               scope.Cloud().GlobalAddresses(),
-		internaladdresses:       scope.Cloud().Addresses(),
+		internaladdresses:       cloudScope.Addresses(),
 		backendservices:         scope.Cloud().BackendServices(),
-		regionalbackendservices: scope.Cloud().RegionBackendServices(),
+		regionalbackendservices: cloudScope.RegionBackendServices(),
 		forwardingrules:         scope.Cloud().GlobalForwardingRules(),
 		regionalforwardingrules: scope.Cloud().ForwardingRules(),
 		healthchecks:            scope.Cloud().HealthChecks(),
