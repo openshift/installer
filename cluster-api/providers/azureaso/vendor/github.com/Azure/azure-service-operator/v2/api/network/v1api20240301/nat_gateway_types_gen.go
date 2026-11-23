@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/natGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/natGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/natGateways/{natGatewayName}
 type NatGateway struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &NatGateway{}
 
 // ConvertFrom populates our NatGateway from the provided hub NatGateway
 func (gateway *NatGateway) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NatGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/NatGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NatGateway
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return gateway.AssignProperties_From_NatGateway(source)
+	err = gateway.AssignProperties_From_NatGateway(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to gateway")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NatGateway from our NatGateway
 func (gateway *NatGateway) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NatGateway)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/NatGateway but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NatGateway
+	err := gateway.AssignProperties_To_NatGateway(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from gateway")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return gateway.AssignProperties_To_NatGateway(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &NatGateway{}
@@ -86,17 +101,6 @@ func (gateway *NatGateway) SecretDestinationExpressions() []*core.DestinationExp
 		return nil
 	}
 	return gateway.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &NatGateway{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (gateway *NatGateway) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NatGateway_STATUS); ok {
-		return gateway.Spec.Initialize_From_NatGateway_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type NatGateway_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NatGateway{}
@@ -237,7 +241,7 @@ func (gateway *NatGateway) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/natGateway.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/natGateway.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/natGateways/{natGatewayName}
 type NatGatewayList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -327,7 +331,7 @@ func (gateway *NatGateway_Spec) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 	// Set property "Sku":
 	if gateway.Sku != nil {
-		sku_ARM, err := (*gateway.Sku).ConvertToARM(resolved)
+		sku_ARM, err := gateway.Sku.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -528,8 +532,6 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 	if source.PublicIpAddresses != nil {
 		publicIpAddressList := make([]SubResource, len(source.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress SubResource
 			err := publicIpAddress.AssignProperties_From_SubResource(&publicIpAddressItem)
 			if err != nil {
@@ -546,8 +548,6 @@ func (gateway *NatGateway_Spec) AssignProperties_From_NatGateway_Spec(source *st
 	if source.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]SubResource, len(source.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix SubResource
 			err := publicIpPrefix.AssignProperties_From_SubResource(&publicIpPrefixItem)
 			if err != nil {
@@ -623,8 +623,6 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 	if gateway.PublicIpAddresses != nil {
 		publicIpAddressList := make([]storage.SubResource, len(gateway.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress storage.SubResource
 			err := publicIpAddressItem.AssignProperties_To_SubResource(&publicIpAddress)
 			if err != nil {
@@ -641,8 +639,6 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 	if gateway.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]storage.SubResource, len(gateway.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix storage.SubResource
 			err := publicIpPrefixItem.AssignProperties_To_SubResource(&publicIpPrefix)
 			if err != nil {
@@ -679,73 +675,6 @@ func (gateway *NatGateway_Spec) AssignProperties_To_NatGateway_Spec(destination 
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NatGateway_STATUS populates our NatGateway_Spec from the provided source NatGateway_STATUS
-func (gateway *NatGateway_Spec) Initialize_From_NatGateway_STATUS(source *NatGateway_STATUS) error {
-
-	// IdleTimeoutInMinutes
-	gateway.IdleTimeoutInMinutes = genruntime.ClonePointerToInt(source.IdleTimeoutInMinutes)
-
-	// Location
-	gateway.Location = genruntime.ClonePointerToString(source.Location)
-
-	// PublicIpAddresses
-	if source.PublicIpAddresses != nil {
-		publicIpAddressList := make([]SubResource, len(source.PublicIpAddresses))
-		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
-			var publicIpAddress SubResource
-			err := publicIpAddress.Initialize_From_SubResource_STATUS(&publicIpAddressItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIpAddresses")
-			}
-			publicIpAddressList[publicIpAddressIndex] = publicIpAddress
-		}
-		gateway.PublicIpAddresses = publicIpAddressList
-	} else {
-		gateway.PublicIpAddresses = nil
-	}
-
-	// PublicIpPrefixes
-	if source.PublicIpPrefixes != nil {
-		publicIpPrefixList := make([]SubResource, len(source.PublicIpPrefixes))
-		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
-			var publicIpPrefix SubResource
-			err := publicIpPrefix.Initialize_From_SubResource_STATUS(&publicIpPrefixItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field PublicIpPrefixes")
-			}
-			publicIpPrefixList[publicIpPrefixIndex] = publicIpPrefix
-		}
-		gateway.PublicIpPrefixes = publicIpPrefixList
-	} else {
-		gateway.PublicIpPrefixes = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku NatGatewaySku
-		err := sku.Initialize_From_NatGatewaySku_STATUS(source.Sku)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_NatGatewaySku_STATUS() to populate field Sku")
-		}
-		gateway.Sku = &sku
-	} else {
-		gateway.Sku = nil
-	}
-
-	// Tags
-	gateway.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Zones
-	gateway.Zones = genruntime.CloneSliceOfString(source.Zones)
 
 	// No error
 	return nil
@@ -1033,8 +962,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.PublicIpAddresses != nil {
 		publicIpAddressList := make([]SubResource_STATUS, len(source.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range source.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress SubResource_STATUS
 			err := publicIpAddress.AssignProperties_From_SubResource_STATUS(&publicIpAddressItem)
 			if err != nil {
@@ -1051,8 +978,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]SubResource_STATUS, len(source.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range source.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix SubResource_STATUS
 			err := publicIpPrefix.AssignProperties_From_SubResource_STATUS(&publicIpPrefixItem)
 			if err != nil {
@@ -1084,8 +1009,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_From_NatGateway_STATUS(source
 	if source.Subnets != nil {
 		subnetList := make([]SubResource_STATUS, len(source.Subnets))
 		for subnetIndex, subnetItem := range source.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
 			var subnet SubResource_STATUS
 			err := subnet.AssignProperties_From_SubResource_STATUS(&subnetItem)
 			if err != nil {
@@ -1146,8 +1069,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.PublicIpAddresses != nil {
 		publicIpAddressList := make([]storage.SubResource_STATUS, len(gateway.PublicIpAddresses))
 		for publicIpAddressIndex, publicIpAddressItem := range gateway.PublicIpAddresses {
-			// Shadow the loop variable to avoid aliasing
-			publicIpAddressItem := publicIpAddressItem
 			var publicIpAddress storage.SubResource_STATUS
 			err := publicIpAddressItem.AssignProperties_To_SubResource_STATUS(&publicIpAddress)
 			if err != nil {
@@ -1164,8 +1085,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.PublicIpPrefixes != nil {
 		publicIpPrefixList := make([]storage.SubResource_STATUS, len(gateway.PublicIpPrefixes))
 		for publicIpPrefixIndex, publicIpPrefixItem := range gateway.PublicIpPrefixes {
-			// Shadow the loop variable to avoid aliasing
-			publicIpPrefixItem := publicIpPrefixItem
 			var publicIpPrefix storage.SubResource_STATUS
 			err := publicIpPrefixItem.AssignProperties_To_SubResource_STATUS(&publicIpPrefix)
 			if err != nil {
@@ -1197,8 +1116,6 @@ func (gateway *NatGateway_STATUS) AssignProperties_To_NatGateway_STATUS(destinat
 	if gateway.Subnets != nil {
 		subnetList := make([]storage.SubResource_STATUS, len(gateway.Subnets))
 		for subnetIndex, subnetItem := range gateway.Subnets {
-			// Shadow the loop variable to avoid aliasing
-			subnetItem := subnetItem
 			var subnet storage.SubResource_STATUS
 			err := subnetItem.AssignProperties_To_SubResource_STATUS(&subnet)
 			if err != nil {
@@ -1247,8 +1164,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_From_NatGatewayOperator
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1265,8 +1180,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_From_NatGatewayOperator
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1292,8 +1205,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_To_NatGatewayOperatorSp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1310,8 +1221,6 @@ func (operator *NatGatewayOperatorSpec) AssignProperties_To_NatGatewayOperatorSp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1418,21 +1327,6 @@ func (gatewaySku *NatGatewaySku) AssignProperties_To_NatGatewaySku(destination *
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NatGatewaySku_STATUS populates our NatGatewaySku from the provided source NatGatewaySku_STATUS
-func (gatewaySku *NatGatewaySku) Initialize_From_NatGatewaySku_STATUS(source *NatGatewaySku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), natGatewaySku_Name_Values)
-		gatewaySku.Name = &name
-	} else {
-		gatewaySku.Name = nil
 	}
 
 	// No error

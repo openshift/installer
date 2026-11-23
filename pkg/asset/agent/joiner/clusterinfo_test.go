@@ -274,6 +274,33 @@ passwd:
 				return clusterInfo
 			},
 		},
+		{
+			name:     "idms mirrorSourcePolicy is preserved",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
+				t.Helper()
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
+				for i, o := range ocObjs {
+					if idmsList, ok := o.(*configv1.ImageDigestMirrorSetList); ok {
+						for j := range idmsList.Items {
+							for k := range idmsList.Items[j].Spec.ImageDigestMirrors {
+								idmsList.Items[j].Spec.ImageDigestMirrors[k].MirrorSourcePolicy = configv1.NeverContactSource
+							}
+						}
+						ocObjs[i] = idmsList
+						break
+					}
+				}
+				return objs, ocObjs, ocMachineConfigObjs
+			},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				if len(clusterInfo.ImageDigestSources) > 0 {
+					clusterInfo.ImageDigestSources[0].SourcePolicy = configv1.NeverContactSource
+				}
+				return clusterInfo
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

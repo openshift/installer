@@ -502,7 +502,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	}
 
 	if pool.CPUOptions != nil {
-		allErrs = append(allErrs, validateCPUOptions(ctx, meta, fldPath, pool)...)
+		allErrs = append(allErrs, validateCPUOptions(ctx, meta, fldPath, pool, poolName)...)
 	}
 
 	if len(pool.AdditionalSecurityGroupIDs) > 0 {
@@ -1169,7 +1169,7 @@ func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field
 	return nil
 }
 
-func validateCPUOptions(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+func validateCPUOptions(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
 	allErrs := field.ErrorList{}
 	cpuOpts := pool.CPUOptions
 
@@ -1181,21 +1181,27 @@ func validateCPUOptions(ctx context.Context, meta *Metadata, fldPath *field.Path
 	// See sev-snp support requirements: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html#snp-requirements
 	if cpuOpts.ConfidentialCompute != nil && *cpuOpts.ConfidentialCompute == awstypes.ConfidentialComputePolicySEVSNP {
 		// Validate AMI boot mode for SEV-SNP
-		allErrs = append(allErrs, validateAMIBootMode(ctx, meta, fldPath, pool)...)
+		allErrs = append(allErrs, validateAMIBootMode(ctx, meta, fldPath, pool, poolName)...)
 
 		// Validate instance type for SEV-SNP
-		allErrs = append(allErrs, validateInstanceTypeForSEVSNP(ctx, meta, fldPath, pool)...)
+		allErrs = append(allErrs, validateInstanceTypeForSEVSNP(ctx, meta, fldPath, pool, poolName)...)
+	}
+
+	// See NestedVirtualization requirements: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html#nested-virtualization-considerations
+	if cpuOpts.NestedVirtualization != nil && *cpuOpts.NestedVirtualization == awstypes.NestedVirtualizationEnabled {
+		// Validate instance type for NestedVirtualization
+		allErrs = append(allErrs, validateInstanceTypeForNestedVirtualization(ctx, meta, fldPath, pool, poolName)...)
 	}
 
 	return allErrs
 }
 
-func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// Warn if using default instance type
 	if pool.InstanceType == "" {
-		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no instance type is specified. The default instance type may not support amd-sev-snp", fldPath)
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for pool [%s] but no instance type is specified. The default instance type may not support amd-sev-snp", poolName)
 		return allErrs
 	}
 
@@ -1216,13 +1222,13 @@ func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath 
 	return allErrs
 }
 
-func validateAMIBootMode(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+func validateAMIBootMode(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	amiID := pool.AMIID
 	if amiID == "" {
 		// Warn when using default AMI with SEV-SNP
-		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no custom AMI is specified. The default RHCOS AMI may not have UEFI boot mode enabled", fldPath)
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for pool [%s] but no custom AMI is specified. The default RHCOS AMI may not have UEFI boot mode enabled", poolName)
 		return allErrs
 	}
 
@@ -1235,6 +1241,32 @@ func validateAMIBootMode(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	// Check if boot mode supports UEFI
 	if imageInfo.BootMode != string(ec2types.BootModeValuesUefi) && imageInfo.BootMode != string(ec2types.BootModeValuesUefiPreferred) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("amiID"), amiID, fmt.Sprintf("AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got '%s'", imageInfo.BootMode)))
+	}
+
+	return allErrs
+}
+
+func validateInstanceTypeForNestedVirtualization(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Warn if using default instance type
+	if pool.InstanceType == "" {
+		logrus.Warnf("Nested Virtualization is enabled for pool [%s] but no instance type is specified. The default instance type may not support Nested Virtualization", poolName)
+		return allErrs
+	}
+
+	// Fetch instance type metadata
+	typeMeta, err := meta.InstanceType(ctx, pool.InstanceType)
+	if err != nil {
+		// The instance type is not found; already caught in validateMachinePool.
+		if IsInvalidInstanceType(err) {
+			return allErrs
+		}
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	if !slices.Contains(typeMeta.Features, string(ec2types.SupportedAdditionalProcessorFeatureNestedVirtualization)) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, "specified instance type in the specified region doesn't support Nested Virtualization"))
 	}
 
 	return allErrs

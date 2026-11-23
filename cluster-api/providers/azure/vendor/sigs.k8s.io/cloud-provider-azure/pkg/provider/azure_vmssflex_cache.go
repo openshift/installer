@@ -71,10 +71,10 @@ func (fs *FlexScaleSet) newVmssFlexCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	if fs.Config.VmssFlexCacheTTLInSeconds == 0 {
-		fs.Config.VmssFlexCacheTTLInSeconds = consts.VmssFlexCacheTTLDefaultInSeconds
+	if fs.VmssFlexCacheTTLInSeconds == 0 {
+		fs.VmssFlexCacheTTLInSeconds = consts.VmssFlexCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedCache(time.Duration(fs.Config.VmssFlexCacheTTLInSeconds)*time.Second, getter, fs.Cloud.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(fs.VmssFlexCacheTTLInSeconds)*time.Second, getter, fs.DisableAPICallCache)
 }
 
 func (fs *FlexScaleSet) newVmssFlexVMCache() (azcache.Resource, error) {
@@ -124,10 +124,10 @@ func (fs *FlexScaleSet) newVmssFlexVMCache() (azcache.Resource, error) {
 		return localCache, nil
 	}
 
-	if fs.Config.VmssFlexVMCacheTTLInSeconds == 0 {
-		fs.Config.VmssFlexVMCacheTTLInSeconds = consts.VmssFlexVMCacheTTLDefaultInSeconds
+	if fs.VmssFlexVMCacheTTLInSeconds == 0 {
+		fs.VmssFlexVMCacheTTLInSeconds = consts.VmssFlexVMCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedCache(time.Duration(fs.Config.VmssFlexVMCacheTTLInSeconds)*time.Second, getter, fs.Cloud.Config.DisableAPICallCache)
+	return azcache.NewTimedCache(time.Duration(fs.VmssFlexVMCacheTTLInSeconds)*time.Second, getter, fs.DisableAPICallCache)
 }
 
 func (fs *FlexScaleSet) getNodeNameByVMName(ctx context.Context, vmName string) (string, error) {
@@ -337,7 +337,7 @@ func (fs *FlexScaleSet) getVmssFlexByName(ctx context.Context, vmssFlexName stri
 }
 
 func (fs *FlexScaleSet) DeleteCacheForNode(ctx context.Context, nodeName string) error {
-	if fs.Config.DisableAPICallCache {
+	if fs.DisableAPICallCache {
 		return nil
 	}
 	vmssFlexID, err := fs.getNodeVmssFlexID(ctx, nodeName)

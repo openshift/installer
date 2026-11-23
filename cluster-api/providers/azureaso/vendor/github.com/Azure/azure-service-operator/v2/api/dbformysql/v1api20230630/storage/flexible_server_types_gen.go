@@ -5,8 +5,7 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/dbformysql/v20230630/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -23,6 +22,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbformysql}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -55,22 +55,36 @@ var _ conversion.Convertible = &FlexibleServer{}
 
 // ConvertFrom populates our FlexibleServer from the provided hub FlexibleServer
 func (server *FlexibleServer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServer)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20231230/storage/FlexibleServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return server.AssignProperties_From_FlexibleServer(source)
+	err = server.AssignProperties_From_FlexibleServer(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to server")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServer from our FlexibleServer
 func (server *FlexibleServer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServer)
-	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20231230/storage/FlexibleServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServer
+	err := server.AssignProperties_To_FlexibleServer(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from server")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return server.AssignProperties_To_FlexibleServer(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServer{}
@@ -976,8 +990,6 @@ func (server *FlexibleServer_STATUS) AssignProperties_From_FlexibleServer_STATUS
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -1187,8 +1199,6 @@ func (server *FlexibleServer_STATUS) AssignProperties_To_FlexibleServer_STATUS(d
 	if server.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]storage.PrivateEndpointConnection_STATUS, len(server.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range server.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
@@ -1304,13 +1314,6 @@ func (backup *Backup) AssignProperties_From_Backup(source *storage.Backup) error
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
-	// BackupIntervalHours
-	if source.BackupIntervalHours != nil {
-		propertyBag.Add("BackupIntervalHours", *source.BackupIntervalHours)
-	} else {
-		propertyBag.Remove("BackupIntervalHours")
-	}
-
 	// BackupRetentionDays
 	backup.BackupRetentionDays = genruntime.ClonePointerToInt(source.BackupRetentionDays)
 
@@ -1341,19 +1344,6 @@ func (backup *Backup) AssignProperties_From_Backup(source *storage.Backup) error
 func (backup *Backup) AssignProperties_To_Backup(destination *storage.Backup) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
-
-	// BackupIntervalHours
-	if propertyBag.Contains("BackupIntervalHours") {
-		var backupIntervalHour int
-		err := propertyBag.Pull("BackupIntervalHours", &backupIntervalHour)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'BackupIntervalHours' from propertyBag")
-		}
-
-		destination.BackupIntervalHours = &backupIntervalHour
-	} else {
-		destination.BackupIntervalHours = nil
-	}
 
 	// BackupRetentionDays
 	destination.BackupRetentionDays = genruntime.ClonePointerToInt(backup.BackupRetentionDays)
@@ -1395,13 +1385,6 @@ func (backup *Backup_STATUS) AssignProperties_From_Backup_STATUS(source *storage
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
-	// BackupIntervalHours
-	if source.BackupIntervalHours != nil {
-		propertyBag.Add("BackupIntervalHours", *source.BackupIntervalHours)
-	} else {
-		propertyBag.Remove("BackupIntervalHours")
-	}
-
 	// BackupRetentionDays
 	backup.BackupRetentionDays = genruntime.ClonePointerToInt(source.BackupRetentionDays)
 
@@ -1435,19 +1418,6 @@ func (backup *Backup_STATUS) AssignProperties_From_Backup_STATUS(source *storage
 func (backup *Backup_STATUS) AssignProperties_To_Backup_STATUS(destination *storage.Backup_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(backup.PropertyBag)
-
-	// BackupIntervalHours
-	if propertyBag.Contains("BackupIntervalHours") {
-		var backupIntervalHour int
-		err := propertyBag.Pull("BackupIntervalHours", &backupIntervalHour)
-		if err != nil {
-			return eris.Wrap(err, "pulling 'BackupIntervalHours' from propertyBag")
-		}
-
-		destination.BackupIntervalHours = &backupIntervalHour
-	} else {
-		destination.BackupIntervalHours = nil
-	}
 
 	// BackupRetentionDays
 	destination.BackupRetentionDays = genruntime.ClonePointerToInt(backup.BackupRetentionDays)
@@ -1704,8 +1674,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1734,8 +1702,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_From_FlexibleServer
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1789,8 +1755,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1819,8 +1783,6 @@ func (operator *FlexibleServerOperatorSpec) AssignProperties_To_FlexibleServerOp
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2371,8 +2333,6 @@ func (identity *MySQLServerIdentity) AssignProperties_From_MySQLServerIdentity(s
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]UserAssignedIdentityDetails, len(source.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
@@ -2417,8 +2377,6 @@ func (identity *MySQLServerIdentity) AssignProperties_To_MySQLServerIdentity(des
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityItem := userAssignedIdentityItem
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
@@ -2479,8 +2437,6 @@ func (identity *MySQLServerIdentity_STATUS) AssignProperties_From_MySQLServerIde
 	if source.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v1.JSON, len(source.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range source.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			userAssignedIdentityMap[userAssignedIdentityKey] = *userAssignedIdentityValue.DeepCopy()
 		}
 		identity.UserAssignedIdentities = userAssignedIdentityMap
@@ -2526,8 +2482,6 @@ func (identity *MySQLServerIdentity_STATUS) AssignProperties_To_MySQLServerIdent
 	if identity.UserAssignedIdentities != nil {
 		userAssignedIdentityMap := make(map[string]v1.JSON, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
-			// Shadow the loop variable to avoid aliasing
-			userAssignedIdentityValue := userAssignedIdentityValue
 			userAssignedIdentityMap[userAssignedIdentityKey] = *userAssignedIdentityValue.DeepCopy()
 		}
 		destination.UserAssignedIdentities = userAssignedIdentityMap
@@ -3341,7 +3295,7 @@ func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_From_FlexibleServ
 
 	// AdministratorLogin
 	if source.AdministratorLogin != nil {
-		administratorLogin := source.AdministratorLogin.Copy()
+		administratorLogin := *source.AdministratorLogin.DeepCopy()
 		maps.AdministratorLogin = &administratorLogin
 	} else {
 		maps.AdministratorLogin = nil
@@ -3349,7 +3303,7 @@ func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_From_FlexibleServ
 
 	// FullyQualifiedDomainName
 	if source.FullyQualifiedDomainName != nil {
-		fullyQualifiedDomainName := source.FullyQualifiedDomainName.Copy()
+		fullyQualifiedDomainName := *source.FullyQualifiedDomainName.DeepCopy()
 		maps.FullyQualifiedDomainName = &fullyQualifiedDomainName
 	} else {
 		maps.FullyQualifiedDomainName = nil
@@ -3382,7 +3336,7 @@ func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_To_FlexibleServer
 
 	// AdministratorLogin
 	if maps.AdministratorLogin != nil {
-		administratorLogin := maps.AdministratorLogin.Copy()
+		administratorLogin := *maps.AdministratorLogin.DeepCopy()
 		destination.AdministratorLogin = &administratorLogin
 	} else {
 		destination.AdministratorLogin = nil
@@ -3390,7 +3344,7 @@ func (maps *FlexibleServerOperatorConfigMaps) AssignProperties_To_FlexibleServer
 
 	// FullyQualifiedDomainName
 	if maps.FullyQualifiedDomainName != nil {
-		fullyQualifiedDomainName := maps.FullyQualifiedDomainName.Copy()
+		fullyQualifiedDomainName := *maps.FullyQualifiedDomainName.DeepCopy()
 		destination.FullyQualifiedDomainName = &fullyQualifiedDomainName
 	} else {
 		destination.FullyQualifiedDomainName = nil
@@ -3429,7 +3383,7 @@ func (secrets *FlexibleServerOperatorSecrets) AssignProperties_From_FlexibleServ
 
 	// FullyQualifiedDomainName
 	if source.FullyQualifiedDomainName != nil {
-		fullyQualifiedDomainName := source.FullyQualifiedDomainName.Copy()
+		fullyQualifiedDomainName := *source.FullyQualifiedDomainName.DeepCopy()
 		secrets.FullyQualifiedDomainName = &fullyQualifiedDomainName
 	} else {
 		secrets.FullyQualifiedDomainName = nil
@@ -3462,7 +3416,7 @@ func (secrets *FlexibleServerOperatorSecrets) AssignProperties_To_FlexibleServer
 
 	// FullyQualifiedDomainName
 	if secrets.FullyQualifiedDomainName != nil {
-		fullyQualifiedDomainName := secrets.FullyQualifiedDomainName.Copy()
+		fullyQualifiedDomainName := *secrets.FullyQualifiedDomainName.DeepCopy()
 		destination.FullyQualifiedDomainName = &fullyQualifiedDomainName
 	} else {
 		destination.FullyQualifiedDomainName = nil

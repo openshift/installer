@@ -103,7 +103,7 @@ func (r *ResourceReconciler) Pause(ctx context.Context) error {
 		spec.SetNamespace(r.owner.GetNamespace())
 		gvk := spec.GroupVersionKind()
 		log.V(4).Info("pausing resource", "resource", klog.KObj(spec), "resourceVersion", gvk.GroupVersion(), "resourceKind", gvk.Kind)
-		err := r.Patch(ctx, spec, client.Apply, client.FieldOwner("capz-manager"))
+		err := r.Apply(ctx, client.ApplyConfigurationFromUnstructured(spec), client.FieldOwner("capz-manager"))
 		if client.IgnoreNotFound(err) != nil {
 			return fmt.Errorf("failed to patch resource: %w", err)
 		}
@@ -157,7 +157,7 @@ func (r *ResourceReconciler) reconcile(ctx context.Context) error {
 
 		gvk := spec.GroupVersionKind()
 		log.V(4).Info("applying resource", "resource", klog.KObj(spec), "resourceVersion", gvk.GroupVersion(), "resourceKind", gvk.Kind)
-		err := r.Patch(ctx, spec, client.Apply, client.FieldOwner("capz-manager"), client.ForceOwnership)
+		err := r.Apply(ctx, client.ApplyConfigurationFromUnstructured(spec), client.FieldOwner("capz-manager"), client.ForceOwnership)
 		if err != nil {
 			return fmt.Errorf("failed to apply resource: %w", err)
 		}
@@ -279,7 +279,7 @@ func readyStatus(ctx context.Context, u *unstructured.Unstructured) (bool, error
 	}
 
 	for _, el := range statusConditions {
-		condition, ok := el.(map[string]interface{})
+		condition, ok := el.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -366,7 +366,7 @@ func parseOwnedKinds(value string) (sets.Set[metav1.TypeMeta], error) {
 	if value == "" {
 		return nil, nil
 	}
-	for _, ownedKind := range strings.Split(value, ownedKindsSep) {
+	for ownedKind := range strings.SplitSeq(value, ownedKindsSep) {
 		gvk, _ := schema.ParseKindArg(ownedKind)
 		if gvk == nil {
 			return nil, fmt.Errorf("invalid field %q: expected Kind.version.group", ownedKind)

@@ -21,10 +21,10 @@ import (
 	"context"
 	"fmt"
 
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/util/patch"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
 
@@ -45,15 +45,22 @@ func (c *VMContext) String() string {
 
 // Patch updates the object and its status on the API server.
 func (c *VMContext) Patch(ctx context.Context) error {
-	return c.PatchHelper.Patch(ctx, c.VSphereVM, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-		infrav1.VSphereVMReadyV1Beta2Condition,
-		infrav1.VSphereVMVCenterAvailableV1Beta2Condition,
-		infrav1.VSphereVMVirtualMachineProvisionedV1Beta2Condition,
-		infrav1.VSphereVMIPAddressClaimsFulfilledV1Beta2Condition,
-		infrav1.VSphereVMGuestSoftPowerOffSucceededV1Beta2Condition,
-		infrav1.VSphereVMPCIDevicesDetachedV1Beta2Condition,
-		clusterv1beta1.PausedV1Beta2Condition,
-	}})
+	return c.PatchHelper.Patch(ctx, c.VSphereVM,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			clusterv1.ReadyV1Beta1Condition,
+			infrav1.VCenterAvailableV1Beta1Condition,
+			infrav1.IPAddressClaimedV1Beta1Condition,
+			infrav1.VMProvisionedV1Beta1Condition,
+		}},
+		patch.WithOwnedConditions{Conditions: []string{
+			infrav1.VSphereVMReadyCondition,
+			infrav1.VSphereVMVCenterAvailableCondition,
+			infrav1.VSphereVMVirtualMachineProvisionedCondition,
+			infrav1.VSphereVMIPAddressClaimsFulfilledCondition,
+			infrav1.VSphereVMGuestSoftPowerOffSucceededCondition,
+			infrav1.VSphereVMPCIDevicesDetachedCondition,
+			clusterv1.PausedCondition,
+		}})
 }
 
 // GetSession returns this context's session.

@@ -54,7 +54,7 @@ func ObjAsVersion(obj ARMMetaObject, scheme *runtime.Scheme, gvk schema.GroupVer
 	hub, ok := obj.(conversion.Hub)
 	if !ok {
 		// Note that if this function is called by a control-loop, the expectation is that the control-loop
-		// is operating on the storage/hub version already, so it shouldn't be necessarily to take this code path.
+		// is operating on the storage/hub version already, so it shouldn't be necessary to take this code path.
 		gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 		var storageGVK schema.GroupVersionKind
 		storageGVK, err = findStorageGVK(scheme, gk)
@@ -98,6 +98,13 @@ func ObjAsVersion(obj ARMMetaObject, scheme *runtime.Scheme, gvk schema.GroupVer
 	} else {
 		return nil, eris.Errorf("obj %T was not convertible", versionedResource)
 	}
+
+	// Copy key parts of ObjectMeta (annotations, labels, name, namespace) from the source object.
+	// ConvertFrom/ConvertTo only handle spec/status, not metadata.
+	versionedResource.SetName(obj.GetName())
+	versionedResource.SetNamespace(obj.GetNamespace())
+	versionedResource.SetAnnotations(obj.GetAnnotations())
+	versionedResource.SetLabels(obj.GetLabels())
 
 	obj = versionedResource
 

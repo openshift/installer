@@ -1,5 +1,5 @@
 package main
 
 import (
-	_ "sigs.k8s.io/cluster-api-provider-ibmcloud"
+	_ "sigs.k8s.io/cluster-api-provider-ibmcloud/cmd"
 )

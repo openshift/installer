@@ -29,6 +29,12 @@ type DestinationExpression struct {
 	// on CEL in ASO see https://azure.github.io/azure-service-operator/guide/expressions/
 	// +kubebuilder:validation:Required
 	Value string `json:"value,omitempty"`
+
+	// Annotations is an optional set of annotations to apply to the destination resource.
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Labels is an optional set of labels to apply to the destination resource.
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func (s *DestinationExpression) String() string {

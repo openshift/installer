@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types"
@@ -110,29 +112,71 @@ func createUserAssignedIdentity(ctx context.Context, in identityInput) error {
 	roleAssignmentsClient := clientFactory.NewRoleAssignmentsClient()
 	roleAssignmentUUID := uuid.New().String()
 
-	// XXX: Azure doesn't like creating an identity and immediately
-	// creating a role assignment for the identity. There can be
-	// replication delays. So, retry every 10 seconds for a minute until
-	// the role assignment gets created.
-	//
-	// See https://aka.ms/docs-principaltype
-	for i := 0; i < retryCount; i++ {
-		_, err = roleAssignmentsClient.Create(ctx, rgScope, roleAssignmentUUID,
+	err = createRoleAssignmentWithRetry(ctx, roleAssignmentRetryInterval, roleAssignmentRetryTimeout, func(ctx context.Context) error {
+		_, err := roleAssignmentsClient.Create(ctx, rgScope, roleAssignmentUUID,
 			armauthorization.RoleAssignmentCreateParameters{
 				Properties: &armauthorization.RoleAssignmentProperties{
 					PrincipalID:      ptr.To(principalID),
+					PrincipalType:    ptr.To(armauthorization.PrincipalTypeServicePrincipal),
 					RoleDefinitionID: contributor.ID,
 				},
 			},
 			nil,
 		)
-		if err == nil {
-			break
-		}
-		time.Sleep(retryTime)
-	}
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create role assignment: %w", err)
 	}
 	return nil
+}
+
+func createRoleAssignmentWithRetry(ctx context.Context, retryInterval, retryTimeout time.Duration, create func(context.Context) error) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	var lastErr error
+	err := wait.PollUntilContextTimeout(ctx, retryInterval, retryTimeout, true, func(ctx context.Context) (bool, error) {
+		if err := ctx.Err(); err != nil {
+			return false, err
+		}
+
+		err := create(ctx)
+		if err == nil {
+			return true, nil
+		}
+
+		if shouldRetryRoleAssignmentError(err) {
+			var responseErr *azcore.ResponseError
+			if errors.As(err, &responseErr) {
+				logrus.Infof("Azure role assignment returned %s (HTTP %d); retrying in %s", responseErr.ErrorCode, responseErr.StatusCode, retryInterval)
+			}
+			lastErr = err
+			return false, nil
+		}
+
+		return false, err
+	})
+	if err == nil {
+		return nil
+	}
+	if contextErr := ctx.Err(); contextErr != nil {
+		err = contextErr
+	}
+	if lastErr != nil && errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("timed out retrying role assignment: %w; last Azure error: %w", err, lastErr)
+	}
+	return err
+}
+
+// shouldRetryRoleAssignmentError retries PrincipalNotFound while Azure replicates a new principal.
+// See https://aka.ms/docs-principaltype.
+func shouldRetryRoleAssignmentError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+
+	var responseErr *azcore.ResponseError
+	return errors.As(err, &responseErr) && responseErr.ErrorCode == "PrincipalNotFound"
 }

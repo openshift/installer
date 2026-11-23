@@ -20,6 +20,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -51,22 +52,36 @@ var _ conversion.Convertible = &VirtualMachineScaleSetsExtension{}
 
 // ConvertFrom populates our VirtualMachineScaleSetsExtension from the provided hub VirtualMachineScaleSetsExtension
 func (extension *VirtualMachineScaleSetsExtension) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.VirtualMachineScaleSetsExtension)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachineScaleSetsExtension but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.VirtualMachineScaleSetsExtension
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return extension.AssignProperties_From_VirtualMachineScaleSetsExtension(source)
+	err = extension.AssignProperties_From_VirtualMachineScaleSetsExtension(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to extension")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualMachineScaleSetsExtension from our VirtualMachineScaleSetsExtension
 func (extension *VirtualMachineScaleSetsExtension) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.VirtualMachineScaleSetsExtension)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachineScaleSetsExtension but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.VirtualMachineScaleSetsExtension
+	err := extension.AssignProperties_To_VirtualMachineScaleSetsExtension(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from extension")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return extension.AssignProperties_To_VirtualMachineScaleSetsExtension(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualMachineScaleSetsExtension{}
@@ -87,17 +102,6 @@ func (extension *VirtualMachineScaleSetsExtension) SecretDestinationExpressions(
 		return nil
 	}
 	return extension.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &VirtualMachineScaleSetsExtension{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (extension *VirtualMachineScaleSetsExtension) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*VirtualMachineScaleSetsExtension_STATUS); ok {
-		return extension.Spec.Initialize_From_VirtualMachineScaleSetsExtension_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type VirtualMachineScaleSetsExtension_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &VirtualMachineScaleSetsExtension{}
@@ -350,7 +354,7 @@ func (extension *VirtualMachineScaleSetsExtension_Spec) ConvertToARM(resolved ge
 		result.Properties.ProtectedSettings = temp
 	}
 	if extension.ProtectedSettingsFromKeyVault != nil {
-		protectedSettingsFromKeyVault_ARM, err := (*extension.ProtectedSettingsFromKeyVault).ConvertToARM(resolved)
+		protectedSettingsFromKeyVault_ARM, err := extension.ProtectedSettingsFromKeyVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -635,8 +639,6 @@ func (extension *VirtualMachineScaleSetsExtension_Spec) AssignProperties_From_Vi
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -742,8 +744,6 @@ func (extension *VirtualMachineScaleSetsExtension_Spec) AssignProperties_To_Virt
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -771,77 +771,6 @@ func (extension *VirtualMachineScaleSetsExtension_Spec) AssignProperties_To_Virt
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualMachineScaleSetsExtension_STATUS populates our VirtualMachineScaleSetsExtension_Spec from the provided source VirtualMachineScaleSetsExtension_STATUS
-func (extension *VirtualMachineScaleSetsExtension_Spec) Initialize_From_VirtualMachineScaleSetsExtension_STATUS(source *VirtualMachineScaleSetsExtension_STATUS) error {
-
-	// AutoUpgradeMinorVersion
-	if source.AutoUpgradeMinorVersion != nil {
-		autoUpgradeMinorVersion := *source.AutoUpgradeMinorVersion
-		extension.AutoUpgradeMinorVersion = &autoUpgradeMinorVersion
-	} else {
-		extension.AutoUpgradeMinorVersion = nil
-	}
-
-	// EnableAutomaticUpgrade
-	if source.EnableAutomaticUpgrade != nil {
-		enableAutomaticUpgrade := *source.EnableAutomaticUpgrade
-		extension.EnableAutomaticUpgrade = &enableAutomaticUpgrade
-	} else {
-		extension.EnableAutomaticUpgrade = nil
-	}
-
-	// ForceUpdateTag
-	extension.ForceUpdateTag = genruntime.ClonePointerToString(source.ForceUpdateTag)
-
-	// ProtectedSettingsFromKeyVault
-	if source.ProtectedSettingsFromKeyVault != nil {
-		var protectedSettingsFromKeyVault KeyVaultSecretReference
-		err := protectedSettingsFromKeyVault.Initialize_From_KeyVaultSecretReference_STATUS(source.ProtectedSettingsFromKeyVault)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
-		}
-		extension.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
-	} else {
-		extension.ProtectedSettingsFromKeyVault = nil
-	}
-
-	// ProvisionAfterExtensions
-	extension.ProvisionAfterExtensions = genruntime.CloneSliceOfString(source.ProvisionAfterExtensions)
-
-	// Publisher
-	extension.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// Settings
-	if source.Settings != nil {
-		settingMap := make(map[string]v1.JSON, len(source.Settings))
-		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
-			settingMap[settingKey] = *settingValue.DeepCopy()
-		}
-		extension.Settings = settingMap
-	} else {
-		extension.Settings = nil
-	}
-
-	// SuppressFailures
-	if source.SuppressFailures != nil {
-		suppressFailure := *source.SuppressFailures
-		extension.SuppressFailures = &suppressFailure
-	} else {
-		extension.SuppressFailures = nil
-	}
-
-	// Type
-	extension.Type = genruntime.ClonePointerToString(source.PropertiesType)
-
-	// TypeHandlerVersion
-	extension.TypeHandlerVersion = genruntime.ClonePointerToString(source.TypeHandlerVersion)
 
 	// No error
 	return nil
@@ -1162,8 +1091,6 @@ func (extension *VirtualMachineScaleSetsExtension_STATUS) AssignProperties_From_
 	if source.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(source.Settings))
 		for settingKey, settingValue := range source.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		extension.Settings = settingMap
@@ -1250,8 +1177,6 @@ func (extension *VirtualMachineScaleSetsExtension_STATUS) AssignProperties_To_Vi
 	if extension.Settings != nil {
 		settingMap := make(map[string]v1.JSON, len(extension.Settings))
 		for settingKey, settingValue := range extension.Settings {
-			// Shadow the loop variable to avoid aliasing
-			settingValue := settingValue
 			settingMap[settingKey] = *settingValue.DeepCopy()
 		}
 		destination.Settings = settingMap
@@ -1312,7 +1237,7 @@ func (reference *KeyVaultSecretReference) ConvertToARM(resolved genruntime.Conve
 
 	// Set property "SourceVault":
 	if reference.SourceVault != nil {
-		sourceVault_ARM, err := (*reference.SourceVault).ConvertToARM(resolved)
+		sourceVault_ARM, err := reference.SourceVault.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1402,28 +1327,6 @@ func (reference *KeyVaultSecretReference) AssignProperties_To_KeyVaultSecretRefe
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_KeyVaultSecretReference_STATUS populates our KeyVaultSecretReference from the provided source KeyVaultSecretReference_STATUS
-func (reference *KeyVaultSecretReference) Initialize_From_KeyVaultSecretReference_STATUS(source *KeyVaultSecretReference_STATUS) error {
-
-	// SecretUrl
-	reference.SecretUrl = genruntime.ClonePointerToString(source.SecretUrl)
-
-	// SourceVault
-	if source.SourceVault != nil {
-		var sourceVault SubResource
-		err := sourceVault.Initialize_From_SubResource_STATUS(source.SourceVault)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field SourceVault")
-		}
-		reference.SourceVault = &sourceVault
-	} else {
-		reference.SourceVault = nil
 	}
 
 	// No error
@@ -1543,8 +1446,6 @@ func (operator *VirtualMachineScaleSetsExtensionOperatorSpec) AssignProperties_F
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1561,8 +1462,6 @@ func (operator *VirtualMachineScaleSetsExtensionOperatorSpec) AssignProperties_F
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1588,8 +1487,6 @@ func (operator *VirtualMachineScaleSetsExtensionOperatorSpec) AssignProperties_T
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1606,8 +1503,6 @@ func (operator *VirtualMachineScaleSetsExtensionOperatorSpec) AssignProperties_T
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

@@ -29,28 +29,95 @@ Check out the [getting started guide](./docs/getting_started.md) for launching a
 
 ------
 
-## Compatibility with Cluster API and Kubernetes Versions
+# CAPV release support
 
-This provider's versions are compatible with the following versions of Cluster API:
+A Cluster API provider vSphere release correspond to a release in the GitHub repository for this project, and the corresponding images published in the Kubernetes docker registry.
+The CAPV release calendar will be aligned as much as possible to the Kubernetes and the Cluster API release dates plus an offset for 
+performing test/validation after K8s/CAPI release are available (tentatively one or two weeks after both K8s and CAPI release are available). 
 
-|                      | Cluster API v1beta1 (v1.6) | Cluster API v1beta1 (v1.7) | Cluster API v1beta1 (v1.8) | Cluster API v1beta1 (v1.9) |
-|----------------------|:--------------------------:|:--------------------------:|:--------------------------:|:--------------------------:|
-| CAPV v1beta1 (v1.9)  |             ✓              |             x              |             x              |             x              |
-| CAPV v1beta1 (v1.10) |             x              |             ✓              |             x              |             x              |
-| CAPV v1beta1 (v1.11) |             x              |             x              |             ✓              |             x              |
-| CAPV v1beta1 (v1.12) |             x              |             x              |             x              |             ✓              |
+The CAPV team actively supports the latest two minor releases (N, N-1); support in this context means that we:
 
-As CAPV doesn't dictate supported K8s versions, and it supports whatever CAPI supported, about the provider's compatibility with K8s versions, please refer
-to [CAPI Supported Kubernetes Versions](https://cluster-api.sigs.k8s.io/reference/versions.html).
+- Have CI signal with E2E tests, unit tests, CVE scans etc.
+- Accept bug fixes, perform golang or dependency bumps, etc.
+- Cut patch releases when necessary.
 
-Basically:
+On top of supporting the N and N-1 releases, the CAPV team also maintains CI signal for the CAPV N-2 releases in case we have to do an emergency patch release. Please note that:
 
-- 4 Kubernetes minor releases for the management cluster (N - N-3)
-- 6 Kubernetes minor releases for the workload cluster (N - N-5)
+- Even if a subset of the CI signal for the N-2 branch is preserved, the N-2 branch is considered in maintenance mode and no change is back-ported proactively.
+- Security scans will be disabled (this signal does not make sense considering that CVE are not going to be fixed proactively)
+- If there is a need for an emergency patch, e.g. to fix a critical issue, please bring this up to maintainers and it will be considered on a case-by-case basis.
 
-**NOTES:**
-* We aim to cut a CAPV minor release approximately one week after the corresponding CAPI minor release is out.
-* We aim to cut a CAPV minor or patch release with support for a new Kubernetes minor version approximately 3 business days after releases for CAPI and CPI that support the new Kubernetes version are available.
+All considered, each CAPV minor release is supported for a period of roughly 12 months:
+
+- The first eight months of this timeframe will be considered the standard support period for a minor release.
+- The next four months the minor release will be considered in maintenance mode.
+- At the end of the four-month maintenance mode period, the minor release will be considered EOL (end of life) and cherry-picks to the associated branch are to be closed soon afterward.
+
+The table below documents support matrix for Cluster API provider vSphere versions (older versions omitted).
+
+| Minor Release | Status                  | Supported Until (including maintenance mode)                                         |
+|---------------|-------------------------|--------------------------------------------------------------------------------------|
+| v1.16.x       | Standard support period | in maintenance mode when v1.18.0 will be released, EOL when v1.19.0 will be released |
+| v1.15.x       | Standard support period | in maintenance mode when v1.17.0 will be released, EOL when v1.18.0 will be released |
+| v1.14.x       | Maintenance mode        | Maintenance mode since v1.16.0 release date, EOL when v1.17.0 will be released       |
+| v1.13.x       | EOL                     | EOL since v1.16.0 release date                                                       |
+| v1.12.x       | EOL                     | EOL since v1.15.0 release date                                                       |
+| v1.11.x       | EOL                     | EOL since v1.14.0 release date                                                       |
+
+## Compatibility with Cluster API
+
+Only a limited set of combinations between releases of CAPV and Cluster API are tested on CI and thus actively
+supported:
+
+| CAPV version | CAPI version used in CI |
+|--------------|:-----------------------:|
+| CAPV v1.17   |       CAPI v1.14        |
+| CAPV v1.16   |       CAPI v1.13        |
+| CAPV v1.15   |       CAPI v1.12        |
+| CAPV v1.14   |       CAPI v1.11        |
+| CAPV v1.13   |       CAPI v1.10        |
+
+Other CAPV/CAPI version combinations might work, but it is up to the users to validate those combinations; 
+also please be aware that in case of a CAPI/CAPV combination not listed above, support will be provided at best effort.
+
+Following info should be used when identifying possible CAPV/CAPI version combinations outside the table above:
+
+Compatibility between CAPV and Cluster API depends on which Cluster API contract versions is supported by CAPI and by
+which contract version is implemented in CAPV.
+
+The following table documents the Cluster API contract versions implemented by supported CAPV versions:
+
+| CAPV version | Implements Cluster API contract version |
+|--------------|:---------------------------------------:|
+| CAPV v1.17   |                 v1beta2                 |
+| CAPV v1.16   |                 v1beta2                 |
+| CAPV v1.15   |                 v1beta1                 |
+| CAPV v1.14   |                 v1beta1                 |
+| CAPV v1.13   |                 v1beta1                 |
+
+Contract versions supported by Cluster API are documented in the [versions](https://cluster-api.sigs.k8s.io/reference/versions#cluster-api-release-vs-contract-versions) page in the [Cluster API book](https://cluster-api.sigs.k8s.io).
+
+Additionally, each version of CAPV requires a specific API version to served by Cluster API, and this
+further reduces the number of valid combinations.
+
+The table below documents CAPI API version required by supported CAPV versions.
+
+| CAPV version | Requires CAPI API version |
+|--------------|:-------------------------:|
+| CAPV v1.17   |          v1beta2          |
+| CAPV v1.16   |          v1beta2          |
+| CAPV v1.15   |          v1beta2          |
+| CAPV v1.14   |          v1beta2          |
+| CAPV v1.13   |          v1beta1          |
+
+API versions supported by Cluster API are documented in the [versions](https://cluster-api.sigs.k8s.io/reference/versions#cluster-api-release-vs-api-versions) page in the [Cluster API book](https://cluster-api.sigs.k8s.io).
+
+## Compatibility with Kubernetes Versions
+
+CAPV doesn't dictate supported K8s versions, but in practice compatibility with Kubernetes versions is limited by the
+compatibility matrix of the Cluster API version you are using in combination with CAPV.
+
+Please refer to Cluster API 's [Kubernetes versions matrix](https://cluster-api.sigs.k8s.io/reference/versions#kubernetes-versions-support).
 
 ## Kubernetes versions with published OVAs
 
@@ -64,27 +131,33 @@ production-like environments, it is highly recommended to build and use your own
 
 | Kubernetes | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Ubuntu 24.04 | Photon 3 | Photon 5 | Flatcar Stable |
 |:-----------|:------------:|:------------:|:------------:|:------------:|:--------:|:--------:|:--------------:|
-| [v1.24.11] |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
-| [v1.25.7]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
-| [v1.26.2]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
-| [v1.27.3]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
-| [v1.28.0]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
-| [v1.29.0]  |              |              |      ✓       |              |    ✓     |    ✓     |       ✓        |
-| [v1.30.0]  |              |              |      ✓       |              |          |    ✓     |       ✓        |
-| [v1.31.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
-| [v1.32.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
+| [v1.36.0]  |              |              |      ✓       |      ✓       |          |          |       ✓        |
+| [v1.35.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
+| [v1.34.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
 | [v1.33.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
+| [v1.32.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
+| [v1.31.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
+| [v1.30.0]  |              |              |      ✓       |              |          |    ✓     |       ✓        |
+| [v1.29.0]  |              |              |      ✓       |              |    ✓     |    ✓     |       ✓        |
+| [v1.28.0]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
+| [v1.27.3]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
+| [v1.26.2]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
+| [v1.25.7]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
+| [v1.24.11] |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
 
-[v1.24.11]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.24.11
-[v1.25.7]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.25.7
-[v1.26.2]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.26.2
-[v1.27.3]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.27.3
-[v1.28.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.28.0
-[v1.29.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.29.0
-[v1.30.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.30.0
-[v1.31.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.31.0
-[v1.32.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.32.0
+[v1.36.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.36.0
+[v1.35.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.35.0
+[v1.34.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.34.0
 [v1.33.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.33.0
+[v1.32.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.32.0
+[v1.31.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.31.0
+[v1.30.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.30.0
+[v1.29.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.29.0
+[v1.28.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.28.0
+[v1.27.3]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.27.3
+[v1.26.2]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.26.2
+[v1.25.7]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.25.7
+[v1.24.11]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.24.11
 
 A full list of the published machine images for CAPV can be found by [searching for releases](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases?q=templates%2F&expanded=true)
 on the repository having the prefix `templates/` and taking a look at the available assets.

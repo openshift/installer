@@ -16,7 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	apimanagement "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	apimanagement "github.com/Azure/azure-service-operator/v2/api/apimanagement/v20240501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
@@ -123,10 +123,11 @@ func secretsSpecified(obj *apimanagement.Subscription) set.Set[string] {
 }
 
 func secretsToWrite(obj *apimanagement.Subscription, s armapimanagement.SubscriptionKeysContract) ([]*v1.Secret, error) {
-	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
-	if operatorSpecSecrets == nil {
+	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
 		return nil, nil
 	}
+
+	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 
 	collector := secrets.NewCollector(obj.Namespace)
 	collector.AddValue(operatorSpecSecrets.PrimaryKey, to.Value(s.PrimaryKey))

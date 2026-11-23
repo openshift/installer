@@ -27,7 +27,7 @@ func Timeout(err error) bool {
 }
 
 // PgError represents an error reported by the PostgreSQL server. See
-// http://www.postgresql.org/docs/11/static/protocol-error-fields.html for
+// http://www.postgresql.org/docs/current/static/protocol-error-fields.html for
 // detailed field description.
 type PgError struct {
 	Severity            string
@@ -93,6 +93,12 @@ func (e *perDialConnectError) Unwrap() error {
 	return e.err
 }
 
+// ErrConnClosed is returned (possibly wrapped) when an operation is attempted
+// on a connection that the driver has already closed, e.g. because a prior
+// query was cancelled mid-flight or the underlying socket went away. Use
+// errors.Is to test for it, since it shows up wrapped inside connLockError.
+var ErrConnClosed = errors.New("conn closed")
+
 type connLockError struct {
 	status string
 }
@@ -105,11 +111,26 @@ func (e *connLockError) Error() string {
 	return e.status
 }
 
+func (e *connLockError) Unwrap() error {
+	if e.status == "conn closed" {
+		return ErrConnClosed
+	}
+	return nil
+}
+
 // ParseConfigError is the error returned when a connection string cannot be parsed.
 type ParseConfigError struct {
 	ConnString string // The connection string that could not be parsed.
 	msg        string
 	err        error
+}
+
+func NewParseConfigError(conn, msg string, err error) error {
+	return &ParseConfigError{
+		ConnString: conn,
+		msg:        msg,
+		err:        err,
+	}
 }
 
 func (e *ParseConfigError) Error() string {
@@ -130,13 +151,14 @@ func (e *ParseConfigError) Unwrap() error {
 func normalizeTimeoutError(ctx context.Context, err error) error {
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {
-		if ctx.Err() == context.Canceled {
+		switch ctx.Err() {
+		case context.Canceled:
 			// Since the timeout was caused by a context cancellation, the actual error is context.Canceled not the timeout error.
 			return context.Canceled
-		} else if ctx.Err() == context.DeadlineExceeded {
+		case context.DeadlineExceeded:
 			return &errTimeout{err: ctx.Err()}
-		} else {
-			return &errTimeout{err: netErr}
+		default:
+			return &errTimeout{err: err}
 		}
 	}
 	return err
@@ -244,5 +266,22 @@ func (e *NotPreferredError) SafeToRetry() bool {
 }
 
 func (e *NotPreferredError) Unwrap() error {
+	return e.err
+}
+
+type PrepareError struct {
+	err error
+
+	ParseComplete bool // Indicates whether the error occurred after a ParseComplete message was received.
+}
+
+func (e *PrepareError) Error() string {
+	if e.ParseComplete {
+		return fmt.Sprintf("prepare failed after ParseComplete: %s", e.err.Error())
+	}
+	return e.err.Error()
+}
+
+func (e *PrepareError) Unwrap() error {
 	return e.err
 }

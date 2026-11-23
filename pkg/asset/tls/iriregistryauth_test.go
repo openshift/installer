@@ -4,6 +4,7 @@ package tls
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -36,6 +37,11 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 			shouldGenerate: false,
 		},
 	}
+
+	// The pull secret the merged form of which the asset carries: an entry
+	// for the IRI registry is added to it when credentials are generated,
+	// and it is carried unchanged when they are not.
+	existingPullSecret := `{"auths":{"quay.io":{"auth":"dGVzdDp0ZXN0"}}}` //nolint:gosec // test fixture, not a real credential
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -70,6 +76,7 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 								APIVIPs: []string{"192.168.111.5"},
 							},
 						},
+						PullSecret: existingPullSecret,
 					},
 				},
 			}
@@ -95,6 +102,7 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 			if !tt.shouldGenerate {
 				assert.Empty(t, auth.Password, "Password should be empty when generation is skipped")
 				assert.Empty(t, auth.HtpasswdContent, "HtpasswdContent should be empty when generation is skipped")
+				assert.Equal(t, existingPullSecret, auth.MergedPullSecret, "MergedPullSecret should be the pull secret unchanged when generation is skipped")
 				return
 			}
 
@@ -123,6 +131,27 @@ func TestIRIRegistryCredentialsGenerate(t *testing.T) {
 			// Verify bcrypt hash validates against password
 			err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(auth.Password))
 			assert.NoError(t, err, "Bcrypt hash should validate against password")
+
+			// Verify the merged pull secret carries the credentials for the
+			// registry behind api-int on the cluster domain, and the entry
+			// the install config already carried.
+			var merged map[string]interface{}
+			if !assert.NoError(t, json.Unmarshal([]byte(auth.MergedPullSecret), &merged)) {
+				return
+			}
+			auths, ok := merged["auths"].(map[string]interface{})
+			if !assert.True(t, ok, "MergedPullSecret should carry auths") {
+				return
+			}
+			iriAuth, ok := auths["api-int.test-cluster.example.com:22625"].(map[string]interface{})
+			if assert.True(t, ok, "MergedPullSecret should carry the IRI registry auth") {
+				assert.Equal(t, base64.StdEncoding.EncodeToString([]byte(IRIRegistryUsername+":"+auth.Password)), iriAuth["auth"])
+			}
+			if quayAuth, ok := auths["quay.io"].(map[string]interface{}); ok {
+				assert.Equal(t, "dGVzdDp0ZXN0", quayAuth["auth"], "the existing auth should survive the merge")
+			} else {
+				t.Error("the existing quay.io auth should survive the merge")
+			}
 		})
 	}
 }

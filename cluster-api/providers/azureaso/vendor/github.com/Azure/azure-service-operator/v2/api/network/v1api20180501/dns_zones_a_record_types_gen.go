@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/A/{relativeRecordSetName}
 type DnsZonesARecord struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (record *DnsZonesARecord) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /dns/resource-manager/Microsoft.Network/stable/2018-05-01/dns.json
+// - Generated from: /dns/resource-manager/Microsoft.Network/Dns/stable/2018-05-01/dns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/dnsZones/{zoneName}/A/{relativeRecordSetName}
 type DnsZonesARecordList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -352,7 +353,7 @@ func (record *DnsZonesARecord_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.ARecords = append(result.Properties.ARecords, *item_ARM.(*arm.ARecord))
 	}
 	if record.CNAMERecord != nil {
-		cnameRecord_ARM, err := (*record.CNAMERecord).ConvertToARM(resolved)
+		cnameRecord_ARM, err := record.CNAMERecord.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -394,7 +395,7 @@ func (record *DnsZonesARecord_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.PTRRecords = append(result.Properties.PTRRecords, *item_ARM.(*arm.PtrRecord))
 	}
 	if record.SOARecord != nil {
-		soaRecord_ARM, err := (*record.SOARecord).ConvertToARM(resolved)
+		soaRecord_ARM, err := record.SOARecord.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +421,7 @@ func (record *DnsZonesARecord_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.TXTRecords = append(result.Properties.TXTRecords, *item_ARM.(*arm.TxtRecord))
 	}
 	if record.TargetResource != nil {
-		targetResource_ARM, err := (*record.TargetResource).ConvertToARM(resolved)
+		targetResource_ARM, err := record.TargetResource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -686,8 +687,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.AAAARecords != nil {
 		aaaaRecordList := make([]AaaaRecord, len(source.AAAARecords))
 		for aaaaRecordIndex, aaaaRecordItem := range source.AAAARecords {
-			// Shadow the loop variable to avoid aliasing
-			aaaaRecordItem := aaaaRecordItem
 			var aaaaRecord AaaaRecord
 			err := aaaaRecord.AssignProperties_From_AaaaRecord(&aaaaRecordItem)
 			if err != nil {
@@ -704,8 +703,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.ARecords != nil {
 		aRecordList := make([]ARecord, len(source.ARecords))
 		for aRecordIndex, aRecordItem := range source.ARecords {
-			// Shadow the loop variable to avoid aliasing
-			aRecordItem := aRecordItem
 			var aRecord ARecord
 			err := aRecord.AssignProperties_From_ARecord(&aRecordItem)
 			if err != nil {
@@ -737,8 +734,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.CaaRecords != nil {
 		caaRecordList := make([]CaaRecord, len(source.CaaRecords))
 		for caaRecordIndex, caaRecordItem := range source.CaaRecords {
-			// Shadow the loop variable to avoid aliasing
-			caaRecordItem := caaRecordItem
 			var caaRecord CaaRecord
 			err := caaRecord.AssignProperties_From_CaaRecord(&caaRecordItem)
 			if err != nil {
@@ -758,8 +753,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.MXRecords != nil {
 		mxRecordList := make([]MxRecord, len(source.MXRecords))
 		for mxRecordIndex, mxRecordItem := range source.MXRecords {
-			// Shadow the loop variable to avoid aliasing
-			mxRecordItem := mxRecordItem
 			var mxRecord MxRecord
 			err := mxRecord.AssignProperties_From_MxRecord(&mxRecordItem)
 			if err != nil {
@@ -779,8 +772,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.NSRecords != nil {
 		nsRecordList := make([]NsRecord, len(source.NSRecords))
 		for nsRecordIndex, nsRecordItem := range source.NSRecords {
-			// Shadow the loop variable to avoid aliasing
-			nsRecordItem := nsRecordItem
 			var nsRecord NsRecord
 			err := nsRecord.AssignProperties_From_NsRecord(&nsRecordItem)
 			if err != nil {
@@ -817,8 +808,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.PTRRecords != nil {
 		ptrRecordList := make([]PtrRecord, len(source.PTRRecords))
 		for ptrRecordIndex, ptrRecordItem := range source.PTRRecords {
-			// Shadow the loop variable to avoid aliasing
-			ptrRecordItem := ptrRecordItem
 			var ptrRecord PtrRecord
 			err := ptrRecord.AssignProperties_From_PtrRecord(&ptrRecordItem)
 			if err != nil {
@@ -847,8 +836,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.SRVRecords != nil {
 		srvRecordList := make([]SrvRecord, len(source.SRVRecords))
 		for srvRecordIndex, srvRecordItem := range source.SRVRecords {
-			// Shadow the loop variable to avoid aliasing
-			srvRecordItem := srvRecordItem
 			var srvRecord SrvRecord
 			err := srvRecord.AssignProperties_From_SrvRecord(&srvRecordItem)
 			if err != nil {
@@ -868,8 +855,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_From_DnsZonesARecord_Spec(s
 	if source.TXTRecords != nil {
 		txtRecordList := make([]TxtRecord, len(source.TXTRecords))
 		for txtRecordIndex, txtRecordItem := range source.TXTRecords {
-			// Shadow the loop variable to avoid aliasing
-			txtRecordItem := txtRecordItem
 			var txtRecord TxtRecord
 			err := txtRecord.AssignProperties_From_TxtRecord(&txtRecordItem)
 			if err != nil {
@@ -907,8 +892,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.AAAARecords != nil {
 		aaaaRecordList := make([]storage.AaaaRecord, len(record.AAAARecords))
 		for aaaaRecordIndex, aaaaRecordItem := range record.AAAARecords {
-			// Shadow the loop variable to avoid aliasing
-			aaaaRecordItem := aaaaRecordItem
 			var aaaaRecord storage.AaaaRecord
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord(&aaaaRecord)
 			if err != nil {
@@ -925,8 +908,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.ARecords != nil {
 		aRecordList := make([]storage.ARecord, len(record.ARecords))
 		for aRecordIndex, aRecordItem := range record.ARecords {
-			// Shadow the loop variable to avoid aliasing
-			aRecordItem := aRecordItem
 			var aRecord storage.ARecord
 			err := aRecordItem.AssignProperties_To_ARecord(&aRecord)
 			if err != nil {
@@ -958,8 +939,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.CaaRecords != nil {
 		caaRecordList := make([]storage.CaaRecord, len(record.CaaRecords))
 		for caaRecordIndex, caaRecordItem := range record.CaaRecords {
-			// Shadow the loop variable to avoid aliasing
-			caaRecordItem := caaRecordItem
 			var caaRecord storage.CaaRecord
 			err := caaRecordItem.AssignProperties_To_CaaRecord(&caaRecord)
 			if err != nil {
@@ -979,8 +958,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.MXRecords != nil {
 		mxRecordList := make([]storage.MxRecord, len(record.MXRecords))
 		for mxRecordIndex, mxRecordItem := range record.MXRecords {
-			// Shadow the loop variable to avoid aliasing
-			mxRecordItem := mxRecordItem
 			var mxRecord storage.MxRecord
 			err := mxRecordItem.AssignProperties_To_MxRecord(&mxRecord)
 			if err != nil {
@@ -1000,8 +977,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.NSRecords != nil {
 		nsRecordList := make([]storage.NsRecord, len(record.NSRecords))
 		for nsRecordIndex, nsRecordItem := range record.NSRecords {
-			// Shadow the loop variable to avoid aliasing
-			nsRecordItem := nsRecordItem
 			var nsRecord storage.NsRecord
 			err := nsRecordItem.AssignProperties_To_NsRecord(&nsRecord)
 			if err != nil {
@@ -1041,8 +1016,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.PTRRecords != nil {
 		ptrRecordList := make([]storage.PtrRecord, len(record.PTRRecords))
 		for ptrRecordIndex, ptrRecordItem := range record.PTRRecords {
-			// Shadow the loop variable to avoid aliasing
-			ptrRecordItem := ptrRecordItem
 			var ptrRecord storage.PtrRecord
 			err := ptrRecordItem.AssignProperties_To_PtrRecord(&ptrRecord)
 			if err != nil {
@@ -1071,8 +1044,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.SRVRecords != nil {
 		srvRecordList := make([]storage.SrvRecord, len(record.SRVRecords))
 		for srvRecordIndex, srvRecordItem := range record.SRVRecords {
-			// Shadow the loop variable to avoid aliasing
-			srvRecordItem := srvRecordItem
 			var srvRecord storage.SrvRecord
 			err := srvRecordItem.AssignProperties_To_SrvRecord(&srvRecord)
 			if err != nil {
@@ -1092,8 +1063,6 @@ func (record *DnsZonesARecord_Spec) AssignProperties_To_DnsZonesARecord_Spec(des
 	if record.TXTRecords != nil {
 		txtRecordList := make([]storage.TxtRecord, len(record.TXTRecords))
 		for txtRecordIndex, txtRecordItem := range record.TXTRecords {
-			// Shadow the loop variable to avoid aliasing
-			txtRecordItem := txtRecordItem
 			var txtRecord storage.TxtRecord
 			err := txtRecordItem.AssignProperties_To_TxtRecord(&txtRecord)
 			if err != nil {
@@ -1136,8 +1105,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.AAAARecords != nil {
 		aaaaRecordList := make([]AaaaRecord, len(source.AAAARecords))
 		for aaaaRecordIndex, aaaaRecordItem := range source.AAAARecords {
-			// Shadow the loop variable to avoid aliasing
-			aaaaRecordItem := aaaaRecordItem
 			var aaaaRecord AaaaRecord
 			err := aaaaRecord.Initialize_From_AaaaRecord_STATUS(&aaaaRecordItem)
 			if err != nil {
@@ -1154,8 +1121,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.ARecords != nil {
 		aRecordList := make([]ARecord, len(source.ARecords))
 		for aRecordIndex, aRecordItem := range source.ARecords {
-			// Shadow the loop variable to avoid aliasing
-			aRecordItem := aRecordItem
 			var aRecord ARecord
 			err := aRecord.Initialize_From_ARecord_STATUS(&aRecordItem)
 			if err != nil {
@@ -1184,8 +1149,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.CaaRecords != nil {
 		caaRecordList := make([]CaaRecord, len(source.CaaRecords))
 		for caaRecordIndex, caaRecordItem := range source.CaaRecords {
-			// Shadow the loop variable to avoid aliasing
-			caaRecordItem := caaRecordItem
 			var caaRecord CaaRecord
 			err := caaRecord.Initialize_From_CaaRecord_STATUS(&caaRecordItem)
 			if err != nil {
@@ -1205,8 +1168,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.MXRecords != nil {
 		mxRecordList := make([]MxRecord, len(source.MXRecords))
 		for mxRecordIndex, mxRecordItem := range source.MXRecords {
-			// Shadow the loop variable to avoid aliasing
-			mxRecordItem := mxRecordItem
 			var mxRecord MxRecord
 			err := mxRecord.Initialize_From_MxRecord_STATUS(&mxRecordItem)
 			if err != nil {
@@ -1226,8 +1187,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.NSRecords != nil {
 		nsRecordList := make([]NsRecord, len(source.NSRecords))
 		for nsRecordIndex, nsRecordItem := range source.NSRecords {
-			// Shadow the loop variable to avoid aliasing
-			nsRecordItem := nsRecordItem
 			var nsRecord NsRecord
 			err := nsRecord.Initialize_From_NsRecord_STATUS(&nsRecordItem)
 			if err != nil {
@@ -1244,8 +1203,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.PTRRecords != nil {
 		ptrRecordList := make([]PtrRecord, len(source.PTRRecords))
 		for ptrRecordIndex, ptrRecordItem := range source.PTRRecords {
-			// Shadow the loop variable to avoid aliasing
-			ptrRecordItem := ptrRecordItem
 			var ptrRecord PtrRecord
 			err := ptrRecord.Initialize_From_PtrRecord_STATUS(&ptrRecordItem)
 			if err != nil {
@@ -1274,8 +1231,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.SRVRecords != nil {
 		srvRecordList := make([]SrvRecord, len(source.SRVRecords))
 		for srvRecordIndex, srvRecordItem := range source.SRVRecords {
-			// Shadow the loop variable to avoid aliasing
-			srvRecordItem := srvRecordItem
 			var srvRecord SrvRecord
 			err := srvRecord.Initialize_From_SrvRecord_STATUS(&srvRecordItem)
 			if err != nil {
@@ -1295,8 +1250,6 @@ func (record *DnsZonesARecord_Spec) Initialize_From_DnsZonesARecord_STATUS(sourc
 	if source.TXTRecords != nil {
 		txtRecordList := make([]TxtRecord, len(source.TXTRecords))
 		for txtRecordIndex, txtRecordItem := range source.TXTRecords {
-			// Shadow the loop variable to avoid aliasing
-			txtRecordItem := txtRecordItem
 			var txtRecord TxtRecord
 			err := txtRecord.Initialize_From_TxtRecord_STATUS(&txtRecordItem)
 			if err != nil {
@@ -1680,8 +1633,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.AAAARecords != nil {
 		aaaaRecordList := make([]AaaaRecord_STATUS, len(source.AAAARecords))
 		for aaaaRecordIndex, aaaaRecordItem := range source.AAAARecords {
-			// Shadow the loop variable to avoid aliasing
-			aaaaRecordItem := aaaaRecordItem
 			var aaaaRecord AaaaRecord_STATUS
 			err := aaaaRecord.AssignProperties_From_AaaaRecord_STATUS(&aaaaRecordItem)
 			if err != nil {
@@ -1698,8 +1649,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.ARecords != nil {
 		aRecordList := make([]ARecord_STATUS, len(source.ARecords))
 		for aRecordIndex, aRecordItem := range source.ARecords {
-			// Shadow the loop variable to avoid aliasing
-			aRecordItem := aRecordItem
 			var aRecord ARecord_STATUS
 			err := aRecord.AssignProperties_From_ARecord_STATUS(&aRecordItem)
 			if err != nil {
@@ -1728,8 +1677,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.CaaRecords != nil {
 		caaRecordList := make([]CaaRecord_STATUS, len(source.CaaRecords))
 		for caaRecordIndex, caaRecordItem := range source.CaaRecords {
-			// Shadow the loop variable to avoid aliasing
-			caaRecordItem := caaRecordItem
 			var caaRecord CaaRecord_STATUS
 			err := caaRecord.AssignProperties_From_CaaRecord_STATUS(&caaRecordItem)
 			if err != nil {
@@ -1758,8 +1705,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.MXRecords != nil {
 		mxRecordList := make([]MxRecord_STATUS, len(source.MXRecords))
 		for mxRecordIndex, mxRecordItem := range source.MXRecords {
-			// Shadow the loop variable to avoid aliasing
-			mxRecordItem := mxRecordItem
 			var mxRecord MxRecord_STATUS
 			err := mxRecord.AssignProperties_From_MxRecord_STATUS(&mxRecordItem)
 			if err != nil {
@@ -1779,8 +1724,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.NSRecords != nil {
 		nsRecordList := make([]NsRecord_STATUS, len(source.NSRecords))
 		for nsRecordIndex, nsRecordItem := range source.NSRecords {
-			// Shadow the loop variable to avoid aliasing
-			nsRecordItem := nsRecordItem
 			var nsRecord NsRecord_STATUS
 			err := nsRecord.AssignProperties_From_NsRecord_STATUS(&nsRecordItem)
 			if err != nil {
@@ -1800,8 +1743,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.PTRRecords != nil {
 		ptrRecordList := make([]PtrRecord_STATUS, len(source.PTRRecords))
 		for ptrRecordIndex, ptrRecordItem := range source.PTRRecords {
-			// Shadow the loop variable to avoid aliasing
-			ptrRecordItem := ptrRecordItem
 			var ptrRecord PtrRecord_STATUS
 			err := ptrRecord.AssignProperties_From_PtrRecord_STATUS(&ptrRecordItem)
 			if err != nil {
@@ -1833,8 +1774,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.SRVRecords != nil {
 		srvRecordList := make([]SrvRecord_STATUS, len(source.SRVRecords))
 		for srvRecordIndex, srvRecordItem := range source.SRVRecords {
-			// Shadow the loop variable to avoid aliasing
-			srvRecordItem := srvRecordItem
 			var srvRecord SrvRecord_STATUS
 			err := srvRecord.AssignProperties_From_SrvRecord_STATUS(&srvRecordItem)
 			if err != nil {
@@ -1854,8 +1793,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_From_DnsZonesARecord_STAT
 	if source.TXTRecords != nil {
 		txtRecordList := make([]TxtRecord_STATUS, len(source.TXTRecords))
 		for txtRecordIndex, txtRecordItem := range source.TXTRecords {
-			// Shadow the loop variable to avoid aliasing
-			txtRecordItem := txtRecordItem
 			var txtRecord TxtRecord_STATUS
 			err := txtRecord.AssignProperties_From_TxtRecord_STATUS(&txtRecordItem)
 			if err != nil {
@@ -1896,8 +1833,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.AAAARecords != nil {
 		aaaaRecordList := make([]storage.AaaaRecord_STATUS, len(record.AAAARecords))
 		for aaaaRecordIndex, aaaaRecordItem := range record.AAAARecords {
-			// Shadow the loop variable to avoid aliasing
-			aaaaRecordItem := aaaaRecordItem
 			var aaaaRecord storage.AaaaRecord_STATUS
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord_STATUS(&aaaaRecord)
 			if err != nil {
@@ -1914,8 +1849,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.ARecords != nil {
 		aRecordList := make([]storage.ARecord_STATUS, len(record.ARecords))
 		for aRecordIndex, aRecordItem := range record.ARecords {
-			// Shadow the loop variable to avoid aliasing
-			aRecordItem := aRecordItem
 			var aRecord storage.ARecord_STATUS
 			err := aRecordItem.AssignProperties_To_ARecord_STATUS(&aRecord)
 			if err != nil {
@@ -1944,8 +1877,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.CaaRecords != nil {
 		caaRecordList := make([]storage.CaaRecord_STATUS, len(record.CaaRecords))
 		for caaRecordIndex, caaRecordItem := range record.CaaRecords {
-			// Shadow the loop variable to avoid aliasing
-			caaRecordItem := caaRecordItem
 			var caaRecord storage.CaaRecord_STATUS
 			err := caaRecordItem.AssignProperties_To_CaaRecord_STATUS(&caaRecord)
 			if err != nil {
@@ -1974,8 +1905,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.MXRecords != nil {
 		mxRecordList := make([]storage.MxRecord_STATUS, len(record.MXRecords))
 		for mxRecordIndex, mxRecordItem := range record.MXRecords {
-			// Shadow the loop variable to avoid aliasing
-			mxRecordItem := mxRecordItem
 			var mxRecord storage.MxRecord_STATUS
 			err := mxRecordItem.AssignProperties_To_MxRecord_STATUS(&mxRecord)
 			if err != nil {
@@ -1995,8 +1924,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.NSRecords != nil {
 		nsRecordList := make([]storage.NsRecord_STATUS, len(record.NSRecords))
 		for nsRecordIndex, nsRecordItem := range record.NSRecords {
-			// Shadow the loop variable to avoid aliasing
-			nsRecordItem := nsRecordItem
 			var nsRecord storage.NsRecord_STATUS
 			err := nsRecordItem.AssignProperties_To_NsRecord_STATUS(&nsRecord)
 			if err != nil {
@@ -2016,8 +1943,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.PTRRecords != nil {
 		ptrRecordList := make([]storage.PtrRecord_STATUS, len(record.PTRRecords))
 		for ptrRecordIndex, ptrRecordItem := range record.PTRRecords {
-			// Shadow the loop variable to avoid aliasing
-			ptrRecordItem := ptrRecordItem
 			var ptrRecord storage.PtrRecord_STATUS
 			err := ptrRecordItem.AssignProperties_To_PtrRecord_STATUS(&ptrRecord)
 			if err != nil {
@@ -2049,8 +1974,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.SRVRecords != nil {
 		srvRecordList := make([]storage.SrvRecord_STATUS, len(record.SRVRecords))
 		for srvRecordIndex, srvRecordItem := range record.SRVRecords {
-			// Shadow the loop variable to avoid aliasing
-			srvRecordItem := srvRecordItem
 			var srvRecord storage.SrvRecord_STATUS
 			err := srvRecordItem.AssignProperties_To_SrvRecord_STATUS(&srvRecord)
 			if err != nil {
@@ -2070,8 +1993,6 @@ func (record *DnsZonesARecord_STATUS) AssignProperties_To_DnsZonesARecord_STATUS
 	if record.TXTRecords != nil {
 		txtRecordList := make([]storage.TxtRecord_STATUS, len(record.TXTRecords))
 		for txtRecordIndex, txtRecordItem := range record.TXTRecords {
-			// Shadow the loop variable to avoid aliasing
-			txtRecordItem := txtRecordItem
 			var txtRecord storage.TxtRecord_STATUS
 			err := txtRecordItem.AssignProperties_To_TxtRecord_STATUS(&txtRecord)
 			if err != nil {
@@ -2126,8 +2047,6 @@ func (operator *DnsZonesARecordOperatorSpec) AssignProperties_From_DnsZonesAReco
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2144,8 +2063,6 @@ func (operator *DnsZonesARecordOperatorSpec) AssignProperties_From_DnsZonesAReco
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2171,8 +2088,6 @@ func (operator *DnsZonesARecordOperatorSpec) AssignProperties_To_DnsZonesARecord
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2189,8 +2104,6 @@ func (operator *DnsZonesARecordOperatorSpec) AssignProperties_To_DnsZonesARecord
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

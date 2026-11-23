@@ -45,3 +45,19 @@ type VSphereCluster struct{}
 func (webhook *VSphereCluster) SetupWebhookWithManager(mgr ctrl.Manager, networkProvider string) error {
 	return (&vmware.VSphereCluster{NetworkProvider: networkProvider}).SetupWebhookWithManager(mgr)
 }
+
+// VSphereClusterTemplate implements a validation and defaulting webhook for VSphereClusterTemplate.
+type VSphereClusterTemplate struct{}
+
+// SetupWebhookWithManager sets up VSphereClusterTemplate webhooks.
+func (webhook *VSphereClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager, networkProvider string) error {
+	return (&vmware.VSphereClusterTemplate{NetworkProvider: networkProvider}).SetupWebhookWithManager(mgr)
+}
+
+// ProviderServiceAccount implements a converter for ProviderServiceAccount.
+type ProviderServiceAccount struct{}
+
+// SetupWebhookWithManager sets up ProviderServiceAccount webhooks.
+func (webhook *ProviderServiceAccount) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return (&vmware.ProviderServiceAccount{}).SetupWebhookWithManager(mgr)
+}

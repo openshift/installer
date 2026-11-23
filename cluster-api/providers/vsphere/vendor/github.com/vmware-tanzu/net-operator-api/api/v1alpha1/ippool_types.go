@@ -1,5 +1,6 @@
-// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2020-2024 Broadcom. All Rights Reserved.
+// Broadcom Confidential. The term "Broadcom" refers to Broadcom Inc.
+// and/or its subsidiaries.
 
 package v1alpha1
 
@@ -63,7 +64,7 @@ type IPPoolCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
-// IPPoolSpec defines the desired state of IPPool
+// IPPoolSpec defines the desired state of IPPool.
 type IPPoolSpec struct {
 	// StartingAddress represents the starting IP address of the pool.
 	StartingAddress string `json:"startingAddress"`
@@ -73,6 +74,8 @@ type IPPoolSpec struct {
 
 // IPPoolStatus defines the current state of IPPool.
 type IPPoolStatus struct {
+	// Allocated represents the number of IP addresses currently allocated to services.
+	Allocated int64 `json:"allocated,omitempty"`
 	// Conditions is an array of current observed IPPool conditions.
 	Conditions []IPPoolCondition `json:"conditions,omitempty"`
 }
@@ -92,6 +95,13 @@ type IPPool struct {
 
 	Spec   IPPoolSpec   `json:"spec,omitempty"`
 	Status IPPoolStatus `json:"status,omitempty"`
+}
+
+type IPPoolReference struct {
+	// Name of the IPPool resource being referenced.
+	Name string `json:"name"`
+	// API version of the referent.
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 // +kubebuilder:object:root=true

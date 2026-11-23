@@ -22,40 +22,36 @@ import (
 	"net"
 	"reflect"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/conversion"
 )
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=validation.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=default.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-vspheremachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta2,name=validation.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-vspheremachine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta2,name=default.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // VSphereMachine implements a validation and defaulting webhook for VSphereMachine.
 type VSphereMachine struct{}
 
-var _ webhook.CustomValidator = &VSphereMachine{}
-var _ webhook.CustomDefaulter = &VSphereMachine{}
+var _ admission.Validator[*infrav1.VSphereMachine] = &VSphereMachine{}
+var _ admission.Defaulter[*infrav1.VSphereMachine] = &VSphereMachine{}
 
 func (webhook *VSphereMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.VSphereMachine{}).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.VSphereMachine{}).
 		WithValidator(webhook).
-		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
+		WithDefaulter(webhook).
+		WithConverter(conversion.VSphereMachine).
 		Complete()
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereMachine) Default(_ context.Context, obj runtime.Object) error {
-	objValue, ok := obj.(*infrav1.VSphereMachine)
-	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachine but got a %T", obj))
-	}
+func (webhook *VSphereMachine) Default(_ context.Context, objValue *infrav1.VSphereMachine) error {
 	if objValue.Spec.Datacenter == "" {
 		objValue.Spec.Datacenter = "*"
 	}
@@ -63,18 +59,10 @@ func (webhook *VSphereMachine) Default(_ context.Context, obj runtime.Object) er
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachine) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateCreate(_ context.Context, obj *infrav1.VSphereMachine) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
-	obj, ok := raw.(*infrav1.VSphereMachine)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachine but got a %T", raw))
-	}
 	spec := obj.Spec
-
-	if spec.Network.PreferredAPIServerCIDR != "" {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "PreferredAPIServerCIDR"), spec.Network.PreferredAPIServerCIDR, "cannot be set, as it will be removed and is no longer used"))
-	}
 
 	for i, device := range spec.Network.Devices {
 		for j, ip := range device.IPAddrs {
@@ -84,12 +72,9 @@ func (webhook *VSphereMachine) ValidateCreate(_ context.Context, raw runtime.Obj
 		}
 	}
 
-	if spec.GuestSoftPowerOffTimeout != nil {
+	if spec.GuestSoftPowerOffTimeoutSeconds != 0 {
 		if spec.PowerOffMode != infrav1.VirtualMachinePowerOpModeTrySoft {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeout, "should not be set in templates unless the powerOffMode is trySoft"))
-		}
-		if spec.GuestSoftPowerOffTimeout.Duration <= 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeout, "should be greater than 0"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeoutSeconds, "should not be set in templates unless the powerOffMode is trySoft"))
 		}
 	}
 	pciErrs := validatePCIDevices(spec.PciDevices)
@@ -99,36 +84,29 @@ func (webhook *VSphereMachine) ValidateCreate(_ context.Context, raw runtime.Obj
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachine) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateUpdate(_ context.Context, oldTyped, newTyped *infrav1.VSphereMachine) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
-	newTyped, ok := newRaw.(*infrav1.VSphereMachine)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachine but got a %T", newRaw))
-	}
-	if newTyped.Spec.GuestSoftPowerOffTimeout != nil {
+	if newTyped.Spec.GuestSoftPowerOffTimeoutSeconds != 0 {
 		if newTyped.Spec.PowerOffMode != infrav1.VirtualMachinePowerOpModeTrySoft {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), newTyped.Spec.GuestSoftPowerOffTimeout, "should not be set in templates unless the powerOffMode is trySoft"))
-		}
-		if newTyped.Spec.GuestSoftPowerOffTimeout.Duration <= 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), newTyped.Spec.GuestSoftPowerOffTimeout, "should be greater than 0"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), newTyped.Spec.GuestSoftPowerOffTimeoutSeconds, "should not be set in templates unless the powerOffMode is trySoft"))
 		}
 	}
 
-	newVSphereMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newRaw)
+	newVSphereMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newTyped)
 	if err != nil {
-		return nil, apierrors.NewInternalError(errors.Wrap(err, "failed to convert new VSphereMachine to unstructured object"))
+		return nil, apierrors.NewInternalError(pkgerrors.Wrap(err, "failed to convert new VSphereMachine to unstructured object"))
 	}
 
-	oldVSphereMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldRaw)
+	oldVSphereMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldTyped)
 	if err != nil {
-		return nil, apierrors.NewInternalError(errors.Wrap(err, "failed to convert old VSphereMachine to unstructured object"))
+		return nil, apierrors.NewInternalError(pkgerrors.Wrap(err, "failed to convert old VSphereMachine to unstructured object"))
 	}
 
 	newVSphereMachineSpec := newVSphereMachine["spec"].(map[string]interface{})
 	oldVSphereMachineSpec := oldVSphereMachine["spec"].(map[string]interface{})
 
-	allowChangeKeys := []string{"providerID", "powerOffMode", "guestSoftPowerOffTimeout"}
+	allowChangeKeys := []string{"providerID", "powerOffMode", "guestSoftPowerOffTimeoutSeconds"}
 	for _, key := range allowChangeKeys {
 		delete(oldVSphereMachineSpec, key)
 		delete(newVSphereMachineSpec, key)
@@ -159,7 +137,7 @@ func (webhook *VSphereMachine) ValidateUpdate(_ context.Context, oldRaw runtime.
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachine) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachine) ValidateDelete(_ context.Context, _ *infrav1.VSphereMachine) (admission.Warnings, error) {
 	return nil, nil
 }
 

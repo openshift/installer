@@ -32,8 +32,10 @@ func (administrator *FlexibleServersAdministrator_Spec) GetType() string {
 // The properties of an administrator.
 type AdministratorProperties struct {
 	// AdministratorType: Type of the sever administrator.
-	AdministratorType  *AdministratorProperties_AdministratorType `json:"administratorType,omitempty"`
-	IdentityResourceId *string                                    `json:"identityResourceId,omitempty"`
+	AdministratorType *AdministratorProperties_AdministratorType `json:"administratorType,omitempty"`
+
+	// IdentityResourceId: The resource id of the identity used for AAD Authentication.
+	IdentityResourceId *string `json:"identityResourceId,omitempty"`
 
 	// Login: Login name of the server administrator.
 	Login *string `json:"login,omitempty"`

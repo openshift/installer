@@ -29,7 +29,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	// Only the service instance is guaranteed to exist and be passed via the install config
 	// The other two, we should standardize a name including the cluster id.
 	image := fmt.Sprintf("rhcos-%s", clusterID)
-	var network string
+	network := networkName(clusterID, platform)
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
 	}
@@ -111,6 +111,18 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	utils.SetCPMSOSStreamLabels(controlPlaneMachineSet, config)
 	return machines, controlPlaneMachineSet, nil
+}
+
+// networkName returns the name of the PowerVS network the machines should attach to.
+// For the DHCPSubnet network type, the installer creates a plain PowerVS network named
+// "<infraID>-network". For the legacy DHCPServer type, the network is created by the DHCP
+// server with a generated "DHCPSERVER...<infraID>..._Private" name, so an empty name is
+// returned and provider() falls back to a regular expression.
+func networkName(clusterID string, platform *powervs.Platform) string {
+	if platform.NetworkType == powervs.NetworkTypeDHCPServer {
+		return ""
+	}
+	return fmt.Sprintf("%s-network", clusterID)
 }
 
 func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*machinev1.PowerVSMachineProviderConfig, error) {

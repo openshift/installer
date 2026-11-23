@@ -146,7 +146,7 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 			return err
 		}
 	case powervs.Name:
-		client, err := powervsconfig.NewClient()
+		client, err := powervsconfig.NewClientWithEndpoints(ic.Config.Platform.PowerVS.ServiceEndpoints)
 		if err != nil {
 			return err
 		}

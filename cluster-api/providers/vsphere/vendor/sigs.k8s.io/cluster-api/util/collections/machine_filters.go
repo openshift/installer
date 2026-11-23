@@ -22,6 +22,7 @@ import (
 	"github.com/blang/semver/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,7 +32,7 @@ import (
 	"sigs.k8s.io/cluster-api/util/conditions"
 )
 
-// Func is the functon definition for a filter.
+// Func is the function definition for a filter.
 type Func func(machine *clusterv1.Machine) bool
 
 // And returns a filter that returns true if all of the given filters returns true.
@@ -100,13 +101,13 @@ func InFailureDomains(failureDomains ...string) Func {
 }
 
 // OwnedMachines returns a filter to find all machines owned by specified owner.
-// Usage: GetFilteredMachinesForCluster(ctx, client, cluster, OwnedMachines(controlPlane)).
-func OwnedMachines(owner client.Object) func(machine *clusterv1.Machine) bool {
+// Usage: GetFilteredMachinesForCluster(ctx, client, cluster, OwnedMachines(controlPlane, controlPlaneGK)).
+func OwnedMachines(owner client.Object, ownerGK schema.GroupKind) func(machine *clusterv1.Machine) bool {
 	return func(machine *clusterv1.Machine) bool {
 		if machine == nil {
 			return false
 		}
-		return util.IsOwnedByObject(machine, owner)
+		return util.IsOwnedByObject(machine, owner, ownerGK)
 	}
 }
 

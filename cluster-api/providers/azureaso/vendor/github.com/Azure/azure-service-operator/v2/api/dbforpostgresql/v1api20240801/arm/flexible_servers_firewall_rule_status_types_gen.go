@@ -11,7 +11,7 @@ type FlexibleServersFirewallRule_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Properties: The properties of a firewall rule.
+	// Properties: Properties of a firewall rule.
 	Properties *FirewallRuleProperties_STATUS `json:"properties,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -21,11 +21,12 @@ type FlexibleServersFirewallRule_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// The properties of a server firewall rule.
+// Properties of a firewall rule.
 type FirewallRuleProperties_STATUS struct {
-	// EndIpAddress: The end IP address of the server firewall rule. Must be IPv4 format.
+	// EndIpAddress: IP address defining the end of the range of addresses of a firewall rule. Must be expressed in IPv4 format.
 	EndIpAddress *string `json:"endIpAddress,omitempty"`
 
-	// StartIpAddress: The start IP address of the server firewall rule. Must be IPv4 format.
+	// StartIpAddress: IP address defining the start of the range of addresses of a firewall rule. Must be expressed in IPv4
+	// format.
 	StartIpAddress *string `json:"startIpAddress,omitempty"`
 }

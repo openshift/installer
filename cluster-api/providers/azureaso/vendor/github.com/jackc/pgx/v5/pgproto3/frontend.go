@@ -52,6 +52,7 @@ type Frontend struct {
 	readyForQuery                   ReadyForQuery
 	rowDescription                  RowDescription
 	portalSuspended                 PortalSuspended
+	negotiateProtocolVersion        NegotiateProtocolVersion
 
 	bodyLen    int
 	maxBodyLen int // maxBodyLen is the maximum length of a message body in octets. If a message body exceeds this length, Receive will return an error.
@@ -61,9 +62,13 @@ type Frontend struct {
 }
 
 // NewFrontend creates a new Frontend.
+//
+// The maximum accepted message body length defaults to the same ~1 GiB limit the PostgreSQL
+// server enforces on inbound messages (PQ_LARGE_MESSAGE_LIMIT in src/include/libpq/libpq.h).
+// Use [Frontend.SetMaxBodyLen] to change or remove the limit.
 func NewFrontend(r io.Reader, w io.Writer) *Frontend {
 	cr := newChunkReader(r, 0)
-	return &Frontend{cr: cr, w: w}
+	return &Frontend{cr: cr, w: w, maxBodyLen: maxMessageBodyLen}
 }
 
 // Send sends a message to the backend (i.e. the server). The message is buffered until Flush is called. Any error
@@ -230,7 +235,7 @@ func (f *Frontend) SendExecute(msg *Execute) {
 	f.wbuf = newBuf
 
 	if f.tracer != nil {
-		f.tracer.TraceQueryute('F', int32(len(f.wbuf)-prevLen), msg)
+		f.tracer.traceExecute('F', int32(len(f.wbuf)-prevLen), msg)
 	}
 }
 
@@ -312,7 +317,7 @@ func (f *Frontend) Receive() (BackendMessage, error) {
 
 		f.msgType = header[0]
 
-		msgLength := int(binary.BigEndian.Uint32(header[1:]))
+		msgLength := int(int32(binary.BigEndian.Uint32(header[1:])))
 		if msgLength < 4 {
 			return nil, fmt.Errorf("invalid message length: %d", msgLength)
 		}
@@ -383,6 +388,8 @@ func (f *Frontend) Receive() (BackendMessage, error) {
 		msg = &f.copyBothResponse
 	case 'Z':
 		msg = &f.readyForQuery
+	case 'v':
+		msg = &f.negotiateProtocolVersion
 	default:
 		return nil, fmt.Errorf("unknown message type: %c", f.msgType)
 	}

@@ -71,25 +71,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.NICSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of NICSpecs to reconcile each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error creating) -> operationNotDoneError (i.e. creating in progress) -> no error (i.e. created)
-	var result error
-	for _, nicSpec := range specs {
-		if _, err := s.CreateOrUpdateResource(ctx, nicSpec, serviceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-
-	s.Scope.UpdatePutStatus(infrav1.NetworkInterfaceReadyCondition, serviceName, result)
-	return result
+	return azure.ReconcileAll(ctx, s.Reconciler, s.Scope, s.Scope.NICSpecs(), serviceName, infrav1.NetworkInterfaceReadyCondition)
 }
 
 // Delete deletes the network interface with the provided name.
@@ -100,25 +82,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.NICSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of NICSpecs to delete each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error deleting) -> operationNotDoneError (i.e. deleting in progress) -> no error (i.e. deleted)
-	var result error
-	for _, nicSpec := range specs {
-		if err := s.DeleteResource(ctx, nicSpec, serviceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-
-	s.Scope.UpdateDeleteStatus(infrav1.NetworkInterfaceReadyCondition, serviceName, result)
-	return result
+	return azure.DeleteAll(ctx, s.Reconciler, s.Scope, s.Scope.NICSpecs(), serviceName, infrav1.NetworkInterfaceReadyCondition)
 }
 
 // IsManaged returns always returns true as CAPZ does not support BYO network interfaces.

@@ -549,9 +549,7 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		if len(host.BGPPeers) > 16 {
 			allErrs = append(allErrs, field.TooMany(hostsPath, len(host.BGPPeers), 16))
 		}
-		for j, peer := range host.BGPPeers {
-			allErrs = append(allErrs, validateBGPPeer(peer, hostsPath.Index(j))...)
-		}
+		allErrs = append(allErrs, validateBGPPeers(host.BGPPeers, hostsPath)...)
 	}
 
 	return allErrs
@@ -604,24 +602,84 @@ func validateBGPVIPConfig(bgpConfig *baremetal.BGPVIPConfig, fldPath *field.Path
 		allErrs = append(allErrs, field.TooMany(fldPath.Child("peers"), len(bgpConfig.Peers), 16))
 	}
 
-	for i, peer := range bgpConfig.Peers {
-		peerPath := fldPath.Child("peers").Index(i)
-		allErrs = append(allErrs, validateBGPPeer(peer, peerPath)...)
-	}
+	allErrs = append(allErrs, validateBGPPeers(bgpConfig.Peers, fldPath.Child("peers"))...)
 
+	if len(bgpConfig.Communities) > bgpMaxCommunities {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("communities"), len(bgpConfig.Communities), bgpMaxCommunities))
+	}
+	seenCommunities := sets.New[string]()
 	for i, community := range bgpConfig.Communities {
-		if !bgpCommunityRe.MatchString(community) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("communities").Index(i), community,
-				"must be a standard (AA:NN) or large (AA:BB:CC) BGP community"))
+		communityPath := fldPath.Child("communities").Index(i)
+		if err := validateBGPCommunity(community); err != "" {
+			allErrs = append(allErrs, field.Invalid(communityPath, community, err))
+			continue
 		}
+		if seenCommunities.Has(community) {
+			allErrs = append(allErrs, field.Duplicate(communityPath, community))
+		}
+		seenCommunities.Insert(community)
 	}
 
 	return allErrs
 }
 
+// bgpMaxCommunities mirrors the BGPVIPConfig CRD's communities MaxItems.
+const bgpMaxCommunities = 8
+
 // bgpCommunityRe matches standard (AA:NN) and large (AA:BB:CC) BGP community
-// values.
-var bgpCommunityRe = regexp.MustCompile(`^\d+:\d+(:\d+)?$`)
+// values: colon-separated decimal numbers without leading zeros, as the
+// BGPVIPConfig CRD requires.
+var bgpCommunityRe = regexp.MustCompile(`^(0|[1-9][0-9]*)(:(0|[1-9][0-9]*)){1,2}$`)
+
+// validateBGPCommunity mirrors the BGPVIPConfig CRD's community rules so
+// day-0 input cannot express what the API would reject: standard (RFC 1997)
+// segments are 16-bit, large (RFC 8092) segments are 32-bit. It returns an
+// empty string for a valid community.
+func validateBGPCommunity(community string) string {
+	if !bgpCommunityRe.MatchString(community) {
+		return "must be a standard (AA:NN) or large (AA:BB:CC) BGP community: colon-separated decimal numbers without leading zeros"
+	}
+	segments := strings.Split(community, ":")
+	bits, limit := 16, "65535"
+	if len(segments) == 3 {
+		bits, limit = 32, "4294967295"
+	}
+	for _, segment := range segments {
+		if _, err := strconv.ParseUint(segment, 10, bits); err != nil {
+			if len(segments) == 3 {
+				return fmt.Sprintf("large community (AA:BB:CC) segments must be between 0 and %s", limit)
+			}
+			return fmt.Sprintf("standard community (AA:NN) segments must be between 0 and %s", limit)
+		}
+	}
+	return ""
+}
+
+// validateBGPPeers validates each peer of one list (the default peers, or
+// one host's overrides) and rejects repeated peer addresses within it: the
+// BGPVIPConfig CRD keys both lists by peerAddress, and two password-bearing
+// peers with one address would also share a Secret. The same address in
+// different lists is fine; a host override replaces the defaults.
+func validateBGPPeers(peers []baremetal.BGPPeerConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	seen := sets.New[string]()
+	for i, peer := range peers {
+		peerPath := fldPath.Index(i)
+		allErrs = append(allErrs, validateBGPPeer(peer, peerPath)...)
+		if peer.PeerAddress == "" {
+			continue
+		}
+		if seen.Has(peer.PeerAddress) {
+			allErrs = append(allErrs, field.Duplicate(peerPath.Child("peerAddress"), peer.PeerAddress))
+		}
+		seen.Insert(peer.PeerAddress)
+	}
+	return allErrs
+}
+
+// bgpMaxPasswordBytes mirrors the BGPVIPConfig password contract: the
+// kernel's TCP MD5 key limit (TCP_MD5SIG_MAXKEYLEN).
+const bgpMaxPasswordBytes = 80
 
 func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -650,6 +708,11 @@ func validateBGPPeer(peer baremetal.BGPPeerConfig, fldPath *field.Path) field.Er
 	if peer.PeerReachability != "" && peer.PeerReachability != baremetal.BGPPeerReachabilityDirectlyConnected && peer.PeerReachability != baremetal.BGPPeerReachabilityMultiHop {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("peerReachability"), peer.PeerReachability,
 			[]string{string(baremetal.BGPPeerReachabilityDirectlyConnected), string(baremetal.BGPPeerReachabilityMultiHop)}))
+	}
+
+	// TooLong never echoes the value, so the password stays out of errors.
+	if len(peer.Password) > bgpMaxPasswordBytes {
+		allErrs = append(allErrs, field.TooLong(fldPath.Child("password"), "", bgpMaxPasswordBytes))
 	}
 
 	if peer.Port != 0 && (peer.Port < 1 || peer.Port > 65535) {

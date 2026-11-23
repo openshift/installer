@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/virtualNetworkLinks/{virtualNetworkLinkName}
 type PrivateDnsZonesVirtualNetworkLink struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink) OriginalGVK() *schema.GroupVersio
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/virtualNetworkLinks/{virtualNetworkLinkName}
 type PrivateDnsZonesVirtualNetworkLinkList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -273,7 +274,7 @@ type PrivateDnsZonesVirtualNetworkLink_Spec struct {
 	// ResolutionPolicy: The resolution policy on the virtual network link. Only applicable for virtual network links to
 	// privatelink zones, and for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public
 	// resolution if private dns query resolution results in non-existent domain response.
-	ResolutionPolicy *VirtualNetworkLinkProperties_ResolutionPolicy `json:"resolutionPolicy,omitempty"`
+	ResolutionPolicy *ResolutionPolicy `json:"resolutionPolicy,omitempty"`
 
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
@@ -319,11 +320,11 @@ func (link *PrivateDnsZonesVirtualNetworkLink_Spec) ConvertToARM(resolved genrun
 	if link.ResolutionPolicy != nil {
 		var temp string
 		temp = string(*link.ResolutionPolicy)
-		resolutionPolicy := arm.VirtualNetworkLinkProperties_ResolutionPolicy(temp)
+		resolutionPolicy := arm.ResolutionPolicy(temp)
 		result.Properties.ResolutionPolicy = &resolutionPolicy
 	}
 	if link.VirtualNetwork != nil {
-		virtualNetwork_ARM, err := (*link.VirtualNetwork).ConvertToARM(resolved)
+		virtualNetwork_ARM, err := link.VirtualNetwork.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -391,7 +392,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_Spec) PopulateFromARM(owner genrun
 		if typedInput.Properties.ResolutionPolicy != nil {
 			var temp string
 			temp = string(*typedInput.Properties.ResolutionPolicy)
-			resolutionPolicy := VirtualNetworkLinkProperties_ResolutionPolicy(temp)
+			resolutionPolicy := ResolutionPolicy(temp)
 			link.ResolutionPolicy = &resolutionPolicy
 		}
 	}
@@ -515,7 +516,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_Spec) AssignProperties_From_Privat
 	// ResolutionPolicy
 	if source.ResolutionPolicy != nil {
 		resolutionPolicy := *source.ResolutionPolicy
-		resolutionPolicyTemp := genruntime.ToEnum(resolutionPolicy, virtualNetworkLinkProperties_ResolutionPolicy_Values)
+		resolutionPolicyTemp := genruntime.ToEnum(resolutionPolicy, resolutionPolicy_Values)
 		link.ResolutionPolicy = &resolutionPolicyTemp
 	} else {
 		link.ResolutionPolicy = nil
@@ -638,7 +639,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_Spec) Initialize_From_PrivateDnsZo
 
 	// ResolutionPolicy
 	if source.ResolutionPolicy != nil {
-		resolutionPolicy := genruntime.ToEnum(string(*source.ResolutionPolicy), virtualNetworkLinkProperties_ResolutionPolicy_Values)
+		resolutionPolicy := genruntime.ToEnum(string(*source.ResolutionPolicy), resolutionPolicy_Values)
 		link.ResolutionPolicy = &resolutionPolicy
 	} else {
 		link.ResolutionPolicy = nil
@@ -680,8 +681,8 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 	// Etag: The ETag of the virtual network link.
 	Etag *string `json:"etag,omitempty"`
 
-	// Id: Fully qualified resource Id for the resource. Example -
-	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateDnsZoneName}'.
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
 	// Location: The Azure Region where the resource lives
@@ -692,7 +693,7 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 
 	// ProvisioningState: The provisioning state of the resource. This is a read-only property and any attempt to set this
 	// value will be ignored.
-	ProvisioningState *VirtualNetworkLinkProperties_ProvisioningState_STATUS `json:"provisioningState,omitempty"`
+	ProvisioningState *ProvisioningState_STATUS `json:"provisioningState,omitempty"`
 
 	// RegistrationEnabled: Is auto-registration of virtual machine records in the virtual network in the Private DNS zone
 	// enabled?
@@ -701,12 +702,15 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 	// ResolutionPolicy: The resolution policy on the virtual network link. Only applicable for virtual network links to
 	// privatelink zones, and for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public
 	// resolution if private dns query resolution results in non-existent domain response.
-	ResolutionPolicy *VirtualNetworkLinkProperties_ResolutionPolicy_STATUS `json:"resolutionPolicy,omitempty"`
+	ResolutionPolicy *ResolutionPolicy_STATUS `json:"resolutionPolicy,omitempty"`
+
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
 
 	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// Type: The type of the resource. Example - 'Microsoft.Network/privateDnsZones'.
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 
 	// VirtualNetwork: The reference of the virtual network.
@@ -714,7 +718,7 @@ type PrivateDnsZonesVirtualNetworkLink_STATUS struct {
 
 	// VirtualNetworkLinkState: The status of the virtual network link to the Private DNS zone. Possible values are
 	// 'InProgress' and 'Done'. This is a read-only property and any attempt to set this value will be ignored.
-	VirtualNetworkLinkState *VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS `json:"virtualNetworkLinkState,omitempty"`
+	VirtualNetworkLinkState *VirtualNetworkLinkState_STATUS `json:"virtualNetworkLinkState,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &PrivateDnsZonesVirtualNetworkLink_STATUS{}
@@ -813,7 +817,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) PopulateFromARM(owner genr
 		if typedInput.Properties.ProvisioningState != nil {
 			var temp string
 			temp = string(*typedInput.Properties.ProvisioningState)
-			provisioningState := VirtualNetworkLinkProperties_ProvisioningState_STATUS(temp)
+			provisioningState := ProvisioningState_STATUS(temp)
 			link.ProvisioningState = &provisioningState
 		}
 	}
@@ -833,9 +837,20 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) PopulateFromARM(owner genr
 		if typedInput.Properties.ResolutionPolicy != nil {
 			var temp string
 			temp = string(*typedInput.Properties.ResolutionPolicy)
-			resolutionPolicy := VirtualNetworkLinkProperties_ResolutionPolicy_STATUS(temp)
+			resolutionPolicy := ResolutionPolicy_STATUS(temp)
 			link.ResolutionPolicy = &resolutionPolicy
 		}
+	}
+
+	// Set property "SystemData":
+	if typedInput.SystemData != nil {
+		var systemData1 SystemData_STATUS
+		err := systemData1.PopulateFromARM(owner, *typedInput.SystemData)
+		if err != nil {
+			return err
+		}
+		systemData := systemData1
+		link.SystemData = &systemData
 	}
 
 	// Set property "Tags":
@@ -872,7 +887,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) PopulateFromARM(owner genr
 		if typedInput.Properties.VirtualNetworkLinkState != nil {
 			var temp string
 			temp = string(*typedInput.Properties.VirtualNetworkLinkState)
-			virtualNetworkLinkState := VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS(temp)
+			virtualNetworkLinkState := VirtualNetworkLinkState_STATUS(temp)
 			link.VirtualNetworkLinkState = &virtualNetworkLinkState
 		}
 	}
@@ -902,7 +917,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) AssignProperties_From_Priv
 	// ProvisioningState
 	if source.ProvisioningState != nil {
 		provisioningState := *source.ProvisioningState
-		provisioningStateTemp := genruntime.ToEnum(provisioningState, virtualNetworkLinkProperties_ProvisioningState_STATUS_Values)
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, provisioningState_STATUS_Values)
 		link.ProvisioningState = &provisioningStateTemp
 	} else {
 		link.ProvisioningState = nil
@@ -919,10 +934,22 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) AssignProperties_From_Priv
 	// ResolutionPolicy
 	if source.ResolutionPolicy != nil {
 		resolutionPolicy := *source.ResolutionPolicy
-		resolutionPolicyTemp := genruntime.ToEnum(resolutionPolicy, virtualNetworkLinkProperties_ResolutionPolicy_STATUS_Values)
+		resolutionPolicyTemp := genruntime.ToEnum(resolutionPolicy, resolutionPolicy_STATUS_Values)
 		link.ResolutionPolicy = &resolutionPolicyTemp
 	} else {
 		link.ResolutionPolicy = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		link.SystemData = &systemDatum
+	} else {
+		link.SystemData = nil
 	}
 
 	// Tags
@@ -946,7 +973,7 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) AssignProperties_From_Priv
 	// VirtualNetworkLinkState
 	if source.VirtualNetworkLinkState != nil {
 		virtualNetworkLinkState := *source.VirtualNetworkLinkState
-		virtualNetworkLinkStateTemp := genruntime.ToEnum(virtualNetworkLinkState, virtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Values)
+		virtualNetworkLinkStateTemp := genruntime.ToEnum(virtualNetworkLinkState, virtualNetworkLinkState_STATUS_Values)
 		link.VirtualNetworkLinkState = &virtualNetworkLinkStateTemp
 	} else {
 		link.VirtualNetworkLinkState = nil
@@ -998,6 +1025,18 @@ func (link *PrivateDnsZonesVirtualNetworkLink_STATUS) AssignProperties_To_Privat
 		destination.ResolutionPolicy = &resolutionPolicy
 	} else {
 		destination.ResolutionPolicy = nil
+	}
+
+	// SystemData
+	if link.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := link.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
 	}
 
 	// Tags
@@ -1053,8 +1092,6 @@ func (operator *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) AssignProperties_
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1071,8 +1108,6 @@ func (operator *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) AssignProperties_
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1098,8 +1133,6 @@ func (operator *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) AssignProperties_
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1116,8 +1149,6 @@ func (operator *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) AssignProperties_
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1139,6 +1170,39 @@ func (operator *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) AssignProperties_
 
 	// No error
 	return nil
+}
+
+// The resolution policy on the virtual network link. Only applicable for virtual network links to privatelink zones, and
+// for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public resolution if private
+// dns query resolution results in non-existent domain response.
+// +kubebuilder:validation:Enum={"Default","NxDomainRedirect"}
+type ResolutionPolicy string
+
+const (
+	ResolutionPolicy_Default          = ResolutionPolicy("Default")
+	ResolutionPolicy_NxDomainRedirect = ResolutionPolicy("NxDomainRedirect")
+)
+
+// Mapping from string to ResolutionPolicy
+var resolutionPolicy_Values = map[string]ResolutionPolicy{
+	"default":          ResolutionPolicy_Default,
+	"nxdomainredirect": ResolutionPolicy_NxDomainRedirect,
+}
+
+// The resolution policy on the virtual network link. Only applicable for virtual network links to privatelink zones, and
+// for A,AAAA,CNAME queries. When set to 'NxDomainRedirect', Azure DNS resolver falls back to public resolution if private
+// dns query resolution results in non-existent domain response.
+type ResolutionPolicy_STATUS string
+
+const (
+	ResolutionPolicy_STATUS_Default          = ResolutionPolicy_STATUS("Default")
+	ResolutionPolicy_STATUS_NxDomainRedirect = ResolutionPolicy_STATUS("NxDomainRedirect")
+)
+
+// Mapping from string to ResolutionPolicy_STATUS
+var resolutionPolicy_STATUS_Values = map[string]ResolutionPolicy_STATUS{
+	"default":          ResolutionPolicy_STATUS_Default,
+	"nxdomainredirect": ResolutionPolicy_STATUS_NxDomainRedirect,
 }
 
 // Reference to another subresource.
@@ -1299,65 +1363,19 @@ func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(desti
 	return nil
 }
 
-type VirtualNetworkLinkProperties_ProvisioningState_STATUS string
+// The status of the virtual network link to the Private DNS zone. Possible values are 'InProgress' and 'Done'. This is a
+// read-only property and any attempt to set this value will be ignored.
+type VirtualNetworkLinkState_STATUS string
 
 const (
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Canceled  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Canceled")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Creating  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Creating")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Deleting  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Deleting")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Failed    = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Failed")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Succeeded = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Succeeded")
-	VirtualNetworkLinkProperties_ProvisioningState_STATUS_Updating  = VirtualNetworkLinkProperties_ProvisioningState_STATUS("Updating")
+	VirtualNetworkLinkState_STATUS_Completed  = VirtualNetworkLinkState_STATUS("Completed")
+	VirtualNetworkLinkState_STATUS_InProgress = VirtualNetworkLinkState_STATUS("InProgress")
 )
 
-// Mapping from string to VirtualNetworkLinkProperties_ProvisioningState_STATUS
-var virtualNetworkLinkProperties_ProvisioningState_STATUS_Values = map[string]VirtualNetworkLinkProperties_ProvisioningState_STATUS{
-	"canceled":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Canceled,
-	"creating":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Creating,
-	"deleting":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Deleting,
-	"failed":    VirtualNetworkLinkProperties_ProvisioningState_STATUS_Failed,
-	"succeeded": VirtualNetworkLinkProperties_ProvisioningState_STATUS_Succeeded,
-	"updating":  VirtualNetworkLinkProperties_ProvisioningState_STATUS_Updating,
-}
-
-// +kubebuilder:validation:Enum={"Default","NxDomainRedirect"}
-type VirtualNetworkLinkProperties_ResolutionPolicy string
-
-const (
-	VirtualNetworkLinkProperties_ResolutionPolicy_Default          = VirtualNetworkLinkProperties_ResolutionPolicy("Default")
-	VirtualNetworkLinkProperties_ResolutionPolicy_NxDomainRedirect = VirtualNetworkLinkProperties_ResolutionPolicy("NxDomainRedirect")
-)
-
-// Mapping from string to VirtualNetworkLinkProperties_ResolutionPolicy
-var virtualNetworkLinkProperties_ResolutionPolicy_Values = map[string]VirtualNetworkLinkProperties_ResolutionPolicy{
-	"default":          VirtualNetworkLinkProperties_ResolutionPolicy_Default,
-	"nxdomainredirect": VirtualNetworkLinkProperties_ResolutionPolicy_NxDomainRedirect,
-}
-
-type VirtualNetworkLinkProperties_ResolutionPolicy_STATUS string
-
-const (
-	VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_Default          = VirtualNetworkLinkProperties_ResolutionPolicy_STATUS("Default")
-	VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_NxDomainRedirect = VirtualNetworkLinkProperties_ResolutionPolicy_STATUS("NxDomainRedirect")
-)
-
-// Mapping from string to VirtualNetworkLinkProperties_ResolutionPolicy_STATUS
-var virtualNetworkLinkProperties_ResolutionPolicy_STATUS_Values = map[string]VirtualNetworkLinkProperties_ResolutionPolicy_STATUS{
-	"default":          VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_Default,
-	"nxdomainredirect": VirtualNetworkLinkProperties_ResolutionPolicy_STATUS_NxDomainRedirect,
-}
-
-type VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS string
-
-const (
-	VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Completed  = VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS("Completed")
-	VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_InProgress = VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS("InProgress")
-)
-
-// Mapping from string to VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS
-var virtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Values = map[string]VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS{
-	"completed":  VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_Completed,
-	"inprogress": VirtualNetworkLinkProperties_VirtualNetworkLinkState_STATUS_InProgress,
+// Mapping from string to VirtualNetworkLinkState_STATUS
+var virtualNetworkLinkState_STATUS_Values = map[string]VirtualNetworkLinkState_STATUS{
+	"completed":  VirtualNetworkLinkState_STATUS_Completed,
+	"inprogress": VirtualNetworkLinkState_STATUS_InProgress,
 }
 
 func init() {

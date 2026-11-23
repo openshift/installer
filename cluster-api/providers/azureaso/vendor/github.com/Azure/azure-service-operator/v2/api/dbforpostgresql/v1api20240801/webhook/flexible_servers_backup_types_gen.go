@@ -116,7 +116,12 @@ func (backup *FlexibleServersBackup) ValidateUpdate(ctx context.Context, oldReso
 
 // createValidations validates the creation of the resource
 func (backup *FlexibleServersBackup) createValidations() []func(ctx context.Context, obj *v20240801.FlexibleServersBackup) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240801.FlexibleServersBackup) (admission.Warnings, error){backup.validateResourceReferences, backup.validateOwnerReference, backup.validateSecretDestinations, backup.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240801.FlexibleServersBackup) (admission.Warnings, error){
+		backup.validateResourceReferences,
+		backup.validateOwnerReference,
+		backup.validateSecretDestinations,
+		backup.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

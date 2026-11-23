@@ -24,11 +24,11 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -40,6 +40,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/agentpools"
 	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -103,7 +104,7 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ammpr.WatchFilterValue)).
 		// watch for changes in CAPI MachinePool resources
 		Watches(
-			&expv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(MachinePoolToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("AzureManagedMachinePool"), log)),
 		).
 		// watch for changes in AzureManagedControlPlanes
@@ -116,7 +117,7 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
 			builder.WithPredicates(
-				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, ammpr.WatchFilterValue),
 			),
 		).
@@ -177,7 +178,7 @@ func (ammpr *AzureManagedMachinePoolReconciler) Reconcile(ctx context.Context, r
 	// Fetch the corresponding control plane which has all the interesting data.
 	controlPlane := &infrav1.AzureManagedControlPlane{}
 	controlPlaneName := client.ObjectKey{
-		Namespace: ownerCluster.Spec.ControlPlaneRef.Namespace,
+		Namespace: ownerCluster.Namespace,
 		Name:      ownerCluster.Spec.ControlPlaneRef.Name,
 	}
 	if err := ammpr.Client.Get(ctx, controlPlaneName, controlPlane); err != nil {
@@ -269,8 +270,8 @@ func (ammpr *AzureManagedMachinePoolReconciler) reconcileNormal(ctx context.Cont
 		scope.SetAgentPoolReady(false)
 		// Ensure the ready condition is false, but do not overwrite an existing
 		// error condition which might provide more details.
-		if conditions.IsTrue(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition) {
-			conditions.MarkFalse(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition, infrav1.FailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
+		if v1beta1conditions.IsTrue(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition) {
+			v1beta1conditions.MarkFalse(scope.InfraMachinePool, infrav1.AgentPoolsReadyCondition, infrav1.FailedReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
 		}
 
 		// Handle transient and terminal errors
@@ -325,6 +326,15 @@ func (ammpr *AzureManagedMachinePoolReconciler) reconcileDelete(ctx context.Cont
 
 	if !scope.Cluster.DeletionTimestamp.IsZero() {
 		// Cluster was deleted, skip machine pool deletion and let AKS delete the whole cluster.
+		// The ASO agent pool resource is owned by the AzureManagedMachinePool and
+		// will be garbage collected when the AzureManagedMachinePool is deleted. If
+		// ASO sees a managed deleting agent pool after the parent AKS cluster delete
+		// has started, Azure rejects the child delete as an update to a deleting
+		// cluster. Pause the ASO resource so ASO removes its own finalizer without
+		// issuing the child Azure delete.
+		if err := agentpools.New(scope).Pause(ctx); err != nil && !apierrors.IsNotFound(err) {
+			return reconcile.Result{}, errors.Wrap(err, "failed to pause ASO agent pool before deletion")
+		}
 		// So, remove the finalizer.
 		controllerutil.RemoveFinalizer(scope.InfraMachinePool, infrav1.ClusterFinalizer)
 	} else {

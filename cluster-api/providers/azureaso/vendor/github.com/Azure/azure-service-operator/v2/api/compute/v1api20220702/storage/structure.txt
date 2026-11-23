@@ -99,8 +99,6 @@ augmentConversionForEncryptionSetIdentity: Interface
 
 augmentConversionForEncryptionSetIdentity_STATUS: Interface
 
-augmentConversionForEncryptionSetIdentity_UserAssignedIdentities_STATUS: Interface
-
 augmentConversionForInnerError_STATUS: Interface
 
 augmentConversionForKeyForDiskEncryptionSet: Interface
@@ -110,6 +108,8 @@ augmentConversionForKeyForDiskEncryptionSet_STATUS: Interface
 augmentConversionForSourceVault: Interface
 
 augmentConversionForSourceVault_STATUS: Interface
+
+augmentConversionForUserAssignedIdentitiesValue_STATUS: Interface
 
 augmentConversionForUserAssignedIdentityDetails: Interface
 

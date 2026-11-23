@@ -1,6 +1,7 @@
 package msdsn
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -65,6 +66,7 @@ const (
 	Port                   = "port"
 	TrustServerCertificate = "trustservercertificate"
 	Certificate            = "certificate"
+	ServerCertificate      = "servercertificate"
 	TLSMin                 = "tlsmin"
 	PacketSize             = "packet size"
 	LogParam               = "log"
@@ -77,6 +79,7 @@ const (
 	ApplicationIntent      = "applicationintent"
 	FailoverPartner        = "failoverpartner"
 	FailOverPort           = "failoverport"
+	FailoverPartnerSpn     = "failoverpartnerspn"
 	DisableRetry           = "disableretry"
 	Server                 = "server"
 	Protocol               = "protocol"
@@ -84,7 +87,24 @@ const (
 	Pipe                   = "pipe"
 	MultiSubnetFailover    = "multisubnetfailover"
 	NoTraceID              = "notraceid"
+	GuidConversion         = "guid conversion"
+	Timezone               = "timezone"
+	EpaEnabled             = "epa enabled"
 )
+
+type EncodeParameters struct {
+	// Properly convert GUIDs, using correct byte endianness
+	GuidConversion bool
+	// Timezone is the timezone to use for encoding and decoding datetime values.
+	Timezone *time.Location
+}
+
+func (e EncodeParameters) GetTimezone() *time.Location {
+	if e.Timezone == nil {
+		return time.UTC
+	}
+	return e.Timezone
+}
 
 type Config struct {
 	Port       uint64
@@ -96,8 +116,9 @@ type Config struct {
 	Encryption Encryption
 	TLSConfig  *tls.Config
 
-	FailOverPartner string
-	FailOverPort    uint64
+	FailOverPartner    string
+	FailOverPort       uint64
+	FailOverPartnerSPN string
 
 	// If true the TLSConfig servername should use the routed server.
 	HostInCertificateProvided bool
@@ -141,6 +162,13 @@ type Config struct {
 	// When true, no connection id or trace id value is sent in the prelogin packet.
 	// Some cloud servers may block connections that lack such values.
 	NoTraceID bool
+	// TrustServerCertificate controls whether the client verifies the server certificate.
+	// When true, the server certificate is accepted without validation.
+	TrustServerCertificate bool
+	// Parameters related to type encoding
+	Encoding EncodeParameters
+	// EPA mode determines how the Channel Bindings are calculated.
+	EpaEnabled bool
 }
 
 func readDERFile(filename string) ([]byte, error) {
@@ -175,7 +203,9 @@ func readCertificate(certificate string) ([]byte, error) {
 }
 
 // Build a tls.Config object from the supplied certificate.
-func SetupTLS(certificate string, insecureSkipVerify bool, hostInCertificate string, minTLSVersion string) (*tls.Config, error) {
+// serverCertificate is used for byte-comparison validation (skips chain validation and hostname validation)
+// certificate is used for traditional chain validation
+func SetupTLS(certificate string, serverCertificate string, insecureSkipVerify bool, hostInCertificate string, minTLSVersion string) (*tls.Config, error) {
 	config := tls.Config{
 		ServerName:         hostInCertificate,
 		InsecureSkipVerify: insecureSkipVerify,
@@ -188,6 +218,19 @@ func SetupTLS(certificate string, insecureSkipVerify bool, hostInCertificate str
 		MinVersion:                  TLSVersionFromString(minTLSVersion),
 	}
 
+	// Handle serverCertificate parameter (byte-comparison validation)
+	if len(serverCertificate) > 0 {
+		pem, err := readCertificate(serverCertificate)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read server certificate %q: %w", serverCertificate, err)
+		}
+		if err := setupTLSServerCertificateOnly(&config, pem); err != nil {
+			return nil, err
+		}
+		return &config, nil
+	}
+
+	// Handle certificate parameter (traditional chain validation)
 	if len(certificate) == 0 {
 		return &config, nil
 	}
@@ -195,6 +238,7 @@ func SetupTLS(certificate string, insecureSkipVerify bool, hostInCertificate str
 	if err != nil {
 		return nil, fmt.Errorf("cannot read certificate %q: %w", certificate, err)
 	}
+
 	if strings.Contains(config.ServerName, ":") && !insecureSkipVerify {
 		err := setupTLSCommonName(&config, pem)
 		if err != skipSetup {
@@ -207,8 +251,47 @@ func SetupTLS(certificate string, insecureSkipVerify bool, hostInCertificate str
 	return &config, nil
 }
 
-// Parse and handle encryption parameters. If encryption is desired, it returns the corresponding tls.Config object.
-func parseTLS(params map[string]string, host string) (Encryption, *tls.Config, error) {
+// setupTLSServerCertificateOnly validates that the server certificate matches the provided certificate via byte comparison
+// This matches the behavior of Microsoft.Data.SqlClient
+func setupTLSServerCertificateOnly(config *tls.Config, pemData []byte) error {
+	// To match the behavior of Microsoft.Data.SqlClient, we simply compare the raw bytes
+	// of the server's certificate with the provided certificate file. This approach:
+	// - Does not validate certificate chain, expiry, or subject
+	// - Only checks that the server's certificate exactly matches the provided certificate
+	// - Skips hostname validation (which is the intended behavior)
+	//
+	// We use InsecureSkipVerify=true with VerifyPeerCertificate callback because
+	// VerifyConnection runs AFTER standard verification (including hostname check).
+
+	// Parse the expected certificate from the PEM data
+	block, _ := pem.Decode(pemData)
+	if block == nil {
+		return errors.New("failed to decode PEM certificate")
+	}
+	// Store the raw certificate bytes (DER format) for comparison
+	expectedCertBytes := block.Bytes
+
+	config.InsecureSkipVerify = true
+	config.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+		if len(rawCerts) == 0 {
+			return errors.New("no peer certificates provided")
+		}
+
+		// Compare the server's certificate bytes with the expected certificate bytes
+		// This matches the Microsoft.Data.SqlClient behavior: just compare raw bytes
+		serverCertBytes := rawCerts[0]
+
+		if !bytes.Equal(serverCertBytes, expectedCertBytes) {
+			return errors.New("server certificate doesn't match the provided certificate")
+		}
+
+		return nil
+	}
+	return nil
+}
+
+// parseTLS parses encryption parameters and returns the TLS configuration and trustServerCertificate value.
+func parseTLS(params map[string]string, host string) (Encryption, *tls.Config, bool, error) {
 	trustServerCert := false
 
 	var encryption Encryption = EncryptionOff
@@ -226,7 +309,7 @@ func parseTLS(params map[string]string, host string) (Encryption, *tls.Config, e
 			encryption = EncryptionOff
 		default:
 			f := "invalid encrypt '%s'"
-			return encryption, nil, fmt.Errorf(f, encrypt)
+			return encryption, nil, false, fmt.Errorf(f, encrypt)
 		}
 	} else {
 		trustServerCert = true
@@ -237,22 +320,35 @@ func parseTLS(params map[string]string, host string) (Encryption, *tls.Config, e
 		trustServerCert, err = strconv.ParseBool(trust)
 		if err != nil {
 			f := "invalid trust server certificate '%s': %s"
-			return encryption, nil, fmt.Errorf(f, trust, err.Error())
+			return encryption, nil, false, fmt.Errorf(f, trust, err.Error())
 		}
 	}
 	certificate := params[Certificate]
+	serverCertificate := params[ServerCertificate]
+	hostInCertificate := params[HostNameInCertificate]
+
+	// Validate parameter combinations
+	if len(serverCertificate) > 0 {
+		if len(certificate) > 0 {
+			return encryption, nil, false, errors.New("cannot specify both 'certificate' and 'serverCertificate' parameters")
+		}
+		if len(hostInCertificate) > 0 {
+			return encryption, nil, false, errors.New("cannot specify both 'serverCertificate' and 'hostnameincertificate' parameters")
+		}
+	}
+
 	if encryption != EncryptionDisabled {
 		tlsMin := params[TLSMin]
 		if encrypt == "strict" {
 			trustServerCert = false
 		}
-		tlsConfig, err := SetupTLS(certificate, trustServerCert, host, tlsMin)
+		tlsConfig, err := SetupTLS(certificate, serverCertificate, trustServerCert, host, tlsMin)
 		if err != nil {
-			return encryption, nil, fmt.Errorf("failed to setup TLS: %w", err)
+			return encryption, nil, trustServerCert, fmt.Errorf("failed to setup TLS: %w", err)
 		}
-		return encryption, tlsConfig, nil
+		return encryption, tlsConfig, trustServerCert, nil
 	}
-	return encryption, nil, nil
+	return encryption, nil, trustServerCert, nil
 }
 
 var skipSetup = errors.New("skip setting up TLS")
@@ -293,6 +389,9 @@ func Parse(dsn string) (Config, error) {
 	p := Config{
 		ProtocolParameters: map[string]interface{}{},
 		Protocols:          []string{},
+		Encoding: EncodeParameters{
+			Timezone: time.UTC,
+		},
 	}
 
 	activityid, uerr := uuid.NewRandom()
@@ -315,6 +414,15 @@ func Parse(dsn string) (Config, error) {
 			return p, fmt.Errorf("invalid log parameter '%s': %s", strlog, err.Error())
 		}
 		p.LogFlags = Log(flags)
+	}
+
+	tz, ok := params[Timezone]
+	if ok {
+		location, err := time.LoadLocation(tz)
+		if err != nil {
+			return p, fmt.Errorf("invalid timezone '%s': %s", tz, err.Error())
+		}
+		p.Encoding.Timezone = location
 	}
 
 	p.Database = params[Database]
@@ -425,6 +533,11 @@ func Parse(dsn string) (Config, error) {
 		}
 	}
 
+	failOverPartnerSPN, ok := params[FailoverPartnerSpn]
+	if ok {
+		p.FailOverPartnerSPN = failOverPartnerSPN
+	}
+
 	disableRetry, ok := params[DisableRetry]
 	if ok {
 		var err error
@@ -482,7 +595,7 @@ func Parse(dsn string) (Config, error) {
 		p.HostInCertificateProvided = false
 	}
 
-	p.Encryption, p.TLSConfig, err = parseTLS(params, hostInCertificate)
+	p.Encryption, p.TLSConfig, p.TrustServerCertificate, err = parseTLS(params, hostInCertificate)
 	if err != nil {
 		return p, err
 	}
@@ -525,6 +638,33 @@ func Parse(dsn string) (Config, error) {
 			p.NoTraceID = notraceid
 		}
 	}
+
+	guidConversion, ok := params[GuidConversion]
+	if ok {
+		var err error
+		p.Encoding.GuidConversion, err = strconv.ParseBool(guidConversion)
+		if err != nil {
+			f := "invalid guid conversion '%s': %s"
+			return p, fmt.Errorf(f, guidConversion, err.Error())
+		}
+	} else {
+		// set to false for backward compatibility
+		p.Encoding.GuidConversion = false
+	}
+
+	p.EpaEnabled = false
+	epaString, ok := params[EpaEnabled]
+	if !ok {
+		epaString = os.Getenv("MSSQL_USE_EPA")
+	}
+	if epaString != "" {
+		epaEnabled, err := strconv.ParseBool(epaString)
+		if err != nil {
+			return p, fmt.Errorf("invalid epa enabled value '%s': %v", epaString, err)
+		}
+		p.EpaEnabled = epaEnabled
+	}
+
 	return p, nil
 }
 
@@ -549,7 +689,8 @@ func (p Config) URL() *url.URL {
 		}
 	}
 	if p.Port > 0 {
-		host = fmt.Sprintf("%s:%d", host, p.Port)
+		// Use net.JoinHostPort to properly handle IPv6 addresses (e.g., [::1]:1433)
+		host = net.JoinHostPort(host, strconv.Itoa(int(p.Port)))
 	}
 	q.Add(DisableRetry, fmt.Sprintf("%t", p.DisableRetry))
 	protocolParam, ok := p.Parameters[Protocol]
@@ -582,9 +723,35 @@ func (p Config) URL() *url.URL {
 	case EncryptionRequired:
 		q.Add(Encrypt, "true")
 	}
+	// Only include TrustServerCertificate if it was explicitly set in the original connection string
+	if _, ok := p.Parameters[TrustServerCertificate]; ok {
+		q.Add(TrustServerCertificate, strconv.FormatBool(p.TrustServerCertificate))
+	}
 	if p.ColumnEncryption {
 		q.Add("columnencryption", "true")
 	}
+
+	if p.Encoding.GuidConversion {
+		q.Add(GuidConversion, strconv.FormatBool(p.Encoding.GuidConversion))
+	}
+
+	if tz := p.Encoding.Timezone; tz != nil && tz != time.UTC {
+		q.Add(Timezone, tz.String())
+	}
+
+	if p.FailOverPartner != "" {
+		q.Add(FailoverPartner, p.FailOverPartner)
+	}
+	if p.FailOverPort != 0 {
+		q.Add(FailOverPort, strconv.FormatUint(p.FailOverPort, 10))
+	}
+	if p.ServerSPN != "" {
+		q.Add(ServerSpn, p.ServerSPN)
+	}
+	if p.FailOverPartnerSPN != "" {
+		q.Add(FailoverPartnerSpn, p.FailOverPartnerSPN)
+	}
+
 	if len(q) > 0 {
 		res.RawQuery = q.Encode()
 	}
@@ -601,13 +768,14 @@ var adoSynonyms = map[string]string{
 	"addr":                      Server,
 	"user":                      UserID,
 	"uid":                       UserID,
+	"pwd":                       Password,
 	"initial catalog":           Database,
 	"column encryption setting": "columnencryption",
 }
 
 func splitConnectionString(dsn string) (res map[string]string) {
 	res = map[string]string{}
-	parts := strings.Split(dsn, ";")
+	parts := splitAdoConnectionStringParts(dsn)
 	for _, part := range parts {
 		if len(part) == 0 {
 			continue
@@ -620,6 +788,12 @@ func splitConnectionString(dsn string) (res map[string]string) {
 		var value string = ""
 		if len(lst) > 1 {
 			value = strings.TrimSpace(lst[1])
+			// Remove surrounding double quotes if present
+			if len(value) >= 2 && strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
+				value = value[1 : len(value)-1]
+				// Unescape double quotes
+				value = strings.ReplaceAll(value, "\"\"", "\"")
+			}
 		}
 		synonym, hasSynonym := adoSynonyms[name]
 		if hasSynonym {
@@ -645,13 +819,53 @@ func splitConnectionString(dsn string) (res map[string]string) {
 	return res
 }
 
+// splitAdoConnectionStringParts splits an ADO connection string into parts,
+// properly handling double-quoted values that may contain semicolons
+func splitAdoConnectionStringParts(dsn string) []string {
+	var parts []string
+	var current strings.Builder
+	inQuotes := false
+
+	runes := []rune(dsn)
+	for i := 0; i < len(runes); i++ {
+		char := runes[i]
+
+		if char == '"' {
+			if inQuotes && i+1 < len(runes) && runes[i+1] == '"' {
+				// Double quote escape sequence - add both quotes to current part
+				current.WriteRune(char)
+				current.WriteRune(runes[i+1])
+				i++ // Skip the next quote
+			} else {
+				// Start or end of quoted section
+				inQuotes = !inQuotes
+				current.WriteRune(char)
+			}
+		} else if char == ';' && !inQuotes {
+			// Semicolon outside of quotes - end current part
+			parts = append(parts, current.String())
+			current.Reset()
+		} else {
+			current.WriteRune(char)
+		}
+	}
+
+	// Add the last part if it's not empty
+	if current.Len() > 0 {
+		parts = append(parts, current.String())
+	}
+
+	return parts
+}
+
 // Splits a URL of the form sqlserver://username:password@host/instance?param1=value&param2=value
 func splitConnectionStringURL(dsn string) (map[string]string, error) {
 	res := map[string]string{}
 
 	u, err := url.Parse(dsn)
 	if err != nil {
-		return res, err
+		// Do not include the original error which may contain credentials
+		return res, fmt.Errorf("unable to parse connection string: invalid URL format")
 	}
 
 	if u.Scheme != "sqlserver" {
@@ -686,7 +900,11 @@ func splitConnectionStringURL(dsn string) (map[string]string, error) {
 		if len(v) > 1 {
 			return res, fmt.Errorf("key %s provided more than once", k)
 		}
-		res[strings.ToLower(k)] = v[0]
+		lk := strings.ToLower(k)
+		if _, exists := res[lk]; exists {
+			return res, fmt.Errorf("key %q provided more than once (connection string keys are case-insensitive; remove the duplicate)", k)
+		}
+		res[lk] = v[0]
 	}
 
 	return res, nil

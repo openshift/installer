@@ -20,7 +20,7 @@ func (r commonResult) Extract() (*Network, error) {
 }
 
 func (r commonResult) ExtractInto(v any) error {
-	return r.Result.ExtractIntoStructPtr(v, "network")
+	return r.ExtractIntoStructPtr(v, "network")
 }
 
 // CreateResult represents the result of a create operation. Call its Extract
@@ -139,6 +139,11 @@ type NetworkPage struct {
 	pagination.LinkedPageBase
 }
 
+// ResourceKey returns the JSON object key for network collections.
+func (r NetworkPage) ResourceKey() string {
+	return "networks"
+}
+
 // NextPageURL is invoked when a paginated collection of networks has reached
 // the end of a page and the pager seeks to traverse over a new one. In order
 // to do this, it needs to construct the next page's URL.
@@ -173,5 +178,5 @@ func ExtractNetworks(r pagination.Page) ([]Network, error) {
 }
 
 func ExtractNetworksInto(r pagination.Page, v any) error {
-	return r.(NetworkPage).Result.ExtractIntoSlicePtr(v, "networks")
+	return r.(NetworkPage).ExtractIntoSlicePtr(v, "networks")
 }

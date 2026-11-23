@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,notificationhubs}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/stable/2023-09-01/notificationhubs.json
+// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/NotificationHubs/stable/2023-09-01/notificationhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}/authorizationRules/{authorizationRuleName}
 type NamespacesAuthorizationRule struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (rule *NamespacesAuthorizationRule) OriginalGVK() *schema.GroupVersionKind 
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/stable/2023-09-01/notificationhubs.json
+// - Generated from: /notificationhubs/resource-manager/Microsoft.NotificationHubs/NotificationHubs/stable/2023-09-01/notificationhubs.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}/authorizationRules/{authorizationRuleName}
 type NamespacesAuthorizationRuleList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -293,7 +294,7 @@ func (rule *NamespacesAuthorizationRule_Spec) ConvertToARM(resolved genruntime.C
 
 	// Set property "Properties":
 	if rule.Properties != nil {
-		properties_ARM, err := (*rule.Properties).ConvertToARM(resolved)
+		properties_ARM, err := rule.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -830,8 +831,6 @@ func (operator *NamespacesAuthorizationRuleOperatorSpec) AssignProperties_From_N
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -848,8 +847,6 @@ func (operator *NamespacesAuthorizationRuleOperatorSpec) AssignProperties_From_N
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -875,8 +872,6 @@ func (operator *NamespacesAuthorizationRuleOperatorSpec) AssignProperties_To_Nam
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -893,8 +888,6 @@ func (operator *NamespacesAuthorizationRuleOperatorSpec) AssignProperties_To_Nam
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -973,8 +966,6 @@ func (properties *SharedAccessAuthorizationRuleProperties) AssignProperties_From
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_Values)
 		}
 		properties.Rights = rightList
@@ -995,8 +986,6 @@ func (properties *SharedAccessAuthorizationRuleProperties) AssignProperties_To_S
 	if properties.Rights != nil {
 		rightList := make([]string, len(properties.Rights))
 		for rightIndex, rightItem := range properties.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList
@@ -1022,8 +1011,6 @@ func (properties *SharedAccessAuthorizationRuleProperties) Initialize_From_Share
 	if source.Rights != nil {
 		rightList := make([]AccessRights, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			right := genruntime.ToEnum(string(rightItem), accessRights_Values)
 			rightList[rightIndex] = right
 		}
@@ -1146,8 +1133,6 @@ func (properties *SharedAccessAuthorizationRuleProperties_STATUS) AssignProperti
 	if source.Rights != nil {
 		rightList := make([]AccessRights_STATUS, len(source.Rights))
 		for rightIndex, rightItem := range source.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = genruntime.ToEnum(rightItem, accessRights_STATUS_Values)
 		}
 		properties.Rights = rightList
@@ -1186,8 +1171,6 @@ func (properties *SharedAccessAuthorizationRuleProperties_STATUS) AssignProperti
 	if properties.Rights != nil {
 		rightList := make([]string, len(properties.Rights))
 		for rightIndex, rightItem := range properties.Rights {
-			// Shadow the loop variable to avoid aliasing
-			rightItem := rightItem
 			rightList[rightIndex] = string(rightItem)
 		}
 		destination.Rights = rightList

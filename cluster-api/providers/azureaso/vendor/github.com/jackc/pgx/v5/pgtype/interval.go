@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	microsecondsPerSecond = 1000000
+	microsecondsPerSecond = 1_000_000
 	microsecondsPerMinute = 60 * microsecondsPerSecond
 	microsecondsPerHour   = 60 * microsecondsPerMinute
 	microsecondsPerDay    = 24 * microsecondsPerHour
@@ -33,31 +33,32 @@ type Interval struct {
 	Valid        bool
 }
 
+// ScanInterval implements the [IntervalScanner] interface.
 func (interval *Interval) ScanInterval(v Interval) error {
 	*interval = v
 	return nil
 }
 
+// IntervalValue implements the [IntervalValuer] interface.
 func (interval Interval) IntervalValue() (Interval, error) {
 	return interval, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (interval *Interval) Scan(src any) error {
 	if src == nil {
 		*interval = Interval{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToIntervalScanner{}.Scan([]byte(src), interval)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (interval Interval) Value() (driver.Value, error) {
 	if !interval.Valid {
 		return nil, nil
@@ -157,16 +158,13 @@ func (encodePlanIntervalCodecText) Encode(value any, buf []byte) (newBuf []byte,
 }
 
 func (IntervalCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case IntervalScanner:
+		if _, ok := target.(IntervalScanner); ok {
 			return scanPlanBinaryIntervalToIntervalScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case IntervalScanner:
+		if _, ok := target.(IntervalScanner); ok {
 			return scanPlanTextAnyToIntervalScanner{}
 		}
 	}
@@ -222,6 +220,8 @@ func (scanPlanTextAnyToIntervalScanner) Scan(src []byte, dst any) error {
 			months += int32(scalar)
 		case "day", "days":
 			days = int32(scalar)
+		default:
+			return fmt.Errorf("bad interval format: %q", parts[i+1])
 		}
 	}
 

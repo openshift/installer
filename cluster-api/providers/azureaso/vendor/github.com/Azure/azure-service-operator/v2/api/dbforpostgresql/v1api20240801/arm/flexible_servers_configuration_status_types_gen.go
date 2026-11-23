@@ -11,7 +11,7 @@ type FlexibleServersConfiguration_STATUS struct {
 	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
-	// Properties: The properties of a configuration.
+	// Properties: Properties of a server parameter.
 	Properties *ConfigurationProperties_STATUS `json:"properties,omitempty"`
 
 	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
@@ -21,39 +21,44 @@ type FlexibleServersConfiguration_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// The properties of a configuration.
+// Properties of a server parameter.
 type ConfigurationProperties_STATUS struct {
-	// AllowedValues: Allowed values of the configuration.
+	// AllowedValues: Allowed values of the server parameter.
 	AllowedValues *string `json:"allowedValues,omitempty"`
 
-	// DataType: Data type of the configuration.
+	// DataType: Data type of the server parameter.
 	DataType *ConfigurationProperties_DataType_STATUS `json:"dataType,omitempty"`
 
-	// DefaultValue: Default value of the configuration.
+	// DefaultValue: Value assigned by default to the server parameter.
 	DefaultValue *string `json:"defaultValue,omitempty"`
 
-	// Description: Description of the configuration.
+	// Description: Description of the server parameter.
 	Description *string `json:"description,omitempty"`
 
-	// DocumentationLink: Configuration documentation link.
+	// DocumentationLink: Link pointing to the documentation of the server parameter.
 	DocumentationLink *string `json:"documentationLink,omitempty"`
 
-	// IsConfigPendingRestart: Configuration is pending restart or not.
+	// IsConfigPendingRestart: Indicates if the value assigned to the server parameter is pending a server restart for the
+	// value to take effect.
 	IsConfigPendingRestart *bool `json:"isConfigPendingRestart,omitempty"`
 
-	// IsDynamicConfig: Configuration dynamic or static.
+	// IsDynamicConfig: Indicates if it's a dynamic (true) or static (false) server parameter. Static server parameters require
+	// a server restart after changing the value assigned to it, for the change to take effect. Dynamic server parameters do
+	// not require a server restart after changing the value assigned to it, for the change to take effect.
 	IsDynamicConfig *bool `json:"isDynamicConfig,omitempty"`
 
-	// IsReadOnly: Configuration read-only or not.
+	// IsReadOnly: Indicates if it's a read-only (true) or modifiable (false) server parameter.
 	IsReadOnly *bool `json:"isReadOnly,omitempty"`
 
-	// Source: Source of the configuration. Required to update the configuration.
+	// Source: Source of the value assigned to the server parameter. Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Source *string `json:"source,omitempty"`
 
-	// Unit: Configuration unit.
+	// Unit: Units in which the server parameter value is expressed.
 	Unit *string `json:"unit,omitempty"`
 
-	// Value: Value of the configuration. Required to update the configuration.
+	// Value: Value of the server parameter (also known as configuration). Required to update the value assigned to a specific
+	// modifiable server parameter.
 	Value *string `json:"value,omitempty"`
 }
 

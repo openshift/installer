@@ -36,9 +36,9 @@ network:
       set-name: "eth{{ $i }}"
       {{- end }}
       wakeonlan: true
-      dhcp4: {{ $net.DHCP4 }}
-      dhcp6: {{ $net.DHCP6 }}
-      accept-ra: {{ $net.DHCP6 }}   
+      dhcp4: {{ if $net.DHCP4 }}{{ $net.DHCP4 }}{{ else }}false{{ end }}
+      dhcp6: {{ if $net.DHCP6 }}{{ $net.DHCP6 }}{{ else }}false{{ end }}
+      accept-ra: {{ if $net.DHCP6 }}{{ $net.DHCP6 }}{{ else }}false{{ end }}
 	  {{- if $net.DHCP4Overrides }}
       dhcp4-overrides:
 	    {{- if $net.DHCP4Overrides.Hostname }}
@@ -138,12 +138,4 @@ network:
         {{- end }}
       {{- end }}
     {{- end }}
-  {{- if .Routes }}
-  routes:
-  {{- range .Routes }}
-  - to: "{{ .To }}"
-    via: "{{ .Via }}"
-    metric: {{ .Metric }}
-  {{- end }}
-  {{- end }}
 `

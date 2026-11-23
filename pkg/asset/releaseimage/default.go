@@ -3,6 +3,8 @@ package releaseimage
 import (
 	"fmt"
 	"strings"
+
+	"github.com/openshift/installer/pkg/version/versioninfo"
 )
 
 // This file handles correctly identifying the default release image, which is expected to be
@@ -19,8 +21,6 @@ import (
 // will use that image.
 
 var (
-	// defaultReleaseImageOriginal is the value served when defaultReleaseImagePadded is unmodified.
-	defaultReleaseImageOriginal = "registry.ci.openshift.org/origin/release:4.22"
 	// defaultReleaseImagePadded may be replaced in the binary with a pull spec that overrides defaultReleaseImage as
 	// a null-terminated string within the allowed character length. This allows a distributor to override the payload
 	// location without having to rebuild the source.
@@ -29,14 +29,20 @@ var (
 	defaultReleaseImageLength = len(defaultReleaseImagePadded)
 )
 
+// defaultReleaseImage returns the release image for a binary.
+func defaultReleaseImage() string {
+	info := versioninfo.GetInfo()
+	return fmt.Sprintf("registry.ci.openshift.org/origin/release:%d.%d", info.Major, info.Minor)
+}
+
 // Default abstracts how the binary loads the default release payload. We want to lock the binary
 // to the pull spec of the payload we test it with, and since a payload contains an installer image we can't
 // know that at build time. Instead, we make it possible to replace the release string after build via a
 // known constant in the binary.
 func Default() (string, error) {
 	if strings.HasPrefix(defaultReleaseImagePadded, defaultReleaseImagePrefix) {
-		// the defaultReleaseImagePadded constant hasn't been altered in the binary, fall back to the default
-		return defaultReleaseImageOriginal, nil
+		// the defaultReleaseImagePadded constant hasn't been altered in the binary, derive the default
+		return defaultReleaseImage(), nil
 	}
 	nullTerminator := strings.IndexByte(defaultReleaseImagePadded, '\x00')
 	if nullTerminator == -1 {

@@ -115,11 +115,6 @@ var sku_Name_Values = map[string]Sku_Name{
 	"standard":  Sku_Name_Standard,
 }
 
-// Reference to another subresource.
-type SubResource struct {
-	Id *string `json:"id,omitempty"`
-}
-
 // Properties of IP configuration of an Bastion Host.
 type BastionHostIPConfigurationPropertiesFormat struct {
 	// PrivateIPAllocationMethod: Private IP allocation method.

@@ -121,7 +121,7 @@ func (r *Image) UnmarshalJSON(b []byte) error {
 	case float64:
 		r.SizeBytes = int64(t)
 	default:
-		return fmt.Errorf("Unknown type for SizeBytes: %v (value: %v)", reflect.TypeOf(t), t)
+		return fmt.Errorf("unknown type for SizeBytes: %v (value: %v)", reflect.TypeOf(t), t)
 	}
 
 	// Bundle all other fields into Properties, except for the field named "properties"

@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=dbformariadb.azure.com,resources={configurations/status,configurations/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,dbformariadb}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

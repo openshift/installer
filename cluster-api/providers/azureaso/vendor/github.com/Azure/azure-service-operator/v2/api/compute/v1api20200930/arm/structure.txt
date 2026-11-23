@@ -272,7 +272,7 @@ Snapshot_Spec: Object (6 properties)
 │       └── "EdgeZone"
 ├── Location: *string
 ├── Name: string
-├── Properties: *Object (11 properties)
+├── Properties: *Object (10 properties)
 │   ├── CreationData: *Object (8 properties)
 │   │   ├── CreateOption: *Enum (7 values)
 │   │   │   ├── "Attach"
@@ -295,13 +295,6 @@ Snapshot_Spec: Object (6 properties)
 │   │   └── UploadSizeBytes: *int
 │   ├── DiskAccessId: *string
 │   ├── DiskSizeGB: *int
-│   ├── DiskState: *Enum (6 values)
-│   │   ├── "ActiveSAS"
-│   │   ├── "ActiveUpload"
-│   │   ├── "Attached"
-│   │   ├── "ReadyToUpload"
-│   │   ├── "Reserved"
-│   │   └── "Unattached"
 │   ├── Encryption: *Object (2 properties)
 │   │   ├── DiskEncryptionSetId: *string
 │   │   └── Type: *Enum (3 values)

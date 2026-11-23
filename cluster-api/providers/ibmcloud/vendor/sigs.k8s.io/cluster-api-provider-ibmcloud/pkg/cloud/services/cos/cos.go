@@ -17,13 +17,15 @@ limitations under the License.
 package cos
 
 import (
+	"time"
+
 	"github.com/IBM/ibm-cos-sdk-go/aws"
 	"github.com/IBM/ibm-cos-sdk-go/aws/request"
 	"github.com/IBM/ibm-cos-sdk-go/service/s3"
 )
 
 //go:generate ../../../../hack/tools/bin/mockgen -source=./cos.go -destination=./mock/cos_generated.go -package=mock
-//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/cos_generated.go > ./mock/_cos_generated.go && mv ./mock/_cos_generated.go ./mock/cos_generated.go"
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/scripts/verify/boilerplate/boilerplate.generatego.txt ./mock/cos_generated.go > ./mock/_cos_generated.go && mv ./mock/_cos_generated.go ./mock/cos_generated.go"
 
 // Cos interface defines a method that a IBMCLOUD service object should implement in order to
 // use the cos package for listing resource instances.
@@ -36,4 +38,5 @@ type Cos interface {
 	ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error)
 	DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
 	PutPublicAccessBlock(input *s3.PutPublicAccessBlockInput) (*s3.PutPublicAccessBlockOutput, error)
+	PresignedURL(bucket, key string, expiry time.Duration) (string, error)
 }

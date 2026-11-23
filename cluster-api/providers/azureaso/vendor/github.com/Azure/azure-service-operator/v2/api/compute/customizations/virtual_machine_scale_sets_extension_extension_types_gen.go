@@ -4,10 +4,14 @@
 package customizations
 
 import (
-	v20201201 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201"
-	v20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201/storage"
-	v20220301 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301"
-	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
+	compute_v1api20201201 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201"
+	compute_v1api20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201/storage"
+	compute_v1api20220301 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301"
+	compute_v1api20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
+	compute_v20201201 "github.com/Azure/azure-service-operator/v2/api/compute/v20201201"
+	compute_v20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v20201201/storage"
+	compute_v20220301 "github.com/Azure/azure-service-operator/v2/api/compute/v20220301"
+	compute_v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -17,8 +21,12 @@ type VirtualMachineScaleSetsExtensionExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *VirtualMachineScaleSetsExtensionExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20201201.VirtualMachineScaleSetsExtension{},
-		&v20201201s.VirtualMachineScaleSetsExtension{},
-		&v20220301.VirtualMachineScaleSetsExtension{},
-		&v20220301s.VirtualMachineScaleSetsExtension{}}
+		&compute_v1api20201201.VirtualMachineScaleSetsExtension{},
+		&compute_v1api20201201s.VirtualMachineScaleSetsExtension{},
+		&compute_v1api20220301.VirtualMachineScaleSetsExtension{},
+		&compute_v1api20220301s.VirtualMachineScaleSetsExtension{},
+		&compute_v20201201.VirtualMachineScaleSetsExtension{},
+		&compute_v20201201s.VirtualMachineScaleSetsExtension{},
+		&compute_v20220301.VirtualMachineScaleSetsExtension{},
+		&compute_v20220301s.VirtualMachineScaleSetsExtension{}}
 }

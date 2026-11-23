@@ -116,7 +116,13 @@ func (record *PrivateDnsZonesCNAMERecord) ValidateUpdate(ctx context.Context, ol
 
 // createValidations validates the creation of the resource
 func (record *PrivateDnsZonesCNAMERecord) createValidations() []func(ctx context.Context, obj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error){record.validateResourceReferences, record.validateOwnerReference, record.validateSecretDestinations, record.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error){
+		record.validateResourceReferences,
+		record.validateOwnerReference,
+		record.validateSecretDestinations,
+		record.validateConfigMapDestinations,
+		record.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -140,6 +146,9 @@ func (record *PrivateDnsZonesCNAMERecord) updateValidations() []func(ctx context
 		func(ctx context.Context, oldObj *v20200601.PrivateDnsZonesCNAMERecord, newObj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error) {
 			return record.validateConfigMapDestinations(ctx, newObj)
 		},
+		func(ctx context.Context, oldObj *v20200601.PrivateDnsZonesCNAMERecord, newObj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error) {
+			return record.validateOptionalConfigMapReferences(ctx, newObj)
+		},
 	}
 }
 
@@ -149,6 +158,15 @@ func (record *PrivateDnsZonesCNAMERecord) validateConfigMapDestinations(ctx cont
 		return nil, nil
 	}
 	return configmaps.ValidateDestinations(obj, nil, obj.Spec.OperatorSpec.ConfigMapExpressions)
+}
+
+// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
+func (record *PrivateDnsZonesCNAMERecord) validateOptionalConfigMapReferences(ctx context.Context, obj *v20200601.PrivateDnsZonesCNAMERecord) (admission.Warnings, error) {
+	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&obj.Spec)
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field

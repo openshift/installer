@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,alertsmanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2023-03-01/PrometheusRuleGroups.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/PrometheusRuleGroups/stable/2023-03-01/PrometheusRuleGroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AlertsManagement/prometheusRuleGroups/{ruleGroupName}
 type PrometheusRuleGroup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &PrometheusRuleGroup{}
 
 // ConvertFrom populates our PrometheusRuleGroup from the provided hub PrometheusRuleGroup
 func (group *PrometheusRuleGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.PrometheusRuleGroup)
-	if !ok {
-		return fmt.Errorf("expected alertsmanagement/v1api20230301/storage/PrometheusRuleGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.PrometheusRuleGroup
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return group.AssignProperties_From_PrometheusRuleGroup(source)
+	err = group.AssignProperties_From_PrometheusRuleGroup(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to group")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub PrometheusRuleGroup from our PrometheusRuleGroup
 func (group *PrometheusRuleGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.PrometheusRuleGroup)
-	if !ok {
-		return fmt.Errorf("expected alertsmanagement/v1api20230301/storage/PrometheusRuleGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.PrometheusRuleGroup
+	err := group.AssignProperties_To_PrometheusRuleGroup(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from group")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return group.AssignProperties_To_PrometheusRuleGroup(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &PrometheusRuleGroup{}
@@ -86,17 +101,6 @@ func (group *PrometheusRuleGroup) SecretDestinationExpressions() []*core.Destina
 		return nil
 	}
 	return group.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &PrometheusRuleGroup{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (group *PrometheusRuleGroup) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*PrometheusRuleGroup_STATUS); ok {
-		return group.Spec.Initialize_From_PrometheusRuleGroup_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type PrometheusRuleGroup_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &PrometheusRuleGroup{}
@@ -237,7 +241,7 @@ func (group *PrometheusRuleGroup) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/stable/2023-03-01/PrometheusRuleGroups.json
+// - Generated from: /alertsmanagement/resource-manager/Microsoft.AlertsManagement/PrometheusRuleGroups/stable/2023-03-01/PrometheusRuleGroups.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AlertsManagement/prometheusRuleGroups/{ruleGroupName}
 type PrometheusRuleGroupList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -556,8 +560,6 @@ func (group *PrometheusRuleGroup_Spec) AssignProperties_From_PrometheusRuleGroup
 	if source.Rules != nil {
 		ruleList := make([]PrometheusRule, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule PrometheusRule
 			err := rule.AssignProperties_From_PrometheusRule(&ruleItem)
 			if err != nil {
@@ -574,8 +576,6 @@ func (group *PrometheusRuleGroup_Spec) AssignProperties_From_PrometheusRuleGroup
 	if source.ScopesReferences != nil {
 		scopesReferenceList := make([]genruntime.ResourceReference, len(source.ScopesReferences))
 		for scopesReferenceIndex, scopesReferenceItem := range source.ScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopesReferenceItem := scopesReferenceItem
 			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
 		}
 		group.ScopesReferences = scopesReferenceList
@@ -645,8 +645,6 @@ func (group *PrometheusRuleGroup_Spec) AssignProperties_To_PrometheusRuleGroup_S
 	if group.Rules != nil {
 		ruleList := make([]storage.PrometheusRule, len(group.Rules))
 		for ruleIndex, ruleItem := range group.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.PrometheusRule
 			err := ruleItem.AssignProperties_To_PrometheusRule(&rule)
 			if err != nil {
@@ -663,8 +661,6 @@ func (group *PrometheusRuleGroup_Spec) AssignProperties_To_PrometheusRuleGroup_S
 	if group.ScopesReferences != nil {
 		scopesReferenceList := make([]genruntime.ResourceReference, len(group.ScopesReferences))
 		for scopesReferenceIndex, scopesReferenceItem := range group.ScopesReferences {
-			// Shadow the loop variable to avoid aliasing
-			scopesReferenceItem := scopesReferenceItem
 			scopesReferenceList[scopesReferenceIndex] = scopesReferenceItem.Copy()
 		}
 		destination.ScopesReferences = scopesReferenceList
@@ -681,54 +677,6 @@ func (group *PrometheusRuleGroup_Spec) AssignProperties_To_PrometheusRuleGroup_S
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PrometheusRuleGroup_STATUS populates our PrometheusRuleGroup_Spec from the provided source PrometheusRuleGroup_STATUS
-func (group *PrometheusRuleGroup_Spec) Initialize_From_PrometheusRuleGroup_STATUS(source *PrometheusRuleGroup_STATUS) error {
-
-	// ClusterName
-	group.ClusterName = genruntime.ClonePointerToString(source.ClusterName)
-
-	// Description
-	group.Description = genruntime.ClonePointerToString(source.Description)
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		group.Enabled = &enabled
-	} else {
-		group.Enabled = nil
-	}
-
-	// Interval
-	group.Interval = genruntime.ClonePointerToString(source.Interval)
-
-	// Location
-	group.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Rules
-	if source.Rules != nil {
-		ruleList := make([]PrometheusRule, len(source.Rules))
-		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
-			var rule PrometheusRule
-			err := rule.Initialize_From_PrometheusRule_STATUS(&ruleItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_PrometheusRule_STATUS() to populate field Rules")
-			}
-			ruleList[ruleIndex] = rule
-		}
-		group.Rules = ruleList
-	} else {
-		group.Rules = nil
-	}
-
-	// Tags
-	group.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -992,8 +940,6 @@ func (group *PrometheusRuleGroup_STATUS) AssignProperties_From_PrometheusRuleGro
 	if source.Rules != nil {
 		ruleList := make([]PrometheusRule_STATUS, len(source.Rules))
 		for ruleIndex, ruleItem := range source.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule PrometheusRule_STATUS
 			err := rule.AssignProperties_From_PrometheusRule_STATUS(&ruleItem)
 			if err != nil {
@@ -1069,8 +1015,6 @@ func (group *PrometheusRuleGroup_STATUS) AssignProperties_To_PrometheusRuleGroup
 	if group.Rules != nil {
 		ruleList := make([]storage.PrometheusRule_STATUS, len(group.Rules))
 		for ruleIndex, ruleItem := range group.Rules {
-			// Shadow the loop variable to avoid aliasing
-			ruleItem := ruleItem
 			var rule storage.PrometheusRule_STATUS
 			err := ruleItem.AssignProperties_To_PrometheusRule_STATUS(&rule)
 			if err != nil {
@@ -1218,7 +1162,7 @@ func (rule *PrometheusRule) ConvertToARM(resolved genruntime.ConvertToARMResolve
 
 	// Set property "ResolveConfiguration":
 	if rule.ResolveConfiguration != nil {
-		resolveConfiguration_ARM, err := (*rule.ResolveConfiguration).ConvertToARM(resolved)
+		resolveConfiguration_ARM, err := rule.ResolveConfiguration.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1330,8 +1274,6 @@ func (rule *PrometheusRule) AssignProperties_From_PrometheusRule(source *storage
 	if source.Actions != nil {
 		actionList := make([]PrometheusRuleGroupAction, len(source.Actions))
 		for actionIndex, actionItem := range source.Actions {
-			// Shadow the loop variable to avoid aliasing
-			actionItem := actionItem
 			var action PrometheusRuleGroupAction
 			err := action.AssignProperties_From_PrometheusRuleGroupAction(&actionItem)
 			if err != nil {
@@ -1398,8 +1340,6 @@ func (rule *PrometheusRule) AssignProperties_To_PrometheusRule(destination *stor
 	if rule.Actions != nil {
 		actionList := make([]storage.PrometheusRuleGroupAction, len(rule.Actions))
 		for actionIndex, actionItem := range rule.Actions {
-			// Shadow the loop variable to avoid aliasing
-			actionItem := actionItem
 			var action storage.PrometheusRuleGroupAction
 			err := actionItem.AssignProperties_To_PrometheusRuleGroupAction(&action)
 			if err != nil {
@@ -1459,72 +1399,6 @@ func (rule *PrometheusRule) AssignProperties_To_PrometheusRule(destination *stor
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PrometheusRule_STATUS populates our PrometheusRule from the provided source PrometheusRule_STATUS
-func (rule *PrometheusRule) Initialize_From_PrometheusRule_STATUS(source *PrometheusRule_STATUS) error {
-
-	// Actions
-	if source.Actions != nil {
-		actionList := make([]PrometheusRuleGroupAction, len(source.Actions))
-		for actionIndex, actionItem := range source.Actions {
-			// Shadow the loop variable to avoid aliasing
-			actionItem := actionItem
-			var action PrometheusRuleGroupAction
-			err := action.Initialize_From_PrometheusRuleGroupAction_STATUS(&actionItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_PrometheusRuleGroupAction_STATUS() to populate field Actions")
-			}
-			actionList[actionIndex] = action
-		}
-		rule.Actions = actionList
-	} else {
-		rule.Actions = nil
-	}
-
-	// Alert
-	rule.Alert = genruntime.ClonePointerToString(source.Alert)
-
-	// Annotations
-	rule.Annotations = genruntime.CloneMapOfStringToString(source.Annotations)
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		rule.Enabled = &enabled
-	} else {
-		rule.Enabled = nil
-	}
-
-	// Expression
-	rule.Expression = genruntime.ClonePointerToString(source.Expression)
-
-	// For
-	rule.For = genruntime.ClonePointerToString(source.For)
-
-	// Labels
-	rule.Labels = genruntime.CloneMapOfStringToString(source.Labels)
-
-	// Record
-	rule.Record = genruntime.ClonePointerToString(source.Record)
-
-	// ResolveConfiguration
-	if source.ResolveConfiguration != nil {
-		var resolveConfiguration PrometheusRuleResolveConfiguration
-		err := resolveConfiguration.Initialize_From_PrometheusRuleResolveConfiguration_STATUS(source.ResolveConfiguration)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_PrometheusRuleResolveConfiguration_STATUS() to populate field ResolveConfiguration")
-		}
-		rule.ResolveConfiguration = &resolveConfiguration
-	} else {
-		rule.ResolveConfiguration = nil
-	}
-
-	// Severity
-	rule.Severity = genruntime.ClonePointerToInt(source.Severity)
 
 	// No error
 	return nil
@@ -1664,8 +1538,6 @@ func (rule *PrometheusRule_STATUS) AssignProperties_From_PrometheusRule_STATUS(s
 	if source.Actions != nil {
 		actionList := make([]PrometheusRuleGroupAction_STATUS, len(source.Actions))
 		for actionIndex, actionItem := range source.Actions {
-			// Shadow the loop variable to avoid aliasing
-			actionItem := actionItem
 			var action PrometheusRuleGroupAction_STATUS
 			err := action.AssignProperties_From_PrometheusRuleGroupAction_STATUS(&actionItem)
 			if err != nil {
@@ -1732,8 +1604,6 @@ func (rule *PrometheusRule_STATUS) AssignProperties_To_PrometheusRule_STATUS(des
 	if rule.Actions != nil {
 		actionList := make([]storage.PrometheusRuleGroupAction_STATUS, len(rule.Actions))
 		for actionIndex, actionItem := range rule.Actions {
-			// Shadow the loop variable to avoid aliasing
-			actionItem := actionItem
 			var action storage.PrometheusRuleGroupAction_STATUS
 			err := actionItem.AssignProperties_To_PrometheusRuleGroupAction_STATUS(&action)
 			if err != nil {
@@ -1814,8 +1684,6 @@ func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_From_Prometheu
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1832,8 +1700,6 @@ func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_From_Prometheu
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1859,8 +1725,6 @@ func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_To_PrometheusR
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1877,8 +1741,6 @@ func (operator *PrometheusRuleGroupOperatorSpec) AssignProperties_To_PrometheusR
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2171,24 +2033,6 @@ func (action *PrometheusRuleGroupAction) AssignProperties_To_PrometheusRuleGroup
 	return nil
 }
 
-// Initialize_From_PrometheusRuleGroupAction_STATUS populates our PrometheusRuleGroupAction from the provided source PrometheusRuleGroupAction_STATUS
-func (action *PrometheusRuleGroupAction) Initialize_From_PrometheusRuleGroupAction_STATUS(source *PrometheusRuleGroupAction_STATUS) error {
-
-	// ActionGroupReference
-	if source.ActionGroupId != nil {
-		actionGroupReference := genruntime.CreateResourceReferenceFromARMID(*source.ActionGroupId)
-		action.ActionGroupReference = &actionGroupReference
-	} else {
-		action.ActionGroupReference = nil
-	}
-
-	// ActionProperties
-	action.ActionProperties = genruntime.CloneMapOfStringToString(source.ActionProperties)
-
-	// No error
-	return nil
-}
-
 // An alert action. Only relevant for alerts.
 type PrometheusRuleGroupAction_STATUS struct {
 	// ActionGroupId: The resource id of the action group to use.
@@ -2365,24 +2209,6 @@ func (configuration *PrometheusRuleResolveConfiguration) AssignProperties_To_Pro
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PrometheusRuleResolveConfiguration_STATUS populates our PrometheusRuleResolveConfiguration from the provided source PrometheusRuleResolveConfiguration_STATUS
-func (configuration *PrometheusRuleResolveConfiguration) Initialize_From_PrometheusRuleResolveConfiguration_STATUS(source *PrometheusRuleResolveConfiguration_STATUS) error {
-
-	// AutoResolved
-	if source.AutoResolved != nil {
-		autoResolved := *source.AutoResolved
-		configuration.AutoResolved = &autoResolved
-	} else {
-		configuration.AutoResolved = nil
-	}
-
-	// TimeToResolve
-	configuration.TimeToResolve = genruntime.ClonePointerToString(source.TimeToResolve)
 
 	// No error
 	return nil

@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -137,9 +137,9 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		err = asos.Get(ctx, req.NamespacedName, azureManagedControlPlane)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				asos.Recorder.Eventf(azureCluster, corev1.EventTypeNormal, "AzureClusterObjectNotFound",
+				asos.Recorder.Event(azureCluster, corev1.EventTypeNormal, "AzureClusterObjectNotFound",
 					fmt.Sprintf("AzureCluster object %s/%s not found", req.Namespace, req.Name))
-				asos.Recorder.Eventf(azureManagedControlPlane, corev1.EventTypeNormal, "AzureManagedControlPlaneObjectNotFound",
+				asos.Recorder.Event(azureManagedControlPlane, corev1.EventTypeNormal, "AzureManagedControlPlaneObjectNotFound",
 					fmt.Sprintf("AzureManagedControlPlane object %s/%s not found", req.Namespace, req.Name))
 				log.Info("object was not found")
 				return reconcile.Result{}, nil
@@ -211,7 +211,7 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if cluster == nil {
 		log.Info("Cluster Controller has not yet set OwnerRef")
-		asos.Recorder.Eventf(asoSecretOwner, corev1.EventTypeNormal, "OwnerRefNotFound",
+		asos.Recorder.Event(asoSecretOwner, corev1.EventTypeNormal, "OwnerRefNotFound",
 			fmt.Sprintf("Cluster Controller has not yet set OwnerRef for object %s/%s", req.Namespace, req.Name))
 		return reconcile.Result{}, nil
 	}
@@ -221,7 +221,7 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Return early if the ASO Secret Owner(AzureCluster or AzureManagedControlPlane) or Cluster is paused.
 	if annotations.IsPaused(cluster, asoSecretOwner) {
 		log.Info(fmt.Sprintf("%T or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner))
-		asos.Recorder.Eventf(asoSecretOwner, corev1.EventTypeNormal, "ClusterPaused",
+		asos.Recorder.Event(asoSecretOwner, corev1.EventTypeNormal, "ClusterPaused",
 			fmt.Sprintf("%T or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner))
 		return ctrl.Result{}, nil
 	}
@@ -244,7 +244,7 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	newASOSecret.OwnerReferences = []metav1.OwnerReference{owner}
 
 	if err := reconcileAzureSecret(ctx, asos.Client, owner, newASOSecret, cluster.GetName()); err != nil {
-		asos.Recorder.Eventf(cluster, corev1.EventTypeWarning, "Error reconciling ASO secret", err.Error())
+		asos.Recorder.Event(cluster, corev1.EventTypeWarning, "Error reconciling ASO secret", err.Error())
 		return ctrl.Result{}, errors.Wrap(err, "failed to reconcile ASO secret")
 	}
 

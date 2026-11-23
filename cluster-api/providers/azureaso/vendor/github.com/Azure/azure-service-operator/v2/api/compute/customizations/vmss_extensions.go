@@ -18,7 +18,7 @@ import (
 	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	compute "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
+	compute "github.com/Azure/azure-service-operator/v2/api/compute/v20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"

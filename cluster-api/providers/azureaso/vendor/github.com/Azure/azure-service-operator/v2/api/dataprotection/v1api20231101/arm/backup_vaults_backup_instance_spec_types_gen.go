@@ -114,6 +114,9 @@ type Datasource struct {
 
 	// ObjectType: Type of Datasource object, used to initialize the right inherited type
 	ObjectType *string `json:"objectType,omitempty"`
+
+	// ResourceID: Full ARM ID of the resource. For azure resources, this is ARM ID. For non azure resources, this will be the
+	// ID created by backup service via Fabric/Vault.
 	ResourceID *string `json:"resourceID,omitempty"`
 
 	// ResourceLocation: Location of datasource.
@@ -139,6 +142,9 @@ type DatasourceSet struct {
 
 	// ObjectType: Type of Datasource object, used to initialize the right inherited type
 	ObjectType *string `json:"objectType,omitempty"`
+
+	// ResourceID: Full ARM ID of the resource. For azure resources, this is ARM ID. For non azure resources, this will be the
+	// ID created by backup service via Fabric/Vault.
 	ResourceID *string `json:"resourceID,omitempty"`
 
 	// ResourceLocation: Location of datasource.
@@ -326,8 +332,10 @@ type AzureOperationalStoreParameters struct {
 	DataStoreType *AzureOperationalStoreParameters_DataStoreType `json:"dataStoreType,omitempty"`
 
 	// ObjectType: Type of the specific object - used for deserializing
-	ObjectType      AzureOperationalStoreParameters_ObjectType `json:"objectType,omitempty"`
-	ResourceGroupId *string                                    `json:"resourceGroupId,omitempty"`
+	ObjectType AzureOperationalStoreParameters_ObjectType `json:"objectType,omitempty"`
+
+	// ResourceGroupId: Gets or sets the Snapshot Resource Group Uri.
+	ResourceGroupId *string `json:"resourceGroupId,omitempty"`
 }
 
 type BlobBackupDatasourceParameters struct {

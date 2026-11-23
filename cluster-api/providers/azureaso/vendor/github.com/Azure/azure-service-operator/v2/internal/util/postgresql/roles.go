@@ -50,7 +50,8 @@ func GetUserServerRoles(ctx context.Context, db *sql.DB, user SQLUser) (set.Set[
 	rows, err := db.QueryContext(
 		ctx,
 		"SELECT c.rolname as role_name FROM pg_roles a INNER JOIN pg_auth_members b on a.oid = b.member INNER JOIN pg_roles c ON b.roleid = c.oid WHERE a.rolname = $1",
-		user.Name)
+		user.Name,
+	)
 	if err != nil {
 		return nil, eris.Wrapf(err, "listing grants for user %s", user)
 	}

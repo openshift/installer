@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -148,7 +149,7 @@ func IsNodeReady(node *corev1.Node) bool {
 // GetClusterFromMetadata returns the Cluster object (if present) using the object metadata.
 func GetClusterFromMetadata(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.Cluster, error) {
 	if obj.Labels[clusterv1.ClusterNameLabel] == "" {
-		return nil, errors.WithStack(ErrNoCluster)
+		return nil, pkgerrors.WithStack(ErrNoCluster)
 	}
 	return GetClusterByName(ctx, c, obj.Namespace, obj.Labels[clusterv1.ClusterNameLabel])
 }
@@ -161,7 +162,7 @@ func GetOwnerCluster(ctx context.Context, c client.Client, obj metav1.ObjectMeta
 		}
 		gv, err := schema.ParseGroupVersion(ref.APIVersion)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, pkgerrors.WithStack(err)
 		}
 		if gv.Group == clusterv1.GroupVersion.Group {
 			return GetClusterByName(ctx, c, obj.Namespace, ref.Name)
@@ -179,7 +180,7 @@ func GetClusterByName(ctx context.Context, c client.Client, namespace, name stri
 	}
 
 	if err := c.Get(ctx, key, cluster); err != nil {
-		return nil, errors.Wrapf(err, "failed to get Cluster/%s", name)
+		return nil, pkgerrors.Wrapf(err, "failed to get Cluster %s", klog.KRef(namespace, name))
 	}
 
 	return cluster, nil
@@ -359,9 +360,9 @@ func indexOwnerRef(ownerReferences []metav1.OwnerReference, ref metav1.OwnerRefe
 
 // IsOwnedByObject returns true if any of the owner references point to the given target.
 // It matches the object based on the Group, Kind and Name.
-func IsOwnedByObject(obj metav1.Object, target client.Object) bool {
+func IsOwnedByObject(obj metav1.Object, target client.Object, targetGK schema.GroupKind) bool {
 	for _, ref := range obj.GetOwnerReferences() {
-		if refersTo(&ref, target) {
+		if refersTo(&ref, target, targetGK) {
 			return true
 		}
 	}
@@ -369,12 +370,12 @@ func IsOwnedByObject(obj metav1.Object, target client.Object) bool {
 }
 
 // IsControlledBy differs from metav1.IsControlledBy. This function matches on Group, Kind and Name. The metav1.IsControlledBy function matches on UID only.
-func IsControlledBy(obj metav1.Object, owner client.Object) bool {
+func IsControlledBy(obj metav1.Object, owner client.Object, ownerGK schema.GroupKind) bool {
 	controllerRef := metav1.GetControllerOfNoCopy(obj)
 	if controllerRef == nil {
 		return false
 	}
-	return refersTo(controllerRef, owner)
+	return refersTo(controllerRef, owner, ownerGK)
 }
 
 // Returns true if a and b point to the same object based on Group, Kind and Name.
@@ -393,36 +394,35 @@ func referSameObject(a, b metav1.OwnerReference) bool {
 }
 
 // Returns true if ref refers to obj based on Group, Kind and Name.
-func refersTo(ref *metav1.OwnerReference, obj client.Object) bool {
+func refersTo(ref *metav1.OwnerReference, obj client.Object, objGK schema.GroupKind) bool {
 	refGv, err := schema.ParseGroupVersion(ref.APIVersion)
 	if err != nil {
 		return false
 	}
 
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	return refGv.Group == gvk.Group && ref.Kind == gvk.Kind && ref.Name == obj.GetName()
+	return refGv.Group == objGK.Group && ref.Kind == objGK.Kind && ref.Name == obj.GetName()
 }
 
 // UnstructuredUnmarshalField is a wrapper around json and unstructured objects to decode and copy a specific field
 // value into an object.
 func UnstructuredUnmarshalField(obj *unstructured.Unstructured, v interface{}, fields ...string) error {
 	if obj == nil || obj.Object == nil {
-		return errors.Errorf("failed to unmarshal unstructured object: object is nil")
+		return pkgerrors.Errorf("failed to unmarshal unstructured object: object is nil")
 	}
 
 	value, found, err := unstructured.NestedFieldNoCopy(obj.Object, fields...)
 	if err != nil {
-		return errors.Wrapf(err, "failed to retrieve field %q from %q", strings.Join(fields, "."), obj.GroupVersionKind())
+		return pkgerrors.Wrapf(err, "failed to retrieve field %q from %q", strings.Join(fields, "."), obj.GroupVersionKind())
 	}
 	if !found || value == nil {
 		return ErrUnstructuredFieldNotFound
 	}
 	valueBytes, err := json.Marshal(value)
 	if err != nil {
-		return errors.Wrapf(err, "failed to json-encode field %q value from %q", strings.Join(fields, "."), obj.GroupVersionKind())
+		return pkgerrors.Wrapf(err, "failed to json-encode field %q value from %q", strings.Join(fields, "."), obj.GroupVersionKind())
 	}
 	if err := json.Unmarshal(valueBytes, v); err != nil {
-		return errors.Wrapf(err, "failed to json-decode field %q value from %q", strings.Join(fields, "."), obj.GroupVersionKind())
+		return pkgerrors.Wrapf(err, "failed to json-decode field %q value from %q", strings.Join(fields, "."), obj.GroupVersionKind())
 	}
 	return nil
 }
@@ -468,11 +468,11 @@ func ClusterToTypedObjectsMapper(c client.Client, ro client.ObjectList, scheme *
 	// reflection in every execution of the actual event handler.
 	obj, err := scheme.New(gvk)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to construct object of type %s", gvk)
+		return nil, pkgerrors.Wrapf(err, "failed to construct object of type %s", gvk)
 	}
 	objectList, ok := obj.(client.ObjectList)
 	if !ok {
-		return nil, errors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
+		return nil, pkgerrors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
 	}
 
 	isNamespaced, err := isAPINamespaced(gvk, c.RESTMapper())
@@ -535,11 +535,11 @@ func MachineDeploymentToObjectsMapper(c client.Client, ro client.ObjectList, sch
 	// reflection in every execution of the actual event handler.
 	obj, err := scheme.New(gvk)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to construct object of type %s", gvk)
+		return nil, pkgerrors.Wrapf(err, "failed to construct object of type %s", gvk)
 	}
 	objectList, ok := obj.(client.ObjectList)
 	if !ok {
-		return nil, errors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
+		return nil, pkgerrors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
 	}
 
 	isNamespaced, err := isAPINamespaced(gvk, c.RESTMapper())
@@ -599,11 +599,11 @@ func MachineSetToObjectsMapper(c client.Client, ro client.ObjectList, scheme *ru
 	// reflection in every execution of the actual event handler.
 	obj, err := scheme.New(gvk)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to construct object of type %s", gvk)
+		return nil, pkgerrors.Wrapf(err, "failed to construct object of type %s", gvk)
 	}
 	objectList, ok := obj.(client.ObjectList)
 	if !ok {
-		return nil, errors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
+		return nil, pkgerrors.Errorf("expected object to be a client.ObjectList, is actually %T", obj)
 	}
 
 	isNamespaced, err := isAPINamespaced(gvk, c.RESTMapper())
@@ -659,7 +659,7 @@ func isAPINamespaced(gk schema.GroupVersionKind, restmapper meta.RESTMapper) (bo
 
 	switch restMapping.Scope.Name() {
 	case "":
-		return false, errors.New("Scope cannot be identified. Empty scope returned")
+		return false, pkgerrors.New("Scope cannot be identified. Empty scope returned")
 	case meta.RESTScopeNameRoot:
 		return false, nil
 	default:
@@ -690,6 +690,8 @@ func IsSupportedVersionSkew(a, b semver.Version) bool {
 
 // LowestNonZeroResult compares two reconciliation results
 // and returns the one with lowest requeue time.
+//
+//nolint:staticcheck // SA1019: Requeue is deprecated.
 func LowestNonZeroResult(i, j ctrl.Result) ctrl.Result {
 	switch {
 	case i.IsZero():
@@ -727,7 +729,7 @@ func IsNil(i interface{}) bool {
 		return true
 	}
 	switch reflect.TypeOf(i).Kind() {
-	case reflect.Ptr, reflect.Map, reflect.Chan, reflect.Slice, reflect.Interface, reflect.UnsafePointer, reflect.Func:
+	case reflect.Pointer, reflect.Map, reflect.Chan, reflect.Slice, reflect.Interface, reflect.UnsafePointer, reflect.Func:
 		return reflect.ValueOf(i).IsValid() && reflect.ValueOf(i).IsNil()
 	}
 	return false
@@ -750,4 +752,90 @@ func MergeMap(maps ...map[string]string) map[string]string {
 		return nil
 	}
 	return m
+}
+
+// GetOwnerMachinePool returns the MachinePool objects owning the current resource.
+func GetOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
+	for _, ref := range obj.GetOwnerReferences() {
+		if ref.Kind != "MachinePool" {
+			continue
+		}
+		gv, err := schema.ParseGroupVersion(ref.APIVersion)
+		if err != nil {
+			return nil, pkgerrors.WithStack(err)
+		}
+		if gv.Group == clusterv1.GroupVersion.Group {
+			return GetMachinePoolByName(ctx, c, obj.Namespace, ref.Name)
+		}
+	}
+	return nil, nil
+}
+
+// GetMachinePoolByName finds and returns a MachinePool object using the specified params.
+func GetMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.MachinePool, error) {
+	m := &clusterv1.MachinePool{}
+	key := client.ObjectKey{Name: name, Namespace: namespace}
+	if err := c.Get(ctx, key, m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// GetMachinePoolByLabels finds and returns a MachinePool object using the value of clusterv1.MachinePoolNameLabel.
+// This differs from GetMachinePoolByName as the label value can be a hash.
+func GetMachinePoolByLabels(ctx context.Context, c client.Client, namespace string, labels map[string]string) (*clusterv1.MachinePool, error) {
+	selector := map[string]string{}
+	if clusterName, ok := labels[clusterv1.ClusterNameLabel]; ok {
+		selector = map[string]string{clusterv1.ClusterNameLabel: clusterName}
+	}
+
+	if poolNameHash, ok := labels[clusterv1.MachinePoolNameLabel]; ok {
+		machinePoolList := &clusterv1.MachinePoolList{}
+		if err := c.List(ctx, machinePoolList, client.InNamespace(namespace), client.MatchingLabels(selector)); err != nil {
+			return nil, pkgerrors.Wrapf(err, "failed to list MachinePools using labels %v", selector)
+		}
+
+		for _, mp := range machinePoolList.Items {
+			if format.MustFormatValue(mp.Name) == poolNameHash {
+				return &mp, nil
+			}
+		}
+	} else {
+		return nil, pkgerrors.Errorf("labels missing required key `%s`", clusterv1.MachinePoolNameLabel)
+	}
+
+	return nil, nil
+}
+
+// MachinePoolToInfrastructureMapFunc returns a handler.MapFunc that watches for
+// MachinePool events and returns reconciliation requests for an infrastructure provider object.
+func MachinePoolToInfrastructureMapFunc(ctx context.Context, gvk schema.GroupVersionKind) handler.MapFunc {
+	log := ctrl.LoggerFrom(ctx)
+	return func(_ context.Context, o client.Object) []reconcile.Request {
+		m, ok := o.(*clusterv1.MachinePool)
+		if !ok {
+			log.V(4).Info("Not a machine pool", "Object", klog.KObj(o))
+			return nil
+		}
+		log := log.WithValues("MachinePool", klog.KObj(o))
+
+		gk := gvk.GroupKind()
+		ref := m.Spec.Template.Spec.InfrastructureRef
+		// Return early if the GroupKind doesn't match what we expect.
+		infraGK := ref.GroupKind()
+		if gk != infraGK {
+			log.V(4).Info("Infra kind doesn't match filter group kind", "infrastructureGroupKind", infraGK.String())
+			return nil
+		}
+
+		log.V(4).Info("Projecting object")
+		return []reconcile.Request{
+			{
+				NamespacedName: client.ObjectKey{
+					Namespace: m.Namespace,
+					Name:      ref.Name,
+				},
+			},
+		}
+	}
 }

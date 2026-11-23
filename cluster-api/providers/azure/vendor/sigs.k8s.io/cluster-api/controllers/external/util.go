@@ -20,21 +20,24 @@ import (
 	"context"
 	"strings"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/internal/contract"
 )
 
 // Get uses the client and reference to get an external, unstructured object.
 func Get(ctx context.Context, c client.Reader, ref *corev1.ObjectReference) (*unstructured.Unstructured, error) {
 	if ref == nil {
-		return nil, errors.Errorf("cannot get object - object reference not set")
+		return nil, pkgerrors.Errorf("cannot get object - object reference not set")
 	}
 	obj := new(unstructured.Unstructured)
 	obj.SetAPIVersion(ref.APIVersion)
@@ -42,7 +45,38 @@ func Get(ctx context.Context, c client.Reader, ref *corev1.ObjectReference) (*un
 	obj.SetName(ref.Name)
 	obj.SetNamespace(ref.Namespace)
 	if err := c.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve %s %s", obj.GetKind(), klog.KRef(ref.Namespace, ref.Name))
+		return nil, pkgerrors.Wrapf(err, "failed to retrieve %s %s", obj.GetKind(), klog.KRef(ref.Namespace, ref.Name))
+	}
+	return obj, nil
+}
+
+// GetObjectFromContractVersionedRef uses the client and reference to get an external, unstructured object.
+func GetObjectFromContractVersionedRef(ctx context.Context, c client.Reader, ref clusterv1.ContractVersionedObjectReference, namespace string) (*unstructured.Unstructured, error) {
+	if !ref.IsDefined() {
+		return nil, pkgerrors.Errorf("cannot get object - object reference not set")
+	}
+
+	metadata, err := contract.GetGKMetadata(ctx, c, schema.GroupKind{Group: ref.APIGroup, Kind: ref.Kind})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// We want to surface the NotFound error only for the referenced object, so we use a generic error in case CRD is not found.
+			return nil, pkgerrors.Errorf("failed to get object from ref: %v", err.Error())
+		}
+		return nil, pkgerrors.Wrapf(err, "failed to get object from ref")
+	}
+
+	_, latestAPIVersion, err := contract.GetLatestContractAndAPIVersionFromContract(metadata, contract.Version)
+	if err != nil {
+		return nil, pkgerrors.Wrapf(err, "failed to get object from ref")
+	}
+
+	obj := new(unstructured.Unstructured)
+	obj.SetAPIVersion(schema.GroupVersion{Group: ref.APIGroup, Version: latestAPIVersion}.String())
+	obj.SetKind(ref.Kind)
+	obj.SetName(ref.Name)
+	obj.SetNamespace(namespace)
+	if err := c.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
+		return nil, pkgerrors.Wrapf(err, "failed to retrieve %s %s", obj.GetKind(), klog.KRef(namespace, ref.Name))
 	}
 	return obj, nil
 }
@@ -55,7 +89,7 @@ func Delete(ctx context.Context, c client.Writer, ref *corev1.ObjectReference) e
 	obj.SetName(ref.Name)
 	obj.SetNamespace(ref.Namespace)
 	if err := c.Delete(ctx, obj); err != nil {
-		return errors.Wrapf(err, "failed to delete %s %s", obj.GetKind(), klog.KRef(ref.Namespace, ref.Name))
+		return pkgerrors.Wrapf(err, "failed to delete %s %s", obj.GetKind(), klog.KRef(ref.Namespace, ref.Name))
 	}
 	return nil
 }
@@ -92,10 +126,10 @@ type CreateFromTemplateInput struct {
 }
 
 // CreateFromTemplate uses the client and the reference to create a new object from the template.
-func CreateFromTemplate(ctx context.Context, in *CreateFromTemplateInput) (*corev1.ObjectReference, error) {
+func CreateFromTemplate(ctx context.Context, in *CreateFromTemplateInput) (*unstructured.Unstructured, clusterv1.ContractVersionedObjectReference, error) {
 	from, err := Get(ctx, in.Client, in.TemplateRef)
 	if err != nil {
-		return nil, err
+		return nil, clusterv1.ContractVersionedObjectReference{}, err
 	}
 	generateTemplateInput := &GenerateTemplateInput{
 		Template:    from,
@@ -109,15 +143,19 @@ func CreateFromTemplate(ctx context.Context, in *CreateFromTemplateInput) (*core
 	}
 	to, err := GenerateTemplate(generateTemplateInput)
 	if err != nil {
-		return nil, err
+		return nil, clusterv1.ContractVersionedObjectReference{}, err
 	}
 
 	// Create the external clone.
 	if err := in.Client.Create(ctx, to); err != nil {
-		return nil, err
+		return nil, clusterv1.ContractVersionedObjectReference{}, err
 	}
 
-	return GetObjectReference(to), nil
+	return to, clusterv1.ContractVersionedObjectReference{
+		APIGroup: to.GroupVersionKind().Group,
+		Kind:     to.GetKind(),
+		Name:     to.GetName(),
+	}, nil
 }
 
 // GenerateTemplateInput is the input needed to generate a new template.
@@ -155,9 +193,11 @@ type GenerateTemplateInput struct {
 func GenerateTemplate(in *GenerateTemplateInput) (*unstructured.Unstructured, error) {
 	template, found, err := unstructured.NestedMap(in.Template.Object, "spec", "template")
 	if !found {
-		return nil, errors.Errorf("missing Spec.Template on %v %q", in.Template.GroupVersionKind(), in.Template.GetName())
+		// Tolerate template objects without `spec.template`.
+		// Intentionally using an empty template as replacement.
+		template = nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve Spec.Template map on %v %q", in.Template.GroupVersionKind(), in.Template.GetName())
+		return nil, pkgerrors.Wrapf(err, "failed to retrieve Spec.Template map on %v %q", in.Template.GroupVersionKind(), in.Template.GetName())
 	}
 
 	// Create the unstructured object from the template.
@@ -212,27 +252,16 @@ func GenerateTemplate(in *GenerateTemplateInput) (*unstructured.Unstructured, er
 	return to, nil
 }
 
-// GetObjectReference converts an unstructured into object reference.
-func GetObjectReference(obj *unstructured.Unstructured) *corev1.ObjectReference {
-	return &corev1.ObjectReference{
-		APIVersion: obj.GetAPIVersion(),
-		Kind:       obj.GetKind(),
-		Name:       obj.GetName(),
-		Namespace:  obj.GetNamespace(),
-		UID:        obj.GetUID(),
-	}
-}
-
 // FailuresFrom returns the FailureReason and FailureMessage fields from the external object status.
 func FailuresFrom(obj *unstructured.Unstructured) (string, string, error) {
 	failureReason, _, err := unstructured.NestedString(obj.Object, "status", "failureReason")
 	if err != nil {
-		return "", "", errors.Wrapf(err, "failed to determine failureReason on %v %q",
+		return "", "", pkgerrors.Wrapf(err, "failed to determine failureReason on %v %q",
 			obj.GroupVersionKind(), obj.GetName())
 	}
 	failureMessage, _, err := unstructured.NestedString(obj.Object, "status", "failureMessage")
 	if err != nil {
-		return "", "", errors.Wrapf(err, "failed to determine failureMessage on %v %q",
+		return "", "", pkgerrors.Wrapf(err, "failed to determine failureMessage on %v %q",
 			obj.GroupVersionKind(), obj.GetName())
 	}
 	return failureReason, failureMessage, nil
@@ -242,18 +271,8 @@ func FailuresFrom(obj *unstructured.Unstructured) (string, string, error) {
 func IsReady(obj *unstructured.Unstructured) (bool, error) {
 	ready, found, err := unstructured.NestedBool(obj.Object, "status", "ready")
 	if err != nil {
-		return false, errors.Wrapf(err, "failed to determine %v %q readiness",
+		return false, pkgerrors.Wrapf(err, "failed to determine %v %q readiness",
 			obj.GroupVersionKind(), obj.GetName())
 	}
 	return ready && found, nil
-}
-
-// IsInitialized returns true if the Status.Initialized field on an external object is true.
-func IsInitialized(obj *unstructured.Unstructured) (bool, error) {
-	initialized, found, err := unstructured.NestedBool(obj.Object, "status", "initialized")
-	if err != nil {
-		return false, errors.Wrapf(err, "failed to determine %v %q initialized",
-			obj.GroupVersionKind(), obj.GetName())
-	}
-	return initialized && found, nil
 }

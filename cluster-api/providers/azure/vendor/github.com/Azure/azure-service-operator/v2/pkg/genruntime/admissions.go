@@ -49,7 +49,8 @@ func ValidateWriteOnceProperties(oldObj ARMMetaObject, newObj ARMMetaObject) (ad
 		err := eris.Errorf(
 			"updating 'spec.azureName' is not allowed for '%s : %s",
 			oldObj.GetObjectKind().GroupVersionKind(),
-			oldObj.GetName())
+			oldObj.GetName(),
+		)
 		errs = append(errs, err)
 	}
 

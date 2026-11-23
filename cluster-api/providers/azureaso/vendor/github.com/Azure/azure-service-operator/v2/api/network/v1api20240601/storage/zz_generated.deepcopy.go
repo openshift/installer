@@ -24,6 +24,11 @@ func (in *ARecord) DeepCopyInto(out *ARecord) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Ipv4AddressFromConfig != nil {
+		in, out := &in.Ipv4AddressFromConfig, &out.Ipv4AddressFromConfig
+		*out = new(genruntime.ConfigMapReference)
+		**out = **in
+	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
 		*out = make(genruntime.PropertyBag, len(*in))
@@ -76,6 +81,11 @@ func (in *AaaaRecord) DeepCopyInto(out *AaaaRecord) {
 	if in.Ipv6Address != nil {
 		in, out := &in.Ipv6Address, &out.Ipv6Address
 		*out = new(string)
+		**out = **in
+	}
+	if in.Ipv6AddressFromConfig != nil {
+		in, out := &in.Ipv6AddressFromConfig, &out.Ipv6AddressFromConfig
+		*out = new(genruntime.ConfigMapReference)
 		**out = **in
 	}
 	if in.PropertyBag != nil {
@@ -311,7 +321,7 @@ func (in *PrivateDnsZoneOperatorSpec) DeepCopyInto(out *PrivateDnsZoneOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -329,7 +339,7 @@ func (in *PrivateDnsZoneOperatorSpec) DeepCopyInto(out *PrivateDnsZoneOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -421,6 +431,11 @@ func (in *PrivateDnsZone_STATUS) DeepCopyInto(out *PrivateDnsZone_STATUS) {
 		in, out := &in.ProvisioningState, &out.ProvisioningState
 		*out = new(string)
 		**out = **in
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
@@ -564,7 +579,7 @@ func (in *PrivateDnsZonesAAAARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -582,7 +597,7 @@ func (in *PrivateDnsZonesAAAARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZon
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -691,6 +706,11 @@ func (in *PrivateDnsZonesAAAARecord_STATUS) DeepCopyInto(out *PrivateDnsZonesAAA
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -891,7 +911,7 @@ func (in *PrivateDnsZonesARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZonesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -909,7 +929,7 @@ func (in *PrivateDnsZonesARecordOperatorSpec) DeepCopyInto(out *PrivateDnsZonesA
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1018,6 +1038,11 @@ func (in *PrivateDnsZonesARecord_STATUS) DeepCopyInto(out *PrivateDnsZonesARecor
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -1218,7 +1243,7 @@ func (in *PrivateDnsZonesCNAMERecordOperatorSpec) DeepCopyInto(out *PrivateDnsZo
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1236,7 +1261,7 @@ func (in *PrivateDnsZonesCNAMERecordOperatorSpec) DeepCopyInto(out *PrivateDnsZo
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1345,6 +1370,11 @@ func (in *PrivateDnsZonesCNAMERecord_STATUS) DeepCopyInto(out *PrivateDnsZonesCN
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -1545,7 +1575,7 @@ func (in *PrivateDnsZonesMXRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZones
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1563,7 +1593,7 @@ func (in *PrivateDnsZonesMXRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZones
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1672,6 +1702,11 @@ func (in *PrivateDnsZonesMXRecord_STATUS) DeepCopyInto(out *PrivateDnsZonesMXRec
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -1872,7 +1907,7 @@ func (in *PrivateDnsZonesPTRRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1890,7 +1925,7 @@ func (in *PrivateDnsZonesPTRRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1999,6 +2034,11 @@ func (in *PrivateDnsZonesPTRRecord_STATUS) DeepCopyInto(out *PrivateDnsZonesPTRR
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -2199,7 +2239,7 @@ func (in *PrivateDnsZonesSRVRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2217,7 +2257,7 @@ func (in *PrivateDnsZonesSRVRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2326,6 +2366,11 @@ func (in *PrivateDnsZonesSRVRecord_STATUS) DeepCopyInto(out *PrivateDnsZonesSRVR
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -2526,7 +2571,7 @@ func (in *PrivateDnsZonesTXTRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2544,7 +2589,7 @@ func (in *PrivateDnsZonesTXTRecordOperatorSpec) DeepCopyInto(out *PrivateDnsZone
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2653,6 +2698,11 @@ func (in *PrivateDnsZonesTXTRecord_STATUS) DeepCopyInto(out *PrivateDnsZonesTXTR
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Ttl != nil {
 		in, out := &in.Ttl, &out.Ttl
@@ -2853,7 +2903,7 @@ func (in *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) DeepCopyInto(out *Priva
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2871,7 +2921,7 @@ func (in *PrivateDnsZonesVirtualNetworkLinkOperatorSpec) DeepCopyInto(out *Priva
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2938,6 +2988,11 @@ func (in *PrivateDnsZonesVirtualNetworkLink_STATUS) DeepCopyInto(out *PrivateDns
 		in, out := &in.ResolutionPolicy, &out.ResolutionPolicy
 		*out = new(string)
 		**out = **in
+	}
+	if in.SystemData != nil {
+		in, out := &in.SystemData, &out.SystemData
+		*out = new(SystemData_STATUS)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
@@ -3339,6 +3394,58 @@ func (in *SubResource_STATUS) DeepCopy() *SubResource_STATUS {
 		return nil
 	}
 	out := new(SubResource_STATUS)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *SystemData_STATUS) DeepCopyInto(out *SystemData_STATUS) {
+	*out = *in
+	if in.CreatedAt != nil {
+		in, out := &in.CreatedAt, &out.CreatedAt
+		*out = new(string)
+		**out = **in
+	}
+	if in.CreatedBy != nil {
+		in, out := &in.CreatedBy, &out.CreatedBy
+		*out = new(string)
+		**out = **in
+	}
+	if in.CreatedByType != nil {
+		in, out := &in.CreatedByType, &out.CreatedByType
+		*out = new(string)
+		**out = **in
+	}
+	if in.LastModifiedAt != nil {
+		in, out := &in.LastModifiedAt, &out.LastModifiedAt
+		*out = new(string)
+		**out = **in
+	}
+	if in.LastModifiedBy != nil {
+		in, out := &in.LastModifiedBy, &out.LastModifiedBy
+		*out = new(string)
+		**out = **in
+	}
+	if in.LastModifiedByType != nil {
+		in, out := &in.LastModifiedByType, &out.LastModifiedByType
+		*out = new(string)
+		**out = **in
+	}
+	if in.PropertyBag != nil {
+		in, out := &in.PropertyBag, &out.PropertyBag
+		*out = make(genruntime.PropertyBag, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new SystemData_STATUS.
+func (in *SystemData_STATUS) DeepCopy() *SystemData_STATUS {
+	if in == nil {
+		return nil
+	}
+	out := new(SystemData_STATUS)
 	in.DeepCopyInto(out)
 	return out
 }

@@ -120,6 +120,33 @@ func TestValidatePlatform(t *testing.T) {
 			valid: false,
 		},
 		{
+			name: "OSImage: valid COS URL without serviceInstanceGUID",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = "https://s3.us-south.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-us-south/rhcos-10-2-20260423-0-ppc64le-powervs.ova.gz"
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "OSImage: invalid when not a COS URL",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = "my-workspace-image"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "OSImage: valid when osImage is empty",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.OSImage = ""
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name: "invalid url (no hostname) for service endpoint",
 			platform: func() *powervs.Platform {
 				p := validMinimalPlatform()

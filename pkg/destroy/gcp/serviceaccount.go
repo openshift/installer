@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listServiceAccounts(ctx context.Context) ([]cloudRe
 	result := []cloudResource{}
 	sas, err := o.listClusterServiceAccount(ctx)
 	if err != nil {
-		errors.Wrapf(err, "failed to fetch service accounts for the cluster")
+		return nil, fmt.Errorf("failed to fetch service accounts for the cluster: %w", err)
 	}
 	for _, item := range sas {
 		o.Logger.Debugf("Found service account: %s", item.Name)

@@ -72,8 +72,40 @@ TrafficManagerProfile: Resource
     │   ├── Fqdn: *string
     │   ├── RelativeName: *string
     │   └── Ttl: *int
-    ├── Endpoints: Object (1 property)[]
-    │   └── Id: *string
+    ├── Endpoints: Object (17 properties)[]
+    │   ├── AlwaysServe: *Enum (2 values)
+    │   │   ├── "Disabled"
+    │   │   └── "Enabled"
+    │   ├── CustomHeaders: Object (2 properties)[]
+    │   │   ├── Name: *string
+    │   │   └── Value: *string
+    │   ├── EndpointLocation: *string
+    │   ├── EndpointMonitorStatus: *Enum (7 values)
+    │   │   ├── "CheckingEndpoint"
+    │   │   ├── "Degraded"
+    │   │   ├── "Disabled"
+    │   │   ├── "Inactive"
+    │   │   ├── "Online"
+    │   │   ├── "Stopped"
+    │   │   └── "Unmonitored"
+    │   ├── EndpointStatus: *Enum (2 values)
+    │   │   ├── "Disabled"
+    │   │   └── "Enabled"
+    │   ├── GeoMapping: string[]
+    │   ├── Id: *string
+    │   ├── MinChildEndpoints: *int
+    │   ├── MinChildEndpointsIPv4: *int
+    │   ├── MinChildEndpointsIPv6: *int
+    │   ├── Name: *string
+    │   ├── Priority: *int
+    │   ├── Subnets: Object (3 properties)[]
+    │   │   ├── First: *string
+    │   │   ├── Last: *string
+    │   │   └── Scope: *int
+    │   ├── Target: *string
+    │   ├── TargetResourceId: *string
+    │   ├── Type: *string
+    │   └── Weight: *int
     ├── Id: *string
     ├── Location: *string
     ├── MaxReturn: *int

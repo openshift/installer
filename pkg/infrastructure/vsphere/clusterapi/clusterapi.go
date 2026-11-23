@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/vmware/govmomi/object"
-	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -113,7 +113,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 
 		for i := range in.MachineManifests {
-			if vm, ok := in.MachineManifests[i].(*v1beta1.VSphereMachine); ok {
+			if vm, ok := in.MachineManifests[i].(*v1beta2.VSphereMachine); ok {
 				if vm.Spec.Server == server {
 					vm.Spec.TagIDs = append(vm.Spec.TagIDs, tagID)
 				}

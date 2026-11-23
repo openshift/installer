@@ -116,7 +116,12 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) ValidateUpdate(ctx context.Con
 
 // createValidations validates the creation of the resource
 func (group *PrivateEndpointsPrivateDnsZoneGroup) createValidations() []func(ctx context.Context, obj *v20220701.PrivateEndpointsPrivateDnsZoneGroup) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.PrivateEndpointsPrivateDnsZoneGroup) (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.PrivateEndpointsPrivateDnsZoneGroup) (admission.Warnings, error){
+		group.validateResourceReferences,
+		group.validateOwnerReference,
+		group.validateSecretDestinations,
+		group.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

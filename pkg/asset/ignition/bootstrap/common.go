@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"bytes"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -48,6 +47,7 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -100,6 +100,15 @@ type bootstrapTemplateData struct {
 	ClusterDomain         string
 	OSImageStream         types.OSImageStream
 	KonnectivityEnabled   bool
+	// ApproveCSRMaxNodes bounds how many kubelet client CSRs approve-csr.sh
+	// approves. Zero means no bound.
+	ApproveCSRMaxNodes int64
+	// MachineNetworks is the space separated list of CIDRs that a kubelet
+	// serving certificate may name an address out of: the machine networks,
+	// and on baremetal the provisioning network the nodes are also attached
+	// to. It holds an entry per IP family, so a dual stack install needs no
+	// special handling.
+	MachineNetworks string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -327,6 +336,19 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	if installConfig.Config.Arbiter != nil {
 		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
 	}
+
+	// A CSR says nothing about the role of the node that asked for it, so the
+	// bootstrap approver is held to a count rather than to a role. On platform
+	// none there is no machine-api, so cluster-machine-approver never takes
+	// over and the workers have to be approved here too; everywhere else it
+	// picks up the workers once it is running, and this service only has to
+	// cover the control plane and the arbiter.
+	approveCSRMaxNodes := int64(0)
+	if installConfig.Config.Platform.Name() != nonetypes.Name {
+		approveCSRMaxNodes = controlPlaneReplicas
+	}
+
+	machineNetworks := approveCSRNetworks(installConfig.Config)
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
@@ -381,24 +403,17 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 
 	openshiftInstallInvoker := os.Getenv("OPENSHIFT_INSTALL_INVOKER")
 
-	pullSecret := installConfig.Config.PullSecret
-
-	// Merge IRI registry credentials into pull secret if available.
-	// IRIRegistryCredentials generates credentials when an InternalReleaseImage
-	// manifest is present. This ensures kubelet/CRI-O on bootstrap and cluster
-	// nodes can authenticate to the IRI registry on master nodes.
+	// The pull secret with the IRI registry credentials merged in during
+	// generation, so that kubelet and CRI-O on the bootstrap and cluster
+	// nodes can authenticate to the IRI registry on the master nodes. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
 	iriAuth := &tls.IRIRegistryCredentials{}
 	dependencies.Get(iriAuth)
-	if iriAuth.Password != "" {
-		iriRegistryHost := fmt.Sprintf("api-int.%s:22625", installConfig.Config.ClusterDomain())
-		merged, err := mergeIRIAuthIntoPullSecret(pullSecret, iriAuth.Username, iriAuth.Password, iriRegistryHost)
-		if err != nil {
-			logrus.Fatalf("Failed to merge IRI registry credentials into pull secret: %v", err)
-		}
-		pullSecret = merged
-	}
+	pullSecret := iriAuth.MergedPullSecret
 	konnectivityFeatureGateEnabled := (installConfig.Config.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator) ||
-		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement))
+		installConfig.Config.Enabled(features.FeatureGateClusterAPIMachineManagement) ||
+		installConfig.Config.Enabled(features.FeatureGateClusterAPIOperator))
 
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
@@ -422,34 +437,36 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		FeatureSet:            installConfig.Config.FeatureSet,
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
+		ApproveCSRMaxNodes:    approveCSRMaxNodes,
+		MachineNetworks:       strings.Join(machineNetworks, " "),
 		OSImageStream:         installConfig.Config.OSImageStream,
 		KonnectivityEnabled:   konnectivityFeatureGateEnabled && !bootstrapInPlace,
 	}
 }
 
-// mergeIRIAuthIntoPullSecret merges IRI registry authentication credentials
-// into the pull secret so that kubelet/CRI-O can authenticate to the IRI registry.
-func mergeIRIAuthIntoPullSecret(pullSecret, username, password, registryHost string) (string, error) {
-	var pullSecretMap map[string]interface{}
-	if err := json.Unmarshal([]byte(pullSecret), &pullSecretMap); err != nil {
-		return "", fmt.Errorf("failed to parse pull secret: %w", err)
+// approveCSRNetworks returns the networks a kubelet serving certificate may
+// name an address out of. A kubelet serves on an address of the node it runs
+// on, so that is the machine networks, and on baremetal also the provisioning
+// network the nodes are attached to, which is deliberately kept outside the
+// machine networks and so would not otherwise be covered.
+func approveCSRNetworks(config *types.InstallConfig) []string {
+	if config == nil || config.Networking == nil {
+		return nil
 	}
 
-	auths, ok := pullSecretMap["auths"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("pull secret missing 'auths' field")
+	networks := make([]string, 0, len(config.Networking.MachineNetwork)+1)
+	for _, network := range config.Networking.MachineNetwork {
+		networks = append(networks, network.CIDR.String())
 	}
 
-	authValue := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-	auths[registryHost] = map[string]interface{}{
-		"auth": authValue,
+	// There is no provisioning network to allow for when it is disabled.
+	if bm := config.Platform.BareMetal; bm != nil &&
+		bm.ProvisioningNetwork != baremetaltypes.DisabledProvisioningNetwork &&
+		bm.ProvisioningNetworkCIDR != nil {
+		networks = append(networks, bm.ProvisioningNetworkCIDR.String())
 	}
 
-	mergedBytes, err := json.Marshal(pullSecretMap)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal merged pull secret: %w", err)
-	}
-	return string(mergedBytes), nil
+	return networks
 }
 
 // AddStorageFiles adds files to a Ignition config.

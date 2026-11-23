@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	gohttp "net/http"
@@ -9,9 +10,16 @@ import (
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	// https://github.com/IBM/platform-services-go-sdk/blob/v0.18.16/resourcecontrollerv2/resource_controller_v2.go
+	cosaws "github.com/IBM/ibm-cos-sdk-go/aws"
+	cosawserr "github.com/IBM/ibm-cos-sdk-go/aws/awserr"
+	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
+	cossession "github.com/IBM/ibm-cos-sdk-go/aws/session"
+	ibms3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	configv1 "github.com/openshift/api/config/v1"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
 const cosTypeName = "cos instance"
@@ -46,6 +54,14 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		return nil, err
 	}
 
+	var userCOSInstanceGUID string
+	if o.cosInstanceCRN != "" {
+		parts := strings.Split(o.cosInstanceCRN, ":")
+		if len(parts) >= 8 {
+			userCOSInstanceGUID = parts[7]
+		}
+	}
+
 	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
@@ -66,6 +82,11 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to get COS instance (%s): err = %w, response = %v", cosID, err, response)
+		}
+
+		if userCOSInstanceGUID != "" && (instance.GUID != nil && *instance.GUID == userCOSInstanceGUID || instance.ID != nil && *instance.ID == o.cosInstanceCRN) {
+			o.Logger.Debugf("listCOSInstances: skipping user-provided COS instance %s (%s)", *instance.Name, *instance.GUID)
+			continue
 		}
 
 		result = append(result, cloudResource{
@@ -323,9 +344,154 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 	return nil
 }
 
+// bootstrapIgnBucketName returns the name of the bootstrap ignition bucket
+// created by the installer for the given infra ID.
+func bootstrapIgnBucketName(infraID string) string {
+	return fmt.Sprintf("%s-bootstrap-ign", infraID)
+}
+
+// newCOSS3Client builds a COS S3 client pointed at the appropriate endpoint.
+// cosInstanceGUID is the GUID portion of the COS instance CRN.
+// serviceEndpoints is the list of service endpoint overrides from the cluster metadata.
+func newCOSS3Client(apiKey, cosInstanceGUID, endpoint string, serviceEndpoints []configv1.PowerVSServiceEndpoint) *ibms3.S3 {
+	cfg := cosaws.NewConfig()
+	iamURL := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceIAM), serviceEndpoints)
+	if iamURL == "" {
+		iamURL = "https://iam.cloud.ibm.com"
+	}
+	authEndpoint := fmt.Sprintf("%s/identity/token", iamURL)
+	cfg.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, apiKey, cosInstanceGUID))
+	cfg.WithEndpoint(endpoint)
+	sess := cossession.Must(cossession.NewSession())
+	return ibms3.New(sess, cfg)
+}
+
+// destroyCOSInstanceBuckets removes only the bucket that was created during
+// cluster installation inside a pre-existing (user-supplied) COS instance.
+func (o *ClusterUninstaller) destroyCOSInstanceBuckets() error {
+	// The COS instance GUID is the 8th colon-separated field of the CRN.
+	// CRN format: crn:v1:bluemix:public:cloud-object-storage:global:a/<acct>:<guid>::
+	parts := strings.Split(o.cosInstanceCRN, ":")
+	if len(parts) < 8 {
+		return fmt.Errorf("destroyCOSInstanceBuckets: cannot parse GUID from COS CRN %q", o.cosInstanceCRN)
+	}
+	cosInstanceGUID := parts[7]
+
+	// Use COS endpoint override if set; otherwise fall back to the standard regional endpoint.
+	// o.Region is the PowerVS region (e.g. "syd"); COS uses the VPC/COS region (e.g. "au-syd").
+	endpoint := powervstypes.EndpointURLForService(string(configv1.IBMCloudServiceCOS), o.ServiceEndpoints)
+	if endpoint == "" {
+		cosRegion, cosRegionErr := powervstypes.COSRegionForPowerVSRegion(o.Region)
+		if cosRegionErr != nil {
+			if vpcCOSRegion, err := powervstypes.COSRegionForVPCRegion(o.VPCRegion); err == nil {
+				cosRegion = vpcCOSRegion
+			} else {
+				cosRegion = o.VPCRegion
+			}
+		}
+		endpoint = "https://s3." + cosRegion + ".cloud-object-storage.appdomain.cloud"
+	}
+	// Strip the leading "https://" — the SDK expects just the host.
+	endpoint = strings.TrimPrefix(endpoint, "https://")
+
+	cosClient := newCOSS3Client(o.APIKey, cosInstanceGUID, endpoint, o.ServiceEndpoints)
+	ctx, cancel := contextWithTimeout()
+	defer cancel()
+
+	bucketName := bootstrapIgnBucketName(o.InfraID)
+	o.Logger.Infof("Deleting installer-created COS bucket %q from pre-existing instance", bucketName)
+
+	// Enumerate and delete all objects before deleting the bucket itself.
+	// This is a safe no-op when the bucket is empty and handles both the
+	// root-level "bootstrap.ign" object and any additional objects (e.g.
+	// per-machine ignition files) that CAPI may have uploaded.
+	listInput := &ibms3.ListObjectsInput{
+		Bucket: cosaws.String(bucketName),
+	}
+	for {
+		listOutput, err := cosClient.ListObjectsWithContext(ctx, listInput)
+		if err != nil {
+			if isCOSS3NotFound(err) {
+				o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone during list", bucketName)
+				return nil
+			}
+			return fmt.Errorf("destroyCOSInstanceBuckets: failed to list objects in bucket %q: %w", bucketName, err)
+		}
+
+		for _, obj := range listOutput.Contents {
+			deleteObjInput := &ibms3.DeleteObjectInput{
+				Bucket: cosaws.String(bucketName),
+				Key:    obj.Key,
+			}
+			if _, err := cosClient.DeleteObjectWithContext(ctx, deleteObjInput); err != nil {
+				if isCOSS3NotFound(err) {
+					o.Logger.Debugf("destroyCOSInstanceBuckets: object %q already gone in %q", *obj.Key, bucketName)
+					continue
+				}
+				return fmt.Errorf("destroyCOSInstanceBuckets: failed to delete object %q from bucket %q: %w", *obj.Key, bucketName, err)
+			}
+			o.Logger.Debugf("destroyCOSInstanceBuckets: deleted object %q from bucket %q", *obj.Key, bucketName)
+		}
+
+		if listOutput.IsTruncated == nil || !*listOutput.IsTruncated {
+			break
+		}
+		// Without a Delimiter, NextMarker is not set; use the last key as the next marker.
+		if len(listOutput.Contents) > 0 {
+			listInput.Marker = listOutput.Contents[len(listOutput.Contents)-1].Key
+		} else {
+			break
+		}
+	}
+
+	// Delete the now-empty bucket itself.
+	deleteBucketInput := &ibms3.DeleteBucketInput{
+		Bucket: cosaws.String(bucketName),
+	}
+	if _, err := cosClient.DeleteBucketWithContext(ctx, deleteBucketInput); err != nil {
+		if isCOSS3NotFound(err) {
+			o.Logger.Debugf("destroyCOSInstanceBuckets: bucket %q already gone", bucketName)
+			return nil
+		}
+		return fmt.Errorf("destroyCOSInstanceBuckets: failed to delete bucket %q: %w", bucketName, err)
+	}
+
+	o.Logger.Infof("Deleted installer-created COS bucket %q", bucketName)
+	return nil
+}
+
+func isCOSS3NotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	var reqErr cosawserr.RequestFailure
+	if errors.As(err, &reqErr) && reqErr.StatusCode() == gohttp.StatusNotFound {
+		return true
+	}
+	var awsErr cosawserr.Error
+	if errors.As(err, &awsErr) {
+		switch awsErr.Code() {
+		case ibms3.ErrCodeNoSuchBucket, ibms3.ErrCodeNoSuchKey:
+			return true
+		}
+	}
+	return false
+}
+
 // destroyCOSInstances removes the COS service instance resources that have a
 // name prefixed with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyCOSInstances() error {
+	// If the COS instance was preconfigured (user-provided via cosInstanceCRN),
+	// delete the installer-created buckets inside that instance. We do not
+	// delete the preconfigured instance itself, but still proceed to destroy
+	// any separate installer-created COS instances (such as -image-registry).
+	if o.cosInstanceCRN != "" {
+		o.Logger.Infof("COS instance was preconfigured (%s) - deleting installer-created buckets", o.cosInstanceCRN)
+		if err := o.destroyCOSInstanceBuckets(); err != nil {
+			return err
+		}
+	}
+
 	firstPassList, err := o.listCOSInstances()
 	if err != nil {
 		return err

@@ -85,7 +85,7 @@ func (in *FederatedIdentityCredentialOperatorSpec) DeepCopyInto(out *FederatedId
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func (in *FederatedIdentityCredentialOperatorSpec) DeepCopyInto(out *FederatedId
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -329,17 +329,17 @@ func (in *UserAssignedIdentityOperatorConfigMaps) DeepCopyInto(out *UserAssigned
 	if in.ClientId != nil {
 		in, out := &in.ClientId, &out.ClientId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrincipalId != nil {
 		in, out := &in.PrincipalId, &out.PrincipalId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.TenantId != nil {
 		in, out := &in.TenantId, &out.TenantId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -359,17 +359,22 @@ func (in *UserAssignedIdentityOperatorSecrets) DeepCopyInto(out *UserAssignedIde
 	if in.ClientId != nil {
 		in, out := &in.ClientId, &out.ClientId
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PrincipalId != nil {
 		in, out := &in.PrincipalId, &out.PrincipalId
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
+	}
+	if in.SubscriptionId != nil {
+		in, out := &in.SubscriptionId, &out.SubscriptionId
+		*out = new(genruntime.SecretDestination)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.TenantId != nil {
 		in, out := &in.TenantId, &out.TenantId
 		*out = new(genruntime.SecretDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -393,7 +398,7 @@ func (in *UserAssignedIdentityOperatorSpec) DeepCopyInto(out *UserAssignedIdenti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -409,7 +414,7 @@ func (in *UserAssignedIdentityOperatorSpec) DeepCopyInto(out *UserAssignedIdenti
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

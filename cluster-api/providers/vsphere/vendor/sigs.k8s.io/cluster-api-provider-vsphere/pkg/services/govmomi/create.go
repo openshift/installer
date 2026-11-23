@@ -19,7 +19,7 @@ package govmomi
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
@@ -30,7 +30,7 @@ import (
 // for the new VM to be created.
 func createVM(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []byte, format bootstrapv1.Format) error {
 	if !vmCtx.Session.IsVC() {
-		return errors.Errorf("expected VCenter client got %v", vmCtx.Session.ServiceContent.About.ApiType)
+		return pkgerrors.Errorf("expected VCenter client got %v", vmCtx.Session.ServiceContent.About.ApiType)
 	}
 	return vcenter.Clone(ctx, vmCtx, bootstrapData, format)
 }

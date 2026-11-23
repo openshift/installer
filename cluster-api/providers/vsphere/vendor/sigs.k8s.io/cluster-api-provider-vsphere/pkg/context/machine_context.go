@@ -21,11 +21,11 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	"sigs.k8s.io/cluster-api/util/patch"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 )
 
 // BaseMachineContext contains information about a CAPI Machine for VSphereMachine reconciliation.
@@ -60,11 +60,16 @@ func (c *VIMMachineContext) String() string {
 
 // Patch updates the object and its status on the API server.
 func (c *VIMMachineContext) Patch(ctx context.Context) error {
-	return c.PatchHelper.Patch(ctx, c.VSphereMachine, patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-		infrav1.VSphereMachineReadyV1Beta2Condition,
-		infrav1.VSphereMachineVirtualMachineProvisionedV1Beta2Condition,
-		clusterv1beta1.PausedV1Beta2Condition,
-	}})
+	return c.PatchHelper.Patch(ctx, c.VSphereMachine,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			clusterv1.ReadyV1Beta1Condition,
+			infrav1.VMProvisionedV1Beta1Condition,
+		}},
+		patch.WithOwnedConditions{Conditions: []string{
+			infrav1.VSphereMachineReadyCondition,
+			infrav1.VSphereMachineVirtualMachineProvisionedCondition,
+			clusterv1.PausedCondition,
+		}})
 }
 
 // GetVSphereMachine sets the VSphereMachine for the VIMMachineContext.
@@ -74,7 +79,7 @@ func (c *VIMMachineContext) GetVSphereMachine() VSphereMachine {
 
 // GetReady return when the VSphereMachine is ready.
 func (c *VIMMachineContext) GetReady() bool {
-	return c.VSphereMachine.Status.Ready
+	return ptr.Deref(c.VSphereMachine.Status.Initialization.Provisioned, false)
 }
 
 // GetObjectMeta returns the ObjectMeta for the VSphereMachine in the VIMMachineContext.

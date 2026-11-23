@@ -117,6 +117,8 @@ func (f *IBMPINetworkClient) Delete(id string) error {
 }
 
 // Get All Ports on a Network
+//
+// Deprecated: This method is deprecated. Use GetAllNetworkInterfaces instead.
 func (f *IBMPINetworkClient) GetAllPorts(id string) (*models.NetworkPorts, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -132,6 +134,8 @@ func (f *IBMPINetworkClient) GetAllPorts(id string) (*models.NetworkPorts, error
 }
 
 // Get a Port on a Network
+//
+// Deprecated: This method is deprecated. Use GetNetworkInterface instead.
 func (f *IBMPINetworkClient) GetPort(id string, networkPortID string) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -149,6 +153,8 @@ func (f *IBMPINetworkClient) GetPort(id string, networkPortID string) (*models.N
 }
 
 // Create a Port on a Network
+//
+// Deprecated: This method is deprecated. Use CreateNetworkInterface instead.
 func (f *IBMPINetworkClient) CreatePort(id string, body *models.NetworkPortCreate) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -165,6 +171,8 @@ func (f *IBMPINetworkClient) CreatePort(id string, body *models.NetworkPortCreat
 }
 
 // Delete a Port on a Network
+//
+// Deprecated: This method is deprecated. Use DeleteNetworkInterface instead.
 func (f *IBMPINetworkClient) DeletePort(id string, networkPortID string) error {
 	params := p_cloud_networks.NewPcloudNetworksPortsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
@@ -178,6 +186,8 @@ func (f *IBMPINetworkClient) DeletePort(id string, networkPortID string) error {
 }
 
 // Update a Port on a Network
+//
+// Deprecated: This method is deprecated. Use UpdateNetworkInterface instead.
 func (f *IBMPINetworkClient) UpdatePort(id, networkPortID string, body *models.NetworkPortUpdate) (*models.NetworkPort, error) {
 	params := p_cloud_networks.NewPcloudNetworksPortsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).

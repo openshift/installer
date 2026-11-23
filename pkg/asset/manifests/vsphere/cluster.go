@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capv "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	capv "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -21,6 +21,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	assetOutput := &capiutils.GenerateClusterAssetsOutput{}
 
 	for index, vcenter := range installConfig.Config.VSphere.VCenters {
+		credentials, err := installConfig.Config.VSphere.CredentialsForVCenter(vcenter.Server)
+		if err != nil {
+			return nil, err
+		}
 		vsphereCreds := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("vsphere-creds-%d", index),
@@ -30,8 +34,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 		vsphereCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 
-		vsphereCreds.Data["username"] = []byte(vcenter.Username)
-		vsphereCreds.Data["password"] = []byte(vcenter.Password)
+		vsphereCreds.Data["username"] = []byte(credentials.User)
+		vsphereCreds.Data["password"] = []byte(credentials.Password)
 
 		manifests = append(manifests, &asset.RuntimeFile{
 			Object: vsphereCreds,
@@ -49,7 +53,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 					Port: 6443,
 				},
-				IdentityRef: &capv.VSphereIdentityReference{
+				IdentityRef: capv.VSphereIdentityReference{
 					Kind: capv.SecretKind,
 					Name: vsphereCreds.Name,
 				},
@@ -109,8 +113,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 					Topology: capv.Topology{
 						Datacenter:     failureDomain.Topology.Datacenter,
-						ComputeCluster: &failureDomain.Topology.ComputeCluster,
-						Hosts: &capv.FailureDomainHosts{
+						ComputeCluster: failureDomain.Topology.ComputeCluster,
+						Hosts: capv.FailureDomainHosts{
 							VMGroupName:   fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name),
 							HostGroupName: failureDomain.Topology.HostGroup,
 						},

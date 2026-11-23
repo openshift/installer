@@ -28,7 +28,7 @@ type GKEConfigSpec struct{}
 // +kubebuilder:resource:path=gkeconfigs,scope=Namespaced,categories=cluster-api,shortName=gkec
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Bootstrap configuration is ready"
+// +kubebuilder:printcolumn:name="Ready",type="boolean",JSONPath=".status.ready",description="Bootstrap configuration is ready"
 // +kubebuilder:printcolumn:name="DataSecretName",type="string",JSONPath=".status.dataSecretName",description="Name of Secret containing bootstrap data"
 
 // GKEConfig is the schema for the GCP GKE Bootstrap Configuration.
@@ -77,5 +77,5 @@ type GKEConfigList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&GKEConfig{}, &GKEConfigList{})
+	objectTypes = append(objectTypes, &GKEConfig{}, &GKEConfigList{})
 }

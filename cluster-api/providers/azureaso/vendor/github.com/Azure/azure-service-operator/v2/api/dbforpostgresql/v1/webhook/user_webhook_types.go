@@ -108,7 +108,8 @@ func (webhook *User_Webhook) ValidateUpdate(ctx context.Context, oldObj runtime.
 		ctx,
 		oldResource,
 		newResource,
-		validations)
+		validations,
+	)
 }
 
 // createValidations validates the creation of the resource

@@ -1,6 +1,13 @@
 # Kubernetes Cluster API Provider OpenStack
 
-[![Go Report Card](https://goreportcard.com/badge/kubernetes-sigs/cluster-api-provider-openstack)](https://goreportcard.com/report/kubernetes-sigs/cluster-api-provider-openstack)
+<p>
+<a href="https://godoc.org/sigs.k8s.io/cluster-api-provider-openstack"><img src="https://godoc.org/sigs.k8s.io/cluster-api-provider-openstack?status.svg"></a>
+<!-- join kubernetes slack channel for cluster-api -->
+<a href="http://slack.k8s.io/">
+<img src="https://img.shields.io/badge/join%20slack-%23cluster--api--provider--openstack-brightgreen"></a>
+<!-- latest stable release badge -->
+<img alt="GitHub release (latest SemVer)" src="https://img.shields.io/github/v/release/kubernetes-sigs/cluster-api-provider-openstack">
+</p>
 
 ------
 

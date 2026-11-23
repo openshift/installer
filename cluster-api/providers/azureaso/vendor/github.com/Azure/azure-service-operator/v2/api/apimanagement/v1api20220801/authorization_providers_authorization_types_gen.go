@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}
 type AuthorizationProvidersAuthorization struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &AuthorizationProvidersAuthorization{}
 
 // ConvertFrom populates our AuthorizationProvidersAuthorization from the provided hub AuthorizationProvidersAuthorization
 func (authorization *AuthorizationProvidersAuthorization) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.AuthorizationProvidersAuthorization)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvidersAuthorization but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.AuthorizationProvidersAuthorization
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return authorization.AssignProperties_From_AuthorizationProvidersAuthorization(source)
+	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to authorization")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub AuthorizationProvidersAuthorization from our AuthorizationProvidersAuthorization
 func (authorization *AuthorizationProvidersAuthorization) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.AuthorizationProvidersAuthorization)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/AuthorizationProvidersAuthorization but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.AuthorizationProvidersAuthorization
+	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from authorization")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return authorization.AssignProperties_To_AuthorizationProvidersAuthorization(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &AuthorizationProvidersAuthorization{}
@@ -86,17 +101,6 @@ func (authorization *AuthorizationProvidersAuthorization) SecretDestinationExpre
 		return nil
 	}
 	return authorization.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &AuthorizationProvidersAuthorization{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (authorization *AuthorizationProvidersAuthorization) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*AuthorizationProvidersAuthorization_STATUS); ok {
-		return authorization.Spec.Initialize_From_AuthorizationProvidersAuthorization_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type AuthorizationProvidersAuthorization_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &AuthorizationProvidersAuthorization{}
@@ -237,7 +241,7 @@ func (authorization *AuthorizationProvidersAuthorization) OriginalGVK() *schema.
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimauthorizationproviders.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/authorizationProviders/{authorizationProviderId}/authorizations/{authorizationId}
 type AuthorizationProvidersAuthorizationList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -532,29 +536,6 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_AuthorizationProvidersAuthorization_STATUS populates our AuthorizationProvidersAuthorization_Spec from the provided source AuthorizationProvidersAuthorization_STATUS
-func (authorization *AuthorizationProvidersAuthorization_Spec) Initialize_From_AuthorizationProvidersAuthorization_STATUS(source *AuthorizationProvidersAuthorization_STATUS) error {
-
-	// AuthorizationType
-	if source.AuthorizationType != nil {
-		authorizationType := genruntime.ToEnum(string(*source.AuthorizationType), authorizationContractProperties_AuthorizationType_Values)
-		authorization.AuthorizationType = &authorizationType
-	} else {
-		authorization.AuthorizationType = nil
-	}
-
-	// Oauth2GrantType
-	if source.Oauth2GrantType != nil {
-		oauth2GrantType := genruntime.ToEnum(string(*source.Oauth2GrantType), authorizationContractProperties_Oauth2GrantType_Values)
-		authorization.Oauth2GrantType = &oauth2GrantType
-	} else {
-		authorization.Oauth2GrantType = nil
 	}
 
 	// No error
@@ -998,8 +979,6 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1016,8 +995,6 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1043,8 +1020,6 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1061,8 +1036,6 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

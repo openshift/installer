@@ -56,6 +56,13 @@ type VolumeResourceSpec struct {
 	// +listType=atomic
 	// +optional
 	Metadata []VolumeMetadata `json:"metadata,omitempty"`
+
+	// imageRef is a reference to an ORC Image. If specified, creates a
+	// bootable volume from this image. The volume size must be >= the
+	// image's min_disk requirement.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="imageRef is immutable"
+	ImageRef *KubernetesNameRef `json:"imageRef,omitempty"`
 }
 
 // VolumeFilter defines an existing resource by its properties
@@ -175,6 +182,11 @@ type VolumeResourceStatus struct {
 	// bootable indicates whether this is a bootable volume.
 	// +optional
 	Bootable *bool `json:"bootable,omitempty"`
+
+	// imageID is the ID of the image this volume was created from, if any.
+	// +kubebuilder:validation:MaxLength=1024
+	// +optional
+	ImageID string `json:"imageID,omitempty"`
 
 	// encrypted denotes if the volume is encrypted.
 	// +optional

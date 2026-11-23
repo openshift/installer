@@ -116,7 +116,12 @@ func (endpoint *DnsResolversInboundEndpoint) ValidateUpdate(ctx context.Context,
 
 // createValidations validates the creation of the resource
 func (endpoint *DnsResolversInboundEndpoint) createValidations() []func(ctx context.Context, obj *v20220701.DnsResolversInboundEndpoint) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.DnsResolversInboundEndpoint) (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.DnsResolversInboundEndpoint) (admission.Warnings, error){
+		endpoint.validateResourceReferences,
+		endpoint.validateOwnerReference,
+		endpoint.validateSecretDestinations,
+		endpoint.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

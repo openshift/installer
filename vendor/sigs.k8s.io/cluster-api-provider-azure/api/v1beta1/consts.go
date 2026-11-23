@@ -130,6 +130,8 @@ const (
 	NetworkInterfaceReadyCondition clusterv1beta1.ConditionType = "NetworkInterfacesReady"
 	// PrivateEndpointsReadyCondition means the private endpoints exist and are ready to be used.
 	PrivateEndpointsReadyCondition clusterv1beta1.ConditionType = "PrivateEndpointsReady"
+	// PrivateLinksReadyCondition means the private links exist and are ready to be used.
+	PrivateLinksReadyCondition clusterv1beta1.ConditionType = "PrivateLinksReady"
 	// FleetReadyCondition means the Fleet exists and is ready to be used.
 	FleetReadyCondition clusterv1beta1.ConditionType = "FleetReady"
 	// AKSExtensionsReadyCondition means the AKS Extensions exist and are ready to be used.

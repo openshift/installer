@@ -22,31 +22,32 @@ type HstoreValuer interface {
 // associated with its keys.
 type Hstore map[string]*string
 
+// ScanHstore implements the [HstoreScanner] interface.
 func (h *Hstore) ScanHstore(v Hstore) error {
 	*h = v
 	return nil
 }
 
+// HstoreValue implements the [HstoreValuer] interface.
 func (h Hstore) HstoreValue() (Hstore, error) {
 	return h, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (h *Hstore) Scan(src any) error {
 	if src == nil {
 		*h = nil
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToHstoreScanner{}.scanString(src, h)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (h Hstore) Value() (driver.Value, error) {
 	if h == nil {
 		return nil, nil
@@ -162,16 +163,13 @@ func (encodePlanHstoreCodecText) Encode(value any, buf []byte) (newBuf []byte, e
 }
 
 func (HstoreCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case HstoreScanner:
+		if _, ok := target.(HstoreScanner); ok {
 			return scanPlanBinaryHstoreToHstoreScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case HstoreScanner:
+		if _, ok := target.(HstoreScanner); ok {
 			return scanPlanTextAnyToHstoreScanner{}
 		}
 	}
@@ -197,17 +195,30 @@ func (scanPlanBinaryHstoreToHstoreScanner) Scan(src []byte, dst any) error {
 	pairCount := int(int32(binary.BigEndian.Uint32(src[rp:])))
 	rp += uint32Len
 
+	if pairCount < 0 {
+		return fmt.Errorf("hstore invalid pair count: %d", pairCount)
+	}
+	// Each pair carries at minimum two int32 length headers (key, value), so pairCount cannot
+	// exceed the remaining bytes / 8. This bounds the up-front make() against a malicious server
+	// claiming a huge pair count in a small message.
+	if maxPairs := len(src[rp:]) / (2 * uint32Len); pairCount > maxPairs {
+		return fmt.Errorf("hstore invalid pair count %d for %d remaining bytes", pairCount, len(src[rp:]))
+	}
+
 	hstore := make(Hstore, pairCount)
 	// one allocation for all *string, rather than one per string, just like text parsing
 	valueStrings := make([]string, pairCount)
 
-	for i := 0; i < pairCount; i++ {
+	for i := range pairCount {
 		if len(src[rp:]) < uint32Len {
 			return fmt.Errorf("hstore incomplete %v", src)
 		}
 		keyLen := int(int32(binary.BigEndian.Uint32(src[rp:])))
 		rp += uint32Len
 
+		if keyLen < 0 {
+			return fmt.Errorf("hstore invalid key length: %d", keyLen)
+		}
 		if len(src[rp:]) < keyLen {
 			return fmt.Errorf("hstore incomplete %v", src)
 		}
@@ -221,6 +232,9 @@ func (scanPlanBinaryHstoreToHstoreScanner) Scan(src []byte, dst any) error {
 		rp += 4
 
 		if valueLen >= 0 {
+			if len(src[rp:]) < valueLen {
+				return fmt.Errorf("hstore incomplete %v", src)
+			}
 			valueStrings[i] = string(src[rp : rp+valueLen])
 			rp += valueLen
 
@@ -298,7 +312,7 @@ func (p *hstoreParser) consume() (b byte, end bool) {
 	return b, false
 }
 
-func unexpectedByteErr(actualB byte, expectedB byte) error {
+func unexpectedByteErr(actualB, expectedB byte) error {
 	return fmt.Errorf("expected '%c' ('%#v'); found '%c' ('%#v')", expectedB, expectedB, actualB, actualB)
 }
 
@@ -316,7 +330,7 @@ func (p *hstoreParser) consumeExpectedByte(expectedB byte) error {
 
 // consumeExpected2 consumes two expected bytes or returns an error.
 // This was a bit faster than using a string argument (better inlining? Not sure).
-func (p *hstoreParser) consumeExpected2(one byte, two byte) error {
+func (p *hstoreParser) consumeExpected2(one, two byte) error {
 	if p.pos+2 > len(p.str) {
 		return errors.New("unexpected end of string")
 	}
@@ -370,13 +384,15 @@ func (p *hstoreParser) consumeDoubleQuotedWithEscapes(firstBackslash int) (strin
 	p.pos = firstBackslash
 
 	// copy bytes until the end, unescaping backslashes
+quotedString:
 	for {
 		nextB, end := p.consume()
-		if end {
+		switch {
+		case end:
 			return "", errEOSInQuoted
-		} else if nextB == '"' {
-			break
-		} else if nextB == '\\' {
+		case nextB == '"':
+			break quotedString
+		case nextB == '\\':
 			// escape: skip the backslash and copy the char
 			nextB, end = p.consume()
 			if end {
@@ -386,7 +402,7 @@ func (p *hstoreParser) consumeDoubleQuotedWithEscapes(firstBackslash int) (strin
 				return "", fmt.Errorf("unexpected escape in quoted string: found '%#v'", nextB)
 			}
 			builder.WriteByte(nextB)
-		} else {
+		default:
 			// normal byte: copy it
 			builder.WriteByte(nextB)
 		}

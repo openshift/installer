@@ -39,7 +39,7 @@ type azureClient struct {
 
 // newClient creates a new security groups client from an authorizer.
 func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create securitygroups client options")
 	}
@@ -51,7 +51,7 @@ func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 }
 
 // Get gets the specified network security group.
-func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "securitygroups.azureClient.Get")
 	defer done()
 
@@ -65,7 +65,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a network security group in the specified resource group.
 // It sends a PUT request to Azure and if accepted without error, the func will return a Poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.SecurityGroupsClientCreateOrUpdateResponse], err error) {
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armnetwork.SecurityGroupsClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "securitygroups.azureClient.CreateOrUpdate")
 	defer done()
 
@@ -84,7 +84,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 	}
 
 	// Create a new client that knows how to add the etag header.
-	clientOpts, err := azure.ARMClientOptions(ac.auth.CloudEnvironment(), extraPolicies...)
+	clientOpts, err := azure.ARMClientOptionsForAuth(ac.auth, extraPolicies...)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create securitygroups client options")
 	}

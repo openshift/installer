@@ -39,11 +39,10 @@ type azureClient struct {
 
 // newClient creates a new load balancer client from an authorizer.
 func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get load balancer client options")
 	}
-
 	factory, err := armnetwork.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armnetwork client factory")
@@ -52,7 +51,7 @@ func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClien
 }
 
 // Get gets the specified load balancer.
-func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error) {
+func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "loadbalancers.azureClient.Get")
 	defer done()
 
@@ -67,7 +66,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 // CreateOrUpdateAsync creates or updates a load balancer asynchronously.
 // It sends a PUT request to Azure and if accepted without error, the func will return a Poller which can be used to track the ongoing
 // progress of the operation.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armnetwork.LoadBalancersClientCreateOrUpdateResponse], err error) {
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[armnetwork.LoadBalancersClientCreateOrUpdateResponse], err error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "loadbalancers.azureClient.CreateOrUpdate")
 	defer done()
 
@@ -86,7 +85,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 	}
 
 	// Create a new client that knows how to add etag headers to the request.
-	clientOpts, err := azure.ARMClientOptions(ac.auth.CloudEnvironment(), extraPolicies...)
+	clientOpts, err := azure.ARMClientOptionsForAuth(ac.auth, extraPolicies...)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create loadbalancer client options")
 	}

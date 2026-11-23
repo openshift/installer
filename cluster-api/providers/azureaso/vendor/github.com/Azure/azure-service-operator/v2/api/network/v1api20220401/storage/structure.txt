@@ -55,9 +55,32 @@ TrafficManagerProfile: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   ├── RelativeName: *string
     │   └── Ttl: *int
-    ├── Endpoints: Object (2 properties)[]
+    ├── Endpoints: Object (18 properties)[]
+    │   ├── AlwaysServe: *string
+    │   ├── CustomHeaders: Object (3 properties)[]
+    │   │   ├── Name: *string
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   └── Value: *string
+    │   ├── EndpointLocation: *string
+    │   ├── EndpointMonitorStatus: *string
+    │   ├── EndpointStatus: *string
+    │   ├── GeoMapping: string[]
     │   ├── Id: *string
-    │   └── PropertyBag: genruntime.PropertyBag
+    │   ├── MinChildEndpoints: *int
+    │   ├── MinChildEndpointsIPv4: *int
+    │   ├── MinChildEndpointsIPv6: *int
+    │   ├── Name: *string
+    │   ├── Priority: *int
+    │   ├── PropertyBag: genruntime.PropertyBag
+    │   ├── Subnets: Object (4 properties)[]
+    │   │   ├── First: *string
+    │   │   ├── Last: *string
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   └── Scope: *int
+    │   ├── Target: *string
+    │   ├── TargetResourceId: *string
+    │   ├── Type: *string
+    │   └── Weight: *int
     ├── Id: *string
     ├── Location: *string
     ├── MaxReturn: *int

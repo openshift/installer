@@ -12,6 +12,10 @@ type FakeMachineconfigurationV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeMachineconfigurationV1alpha1) BGPVIPConfigs() v1alpha1.BGPVIPConfigInterface {
+	return newFakeBGPVIPConfigs(c)
+}
+
 func (c *FakeMachineconfigurationV1alpha1) InternalReleaseImages() v1alpha1.InternalReleaseImageInterface {
 	return newFakeInternalReleaseImages(c)
 }

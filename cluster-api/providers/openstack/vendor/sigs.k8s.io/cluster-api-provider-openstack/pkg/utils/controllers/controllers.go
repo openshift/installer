@@ -21,32 +21,23 @@ import (
 	"fmt"
 	"net"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	conditions "sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
 
-// ValidateSubnets validates if the amount of IPv4 and IPv6 subnets is allowed by OpenStackCluster.
+// ValidateSubnets validates that all subnet CIDRs are parseable.
+// Multiple subnets of the same IP version are allowed; use PrimarySubnet to
+// specify which subnet should be used for load balancer VIP allocation and
+// member registration when multiple subnets are present.
 func ValidateSubnets(subnets []infrav1.Subnet) error {
-	isIPv6 := []bool{false, false}
-	for i, subnet := range subnets {
-		ip, _, err := net.ParseCIDR(subnet.CIDR)
-		if err != nil {
-			return err
+	for _, subnet := range subnets {
+		if _, _, err := net.ParseCIDR(subnet.CIDR); err != nil {
+			return fmt.Errorf("invalid CIDR %q in subnet %q: %w", subnet.CIDR, subnet.ID, err)
 		}
-
-		if ip.To4() == nil {
-			isIPv6[i] = true
-		}
-	}
-
-	if len(subnets) > 1 && isIPv6[0] == isIPv6[1] {
-		ethertype := 4
-		if isIPv6[0] {
-			ethertype = 6
-		}
-		return fmt.Errorf("multiple IPv%d Subnet not allowed on OpenStackCluster", ethertype)
 	}
 	return nil
 }
@@ -61,4 +52,53 @@ func GetInfraCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cl
 		return nil, err
 	}
 	return openStackCluster, nil
+}
+
+const (
+	// legacyConditionReasonTrue is the reason assigned to a legacy True condition that has no reason.
+	legacyConditionReasonTrue = infrav1.ReadyConditionReason
+	// legacyConditionReasonFalse is the reason assigned to a legacy False condition that has no reason.
+	legacyConditionReasonFalse = "NotReady"
+	// legacyConditionReasonUnknown is the reason assigned to a legacy Unknown condition that has no reason.
+	legacyConditionReasonUnknown = "Unknown"
+)
+
+// EnsureConditionReasons sets a reason on every condition of obj that has an empty one.
+//
+// Conditions written by releases that used the Cluster API v1beta1 condition
+// type (CAPO < 0.15) may have no reason, which is not valid for metav1.Condition
+// and is rejected by the CRD schema. A status patch rewrites the full
+// conditions list, so a single legacy condition would make every later patch fail.
+//
+// This must be called after the patch helper has been created, so that the
+// fix is part of the computed patch. It returns true if any condition was changed.
+func EnsureConditionReasons(obj conditions.Setter) bool {
+	existing := obj.GetConditions()
+	if len(existing) == 0 {
+		return false
+	}
+
+	fixed := make([]metav1.Condition, len(existing))
+	copy(fixed, existing)
+
+	changed := false
+	for i := range fixed {
+		if fixed[i].Reason != "" {
+			continue
+		}
+		switch fixed[i].Status {
+		case metav1.ConditionTrue:
+			fixed[i].Reason = legacyConditionReasonTrue
+		case metav1.ConditionFalse:
+			fixed[i].Reason = legacyConditionReasonFalse
+		default:
+			fixed[i].Reason = legacyConditionReasonUnknown
+		}
+		changed = true
+	}
+
+	if changed {
+		obj.SetConditions(fixed)
+	}
+	return changed
 }

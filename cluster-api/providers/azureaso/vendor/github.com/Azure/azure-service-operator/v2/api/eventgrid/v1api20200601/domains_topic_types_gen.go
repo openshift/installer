@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,eventgrid}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}/topics/{domainTopicName}
 type DomainsTopic struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &DomainsTopic{}
 
 // ConvertFrom populates our DomainsTopic from the provided hub DomainsTopic
 func (topic *DomainsTopic) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.DomainsTopic)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/DomainsTopic but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.DomainsTopic
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return topic.AssignProperties_From_DomainsTopic(source)
+	err = topic.AssignProperties_From_DomainsTopic(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to topic")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub DomainsTopic from our DomainsTopic
 func (topic *DomainsTopic) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.DomainsTopic)
-	if !ok {
-		return fmt.Errorf("expected eventgrid/v1api20200601/storage/DomainsTopic but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.DomainsTopic
+	err := topic.AssignProperties_To_DomainsTopic(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from topic")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return topic.AssignProperties_To_DomainsTopic(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &DomainsTopic{}
@@ -86,17 +101,6 @@ func (topic *DomainsTopic) SecretDestinationExpressions() []*core.DestinationExp
 		return nil
 	}
 	return topic.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &DomainsTopic{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (topic *DomainsTopic) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*DomainsTopic_STATUS); ok {
-		return topic.Spec.Initialize_From_DomainsTopic_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type DomainsTopic_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &DomainsTopic{}
@@ -237,7 +241,7 @@ func (topic *DomainsTopic) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/stable/2020-06-01/EventGrid.json
+// - Generated from: /eventgrid/resource-manager/Microsoft.EventGrid/EventGrid/stable/2020-06-01/EventGrid.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventGrid/domains/{domainName}/topics/{domainTopicName}
 type DomainsTopicList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -419,13 +423,6 @@ func (topic *DomainsTopic_Spec) AssignProperties_To_DomainsTopic_Spec(destinatio
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_DomainsTopic_STATUS populates our DomainsTopic_Spec from the provided source DomainsTopic_STATUS
-func (topic *DomainsTopic_Spec) Initialize_From_DomainsTopic_STATUS(source *DomainsTopic_STATUS) error {
 
 	// No error
 	return nil
@@ -673,8 +670,6 @@ func (operator *DomainsTopicOperatorSpec) AssignProperties_From_DomainsTopicOper
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -691,8 +686,6 @@ func (operator *DomainsTopicOperatorSpec) AssignProperties_From_DomainsTopicOper
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -718,8 +711,6 @@ func (operator *DomainsTopicOperatorSpec) AssignProperties_To_DomainsTopicOperat
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -736,8 +727,6 @@ func (operator *DomainsTopicOperatorSpec) AssignProperties_To_DomainsTopicOperat
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

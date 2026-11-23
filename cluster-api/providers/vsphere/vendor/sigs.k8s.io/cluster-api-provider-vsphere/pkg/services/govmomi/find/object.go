@@ -23,7 +23,7 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/cluster"
 )
 
@@ -37,7 +37,7 @@ func ObjectFunc(failureDomainType infrav1.FailureDomainType, topology infrav1.To
 	switch failureDomainType {
 	case infrav1.ComputeClusterFailureDomain:
 		managedRefFunc = func(ctx context.Context) ([]object.Reference, error) {
-			computeResource, err := finder.ClusterComputeResource(ctx, *topology.ComputeCluster)
+			computeResource, err := finder.ClusterComputeResource(ctx, topology.ComputeCluster)
 			if err != nil {
 				return nil, err
 			}
@@ -53,7 +53,7 @@ func ObjectFunc(failureDomainType infrav1.FailureDomainType, topology infrav1.To
 		}
 	case infrav1.HostGroupFailureDomain:
 		managedRefFunc = func(ctx context.Context) ([]object.Reference, error) {
-			ccr, err := finder.ClusterComputeResource(ctx, *topology.ComputeCluster)
+			ccr, err := finder.ClusterComputeResource(ctx, topology.ComputeCluster)
 			if err != nil {
 				return nil, err
 			}

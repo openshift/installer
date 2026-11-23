@@ -29,24 +29,25 @@ type Time struct {
 	Valid        bool
 }
 
+// ScanTime implements the [TimeScanner] interface.
 func (t *Time) ScanTime(v Time) error {
 	*t = v
 	return nil
 }
 
+// TimeValue implements the [TimeValuer] interface.
 func (t Time) TimeValue() (Time, error) {
 	return t, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (t *Time) Scan(src any) error {
 	if src == nil {
 		*t = Time{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		err := scanPlanTextAnyToTimeScanner{}.Scan([]byte(src), t)
 		if err != nil {
 			t.Microseconds = 0
@@ -58,7 +59,7 @@ func (t *Time) Scan(src any) error {
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (t Time) Value() (driver.Value, error) {
 	if !t.Valid {
 		return nil, nil
@@ -137,7 +138,6 @@ func (encodePlanTimeCodecText) Encode(value any, buf []byte) (newBuf []byte, err
 }
 
 func (TimeCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
 		switch target.(type) {
@@ -147,8 +147,7 @@ func (TimeCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan
 			return scanPlanBinaryTimeToTextScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case TimeScanner:
+		if _, ok := target.(TimeScanner); ok {
 			return scanPlanTextAnyToTimeScanner{}
 		}
 	}

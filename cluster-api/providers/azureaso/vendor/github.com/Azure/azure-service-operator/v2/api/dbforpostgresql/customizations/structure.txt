@@ -3,6 +3,8 @@ github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/customizations
 -----------------------------------------------------------------------------
 FlexibleServerExtension: Object (0 properties)
 
+FlexibleServersAdministratorExtension: Object (0 properties)
+
 FlexibleServersAdvancedThreatProtectionSettingsExtension: Object (0 properties)
 
 FlexibleServersBackupExtension: Object (0 properties)

@@ -16,10 +16,9 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/grafana/regexp"
 )
 
 const (
@@ -125,7 +124,7 @@ func (ln LabelName) IsValidLegacy() bool {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (ln *LabelName) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (ln *LabelName) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err

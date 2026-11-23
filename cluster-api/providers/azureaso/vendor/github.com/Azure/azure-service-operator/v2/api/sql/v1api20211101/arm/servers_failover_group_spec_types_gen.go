@@ -34,6 +34,7 @@ func (group *ServersFailoverGroup_Spec) GetType() string {
 
 // Properties of a failover group.
 type FailoverGroupProperties struct {
+	// Databases: List of databases in the failover group.
 	Databases []string `json:"databases,omitempty"`
 
 	// PartnerServers: List of partner server information for the failover group.
@@ -65,6 +66,7 @@ type FailoverGroupReadWriteEndpoint struct {
 
 // Partner server information for the failover group.
 type PartnerInfo struct {
+	// Id: Resource identifier of the partner server.
 	Id *string `json:"id,omitempty"`
 }
 

@@ -444,7 +444,7 @@ func (in *ExtensionOperatorConfigMaps) DeepCopyInto(out *ExtensionOperatorConfig
 	if in.PrincipalId != nil {
 		in, out := &in.PrincipalId, &out.PrincipalId
 		*out = new(genruntime.ConfigMapDestination)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PropertyBag != nil {
 		in, out := &in.PropertyBag, &out.PropertyBag
@@ -475,7 +475,7 @@ func (in *ExtensionOperatorSpec) DeepCopyInto(out *ExtensionOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -498,7 +498,7 @@ func (in *ExtensionOperatorSpec) DeepCopyInto(out *ExtensionOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -925,7 +925,7 @@ func (in *FluxConfigurationOperatorSpec) DeepCopyInto(out *FluxConfigurationOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -943,7 +943,7 @@ func (in *FluxConfigurationOperatorSpec) DeepCopyInto(out *FluxConfigurationOper
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

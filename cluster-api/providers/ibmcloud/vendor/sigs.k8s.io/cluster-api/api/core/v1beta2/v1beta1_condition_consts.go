@@ -157,6 +157,11 @@ const (
 
 	// UnhealthyNodeConditionV1Beta1Reason is the reason used when a machine's node has one of the MachineHealthCheck's unhealthy conditions.
 	UnhealthyNodeConditionV1Beta1Reason = "UnhealthyNode"
+
+	// UnhealthyMachineConditionV1Beta1Reason is the reason used when a machine has one of the MachineHealthCheck's unhealthy conditions.
+	// When both machine and node issues are detected, this reason takes precedence over node-related reasons
+	// (NodeNotFoundV1Beta1Reason, NodeStartupTimeoutV1Beta1Reason, UnhealthyNodeConditionV1Beta1Reason).
+	UnhealthyMachineConditionV1Beta1Reason = "UnhealthyMachine"
 )
 
 const (
@@ -295,17 +300,27 @@ const (
 	// failing due to an error.
 	TopologyReconcileFailedV1Beta1Reason = "TopologyReconcileFailed"
 
+	// TopologyReconciledClusterCreatingV1Beta1Reason documents reconciliation of a Cluster topology
+	// not yet created because the BeforeClusterCreate hook is blocking.
+	TopologyReconciledClusterCreatingV1Beta1Reason = "ClusterCreating"
+
 	// TopologyReconciledControlPlaneUpgradePendingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because Control Plane is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledControlPlaneUpgradePendingV1Beta1Reason = "ControlPlaneUpgradePending"
 
 	// TopologyReconciledMachineDeploymentsCreatePendingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is yet to be created.
 	// This generally happens because new MachineDeployment creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledMachineDeploymentsCreatePendingV1Beta1Reason = "MachineDeploymentsCreatePending"
 
 	// TopologyReconciledMachineDeploymentsUpgradePendingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachineDeployments is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledMachineDeploymentsUpgradePendingV1Beta1Reason = "MachineDeploymentsUpgradePending"
 
 	// TopologyReconciledMachineDeploymentsUpgradeDeferredV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
@@ -314,11 +329,15 @@ const (
 
 	// TopologyReconciledMachinePoolsUpgradePendingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is not yet updated to match the desired topology spec.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledMachinePoolsUpgradePendingV1Beta1Reason = "MachinePoolsUpgradePending"
 
 	// TopologyReconciledMachinePoolsCreatePendingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the MachinePools is yet to be created.
 	// This generally happens because new MachinePool creations are held off while the ControlPlane is not stable.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledMachinePoolsCreatePendingV1Beta1Reason = "MachinePoolsCreatePending"
 
 	// TopologyReconciledMachinePoolsUpgradeDeferredV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
@@ -327,7 +346,13 @@ const (
 
 	// TopologyReconciledHookBlockingV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology
 	// not yet completed because at least one of the lifecycle hooks is blocking.
+	//
+	// Deprecated: please use ClusterUpgrading instead.
 	TopologyReconciledHookBlockingV1Beta1Reason = "LifecycleHookBlocking"
+
+	// TopologyReconciledClusterUpgradingV1Beta1Reason documents reconciliation of a Cluster topology
+	// not yet completed because a cluster upgrade is still in progress.
+	TopologyReconciledClusterUpgradingV1Beta1Reason = "ClusterUpgrading"
 
 	// TopologyReconciledClusterClassNotReconciledV1Beta1Reason (Severity=Info) documents reconciliation of a Cluster topology not
 	// yet completed because the ClusterClass has not reconciled yet. If this condition persists there may be an issue

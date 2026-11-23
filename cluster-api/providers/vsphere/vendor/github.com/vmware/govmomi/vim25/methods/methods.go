@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package methods
@@ -18741,6 +18741,26 @@ func (b *VStorageObjectCreateSnapshot_TaskBody) Fault() *soap.Fault { return b.F
 
 func VStorageObjectCreateSnapshot_Task(ctx context.Context, r soap.RoundTripper, req *types.VStorageObjectCreateSnapshot_Task) (*types.VStorageObjectCreateSnapshot_TaskResponse, error) {
 	var reqBody, resBody VStorageObjectCreateSnapshot_TaskBody
+
+	reqBody.Req = req
+
+	if err := r.RoundTrip(ctx, &reqBody, &resBody); err != nil {
+		return nil, err
+	}
+
+	return resBody.Res, nil
+}
+
+type VStorageObjectDeleteSnapshotEx2_TaskBody struct {
+	Req    *types.VStorageObjectDeleteSnapshotEx2_Task         `xml:"urn:vim25 VStorageObjectDeleteSnapshotEx2_Task,omitempty"`
+	Res    *types.VStorageObjectDeleteSnapshotEx2_TaskResponse `xml:"VStorageObjectDeleteSnapshotEx2_TaskResponse,omitempty"`
+	Fault_ *soap.Fault                                         `xml:"http://schemas.xmlsoap.org/soap/envelope/ Fault,omitempty"`
+}
+
+func (b *VStorageObjectDeleteSnapshotEx2_TaskBody) Fault() *soap.Fault { return b.Fault_ }
+
+func VStorageObjectDeleteSnapshotEx2_Task(ctx context.Context, r soap.RoundTripper, req *types.VStorageObjectDeleteSnapshotEx2_Task) (*types.VStorageObjectDeleteSnapshotEx2_TaskResponse, error) {
+	var reqBody, resBody VStorageObjectDeleteSnapshotEx2_TaskBody
 
 	reqBody.Req = req
 

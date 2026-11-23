@@ -6,6 +6,7 @@ import configv1 "github.com/openshift/api/config/v1"
 type Metadata struct {
 	BaseDomain           string                            `json:"BaseDomain"`
 	CISInstanceCRN       string                            `json:"cisInstanceCRN"`
+	COSInstanceCRN       string                            `json:"cosInstanceCRN,omitempty"`
 	DNSInstanceCRN       string                            `json:"dnsInstanceCRN"`
 	PowerVSResourceGroup string                            `json:"powerVSResourceGroup"`
 	Region               string                            `json:"region"`

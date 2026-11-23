@@ -19,6 +19,7 @@ package networking
 import (
 	"errors"
 	"fmt"
+	"net"
 
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
@@ -28,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/utils/ptr"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
@@ -40,7 +41,7 @@ type createOpts struct {
 	AdminStateUp        *bool  `json:"admin_state_up,omitempty"`
 	Name                string `json:"name,omitempty"`
 	PortSecurityEnabled *bool  `json:"port_security_enabled,omitempty"`
-	MTU                 *int   `json:"mtu,omitempty"`
+	MTU                 *int32 `json:"mtu,omitempty"`
 }
 
 func (c createOpts) ToNetworkCreateMap() (map[string]interface{}, error) {
@@ -51,9 +52,9 @@ func (c createOpts) ToNetworkCreateMap() (map[string]interface{}, error) {
 // The external network can be specified in the cluster spec or will be searched for if not specified.
 // OpenStackCluster.Status.ExternalNetwork will be set to nil if one of these conditions are met:
 // - no external network was given in the cluster spec and no external network was found
-// - the user has set OpenStackCluster.Spec.DisableExternalNetwork to true.
+// - the user has set OpenStackCluster.Spec.EnableExternalNetwork to false.
 func (s *Service) ReconcileExternalNetwork(openStackCluster *infrav1.OpenStackCluster) error {
-	if ptr.Deref(openStackCluster.Spec.DisableExternalNetwork, false) {
+	if !ptr.Deref(openStackCluster.Spec.EnableExternalNetwork, true) {
 		s.scope.Logger().Info("External network is disabled - proceeding with internal network only")
 		openStackCluster.Status.ExternalNetwork = nil
 		return nil
@@ -118,12 +119,29 @@ func (s *Service) ReconcileNetwork(openStackCluster *infrav1.OpenStackCluster, c
 		Name:         networkName,
 	}
 
-	if ptr.Deref(openStackCluster.Spec.DisablePortSecurity, false) {
-		opts.PortSecurityEnabled = gophercloud.Disabled
+	if openStackCluster.Spec.ManagedNetwork != nil {
+		// Port Security is set to disabled only when EnablePortSecurity is
+		// set and equals false
+		if !ptr.Deref(openStackCluster.Spec.ManagedNetwork.EnablePortSecurity, true) {
+			opts.PortSecurityEnabled = gophercloud.Disabled
+		}
+
+		if openStackCluster.Spec.ManagedNetwork.MTU != nil {
+			opts.MTU = openStackCluster.Spec.ManagedNetwork.MTU
+		}
 	}
 
-	if openStackCluster.Spec.NetworkMTU != nil {
-		opts.MTU = openStackCluster.Spec.NetworkMTU
+	// Determine standard-attr-tag support before creating the network, so
+	// that a failed extension lookup doesn't leave behind a created network
+	// that CAPO never records in status (and therefore never retries tagging
+	// for).
+	var tagsSupported bool
+	if len(openStackCluster.Spec.Tags) > 0 {
+		var err error
+		tagsSupported, err = s.hasStandardAttrTagExtension()
+		if err != nil {
+			return err
+		}
 	}
 
 	network, err := s.client.CreateNetwork(opts)
@@ -133,19 +151,26 @@ func (s *Service) ReconcileNetwork(openStackCluster *infrav1.OpenStackCluster, c
 	}
 	record.Eventf(openStackCluster, "SuccessfulCreateNetwork", "Created network %s with id %s", networkName, network.ID)
 
+	// appliedTags reflects the tags actually observed on the network, so
+	// that status never claims tags were applied when tagging was skipped.
+	appliedTags := network.Tags
 	if len(openStackCluster.Spec.Tags) > 0 {
-		_, err = s.client.ReplaceAllAttributesTags("networks", network.ID, attributestags.ReplaceAllOpts{
-			Tags: openStackCluster.Spec.Tags,
-		})
-		if err != nil {
-			return err
+		if tagsSupported {
+			appliedTags, err = s.client.ReplaceAllAttributesTags("networks", network.ID, attributestags.ReplaceAllOpts{
+				Tags: openStackCluster.Spec.Tags,
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", "networks", "resourceID", network.ID)
 		}
 	}
 
 	openStackCluster.Status.Network = &infrav1.NetworkStatusWithSubnets{}
 	openStackCluster.Status.Network.ID = network.ID
 	openStackCluster.Status.Network.Name = network.Name
-	openStackCluster.Status.Network.Tags = openStackCluster.Spec.Tags
+	openStackCluster.Status.Network.Tags = appliedTags
 	return nil
 }
 
@@ -220,17 +245,35 @@ func (s *Service) ReconcileSubnet(openStackCluster *infrav1.OpenStackCluster, cl
 }
 
 func (s *Service) createSubnet(openStackCluster *infrav1.OpenStackCluster, clusterResourceName string, name string) (*subnets.Subnet, error) {
+	cidr := openStackCluster.Spec.ManagedSubnets[0].CIDR
+	ipVersion := gophercloud.IPv4
+	if ip, _, err := net.ParseCIDR(cidr); err == nil && ip.To4() == nil {
+		ipVersion = gophercloud.IPv6
+	}
+
 	opts := subnets.CreateOpts{
 		NetworkID:      openStackCluster.Status.Network.ID,
 		Name:           name,
-		IPVersion:      4,
-		CIDR:           openStackCluster.Spec.ManagedSubnets[0].CIDR,
+		IPVersion:      ipVersion,
+		CIDR:           cidr,
 		DNSNameservers: openStackCluster.Spec.ManagedSubnets[0].DNSNameservers,
 		Description:    names.GetDescription(clusterResourceName),
 	}
 
 	for _, pool := range openStackCluster.Spec.ManagedSubnets[0].AllocationPools {
 		opts.AllocationPools = append(opts.AllocationPools, subnets.AllocationPool{Start: pool.Start, End: pool.End})
+	}
+
+	// Determine standard-attr-tag support before creating the subnet, so
+	// that a failed extension lookup doesn't leave behind a created subnet
+	// that reconciliation never retries tagging for.
+	var tagsSupported bool
+	if len(openStackCluster.Spec.Tags) > 0 {
+		var err error
+		tagsSupported, err = s.hasStandardAttrTagExtension()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	subnet, err := s.client.CreateSubnet(opts)
@@ -241,12 +284,16 @@ func (s *Service) createSubnet(openStackCluster *infrav1.OpenStackCluster, clust
 	record.Eventf(openStackCluster, "SuccessfulCreateSubnet", "Created subnet %s with id %s", name, subnet.ID)
 
 	if len(openStackCluster.Spec.Tags) > 0 {
-		mc := metrics.NewMetricPrometheusContext("subnet", "update")
-		_, err = s.client.ReplaceAllAttributesTags("subnets", subnet.ID, attributestags.ReplaceAllOpts{
-			Tags: openStackCluster.Spec.Tags,
-		})
-		if mc.ObserveRequest(err) != nil {
-			return nil, err
+		if tagsSupported {
+			mc := metrics.NewMetricPrometheusContext("subnet", "update")
+			_, err = s.client.ReplaceAllAttributesTags("subnets", subnet.ID, attributestags.ReplaceAllOpts{
+				Tags: openStackCluster.Spec.Tags,
+			})
+			if mc.ObserveRequest(err) != nil {
+				return nil, err
+			}
+		} else {
+			s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", "subnets", "resourceID", subnet.ID)
 		}
 	}
 

@@ -274,6 +274,19 @@ func AvailableVPCZones(region string) ([]string, error) {
 	return knownRegion.VPCZones, nil
 }
 
+// VPCZonesForVPCRegion returns the known VPC zones for the specified VPC region.
+// Unlike AvailableVPCZones this is keyed by the VPC region itself, so it stays correct
+// when the user overrides platform.powervs.vpcRegion with a region other than the one
+// derived from the PowerVS region.
+func VPCZonesForVPCRegion(vpcRegion string) ([]string, error) {
+	for _, r := range Regions {
+		if r.VPCRegion == vpcRegion && len(r.VPCZones) > 0 {
+			return r.VPCZones, nil
+		}
+	}
+	return nil, fmt.Errorf("no VPC zones known for VPC region %s", vpcRegion)
+}
+
 // COSRegionForVPCRegion returns the corresponding COS region for the given VPC region.
 func COSRegionForVPCRegion(vpcRegion string) (string, error) {
 	for r := range Regions {
@@ -302,4 +315,25 @@ func ValidateCOSRegion(region string) bool {
 		}
 	}
 	return false
+}
+
+// VPCZoneForPowerVSZone returns the first VPC zone for the VPC region that corresponds
+// to the given PowerVS zone. This is used when the installer needs a single VPC zone to
+// attach a Public Gateway or Routing Table to, and the user has not specified one explicitly.
+//
+// For example, PowerVS zone "dal12" → PowerVS region "dal" → VPC region "us-south" →
+// first VPC zone "us-south-1".
+func VPCZoneForPowerVSZone(zone string) (string, error) {
+	region := RegionFromZone(zone)
+	if region == "" {
+		return "", fmt.Errorf("PowerVS region not found for zone %s", zone)
+	}
+	r, ok := Regions[region]
+	if !ok {
+		return "", fmt.Errorf("PowerVS region %s not found in Regions map", region)
+	}
+	if len(r.VPCZones) == 0 {
+		return "", fmt.Errorf("no VPC zones defined for PowerVS region %s", region)
+	}
+	return r.VPCZones[0], nil
 }

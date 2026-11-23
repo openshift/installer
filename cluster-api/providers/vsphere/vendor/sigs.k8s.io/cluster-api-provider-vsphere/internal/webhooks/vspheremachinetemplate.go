@@ -23,48 +23,60 @@ import (
 	"regexp"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/cluster-api/util/topology"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/conversion"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 )
 
 const machineTemplateImmutableMsg = "VSphereMachineTemplate spec.template.spec field is immutable. Please create a new resource instead."
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachinetemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates,versions=v1beta1,name=validation.vspheremachinetemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-vspheremachinetemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates,versions=v1beta2,name=validation.vspheremachinetemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-vspheremachinetemplate,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachinetemplates,versions=v1beta2,name=default.vspheremachinetemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1
 
 // VSphereMachineTemplate implements a validation webhook for VSphereMachineTemplate.
 type VSphereMachineTemplate struct{}
 
-var _ webhook.CustomValidator = &VSphereMachineTemplate{}
+var _ admission.Defaulter[*infrav1.VSphereMachineTemplate] = &VSphereMachineTemplate{}
+var _ admission.Validator[*infrav1.VSphereMachineTemplate] = &VSphereMachineTemplate{}
 
 func (webhook *VSphereMachineTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&infrav1.VSphereMachineTemplate{}).
+	return ctrl.NewWebhookManagedBy(mgr, &infrav1.VSphereMachineTemplate{}).
+		WithDefaulter(webhook).
 		WithValidator(webhook).
+		WithConverter(conversion.VSphereMachineTemplate).
 		Complete()
 }
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplate) ValidateCreate(ctx context.Context, raw runtime.Object) (admission.Warnings, error) {
-	obj, ok := raw.(*infrav1.VSphereMachineTemplate)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", raw))
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (webhook *VSphereMachineTemplate) Default(ctx context.Context, c *infrav1.VSphereMachineTemplate) error {
+	req, err := admission.RequestFromContext(ctx)
+	if err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("expected an admission.Request inside context: %v", err))
 	}
 
+	if topology.IsDryRunRequest(req, c) {
+		// In case of dry-run requests from the topology controller, apply defaults from older versions of CAPV
+		// so we do not trigger rollouts when dealing with objects created before dropping those defaults.
+		if c.Spec.Template.Spec.PowerOffMode == "" {
+			c.Spec.Template.Spec.PowerOffMode = infrav1.VirtualMachinePowerOpModeHard
+		}
+	}
+
+	return nil
+}
+
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
+func (webhook *VSphereMachineTemplate) ValidateCreate(ctx context.Context, obj *infrav1.VSphereMachineTemplate) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 	spec := obj.Spec.Template.Spec
 
-	if spec.Network.PreferredAPIServerCIDR != "" {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "PreferredAPIServerCIDR"), spec.Network.PreferredAPIServerCIDR, "cannot be set, as it will be removed and is no longer used"))
-	}
-	if spec.ProviderID != nil {
+	if spec.ProviderID != "" {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "template", "spec", "providerID"), "cannot be set in templates"))
 	}
 	for _, device := range spec.Network.Devices {
@@ -78,12 +90,9 @@ func (webhook *VSphereMachineTemplate) ValidateCreate(ctx context.Context, raw r
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "hardwareVersion"), spec.HardwareVersion, "should be a valid VM hardware version, example vmx-17"))
 		}
 	}
-	if spec.GuestSoftPowerOffTimeout != nil {
+	if spec.GuestSoftPowerOffTimeoutSeconds != 0 {
 		if spec.PowerOffMode != infrav1.VirtualMachinePowerOpModeTrySoft {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeout, "should not be set in templates unless the powerOffMode is trySoft"))
-		}
-		if spec.GuestSoftPowerOffTimeout.Duration <= 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeout, "should be greater than 0"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeoutSeconds, "should not be set in templates unless the powerOffMode is trySoft"))
 		}
 	}
 	pciErrs := validatePCIDevices(spec.PciDevices)
@@ -97,16 +106,7 @@ func (webhook *VSphereMachineTemplate) ValidateCreate(ctx context.Context, raw r
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplate) ValidateUpdate(ctx context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
-	oldTyped, ok := oldRaw.(*infrav1.VSphereMachineTemplate)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", oldRaw))
-	}
-	newTyped, ok := newRaw.(*infrav1.VSphereMachineTemplate)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", newRaw))
-	}
-
+func (webhook *VSphereMachineTemplate) ValidateUpdate(ctx context.Context, oldTyped, newTyped *infrav1.VSphereMachineTemplate) (admission.Warnings, error) {
 	req, err := admission.RequestFromContext(ctx)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a admission.Request inside context: %v", err))
@@ -126,21 +126,21 @@ func (webhook *VSphereMachineTemplate) ValidateUpdate(ctx context.Context, oldRa
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplate) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachineTemplate) ValidateDelete(_ context.Context, _ *infrav1.VSphereMachineTemplate) (admission.Warnings, error) {
 	return nil, nil
 }
 
 func validateVSphereVMNamingTemplate(_ context.Context, vsphereMachineTemplate *infrav1.VSphereMachineTemplate) field.ErrorList {
 	var allErrs field.ErrorList
-	namingStrategy := vsphereMachineTemplate.Spec.Template.Spec.NamingStrategy
-	if namingStrategy != nil && namingStrategy.Template != nil {
+	namingStrategy := vsphereMachineTemplate.Spec.Template.Spec.Naming
+	if namingStrategy.Template != "" {
 		name, err := services.GenerateVSphereVMName("machine", namingStrategy)
 		templateFldPath := field.NewPath("spec", "template", "spec", "namingStrategy", "template")
 		if err != nil {
 			allErrs = append(allErrs,
 				field.Invalid(
 					templateFldPath,
-					*namingStrategy.Template,
+					namingStrategy.Template,
 					fmt.Sprintf("invalid VSphereVM name template: %v", err),
 				),
 			)
@@ -150,7 +150,7 @@ func validateVSphereVMNamingTemplate(_ context.Context, vsphereMachineTemplate *
 				allErrs = append(allErrs,
 					field.Invalid(
 						templateFldPath,
-						*namingStrategy.Template,
+						namingStrategy.Template,
 						fmt.Sprintf("invalid VSphereVM name template, generated name is not a valid Kubernetes object name: %v", err),
 					),
 				)

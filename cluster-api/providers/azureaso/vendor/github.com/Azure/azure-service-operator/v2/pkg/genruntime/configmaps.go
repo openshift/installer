@@ -63,6 +63,7 @@ func (s NamespacedConfigMapReference) String() string {
 // ConfigMapDestination describes the location to store a single configmap value
 // Note: This is similar to: SecretDestination in secrets.go.
 // Changes to one may need to be made to the others as well.
+// +kubebuilder:object:generate=true
 type ConfigMapDestination struct {
 	// Name is the name of the Kubernetes ConfigMap to write to.
 	// The ConfigMap will be created in the same namespace as the resource.
@@ -73,18 +74,14 @@ type ConfigMapDestination struct {
 	// +kubebuilder:validation:Required
 	Key string `json:"key,omitempty"`
 
-	// This is a type separate from ConfigMapReference as in the future we may want to support things like
-	// customizable annotations or labels, instructions to not delete the ConfigMap when the resource is
-	// deleted, etc. None of those things make sense for ConfigMapReference so using the exact same type isn't
-	// advisable.
+	// Annotations is an optional set of annotations to apply to the ConfigMap.
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Labels is an optional set of labels to apply to the ConfigMap.
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
-// Copy makes an independent copy of the ConfigMapDestination
-func (c ConfigMapDestination) Copy() ConfigMapDestination {
-	return c
-}
-
-func (c ConfigMapDestination) String() string {
+func (c *ConfigMapDestination) String() string {
 	return fmt.Sprintf("Name: %q, Key: %q", c.Name, c.Key)
 }
 

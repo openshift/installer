@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/utils/ptr"
-	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/vpc/v1beta2"
 
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
@@ -45,7 +45,7 @@ func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRe
 				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
+		BackendPools: []capibmcloud.LoadBalancerBackendPool{
 			{
 				// Kubernetes API pool
 				Name:      kubeAPIBackendPoolNamePtr,
@@ -91,7 +91,7 @@ func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRes
 				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
+		BackendPools: []capibmcloud.LoadBalancerBackendPool{
 			{
 				// Kubernetes API pool
 				Name:      backendPoolNamePtr,

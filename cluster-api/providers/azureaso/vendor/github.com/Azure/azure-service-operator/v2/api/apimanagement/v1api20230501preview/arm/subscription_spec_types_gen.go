@@ -36,7 +36,9 @@ type SubscriptionCreateParameterProperties struct {
 
 	// DisplayName: Subscription name.
 	DisplayName *string `json:"displayName,omitempty"`
-	OwnerId     *string `json:"ownerId,omitempty"`
+
+	// OwnerId: User (user id path) for whom subscription is being created in form /users/{userId}
+	OwnerId *string `json:"ownerId,omitempty"`
 
 	// PrimaryKey: Primary subscription key. If not specified during request key will be generated automatically.
 	PrimaryKey *string `json:"primaryKey,omitempty"`

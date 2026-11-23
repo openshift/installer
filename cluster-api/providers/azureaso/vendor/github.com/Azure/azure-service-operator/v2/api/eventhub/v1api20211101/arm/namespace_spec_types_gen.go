@@ -50,7 +50,9 @@ type Identity struct {
 type Namespace_Properties_Spec struct {
 	// AlternateName: Alternate name specified when alias and namespace names are same.
 	AlternateName *string `json:"alternateName,omitempty"`
-	ClusterArmId  *string `json:"clusterArmId,omitempty"`
+
+	// ClusterArmId: Cluster ARM ID of the Namespace.
+	ClusterArmId *string `json:"clusterArmId,omitempty"`
 
 	// DisableLocalAuth: This property disables SAS authentication for the Event Hubs namespace.
 	DisableLocalAuth *bool `json:"disableLocalAuth,omitempty"`
@@ -176,5 +178,6 @@ type KeyVaultProperties struct {
 }
 
 type UserAssignedIdentityProperties struct {
+	// UserAssignedIdentity: ARM ID of user Identity selected for encryption
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }

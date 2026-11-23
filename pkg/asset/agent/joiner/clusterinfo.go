@@ -423,7 +423,8 @@ func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
 	for _, idms := range imageDigestMirrorSets.Items {
 		for _, digestMirror := range idms.Spec.ImageDigestMirrors {
 			digestSource := types.ImageDigestSource{
-				Source: digestMirror.Source,
+				Source:       digestMirror.Source,
+				SourcePolicy: digestMirror.MirrorSourcePolicy,
 			}
 			for _, m := range digestMirror.Mirrors {
 				digestSource.Mirrors = append(digestSource.Mirrors, string(m))

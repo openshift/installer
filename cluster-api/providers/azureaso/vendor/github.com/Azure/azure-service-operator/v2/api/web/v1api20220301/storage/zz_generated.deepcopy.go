@@ -2240,7 +2240,7 @@ func (in *ServerFarmOperatorSpec) DeepCopyInto(out *ServerFarmOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -2258,7 +2258,7 @@ func (in *ServerFarmOperatorSpec) DeepCopyInto(out *ServerFarmOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3516,7 +3516,7 @@ func (in *SiteOperatorSpec) DeepCopyInto(out *SiteOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3534,7 +3534,7 @@ func (in *SiteOperatorSpec) DeepCopyInto(out *SiteOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4113,7 +4113,7 @@ func (in *SitesSourcecontrolOperatorSpec) DeepCopyInto(out *SitesSourcecontrolOp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4131,7 +4131,7 @@ func (in *SitesSourcecontrolOperatorSpec) DeepCopyInto(out *SitesSourcecontrolOp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

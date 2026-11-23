@@ -157,7 +157,7 @@ func (c *JSONCodec) planScan(m *Map, oid uint32, formatCode int16, target any, d
 	case BytesScanner:
 		return &scanPlanBinaryBytesToBytesScanner{}
 	case sql.Scanner:
-		return &scanPlanSQLScanner{formatCode: formatCode}
+		return &scanPlanCodecSQLScanner{c: c, m: m, oid: oid, formatCode: formatCode}
 	}
 
 	rv := reflect.ValueOf(target)
@@ -199,10 +199,10 @@ type scanPlanJSONToJSONUnmarshal struct {
 func (s *scanPlanJSONToJSONUnmarshal) Scan(src []byte, dst any) error {
 	if src == nil {
 		dstValue := reflect.ValueOf(dst)
-		if dstValue.Kind() == reflect.Ptr {
+		if dstValue.Kind() == reflect.Pointer {
 			el := dstValue.Elem()
 			switch el.Kind() {
-			case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface:
+			case reflect.Pointer, reflect.Slice, reflect.Map, reflect.Interface:
 				el.Set(reflect.Zero(el.Type()))
 				return nil
 			}

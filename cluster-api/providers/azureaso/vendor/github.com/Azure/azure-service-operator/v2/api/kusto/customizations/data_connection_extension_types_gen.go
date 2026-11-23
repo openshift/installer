@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20230815 "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815"
-	storage "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/storage"
+	v20230815s "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20230815/storage"
+	v20240413 "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413"
+	v20240413s "github.com/Azure/azure-service-operator/v2/api/kusto/v1api20240413/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type DataConnectionExtension struct {
 func (extension *DataConnectionExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20230815.DataConnection{},
-		&storage.DataConnection{}}
+		&v20230815s.DataConnection{},
+		&v20240413.DataConnection{},
+		&v20240413s.DataConnection{}}
 }

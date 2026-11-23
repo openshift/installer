@@ -57,9 +57,9 @@ func (o *ClusterUninstaller) listSecurityGroupRules(securityGroupID string) (clo
 	for _, securityGroupRule := range resources.Rules {
 		switch reflect.TypeOf(securityGroupRule).String() {
 
-		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+		case "*vpcv1.SecurityGroupRuleProtocolAny":
 			{
-				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleProtocolAny)
 				result = append(result, cloudResource{
 					key:      *rule.ID,
 					name:     *rule.ID,
@@ -82,6 +82,28 @@ func (o *ClusterUninstaller) listSecurityGroupRules(securityGroupID string) (clo
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
 			{
 				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
+				result = append(result, cloudResource{
+					key:      *rule.ID,
+					name:     *rule.ID,
+					status:   "",
+					typeName: securityGroupRuleTypeName,
+					id:       *rule.ID,
+				})
+			}
+		case "*vpcv1.SecurityGroupRuleProtocolIcmptcpudp":
+			{
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleProtocolIcmptcpudp)
+				result = append(result, cloudResource{
+					key:      *rule.ID,
+					name:     *rule.ID,
+					status:   "",
+					typeName: securityGroupRuleTypeName,
+					id:       *rule.ID,
+				})
+			}
+		case "*vpcv1.vpcv1.SecurityGroupRuleProtocolIndividual":
+			{
+				rule := securityGroupRule.(*vpcv1.SecurityGroupRuleProtocolIndividual)
 				result = append(result, cloudResource{
 					key:      *rule.ID,
 					name:     *rule.ID,

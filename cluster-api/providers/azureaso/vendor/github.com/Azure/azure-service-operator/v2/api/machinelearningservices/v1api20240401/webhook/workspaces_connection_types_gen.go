@@ -116,7 +116,13 @@ func (connection *WorkspacesConnection) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (connection *WorkspacesConnection) createValidations() []func(ctx context.Context, obj *v20240401.WorkspacesConnection) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240401.WorkspacesConnection) (admission.Warnings, error){connection.validateResourceReferences, connection.validateOwnerReference, connection.validateSecretDestinations, connection.validateConfigMapDestinations, connection.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20240401.WorkspacesConnection) (admission.Warnings, error){
+		connection.validateResourceReferences,
+		connection.validateOwnerReference,
+		connection.validateSecretDestinations,
+		connection.validateConfigMapDestinations,
+		connection.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

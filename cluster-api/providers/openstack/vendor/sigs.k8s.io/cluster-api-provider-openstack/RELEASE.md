@@ -95,8 +95,14 @@ There is an [issue template](.github/ISSUE_TEMPLATE/new_release.md) to help trac
 
 1. Follow the [image promotion process](https://github.com/kubernetes/k8s.io/blob/main/registry.k8s.io/README.md#image-promoter)
    to promote the image from the staging repo to `registry.k8s.io/capi-openstack`.
-   The staging repository can be inspected at [Staging CAPI Openstack](https://console.cloud.google.com/gcr/images/k8s-staging-capi-openstack/GLOBAL). Be
+   The staging repository can be inspected at [Staging CAPI Openstack](https://console.cloud.google.com/artifacts/docker/k8s-staging-capi-openstack/us/gcr.io?project=k8s-staging-capi-openstack). Be
    sure to choose the top level `capi-openstack-controller`, which will provide the multi-arch manifest, rather than one for a specific architecture.
+   You can use [gcrane](https://github.com/google/go-containerregistry/blob/main/cmd/gcrane/README.md) to get the digest, for example:
+
+   ```bash
+   gcrane digest gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:vX.Y.Z
+   ```
+
    The image build logs are available at [Cloud Build](https://console.cloud.google.com/cloud-build/builds?project=k8s-staging-capi-openstack).
    Add the new sha=>tag mapping to the [images.yaml](https://github.com/kubernetes/k8s.io/blob/main/registry.k8s.io/images/k8s-staging-capi-openstack/images.yaml) (use the sha of the image with the corresponding tag). The PR to update the [images.yaml](https://github.com/kubernetes/k8s.io/blob/main/registry.k8s.io/images/k8s-staging-capi-openstack/images.yaml) must be approved in the [OWNERS](https://github.com/kubernetes/k8s.io/blob/main/registry.k8s.io/images/k8s-staging-capi-openstack/OWNERS) file and merged.
    Here is an example [pull request](https://github.com/kubernetes/k8s.io/pull/8807).

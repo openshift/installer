@@ -50,8 +50,10 @@ type AlertRuleProperties struct {
 
 	// Frequency: The alert rule frequency in ISO8601 format. The time granularity must be in minutes and minimum value is 1
 	// minute, depending on the detector.
-	Frequency *string  `json:"frequency,omitempty"`
-	Scope     []string `json:"scope,omitempty"`
+	Frequency *string `json:"frequency,omitempty"`
+
+	// Scope: The alert rule resources scope.
+	Scope []string `json:"scope,omitempty"`
 
 	// Severity: The alert rule severity.
 	Severity *AlertRuleProperties_Severity `json:"severity,omitempty"`
@@ -69,8 +71,10 @@ type ActionGroupsInformation struct {
 	CustomEmailSubject *string `json:"customEmailSubject,omitempty"`
 
 	// CustomWebhookPayload: An optional custom web-hook payload to use in web-hook notifications.
-	CustomWebhookPayload *string  `json:"customWebhookPayload,omitempty"`
-	GroupIds             []string `json:"groupIds,omitempty"`
+	CustomWebhookPayload *string `json:"customWebhookPayload,omitempty"`
+
+	// GroupIds: The Action Group resource IDs.
+	GroupIds []string `json:"groupIds,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"Sev0","Sev1","Sev2","Sev3","Sev4"}

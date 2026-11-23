@@ -18,6 +18,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cache}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -25,7 +26,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20201201.Redis
 // Generator information:
-// - Generated from: /redis/resource-manager/Microsoft.Cache/stable/2020-12-01/redis.json
+// - Generated from: /redis/resource-manager/Microsoft.Cache/Redis/stable/2020-12-01/redis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{name}
 type Redis struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -259,7 +260,7 @@ func (redis *Redis) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20201201.Redis
 // Generator information:
-// - Generated from: /redis/resource-manager/Microsoft.Cache/stable/2020-12-01/redis.json
+// - Generated from: /redis/resource-manager/Microsoft.Cache/Redis/stable/2020-12-01/redis.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cache/redis/{name}
 type RedisList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -754,8 +755,6 @@ func (redis *Redis_STATUS) AssignProperties_From_Redis_STATUS(source *v20230401s
 	if source.Instances != nil {
 		instanceList := make([]RedisInstanceDetails_STATUS, len(source.Instances))
 		for instanceIndex, instanceItem := range source.Instances {
-			// Shadow the loop variable to avoid aliasing
-			instanceItem := instanceItem
 			var instance RedisInstanceDetails_STATUS
 			err := instance.AssignProperties_From_RedisInstanceDetails_STATUS(&instanceItem)
 			if err != nil {
@@ -772,8 +771,6 @@ func (redis *Redis_STATUS) AssignProperties_From_Redis_STATUS(source *v20230401s
 	if source.LinkedServers != nil {
 		linkedServerList := make([]RedisLinkedServer_STATUS, len(source.LinkedServers))
 		for linkedServerIndex, linkedServerItem := range source.LinkedServers {
-			// Shadow the loop variable to avoid aliasing
-			linkedServerItem := linkedServerItem
 			var linkedServer RedisLinkedServer_STATUS
 			err := linkedServer.AssignProperties_From_RedisLinkedServer_STATUS(&linkedServerItem)
 			if err != nil {
@@ -802,8 +799,6 @@ func (redis *Redis_STATUS) AssignProperties_From_Redis_STATUS(source *v20230401s
 	if source.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]PrivateEndpointConnection_STATUS, len(source.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range source.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnectionSTATUSStash v20210301s.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionSTATUSStash.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
@@ -948,8 +943,6 @@ func (redis *Redis_STATUS) AssignProperties_To_Redis_STATUS(destination *v202304
 	if redis.Instances != nil {
 		instanceList := make([]v20230401s.RedisInstanceDetails_STATUS, len(redis.Instances))
 		for instanceIndex, instanceItem := range redis.Instances {
-			// Shadow the loop variable to avoid aliasing
-			instanceItem := instanceItem
 			var instance v20230401s.RedisInstanceDetails_STATUS
 			err := instanceItem.AssignProperties_To_RedisInstanceDetails_STATUS(&instance)
 			if err != nil {
@@ -966,8 +959,6 @@ func (redis *Redis_STATUS) AssignProperties_To_Redis_STATUS(destination *v202304
 	if redis.LinkedServers != nil {
 		linkedServerList := make([]v20230401s.RedisLinkedServer_STATUS, len(redis.LinkedServers))
 		for linkedServerIndex, linkedServerItem := range redis.LinkedServers {
-			// Shadow the loop variable to avoid aliasing
-			linkedServerItem := linkedServerItem
 			var linkedServer v20230401s.RedisLinkedServer_STATUS
 			err := linkedServerItem.AssignProperties_To_RedisLinkedServer_STATUS(&linkedServer)
 			if err != nil {
@@ -996,8 +987,6 @@ func (redis *Redis_STATUS) AssignProperties_To_Redis_STATUS(destination *v202304
 	if redis.PrivateEndpointConnections != nil {
 		privateEndpointConnectionList := make([]v20230401s.PrivateEndpointConnection_STATUS, len(redis.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range redis.PrivateEndpointConnections {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointConnectionItem := privateEndpointConnectionItem
 			var privateEndpointConnectionSTATUSStash v20210301s.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnectionSTATUSStash)
 			if err != nil {
@@ -1575,8 +1564,6 @@ func (operator *RedisOperatorSpec) AssignProperties_From_RedisOperatorSpec(sourc
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1593,8 +1580,6 @@ func (operator *RedisOperatorSpec) AssignProperties_From_RedisOperatorSpec(sourc
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1648,8 +1633,6 @@ func (operator *RedisOperatorSpec) AssignProperties_To_RedisOperatorSpec(destina
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1666,8 +1649,6 @@ func (operator *RedisOperatorSpec) AssignProperties_To_RedisOperatorSpec(destina
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2185,7 +2166,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_From_RedisOperatorSecrets(
 
 	// HostName
 	if source.HostName != nil {
-		hostName := source.HostName.Copy()
+		hostName := *source.HostName.DeepCopy()
 		secrets.HostName = &hostName
 	} else {
 		secrets.HostName = nil
@@ -2193,7 +2174,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_From_RedisOperatorSecrets(
 
 	// Port
 	if source.Port != nil {
-		port := source.Port.Copy()
+		port := *source.Port.DeepCopy()
 		secrets.Port = &port
 	} else {
 		secrets.Port = nil
@@ -2201,7 +2182,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_From_RedisOperatorSecrets(
 
 	// PrimaryKey
 	if source.PrimaryKey != nil {
-		primaryKey := source.PrimaryKey.Copy()
+		primaryKey := *source.PrimaryKey.DeepCopy()
 		secrets.PrimaryKey = &primaryKey
 	} else {
 		secrets.PrimaryKey = nil
@@ -2209,7 +2190,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_From_RedisOperatorSecrets(
 
 	// SSLPort
 	if source.SSLPort != nil {
-		sslPort := source.SSLPort.Copy()
+		sslPort := *source.SSLPort.DeepCopy()
 		secrets.SSLPort = &sslPort
 	} else {
 		secrets.SSLPort = nil
@@ -2217,7 +2198,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_From_RedisOperatorSecrets(
 
 	// SecondaryKey
 	if source.SecondaryKey != nil {
-		secondaryKey := source.SecondaryKey.Copy()
+		secondaryKey := *source.SecondaryKey.DeepCopy()
 		secrets.SecondaryKey = &secondaryKey
 	} else {
 		secrets.SecondaryKey = nil
@@ -2250,7 +2231,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_To_RedisOperatorSecrets(de
 
 	// HostName
 	if secrets.HostName != nil {
-		hostName := secrets.HostName.Copy()
+		hostName := *secrets.HostName.DeepCopy()
 		destination.HostName = &hostName
 	} else {
 		destination.HostName = nil
@@ -2258,7 +2239,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_To_RedisOperatorSecrets(de
 
 	// Port
 	if secrets.Port != nil {
-		port := secrets.Port.Copy()
+		port := *secrets.Port.DeepCopy()
 		destination.Port = &port
 	} else {
 		destination.Port = nil
@@ -2266,7 +2247,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_To_RedisOperatorSecrets(de
 
 	// PrimaryKey
 	if secrets.PrimaryKey != nil {
-		primaryKey := secrets.PrimaryKey.Copy()
+		primaryKey := *secrets.PrimaryKey.DeepCopy()
 		destination.PrimaryKey = &primaryKey
 	} else {
 		destination.PrimaryKey = nil
@@ -2274,7 +2255,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_To_RedisOperatorSecrets(de
 
 	// SSLPort
 	if secrets.SSLPort != nil {
-		sslPort := secrets.SSLPort.Copy()
+		sslPort := *secrets.SSLPort.DeepCopy()
 		destination.SSLPort = &sslPort
 	} else {
 		destination.SSLPort = nil
@@ -2282,7 +2263,7 @@ func (secrets *RedisOperatorSecrets) AssignProperties_To_RedisOperatorSecrets(de
 
 	// SecondaryKey
 	if secrets.SecondaryKey != nil {
-		secondaryKey := secrets.SecondaryKey.Copy()
+		secondaryKey := *secrets.SecondaryKey.DeepCopy()
 		destination.SecondaryKey = &secondaryKey
 	} else {
 		destination.SecondaryKey = nil

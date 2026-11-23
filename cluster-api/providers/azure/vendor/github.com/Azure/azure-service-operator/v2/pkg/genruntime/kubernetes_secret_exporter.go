@@ -29,12 +29,24 @@ type KubernetesSecretExportResult struct {
 	RawSecrets map[string]string
 }
 
-// KubernetesSecretExporter defines a resource which can create retrieve secrets from Azure and export them to
-// Kubernetes secrets.
+// KubernetesSecretExporter defines a resource which can retrieve secrets from Azure and export them to
+// Kubernetes secrets. This extension is invoked after a resource has been successfully created or updated
+// in Azure, giving resources the ability to make sensitive data available in Kubernetes.
+// Implement this extension when:
+// - The resource generates secrets in Azure (keys, connection strings, passwords)
+// - Secret values are available in the resource status
+// - Additional ARM API calls are needed to retrieve secrets
 type KubernetesSecretExporter interface {
-	// ExportKubernetesSecrets provides a list of Kubernetes resource for the operator to create once the resource which
-	// implements this interface is successfully provisioned. This method is invoked once a resource has been
-	// successfully created in Azure, but before the Ready condition has been marked successful.
+	// ExportKubernetesSecrets retrieves secrets from Azure and returns Kubernetes Secret objects to be created.
+	// This method is invoked once a resource has been successfully created or updated in Azure,
+	// but before the Ready condition has been marked successful.
+	// ctx is the current operation context.
+	// obj is the resource that owns the secrets.
+	// additionalSecrets is a set of secret names to retrieve (for secret expressions). This exists to avoid
+	// making multiple calls to the secrets API - instead we capture all the secrets we need and then get them.
+	// armClient allows making ARM API calls to retrieve secrets.
+	// log is a logger for the current operation.
+	// Returns a KubernetesSecretExportResult containing Secret objects to create and raw secret values.
 	ExportKubernetesSecrets(
 		ctx context.Context,
 		obj MetaObject,

@@ -156,6 +156,18 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &machineconfigurationv1.PoolSynchronizerStatusApplyConfiguration{}
 
 		// Group=machineconfiguration.openshift.io, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPConfig"):
+		return &machineconfigurationv1alpha1.BGPVIPConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPConfigSpec"):
+		return &machineconfigurationv1alpha1.BGPVIPConfigSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPConfigStatus"):
+		return &machineconfigurationv1alpha1.BGPVIPConfigStatusApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPHostPeers"):
+		return &machineconfigurationv1alpha1.BGPVIPHostPeersApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPPasswordSecret"):
+		return &machineconfigurationv1alpha1.BGPVIPPasswordSecretApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("BGPVIPPeer"):
+		return &machineconfigurationv1alpha1.BGPVIPPeerApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("InternalReleaseImage"):
 		return &machineconfigurationv1alpha1.InternalReleaseImageApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("InternalReleaseImageBundleStatus"):

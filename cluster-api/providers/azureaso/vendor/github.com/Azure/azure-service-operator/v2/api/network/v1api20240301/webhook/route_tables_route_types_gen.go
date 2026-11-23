@@ -116,7 +116,12 @@ func (route *RouteTablesRoute) ValidateUpdate(ctx context.Context, oldResource r
 
 // createValidations validates the creation of the resource
 func (route *RouteTablesRoute) createValidations() []func(ctx context.Context, obj *v20240301.RouteTablesRoute) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240301.RouteTablesRoute) (admission.Warnings, error){route.validateResourceReferences, route.validateOwnerReference, route.validateSecretDestinations, route.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240301.RouteTablesRoute) (admission.Warnings, error){
+		route.validateResourceReferences,
+		route.validateOwnerReference,
+		route.validateSecretDestinations,
+		route.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -37,8 +37,9 @@ type MetadataAPI interface {
 // do not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	BaseDomain      string
-	PublishStrategy types.PublishingStrategy
+	BaseDomain       string
+	PublishStrategy  types.PublishingStrategy
+	ServiceEndpoints []configv1.PowerVSServiceEndpoint
 
 	accountID      string
 	apiKey         string
@@ -51,7 +52,11 @@ type Metadata struct {
 
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(config *types.InstallConfig) *Metadata {
-	return &Metadata{BaseDomain: config.BaseDomain, PublishStrategy: config.Publish}
+	return &Metadata{
+		BaseDomain:       config.BaseDomain,
+		PublishStrategy:  config.Publish,
+		ServiceEndpoints: config.Platform.PowerVS.ServiceEndpoints,
+	}
 }
 
 func (m *Metadata) client() (*Client, error) {
@@ -59,7 +64,7 @@ func (m *Metadata) client() (*Client, error) {
 		return m.sessionClient, nil
 	}
 
-	client, err := NewClient()
+	client, err := NewClientWithEndpoints(m.ServiceEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -331,6 +336,68 @@ func (m *Metadata) GetVPCSubnets(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.S
 	}
 
 	return subnets, err
+}
+
+// vpcRegionFromCRN returns the IBM Cloud region a VPC lives in, taken from its CRN.
+func vpcRegionFromCRN(vpc *vpcv1.VPC) (string, error) {
+	if vpc == nil || vpc.CRN == nil {
+		return "", fmt.Errorf("VPC is nil or has no CRN")
+	}
+	vpcCRN, err := crn.Parse(*vpc.CRN)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse VPC CRN: %w", err)
+	}
+	return vpcCRN.Region, nil
+}
+
+// GetVPCPublicGateways gets the Public Gateways, in every zone, of a VPC.
+func (m *Metadata) GetVPCPublicGateways(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.PublicGateway, error) {
+	region, err := vpcRegionFromCRN(vpc)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListPublicGatewaysByVPC(ctx, *vpc.ID, region)
+}
+
+// GetVPCRoutingTables gets the Routing Tables of a VPC.
+func (m *Metadata) GetVPCRoutingTables(ctx context.Context, vpc *vpcv1.VPC) ([]vpcv1.RoutingTable, error) {
+	region, err := vpcRegionFromCRN(vpc)
+	if err != nil {
+		return nil, err
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListVPCRoutingTables(ctx, *vpc.ID, region)
+}
+
+// SetVPCRoutingTableRouteNextHop points the named route of a routing table at nextHop.
+// It returns true if the route was changed.
+func (m *Metadata) SetVPCRoutingTableRouteNextHop(ctx context.Context, vpcID, region, routingTableID, routeName, nextHop string) (bool, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return false, err
+	}
+
+	return client.SetVPCRoutingTableRouteNextHop(ctx, vpcID, region, routingTableID, routeName, nextHop)
 }
 
 // GetDNSServerIP gets the IP of a custom resolver for DNS use.

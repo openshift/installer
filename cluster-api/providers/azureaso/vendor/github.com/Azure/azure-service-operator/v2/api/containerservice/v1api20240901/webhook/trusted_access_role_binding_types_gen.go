@@ -116,7 +116,12 @@ func (binding *TrustedAccessRoleBinding) ValidateUpdate(ctx context.Context, old
 
 // createValidations validates the creation of the resource
 func (binding *TrustedAccessRoleBinding) createValidations() []func(ctx context.Context, obj *v20240901.TrustedAccessRoleBinding) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240901.TrustedAccessRoleBinding) (admission.Warnings, error){binding.validateResourceReferences, binding.validateOwnerReference, binding.validateSecretDestinations, binding.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240901.TrustedAccessRoleBinding) (admission.Warnings, error){
+		binding.validateResourceReferences,
+		binding.validateOwnerReference,
+		binding.validateSecretDestinations,
+		binding.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

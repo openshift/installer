@@ -1644,7 +1644,7 @@ func (in *ImageOperatorSpec) DeepCopyInto(out *ImageOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -1662,7 +1662,7 @@ func (in *ImageOperatorSpec) DeepCopyInto(out *ImageOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5722,7 +5722,7 @@ func (in *VirtualMachineOperatorSpec) DeepCopyInto(out *VirtualMachineOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -5740,7 +5740,7 @@ func (in *VirtualMachineOperatorSpec) DeepCopyInto(out *VirtualMachineOperatorSp
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -7465,7 +7465,7 @@ func (in *VirtualMachineScaleSetOperatorSpec) DeepCopyInto(out *VirtualMachineSc
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -7483,7 +7483,7 @@ func (in *VirtualMachineScaleSetOperatorSpec) DeepCopyInto(out *VirtualMachineSc
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -8327,7 +8327,7 @@ func (in *VirtualMachineScaleSetsExtensionOperatorSpec) DeepCopyInto(out *Virtua
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -8345,7 +8345,7 @@ func (in *VirtualMachineScaleSetsExtensionOperatorSpec) DeepCopyInto(out *Virtua
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9007,7 +9007,7 @@ func (in *VirtualMachinesExtensionOperatorSpec) DeepCopyInto(out *VirtualMachine
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -9025,7 +9025,7 @@ func (in *VirtualMachinesExtensionOperatorSpec) DeepCopyInto(out *VirtualMachine
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

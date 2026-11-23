@@ -116,7 +116,12 @@ func (signalR *SignalR) ValidateUpdate(ctx context.Context, oldResource runtime.
 
 // createValidations validates the creation of the resource
 func (signalR *SignalR) createValidations() []func(ctx context.Context, obj *v20211001.SignalR) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211001.SignalR) (admission.Warnings, error){signalR.validateResourceReferences, signalR.validateOwnerReference, signalR.validateSecretDestinations, signalR.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211001.SignalR) (admission.Warnings, error){
+		signalR.validateResourceReferences,
+		signalR.validateOwnerReference,
+		signalR.validateSecretDestinations,
+		signalR.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -19,13 +19,13 @@ package util
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/supervisor/v1beta2"
 )
 
 // GetVSphereClusterFromVMwareMachine gets the vmware.infrastructure.cluster.x-k8s.io.VSphereCluster resource for the given VSphereMachine.
@@ -33,7 +33,7 @@ import (
 func GetVSphereClusterFromVMwareMachine(ctx context.Context, c client.Client, machine *vmwarev1.VSphereMachine) (*vmwarev1.VSphereCluster, error) {
 	clusterName := machine.Labels[clusterv1.ClusterNameLabel]
 	if clusterName == "" {
-		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s",
+		return nil, pkgerrors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s",
 			machine.Namespace, machine.Name)
 	}
 	namespacedName := apitypes.NamespacedName{
@@ -46,7 +46,7 @@ func GetVSphereClusterFromVMwareMachine(ctx context.Context, c client.Client, ma
 	}
 
 	if !cluster.Spec.InfrastructureRef.IsDefined() {
-		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
+		return nil, pkgerrors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
 			machine.Namespace, machine.Name)
 	}
 
@@ -63,7 +63,7 @@ func GetVSphereClusterFromVMwareMachine(ctx context.Context, c client.Client, ma
 func GetVSphereClusterFromVSphereMachine(ctx context.Context, c client.Client, machine *infrav1.VSphereMachine) (*infrav1.VSphereCluster, error) {
 	clusterName := machine.Labels[clusterv1.ClusterNameLabel]
 	if clusterName == "" {
-		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s",
+		return nil, pkgerrors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s",
 			machine.Namespace, machine.Name)
 	}
 	namespacedName := apitypes.NamespacedName{
@@ -76,7 +76,7 @@ func GetVSphereClusterFromVSphereMachine(ctx context.Context, c client.Client, m
 	}
 
 	if !cluster.Spec.InfrastructureRef.IsDefined() {
-		return nil, errors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
+		return nil, pkgerrors.Errorf("error getting VSphereCluster name from VSphereMachine %s/%s: Cluster.spec.infrastructureRef not yet set",
 			machine.Namespace, machine.Name)
 	}
 	vsphereClusterKey := apitypes.NamespacedName{

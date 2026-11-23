@@ -26,9 +26,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/api/govmomi/v1beta2"
 )
 
 const (
@@ -69,7 +70,7 @@ func GetCredentials(ctx context.Context, c client.Client, cluster *infrav1.VSphe
 			return nil, err
 		}
 
-		if !identity.Status.Ready {
+		if !ptr.Deref(identity.Status.Ready, false) {
 			return nil, errors.New("identity isn't ready to be used yet")
 		}
 
@@ -121,7 +122,7 @@ func validateInputs(c client.Client, cluster *infrav1.VSphereCluster) error {
 		return errors.New("vsphere cluster is required")
 	}
 	ref := cluster.Spec.IdentityRef
-	if ref == nil {
+	if !ref.IsDefined() {
 		return errors.New("IdentityRef is required")
 	}
 	return nil
@@ -129,7 +130,7 @@ func validateInputs(c client.Client, cluster *infrav1.VSphereCluster) error {
 
 // IsSecretIdentity returns true if the VSphereCluster identity is a Secret.
 func IsSecretIdentity(cluster *infrav1.VSphereCluster) bool {
-	if cluster == nil || cluster.Spec.IdentityRef == nil {
+	if cluster == nil || !cluster.Spec.IdentityRef.IsDefined() {
 		return false
 	}
 	return cluster.Spec.IdentityRef.Kind == infrav1.SecretKind

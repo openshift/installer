@@ -147,16 +147,35 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		// Mutual-exclusivity of ICSP and IDMS is an authoring constraint for
+		// user-written install-config.
 		if installConfig.Supplied {
 			imageDigestSources = installConfig.Config.ImageDigestSources
 			deprecatedImageContentSources = installConfig.Config.DeprecatedImageContentSources
+			if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
+				return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
+			}
 		}
 		image = releaseImage.PullSpec
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		// Sources come from the live cluster, where ICSP and IDMS may coexist
+		// during migration. Combine into one digest-source list, normalize
+		// policies per source (NeverContactSource wins), then let
+		// MergedMirrorSets union mirrors.
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
+		switch {
+		case len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0:
+			imageDigestSources, deprecatedImageContentSources = mergeICSPIntoIDMS(imageDigestSources, deprecatedImageContentSources)
+		case len(deprecatedImageContentSources) != 0:
+			converted := bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)
+			imageDigestSources = make([]types.ImageDigestSource, len(converted))
+			copy(imageDigestSources, converted)
+			deprecatedImageContentSources = nil
+		}
+		imageDigestSources = normalizeMirrorSourcePoliciesForAddNodes(imageDigestSources)
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -172,7 +191,7 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	}
 
 	if !i.releaseImageIsSameInRegistriesConf(image) {
-		logrus.Warnf("The imageDigestSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec)
+		logrus.Warnf("The imageDigestSources configuration should have at least one source field matching the releaseImage value %s", image)
 	}
 
 	registriesData, err := toml.Marshal(i.Config)
@@ -188,11 +207,44 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	return nil
 }
 
-func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
-	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
-		return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
+// mergeICSPIntoIDMS converts ICSP entries to digest mirror entries and appends
+// them after IDMS entries. The add-nodes caller normalizes policies per source
+// before generating the registry configuration.
+func mergeICSPIntoIDMS(idms []types.ImageDigestSource, icsp []types.ImageContentSource) ([]types.ImageDigestSource, []types.ImageContentSource) {
+	logrus.Warn("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; combining configurations")
+	convertedICSP := bootstrap.ContentSourceToDigestMirror(icsp)
+	out := make([]types.ImageDigestSource, 0, len(idms)+len(convertedICSP))
+	out = append(out, idms...)
+	out = append(out, convertedICSP...)
+	return out, nil
+}
+
+// normalizeMirrorSourcePoliciesForAddNodes applies per-source policy precedence
+// for add-nodes: if any entry for a source is NeverContactSource, all entries
+// for that source become NeverContactSource; otherwise the policy is cleared.
+// This matches the per-source policy precedence used when merging mirror
+// objects on the cluster, without changing bootstrap.MergedMirrorSets.
+func normalizeMirrorSourcePoliciesForAddNodes(sources []types.ImageDigestSource) []types.ImageDigestSource {
+	neverBySource := make(map[string]bool, len(sources))
+	for _, s := range sources {
+		if s.SourcePolicy == configv1.NeverContactSource {
+			neverBySource[s.Source] = true
+		}
 	}
 
+	out := make([]types.ImageDigestSource, len(sources))
+	for i, s := range sources {
+		if neverBySource[s.Source] {
+			s.SourcePolicy = configv1.NeverContactSource
+		} else {
+			s.SourcePolicy = ""
+		}
+		out[i] = s
+	}
+	return out
+}
+
+func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
 	digestMirrorSources := []types.ImageDigestSource{}
 	if len(deprecatedImageContentSources) > 0 {
 		digestMirrorSources = bootstrap.ContentSourceToDigestMirror(deprecatedImageContentSources)

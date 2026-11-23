@@ -116,7 +116,13 @@ func (encryptionSet *DiskEncryptionSet) ValidateUpdate(ctx context.Context, oldR
 
 // createValidations validates the creation of the resource
 func (encryptionSet *DiskEncryptionSet) createValidations() []func(ctx context.Context, obj *v20240302.DiskEncryptionSet) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240302.DiskEncryptionSet) (admission.Warnings, error){encryptionSet.validateResourceReferences, encryptionSet.validateOwnerReference, encryptionSet.validateSecretDestinations, encryptionSet.validateConfigMapDestinations, encryptionSet.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20240302.DiskEncryptionSet) (admission.Warnings, error){
+		encryptionSet.validateResourceReferences,
+		encryptionSet.validateOwnerReference,
+		encryptionSet.validateSecretDestinations,
+		encryptionSet.validateConfigMapDestinations,
+		encryptionSet.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

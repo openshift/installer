@@ -62,11 +62,13 @@ func NewProgramCache(
 	cache.OnInsertion(
 		func(ctx context.Context, item *ttlcache.Item[string, *programCacheItem]) {
 			log.V(Debug).Info("Program cache item inserted", "key", item.Key(), "expiry", item.ExpiresAt())
-		})
+		},
+	)
 	cache.OnEviction(
 		func(ctx context.Context, reason ttlcache.EvictionReason, item *ttlcache.Item[string, *programCacheItem]) {
 			log.V(Debug).Info("Program cache item evicted", "key", item.Key(), "expiry", item.ExpiresAt(), "reason", reason)
-		})
+		},
+	)
 	return &ProgramCache{
 		cache:    cache,
 		envCache: envCache,

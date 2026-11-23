@@ -22,7 +22,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -63,10 +63,10 @@ func GetNetworkStatus(
 	)
 
 	if err := pc.RetrieveOne(ctx, moRef, props, &obj); err != nil {
-		return nil, errors.Wrapf(err, "unable to fetch props %v for vm %v", props, moRef)
+		return nil, pkgerrors.Wrapf(err, "unable to fetch props %v for vm %v", props, moRef)
 	}
 	if obj.Config == nil {
-		return nil, errors.New("config.hardware.device is nil")
+		return nil, pkgerrors.New("config.hardware.device is nil")
 	}
 
 	var allNetStatus []NetworkStatus
@@ -111,7 +111,7 @@ func ErrOnLocalOnlyIPAddr(addr string) error {
 		reason = "loopback"
 	}
 	if reason != "" {
-		return errors.Errorf("failed to validate ip addr=%v: %s", addr, reason)
+		return pkgerrors.Errorf("failed to validate ip addr=%v: %s", addr, reason)
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 )
 
 // +genclient
+// +genclient:nonNamespaced
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope="Cluster",path=ipblocksinfos
 
@@ -24,6 +25,12 @@ type IPBlocksInfo struct {
 	// spaces represented by network address and prefix length. The visibility of the
 	// IPBlocks is Private Transit Gateway. Only IPBlocks in default project will be included.
 	PrivateTGWIPCIDRs []string `json:"privateTGWIPCIDRs,omitempty"`
+	// ExternalIPRanges is an array of contiguous IP address space represented by start and end IPs.
+	// The visibility of the IPBlocks is External.
+	ExternalIPRanges []IPPoolRange `json:"externalIPRanges,omitempty"`
+	// PrivateTGWIPRanges is an array of contiguous IP address space represented by start and end IPs.
+	// The visibility of the IPBlocks is Private Transit Gateway.
+	PrivateTGWIPRanges []IPPoolRange `json:"privateTGWIPRanges,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -33,6 +40,13 @@ type IPBlocksInfoList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []IPBlocksInfo `json:"items"`
+}
+
+type IPPoolRange struct {
+	// The start IP Address of the IP Range.
+	Start string `json:"start"`
+	// The end IP Address of the IP Range.
+	End string `json:"end"`
 }
 
 func init() {

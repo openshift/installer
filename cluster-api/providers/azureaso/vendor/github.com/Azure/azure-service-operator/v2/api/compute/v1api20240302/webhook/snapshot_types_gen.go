@@ -116,7 +116,12 @@ func (snapshot *Snapshot) ValidateUpdate(ctx context.Context, oldResource runtim
 
 // createValidations validates the creation of the resource
 func (snapshot *Snapshot) createValidations() []func(ctx context.Context, obj *v20240302.Snapshot) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240302.Snapshot) (admission.Warnings, error){snapshot.validateResourceReferences, snapshot.validateOwnerReference, snapshot.validateSecretDestinations, snapshot.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240302.Snapshot) (admission.Warnings, error){
+		snapshot.validateResourceReferences,
+		snapshot.validateOwnerReference,
+		snapshot.validateSecretDestinations,
+		snapshot.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

@@ -146,13 +146,17 @@ spec:
                 - Disabled
                 type: string
               management:
-                default: ClusterAPI
                 description: |-
-                  Management is the API that will be used for machine management in the cluster.
-                  Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
-                  Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
-                  Supported platforms: aws
-                  Default is ClusterAPI.
+                  Management specifies the API used to provision and manage the machines
+                  in this pool: Cluster API or Machine API.
+
+                  ClusterAPI is only supported for AWS compute pools ("worker" and "edge")
+                  with the ClusterAPIMachineManagementAWS feature gate enabled.
+
+                  When management is unset, the platform is AWS, the pool is a compute pool,
+                  and the ClusterAPIMachineManagementAWS feature gate is enabled, management
+                  defaults to ClusterAPI. Otherwise it remains unset and the machines are
+                  managed by the Machine API.
                 enum:
                 - ClusterAPI
                 - MachineAPI
@@ -211,6 +215,19 @@ spec:
                             enum:
                             - Disabled
                             - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                          nestedVirtualization:
+                            description: |-
+                              NestedVirtualization specifies whether to enable nested virtualization on the EC2 instance,
+                              allowing hypervisors such as Hyper-V and KVM to run inside it and manage their own virtual machines.
+                              Valid values are: Disabled, Enabled, and omitted.
+                              When set to Enabled, ensure the selected instance type supports nested virtualization.
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+                            enum:
+                            - Disabled
+                            - Enabled
                             type: string
                         type: object
                       hostPlacement:
@@ -1774,13 +1791,17 @@ spec:
                   - Disabled
                   type: string
                 management:
-                  default: ClusterAPI
                   description: |-
-                    Management is the API that will be used for machine management in the cluster.
-                    Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
-                    Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
-                    Supported platforms: aws
-                    Default is ClusterAPI.
+                    Management specifies the API used to provision and manage the machines
+                    in this pool: Cluster API or Machine API.
+
+                    ClusterAPI is only supported for AWS compute pools ("worker" and "edge")
+                    with the ClusterAPIMachineManagementAWS feature gate enabled.
+
+                    When management is unset, the platform is AWS, the pool is a compute pool,
+                    and the ClusterAPIMachineManagementAWS feature gate is enabled, management
+                    defaults to ClusterAPI. Otherwise it remains unset and the machines are
+                    managed by the Machine API.
                   enum:
                   - ClusterAPI
                   - MachineAPI
@@ -1839,6 +1860,19 @@ spec:
                               enum:
                               - Disabled
                               - AMDEncryptedVirtualizationNestedPaging
+                              type: string
+                            nestedVirtualization:
+                              description: |-
+                                NestedVirtualization specifies whether to enable nested virtualization on the EC2 instance,
+                                allowing hypervisors such as Hyper-V and KVM to run inside it and manage their own virtual machines.
+                                Valid values are: Disabled, Enabled, and omitted.
+                                When set to Enabled, ensure the selected instance type supports nested virtualization.
+                                When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                                which is subject to change without notice. The current default is Disabled.
+                                More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+                              enum:
+                              - Disabled
+                              - Enabled
                               type: string
                           type: object
                         hostPlacement:
@@ -3360,13 +3394,17 @@ spec:
                 - Disabled
                 type: string
               management:
-                default: ClusterAPI
                 description: |-
-                  Management is the API that will be used for machine management in the cluster.
-                  Using this field for control plane machines requires the ClusterAPIControlPlaneInstall feature gate.
-                  Using this field for compute machines requires the ClusterAPIComputeInstall feature gate.
-                  Supported platforms: aws
-                  Default is ClusterAPI.
+                  Management specifies the API used to provision and manage the machines
+                  in this pool: Cluster API or Machine API.
+
+                  ClusterAPI is only supported for AWS compute pools ("worker" and "edge")
+                  with the ClusterAPIMachineManagementAWS feature gate enabled.
+
+                  When management is unset, the platform is AWS, the pool is a compute pool,
+                  and the ClusterAPIMachineManagementAWS feature gate is enabled, management
+                  defaults to ClusterAPI. Otherwise it remains unset and the machines are
+                  managed by the Machine API.
                 enum:
                 - ClusterAPI
                 - MachineAPI
@@ -3425,6 +3463,19 @@ spec:
                             enum:
                             - Disabled
                             - AMDEncryptedVirtualizationNestedPaging
+                            type: string
+                          nestedVirtualization:
+                            description: |-
+                              NestedVirtualization specifies whether to enable nested virtualization on the EC2 instance,
+                              allowing hypervisors such as Hyper-V and KVM to run inside it and manage their own virtual machines.
+                              Valid values are: Disabled, Enabled, and omitted.
+                              When set to Enabled, ensure the selected instance type supports nested virtualization.
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+                            enum:
+                            - Disabled
+                            - Enabled
                             type: string
                         type: object
                       hostPlacement:
@@ -5292,6 +5343,19 @@ spec:
                             - Disabled
                             - AMDEncryptedVirtualizationNestedPaging
                             type: string
+                          nestedVirtualization:
+                            description: |-
+                              NestedVirtualization specifies whether to enable nested virtualization on the EC2 instance,
+                              allowing hypervisors such as Hyper-V and KVM to run inside it and manage their own virtual machines.
+                              Valid values are: Disabled, Enabled, and omitted.
+                              When set to Enabled, ensure the selected instance type supports nested virtualization.
+                              When omitted, this means no opinion and the AWS platform is left to choose a reasonable default,
+                              which is subject to change without notice. The current default is Disabled.
+                              More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html
+                            enum:
+                            - Disabled
+                            - Enabled
+                            type: string
                         type: object
                       hostPlacement:
                         description: |-
@@ -7051,6 +7115,13 @@ spec:
                     items:
                       type: string
                     type: array
+                  cosInstanceCRN:
+                    description: |-
+                      COSInstanceCRN is the CRN of an existing IBM Cloud Object Storage instance
+                      to use for storing the RHCOS image and bootstrap ignition data.
+                      If not specified, a new COS instance will be created for the cluster.
+                      The CRN format is: crn:v1:bluemix:public:cloud-object-storage:global:a/<account_id>:<instance_id>::
+                    type: string
                   defaultMachinePlatform:
                     description: |-
                       DefaultMachinePlatform is the default configuration used when installing
@@ -8437,6 +8508,13 @@ spec:
                       ClusterOSImage is a pre-created Power VS boot image that overrides the
                       default image for cluster nodes.
                     type: string
+                  cosInstanceCRN:
+                    description: |-
+                      COSInstanceCRN is the CRN of an existing IBM Cloud Object Storage instance
+                      to use for storing the RHCOS image and bootstrap ignition data.
+                      If not specified, a new COS instance will be created for the cluster.
+                      The CRN format is: crn:v1:bluemix:public:cloud-object-storage:global:a/<account_id>:<instance_id>::
+                    type: string
                   defaultMachinePlatform:
                     description: |-
                       DefaultMachinePlatform is the default configuration used when
@@ -8479,10 +8557,46 @@ spec:
                           type: string
                         type: array
                     type: object
+                  networkType:
+                    description: |-
+                      NetworkType selects the PowerVS network provisioning strategy.
+                      Allowed values are "DHCPSubnet" (default) and "DHCPServer" (legacy).
+
+                      DHCPSubnet creates a plain PowerVS network with DHCP natively enabled and is the
+                      recommended mode. It enables the full new networking model: route-mode Network Load
+                      Balancer, VPC Routing Table advertising 0.0.0.0/0, and a VPC Public Gateway.
+                      When an existing VPC is supplied, a Public Gateway already present in the zone is
+                      reused, and the Routing Table is not created if the VPC already has one with
+                      Transit Gateway ingress enabled (IBM Cloud allows only one); in that case that
+                      table must route outbound traffic to the cluster.
+
+                      DHCPServer creates a dedicated DHCP Service VM (legacy). When this mode is selected
+                      the route-mode NLB, Routing Table, and Public Gateway are suppressed because the
+                      DHCP Server manages its own SNAT and egress.
+
+                      Leave unset to use DHCPSubnet.
+                    enum:
+                    - DHCPSubnet
+                    - DHCPServer
+                    type: string
+                  osImage:
+                    description: |-
+                      OSImage is the IBM Cloud Object Storage URL of a Power VS image to import into the
+                      Power VS Workspace and use for cluster nodes, of the form
+                      https://s3.<region>.cloud-object-storage.appdomain.cloud/<bucket>/<object>.
+                      When unset, the stock catalog image matching osImageStream is used.
+                    type: string
                   powervsResourceGroup:
                     description: PowerVSResourceGroup is the resource group in which
                       Power VS resources will be created.
                     type: string
+                  provisionTimeoutMinutes:
+                    description: |-
+                      ProvisionTimeoutMinutes overrides the default machine provisioning timeout.
+                      Use this when the target environment provisions machines more slowly than
+                      the default 15-minute window (e.g. IBM Cloud staging/test environments).
+                      When unset or zero, the default of 15 minutes is used.
+                    type: integer
                   region:
                     description: Region specifies the IBM Cloud colo region where
                       the cluster will be created.
@@ -8600,6 +8714,14 @@ spec:
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS OVA
+                    type: string
+                  credentialType:
+                    description: |-
+                      CredentialType determines whether credentials are global or component-scoped.
+                      When omitted, global credentials are used for backward compatibility.
+                    enum:
+                    - global
+                    - component-scoped
                     type: string
                   datacenter:
                     description: |-
@@ -9084,15 +9206,96 @@ spec:
                         VCenter stores the vCenter connection fields
                         https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:
+                        componentCredentials:
+                          description: |-
+                            ComponentCredentials contains credentials for each vSphere component when
+                            the platform uses component-scoped credentials.
+                          properties:
+                            cloudControllerManager:
+                              description: |-
+                                CloudControllerManager is used by the vSphere Cloud Controller Manager to
+                                manage cloud-provider integration, including node and load-balancer state.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            machineManagement:
+                              description: |-
+                                MachineManagement is used by the Machine API, Cluster API, and installer-side
+                                operations to provision, configure, and remove virtual machines in vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            storage:
+                              description: |-
+                                Storage is used by the vSphere CSI driver to provision and manage storage
+                                volumes and related vSphere storage resources.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            vsphereProblemDetector:
+                              description: |-
+                                VSphereProblemDetector is used by the vSphere Problem Detector to inspect
+                                the vSphere environment and report configuration and permission problems.
+                              properties:
+                                password:
+                                  description: Password is the password used to authenticate
+                                    to vCenter.
+                                  type: string
+                                user:
+                                  description: User is the username used to authenticate
+                                    to vCenter.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                          required:
+                          - cloudControllerManager
+                          - machineManagement
+                          - storage
+                          - vsphereProblemDetector
+                          type: object
                         datacenters:
-                          description: Datacenter in which VMs are located.
+                          description: Datacenters in which VMs are located.
                           items:
                             type: string
                           minItems: 1
                           type: array
                         password:
-                          description: Password is the password for the user to use
-                            to connect to the vCenter.
+                          description: |-
+                            Password is the password for the user to use to connect to the vCenter.
+                            It must be set for global credentials and must be omitted when
+                            credentialType is component-scoped.
                           type: string
                         port:
                           default: 443
@@ -9110,14 +9313,14 @@ spec:
                           maxLength: 255
                           type: string
                         user:
-                          description: Username is the username that will be used
-                            to connect to vCenter
+                          description: |-
+                            Username is the username that will be used to connect to vCenter.
+                            It must be set for global credentials and must be omitted when
+                            credentialType is component-scoped.
                           type: string
                       required:
                       - datacenters
-                      - password
                       - server
-                      - user
                       type: object
                     maxItems: 3
                     minItems: 1

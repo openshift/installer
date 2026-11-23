@@ -65,14 +65,24 @@ func mergeSecrets(namespace string, s []*v1.Secret) ([]*v1.Secret, error) {
 				&genruntime.SecretDestination{
 					Name: secret.Name,
 					Key:  key,
-				}, value)
+					// Safe to copy these maps as-is because they're solely used by this merge function
+					// and are deep-copied by the collector
+					Annotations: secret.Annotations,
+					Labels:      secret.Labels,
+				}, value,
+			)
 		}
 		for key, value := range secret.Data {
 			collector.AddBinaryValue(
 				&genruntime.SecretDestination{
 					Name: secret.Name,
 					Key:  key,
-				}, value)
+					// Safe to copy these maps as-is because they're solely used by this merge function
+					// and are deep-copied by the collector
+					Annotations: secret.Annotations,
+					Labels:      secret.Labels,
+				}, value,
+			)
 		}
 	}
 
@@ -87,14 +97,24 @@ func mergeConfigMaps(namespace string, c []*v1.ConfigMap) ([]*v1.ConfigMap, erro
 				&genruntime.ConfigMapDestination{
 					Name: configMap.Name,
 					Key:  key,
-				}, value)
+					// Safe to copy these maps as-is because they're solely used by this merge function
+					// and are deep-copied by the collector
+					Annotations: configMap.Annotations,
+					Labels:      configMap.Labels,
+				}, value,
+			)
 		}
 		for key, value := range configMap.BinaryData {
 			collector.AddBinaryValue(
 				&genruntime.ConfigMapDestination{
 					Name: configMap.Name,
 					Key:  key,
-				}, value)
+					// Safe to copy these maps as-is because they're solely used by this merge function
+					// and are deep-copied by the collector
+					Annotations: configMap.Annotations,
+					Labels:      configMap.Labels,
+				}, value,
+			)
 		}
 	}
 

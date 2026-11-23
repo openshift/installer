@@ -63,6 +63,7 @@ type AFDDomainHttpsParameters struct {
 
 // Reference to another resource.
 type ResourceReference struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

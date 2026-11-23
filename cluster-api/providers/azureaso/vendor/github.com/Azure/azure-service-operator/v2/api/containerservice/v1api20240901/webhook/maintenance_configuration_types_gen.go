@@ -116,7 +116,12 @@ func (configuration *MaintenanceConfiguration) ValidateUpdate(ctx context.Contex
 
 // createValidations validates the creation of the resource
 func (configuration *MaintenanceConfiguration) createValidations() []func(ctx context.Context, obj *v20240901.MaintenanceConfiguration) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240901.MaintenanceConfiguration) (admission.Warnings, error){configuration.validateResourceReferences, configuration.validateOwnerReference, configuration.validateSecretDestinations, configuration.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240901.MaintenanceConfiguration) (admission.Warnings, error){
+		configuration.validateResourceReferences,
+		configuration.validateOwnerReference,
+		configuration.validateSecretDestinations,
+		configuration.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

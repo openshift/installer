@@ -5,7 +5,7 @@ APIVersion: Enum (1 value)
 └── "2022-01-01"
 
 FlexibleServersAdministrator: Resource
-├── Owner: FlexibleServer
+├── Owner: dbformysql/v20220101.FlexibleServer
 ├── Spec: Object (9 properties)
 │   ├── AdministratorType: *Enum (1 value)
 │   │   └── "ActiveDirectory"
@@ -47,7 +47,7 @@ FlexibleServersAdministrator: Resource
     └── Type: *string
 
 FlexibleServersConfiguration: Resource
-├── Owner: FlexibleServer
+├── Owner: dbformysql/v20220101.FlexibleServer
 ├── Spec: Object (6 properties)
 │   ├── AzureName: Validated<string> (1 rule)
 │   │   └── Rule 0: Pattern: "^[a-zA-Z0-9_.-]+$"

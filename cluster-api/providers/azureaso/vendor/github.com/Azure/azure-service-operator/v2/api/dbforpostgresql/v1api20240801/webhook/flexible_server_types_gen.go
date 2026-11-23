@@ -116,7 +116,13 @@ func (server *FlexibleServer) ValidateUpdate(ctx context.Context, oldResource ru
 
 // createValidations validates the creation of the resource
 func (server *FlexibleServer) createValidations() []func(ctx context.Context, obj *v20240801.FlexibleServer) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240801.FlexibleServer) (admission.Warnings, error){server.validateResourceReferences, server.validateOwnerReference, server.validateSecretDestinations, server.validateConfigMapDestinations, server.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20240801.FlexibleServer) (admission.Warnings, error){
+		server.validateResourceReferences,
+		server.validateOwnerReference,
+		server.validateSecretDestinations,
+		server.validateConfigMapDestinations,
+		server.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

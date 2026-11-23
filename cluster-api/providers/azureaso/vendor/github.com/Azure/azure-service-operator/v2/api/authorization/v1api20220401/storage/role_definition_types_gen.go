@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=authorization.azure.com,resources={roledefinitions/status,roledefinitions/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,authorization}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"

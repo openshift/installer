@@ -105,7 +105,7 @@ func Authenticate(ctx context.Context, client *gophercloud.ProviderClient, optio
 		return v3auth(ctx, client, endpoint, &options, gophercloud.EndpointOpts{})
 	default:
 		// The switch statement must be out of date from the versions list.
-		return fmt.Errorf("Unrecognized identity version: %s", chosen.ID)
+		return fmt.Errorf("unrecognized identity version: %s", chosen.ID)
 	}
 }
 
@@ -351,7 +351,7 @@ func initClientOpts(client *gophercloud.ProviderClient, eo gophercloud.EndpointO
 
 	eo.ApplyDefaults(clientType)
 	if eo.Version != 0 && eo.Version != version {
-		return sc, errors.New("Conflict between requested service major version and manually set version")
+		return sc, errors.New("conflict between requested service major version and manually set version")
 	}
 	eo.Version = version
 
@@ -458,9 +458,17 @@ func NewLoadBalancerV2(client *gophercloud.ProviderClient, eo gophercloud.Endpoi
 	sc, err := initClientOpts(client, eo, "load-balancer", 2)
 
 	// Fixes edge case having an OpenStack lb endpoint with trailing version number.
-	endpoint := strings.Replace(sc.Endpoint, "v2.0/", "", -1)
+	endpoint := strings.ReplaceAll(sc.Endpoint, "v2.0/", "")
 
 	sc.ResourceBase = endpoint + "v2.0/"
+	return sc, err
+}
+
+// NewMetricV1 creates a ServiceClient that may be used with the v1 metric-storage
+// service (Aetos).
+func NewMetricV1(client *gophercloud.ProviderClient, eo gophercloud.EndpointOpts) (*gophercloud.ServiceClient, error) {
+	sc, err := initClientOpts(client, eo, "metric-storage", 1)
+	sc.ResourceBase = sc.Endpoint + "api/v1/"
 	return sc, err
 }
 
@@ -499,4 +507,16 @@ func NewWorkflowV2(client *gophercloud.ProviderClient, eo gophercloud.EndpointOp
 // NewPlacementV1 creates a ServiceClient that may be used with the placement package.
 func NewPlacementV1(client *gophercloud.ProviderClient, eo gophercloud.EndpointOpts) (*gophercloud.ServiceClient, error) {
 	return initClientOpts(client, eo, "placement", 1)
+}
+
+// NewReservationV1 creates a ServiceClient that may be used with the reservation package.
+func NewReservationV1(client *gophercloud.ProviderClient, eo gophercloud.EndpointOpts) (*gophercloud.ServiceClient, error) {
+	sc, err := initClientOpts(client, eo, "reservation", 1)
+	if err != nil {
+		return sc, err
+	}
+	if !strings.HasSuffix(strings.TrimSuffix(sc.Endpoint, "/"), "v1") {
+		sc.ResourceBase = sc.Endpoint + "v1/"
+	}
+	return sc, nil
 }

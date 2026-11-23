@@ -116,7 +116,12 @@ func (database *SqlDatabase) ValidateUpdate(ctx context.Context, oldResource run
 
 // createValidations validates the creation of the resource
 func (database *SqlDatabase) createValidations() []func(ctx context.Context, obj *v20240815.SqlDatabase) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20240815.SqlDatabase) (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20240815.SqlDatabase) (admission.Warnings, error){
+		database.validateResourceReferences,
+		database.validateOwnerReference,
+		database.validateSecretDestinations,
+		database.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

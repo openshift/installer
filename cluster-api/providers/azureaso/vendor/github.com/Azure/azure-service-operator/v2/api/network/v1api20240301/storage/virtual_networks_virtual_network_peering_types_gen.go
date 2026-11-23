@@ -4,6 +4,9 @@
 package storage
 
 import (
+	"fmt"
+	v20240601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +15,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=virtualnetworksvirtualnetworkpeerings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={virtualnetworksvirtualnetworkpeerings/status,virtualnetworksvirtualnetworkpeerings/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.VirtualNetworksVirtualNetworkPeering
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeering struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +46,28 @@ func (peering *VirtualNetworksVirtualNetworkPeering) GetConditions() conditions.
 // SetConditions sets the conditions on the resource status
 func (peering *VirtualNetworksVirtualNetworkPeering) SetConditions(conditions conditions.Conditions) {
 	peering.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &VirtualNetworksVirtualNetworkPeering{}
+
+// ConvertFrom populates our VirtualNetworksVirtualNetworkPeering from the provided hub VirtualNetworksVirtualNetworkPeering
+func (peering *VirtualNetworksVirtualNetworkPeering) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*v20250301s.VirtualNetworksVirtualNetworkPeering)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	}
+
+	return peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering(source)
+}
+
+// ConvertTo populates the provided hub VirtualNetworksVirtualNetworkPeering from our VirtualNetworksVirtualNetworkPeering
+func (peering *VirtualNetworksVirtualNetworkPeering) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*v20250301s.VirtualNetworksVirtualNetworkPeering)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	}
+
+	return peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering(destination)
 }
 
 var _ configmaps.Exporter = &VirtualNetworksVirtualNetworkPeering{}
@@ -142,8 +165,75 @@ func (peering *VirtualNetworksVirtualNetworkPeering) SetStatus(status genruntime
 	return nil
 }
 
-// Hub marks that this VirtualNetworksVirtualNetworkPeering is the hub type for conversion
-func (peering *VirtualNetworksVirtualNetworkPeering) Hub() {}
+// AssignProperties_From_VirtualNetworksVirtualNetworkPeering populates our VirtualNetworksVirtualNetworkPeering from the provided source VirtualNetworksVirtualNetworkPeering
+func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_From_VirtualNetworksVirtualNetworkPeering(source *v20250301s.VirtualNetworksVirtualNetworkPeering) error {
+
+	// ObjectMeta
+	peering.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec VirtualNetworksVirtualNetworkPeering_Spec
+	err := spec.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
+	}
+	peering.Spec = spec
+
+	// Status
+	var status VirtualNetworksVirtualNetworkPeering_STATUS
+	err = status.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
+	}
+	peering.Status = status
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering); ok {
+		err := augmentedPeering.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworksVirtualNetworkPeering populates the provided destination VirtualNetworksVirtualNetworkPeering from our VirtualNetworksVirtualNetworkPeering
+func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_To_VirtualNetworksVirtualNetworkPeering(destination *v20250301s.VirtualNetworksVirtualNetworkPeering) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *peering.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec v20250301s.VirtualNetworksVirtualNetworkPeering_Spec
+	err := peering.Spec.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS
+	err = peering.Status.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering); ok {
+		err := augmentedPeering.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (peering *VirtualNetworksVirtualNetworkPeering) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +247,17 @@ func (peering *VirtualNetworksVirtualNetworkPeering) OriginalGVK() *schema.Group
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.VirtualNetworksVirtualNetworkPeering
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeeringList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VirtualNetworksVirtualNetworkPeering `json:"items"`
+}
+
+type augmentConversionForVirtualNetworksVirtualNetworkPeering interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworksVirtualNetworkPeering) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworksVirtualNetworkPeering) error
 }
 
 // Storage version of v1api20240301.VirtualNetworksVirtualNetworkPeering_Spec
@@ -203,20 +298,442 @@ var _ genruntime.ConvertibleSpec = &VirtualNetworksVirtualNetworkPeering_Spec{}
 
 // ConvertSpecFrom populates our VirtualNetworksVirtualNetworkPeering_Spec from the provided source
 func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == peering {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*v20250301s.VirtualNetworksVirtualNetworkPeering_Spec)
+	if ok {
+		// Populate our instance from source
+		return peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(src)
 	}
 
-	return source.ConvertSpecTo(peering)
+	// Convert to an intermediate form
+	src = &v20250301s.VirtualNetworksVirtualNetworkPeering_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our VirtualNetworksVirtualNetworkPeering_Spec
 func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == peering {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*v20250301s.VirtualNetworksVirtualNetworkPeering_Spec)
+	if ok {
+		// Populate destination from our instance
+		return peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(peering)
+	// Convert to an intermediate form
+	dst = &v20250301s.VirtualNetworksVirtualNetworkPeering_Spec{}
+	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec populates our VirtualNetworksVirtualNetworkPeering_Spec from the provided source VirtualNetworksVirtualNetworkPeering_Spec
+func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(source *v20250301s.VirtualNetworksVirtualNetworkPeering_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AllowForwardedTraffic
+	if source.AllowForwardedTraffic != nil {
+		allowForwardedTraffic := *source.AllowForwardedTraffic
+		peering.AllowForwardedTraffic = &allowForwardedTraffic
+	} else {
+		peering.AllowForwardedTraffic = nil
+	}
+
+	// AllowGatewayTransit
+	if source.AllowGatewayTransit != nil {
+		allowGatewayTransit := *source.AllowGatewayTransit
+		peering.AllowGatewayTransit = &allowGatewayTransit
+	} else {
+		peering.AllowGatewayTransit = nil
+	}
+
+	// AllowVirtualNetworkAccess
+	if source.AllowVirtualNetworkAccess != nil {
+		allowVirtualNetworkAccess := *source.AllowVirtualNetworkAccess
+		peering.AllowVirtualNetworkAccess = &allowVirtualNetworkAccess
+	} else {
+		peering.AllowVirtualNetworkAccess = nil
+	}
+
+	// AzureName
+	peering.AzureName = source.AzureName
+
+	// DoNotVerifyRemoteGateways
+	if source.DoNotVerifyRemoteGateways != nil {
+		doNotVerifyRemoteGateway := *source.DoNotVerifyRemoteGateways
+		peering.DoNotVerifyRemoteGateways = &doNotVerifyRemoteGateway
+	} else {
+		peering.DoNotVerifyRemoteGateways = nil
+	}
+
+	// EnableOnlyIPv6Peering
+	if source.EnableOnlyIPv6Peering != nil {
+		enableOnlyIPv6Peering := *source.EnableOnlyIPv6Peering
+		peering.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
+	} else {
+		peering.EnableOnlyIPv6Peering = nil
+	}
+
+	// LocalAddressSpace
+	if source.LocalAddressSpace != nil {
+		var localAddressSpace AddressSpace
+		err := localAddressSpace.AssignProperties_From_AddressSpace(source.LocalAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field LocalAddressSpace")
+		}
+		peering.LocalAddressSpace = &localAddressSpace
+	} else {
+		peering.LocalAddressSpace = nil
+	}
+
+	// LocalSubnetNames
+	peering.LocalSubnetNames = genruntime.CloneSliceOfString(source.LocalSubnetNames)
+
+	// LocalVirtualNetworkAddressSpace
+	if source.LocalVirtualNetworkAddressSpace != nil {
+		var localVirtualNetworkAddressSpace AddressSpace
+		err := localVirtualNetworkAddressSpace.AssignProperties_From_AddressSpace(source.LocalVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field LocalVirtualNetworkAddressSpace")
+		}
+		peering.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
+	} else {
+		peering.LocalVirtualNetworkAddressSpace = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec VirtualNetworksVirtualNetworkPeeringOperatorSpec
+		err := operatorSpec.AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
+		}
+		peering.OperatorSpec = &operatorSpec
+	} else {
+		peering.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	peering.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		peering.Owner = &owner
+	} else {
+		peering.Owner = nil
+	}
+
+	// PeerCompleteVnets
+	if source.PeerCompleteVnets != nil {
+		peerCompleteVnet := *source.PeerCompleteVnets
+		peering.PeerCompleteVnets = &peerCompleteVnet
+	} else {
+		peering.PeerCompleteVnets = nil
+	}
+
+	// PeeringState
+	peering.PeeringState = genruntime.ClonePointerToString(source.PeeringState)
+
+	// PeeringSyncLevel
+	peering.PeeringSyncLevel = genruntime.ClonePointerToString(source.PeeringSyncLevel)
+
+	// RemoteAddressSpace
+	if source.RemoteAddressSpace != nil {
+		var remoteAddressSpace AddressSpace
+		err := remoteAddressSpace.AssignProperties_From_AddressSpace(source.RemoteAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field RemoteAddressSpace")
+		}
+		peering.RemoteAddressSpace = &remoteAddressSpace
+	} else {
+		peering.RemoteAddressSpace = nil
+	}
+
+	// RemoteBgpCommunities
+	if source.RemoteBgpCommunities != nil {
+		var remoteBgpCommunity VirtualNetworkBgpCommunities
+		err := remoteBgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities(source.RemoteBgpCommunities)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
+		}
+		peering.RemoteBgpCommunities = &remoteBgpCommunity
+	} else {
+		peering.RemoteBgpCommunities = nil
+	}
+
+	// RemoteSubnetNames
+	peering.RemoteSubnetNames = genruntime.CloneSliceOfString(source.RemoteSubnetNames)
+
+	// RemoteVirtualNetwork
+	if source.RemoteVirtualNetwork != nil {
+		var subResourceStash v20240601s.SubResource
+		err := subResourceStash.AssignProperties_From_SubResource(source.RemoteVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
+		}
+		var remoteVirtualNetwork SubResource
+		err = remoteVirtualNetwork.AssignProperties_From_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
+		}
+		peering.RemoteVirtualNetwork = &remoteVirtualNetwork
+	} else {
+		peering.RemoteVirtualNetwork = nil
+	}
+
+	// RemoteVirtualNetworkAddressSpace
+	if source.RemoteVirtualNetworkAddressSpace != nil {
+		var remoteVirtualNetworkAddressSpace AddressSpace
+		err := remoteVirtualNetworkAddressSpace.AssignProperties_From_AddressSpace(source.RemoteVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field RemoteVirtualNetworkAddressSpace")
+		}
+		peering.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
+	} else {
+		peering.RemoteVirtualNetworkAddressSpace = nil
+	}
+
+	// UseRemoteGateways
+	if source.UseRemoteGateways != nil {
+		useRemoteGateway := *source.UseRemoteGateways
+		peering.UseRemoteGateways = &useRemoteGateway
+	} else {
+		peering.UseRemoteGateways = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		peering.PropertyBag = propertyBag
+	} else {
+		peering.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec); ok {
+		err := augmentedPeering.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec populates the provided destination VirtualNetworksVirtualNetworkPeering_Spec from our VirtualNetworksVirtualNetworkPeering_Spec
+func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(destination *v20250301s.VirtualNetworksVirtualNetworkPeering_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(peering.PropertyBag)
+
+	// AllowForwardedTraffic
+	if peering.AllowForwardedTraffic != nil {
+		allowForwardedTraffic := *peering.AllowForwardedTraffic
+		destination.AllowForwardedTraffic = &allowForwardedTraffic
+	} else {
+		destination.AllowForwardedTraffic = nil
+	}
+
+	// AllowGatewayTransit
+	if peering.AllowGatewayTransit != nil {
+		allowGatewayTransit := *peering.AllowGatewayTransit
+		destination.AllowGatewayTransit = &allowGatewayTransit
+	} else {
+		destination.AllowGatewayTransit = nil
+	}
+
+	// AllowVirtualNetworkAccess
+	if peering.AllowVirtualNetworkAccess != nil {
+		allowVirtualNetworkAccess := *peering.AllowVirtualNetworkAccess
+		destination.AllowVirtualNetworkAccess = &allowVirtualNetworkAccess
+	} else {
+		destination.AllowVirtualNetworkAccess = nil
+	}
+
+	// AzureName
+	destination.AzureName = peering.AzureName
+
+	// DoNotVerifyRemoteGateways
+	if peering.DoNotVerifyRemoteGateways != nil {
+		doNotVerifyRemoteGateway := *peering.DoNotVerifyRemoteGateways
+		destination.DoNotVerifyRemoteGateways = &doNotVerifyRemoteGateway
+	} else {
+		destination.DoNotVerifyRemoteGateways = nil
+	}
+
+	// EnableOnlyIPv6Peering
+	if peering.EnableOnlyIPv6Peering != nil {
+		enableOnlyIPv6Peering := *peering.EnableOnlyIPv6Peering
+		destination.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
+	} else {
+		destination.EnableOnlyIPv6Peering = nil
+	}
+
+	// LocalAddressSpace
+	if peering.LocalAddressSpace != nil {
+		var localAddressSpace v20250301s.AddressSpace
+		err := peering.LocalAddressSpace.AssignProperties_To_AddressSpace(&localAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field LocalAddressSpace")
+		}
+		destination.LocalAddressSpace = &localAddressSpace
+	} else {
+		destination.LocalAddressSpace = nil
+	}
+
+	// LocalSubnetNames
+	destination.LocalSubnetNames = genruntime.CloneSliceOfString(peering.LocalSubnetNames)
+
+	// LocalVirtualNetworkAddressSpace
+	if peering.LocalVirtualNetworkAddressSpace != nil {
+		var localVirtualNetworkAddressSpace v20250301s.AddressSpace
+		err := peering.LocalVirtualNetworkAddressSpace.AssignProperties_To_AddressSpace(&localVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field LocalVirtualNetworkAddressSpace")
+		}
+		destination.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
+	} else {
+		destination.LocalVirtualNetworkAddressSpace = nil
+	}
+
+	// OperatorSpec
+	if peering.OperatorSpec != nil {
+		var operatorSpec v20250301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec
+		err := peering.OperatorSpec.AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = peering.OriginalVersion
+
+	// Owner
+	if peering.Owner != nil {
+		owner := peering.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PeerCompleteVnets
+	if peering.PeerCompleteVnets != nil {
+		peerCompleteVnet := *peering.PeerCompleteVnets
+		destination.PeerCompleteVnets = &peerCompleteVnet
+	} else {
+		destination.PeerCompleteVnets = nil
+	}
+
+	// PeeringState
+	destination.PeeringState = genruntime.ClonePointerToString(peering.PeeringState)
+
+	// PeeringSyncLevel
+	destination.PeeringSyncLevel = genruntime.ClonePointerToString(peering.PeeringSyncLevel)
+
+	// RemoteAddressSpace
+	if peering.RemoteAddressSpace != nil {
+		var remoteAddressSpace v20250301s.AddressSpace
+		err := peering.RemoteAddressSpace.AssignProperties_To_AddressSpace(&remoteAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field RemoteAddressSpace")
+		}
+		destination.RemoteAddressSpace = &remoteAddressSpace
+	} else {
+		destination.RemoteAddressSpace = nil
+	}
+
+	// RemoteBgpCommunities
+	if peering.RemoteBgpCommunities != nil {
+		var remoteBgpCommunity v20250301s.VirtualNetworkBgpCommunities
+		err := peering.RemoteBgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities(&remoteBgpCommunity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
+		}
+		destination.RemoteBgpCommunities = &remoteBgpCommunity
+	} else {
+		destination.RemoteBgpCommunities = nil
+	}
+
+	// RemoteSubnetNames
+	destination.RemoteSubnetNames = genruntime.CloneSliceOfString(peering.RemoteSubnetNames)
+
+	// RemoteVirtualNetwork
+	if peering.RemoteVirtualNetwork != nil {
+		var subResourceStash v20240601s.SubResource
+		err := peering.RemoteVirtualNetwork.AssignProperties_To_SubResource(&subResourceStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
+		}
+		var remoteVirtualNetwork v20250301s.SubResource
+		err = subResourceStash.AssignProperties_To_SubResource(&remoteVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
+		}
+		destination.RemoteVirtualNetwork = &remoteVirtualNetwork
+	} else {
+		destination.RemoteVirtualNetwork = nil
+	}
+
+	// RemoteVirtualNetworkAddressSpace
+	if peering.RemoteVirtualNetworkAddressSpace != nil {
+		var remoteVirtualNetworkAddressSpace v20250301s.AddressSpace
+		err := peering.RemoteVirtualNetworkAddressSpace.AssignProperties_To_AddressSpace(&remoteVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field RemoteVirtualNetworkAddressSpace")
+		}
+		destination.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
+	} else {
+		destination.RemoteVirtualNetworkAddressSpace = nil
+	}
+
+	// UseRemoteGateways
+	if peering.UseRemoteGateways != nil {
+		useRemoteGateway := *peering.UseRemoteGateways
+		destination.UseRemoteGateways = &useRemoteGateway
+	} else {
+		destination.UseRemoteGateways = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec); ok {
+		err := augmentedPeering.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.VirtualNetworksVirtualNetworkPeering_STATUS
@@ -253,20 +770,466 @@ var _ genruntime.ConvertibleStatus = &VirtualNetworksVirtualNetworkPeering_STATU
 
 // ConvertStatusFrom populates our VirtualNetworksVirtualNetworkPeering_STATUS from the provided source
 func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == peering {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS)
+	if ok {
+		// Populate our instance from source
+		return peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(peering)
+	// Convert to an intermediate form
+	src = &v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our VirtualNetworksVirtualNetworkPeering_STATUS
 func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == peering {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(peering)
+	// Convert to an intermediate form
+	dst = &v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS{}
+	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS populates our VirtualNetworksVirtualNetworkPeering_STATUS from the provided source VirtualNetworksVirtualNetworkPeering_STATUS
+func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(source *v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AllowForwardedTraffic
+	if source.AllowForwardedTraffic != nil {
+		allowForwardedTraffic := *source.AllowForwardedTraffic
+		peering.AllowForwardedTraffic = &allowForwardedTraffic
+	} else {
+		peering.AllowForwardedTraffic = nil
+	}
+
+	// AllowGatewayTransit
+	if source.AllowGatewayTransit != nil {
+		allowGatewayTransit := *source.AllowGatewayTransit
+		peering.AllowGatewayTransit = &allowGatewayTransit
+	} else {
+		peering.AllowGatewayTransit = nil
+	}
+
+	// AllowVirtualNetworkAccess
+	if source.AllowVirtualNetworkAccess != nil {
+		allowVirtualNetworkAccess := *source.AllowVirtualNetworkAccess
+		peering.AllowVirtualNetworkAccess = &allowVirtualNetworkAccess
+	} else {
+		peering.AllowVirtualNetworkAccess = nil
+	}
+
+	// Conditions
+	peering.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DoNotVerifyRemoteGateways
+	if source.DoNotVerifyRemoteGateways != nil {
+		doNotVerifyRemoteGateway := *source.DoNotVerifyRemoteGateways
+		peering.DoNotVerifyRemoteGateways = &doNotVerifyRemoteGateway
+	} else {
+		peering.DoNotVerifyRemoteGateways = nil
+	}
+
+	// EnableOnlyIPv6Peering
+	if source.EnableOnlyIPv6Peering != nil {
+		enableOnlyIPv6Peering := *source.EnableOnlyIPv6Peering
+		peering.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
+	} else {
+		peering.EnableOnlyIPv6Peering = nil
+	}
+
+	// Etag
+	peering.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	peering.Id = genruntime.ClonePointerToString(source.Id)
+
+	// LocalAddressSpace
+	if source.LocalAddressSpace != nil {
+		var localAddressSpace AddressSpace_STATUS
+		err := localAddressSpace.AssignProperties_From_AddressSpace_STATUS(source.LocalAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field LocalAddressSpace")
+		}
+		peering.LocalAddressSpace = &localAddressSpace
+	} else {
+		peering.LocalAddressSpace = nil
+	}
+
+	// LocalSubnetNames
+	peering.LocalSubnetNames = genruntime.CloneSliceOfString(source.LocalSubnetNames)
+
+	// LocalVirtualNetworkAddressSpace
+	if source.LocalVirtualNetworkAddressSpace != nil {
+		var localVirtualNetworkAddressSpace AddressSpace_STATUS
+		err := localVirtualNetworkAddressSpace.AssignProperties_From_AddressSpace_STATUS(source.LocalVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field LocalVirtualNetworkAddressSpace")
+		}
+		peering.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
+	} else {
+		peering.LocalVirtualNetworkAddressSpace = nil
+	}
+
+	// Name
+	peering.Name = genruntime.ClonePointerToString(source.Name)
+
+	// PeerCompleteVnets
+	if source.PeerCompleteVnets != nil {
+		peerCompleteVnet := *source.PeerCompleteVnets
+		peering.PeerCompleteVnets = &peerCompleteVnet
+	} else {
+		peering.PeerCompleteVnets = nil
+	}
+
+	// PeeringState
+	peering.PeeringState = genruntime.ClonePointerToString(source.PeeringState)
+
+	// PeeringSyncLevel
+	peering.PeeringSyncLevel = genruntime.ClonePointerToString(source.PeeringSyncLevel)
+
+	// ProvisioningState
+	peering.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// RemoteAddressSpace
+	if source.RemoteAddressSpace != nil {
+		var remoteAddressSpace AddressSpace_STATUS
+		err := remoteAddressSpace.AssignProperties_From_AddressSpace_STATUS(source.RemoteAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field RemoteAddressSpace")
+		}
+		peering.RemoteAddressSpace = &remoteAddressSpace
+	} else {
+		peering.RemoteAddressSpace = nil
+	}
+
+	// RemoteBgpCommunities
+	if source.RemoteBgpCommunities != nil {
+		var remoteBgpCommunity VirtualNetworkBgpCommunities_STATUS
+		err := remoteBgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities_STATUS(source.RemoteBgpCommunities)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
+		}
+		peering.RemoteBgpCommunities = &remoteBgpCommunity
+	} else {
+		peering.RemoteBgpCommunities = nil
+	}
+
+	// RemoteSubnetNames
+	peering.RemoteSubnetNames = genruntime.CloneSliceOfString(source.RemoteSubnetNames)
+
+	// RemoteVirtualNetwork
+	if source.RemoteVirtualNetwork != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.RemoteVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
+		}
+		var remoteVirtualNetwork SubResource_STATUS
+		err = remoteVirtualNetwork.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
+		}
+		peering.RemoteVirtualNetwork = &remoteVirtualNetwork
+	} else {
+		peering.RemoteVirtualNetwork = nil
+	}
+
+	// RemoteVirtualNetworkAddressSpace
+	if source.RemoteVirtualNetworkAddressSpace != nil {
+		var remoteVirtualNetworkAddressSpace AddressSpace_STATUS
+		err := remoteVirtualNetworkAddressSpace.AssignProperties_From_AddressSpace_STATUS(source.RemoteVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field RemoteVirtualNetworkAddressSpace")
+		}
+		peering.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
+	} else {
+		peering.RemoteVirtualNetworkAddressSpace = nil
+	}
+
+	// RemoteVirtualNetworkEncryption
+	if source.RemoteVirtualNetworkEncryption != nil {
+		var remoteVirtualNetworkEncryption VirtualNetworkEncryption_STATUS
+		err := remoteVirtualNetworkEncryption.AssignProperties_From_VirtualNetworkEncryption_STATUS(source.RemoteVirtualNetworkEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkEncryption_STATUS() to populate field RemoteVirtualNetworkEncryption")
+		}
+		peering.RemoteVirtualNetworkEncryption = &remoteVirtualNetworkEncryption
+	} else {
+		peering.RemoteVirtualNetworkEncryption = nil
+	}
+
+	// ResourceGuid
+	peering.ResourceGuid = genruntime.ClonePointerToString(source.ResourceGuid)
+
+	// Type
+	peering.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UseRemoteGateways
+	if source.UseRemoteGateways != nil {
+		useRemoteGateway := *source.UseRemoteGateways
+		peering.UseRemoteGateways = &useRemoteGateway
+	} else {
+		peering.UseRemoteGateways = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		peering.PropertyBag = propertyBag
+	} else {
+		peering.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS); ok {
+		err := augmentedPeering.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS populates the provided destination VirtualNetworksVirtualNetworkPeering_STATUS from our VirtualNetworksVirtualNetworkPeering_STATUS
+func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(destination *v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(peering.PropertyBag)
+
+	// AllowForwardedTraffic
+	if peering.AllowForwardedTraffic != nil {
+		allowForwardedTraffic := *peering.AllowForwardedTraffic
+		destination.AllowForwardedTraffic = &allowForwardedTraffic
+	} else {
+		destination.AllowForwardedTraffic = nil
+	}
+
+	// AllowGatewayTransit
+	if peering.AllowGatewayTransit != nil {
+		allowGatewayTransit := *peering.AllowGatewayTransit
+		destination.AllowGatewayTransit = &allowGatewayTransit
+	} else {
+		destination.AllowGatewayTransit = nil
+	}
+
+	// AllowVirtualNetworkAccess
+	if peering.AllowVirtualNetworkAccess != nil {
+		allowVirtualNetworkAccess := *peering.AllowVirtualNetworkAccess
+		destination.AllowVirtualNetworkAccess = &allowVirtualNetworkAccess
+	} else {
+		destination.AllowVirtualNetworkAccess = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(peering.Conditions)
+
+	// DoNotVerifyRemoteGateways
+	if peering.DoNotVerifyRemoteGateways != nil {
+		doNotVerifyRemoteGateway := *peering.DoNotVerifyRemoteGateways
+		destination.DoNotVerifyRemoteGateways = &doNotVerifyRemoteGateway
+	} else {
+		destination.DoNotVerifyRemoteGateways = nil
+	}
+
+	// EnableOnlyIPv6Peering
+	if peering.EnableOnlyIPv6Peering != nil {
+		enableOnlyIPv6Peering := *peering.EnableOnlyIPv6Peering
+		destination.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
+	} else {
+		destination.EnableOnlyIPv6Peering = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(peering.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(peering.Id)
+
+	// LocalAddressSpace
+	if peering.LocalAddressSpace != nil {
+		var localAddressSpace v20250301s.AddressSpace_STATUS
+		err := peering.LocalAddressSpace.AssignProperties_To_AddressSpace_STATUS(&localAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field LocalAddressSpace")
+		}
+		destination.LocalAddressSpace = &localAddressSpace
+	} else {
+		destination.LocalAddressSpace = nil
+	}
+
+	// LocalSubnetNames
+	destination.LocalSubnetNames = genruntime.CloneSliceOfString(peering.LocalSubnetNames)
+
+	// LocalVirtualNetworkAddressSpace
+	if peering.LocalVirtualNetworkAddressSpace != nil {
+		var localVirtualNetworkAddressSpace v20250301s.AddressSpace_STATUS
+		err := peering.LocalVirtualNetworkAddressSpace.AssignProperties_To_AddressSpace_STATUS(&localVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field LocalVirtualNetworkAddressSpace")
+		}
+		destination.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
+	} else {
+		destination.LocalVirtualNetworkAddressSpace = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(peering.Name)
+
+	// PeerCompleteVnets
+	if peering.PeerCompleteVnets != nil {
+		peerCompleteVnet := *peering.PeerCompleteVnets
+		destination.PeerCompleteVnets = &peerCompleteVnet
+	} else {
+		destination.PeerCompleteVnets = nil
+	}
+
+	// PeeringState
+	destination.PeeringState = genruntime.ClonePointerToString(peering.PeeringState)
+
+	// PeeringSyncLevel
+	destination.PeeringSyncLevel = genruntime.ClonePointerToString(peering.PeeringSyncLevel)
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(peering.ProvisioningState)
+
+	// RemoteAddressSpace
+	if peering.RemoteAddressSpace != nil {
+		var remoteAddressSpace v20250301s.AddressSpace_STATUS
+		err := peering.RemoteAddressSpace.AssignProperties_To_AddressSpace_STATUS(&remoteAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field RemoteAddressSpace")
+		}
+		destination.RemoteAddressSpace = &remoteAddressSpace
+	} else {
+		destination.RemoteAddressSpace = nil
+	}
+
+	// RemoteBgpCommunities
+	if peering.RemoteBgpCommunities != nil {
+		var remoteBgpCommunity v20250301s.VirtualNetworkBgpCommunities_STATUS
+		err := peering.RemoteBgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities_STATUS(&remoteBgpCommunity)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
+		}
+		destination.RemoteBgpCommunities = &remoteBgpCommunity
+	} else {
+		destination.RemoteBgpCommunities = nil
+	}
+
+	// RemoteSubnetNames
+	destination.RemoteSubnetNames = genruntime.CloneSliceOfString(peering.RemoteSubnetNames)
+
+	// RemoteVirtualNetwork
+	if peering.RemoteVirtualNetwork != nil {
+		var subResourceSTATUSStash v20240601s.SubResource_STATUS
+		err := peering.RemoteVirtualNetwork.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
+		}
+		var remoteVirtualNetwork v20250301s.SubResource_STATUS
+		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&remoteVirtualNetwork)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
+		}
+		destination.RemoteVirtualNetwork = &remoteVirtualNetwork
+	} else {
+		destination.RemoteVirtualNetwork = nil
+	}
+
+	// RemoteVirtualNetworkAddressSpace
+	if peering.RemoteVirtualNetworkAddressSpace != nil {
+		var remoteVirtualNetworkAddressSpace v20250301s.AddressSpace_STATUS
+		err := peering.RemoteVirtualNetworkAddressSpace.AssignProperties_To_AddressSpace_STATUS(&remoteVirtualNetworkAddressSpace)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field RemoteVirtualNetworkAddressSpace")
+		}
+		destination.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
+	} else {
+		destination.RemoteVirtualNetworkAddressSpace = nil
+	}
+
+	// RemoteVirtualNetworkEncryption
+	if peering.RemoteVirtualNetworkEncryption != nil {
+		var remoteVirtualNetworkEncryption v20250301s.VirtualNetworkEncryption_STATUS
+		err := peering.RemoteVirtualNetworkEncryption.AssignProperties_To_VirtualNetworkEncryption_STATUS(&remoteVirtualNetworkEncryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkEncryption_STATUS() to populate field RemoteVirtualNetworkEncryption")
+		}
+		destination.RemoteVirtualNetworkEncryption = &remoteVirtualNetworkEncryption
+	} else {
+		destination.RemoteVirtualNetworkEncryption = nil
+	}
+
+	// ResourceGuid
+	destination.ResourceGuid = genruntime.ClonePointerToString(peering.ResourceGuid)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(peering.Type)
+
+	// UseRemoteGateways
+	if peering.UseRemoteGateways != nil {
+		useRemoteGateway := *peering.UseRemoteGateways
+		destination.UseRemoteGateways = &useRemoteGateway
+	} else {
+		destination.UseRemoteGateways = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS interface (if implemented) to customize the conversion
+	var peeringAsAny any = peering
+	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS); ok {
+		err := augmentedPeering.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworksVirtualNetworkPeering_Spec) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworksVirtualNetworkPeering_Spec) error
+}
+
+type augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworksVirtualNetworkPeering_STATUS) error
 }
 
 // Storage version of v1api20240301.VirtualNetworksVirtualNetworkPeeringOperatorSpec
@@ -275,6 +1238,125 @@ type VirtualNetworksVirtualNetworkPeeringOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec populates our VirtualNetworksVirtualNetworkPeeringOperatorSpec from the provided source VirtualNetworksVirtualNetworkPeeringOperatorSpec
+func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec(source *v20250301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec populates the provided destination VirtualNetworksVirtualNetworkPeeringOperatorSpec from our VirtualNetworksVirtualNetworkPeeringOperatorSpec
+func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec(destination *v20250301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec interface {
+	AssignPropertiesFrom(src *v20250301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec) error
+	AssignPropertiesTo(dst *v20250301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec) error
 }
 
 func init() {

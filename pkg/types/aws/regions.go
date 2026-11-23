@@ -36,6 +36,7 @@ var (
 		IlCentral1RegionID:   "Israel (Tel Aviv)",
 		MxCentral1RegionID:   "Mexico (Central)",
 		MeSouth1RegionID:     "Middle East (Bahrain)",
+		MeWest1RegionID:      "Middle East (Saudi Arabia)",
 		MeCentral1RegionID:   "Middle East (UAE)",
 		SaEast1RegionID:      "South America (São Paulo)",
 		UsEast1RegionID:      "US East (N. Virginia)",
@@ -119,8 +120,9 @@ const (
 	EuWest2RegionID      = "eu-west-2"      // Europe (London).
 	EuWest3RegionID      = "eu-west-3"      // Europe (Paris).
 	IlCentral1RegionID   = "il-central-1"   // Israel (Tel Aviv).
-	MeCentral1RegionID   = "me-central-1"   // Middle East (UAE).
 	MeSouth1RegionID     = "me-south-1"     // Middle East (Bahrain).
+	MeWest1RegionID      = "me-west-1"      // Middle East (Saudi Arabia).
+	MeCentral1RegionID   = "me-central-1"   // Middle East (UAE).
 	MxCentral1RegionID   = "mx-central-1"   // Mexico (Central).
 	SaEast1RegionID      = "sa-east-1"      // South America (Sao Paulo).
 	UsEast1RegionID      = "us-east-1"      // US East (N. Virginia).

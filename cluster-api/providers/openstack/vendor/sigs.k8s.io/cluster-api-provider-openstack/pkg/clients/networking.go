@@ -386,7 +386,7 @@ func (c networkClient) ListNetwork(opts networks.ListOptsBuilder) ([]networks.Ne
 func (c networkClient) CreateNetwork(opts networks.CreateOptsBuilder) (*networks.Network, error) {
 	mc := metrics.NewMetricPrometheusContext("network", "create")
 	net, err := networks.Create(context.TODO(), c.serviceClient, opts).Extract()
-	if (mc.ObserveRequest(err)) != nil {
+	if mc.ObserveRequest(err) != nil {
 		return nil, err
 	}
 	return net, nil

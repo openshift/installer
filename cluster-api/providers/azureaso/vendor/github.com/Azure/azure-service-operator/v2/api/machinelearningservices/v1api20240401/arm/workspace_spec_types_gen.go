@@ -47,10 +47,14 @@ func (workspace *Workspace_Spec) GetType() string {
 // The properties of a machine learning workspace.
 type WorkspaceProperties struct {
 	// AllowPublicAccessWhenBehindVnet: The flag to indicate whether to allow public access when behind VNet.
-	AllowPublicAccessWhenBehindVnet *bool    `json:"allowPublicAccessWhenBehindVnet,omitempty"`
-	ApplicationInsights             *string  `json:"applicationInsights,omitempty"`
-	AssociatedWorkspaces            []string `json:"associatedWorkspaces,omitempty"`
-	ContainerRegistry               *string  `json:"containerRegistry,omitempty"`
+	AllowPublicAccessWhenBehindVnet *bool `json:"allowPublicAccessWhenBehindVnet,omitempty"`
+
+	// ApplicationInsights: ARM id of the application insights associated with this workspace.
+	ApplicationInsights  *string  `json:"applicationInsights,omitempty"`
+	AssociatedWorkspaces []string `json:"associatedWorkspaces,omitempty"`
+
+	// ContainerRegistry: ARM id of the container registry associated with this workspace.
+	ContainerRegistry *string `json:"containerRegistry,omitempty"`
 
 	// Description: The description of this workspace.
 	Description *string `json:"description,omitempty"`
@@ -74,11 +78,16 @@ type WorkspaceProperties struct {
 
 	// ImageBuildCompute: The compute name for image build
 	ImageBuildCompute *string `json:"imageBuildCompute,omitempty"`
-	KeyVault          *string `json:"keyVault,omitempty"`
+
+	// KeyVault: ARM id of the key vault associated with this workspace. This cannot be changed once the workspace has been
+	// created
+	KeyVault *string `json:"keyVault,omitempty"`
 
 	// ManagedNetwork: Managed Network settings for a machine learning workspace.
-	ManagedNetwork              *ManagedNetworkSettings `json:"managedNetwork,omitempty"`
-	PrimaryUserAssignedIdentity *string                 `json:"primaryUserAssignedIdentity,omitempty"`
+	ManagedNetwork *ManagedNetworkSettings `json:"managedNetwork,omitempty"`
+
+	// PrimaryUserAssignedIdentity: The user assigned identity resource id that represents the workspace identity.
+	PrimaryUserAssignedIdentity *string `json:"primaryUserAssignedIdentity,omitempty"`
 
 	// PublicNetworkAccess: Whether requests from Public Network are allowed.
 	PublicNetworkAccess *WorkspaceProperties_PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
@@ -91,7 +100,10 @@ type WorkspaceProperties struct {
 
 	// SharedPrivateLinkResources: The list of shared private link resources in this workspace.
 	SharedPrivateLinkResources []SharedPrivateLinkResource `json:"sharedPrivateLinkResources,omitempty"`
-	StorageAccount             *string                     `json:"storageAccount,omitempty"`
+
+	// StorageAccount: ARM id of the storage account associated with this workspace. This cannot be changed once the workspace
+	// has been created
+	StorageAccount *string `json:"storageAccount,omitempty"`
 
 	// V1LegacyMode: Enabling v1_legacy_mode may prevent you from using features provided by the v2 API.
 	V1LegacyMode *bool `json:"v1LegacyMode,omitempty"`
@@ -127,6 +139,8 @@ type ManagedNetworkSettings struct {
 }
 
 type ServerlessComputeSettings struct {
+	// ServerlessComputeCustomSubnet: The resource ID of an existing virtual network subnet in which serverless compute nodes
+	// should be deployed
 	ServerlessComputeCustomSubnet *string `json:"serverlessComputeCustomSubnet,omitempty"`
 
 	// ServerlessComputeNoPublicIP: The flag to signal if serverless compute nodes deployed in custom vNet would have no public
@@ -183,11 +197,14 @@ type EncryptionKeyVaultProperties struct {
 
 	// KeyIdentifier: Key vault uri to access the encryption key.
 	KeyIdentifier *string `json:"keyIdentifier,omitempty"`
+
+	// KeyVaultArmId: The ArmId of the keyVault where the customer owned encryption key is present.
 	KeyVaultArmId *string `json:"keyVaultArmId,omitempty"`
 }
 
 // Identity that will be used to access key vault for encryption at rest
 type IdentityForCmk struct {
+	// UserAssignedIdentity: The ArmId of the user assigned identity that will be used to access the customer managed key vault
 	UserAssignedIdentity *string `json:"userAssignedIdentity,omitempty"`
 }
 
@@ -272,7 +289,9 @@ func (rule *OutboundRule) UnmarshalJSON(data []byte) error {
 // Properties of a shared private link resource.
 type SharedPrivateLinkResourceProperty struct {
 	// GroupId: The private link resource group id.
-	GroupId               *string `json:"groupId,omitempty"`
+	GroupId *string `json:"groupId,omitempty"`
+
+	// PrivateLinkResourceId: The resource id that private link links to.
 	PrivateLinkResourceId *string `json:"privateLinkResourceId,omitempty"`
 
 	// RequestMessage: Request message.

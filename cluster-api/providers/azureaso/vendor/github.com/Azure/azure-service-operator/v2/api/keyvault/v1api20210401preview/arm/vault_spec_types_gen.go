@@ -244,6 +244,8 @@ var sku_Name_Values = map[string]Sku_Name{
 
 // A rule governing the accessibility of a vault from a specific virtual network.
 type VirtualNetworkRule struct {
+	// Id: Full resource id of a vnet subnet, such as
+	// '/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/subnet1'.
 	Id *string `json:"id,omitempty"`
 
 	// IgnoreMissingVnetServiceEndpoint: Property to specify whether NRP will ignore the check if parent subnet has

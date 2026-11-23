@@ -191,6 +191,28 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
+	featureSetErrs := ValidateFeatureSet(c)
+	if len(featureSetErrs) == 0 {
+		// The ClusterVersion CRD is published per feature set, not per feature
+		// gate, and the CustomNoUpgrade variant carries every feature gated
+		// validation whichever gates the cluster actually enables. Mirror that
+		// here, otherwise a CustomNoUpgrade install config passes validation and
+		// then fails when the bootstrap ClusterVersion is created.
+		customNoUpgrade := c.FeatureSet == configv1.CustomNoUpgrade
+		machineAPIRuleApplies := customNoUpgrade || c.Enabled(features.FeatureGateClusterAPIOperator)
+		clusterAPIRuleApplies := customNoUpgrade ||
+			(c.Enabled(features.FeatureGateClusterAPIOperator) && c.Enabled(features.FeatureGateCRDCompatibilityRequirementOperator))
+
+		enabledCaps := c.GetEnabledCapabilities()
+		if machineAPIRuleApplies && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the MachineAPI capability requires the ClusterAPI capability: add ClusterAPI to capabilities.additionalEnabledCapabilities"))
+		}
+		if clusterAPIRuleApplies && enabledCaps.Has(configv1.ClusterVersionCapabilityClusterAPI) && !enabledCaps.Has(configv1.ClusterVersionCapabilityCompatibilityRequirements) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the ClusterAPI capability requires the CompatibilityRequirements capability: add CompatibilityRequirements to capabilities.additionalEnabledCapabilities"))
+		}
+	}
 	if c.Capabilities != nil {
 		allErrs = append(allErrs, validateCapabilities(c.Capabilities, field.NewPath("capabilities"))...)
 	}
@@ -289,7 +311,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, pkivalidation.ValidatePKIConfig(c.PKI, field.NewPath("pki"))...)
 	}
 
-	allErrs = append(allErrs, ValidateFeatureSet(c)...)
+	allErrs = append(allErrs, featureSetErrs...)
 	allErrs = append(allErrs, validateOSImageStream(c)...)
 
 	return allErrs
@@ -461,12 +483,16 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 			fallthrough
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
+		case p.Azure != nil && p.Azure.IPFamily.DualStackEnabled():
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "single-stack IPv6 is not supported for this platform"))
 		}
 
 	case hasIPv4:
 		switch {
+		case p.Azure != nil && p.Azure.IPFamily.DualStackEnabled():
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		case p.AWS != nil:
 			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
 			if p.AWS.IPFamily.DualStackEnabled() {
@@ -484,7 +510,23 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		// we should have a validation error for no specified machineNetwork, serviceNetwork, or clusterNetwork
 	}
 
+	allErrs = append(allErrs, validateClusterNetworkIPFamily(p, hasIPv4, hasIPv6, presence[networkTypeCluster], addresses[networkTypeCluster])...)
+
 	return allErrs
+}
+
+// validateClusterNetworkIPFamily checks the clusterNetwork family on single-stack clusters.
+func validateClusterNetworkIPFamily(p *types.Platform, hasIPv4, hasIPv6 bool, cn ipAddressType, clusterNetworks []ipnet.IPNet) field.ErrorList {
+	// AWS and Azure dual-stack are reported by the caller.
+	awsDualStack := p.AWS != nil && p.AWS.IPFamily.DualStackEnabled()
+	azureDualStack := p.Azure != nil && p.Azure.IPFamily.DualStackEnabled()
+	if hasIPv4 == hasIPv6 || len(clusterNetworks) == 0 || awsDualStack || azureDualStack {
+		return nil
+	}
+	if cn.IPv4 != hasIPv4 || cn.IPv6 != hasIPv6 {
+		return field.ErrorList{field.Invalid(field.NewPath("networking", networkTypeCluster), strings.Join(ipnetworksToStrings(clusterNetworks), ", "), "clusterNetwork must use the same IP family as serviceNetwork")}
+	}
+	return nil
 }
 
 // validateNetworkEntryOrder ensures the order of CIDR entries is correct in networking configurations.
@@ -896,6 +938,7 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
+
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
 	allErrs = append(allErrs, validateFencingCredentialsAndPlatform(installConfig)...)
 	return allErrs
@@ -949,7 +992,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		}
 		poolNames[p.Name] = true
 		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
-			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heterogeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 
 		// We only allow multi arch on baremetal when the control plane is x86 and compute is arm64.
@@ -1475,6 +1518,7 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		powervc.Name:   {types.PassthroughCredentialsMode},
 		powervs.Name:   {types.ManualCredentialsMode},
 		nutanix.Name:   {types.ManualCredentialsMode},
+		vsphere.Name:   {types.ManualCredentialsMode},
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()
@@ -1705,11 +1749,40 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	})
 
 	fg := c.EnabledFeatureGates()
-	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+
+	// featureSetsForGate describes the feature sets through which the gate can
+	// be enabled. Gates enabled by TechPreviewNoUpgrade keep the standard
+	// message; gates that TechPreviewNoUpgrade does not enable (currently
+	// DevPreviewNoUpgrade-only gates) must name the feature sets that do
+	// enable them, or the instruction in the error would not work.
+	featureSetsForGate := func(gate configv1.FeatureGateName) string {
+		standardSets := "either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+		featureSets, err := types.FeatureSetsForProfile()
+		if err != nil {
+			return standardSets
+		}
+		var sets []string
+		for name, set := range featureSets {
+			if name == configv1.Default {
+				continue
+			}
+			for _, enabled := range set.Enabled {
+				if enabled.FeatureGateAttributes.Name == gate {
+					sets = append(sets, string(name))
+					break
+				}
+			}
+		}
+		if len(sets) == 0 || slices.Contains(sets, string(configv1.TechPreviewNoUpgrade)) {
+			return standardSets
+		}
+		sort.Strings(sets)
+		return fmt.Sprintf("either the %s or CustomNoUpgrade feature set", strings.Join(sets, " or "))
+	}
 
 	fgCheck := func(c featuregates.GatedInstallConfigFeature) {
 		if !fg.Enabled(c.FeatureGateName) && c.Condition {
-			errMsg := fmt.Sprintf(errMsgTemplate, c.FeatureGateName)
+			errMsg := fmt.Sprintf("this field is protected by the %s feature gate which must be enabled through %s", c.FeatureGateName, featureSetsForGate(c.FeatureGateName))
 			allErrs = append(allErrs, field.Forbidden(c.Field, errMsg))
 		}
 	}

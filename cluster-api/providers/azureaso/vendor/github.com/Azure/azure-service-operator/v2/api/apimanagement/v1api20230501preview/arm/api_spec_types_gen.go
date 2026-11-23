@@ -52,8 +52,10 @@ type ApiCreateOrUpdateProperties struct {
 	ApiVersionDescription *string `json:"apiVersionDescription,omitempty"`
 
 	// ApiVersionSet: Version set details
-	ApiVersionSet   *ApiVersionSetContractDetails `json:"apiVersionSet,omitempty"`
-	ApiVersionSetId *string                       `json:"apiVersionSetId,omitempty"`
+	ApiVersionSet *ApiVersionSetContractDetails `json:"apiVersionSet,omitempty"`
+
+	// ApiVersionSetId: A resource identifier for the related ApiVersionSet.
+	ApiVersionSetId *string `json:"apiVersionSetId,omitempty"`
 
 	// AuthenticationSettings: Collection of authentication settings included into this API.
 	AuthenticationSettings *AuthenticationSettingsContract `json:"authenticationSettings,omitempty"`
@@ -85,7 +87,9 @@ type ApiCreateOrUpdateProperties struct {
 	Protocols []ApiCreateOrUpdateProperties_Protocols `json:"protocols,omitempty"`
 
 	// ServiceUrl: Absolute URL of the backend service implementing this API. Cannot be more than 2000 characters long.
-	ServiceUrl  *string `json:"serviceUrl,omitempty"`
+	ServiceUrl *string `json:"serviceUrl,omitempty"`
+
+	// SourceApiId: API identifier of the source API.
 	SourceApiId *string `json:"sourceApiId,omitempty"`
 
 	// SubscriptionKeyParameterNames: Protocols over which API is made available.
@@ -260,7 +264,9 @@ type ApiLicenseInformation struct {
 type ApiVersionSetContractDetails struct {
 	// Description: Description of API Version Set.
 	Description *string `json:"description,omitempty"`
-	Id          *string `json:"id,omitempty"`
+
+	// Id: Identifier for existing API Version Set. Omit this value to create a new Version Set.
+	Id *string `json:"id,omitempty"`
 
 	// Name: The display Name of the API Version Set.
 	Name *string `json:"name,omitempty"`

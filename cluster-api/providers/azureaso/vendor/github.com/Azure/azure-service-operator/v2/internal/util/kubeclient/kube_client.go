@@ -46,6 +46,10 @@ func NewClient(client client.Client) Client {
 	}
 }
 
+func (c *clientHelper) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return c.client.Apply(ctx, obj, opts...)
+}
+
 func (c *clientHelper) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return c.client.Get(ctx, key, obj, opts...)
 }

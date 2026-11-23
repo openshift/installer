@@ -116,7 +116,12 @@ func (network *VirtualNetwork) ValidateUpdate(ctx context.Context, oldResource r
 
 // createValidations validates the creation of the resource
 func (network *VirtualNetwork) createValidations() []func(ctx context.Context, obj *v20201101.VirtualNetwork) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201101.VirtualNetwork) (admission.Warnings, error){network.validateResourceReferences, network.validateOwnerReference, network.validateSecretDestinations, network.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201101.VirtualNetwork) (admission.Warnings, error){
+		network.validateResourceReferences,
+		network.validateOwnerReference,
+		network.validateSecretDestinations,
+		network.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

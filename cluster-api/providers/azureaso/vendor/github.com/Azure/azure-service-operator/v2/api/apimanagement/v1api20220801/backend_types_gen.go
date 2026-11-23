@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimbackends.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimbackends.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}
 type Backend struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &Backend{}
 
 // ConvertFrom populates our Backend from the provided hub Backend
 func (backend *Backend) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Backend)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Backend but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Backend
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return backend.AssignProperties_From_Backend(source)
+	err = backend.AssignProperties_From_Backend(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to backend")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Backend from our Backend
 func (backend *Backend) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Backend)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Backend but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Backend
+	err := backend.AssignProperties_To_Backend(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from backend")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return backend.AssignProperties_To_Backend(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &Backend{}
@@ -86,17 +101,6 @@ func (backend *Backend) SecretDestinationExpressions() []*core.DestinationExpres
 		return nil
 	}
 	return backend.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Backend{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (backend *Backend) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Backend_STATUS); ok {
-		return backend.Spec.Initialize_From_Backend_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Backend_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &Backend{}
@@ -238,7 +242,7 @@ func (backend *Backend) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimbackends.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimbackends.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/backends/{backendId}
 type BackendList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -325,7 +329,7 @@ func (backend *Backend_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties = &arm.BackendContractProperties{}
 	}
 	if backend.Credentials != nil {
-		credentials_ARM, err := (*backend.Credentials).ConvertToARM(resolved)
+		credentials_ARM, err := backend.Credentials.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -337,7 +341,7 @@ func (backend *Backend_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.Description = &description
 	}
 	if backend.Properties != nil {
-		properties_ARM, err := (*backend.Properties).ConvertToARM(resolved)
+		properties_ARM, err := backend.Properties.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +355,7 @@ func (backend *Backend_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.Protocol = &protocol
 	}
 	if backend.Proxy != nil {
-		proxy_ARM, err := (*backend.Proxy).ConvertToARM(resolved)
+		proxy_ARM, err := backend.Proxy.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +375,7 @@ func (backend *Backend_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.Title = &title
 	}
 	if backend.Tls != nil {
-		tls_ARM, err := (*backend.Tls).ConvertToARM(resolved)
+		tls_ARM, err := backend.Tls.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -772,86 +776,6 @@ func (backend *Backend_Spec) AssignProperties_To_Backend_Spec(destination *stora
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Backend_STATUS populates our Backend_Spec from the provided source Backend_STATUS
-func (backend *Backend_Spec) Initialize_From_Backend_STATUS(source *Backend_STATUS) error {
-
-	// Credentials
-	if source.Credentials != nil {
-		var credential BackendCredentialsContract
-		err := credential.Initialize_From_BackendCredentialsContract_STATUS(source.Credentials)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendCredentialsContract_STATUS() to populate field Credentials")
-		}
-		backend.Credentials = &credential
-	} else {
-		backend.Credentials = nil
-	}
-
-	// Description
-	backend.Description = genruntime.ClonePointerToString(source.Description)
-
-	// Properties
-	if source.Properties != nil {
-		var property BackendProperties
-		err := property.Initialize_From_BackendProperties_STATUS(source.Properties)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendProperties_STATUS() to populate field Properties")
-		}
-		backend.Properties = &property
-	} else {
-		backend.Properties = nil
-	}
-
-	// Protocol
-	if source.Protocol != nil {
-		protocol := genruntime.ToEnum(string(*source.Protocol), backendContractProperties_Protocol_Values)
-		backend.Protocol = &protocol
-	} else {
-		backend.Protocol = nil
-	}
-
-	// Proxy
-	if source.Proxy != nil {
-		var proxy BackendProxyContract
-		err := proxy.Initialize_From_BackendProxyContract_STATUS(source.Proxy)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendProxyContract_STATUS() to populate field Proxy")
-		}
-		backend.Proxy = &proxy
-	} else {
-		backend.Proxy = nil
-	}
-
-	// ResourceReference
-	if source.ResourceId != nil {
-		resourceReference := genruntime.CreateResourceReferenceFromARMID(*source.ResourceId)
-		backend.ResourceReference = &resourceReference
-	} else {
-		backend.ResourceReference = nil
-	}
-
-	// Title
-	backend.Title = genruntime.ClonePointerToString(source.Title)
-
-	// Tls
-	if source.Tls != nil {
-		var tl BackendTlsProperties
-		err := tl.Initialize_From_BackendTlsProperties_STATUS(source.Tls)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendTlsProperties_STATUS() to populate field Tls")
-		}
-		backend.Tls = &tl
-	} else {
-		backend.Tls = nil
-	}
-
-	// Url
-	backend.Url = genruntime.ClonePointerToString(source.Url)
 
 	// No error
 	return nil
@@ -1341,7 +1265,7 @@ func (contract *BackendCredentialsContract) ConvertToARM(resolved genruntime.Con
 
 	// Set property "Authorization":
 	if contract.Authorization != nil {
-		authorization_ARM, err := (*contract.Authorization).ConvertToARM(resolved)
+		authorization_ARM, err := contract.Authorization.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1471,8 +1395,6 @@ func (contract *BackendCredentialsContract) AssignProperties_From_BackendCredent
 	if source.Header != nil {
 		headerMap := make(map[string][]string, len(source.Header))
 		for headerKey, headerValue := range source.Header {
-			// Shadow the loop variable to avoid aliasing
-			headerValue := headerValue
 			headerMap[headerKey] = genruntime.CloneSliceOfString(headerValue)
 		}
 		contract.Header = headerMap
@@ -1484,8 +1406,6 @@ func (contract *BackendCredentialsContract) AssignProperties_From_BackendCredent
 	if source.Query != nil {
 		queryMap := make(map[string][]string, len(source.Query))
 		for queryKey, queryValue := range source.Query {
-			// Shadow the loop variable to avoid aliasing
-			queryValue := queryValue
 			queryMap[queryKey] = genruntime.CloneSliceOfString(queryValue)
 		}
 		contract.Query = queryMap
@@ -1524,8 +1444,6 @@ func (contract *BackendCredentialsContract) AssignProperties_To_BackendCredentia
 	if contract.Header != nil {
 		headerMap := make(map[string][]string, len(contract.Header))
 		for headerKey, headerValue := range contract.Header {
-			// Shadow the loop variable to avoid aliasing
-			headerValue := headerValue
 			headerMap[headerKey] = genruntime.CloneSliceOfString(headerValue)
 		}
 		destination.Header = headerMap
@@ -1537,8 +1455,6 @@ func (contract *BackendCredentialsContract) AssignProperties_To_BackendCredentia
 	if contract.Query != nil {
 		queryMap := make(map[string][]string, len(contract.Query))
 		for queryKey, queryValue := range contract.Query {
-			// Shadow the loop variable to avoid aliasing
-			queryValue := queryValue
 			queryMap[queryKey] = genruntime.CloneSliceOfString(queryValue)
 		}
 		destination.Query = queryMap
@@ -1551,57 +1467,6 @@ func (contract *BackendCredentialsContract) AssignProperties_To_BackendCredentia
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BackendCredentialsContract_STATUS populates our BackendCredentialsContract from the provided source BackendCredentialsContract_STATUS
-func (contract *BackendCredentialsContract) Initialize_From_BackendCredentialsContract_STATUS(source *BackendCredentialsContract_STATUS) error {
-
-	// Authorization
-	if source.Authorization != nil {
-		var authorization BackendAuthorizationHeaderCredentials
-		err := authorization.Initialize_From_BackendAuthorizationHeaderCredentials_STATUS(source.Authorization)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendAuthorizationHeaderCredentials_STATUS() to populate field Authorization")
-		}
-		contract.Authorization = &authorization
-	} else {
-		contract.Authorization = nil
-	}
-
-	// Certificate
-	contract.Certificate = genruntime.CloneSliceOfString(source.Certificate)
-
-	// CertificateIds
-	contract.CertificateIds = genruntime.CloneSliceOfString(source.CertificateIds)
-
-	// Header
-	if source.Header != nil {
-		headerMap := make(map[string][]string, len(source.Header))
-		for headerKey, headerValue := range source.Header {
-			// Shadow the loop variable to avoid aliasing
-			headerValue := headerValue
-			headerMap[headerKey] = genruntime.CloneSliceOfString(headerValue)
-		}
-		contract.Header = headerMap
-	} else {
-		contract.Header = nil
-	}
-
-	// Query
-	if source.Query != nil {
-		queryMap := make(map[string][]string, len(source.Query))
-		for queryKey, queryValue := range source.Query {
-			// Shadow the loop variable to avoid aliasing
-			queryValue := queryValue
-			queryMap[queryKey] = genruntime.CloneSliceOfString(queryValue)
-		}
-		contract.Query = queryMap
-	} else {
-		contract.Query = nil
 	}
 
 	// No error
@@ -1714,8 +1579,6 @@ func (contract *BackendCredentialsContract_STATUS) AssignProperties_From_Backend
 	if source.Header != nil {
 		headerMap := make(map[string][]string, len(source.Header))
 		for headerKey, headerValue := range source.Header {
-			// Shadow the loop variable to avoid aliasing
-			headerValue := headerValue
 			headerMap[headerKey] = genruntime.CloneSliceOfString(headerValue)
 		}
 		contract.Header = headerMap
@@ -1727,8 +1590,6 @@ func (contract *BackendCredentialsContract_STATUS) AssignProperties_From_Backend
 	if source.Query != nil {
 		queryMap := make(map[string][]string, len(source.Query))
 		for queryKey, queryValue := range source.Query {
-			// Shadow the loop variable to avoid aliasing
-			queryValue := queryValue
 			queryMap[queryKey] = genruntime.CloneSliceOfString(queryValue)
 		}
 		contract.Query = queryMap
@@ -1767,8 +1628,6 @@ func (contract *BackendCredentialsContract_STATUS) AssignProperties_To_BackendCr
 	if contract.Header != nil {
 		headerMap := make(map[string][]string, len(contract.Header))
 		for headerKey, headerValue := range contract.Header {
-			// Shadow the loop variable to avoid aliasing
-			headerValue := headerValue
 			headerMap[headerKey] = genruntime.CloneSliceOfString(headerValue)
 		}
 		destination.Header = headerMap
@@ -1780,8 +1639,6 @@ func (contract *BackendCredentialsContract_STATUS) AssignProperties_To_BackendCr
 	if contract.Query != nil {
 		queryMap := make(map[string][]string, len(contract.Query))
 		for queryKey, queryValue := range contract.Query {
-			// Shadow the loop variable to avoid aliasing
-			queryValue := queryValue
 			queryMap[queryKey] = genruntime.CloneSliceOfString(queryValue)
 		}
 		destination.Query = queryMap
@@ -1816,8 +1673,6 @@ func (operator *BackendOperatorSpec) AssignProperties_From_BackendOperatorSpec(s
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1834,8 +1689,6 @@ func (operator *BackendOperatorSpec) AssignProperties_From_BackendOperatorSpec(s
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1861,8 +1714,6 @@ func (operator *BackendOperatorSpec) AssignProperties_To_BackendOperatorSpec(des
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1879,8 +1730,6 @@ func (operator *BackendOperatorSpec) AssignProperties_To_BackendOperatorSpec(des
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1921,7 +1770,7 @@ func (properties *BackendProperties) ConvertToARM(resolved genruntime.ConvertToA
 
 	// Set property "ServiceFabricCluster":
 	if properties.ServiceFabricCluster != nil {
-		serviceFabricCluster_ARM, err := (*properties.ServiceFabricCluster).ConvertToARM(resolved)
+		serviceFabricCluster_ARM, err := properties.ServiceFabricCluster.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1999,25 +1848,6 @@ func (properties *BackendProperties) AssignProperties_To_BackendProperties(desti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BackendProperties_STATUS populates our BackendProperties from the provided source BackendProperties_STATUS
-func (properties *BackendProperties) Initialize_From_BackendProperties_STATUS(source *BackendProperties_STATUS) error {
-
-	// ServiceFabricCluster
-	if source.ServiceFabricCluster != nil {
-		var serviceFabricCluster BackendServiceFabricClusterProperties
-		err := serviceFabricCluster.Initialize_From_BackendServiceFabricClusterProperties_STATUS(source.ServiceFabricCluster)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_BackendServiceFabricClusterProperties_STATUS() to populate field ServiceFabricCluster")
-		}
-		properties.ServiceFabricCluster = &serviceFabricCluster
-	} else {
-		properties.ServiceFabricCluster = nil
 	}
 
 	// No error
@@ -2236,19 +2066,6 @@ func (contract *BackendProxyContract) AssignProperties_To_BackendProxyContract(d
 	return nil
 }
 
-// Initialize_From_BackendProxyContract_STATUS populates our BackendProxyContract from the provided source BackendProxyContract_STATUS
-func (contract *BackendProxyContract) Initialize_From_BackendProxyContract_STATUS(source *BackendProxyContract_STATUS) error {
-
-	// Url
-	contract.Url = genruntime.ClonePointerToString(source.Url)
-
-	// Username
-	contract.Username = genruntime.ClonePointerToString(source.Username)
-
-	// No error
-	return nil
-}
-
 // Details of the Backend WebProxy Server to use in the Request to Backend.
 type BackendProxyContract_STATUS struct {
 	// Url: WebProxy Server AbsoluteUri property which includes the entire URI stored in the Uri instance, including all
@@ -2435,29 +2252,6 @@ func (properties *BackendTlsProperties) AssignProperties_To_BackendTlsProperties
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BackendTlsProperties_STATUS populates our BackendTlsProperties from the provided source BackendTlsProperties_STATUS
-func (properties *BackendTlsProperties) Initialize_From_BackendTlsProperties_STATUS(source *BackendTlsProperties_STATUS) error {
-
-	// ValidateCertificateChain
-	if source.ValidateCertificateChain != nil {
-		validateCertificateChain := *source.ValidateCertificateChain
-		properties.ValidateCertificateChain = &validateCertificateChain
-	} else {
-		properties.ValidateCertificateChain = nil
-	}
-
-	// ValidateCertificateName
-	if source.ValidateCertificateName != nil {
-		validateCertificateName := *source.ValidateCertificateName
-		properties.ValidateCertificateName = &validateCertificateName
-	} else {
-		properties.ValidateCertificateName = nil
 	}
 
 	// No error
@@ -2656,19 +2450,6 @@ func (credentials *BackendAuthorizationHeaderCredentials) AssignProperties_To_Ba
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BackendAuthorizationHeaderCredentials_STATUS populates our BackendAuthorizationHeaderCredentials from the provided source BackendAuthorizationHeaderCredentials_STATUS
-func (credentials *BackendAuthorizationHeaderCredentials) Initialize_From_BackendAuthorizationHeaderCredentials_STATUS(source *BackendAuthorizationHeaderCredentials_STATUS) error {
-
-	// Parameter
-	credentials.Parameter = genruntime.ClonePointerToString(source.Parameter)
-
-	// Scheme
-	credentials.Scheme = genruntime.ClonePointerToString(source.Scheme)
 
 	// No error
 	return nil
@@ -2895,8 +2676,6 @@ func (properties *BackendServiceFabricClusterProperties) AssignProperties_From_B
 	if source.ServerX509Names != nil {
 		serverX509NameList := make([]X509CertificateName, len(source.ServerX509Names))
 		for serverX509NameIndex, serverX509NameItem := range source.ServerX509Names {
-			// Shadow the loop variable to avoid aliasing
-			serverX509NameItem := serverX509NameItem
 			var serverX509Name X509CertificateName
 			err := serverX509Name.AssignProperties_From_X509CertificateName(&serverX509NameItem)
 			if err != nil {
@@ -2937,8 +2716,6 @@ func (properties *BackendServiceFabricClusterProperties) AssignProperties_To_Bac
 	if properties.ServerX509Names != nil {
 		serverX509NameList := make([]storage.X509CertificateName, len(properties.ServerX509Names))
 		for serverX509NameIndex, serverX509NameItem := range properties.ServerX509Names {
-			// Shadow the loop variable to avoid aliasing
-			serverX509NameItem := serverX509NameItem
 			var serverX509Name storage.X509CertificateName
 			err := serverX509NameItem.AssignProperties_To_X509CertificateName(&serverX509Name)
 			if err != nil {
@@ -2956,46 +2733,6 @@ func (properties *BackendServiceFabricClusterProperties) AssignProperties_To_Bac
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BackendServiceFabricClusterProperties_STATUS populates our BackendServiceFabricClusterProperties from the provided source BackendServiceFabricClusterProperties_STATUS
-func (properties *BackendServiceFabricClusterProperties) Initialize_From_BackendServiceFabricClusterProperties_STATUS(source *BackendServiceFabricClusterProperties_STATUS) error {
-
-	// ClientCertificateId
-	properties.ClientCertificateId = genruntime.ClonePointerToString(source.ClientCertificateId)
-
-	// ClientCertificatethumbprint
-	properties.ClientCertificatethumbprint = genruntime.ClonePointerToString(source.ClientCertificatethumbprint)
-
-	// ManagementEndpoints
-	properties.ManagementEndpoints = genruntime.CloneSliceOfString(source.ManagementEndpoints)
-
-	// MaxPartitionResolutionRetries
-	properties.MaxPartitionResolutionRetries = genruntime.ClonePointerToInt(source.MaxPartitionResolutionRetries)
-
-	// ServerCertificateThumbprints
-	properties.ServerCertificateThumbprints = genruntime.CloneSliceOfString(source.ServerCertificateThumbprints)
-
-	// ServerX509Names
-	if source.ServerX509Names != nil {
-		serverX509NameList := make([]X509CertificateName, len(source.ServerX509Names))
-		for serverX509NameIndex, serverX509NameItem := range source.ServerX509Names {
-			// Shadow the loop variable to avoid aliasing
-			serverX509NameItem := serverX509NameItem
-			var serverX509Name X509CertificateName
-			err := serverX509Name.Initialize_From_X509CertificateName_STATUS(&serverX509NameItem)
-			if err != nil {
-				return eris.Wrap(err, "calling Initialize_From_X509CertificateName_STATUS() to populate field ServerX509Names")
-			}
-			serverX509NameList[serverX509NameIndex] = serverX509Name
-		}
-		properties.ServerX509Names = serverX509NameList
-	} else {
-		properties.ServerX509Names = nil
 	}
 
 	// No error
@@ -3102,8 +2839,6 @@ func (properties *BackendServiceFabricClusterProperties_STATUS) AssignProperties
 	if source.ServerX509Names != nil {
 		serverX509NameList := make([]X509CertificateName_STATUS, len(source.ServerX509Names))
 		for serverX509NameIndex, serverX509NameItem := range source.ServerX509Names {
-			// Shadow the loop variable to avoid aliasing
-			serverX509NameItem := serverX509NameItem
 			var serverX509Name X509CertificateName_STATUS
 			err := serverX509Name.AssignProperties_From_X509CertificateName_STATUS(&serverX509NameItem)
 			if err != nil {
@@ -3144,8 +2879,6 @@ func (properties *BackendServiceFabricClusterProperties_STATUS) AssignProperties
 	if properties.ServerX509Names != nil {
 		serverX509NameList := make([]storage.X509CertificateName_STATUS, len(properties.ServerX509Names))
 		for serverX509NameIndex, serverX509NameItem := range properties.ServerX509Names {
-			// Shadow the loop variable to avoid aliasing
-			serverX509NameItem := serverX509NameItem
 			var serverX509Name storage.X509CertificateName_STATUS
 			err := serverX509NameItem.AssignProperties_To_X509CertificateName_STATUS(&serverX509Name)
 			if err != nil {
@@ -3259,19 +2992,6 @@ func (name *X509CertificateName) AssignProperties_To_X509CertificateName(destina
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_X509CertificateName_STATUS populates our X509CertificateName from the provided source X509CertificateName_STATUS
-func (name *X509CertificateName) Initialize_From_X509CertificateName_STATUS(source *X509CertificateName_STATUS) error {
-
-	// IssuerCertificateThumbprint
-	name.IssuerCertificateThumbprint = genruntime.ClonePointerToString(source.IssuerCertificateThumbprint)
-
-	// Name
-	name.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil

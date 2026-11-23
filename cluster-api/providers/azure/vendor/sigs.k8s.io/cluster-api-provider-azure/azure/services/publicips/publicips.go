@@ -79,25 +79,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
-	specs := s.Scope.PublicIPSpecs()
-	if len(specs) == 0 {
-		return nil
-	}
-
-	// We go through the list of PublicIPSpecs to reconcile each one, independently of the result of the previous one.
-	// If multiple errors occur, we return the most pressing one.
-	//  Order of precedence (highest -> lowest) is: error that is not an operationNotDoneError (i.e. error creating) -> operationNotDoneError (i.e. creating in progress) -> no error (i.e. created)
-	var result error
-	for _, publicIPSpec := range specs {
-		if _, err := s.CreateOrUpdateResource(ctx, publicIPSpec, serviceName); err != nil {
-			if !azure.IsOperationNotDoneError(err) || result == nil {
-				result = err
-			}
-		}
-	}
-
-	s.Scope.UpdatePutStatus(infrav1.PublicIPsReadyCondition, serviceName, result)
-	return result
+	return azure.ReconcileAll(ctx, s.Reconciler, s.Scope, s.Scope.PublicIPSpecs(), serviceName, infrav1.PublicIPsReadyCondition)
 }
 
 // Delete deletes the public IP with the provided scope.

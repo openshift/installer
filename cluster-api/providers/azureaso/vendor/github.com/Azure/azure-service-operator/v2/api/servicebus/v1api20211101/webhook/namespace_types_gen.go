@@ -116,7 +116,12 @@ func (namespace *Namespace) ValidateUpdate(ctx context.Context, oldResource runt
 
 // createValidations validates the creation of the resource
 func (namespace *Namespace) createValidations() []func(ctx context.Context, obj *v20211101.Namespace) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20211101.Namespace) (admission.Warnings, error){namespace.validateResourceReferences, namespace.validateOwnerReference, namespace.validateSecretDestinations, namespace.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20211101.Namespace) (admission.Warnings, error){
+		namespace.validateResourceReferences,
+		namespace.validateOwnerReference,
+		namespace.validateSecretDestinations,
+		namespace.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

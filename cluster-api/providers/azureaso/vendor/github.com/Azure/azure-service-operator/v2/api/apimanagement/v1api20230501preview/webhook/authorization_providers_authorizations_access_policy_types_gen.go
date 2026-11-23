@@ -116,7 +116,13 @@ func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) ValidateUpdate(c
 
 // createValidations validates the creation of the resource
 func (policy *AuthorizationProvidersAuthorizationsAccessPolicy) createValidations() []func(ctx context.Context, obj *v20230501p.AuthorizationProvidersAuthorizationsAccessPolicy) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20230501p.AuthorizationProvidersAuthorizationsAccessPolicy) (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations, policy.validateOptionalConfigMapReferences}
+	return []func(ctx context.Context, obj *v20230501p.AuthorizationProvidersAuthorizationsAccessPolicy) (admission.Warnings, error){
+		policy.validateResourceReferences,
+		policy.validateOwnerReference,
+		policy.validateSecretDestinations,
+		policy.validateConfigMapDestinations,
+		policy.validateOptionalConfigMapReferences,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

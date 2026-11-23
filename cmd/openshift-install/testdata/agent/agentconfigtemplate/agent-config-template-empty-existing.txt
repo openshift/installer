@@ -1,0 +1,10 @@
+# An empty existing config keeps its validation error and stays empty.
+! exec openshift-install agent create agent-config-template --dir $WORK
+stderr 'failed to fetch Agent Config'
+stderr 'no version was provided'
+
+exists $WORK/agent-config.yaml
+cmp $WORK/agent-config.yaml $WORK/expected/agent-config.yaml
+
+-- agent-config.yaml --
+-- expected/agent-config.yaml --

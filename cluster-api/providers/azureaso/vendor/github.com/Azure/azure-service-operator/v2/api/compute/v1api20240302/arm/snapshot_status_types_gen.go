@@ -8,29 +8,33 @@ type Snapshot_STATUS struct {
 	// ExtendedLocation: The extended location where the snapshot will be created. Extended location cannot be changed.
 	ExtendedLocation *ExtendedLocation_STATUS `json:"extendedLocation,omitempty"`
 
-	// Id: Resource Id
+	// Id: Fully qualified resource ID for the resource. Ex -
+	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	Id *string `json:"id,omitempty"`
 
-	// Location: Resource location
+	// Location: The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 
 	// ManagedBy: Unused. Always Null.
 	ManagedBy *string `json:"managedBy,omitempty"`
 
-	// Name: Resource name
+	// Name: The name of the resource
 	Name *string `json:"name,omitempty"`
 
 	// Properties: Snapshot resource properties.
 	Properties *SnapshotProperties_STATUS `json:"properties,omitempty"`
 
 	// Sku: The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for
-	// incremental  snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
+	// incremental snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 	Sku *SnapshotSku_STATUS `json:"sku,omitempty"`
 
-	// Tags: Resource tags
+	// SystemData: Azure Resource Manager metadata containing createdBy and modifiedBy information.
+	SystemData *SystemData_STATUS `json:"systemData,omitempty"`
+
+	// Tags: Resource tags.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// Type: Resource type
+	// Type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
 }
 
@@ -71,7 +75,7 @@ type SnapshotProperties_STATUS struct {
 	EncryptionSettingsCollection *EncryptionSettingsCollection_STATUS `json:"encryptionSettingsCollection,omitempty"`
 
 	// HyperVGeneration: The hypervisor generation of the Virtual Machine. Applicable to OS disks only.
-	HyperVGeneration *SnapshotProperties_HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
+	HyperVGeneration *HyperVGeneration_STATUS `json:"hyperVGeneration,omitempty"`
 
 	// Incremental: Whether a snapshot is incremental. Incremental snapshots on the same disk occupy less space than full
 	// snapshots and can be diffed.
@@ -85,7 +89,7 @@ type SnapshotProperties_STATUS struct {
 	NetworkAccessPolicy *NetworkAccessPolicy_STATUS `json:"networkAccessPolicy,omitempty"`
 
 	// OsType: The Operating System type.
-	OsType *SnapshotProperties_OsType_STATUS `json:"osType,omitempty"`
+	OsType *OperatingSystemTypes_STATUS `json:"osType,omitempty"`
 
 	// ProvisioningState: The disk provisioning state.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
@@ -94,7 +98,7 @@ type SnapshotProperties_STATUS struct {
 	PublicNetworkAccess *PublicNetworkAccess_STATUS `json:"publicNetworkAccess,omitempty"`
 
 	// PurchasePlan: Purchase plan information for the image from which the source disk for the snapshot was originally created.
-	PurchasePlan *PurchasePlan_STATUS `json:"purchasePlan,omitempty"`
+	PurchasePlan *DiskPurchasePlan_STATUS `json:"purchasePlan,omitempty"`
 
 	// SecurityProfile: Contains the security related information for the resource.
 	SecurityProfile *DiskSecurityProfile_STATUS `json:"securityProfile,omitempty"`
@@ -117,7 +121,7 @@ type SnapshotProperties_STATUS struct {
 // snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 type SnapshotSku_STATUS struct {
 	// Name: The sku name.
-	Name *SnapshotSku_Name_STATUS `json:"name,omitempty"`
+	Name *SnapshotStorageAccountTypes_STATUS `json:"name,omitempty"`
 
 	// Tier: The sku tier.
 	Tier *string `json:"tier,omitempty"`
@@ -126,58 +130,34 @@ type SnapshotSku_STATUS struct {
 // Indicates the error details if the background copy of a resource created via the CopyStart operation fails.
 type CopyCompletionError_STATUS struct {
 	// ErrorCode: Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
-	ErrorCode *CopyCompletionError_ErrorCode_STATUS `json:"errorCode,omitempty"`
+	ErrorCode *CopyCompletionErrorReason_STATUS `json:"errorCode,omitempty"`
 
 	// ErrorMessage: Indicates the error message if the background copy of a resource created via the CopyStart operation fails.
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
-type SnapshotProperties_HyperVGeneration_STATUS string
+// The sku name.
+type SnapshotStorageAccountTypes_STATUS string
 
 const (
-	SnapshotProperties_HyperVGeneration_STATUS_V1 = SnapshotProperties_HyperVGeneration_STATUS("V1")
-	SnapshotProperties_HyperVGeneration_STATUS_V2 = SnapshotProperties_HyperVGeneration_STATUS("V2")
+	SnapshotStorageAccountTypes_STATUS_Premium_LRS  = SnapshotStorageAccountTypes_STATUS("Premium_LRS")
+	SnapshotStorageAccountTypes_STATUS_Standard_LRS = SnapshotStorageAccountTypes_STATUS("Standard_LRS")
+	SnapshotStorageAccountTypes_STATUS_Standard_ZRS = SnapshotStorageAccountTypes_STATUS("Standard_ZRS")
 )
 
-// Mapping from string to SnapshotProperties_HyperVGeneration_STATUS
-var snapshotProperties_HyperVGeneration_STATUS_Values = map[string]SnapshotProperties_HyperVGeneration_STATUS{
-	"v1": SnapshotProperties_HyperVGeneration_STATUS_V1,
-	"v2": SnapshotProperties_HyperVGeneration_STATUS_V2,
+// Mapping from string to SnapshotStorageAccountTypes_STATUS
+var snapshotStorageAccountTypes_STATUS_Values = map[string]SnapshotStorageAccountTypes_STATUS{
+	"premium_lrs":  SnapshotStorageAccountTypes_STATUS_Premium_LRS,
+	"standard_lrs": SnapshotStorageAccountTypes_STATUS_Standard_LRS,
+	"standard_zrs": SnapshotStorageAccountTypes_STATUS_Standard_ZRS,
 }
 
-type SnapshotProperties_OsType_STATUS string
+// Indicates the error code if the background copy of a resource created via the CopyStart operation fails.
+type CopyCompletionErrorReason_STATUS string
 
-const (
-	SnapshotProperties_OsType_STATUS_Linux   = SnapshotProperties_OsType_STATUS("Linux")
-	SnapshotProperties_OsType_STATUS_Windows = SnapshotProperties_OsType_STATUS("Windows")
-)
+const CopyCompletionErrorReason_STATUS_CopySourceNotFound = CopyCompletionErrorReason_STATUS("CopySourceNotFound")
 
-// Mapping from string to SnapshotProperties_OsType_STATUS
-var snapshotProperties_OsType_STATUS_Values = map[string]SnapshotProperties_OsType_STATUS{
-	"linux":   SnapshotProperties_OsType_STATUS_Linux,
-	"windows": SnapshotProperties_OsType_STATUS_Windows,
-}
-
-type SnapshotSku_Name_STATUS string
-
-const (
-	SnapshotSku_Name_STATUS_Premium_LRS  = SnapshotSku_Name_STATUS("Premium_LRS")
-	SnapshotSku_Name_STATUS_Standard_LRS = SnapshotSku_Name_STATUS("Standard_LRS")
-	SnapshotSku_Name_STATUS_Standard_ZRS = SnapshotSku_Name_STATUS("Standard_ZRS")
-)
-
-// Mapping from string to SnapshotSku_Name_STATUS
-var snapshotSku_Name_STATUS_Values = map[string]SnapshotSku_Name_STATUS{
-	"premium_lrs":  SnapshotSku_Name_STATUS_Premium_LRS,
-	"standard_lrs": SnapshotSku_Name_STATUS_Standard_LRS,
-	"standard_zrs": SnapshotSku_Name_STATUS_Standard_ZRS,
-}
-
-type CopyCompletionError_ErrorCode_STATUS string
-
-const CopyCompletionError_ErrorCode_STATUS_CopySourceNotFound = CopyCompletionError_ErrorCode_STATUS("CopySourceNotFound")
-
-// Mapping from string to CopyCompletionError_ErrorCode_STATUS
-var copyCompletionError_ErrorCode_STATUS_Values = map[string]CopyCompletionError_ErrorCode_STATUS{
-	"copysourcenotfound": CopyCompletionError_ErrorCode_STATUS_CopySourceNotFound,
+// Mapping from string to CopyCompletionErrorReason_STATUS
+var copyCompletionErrorReason_STATUS_Values = map[string]CopyCompletionErrorReason_STATUS{
+	"copysourcenotfound": CopyCompletionErrorReason_STATUS_CopySourceNotFound,
 }

@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,apimanagement}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimproducts.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimproducts.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/policies/{policyId}
 type ProductPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &ProductPolicy{}
 
 // ConvertFrom populates our ProductPolicy from the provided hub ProductPolicy
 func (policy *ProductPolicy) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.ProductPolicy)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ProductPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.ProductPolicy
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return policy.AssignProperties_From_ProductPolicy(source)
+	err = policy.AssignProperties_From_ProductPolicy(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to policy")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ProductPolicy from our ProductPolicy
 func (policy *ProductPolicy) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.ProductPolicy)
-	if !ok {
-		return fmt.Errorf("expected apimanagement/v1api20220801/storage/ProductPolicy but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.ProductPolicy
+	err := policy.AssignProperties_To_ProductPolicy(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from policy")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return policy.AssignProperties_To_ProductPolicy(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &ProductPolicy{}
@@ -86,17 +101,6 @@ func (policy *ProductPolicy) SecretDestinationExpressions() []*core.DestinationE
 		return nil
 	}
 	return policy.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &ProductPolicy{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (policy *ProductPolicy) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ProductPolicy_STATUS); ok {
-		return policy.Spec.Initialize_From_ProductPolicy_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ProductPolicy_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ProductPolicy{}
@@ -238,7 +242,7 @@ func (policy *ProductPolicy) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/stable/2022-08-01/apimproducts.json
+// - Generated from: /apimanagement/resource-manager/Microsoft.ApiManagement/ApiManagement/stable/2022-08-01/apimproducts.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/policies/{policyId}
 type ProductPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -477,24 +481,6 @@ func (policy *ProductPolicy_Spec) AssignProperties_To_ProductPolicy_Spec(destina
 	return nil
 }
 
-// Initialize_From_ProductPolicy_STATUS populates our ProductPolicy_Spec from the provided source ProductPolicy_STATUS
-func (policy *ProductPolicy_Spec) Initialize_From_ProductPolicy_STATUS(source *ProductPolicy_STATUS) error {
-
-	// Format
-	if source.Format != nil {
-		format := genruntime.ToEnum(string(*source.Format), policyContractProperties_Format_Values)
-		policy.Format = &format
-	} else {
-		policy.Format = nil
-	}
-
-	// Value
-	policy.Value = genruntime.ClonePointerToString(source.Value)
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (policy *ProductPolicy_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -715,8 +701,6 @@ func (operator *ProductPolicyOperatorSpec) AssignProperties_From_ProductPolicyOp
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -733,8 +717,6 @@ func (operator *ProductPolicyOperatorSpec) AssignProperties_From_ProductPolicyOp
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -760,8 +742,6 @@ func (operator *ProductPolicyOperatorSpec) AssignProperties_To_ProductPolicyOper
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -778,8 +758,6 @@ func (operator *ProductPolicyOperatorSpec) AssignProperties_To_ProductPolicyOper
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

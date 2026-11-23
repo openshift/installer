@@ -4,7 +4,6 @@
 package storage
 
 import (
-	"fmt"
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240101s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240101/storage"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
@@ -20,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -27,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20201101.VirtualNetworksVirtualNetworkPeering
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeering struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -52,22 +52,36 @@ var _ conversion.Convertible = &VirtualNetworksVirtualNetworkPeering{}
 
 // ConvertFrom populates our VirtualNetworksVirtualNetworkPeering from the provided hub VirtualNetworksVirtualNetworkPeering
 func (peering *VirtualNetworksVirtualNetworkPeering) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20240301s.VirtualNetworksVirtualNetworkPeering)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20240301s.VirtualNetworksVirtualNetworkPeering
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering(source)
+	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to peering")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualNetworksVirtualNetworkPeering from our VirtualNetworksVirtualNetworkPeering
 func (peering *VirtualNetworksVirtualNetworkPeering) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20240301s.VirtualNetworksVirtualNetworkPeering)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20240301s.VirtualNetworksVirtualNetworkPeering
+	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from peering")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualNetworksVirtualNetworkPeering{}
@@ -247,7 +261,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) OriginalGVK() *schema.Group
 // +kubebuilder:object:root=true
 // Storage version of v1api20201101.VirtualNetworksVirtualNetworkPeering
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2020-11-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2020-11-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeeringList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -1314,8 +1328,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1332,8 +1344,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1375,8 +1385,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1393,8 +1401,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

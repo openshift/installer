@@ -4,12 +4,20 @@
 package customizations
 
 import (
-	v20210401 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401"
-	v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401/storage"
-	v20220901 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
-	v20230101 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	storage_v1api20210401 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401"
+	storage_v1api20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401/storage"
+	storage_v1api20220901 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901"
+	storage_v1api20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
+	storage_v1api20230101 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101"
+	storage_v1api20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
+	storage_v20210401 "github.com/Azure/azure-service-operator/v2/api/storage/v20210401"
+	storage_v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v20210401/storage"
+	storage_v20220901 "github.com/Azure/azure-service-operator/v2/api/storage/v20220901"
+	storage_v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v20220901/storage"
+	storage_v20230101 "github.com/Azure/azure-service-operator/v2/api/storage/v20230101"
+	storage_v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v20230101/storage"
+	storage_v20250601 "github.com/Azure/azure-service-operator/v2/api/storage/v20250601"
+	storage_v20250601s "github.com/Azure/azure-service-operator/v2/api/storage/v20250601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -19,10 +27,18 @@ type StorageAccountsQueueServiceExtension struct {
 // GetExtendedResources Returns the KubernetesResource slice for Resource versions
 func (extension *StorageAccountsQueueServiceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
-		&v20210401.StorageAccountsQueueService{},
-		&v20210401s.StorageAccountsQueueService{},
-		&v20220901.StorageAccountsQueueService{},
-		&v20220901s.StorageAccountsQueueService{},
-		&v20230101.StorageAccountsQueueService{},
-		&v20230101s.StorageAccountsQueueService{}}
+		&storage_v1api20210401.StorageAccountsQueueService{},
+		&storage_v1api20210401s.StorageAccountsQueueService{},
+		&storage_v1api20220901.StorageAccountsQueueService{},
+		&storage_v1api20220901s.StorageAccountsQueueService{},
+		&storage_v1api20230101.StorageAccountsQueueService{},
+		&storage_v1api20230101s.StorageAccountsQueueService{},
+		&storage_v20210401.StorageAccountsQueueService{},
+		&storage_v20210401s.StorageAccountsQueueService{},
+		&storage_v20220901.StorageAccountsQueueService{},
+		&storage_v20220901s.StorageAccountsQueueService{},
+		&storage_v20230101.StorageAccountsQueueService{},
+		&storage_v20230101s.StorageAccountsQueueService{},
+		&storage_v20250601.StorageAccountsQueueService{},
+		&storage_v20250601s.StorageAccountsQueueService{}}
 }

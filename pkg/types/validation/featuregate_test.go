@@ -69,6 +69,53 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
+			name: "vSphere component-scoped credentials require the feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.CredentialType = vsphere.CredentialTypeComponentScoped
+				return c
+			}(),
+			expected: `^platform.vsphere.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through either the DevPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "vSphere component-scoped credentials are allowed with DevPreviewNoUpgrade",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.CredentialType = vsphere.CredentialTypeComponentScoped
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				return c
+			}(),
+		},
+		{
+			name: "vSphere component-scoped credentials are allowed with custom gate enabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.CredentialType = vsphere.CredentialTypeComponentScoped
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"VSpherePerComponentScopedCreds=true"}
+				return c
+			}(),
+		},
+		{
+			name: "vSphere component-scoped credentials remain disabled with custom gate disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.CredentialType = vsphere.CredentialTypeComponentScoped
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"VSpherePerComponentScopedCreds=false"}
+				return c
+			}(),
+			expected: `^platform.vsphere.credentialType: Forbidden: this field is protected by the VSpherePerComponentScopedCreds feature gate which must be enabled through either the DevPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
 			name: "vSphere hosts is allowed with custom Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -205,17 +252,6 @@ func TestFeatureGates(t *testing.T) {
 				}
 				return c
 			}(),
-		},
-		{
-			name: "Azure diskSetup is gated on AzureMultiDisk, not MultiDiskSetup",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.AWS = nil // validInstallConfig defaults to AWS
-				c.Azure = validAzurePlatform()
-				c.ControlPlane.DiskSetup = validDiskSetup()
-				return c
-			}(),
-			expected: `^controlPlane.diskSetup: Forbidden: this field is protected by the AzureMultiDisk feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "Azure diskSetup is allowed with AzureMultiDisk alone",

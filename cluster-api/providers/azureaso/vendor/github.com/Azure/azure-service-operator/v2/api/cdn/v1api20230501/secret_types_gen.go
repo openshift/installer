@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cdn}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/secrets/{secretName}
 type Secret struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (secret *Secret) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/secrets/{secretName}
 type SecretList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -281,7 +282,7 @@ func (secret *Secret_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolved
 		result.Properties = &arm.SecretProperties{}
 	}
 	if secret.Parameters != nil {
-		parameters_ARM, err := (*secret.Parameters).ConvertToARM(resolved)
+		parameters_ARM, err := secret.Parameters.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -827,8 +828,6 @@ func (operator *SecretOperatorSpec) AssignProperties_From_SecretOperatorSpec(sou
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -845,8 +844,6 @@ func (operator *SecretOperatorSpec) AssignProperties_From_SecretOperatorSpec(sou
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -872,8 +869,6 @@ func (operator *SecretOperatorSpec) AssignProperties_To_SecretOperatorSpec(desti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -890,8 +885,6 @@ func (operator *SecretOperatorSpec) AssignProperties_To_SecretOperatorSpec(desti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -940,7 +933,7 @@ func (parameters *SecretParameters) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "AzureFirstPartyManagedCertificate":
 	if parameters.AzureFirstPartyManagedCertificate != nil {
-		azureFirstPartyManagedCertificate_ARM, err := (*parameters.AzureFirstPartyManagedCertificate).ConvertToARM(resolved)
+		azureFirstPartyManagedCertificate_ARM, err := parameters.AzureFirstPartyManagedCertificate.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -950,7 +943,7 @@ func (parameters *SecretParameters) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "CustomerCertificate":
 	if parameters.CustomerCertificate != nil {
-		customerCertificate_ARM, err := (*parameters.CustomerCertificate).ConvertToARM(resolved)
+		customerCertificate_ARM, err := parameters.CustomerCertificate.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -960,7 +953,7 @@ func (parameters *SecretParameters) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "ManagedCertificate":
 	if parameters.ManagedCertificate != nil {
-		managedCertificate_ARM, err := (*parameters.ManagedCertificate).ConvertToARM(resolved)
+		managedCertificate_ARM, err := parameters.ManagedCertificate.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -970,7 +963,7 @@ func (parameters *SecretParameters) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "UrlSigningKey":
 	if parameters.UrlSigningKey != nil {
-		urlSigningKey_ARM, err := (*parameters.UrlSigningKey).ConvertToARM(resolved)
+		urlSigningKey_ARM, err := parameters.UrlSigningKey.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1781,7 +1774,7 @@ func (parameters *CustomerCertificateParameters) ConvertToARM(resolved genruntim
 
 	// Set property "SecretSource":
 	if parameters.SecretSource != nil {
-		secretSource_ARM, err := (*parameters.SecretSource).ConvertToARM(resolved)
+		secretSource_ARM, err := parameters.SecretSource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -2458,7 +2451,7 @@ func (parameters *UrlSigningKeyParameters) ConvertToARM(resolved genruntime.Conv
 
 	// Set property "SecretSource":
 	if parameters.SecretSource != nil {
-		secretSource_ARM, err := (*parameters.SecretSource).ConvertToARM(resolved)
+		secretSource_ARM, err := parameters.SecretSource.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

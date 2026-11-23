@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,cdn}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/customDomains/{customDomainName}
 type AfdCustomDomain struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -237,7 +238,7 @@ func (domain *AfdCustomDomain) OriginalGVK() *schema.GroupVersionKind {
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /cdn/resource-manager/Microsoft.Cdn/stable/2023-05-01/afdx.json
+// - Generated from: /cdn/resource-manager/Microsoft.Cdn/Cdn/stable/2023-05-01/afdx.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Cdn/profiles/{profileName}/customDomains/{customDomainName}
 type AfdCustomDomainList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -300,7 +301,7 @@ func (domain *AfdCustomDomain_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties = &arm.AFDDomainProperties{}
 	}
 	if domain.AzureDnsZone != nil {
-		azureDnsZone_ARM, err := (*domain.AzureDnsZone).ConvertToARM(resolved)
+		azureDnsZone_ARM, err := domain.AzureDnsZone.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -318,7 +319,7 @@ func (domain *AfdCustomDomain_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.HostName = &hostName
 	}
 	if domain.PreValidatedCustomDomainResourceId != nil {
-		preValidatedCustomDomainResourceId_ARM, err := (*domain.PreValidatedCustomDomainResourceId).ConvertToARM(resolved)
+		preValidatedCustomDomainResourceId_ARM, err := domain.PreValidatedCustomDomainResourceId.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +327,7 @@ func (domain *AfdCustomDomain_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		result.Properties.PreValidatedCustomDomainResourceId = &preValidatedCustomDomainResourceId
 	}
 	if domain.TlsSettings != nil {
-		tlsSettings_ARM, err := (*domain.TlsSettings).ConvertToARM(resolved)
+		tlsSettings_ARM, err := domain.TlsSettings.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1210,8 +1211,6 @@ func (operator *AfdCustomDomainOperatorSpec) AssignProperties_From_AfdCustomDoma
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1228,8 +1227,6 @@ func (operator *AfdCustomDomainOperatorSpec) AssignProperties_From_AfdCustomDoma
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1255,8 +1252,6 @@ func (operator *AfdCustomDomainOperatorSpec) AssignProperties_To_AfdCustomDomain
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -1273,8 +1268,6 @@ func (operator *AfdCustomDomainOperatorSpec) AssignProperties_To_AfdCustomDomain
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -1338,7 +1331,7 @@ func (parameters *AFDDomainHttpsParameters) ConvertToARM(resolved genruntime.Con
 
 	// Set property "Secret":
 	if parameters.Secret != nil {
-		secret_ARM, err := (*parameters.Secret).ConvertToARM(resolved)
+		secret_ARM, err := parameters.Secret.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}

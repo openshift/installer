@@ -17,8 +17,8 @@ limitations under the License.
 package ipam
 
 import (
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 )
 
 // ErrWaitingForIPAddr is used when all IPAddressClaims have not been bound.
-var ErrWaitingForIPAddr = errors.New("waiting for IP address claims to be bound")
+var ErrWaitingForIPAddr = pkgerrors.New("waiting for IP address claims to be bound")

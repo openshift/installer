@@ -55,6 +55,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Source:           ptr.To("*"),
 			Destination:      ptr.To("*"),
 			Action:           capz.SecurityRuleActionAllow,
+			Description:      "API server Inbound Rule",
 		},
 		{
 			Name:             "ssh_in",
@@ -66,6 +67,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Source:           ptr.To("*"),
 			Destination:      ptr.To("*"),
 			Action:           capz.SecurityRuleActionAllow,
+			Description:      "SSH Inbound Rule",
 		},
 		{
 			Name:             "konnectivity_in",
@@ -77,6 +79,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Source:           ptr.To("*"),
 			Destination:      ptr.To("*"),
 			Action:           capz.SecurityRuleActionAllow,
+			Description:      "Konnectivity Inbound Rule",
 		},
 	}
 
@@ -95,6 +98,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "API server inbound rule",
 			})
 			securityRulePriority += 10
 
@@ -108,6 +112,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "SSH inbound rule",
 			})
 			securityRulePriority += 10
 
@@ -121,6 +126,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "Konnectivity inbound rule",
 			})
 			securityRulePriority += 10
 		}
@@ -137,6 +143,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "API server inbound rule",
 			})
 			securityRulePriority += 10
 
@@ -150,6 +157,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "SSH inbound rule",
 			})
 			securityRulePriority += 10
 
@@ -163,6 +171,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Destination:      ptr.To("*"),
 				Priority:         securityRulePriority,
 				Action:           capz.SecurityRuleActionAllow,
+				Description:      "Konnectivity inbound rule",
 			})
 			securityRulePriority += 10
 		}
@@ -772,6 +781,9 @@ func addIPOffset(ip net.IP, offset uint64) (net.IP, bool) {
 	return result, remaining == 0
 }
 
+// getNextAvailableIPForLoadBalancer returns the next available IP address
+// for the internal load balancer, based on the control plane subnet's
+// address prefixes and the existing load balancer IP.
 func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *installconfig.InstallConfig, cidrs []ipnet.IPNet, lbip string) (string, error) {
 	client, err := installConfig.Azure.Client()
 	if err != nil {
@@ -795,7 +807,7 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 			return "", fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
 		if controlPlane.AddressPrefix == nil && controlPlane.AddressPrefixes == nil {
-			return "", fmt.Errorf("failed to get control plane subnet addresses: %w", err)
+			return "", errors.New("failed to get control plane subnet addresses")
 		}
 		prefixes := []*ipnet.IPNet{}
 		if controlPlane.AddressPrefixes != nil {

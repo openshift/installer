@@ -40,7 +40,7 @@ var _ Client = &AzureClient{}
 
 // NewClient creates a new Resource SKUs client from an authorizer.
 func NewClient(auth azure.Authorizer) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourceskus client options")
 	}

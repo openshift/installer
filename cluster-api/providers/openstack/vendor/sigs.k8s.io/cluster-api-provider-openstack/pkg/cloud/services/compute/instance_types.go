@@ -25,7 +25,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	corev1 "k8s.io/api/core/v1"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
 
 // InstanceSpec defines the fields which can be set on a new OpenStack instance.
@@ -95,6 +95,15 @@ func (is *InstanceStatus) AvailabilityZone() string {
 	return is.server.AvailabilityZone
 }
 
+// Fault returns a copy of the instance fault, or nil if the instance has no fault.
+func (is *InstanceStatus) Fault() *servers.Fault {
+	if is.server.Fault.Code == 0 || is.server.Fault.Message == "" {
+		return nil
+	}
+	fault := is.server.Fault
+	return &fault
+}
+
 // BastionStatus updates BastionStatus in openStackCluster.
 func (is *InstanceStatus) UpdateBastionStatus(openStackCluster *infrav1.OpenStackCluster) {
 	if openStackCluster.Status.Bastion == nil {
@@ -146,7 +155,8 @@ func (is *InstanceStatus) NetworkStatus() (*InstanceNetworkStatus, error) {
 			return nil, fmt.Errorf("error unmarshalling addresses for instance %s: %w", is.ID(), err)
 		}
 
-		var IPv4addresses, IPv6addresses []corev1.NodeAddress
+		IPv4addresses := make([]corev1.NodeAddress, 0, len(interfaceList))
+		IPv6addresses := make([]corev1.NodeAddress, 0, len(interfaceList))
 		for i := range interfaceList {
 			address := &interfaceList[i]
 
@@ -194,7 +204,12 @@ func (ns *InstanceNetworkStatus) Addresses() []corev1.NodeAddress {
 	}
 	sort.Strings(networks)
 
-	var addresses []corev1.NodeAddress
+	// Calculate total number of addresses to preallocate
+	totalAddresses := 0
+	for _, addrs := range ns.addresses {
+		totalAddresses += len(addrs)
+	}
+	addresses := make([]corev1.NodeAddress, 0, totalAddresses)
 	for _, network := range networks {
 		addressList := ns.addresses[network]
 		addresses = append(addresses, addressList...)

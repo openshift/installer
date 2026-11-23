@@ -27,7 +27,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/names"
@@ -58,6 +58,17 @@ func (s *Service) GetOrCreateFloatingIP(eventObject runtime.Object, openStackClu
 	fpCreateOpts.FloatingNetworkID = openStackCluster.Status.ExternalNetwork.ID
 	fpCreateOpts.Description = names.GetDescription(clusterResourceName)
 
+	// Determine standard-attr-tag support before allocating the floating IP,
+	// so that a failed extension lookup doesn't leak an allocated floating
+	// IP that CAPO never records or retries tagging for.
+	var tagsSupported bool
+	if len(openStackCluster.Spec.Tags) > 0 {
+		tagsSupported, err = s.hasStandardAttrTagExtension()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	s.scope.Logger().Info("Creating floating IP", "ip", fpCreateOpts.FloatingIP, "floatingNetworkID", openStackCluster.Status.ExternalNetwork.ID, "description", fpCreateOpts.Description)
 
 	fp, err = s.client.CreateFloatingIP(fpCreateOpts)
@@ -67,12 +78,16 @@ func (s *Service) GetOrCreateFloatingIP(eventObject runtime.Object, openStackClu
 	}
 
 	if len(openStackCluster.Spec.Tags) > 0 {
-		mc := metrics.NewMetricPrometheusContext("floating_ip", "update")
-		_, err = s.client.ReplaceAllAttributesTags("floatingips", fp.ID, attributestags.ReplaceAllOpts{
-			Tags: openStackCluster.Spec.Tags,
-		})
-		if mc.ObserveRequest(err) != nil {
-			return nil, err
+		if tagsSupported {
+			mc := metrics.NewMetricPrometheusContext("floating_ip", "update")
+			_, err = s.client.ReplaceAllAttributesTags("floatingips", fp.ID, attributestags.ReplaceAllOpts{
+				Tags: openStackCluster.Spec.Tags,
+			})
+			if mc.ObserveRequest(err) != nil {
+				return nil, err
+			}
+		} else {
+			s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", "floatingips", "resourceID", fp.ID)
 		}
 	}
 

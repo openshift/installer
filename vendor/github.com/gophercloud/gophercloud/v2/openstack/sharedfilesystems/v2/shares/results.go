@@ -148,7 +148,7 @@ func (r SharePage) LastMarker() (string, error) {
 		return invalidMarker, nil
 	}
 
-	u, err := url.Parse(r.URL.String())
+	u, err := url.Parse(r.String())
 	if err != nil {
 		return invalidMarker, err
 	}

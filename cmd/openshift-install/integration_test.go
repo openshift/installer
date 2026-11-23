@@ -23,3 +23,7 @@ func TestAgentIntegration(t *testing.T) {
 func TestImageBasedIntegration(t *testing.T) {
 	runAllIntegrationTests(t, "testdata/imagebased")
 }
+
+func TestIgnitionConfigsIntegration(t *testing.T) {
+	runAllIntegrationTests(t, "testdata/ignitionconfigs")
+}

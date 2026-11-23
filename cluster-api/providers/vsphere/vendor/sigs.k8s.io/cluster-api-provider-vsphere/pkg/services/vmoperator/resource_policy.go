@@ -18,14 +18,17 @@ package vmoperator
 
 import (
 	"context"
+	"reflect"
 
-	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+	pkgerrors "github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
+	vmoprvhub "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/api/vmoperator/hub"
+	conversionclient "sigs.k8s.io/cluster-api-provider-vsphere/pkg/conversion/client"
 )
 
 // RPService represents the ability to reconcile a VirtualMachineSetResourcePolicy via vmoperator.
@@ -35,16 +38,15 @@ type RPService struct {
 
 // ReconcileResourcePolicy ensures that a VirtualMachineSetResourcePolicy exists for the cluster
 // Returns the name of a policy if it exists, otherwise returns an error.
-func (s *RPService) ReconcileResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (string, error) {
-	resourcePolicy, err := s.createOrPatchVirtualMachineSetResourcePolicy(ctx, clusterCtx)
-	if err != nil {
-		return "", errors.Errorf("failed to create Resource Policy: %+v", err)
+func (s *RPService) ReconcileResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
+	if err := s.createOrPatchVirtualMachineSetResourcePolicy(ctx, clusterCtx); err != nil {
+		return pkgerrors.Errorf("failed to create Resource Policy: %+v", err)
 	}
-	return resourcePolicy.Name, nil
+	return nil
 }
 
-func (s *RPService) newVirtualMachineSetResourcePolicy(clusterCtx *vmware.ClusterContext) *vmoprv1.VirtualMachineSetResourcePolicy {
-	return &vmoprv1.VirtualMachineSetResourcePolicy{
+func (s *RPService) newVirtualMachineSetResourcePolicy(clusterCtx *vmware.ClusterContext) *vmoprvhub.VirtualMachineSetResourcePolicy {
+	return &vmoprvhub.VirtualMachineSetResourcePolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: clusterCtx.Cluster.Namespace,
 			Name:      clusterCtx.Cluster.Name,
@@ -52,39 +54,57 @@ func (s *RPService) newVirtualMachineSetResourcePolicy(clusterCtx *vmware.Cluste
 	}
 }
 
-func (s *RPService) createOrPatchVirtualMachineSetResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) (*vmoprv1.VirtualMachineSetResourcePolicy, error) {
+func (s *RPService) createOrPatchVirtualMachineSetResourcePolicy(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
 	vmResourcePolicy := s.newVirtualMachineSetResourcePolicy(clusterCtx)
 
-	_, err := ctrlutil.CreateOrPatch(ctx, s.Client, vmResourcePolicy, func() error {
-		vmResourcePolicy.Spec = vmoprv1.VirtualMachineSetResourcePolicySpec{
-			ResourcePool: vmoprv1.ResourcePoolSpec{
-				Name: clusterCtx.Cluster.Name,
-			},
-			Folder: clusterCtx.Cluster.Name,
-			ClusterModuleGroups: []string{
-				ControlPlaneVMClusterModuleGroupName,
-				getMachineDeploymentNameForCluster(clusterCtx.Cluster),
-			},
+	vmResourcePolicyExists := true
+	if err := s.Client.Get(ctx, client.ObjectKeyFromObject(vmResourcePolicy), vmResourcePolicy); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
 		}
-		// Ensure that the VirtualMachineSetResourcePolicy is owned by the VSphereCluster
-		if err := ctrlutil.SetOwnerReference(
-			clusterCtx.VSphereCluster,
-			vmResourcePolicy,
-			s.Client.Scheme(),
-		); err != nil {
-			return errors.Wrapf(
-				err,
-				"error setting %s/%s as owner of %s/%s",
-				clusterCtx.VSphereCluster.Namespace,
-				clusterCtx.VSphereCluster.Name,
-				vmResourcePolicy.Namespace,
-				vmResourcePolicy.Name,
-			)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+		vmResourcePolicyExists = false
 	}
-	return vmResourcePolicy, nil
+	originalResourcePolicy := vmResourcePolicy.DeepCopy()
+
+	vmResourcePolicy.Spec = vmoprvhub.VirtualMachineSetResourcePolicySpec{
+		ResourcePool: vmoprvhub.ResourcePoolSpec{
+			Name: clusterCtx.Cluster.Name,
+		},
+		Folder: clusterCtx.Cluster.Name,
+		ClusterModuleGroups: []string{
+			ControlPlaneVMClusterModuleGroupName,
+			getMachineDeploymentNameForCluster(clusterCtx.Cluster),
+		},
+	}
+	// Ensure that the VirtualMachineSetResourcePolicy is owned by the VSphereCluster
+	if err := ctrlutil.SetOwnerReference(
+		clusterCtx.VSphereCluster,
+		vmResourcePolicy,
+		s.Client.Scheme(),
+	); err != nil {
+		return pkgerrors.Wrapf(
+			err,
+			"error setting %s/%s as owner of %s/%s",
+			clusterCtx.VSphereCluster.Namespace,
+			clusterCtx.VSphereCluster.Name,
+			vmResourcePolicy.Namespace,
+			vmResourcePolicy.Name,
+		)
+	}
+
+	if !vmResourcePolicyExists {
+		if err := s.Client.Create(ctx, vmResourcePolicy); err != nil {
+			return err
+		}
+	} else if !reflect.DeepEqual(originalResourcePolicy, vmResourcePolicy) {
+		patch, err := conversionclient.MergeFrom(ctx, s.Client, originalResourcePolicy)
+		if err != nil {
+			return pkgerrors.Wrapf(err, "failed to create patch for VirtualMachineSetResourcePolicy object")
+		}
+		if err := s.Client.Patch(ctx, vmResourcePolicy, patch); err != nil {
+			return pkgerrors.Wrapf(err, "failed to patch VirtualMachineSetResourcePolicy object")
+		}
+	}
+
+	return nil
 }

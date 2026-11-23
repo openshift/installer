@@ -116,7 +116,12 @@ func (resolver *DnsResolver) ValidateUpdate(ctx context.Context, oldResource run
 
 // createValidations validates the creation of the resource
 func (resolver *DnsResolver) createValidations() []func(ctx context.Context, obj *v20220701.DnsResolver) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20220701.DnsResolver) (admission.Warnings, error){resolver.validateResourceReferences, resolver.validateOwnerReference, resolver.validateSecretDestinations, resolver.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20220701.DnsResolver) (admission.Warnings, error){
+		resolver.validateResourceReferences,
+		resolver.validateOwnerReference,
+		resolver.validateSecretDestinations,
+		resolver.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

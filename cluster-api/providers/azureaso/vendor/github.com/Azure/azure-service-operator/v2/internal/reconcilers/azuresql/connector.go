@@ -46,21 +46,24 @@ func getOwnerDetails(ctx context.Context, resourceResolver *resolver.Resolver, u
 		return ownerDetails{}, err
 	}
 
-	if len(hierarchy) != 3 {
-		return ownerDetails{}, eris.Errorf("failed to look up ownerDetails: expected resource hierarchy len=3 but was %d", len(hierarchy))
+	var server *sql.Server
+	var database *sql.ServersDatabase
+	for _, object := range hierarchy {
+		switch object.(type) {
+		case *sql.Server:
+			server = object.(*sql.Server)
+		case *sql.ServersDatabase:
+			database = object.(*sql.ServersDatabase)
+		default:
+		}
 	}
 
-	genericServer := hierarchy[1]
-	genericDatabase := hierarchy[2]
-
-	server, ok := genericServer.(*sql.Server)
-	if !ok {
-		return ownerDetails{}, eris.Errorf("owner's owner was not type Server, instead: %T", genericServer)
+	if server == nil {
+		return ownerDetails{}, eris.New("could not find a value of type Server in the hierarchy")
 	}
 
-	database, ok := genericDatabase.(*sql.ServersDatabase)
-	if !ok {
-		return ownerDetails{}, eris.Errorf("owner was not type ServersDatabase, instead: %T", genericDatabase)
+	if database == nil {
+		return ownerDetails{}, eris.New("could not find a value of type ServersDatabase in the hierarchy")
 	}
 
 	// Assertion to ensure that this is still the storage type

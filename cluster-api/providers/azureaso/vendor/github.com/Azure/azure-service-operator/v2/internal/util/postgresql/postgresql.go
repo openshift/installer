@@ -48,7 +48,8 @@ func CreateUser(ctx context.Context, db *sql.DB, username string, password strin
 		return nil, eris.Wrap(err, "problem found with username")
 	}
 	if err := FindBadChars(password); err != nil {
-		return nil, eris.Wrap(err, "problem found with password")
+		// Don't wrap the original error as it contains the information about the raw password (character and index)
+		return nil, fmt.Errorf("problem found with password: potentially dangerous character sequence found")
 	}
 	_, err := db.ExecContext(ctx, fmt.Sprintf("CREATE USER \"%s\" WITH PASSWORD '%s'", username, password))
 	if err != nil {
@@ -61,7 +62,8 @@ func UpdateUser(ctx context.Context, db *sql.DB, user SQLUser, password string) 
 	// make an effort to prevent sql injection
 	// TODO find better solution to check password for SQL Injection
 	if err := FindBadChars(password); err != nil {
-		return eris.Wrap(err, "problem found with password")
+		// Don't wrap the original error as it contains the information about the raw password (character and index)
+		return fmt.Errorf("problem found with password: potentially dangerous character sequence found")
 	}
 	_, err := db.ExecContext(ctx, fmt.Sprintf("ALTER USER \"%s\" WITH PASSWORD '%s'", user.Name, password))
 	if err != nil {

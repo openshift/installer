@@ -17,37 +17,55 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
+	"k8s.io/klog/v2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
+	conditions "sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/services/compute"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/services/networking"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
 	controllers "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/controllers"
 )
 
-const imagePropertyForOS = "os_type"
+const (
+	imagePropertyForOS = "os_type"
+
+	// annotationAllowedAddressPairs tracks the last-applied allowedAddressPairs per
+	// OpenStackMachine (stored as JSON). Written as a metadata annotation so we never
+	// touch the immutable OSM spec, which would trigger the spec-immutability webhook.
+	annotationAllowedAddressPairs = "infrastructure.cluster.x-k8s.io/osmt-allowed-address-pairs"
+)
 
 // Set here so we can easily mock it in tests.
-var newComputeService = compute.NewService
+var (
+	newComputeService    = compute.NewService
+	newNetworkingService = networking.NewService
+)
 
 // OpenStackMachineTemplateReconciler reconciles a OpenStackMachineTemplate object.
 // it only updates the .status field to allow auto-scaling.
 type OpenStackMachineTemplateReconciler struct {
 	Client           client.Client
-	Recorder         record.EventRecorder
+	Recorder         events.EventRecorder
 	WatchFilterValue string
 	ScopeFactory     scope.Factory
 	CaCertificates   []byte // PEM encoded ca certificates.
@@ -55,6 +73,10 @@ type OpenStackMachineTemplateReconciler struct {
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackmachinetemplates,verbs=get;list;watch
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackmachinetemplates/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackmachines,verbs=get;list;watch;patch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=openstackservers,verbs=get;list;watch
+// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinesets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines,verbs=get;list;watch
 
 func (r *OpenStackMachineTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx)
@@ -69,8 +91,8 @@ func (r *OpenStackMachineTemplateReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	log = log.WithValues("openStackMachineTemplate", openStackMachineTemplate.Name)
-	log.V(4).Info("Reconciling openStackMachineTemplate")
+	log = log.WithValues("OpenStackMachineTemplate", klog.KObj(openStackMachineTemplate))
+	log.V(4).Info("Reconciling OpenStackMachineTemplate")
 
 	// If OSMT is set for deletion, do nothing
 	if !openStackMachineTemplate.DeletionTimestamp.IsZero() {
@@ -84,11 +106,11 @@ func (r *OpenStackMachineTemplateReconciler) Reconcile(ctx context.Context, req 
 	// are patched by the CC and thus not valid.
 	cluster, err := util.GetOwnerCluster(ctx, r.Client, openStackMachineTemplate.ObjectMeta)
 	if err != nil || cluster == nil {
-		log.Info("openStackMachineTemplate is missing owner cluster or cluster does not exist")
+		log.Info("OpenStackMachineTemplate is missing owner Cluster or Cluster does not exist")
 		return ctrl.Result{}, nil
 	}
 
-	log = log.WithValues("cluster", cluster.Name)
+	log = log.WithValues("Cluster", klog.KObj(cluster))
 
 	if annotations.IsPaused(cluster, openStackMachineTemplate) {
 		log.Info("OpenStackMachineTemplate or linked Cluster is marked as paused. Won't reconcile")
@@ -100,17 +122,11 @@ func (r *OpenStackMachineTemplateReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, errors.New("error getting infra provider cluster")
 	}
 	if infraCluster == nil {
-		log.Info("OpenStackCluster not ready", "name", cluster.Spec.InfrastructureRef.Name)
+		log.Info("OpenStackCluster is not ready", "OpenStackCluster", klog.KRef(cluster.Namespace, cluster.Spec.InfrastructureRef.Name))
 		return ctrl.Result{}, nil
 	}
 
-	log = log.WithValues("openStackCluster", infraCluster.Name)
-
-	clientScope, err := r.ScopeFactory.NewClientScopeFromObject(ctx, r.Client, r.CaCertificates, log, openStackMachineTemplate, infraCluster)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	scope := scope.NewWithLogger(clientScope, log)
+	log = log.WithValues("OpenStackCluster", klog.KObj(infraCluster))
 
 	// Initialize the patch helper
 	patchHelper, err := patch.NewHelper(openStackMachineTemplate, r.Client)
@@ -127,15 +143,32 @@ func (r *OpenStackMachineTemplateReconciler) Reconcile(ctx context.Context, req 
 		}
 	}()
 
+	clientScope, err := r.ScopeFactory.NewClientScopeFromObject(ctx, r.Client, r.CaCertificates, log, openStackMachineTemplate, infraCluster)
+	if err != nil {
+		conditions.Set(openStackMachineTemplate, metav1.Condition{
+			Type:    infrav1.OpenStackAuthenticationSucceeded,
+			Status:  metav1.ConditionFalse,
+			Reason:  infrav1.OpenStackAuthenticationFailedReason,
+			Message: fmt.Sprintf("Failed to create OpenStack client scope: %v", err),
+		})
+		return ctrl.Result{}, err
+	}
+	conditions.Set(openStackMachineTemplate, metav1.Condition{
+		Type:   infrav1.OpenStackAuthenticationSucceeded,
+		Status: metav1.ConditionTrue,
+		Reason: infrav1.ReadyConditionReason,
+	})
+	scope := scope.NewWithLogger(clientScope, log)
+
 	// Handle non-deleted OpenStackMachineTemplates
-	if err := r.reconcileNormal(ctx, scope, openStackMachineTemplate); err != nil {
+	if err := r.reconcileNormal(ctx, scope, cluster.Name, openStackMachineTemplate); err != nil {
 		return ctrl.Result{}, err
 	}
 	log.V(4).Info("Successfully reconciled OpenStackMachineTemplate")
 	return ctrl.Result{}, nil
 }
 
-func (r *OpenStackMachineTemplateReconciler) reconcileNormal(ctx context.Context, scope *scope.WithLogger, openStackMachineTemplate *infrav1.OpenStackMachineTemplate) (reterr error) {
+func (r *OpenStackMachineTemplateReconciler) reconcileNormal(ctx context.Context, scope *scope.WithLogger, clusterName string, openStackMachineTemplate *infrav1.OpenStackMachineTemplate) (reterr error) {
 	log := scope.Logger()
 
 	computeService, err := newComputeService(scope)
@@ -143,7 +176,7 @@ func (r *OpenStackMachineTemplateReconciler) reconcileNormal(ctx context.Context
 		return err
 	}
 
-	flavorID, err := computeService.GetFlavorID(openStackMachineTemplate.Spec.Template.Spec.FlavorID, openStackMachineTemplate.Spec.Template.Spec.Flavor)
+	flavorID, err := computeService.GetFlavorID(openStackMachineTemplate.Spec.Template.Spec.Flavor)
 	if err != nil {
 		return err
 	}
@@ -187,9 +220,18 @@ func (r *OpenStackMachineTemplateReconciler) reconcileNormal(ctx context.Context
 		openStackMachineTemplate.Status.Capacity[corev1.ResourceStorage] = *resource.NewQuantity(storageBytes, resource.BinarySI)
 	}
 
+	// reconcileAllowedAddressPairs is called independently of the image/flavor logic so that
+	// it is never skipped by an early return (e.g. when imageID is not yet resolvable).
+	if err := r.reconcileAllowedAddressPairs(ctx, scope, clusterName, openStackMachineTemplate); err != nil {
+		return err
+	}
+
 	imageID, err := computeService.GetImageID(ctx, r.Client, openStackMachineTemplate.Namespace, openStackMachineTemplate.Spec.Template.Spec.Image)
 	if err != nil {
 		return err
+	}
+	if imageID == nil {
+		return nil
 	}
 
 	image, err := computeService.GetImageDetails(*imageID)
@@ -208,6 +250,160 @@ func (r *OpenStackMachineTemplateReconciler) reconcileNormal(ctx context.Context
 	}
 
 	return nil
+}
+
+// reconcileAllowedAddressPairs updates the allowedAddressPairs on existing Neutron ports
+// to match what is defined in the OpenStackMachineTemplate.
+// Idempotency is tracked via an annotation on each OpenStackMachine so that only a
+// metadata-only patch is needed — this avoids touching the immutable OSM spec.
+func (r *OpenStackMachineTemplateReconciler) reconcileAllowedAddressPairs(ctx context.Context, scope *scope.WithLogger, clusterName string, openStackMachineTemplate *infrav1.OpenStackMachineTemplate) error {
+	log := scope.Logger()
+
+	if len(openStackMachineTemplate.Spec.Template.Spec.Ports) == 0 || clusterName == "" {
+		return nil
+	}
+
+	// Build the desired state as JSON for idempotency comparison.
+	type portPairs = []infrav1.AddressPair
+	templatePorts := openStackMachineTemplate.Spec.Template.Spec.Ports
+	desired := make([]portPairs, len(templatePorts))
+	for i, p := range templatePorts {
+		desired[i] = p.AllowedAddressPairs
+	}
+	desiredJSON, err := json.Marshal(desired)
+	if err != nil {
+		return err
+	}
+	desiredStr := string(desiredJSON)
+
+	// List MachineSets in the namespace for this cluster.
+	machineSetList := &clusterv1.MachineSetList{}
+	if err := r.Client.List(ctx, machineSetList,
+		client.InNamespace(openStackMachineTemplate.Namespace),
+		client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
+	); err != nil {
+		return err
+	}
+
+	// List Machines in the namespace for this cluster.
+	machineList := &clusterv1.MachineList{}
+	if err := r.Client.List(ctx, machineList,
+		client.InNamespace(openStackMachineTemplate.Namespace),
+		client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName},
+	); err != nil {
+		return err
+	}
+
+	// Networking service is initialised lazily on first actual port update.
+	var networkingService *networking.Service
+
+	for i := range machineSetList.Items {
+		ms := &machineSetList.Items[i]
+		if ms.Spec.Template.Spec.InfrastructureRef.Name != openStackMachineTemplate.Name {
+			continue
+		}
+
+		for j := range machineList.Items {
+			machine := &machineList.Items[j]
+			if !isOwnedByMachineSet(machine, ms) {
+				continue
+			}
+			infraName := machine.Spec.InfrastructureRef.Name
+			if infraName == "" {
+				continue
+			}
+
+			osm := &infrav1.OpenStackMachine{}
+			if err := r.Client.Get(ctx, client.ObjectKey{
+				Namespace: openStackMachineTemplate.Namespace,
+				Name:      infraName,
+			}, osm); err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				return err
+			}
+
+			// Skip if annotation already reflects the desired state.
+			if osm.Annotations[annotationAllowedAddressPairs] == desiredStr {
+				continue
+			}
+
+			// Port IDs are stored in the OpenStackServer status (same name as the OSM).
+			openStackServer := &infrav1alpha1.OpenStackServer{}
+			if err := r.Client.Get(ctx, client.ObjectKey{
+				Namespace: openStackMachineTemplate.Namespace,
+				Name:      infraName,
+			}, openStackServer); err != nil {
+				if apierrors.IsNotFound(err) {
+					continue
+				}
+				return err
+			}
+
+			if openStackServer.Status.Resources == nil || len(openStackServer.Status.Resources.Ports) == 0 {
+				continue
+			}
+
+			if networkingService == nil {
+				networkingService, err = newNetworkingService(scope)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Previously-applied pairs per port; a missing/invalid annotation means none.
+			var applied []portPairs
+			_ = json.Unmarshal([]byte(osm.Annotations[annotationAllowedAddressPairs]), &applied)
+
+			for portIdx, portStatus := range openStackServer.Status.Resources.Ports {
+				if portIdx >= len(templatePorts) {
+					break
+				}
+				pairs := templatePorts[portIdx].AllowedAddressPairs
+
+				// Skip no-op updates: even an empty PUT is policy-checked by Neutron
+				// and returns 403 on networks the project doesn't own.
+				var prev portPairs
+				if portIdx < len(applied) {
+					prev = applied[portIdx]
+				}
+				if len(prev) == 0 && len(pairs) == 0 {
+					continue
+				}
+
+				log.Info("Updating spec.template.spec.ports[*].allowedAddressPairs on Neutron port",
+					"OpenStackMachine", klog.KObj(osm), "portID", portStatus.ID, "portIndex", portIdx)
+				if err := networkingService.UpdateAllowedAddressPairs(portStatus.ID, pairs); err != nil {
+					log.Error(err, "Failed to update spec.template.spec.ports[*].allowedAddressPairs",
+						"OpenStackMachine", klog.KObj(osm), "portID", portStatus.ID)
+					return err
+				}
+			}
+
+			// Record the applied state in an annotation (metadata-only patch).
+			osmCopy := osm.DeepCopy()
+			if osm.Annotations == nil {
+				osm.Annotations = map[string]string{}
+			}
+			osm.Annotations[annotationAllowedAddressPairs] = desiredStr
+			if err := r.Client.Patch(ctx, osm, client.MergeFrom(osmCopy)); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// isOwnedByMachineSet returns true if the Machine has an owner reference pointing to ms.
+func isOwnedByMachineSet(machine *clusterv1.Machine, ms *clusterv1.MachineSet) bool {
+	for _, ref := range machine.OwnerReferences {
+		if ref.Kind == "MachineSet" && ref.Name == ms.Name {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *OpenStackMachineTemplateReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {

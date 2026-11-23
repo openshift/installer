@@ -43,6 +43,13 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	// validate OSImage — must be a COS URL from which bucket, object and region can be derived
+	if p.OSImage != "" {
+		if _, _, _, err := powervs.ParseOSImageURL(p.OSImage); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("osImage"), p.OSImage, err.Error()))
+		}
+	}
+
 	// validate ServiceInstanceGUID
 	if p.ServiceInstanceGUID != "" {
 		_, err := uuid.Parse(p.ServiceInstanceGUID)
@@ -52,6 +59,18 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 	}
 	if p.ServiceEndpoints != nil {
 		allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
+	}
+
+	// validate NetworkType
+	switch p.NetworkType {
+	case "", powervs.NetworkTypeDHCPSubnet, powervs.NetworkTypeDHCPServer:
+		// valid values (empty string treated as DHCPSubnet)
+	default:
+		allErrs = append(allErrs, field.NotSupported(
+			fldPath.Child("networkType"),
+			p.NetworkType,
+			[]string{string(powervs.NetworkTypeDHCPSubnet), string(powervs.NetworkTypeDHCPServer)},
+		))
 	}
 
 	return allErrs

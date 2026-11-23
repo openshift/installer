@@ -130,6 +130,14 @@ func Xfdf(raw []byte, _ uint32) bool {
 	return xml(raw, xmlSig{[]byte("<xfdf"), []byte(`xmlns="http://ns.adobe.com/xfdf/"`)})
 }
 
+// CDXXML matches a CycloneDX XML BOM file.
+// https://cyclonedx.org/docs/1.7/xml/
+func CDXXML(raw []byte, _ uint32) bool {
+	// xmlns is missing the version suffix because there are too many past versions
+	// and probably future versions to come.
+	return xml(raw, xmlSig{[]byte("<bom"), []byte(`xmlns="http://cyclonedx.org/schema/bom/`)})
+}
+
 // VCard matches a Virtual Contact File.
 func VCard(raw []byte, _ uint32) bool {
 	return ciPrefix(raw, []byte("BEGIN:VCARD\n"), []byte("BEGIN:VCARD\r\n"))
@@ -139,6 +147,14 @@ func VCard(raw []byte, _ uint32) bool {
 func ICalendar(raw []byte, _ uint32) bool {
 	return ciPrefix(raw, []byte("BEGIN:VCALENDAR\n"), []byte("BEGIN:VCALENDAR\r\n"))
 }
+
+const (
+	snone  = 0
+	scws   = scan.CompactWS
+	sfw    = scan.FullWord
+	scwsfw = scan.CompactWS | scan.FullWord
+)
+
 func phpPageF(raw []byte, _ uint32) bool {
 	return ciPrefix(raw,
 		[]byte("<?PHP"),
@@ -149,66 +165,61 @@ func phpPageF(raw []byte, _ uint32) bool {
 }
 func phpScriptF(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS,
-		[]byte("/usr/local/bin/php"),
-		[]byte("/usr/bin/php"),
-		[]byte("/usr/bin/env php"),
-		[]byte("/usr/bin/env -S php"),
+		shebangSig{[]byte("/usr/local/bin/php"), snone},
+		shebangSig{[]byte("/usr/bin/php"), snone},
+		shebangSig{[]byte("/usr/bin/env php"), scws},
+		shebangSig{[]byte("/usr/bin/env -S php"), scws},
 	)
 }
 
 // Js matches a Javascript file.
 func Js(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS,
-		[]byte("/bin/node"),
-		[]byte("/usr/bin/node"),
-		[]byte("/bin/nodejs"),
-		[]byte("/usr/bin/nodejs"),
-		[]byte("/usr/bin/env node"),
-		[]byte("/usr/bin/env -S node"),
-		[]byte("/usr/bin/env nodejs"),
-		[]byte("/usr/bin/env -S nodejs"),
+		shebangSig{[]byte("/bin/node"), snone},
+		shebangSig{[]byte("/usr/bin/node"), snone},
+		shebangSig{[]byte("/bin/nodejs"), snone},
+		shebangSig{[]byte("/usr/bin/nodejs"), snone},
+		shebangSig{[]byte("/usr/bin/env node"), scws},
+		shebangSig{[]byte("/usr/bin/env -S node"), scws},
+		shebangSig{[]byte("/usr/bin/env nodejs"), scws},
+		shebangSig{[]byte("/usr/bin/env -S nodejs"), scws},
 	)
 }
 
 // Lua matches a Lua programming language file.
 func Lua(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS|scan.FullWord,
-		[]byte("/usr/bin/lua"),
-		[]byte("/usr/local/bin/lua"),
-		[]byte("/usr/bin/env lua"),
-		[]byte("/usr/bin/env -S lua"),
+		shebangSig{[]byte("/usr/bin/lua"), sfw},
+		shebangSig{[]byte("/usr/local/bin/lua"), sfw},
+		shebangSig{[]byte("/usr/bin/env lua"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S lua"), scwsfw},
 	)
 }
 
 // Perl matches a Perl programming language file.
 func Perl(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS|scan.FullWord,
-		[]byte("/usr/bin/perl"),
-		[]byte("/usr/bin/env perl"),
-		[]byte("/usr/bin/env -S perl"),
+		shebangSig{[]byte("/usr/bin/perl"), sfw},
+		shebangSig{[]byte("/usr/bin/env perl"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S perl"), scwsfw},
 	)
 }
 
 // Python matches a Python programming language file.
 func Python(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS,
-		[]byte("/usr/bin/python"),
-		[]byte("/usr/local/bin/python"),
-		[]byte("/usr/bin/env python"),
-		[]byte("/usr/bin/env -S python"),
-		[]byte("/usr/bin/python2"),
-		[]byte("/usr/local/bin/python2"),
-		[]byte("/usr/bin/env python2"),
-		[]byte("/usr/bin/env -S python2"),
-		[]byte("/usr/bin/python3"),
-		[]byte("/usr/local/bin/python3"),
-		[]byte("/usr/bin/env python3"),
-		[]byte("/usr/bin/env -S python3"),
+		shebangSig{[]byte("/usr/bin/python"), snone},
+		shebangSig{[]byte("/usr/local/bin/python"), snone},
+		shebangSig{[]byte("/usr/bin/env python"), scws},
+		shebangSig{[]byte("/usr/bin/env -S python"), scws},
+		shebangSig{[]byte("/usr/bin/python2"), snone},
+		shebangSig{[]byte("/usr/local/bin/python2"), snone},
+		shebangSig{[]byte("/usr/bin/env python2"), scws},
+		shebangSig{[]byte("/usr/bin/env -S python2"), scws},
+		shebangSig{[]byte("/usr/bin/python3"), snone},
+		shebangSig{[]byte("/usr/local/bin/python3"), snone},
+		shebangSig{[]byte("/usr/bin/env python3"), scws},
+		shebangSig{[]byte("/usr/bin/env -S python3"), scws},
 	)
 
 }
@@ -216,30 +227,28 @@ func Python(raw []byte, _ uint32) bool {
 // Ruby matches a Ruby programming language file.
 func Ruby(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS,
-		[]byte("/usr/bin/ruby"),
-		[]byte("/usr/local/bin/ruby"),
-		[]byte("/usr/bin/env ruby"),
-		[]byte("/usr/bin/env -S ruby"),
+		shebangSig{[]byte("/usr/bin/ruby"), snone},
+		shebangSig{[]byte("/usr/local/bin/ruby"), snone},
+		shebangSig{[]byte("/usr/bin/env ruby"), scws},
+		shebangSig{[]byte("/usr/bin/env -S ruby"), scws},
 	)
 }
 
 // Tcl matches a Tcl programming language file.
 func Tcl(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS,
-		[]byte("/usr/bin/tcl"),
-		[]byte("/usr/local/bin/tcl"),
-		[]byte("/usr/bin/env tcl"),
-		[]byte("/usr/bin/env -S tcl"),
-		[]byte("/usr/bin/tclsh"),
-		[]byte("/usr/local/bin/tclsh"),
-		[]byte("/usr/bin/env tclsh"),
-		[]byte("/usr/bin/env -S tclsh"),
-		[]byte("/usr/bin/wish"),
-		[]byte("/usr/local/bin/wish"),
-		[]byte("/usr/bin/env wish"),
-		[]byte("/usr/bin/env -S wish"),
+		shebangSig{[]byte("/usr/bin/tcl"), snone},
+		shebangSig{[]byte("/usr/local/bin/tcl"), snone},
+		shebangSig{[]byte("/usr/bin/env tcl"), scws},
+		shebangSig{[]byte("/usr/bin/env -S tcl"), scws},
+		shebangSig{[]byte("/usr/bin/tclsh"), snone},
+		shebangSig{[]byte("/usr/local/bin/tclsh"), snone},
+		shebangSig{[]byte("/usr/bin/env tclsh"), scws},
+		shebangSig{[]byte("/usr/bin/env -S tclsh"), scws},
+		shebangSig{[]byte("/usr/bin/wish"), snone},
+		shebangSig{[]byte("/usr/local/bin/wish"), snone},
+		shebangSig{[]byte("/usr/bin/env wish"), scws},
+		shebangSig{[]byte("/usr/bin/env -S wish"), scws},
 	)
 }
 
@@ -251,39 +260,38 @@ func Rtf(raw []byte, _ uint32) bool {
 // Shell matches a shell script file.
 func Shell(raw []byte, _ uint32) bool {
 	return shebang(raw,
-		scan.CompactWS|scan.FullWord,
-		[]byte("/bin/sh"),
-		[]byte("/bin/bash"),
-		[]byte("/usr/local/bin/bash"),
-		[]byte("/usr/bin/env bash"),
-		[]byte("/usr/bin/env -S bash"),
-		[]byte("/bin/csh"),
-		[]byte("/usr/local/bin/csh"),
-		[]byte("/usr/bin/env csh"),
-		[]byte("/usr/bin/env -S csh"),
-		[]byte("/bin/dash"),
-		[]byte("/usr/local/bin/dash"),
-		[]byte("/usr/bin/env dash"),
-		[]byte("/usr/bin/env -S dash"),
-		[]byte("/bin/ksh"),
-		[]byte("/usr/local/bin/ksh"),
-		[]byte("/usr/bin/env ksh"),
-		[]byte("/usr/bin/env -S ksh"),
-		[]byte("/bin/tcsh"),
-		[]byte("/usr/local/bin/tcsh"),
-		[]byte("/usr/bin/env tcsh"),
-		[]byte("/usr/bin/env -S tcsh"),
-		[]byte("/bin/zsh"),
-		[]byte("/usr/local/bin/zsh"),
-		[]byte("/usr/bin/env zsh"),
-		[]byte("/usr/bin/env -S zsh"),
+		shebangSig{[]byte("/bin/sh"), sfw},
+		shebangSig{[]byte("/bin/bash"), sfw},
+		shebangSig{[]byte("/usr/local/bin/bash"), sfw},
+		shebangSig{[]byte("/usr/bin/env bash"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S bash"), scwsfw},
+		shebangSig{[]byte("/bin/csh"), sfw},
+		shebangSig{[]byte("/usr/local/bin/csh"), sfw},
+		shebangSig{[]byte("/usr/bin/env csh"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S csh"), scwsfw},
+		shebangSig{[]byte("/bin/dash"), sfw},
+		shebangSig{[]byte("/usr/local/bin/dash"), sfw},
+		shebangSig{[]byte("/usr/bin/env dash"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S dash"), scwsfw},
+		shebangSig{[]byte("/bin/ksh"), sfw},
+		shebangSig{[]byte("/usr/local/bin/ksh"), sfw},
+		shebangSig{[]byte("/usr/bin/env ksh"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S ksh"), scwsfw},
+		shebangSig{[]byte("/bin/tcsh"), sfw},
+		shebangSig{[]byte("/usr/local/bin/tcsh"), sfw},
+		shebangSig{[]byte("/usr/bin/env tcsh"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S tcsh"), scwsfw},
+		shebangSig{[]byte("/bin/zsh"), sfw},
+		shebangSig{[]byte("/usr/local/bin/zsh"), sfw},
+		shebangSig{[]byte("/usr/bin/env zsh"), scwsfw},
+		shebangSig{[]byte("/usr/bin/env -S zsh"), scwsfw},
 	)
 }
 
 // Text matches a plain text file.
 //
 // TODO: This function does not parse BOM-less UTF16 and UTF32 files. Not really
-// sure it should. Linux file utility also requires a BOM for UTF16 and UTF32.
+// sure it should. libmagic also requires a BOM for UTF16 and UTF32.
 func Text(raw []byte, _ uint32) bool {
 	// First look for BOM.
 	if cset := charset.FromBOM(raw); cset != "" {
@@ -352,13 +360,29 @@ func GLTF(raw []byte, limit uint32) bool {
 	return jsonHelper(raw, limit, json.QueryGLTF, json.TokObject)
 }
 
-func jsonHelper(raw []byte, limit uint32, q string, wantTok int) bool {
-	if !json.LooksLikeObjectOrArray(raw) {
+// CDXJSON matches a CycloneDX JSON BOM file.
+// https://cyclonedx.org/docs/1.7/json/
+func CDXJSON(raw []byte, limit uint32) bool {
+	return jsonHelper(raw, limit, json.QueryCDX, json.TokObject)
+}
+
+// jsonHelper parses raw and tries to match the q query against it. wantToks
+// ensures we're not wasting time parsing an input that would not pass anyway,
+// ex: the input is a valid JSON array, but we're looking for a JSON object.
+func jsonHelper(raw scan.Bytes, limit uint32, q string, wantToks ...int) bool {
+	firstNonWS := raw.FirstNonWS()
+
+	hasTargetTok := false
+	for _, t := range wantToks {
+		hasTargetTok = hasTargetTok || (t&json.TokArray > 0 && firstNonWS == '[')
+		hasTargetTok = hasTargetTok || (t&json.TokObject > 0 && firstNonWS == '{')
+	}
+	if !hasTargetTok {
 		return false
 	}
 	lraw := len(raw)
-	parsed, inspected, firstToken, querySatisfied := json.Parse(q, raw)
-	if !querySatisfied || firstToken&wantTok == 0 {
+	parsed, inspected, _, querySatisfied := json.Parse(q, raw)
+	if !querySatisfied {
 		return false
 	}
 
@@ -369,7 +393,7 @@ func jsonHelper(raw []byte, limit uint32, q string, wantTok int) bool {
 
 	// If a section of the file was provided, check if all of it was inspected.
 	// In other words, check that if there was a problem parsing, that problem
-	// occured at the last byte in the input.
+	// occurred after the last byte in the input.
 	return inspected == lraw && lraw > 0
 }
 
@@ -380,12 +404,19 @@ func NdJSON(raw []byte, limit uint32) bool {
 	lCount, objOrArr := 0, 0
 
 	s := scan.Bytes(raw)
-	s.DropLastLine(limit)
 	var l scan.Bytes
 	for len(s) != 0 {
 		l = s.Line()
-		_, inspected, firstToken, _ := json.Parse(json.QueryNone, l)
-		if len(l) != inspected {
+		parsed, inspected, firstToken, _ := json.Parse(json.QueryNone, l)
+		// Only the last line may be truncated by the read limit; for it, it is
+		// enough that the parser inspected all of it. Every other line must be a
+		// complete, valid JSON document, otherwise a single JSON document spread
+		// over multiple lines would be mistaken for NDJSON. #803
+		if len(s) == 0 {
+			if inspected != len(l) {
+				return false
+			}
+		} else if parsed != len(l) {
 			return false
 		}
 		if firstToken == json.TokArray || firstToken == json.TokObject {
@@ -535,4 +566,101 @@ func Vtt(raw []byte, limit uint32) bool {
 	// Exact match.
 	return bytes.Equal(raw, []byte{0xEF, 0xBB, 0xBF, 0x57, 0x45, 0x42, 0x56, 0x54, 0x54}) || // UTF-8 BOM and "WEBVTT"
 		bytes.Equal(raw, []byte{0x57, 0x45, 0x42, 0x56, 0x54, 0x54}) // "WEBVTT"
+}
+
+type rfc822Hint struct {
+	h          []byte
+	matchFlags scan.Flags
+}
+
+// The hints come from libmagic, but the implementation is bit different. libmagic
+// only checks if the file starts with the hint, while we additionally look for
+// a secondary hint in the first few lines of input.
+func RFC822(raw []byte, limit uint32) bool {
+	b := scan.Bytes(raw)
+
+	// Keep hints here to avoid instantiating them several times in lineHasRFC822Hint.
+	// The alternative is to make them a package level var, but then they'd go
+	// on the heap.
+	// Some of the hints are IgnoreCase, some not. I selected based on what libmagic
+	// does and based on personal observations from sample files.
+	hints := []rfc822Hint{
+		// Enron dataset has Message-ID, Message-Id and Message-id.
+		{[]byte("Message-ID: "), scan.IgnoreCase},
+		{[]byte("From: "), 0},
+		{[]byte("To: "), 0},
+		{[]byte("CC: "), scan.IgnoreCase},
+		{[]byte("Date: "), 0},
+		{[]byte("Subject: "), 0},
+		{[]byte("Received: "), 0},
+		{[]byte("Relay-Version: "), 0},
+		{[]byte("#! rnews"), 0},
+		{[]byte("N#! rnews"), 0},
+		{[]byte("Forward to"), 0},
+		{[]byte("Pipe to"), 0},
+		{[]byte("DELIVERED-TO: "), scan.IgnoreCase},
+		{[]byte("RETURN-PATH: "), scan.IgnoreCase},
+		{[]byte("Content-Type: "), 0},
+		{[]byte("Content-Transfer-Encoding: "), 0},
+	}
+	if !lineHasRFC822Hint(b.Line(), hints) {
+		return false
+	}
+	for i := 0; i < 20; i++ {
+		if lineHasRFC822Hint(b.Line(), hints) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func lineHasRFC822Hint(b scan.Bytes, hints []rfc822Hint) bool {
+	for _, h := range hints {
+		if b.Match(h.h, h.matchFlags) > -1 {
+			return true
+		}
+	}
+	return false
+}
+
+func GEDCOM(raw []byte, limit uint32) bool {
+	// Skip if empty
+	if len(raw) == 0 {
+		return false
+	}
+
+	// GEDCOM header fits within first 4KB
+	searchLimit := min(len(raw), 4096)
+	raw = raw[:searchLimit]
+
+	b := scan.Bytes(raw)
+
+	// Skip BOM if present: UTF-8, UTF-16BE, UTF-16LE
+	for _, bom := range [][]byte{
+		{0xEF, 0xBB, 0xBF}, // UTF-8
+		{0xFE, 0xFF},       // UTF-16BE
+		{0xFF, 0xFE},       // UTF-16LE
+	} {
+		if bytes.HasPrefix(b, bom) {
+			b.Advance(len(bom))
+			break // Only one BOM can exist at the start
+		}
+	}
+
+	b.TrimLWS()
+
+	firstLine := b.Line()
+	if !bytes.Equal(firstLine, []byte("0 HEAD")) {
+		return false
+	}
+
+	// "1 GEDC" is mandatory in the header
+	for i := 0; i < 10; i++ {
+		line := b.Line()
+		if bytes.Equal(line, []byte("1 GEDC")) {
+			return true
+		}
+	}
+	return false
 }

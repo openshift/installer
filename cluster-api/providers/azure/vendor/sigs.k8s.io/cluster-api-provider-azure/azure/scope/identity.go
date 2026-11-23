@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -92,15 +93,33 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 
 	tracingProvider := azotel.NewTracingProvider(otel.GetTracerProvider(), nil)
 
+	// Every credential type must target the resolved Azure environment (ARM
+	// endpoint, token audience, and AAD authority). For air-gapped clouds such as
+	// USSec (IL6) these values are discovered at runtime and AAD instance
+	// discovery must be disabled, because the public login.microsoftonline.com
+	// metadata endpoint used to validate the authority is unreachable.
+	clientOpts := azcore.ClientOptions{
+		TracingProvider: tracingProvider,
+		Cloud: cloud.Configuration{
+			ActiveDirectoryAuthorityHost: activeDirectoryEndpoint,
+			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+				cloud.ResourceManager: {
+					Audience: tokenAudience,
+					Endpoint: resourceManagerEndpoint,
+				},
+			},
+		},
+	}
+	disableInstanceDiscovery := azure.ShouldDisableInstanceDiscovery(activeDirectoryEndpoint)
+
 	switch p.Identity.Spec.Type {
 	case infrav1.WorkloadIdentity:
 		cred, authErr = p.cache.GetOrStoreWorkloadIdentity(&azidentity.WorkloadIdentityCredentialOptions{
-			ClientOptions: azcore.ClientOptions{
-				TracingProvider: tracingProvider,
-			},
-			TenantID:      p.Identity.Spec.TenantID,
-			ClientID:      p.Identity.Spec.ClientID,
-			TokenFilePath: GetProjectedTokenPath(),
+			ClientOptions:            clientOpts,
+			DisableInstanceDiscovery: disableInstanceDiscovery,
+			TenantID:                 p.Identity.Spec.TenantID,
+			ClientID:                 p.Identity.Spec.ClientID,
+			TokenFilePath:            GetProjectedTokenPath(),
 		})
 
 	case infrav1.ManualServicePrincipal:
@@ -112,18 +131,8 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 			return nil, errors.Wrap(err, "failed to get client secret")
 		}
 		options := azidentity.ClientSecretCredentialOptions{
-			ClientOptions: azcore.ClientOptions{
-				TracingProvider: tracingProvider,
-				Cloud: cloud.Configuration{
-					ActiveDirectoryAuthorityHost: activeDirectoryEndpoint,
-					Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
-						cloud.ResourceManager: {
-							Audience: tokenAudience,
-							Endpoint: resourceManagerEndpoint,
-						},
-					},
-				},
-			},
+			ClientOptions:            clientOpts,
+			DisableInstanceDiscovery: disableInstanceDiscovery,
 		}
 		cred, authErr = p.cache.GetOrStoreClientSecret(p.GetTenantID(), p.Identity.Spec.ClientID, clientSecret, &options)
 
@@ -143,9 +152,8 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 			certsContent = []byte(clientSecret)
 		}
 		cred, authErr = p.cache.GetOrStoreClientCert(p.GetTenantID(), p.Identity.Spec.ClientID, certsContent, nil, &azidentity.ClientCertificateCredentialOptions{
-			ClientOptions: azcore.ClientOptions{
-				TracingProvider: tracingProvider,
-			},
+			ClientOptions:            clientOpts,
+			DisableInstanceDiscovery: disableInstanceDiscovery,
 		})
 
 	case infrav1.UserAssignedMSI:
@@ -158,7 +166,10 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 		cred, authErr = p.cache.GetOrStoreManagedIdentity(&options)
 
 	case infrav1.UserAssignedIdentityCredential:
-		cloudType := parseCloudType(p.Identity.Spec.UserAssignedIdentityCredentialsCloudType)
+		cloudType, err := parseCloudType(p.Identity.Spec.UserAssignedIdentityCredentialsCloudType)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse cloud type")
+		}
 		clientOptions := azcore.ClientOptions{
 			TracingProvider: tracingProvider,
 			Cloud:           cloudType,
@@ -238,10 +249,8 @@ func IsClusterNamespaceAllowed(ctx context.Context, k8sClient client.Client, all
 		return true
 	}
 
-	for _, v := range allowedNamespaces.NamespaceList {
-		if v == namespace {
-			return true
-		}
+	if slices.Contains(allowedNamespaces.NamespaceList, namespace) {
+		return true
 	}
 
 	// Check if clusterNamespace is in the namespaces selected by the identity's allowedNamespaces selector.
@@ -269,16 +278,24 @@ func IsClusterNamespaceAllowed(ctx context.Context, k8sClient client.Client, all
 	return false
 }
 
-func parseCloudType(cloudType string) cloud.Configuration {
+func parseCloudType(cloudType string) (cloud.Configuration, error) {
 	cloudType = strings.ToUpper(cloudType)
 	switch cloudType {
 	case "PUBLIC":
-		return cloud.AzurePublic
+		return cloud.AzurePublic, nil
 	case "CHINA":
-		return cloud.AzureChina
+		return cloud.AzureChina, nil
 	case "USGOVERNMENT":
-		return cloud.AzureGovernment
+		return cloud.AzureGovernment, nil
+	case "USSEC": //nolint:goconst
+		env, err := loadCloudEnvironmentFromFile()
+		if err != nil {
+			return cloud.Configuration{}, errors.Wrap(err, "failed to load cloud environment for USSec")
+		}
+		return cloud.Configuration{
+			ActiveDirectoryAuthorityHost: env.ActiveDirectoryEndpoint,
+		}, nil
 	default:
-		return cloud.AzurePublic
+		return cloud.AzurePublic, nil
 	}
 }

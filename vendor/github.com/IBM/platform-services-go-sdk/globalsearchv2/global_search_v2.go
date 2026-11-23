@@ -498,9 +498,9 @@ type SearchOptions struct {
 // any. If false, only existing documents are returned; if true, only deleted documents are returned; If any, both
 // existing and deleted documents are returned. (_for administrators only_).
 const (
-	SearchOptionsIsDeletedAnyConst = "any"
+	SearchOptionsIsDeletedAnyConst   = "any"
 	SearchOptionsIsDeletedFalseConst = "false"
-	SearchOptionsIsDeletedTrueConst = "true"
+	SearchOptionsIsDeletedTrueConst  = "true"
 )
 
 // Constants associated with the SearchOptions.IsReclaimed property.
@@ -508,9 +508,9 @@ const (
 // or any. If false, only not reclaimed documents are returned; if true, only reclaimed documents are returned; If any,
 // both reclaimed and not reclaimed documents are returned.
 const (
-	SearchOptionsIsReclaimedAnyConst = "any"
+	SearchOptionsIsReclaimedAnyConst   = "any"
 	SearchOptionsIsReclaimedFalseConst = "false"
-	SearchOptionsIsReclaimedTrueConst = "true"
+	SearchOptionsIsReclaimedTrueConst  = "true"
 )
 
 // Constants associated with the SearchOptions.CanTag property.
@@ -519,7 +519,7 @@ const (
 // only resources that user has permissions for tagging are returned (_for administrators only_).
 const (
 	SearchOptionsCanTagFalseConst = "false"
-	SearchOptionsCanTagTrueConst = "true"
+	SearchOptionsCanTagTrueConst  = "true"
 )
 
 // Constants associated with the SearchOptions.IsProjectResource property.
@@ -528,9 +528,9 @@ const (
 // only documents belonging to Project family are returned; if any, documents of any family are returned. Only
 // authorized ServiceIds can use this query parameter.
 const (
-	SearchOptionsIsProjectResourceAnyConst = "any"
+	SearchOptionsIsProjectResourceAnyConst   = "any"
 	SearchOptionsIsProjectResourceFalseConst = "false"
-	SearchOptionsIsProjectResourceTrueConst = "true"
+	SearchOptionsIsProjectResourceTrueConst  = "true"
 )
 
 // NewSearchOptions : Instantiate SearchOptions

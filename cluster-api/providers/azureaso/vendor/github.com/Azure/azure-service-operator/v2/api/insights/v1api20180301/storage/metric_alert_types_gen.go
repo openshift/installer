@@ -19,6 +19,7 @@ import (
 // +kubebuilder:rbac:groups=insights.azure.com,resources={metricalerts/status,metricalerts/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,insights}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -269,9 +270,12 @@ func (alert *MetricAlert_STATUS) ConvertStatusTo(destination genruntime.Converti
 // Storage version of v1api20180301.MetricAlertAction
 // An alert action.
 type MetricAlertAction struct {
-	ActionGroupId     *string                `json:"actionGroupId,omitempty"`
-	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	WebHookProperties map[string]string      `json:"webHookProperties,omitempty"`
+	ActionGroupId *string `json:"actionGroupId,omitempty"`
+
+	// ActionGroupReference: the id of the action group to use.
+	ActionGroupReference *genruntime.ResourceReference `armReference:"ActionGroupId" json:"actionGroupReference,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	WebHookProperties    map[string]string             `json:"webHookProperties,omitempty"`
 }
 
 // Storage version of v1api20180301.MetricAlertAction_STATUS

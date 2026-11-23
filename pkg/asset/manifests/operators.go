@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/version/versioninfo"
 	"github.com/openshift/library-go/pkg/crypto"
 )
@@ -92,7 +93,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.InternalReleaseImageRegistryAuthSecret{},
 		&BMCVerifyCAConfigMap{},
 		&PKIConfiguration{},
-		&BGPVIPConfigMap{},
+		&BGPVIPConfigCR{},
 	}
 }
 
@@ -111,9 +112,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	mcoCfgTemplate := &manifests.MCO{}
 	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 	pkiConfig := &PKIConfiguration{}
-	bgpVIPConfigMap := &BGPVIPConfigMap{}
+	bgpVIPConfigCR := &BGPVIPConfigCR{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigMap)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap, pkiConfig, bgpVIPConfigCR)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -153,7 +154,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
 	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 	m.FileList = append(m.FileList, pkiConfig.Files()...)
-	m.FileList = append(m.FileList, bgpVIPConfigMap.Files()...)
+	m.FileList = append(m.FileList, bgpVIPConfigCR.Files()...)
 
 	asset.SortFiles(m.FileList)
 
@@ -180,13 +181,21 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	versionInfo := versioninfo.GetInfo()
 	cvoChannel := fmt.Sprintf("stable-%d.%d", versionInfo.Major, versionInfo.Minor)
 
+	// The global pull secret with the IRI registry credentials merged in
+	// during generation, so that kubelet and CRI-O can authenticate to the
+	// registry the control plane machines serve while bootstrapping. It is
+	// the install config's own pull secret when no internal release image
+	// is being served.
+	iriAuth := &tls.IRIRegistryCredentials{}
+	dependencies.Get(iriAuth)
+
 	templateData := &bootkubeTemplateData{
 		CVOCapabilities:       installConfig.Config.Capabilities,
 		CVOChannel:            cvoChannel,
 		CVOClusterID:          clusterID.UUID,
 		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(iriAuth.MergedPullSecret)),
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
@@ -369,6 +378,12 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 		for i := range newConfig.Platform.VSphere.VCenters {
 			newConfig.Platform.VSphere.VCenters[i].Username = ""
 			newConfig.Platform.VSphere.VCenters[i].Password = ""
+			if credentials := newConfig.Platform.VSphere.VCenters[i].ComponentCredentials; credentials != nil {
+				credentials.MachineManagement = vspheretypes.Credential{}
+				credentials.Storage = vspheretypes.Credential{}
+				credentials.CloudControllerManager = vspheretypes.Credential{}
+				credentials.VSphereProblemDetector = vspheretypes.Credential{}
+			}
 			newConfig.Platform.VSphere.VCenters[i].Port = 0
 		}
 
@@ -379,11 +394,20 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 		// Endpoint is preserved (non-sensitive)
 
 	case newConfig.Platform.BareMetal != nil:
-		// Redact BMC credentials for all hosts
+		// Redact BMC credentials and BGP peer passwords for all hosts
 		for _, host := range newConfig.Platform.BareMetal.Hosts {
 			if host != nil {
 				host.BMC.Username = ""
 				host.BMC.Password = ""
+				for i := range host.BGPPeers {
+					host.BGPPeers[i].Password = ""
+				}
+			}
+		}
+		// Redact BGP peer passwords; they reach the cluster as Secrets
+		if bgp := newConfig.Platform.BareMetal.BGPVIPConfig; bgp != nil {
+			for i := range bgp.Peers {
+				bgp.Peers[i].Password = ""
 			}
 		}
 	}

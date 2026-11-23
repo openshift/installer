@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v20240302/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,21 +14,19 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=compute.azure.com,resources=disks,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=compute.azure.com,resources={disks/status,disks/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,compute}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240302.Disk
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type Disk struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -45,6 +45,28 @@ func (disk *Disk) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (disk *Disk) SetConditions(conditions conditions.Conditions) {
 	disk.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &Disk{}
+
+// ConvertFrom populates our Disk from the provided hub Disk
+func (disk *Disk) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.Disk)
+	if !ok {
+		return fmt.Errorf("expected compute/v20240302/storage/Disk but received %T instead", hub)
+	}
+
+	return disk.AssignProperties_From_Disk(source)
+}
+
+// ConvertTo populates the provided hub Disk from our Disk
+func (disk *Disk) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.Disk)
+	if !ok {
+		return fmt.Errorf("expected compute/v20240302/storage/Disk but received %T instead", hub)
+	}
+
+	return disk.AssignProperties_To_Disk(destination)
 }
 
 var _ configmaps.Exporter = &Disk{}
@@ -142,8 +164,75 @@ func (disk *Disk) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this Disk is the hub type for conversion
-func (disk *Disk) Hub() {}
+// AssignProperties_From_Disk populates our Disk from the provided source Disk
+func (disk *Disk) AssignProperties_From_Disk(source *storage.Disk) error {
+
+	// ObjectMeta
+	disk.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec Disk_Spec
+	err := spec.AssignProperties_From_Disk_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Disk_Spec() to populate field Spec")
+	}
+	disk.Spec = spec
+
+	// Status
+	var status Disk_STATUS
+	err = status.AssignProperties_From_Disk_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_Disk_STATUS() to populate field Status")
+	}
+	disk.Status = status
+
+	// Invoke the augmentConversionForDisk interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk); ok {
+		err := augmentedDisk.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Disk populates the provided destination Disk from our Disk
+func (disk *Disk) AssignProperties_To_Disk(destination *storage.Disk) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *disk.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.Disk_Spec
+	err := disk.Spec.AssignProperties_To_Disk_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Disk_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.Disk_STATUS
+	err = disk.Status.AssignProperties_To_Disk_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_Disk_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForDisk interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk); ok {
+		err := augmentedDisk.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (disk *Disk) OriginalGVK() *schema.GroupVersionKind {
@@ -157,7 +246,7 @@ func (disk *Disk) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240302.Disk
 // Generator information:
-// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/disk.json
+// - Generated from: /compute/resource-manager/Microsoft.Compute/DiskRP/stable/2024-03-02/DiskRP.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/disks/{diskName}
 type DiskList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -170,6 +259,11 @@ type DiskList struct {
 type APIVersion string
 
 const APIVersion_Value = APIVersion("2024-03-02")
+
+type augmentConversionForDisk interface {
+	AssignPropertiesFrom(src *storage.Disk) error
+	AssignPropertiesTo(dst *storage.Disk) error
+}
 
 // Storage version of v1api20240302.Disk_Spec
 type Disk_Spec struct {
@@ -207,7 +301,7 @@ type Disk_Spec struct {
 	Owner                 *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 	PropertyBag           genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 	PublicNetworkAccess   *string                            `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan          *PurchasePlan                      `json:"purchasePlan,omitempty"`
+	PurchasePlan          *DiskPurchasePlan                  `json:"purchasePlan,omitempty"`
 	SecurityProfile       *DiskSecurityProfile               `json:"securityProfile,omitempty"`
 	Sku                   *DiskSku                           `json:"sku,omitempty"`
 	SupportedCapabilities *SupportedCapabilities             `json:"supportedCapabilities,omitempty"`
@@ -221,20 +315,514 @@ var _ genruntime.ConvertibleSpec = &Disk_Spec{}
 
 // ConvertSpecFrom populates our Disk_Spec from the provided source
 func (disk *Disk_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == disk {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.Disk_Spec)
+	if ok {
+		// Populate our instance from source
+		return disk.AssignProperties_From_Disk_Spec(src)
 	}
 
-	return source.ConvertSpecTo(disk)
+	// Convert to an intermediate form
+	src = &storage.Disk_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = disk.AssignProperties_From_Disk_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our Disk_Spec
 func (disk *Disk_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == disk {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.Disk_Spec)
+	if ok {
+		// Populate destination from our instance
+		return disk.AssignProperties_To_Disk_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(disk)
+	// Convert to an intermediate form
+	dst = &storage.Disk_Spec{}
+	err := disk.AssignProperties_To_Disk_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Disk_Spec populates our Disk_Spec from the provided source Disk_Spec
+func (disk *Disk_Spec) AssignProperties_From_Disk_Spec(source *storage.Disk_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	disk.AzureName = source.AzureName
+
+	// BurstingEnabled
+	if source.BurstingEnabled != nil {
+		burstingEnabled := *source.BurstingEnabled
+		disk.BurstingEnabled = &burstingEnabled
+	} else {
+		disk.BurstingEnabled = nil
+	}
+
+	// CompletionPercent
+	if source.CompletionPercent != nil {
+		completionPercent := *source.CompletionPercent
+		disk.CompletionPercent = &completionPercent
+	} else {
+		disk.CompletionPercent = nil
+	}
+
+	// CreationData
+	if source.CreationData != nil {
+		var creationDatum CreationData
+		err := creationDatum.AssignProperties_From_CreationData(source.CreationData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData() to populate field CreationData")
+		}
+		disk.CreationData = &creationDatum
+	} else {
+		disk.CreationData = nil
+	}
+
+	// DataAccessAuthMode
+	disk.DataAccessAuthMode = genruntime.ClonePointerToString(source.DataAccessAuthMode)
+
+	// DiskAccessReference
+	if source.DiskAccessReference != nil {
+		diskAccessReference := source.DiskAccessReference.Copy()
+		disk.DiskAccessReference = &diskAccessReference
+	} else {
+		disk.DiskAccessReference = nil
+	}
+
+	// DiskIOPSReadOnly
+	disk.DiskIOPSReadOnly = genruntime.ClonePointerToInt(source.DiskIOPSReadOnly)
+
+	// DiskIOPSReadWrite
+	disk.DiskIOPSReadWrite = genruntime.ClonePointerToInt(source.DiskIOPSReadWrite)
+
+	// DiskMBpsReadOnly
+	disk.DiskMBpsReadOnly = genruntime.ClonePointerToInt(source.DiskMBpsReadOnly)
+
+	// DiskMBpsReadWrite
+	disk.DiskMBpsReadWrite = genruntime.ClonePointerToInt(source.DiskMBpsReadWrite)
+
+	// DiskSizeGB
+	disk.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
+
+	// Encryption
+	if source.Encryption != nil {
+		var encryption Encryption
+		err := encryption.AssignProperties_From_Encryption(source.Encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Encryption() to populate field Encryption")
+		}
+		disk.Encryption = &encryption
+	} else {
+		disk.Encryption = nil
+	}
+
+	// EncryptionSettingsCollection
+	if source.EncryptionSettingsCollection != nil {
+		var encryptionSettingsCollection EncryptionSettingsCollection
+		err := encryptionSettingsCollection.AssignProperties_From_EncryptionSettingsCollection(source.EncryptionSettingsCollection)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionSettingsCollection() to populate field EncryptionSettingsCollection")
+		}
+		disk.EncryptionSettingsCollection = &encryptionSettingsCollection
+	} else {
+		disk.EncryptionSettingsCollection = nil
+	}
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation
+		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		disk.ExtendedLocation = &extendedLocation
+	} else {
+		disk.ExtendedLocation = nil
+	}
+
+	// HyperVGeneration
+	disk.HyperVGeneration = genruntime.ClonePointerToString(source.HyperVGeneration)
+
+	// Location
+	disk.Location = genruntime.ClonePointerToString(source.Location)
+
+	// MaxShares
+	disk.MaxShares = genruntime.ClonePointerToInt(source.MaxShares)
+
+	// NetworkAccessPolicy
+	disk.NetworkAccessPolicy = genruntime.ClonePointerToString(source.NetworkAccessPolicy)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec DiskOperatorSpec
+		err := operatorSpec.AssignProperties_From_DiskOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskOperatorSpec() to populate field OperatorSpec")
+		}
+		disk.OperatorSpec = &operatorSpec
+	} else {
+		disk.OperatorSpec = nil
+	}
+
+	// OptimizedForFrequentAttach
+	if source.OptimizedForFrequentAttach != nil {
+		optimizedForFrequentAttach := *source.OptimizedForFrequentAttach
+		disk.OptimizedForFrequentAttach = &optimizedForFrequentAttach
+	} else {
+		disk.OptimizedForFrequentAttach = nil
+	}
+
+	// OriginalVersion
+	disk.OriginalVersion = source.OriginalVersion
+
+	// OsType
+	disk.OsType = genruntime.ClonePointerToString(source.OsType)
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		disk.Owner = &owner
+	} else {
+		disk.Owner = nil
+	}
+
+	// PublicNetworkAccess
+	disk.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// PurchasePlan
+	if source.PurchasePlan != nil {
+		var purchasePlan DiskPurchasePlan
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan(source.PurchasePlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan() to populate field PurchasePlan")
+		}
+		disk.PurchasePlan = &purchasePlan
+	} else {
+		disk.PurchasePlan = nil
+	}
+
+	// SecurityProfile
+	if source.SecurityProfile != nil {
+		var securityProfile DiskSecurityProfile
+		err := securityProfile.AssignProperties_From_DiskSecurityProfile(source.SecurityProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskSecurityProfile() to populate field SecurityProfile")
+		}
+		disk.SecurityProfile = &securityProfile
+	} else {
+		disk.SecurityProfile = nil
+	}
+
+	// Sku
+	if source.Sku != nil {
+		var sku DiskSku
+		err := sku.AssignProperties_From_DiskSku(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskSku() to populate field Sku")
+		}
+		disk.Sku = &sku
+	} else {
+		disk.Sku = nil
+	}
+
+	// SupportedCapabilities
+	if source.SupportedCapabilities != nil {
+		var supportedCapability SupportedCapabilities
+		err := supportedCapability.AssignProperties_From_SupportedCapabilities(source.SupportedCapabilities)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SupportedCapabilities() to populate field SupportedCapabilities")
+		}
+		disk.SupportedCapabilities = &supportedCapability
+	} else {
+		disk.SupportedCapabilities = nil
+	}
+
+	// SupportsHibernation
+	if source.SupportsHibernation != nil {
+		supportsHibernation := *source.SupportsHibernation
+		disk.SupportsHibernation = &supportsHibernation
+	} else {
+		disk.SupportsHibernation = nil
+	}
+
+	// Tags
+	disk.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Tier
+	disk.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Zones
+	disk.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		disk.PropertyBag = propertyBag
+	} else {
+		disk.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDisk_Spec interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk_Spec); ok {
+		err := augmentedDisk.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Disk_Spec populates the provided destination Disk_Spec from our Disk_Spec
+func (disk *Disk_Spec) AssignProperties_To_Disk_Spec(destination *storage.Disk_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(disk.PropertyBag)
+
+	// AzureName
+	destination.AzureName = disk.AzureName
+
+	// BurstingEnabled
+	if disk.BurstingEnabled != nil {
+		burstingEnabled := *disk.BurstingEnabled
+		destination.BurstingEnabled = &burstingEnabled
+	} else {
+		destination.BurstingEnabled = nil
+	}
+
+	// CompletionPercent
+	if disk.CompletionPercent != nil {
+		completionPercent := *disk.CompletionPercent
+		destination.CompletionPercent = &completionPercent
+	} else {
+		destination.CompletionPercent = nil
+	}
+
+	// CreationData
+	if disk.CreationData != nil {
+		var creationDatum storage.CreationData
+		err := disk.CreationData.AssignProperties_To_CreationData(&creationDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
+		}
+		destination.CreationData = &creationDatum
+	} else {
+		destination.CreationData = nil
+	}
+
+	// DataAccessAuthMode
+	destination.DataAccessAuthMode = genruntime.ClonePointerToString(disk.DataAccessAuthMode)
+
+	// DiskAccessReference
+	if disk.DiskAccessReference != nil {
+		diskAccessReference := disk.DiskAccessReference.Copy()
+		destination.DiskAccessReference = &diskAccessReference
+	} else {
+		destination.DiskAccessReference = nil
+	}
+
+	// DiskIOPSReadOnly
+	destination.DiskIOPSReadOnly = genruntime.ClonePointerToInt(disk.DiskIOPSReadOnly)
+
+	// DiskIOPSReadWrite
+	destination.DiskIOPSReadWrite = genruntime.ClonePointerToInt(disk.DiskIOPSReadWrite)
+
+	// DiskMBpsReadOnly
+	destination.DiskMBpsReadOnly = genruntime.ClonePointerToInt(disk.DiskMBpsReadOnly)
+
+	// DiskMBpsReadWrite
+	destination.DiskMBpsReadWrite = genruntime.ClonePointerToInt(disk.DiskMBpsReadWrite)
+
+	// DiskSizeGB
+	destination.DiskSizeGB = genruntime.ClonePointerToInt(disk.DiskSizeGB)
+
+	// Encryption
+	if disk.Encryption != nil {
+		var encryption storage.Encryption
+		err := disk.Encryption.AssignProperties_To_Encryption(&encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Encryption() to populate field Encryption")
+		}
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// EncryptionSettingsCollection
+	if disk.EncryptionSettingsCollection != nil {
+		var encryptionSettingsCollection storage.EncryptionSettingsCollection
+		err := disk.EncryptionSettingsCollection.AssignProperties_To_EncryptionSettingsCollection(&encryptionSettingsCollection)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionSettingsCollection() to populate field EncryptionSettingsCollection")
+		}
+		destination.EncryptionSettingsCollection = &encryptionSettingsCollection
+	} else {
+		destination.EncryptionSettingsCollection = nil
+	}
+
+	// ExtendedLocation
+	if disk.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation
+		err := disk.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// HyperVGeneration
+	destination.HyperVGeneration = genruntime.ClonePointerToString(disk.HyperVGeneration)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(disk.Location)
+
+	// MaxShares
+	destination.MaxShares = genruntime.ClonePointerToInt(disk.MaxShares)
+
+	// NetworkAccessPolicy
+	destination.NetworkAccessPolicy = genruntime.ClonePointerToString(disk.NetworkAccessPolicy)
+
+	// OperatorSpec
+	if disk.OperatorSpec != nil {
+		var operatorSpec storage.DiskOperatorSpec
+		err := disk.OperatorSpec.AssignProperties_To_DiskOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OptimizedForFrequentAttach
+	if disk.OptimizedForFrequentAttach != nil {
+		optimizedForFrequentAttach := *disk.OptimizedForFrequentAttach
+		destination.OptimizedForFrequentAttach = &optimizedForFrequentAttach
+	} else {
+		destination.OptimizedForFrequentAttach = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = disk.OriginalVersion
+
+	// OsType
+	destination.OsType = genruntime.ClonePointerToString(disk.OsType)
+
+	// Owner
+	if disk.Owner != nil {
+		owner := disk.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(disk.PublicNetworkAccess)
+
+	// PurchasePlan
+	if disk.PurchasePlan != nil {
+		var purchasePlan storage.DiskPurchasePlan
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan(&purchasePlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan() to populate field PurchasePlan")
+		}
+		destination.PurchasePlan = &purchasePlan
+	} else {
+		destination.PurchasePlan = nil
+	}
+
+	// SecurityProfile
+	if disk.SecurityProfile != nil {
+		var securityProfile storage.DiskSecurityProfile
+		err := disk.SecurityProfile.AssignProperties_To_DiskSecurityProfile(&securityProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskSecurityProfile() to populate field SecurityProfile")
+		}
+		destination.SecurityProfile = &securityProfile
+	} else {
+		destination.SecurityProfile = nil
+	}
+
+	// Sku
+	if disk.Sku != nil {
+		var sku storage.DiskSku
+		err := disk.Sku.AssignProperties_To_DiskSku(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskSku() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SupportedCapabilities
+	if disk.SupportedCapabilities != nil {
+		var supportedCapability storage.SupportedCapabilities
+		err := disk.SupportedCapabilities.AssignProperties_To_SupportedCapabilities(&supportedCapability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SupportedCapabilities() to populate field SupportedCapabilities")
+		}
+		destination.SupportedCapabilities = &supportedCapability
+	} else {
+		destination.SupportedCapabilities = nil
+	}
+
+	// SupportsHibernation
+	if disk.SupportsHibernation != nil {
+		supportsHibernation := *disk.SupportsHibernation
+		destination.SupportsHibernation = &supportsHibernation
+	} else {
+		destination.SupportsHibernation = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(disk.Tags)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(disk.Tier)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(disk.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDisk_Spec interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk_Spec); ok {
+		err := augmentedDisk.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.Disk_STATUS
@@ -272,12 +860,13 @@ type Disk_STATUS struct {
 	PropertyUpdatesInProgress    *PropertyUpdatesInProgress_STATUS    `json:"propertyUpdatesInProgress,omitempty"`
 	ProvisioningState            *string                              `json:"provisioningState,omitempty"`
 	PublicNetworkAccess          *string                              `json:"publicNetworkAccess,omitempty"`
-	PurchasePlan                 *PurchasePlan_STATUS                 `json:"purchasePlan,omitempty"`
+	PurchasePlan                 *DiskPurchasePlan_STATUS             `json:"purchasePlan,omitempty"`
 	SecurityProfile              *DiskSecurityProfile_STATUS          `json:"securityProfile,omitempty"`
 	ShareInfo                    []ShareInfoElement_STATUS            `json:"shareInfo,omitempty"`
 	Sku                          *DiskSku_STATUS                      `json:"sku,omitempty"`
 	SupportedCapabilities        *SupportedCapabilities_STATUS        `json:"supportedCapabilities,omitempty"`
 	SupportsHibernation          *bool                                `json:"supportsHibernation,omitempty"`
+	SystemData                   *SystemData_STATUS                   `json:"systemData,omitempty"`
 	Tags                         map[string]string                    `json:"tags,omitempty"`
 	Tier                         *string                              `json:"tier,omitempty"`
 	TimeCreated                  *string                              `json:"timeCreated,omitempty"`
@@ -290,20 +879,620 @@ var _ genruntime.ConvertibleStatus = &Disk_STATUS{}
 
 // ConvertStatusFrom populates our Disk_STATUS from the provided source
 func (disk *Disk_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == disk {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.Disk_STATUS)
+	if ok {
+		// Populate our instance from source
+		return disk.AssignProperties_From_Disk_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(disk)
+	// Convert to an intermediate form
+	src = &storage.Disk_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = disk.AssignProperties_From_Disk_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our Disk_STATUS
 func (disk *Disk_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == disk {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.Disk_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return disk.AssignProperties_To_Disk_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(disk)
+	// Convert to an intermediate form
+	dst = &storage.Disk_STATUS{}
+	err := disk.AssignProperties_To_Disk_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_Disk_STATUS populates our Disk_STATUS from the provided source Disk_STATUS
+func (disk *Disk_STATUS) AssignProperties_From_Disk_STATUS(source *storage.Disk_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BurstingEnabled
+	if source.BurstingEnabled != nil {
+		burstingEnabled := *source.BurstingEnabled
+		disk.BurstingEnabled = &burstingEnabled
+	} else {
+		disk.BurstingEnabled = nil
+	}
+
+	// BurstingEnabledTime
+	disk.BurstingEnabledTime = genruntime.ClonePointerToString(source.BurstingEnabledTime)
+
+	// CompletionPercent
+	if source.CompletionPercent != nil {
+		completionPercent := *source.CompletionPercent
+		disk.CompletionPercent = &completionPercent
+	} else {
+		disk.CompletionPercent = nil
+	}
+
+	// Conditions
+	disk.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CreationData
+	if source.CreationData != nil {
+		var creationDatum CreationData_STATUS
+		err := creationDatum.AssignProperties_From_CreationData_STATUS(source.CreationData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreationData_STATUS() to populate field CreationData")
+		}
+		disk.CreationData = &creationDatum
+	} else {
+		disk.CreationData = nil
+	}
+
+	// DataAccessAuthMode
+	disk.DataAccessAuthMode = genruntime.ClonePointerToString(source.DataAccessAuthMode)
+
+	// DiskAccessId
+	disk.DiskAccessId = genruntime.ClonePointerToString(source.DiskAccessId)
+
+	// DiskIOPSReadOnly
+	disk.DiskIOPSReadOnly = genruntime.ClonePointerToInt(source.DiskIOPSReadOnly)
+
+	// DiskIOPSReadWrite
+	disk.DiskIOPSReadWrite = genruntime.ClonePointerToInt(source.DiskIOPSReadWrite)
+
+	// DiskMBpsReadOnly
+	disk.DiskMBpsReadOnly = genruntime.ClonePointerToInt(source.DiskMBpsReadOnly)
+
+	// DiskMBpsReadWrite
+	disk.DiskMBpsReadWrite = genruntime.ClonePointerToInt(source.DiskMBpsReadWrite)
+
+	// DiskSizeBytes
+	disk.DiskSizeBytes = genruntime.ClonePointerToInt(source.DiskSizeBytes)
+
+	// DiskSizeGB
+	disk.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
+
+	// DiskState
+	disk.DiskState = genruntime.ClonePointerToString(source.DiskState)
+
+	// Encryption
+	if source.Encryption != nil {
+		var encryption Encryption_STATUS
+		err := encryption.AssignProperties_From_Encryption_STATUS(source.Encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Encryption_STATUS() to populate field Encryption")
+		}
+		disk.Encryption = &encryption
+	} else {
+		disk.Encryption = nil
+	}
+
+	// EncryptionSettingsCollection
+	if source.EncryptionSettingsCollection != nil {
+		var encryptionSettingsCollection EncryptionSettingsCollection_STATUS
+		err := encryptionSettingsCollection.AssignProperties_From_EncryptionSettingsCollection_STATUS(source.EncryptionSettingsCollection)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionSettingsCollection_STATUS() to populate field EncryptionSettingsCollection")
+		}
+		disk.EncryptionSettingsCollection = &encryptionSettingsCollection
+	} else {
+		disk.EncryptionSettingsCollection = nil
+	}
+
+	// ExtendedLocation
+	if source.ExtendedLocation != nil {
+		var extendedLocation ExtendedLocation_STATUS
+		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		disk.ExtendedLocation = &extendedLocation
+	} else {
+		disk.ExtendedLocation = nil
+	}
+
+	// HyperVGeneration
+	disk.HyperVGeneration = genruntime.ClonePointerToString(source.HyperVGeneration)
+
+	// Id
+	disk.Id = genruntime.ClonePointerToString(source.Id)
+
+	// LastOwnershipUpdateTime
+	disk.LastOwnershipUpdateTime = genruntime.ClonePointerToString(source.LastOwnershipUpdateTime)
+
+	// Location
+	disk.Location = genruntime.ClonePointerToString(source.Location)
+
+	// ManagedBy
+	disk.ManagedBy = genruntime.ClonePointerToString(source.ManagedBy)
+
+	// ManagedByExtended
+	disk.ManagedByExtended = genruntime.CloneSliceOfString(source.ManagedByExtended)
+
+	// MaxShares
+	disk.MaxShares = genruntime.ClonePointerToInt(source.MaxShares)
+
+	// Name
+	disk.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NetworkAccessPolicy
+	disk.NetworkAccessPolicy = genruntime.ClonePointerToString(source.NetworkAccessPolicy)
+
+	// OptimizedForFrequentAttach
+	if source.OptimizedForFrequentAttach != nil {
+		optimizedForFrequentAttach := *source.OptimizedForFrequentAttach
+		disk.OptimizedForFrequentAttach = &optimizedForFrequentAttach
+	} else {
+		disk.OptimizedForFrequentAttach = nil
+	}
+
+	// OsType
+	disk.OsType = genruntime.ClonePointerToString(source.OsType)
+
+	// PropertyUpdatesInProgress
+	if source.PropertyUpdatesInProgress != nil {
+		var propertyUpdatesInProgress PropertyUpdatesInProgress_STATUS
+		err := propertyUpdatesInProgress.AssignProperties_From_PropertyUpdatesInProgress_STATUS(source.PropertyUpdatesInProgress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_PropertyUpdatesInProgress_STATUS() to populate field PropertyUpdatesInProgress")
+		}
+		disk.PropertyUpdatesInProgress = &propertyUpdatesInProgress
+	} else {
+		disk.PropertyUpdatesInProgress = nil
+	}
+
+	// ProvisioningState
+	disk.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// PublicNetworkAccess
+	disk.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
+
+	// PurchasePlan
+	if source.PurchasePlan != nil {
+		var purchasePlan DiskPurchasePlan_STATUS
+		err := purchasePlan.AssignProperties_From_DiskPurchasePlan_STATUS(source.PurchasePlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
+		}
+		disk.PurchasePlan = &purchasePlan
+	} else {
+		disk.PurchasePlan = nil
+	}
+
+	// SecurityProfile
+	if source.SecurityProfile != nil {
+		var securityProfile DiskSecurityProfile_STATUS
+		err := securityProfile.AssignProperties_From_DiskSecurityProfile_STATUS(source.SecurityProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskSecurityProfile_STATUS() to populate field SecurityProfile")
+		}
+		disk.SecurityProfile = &securityProfile
+	} else {
+		disk.SecurityProfile = nil
+	}
+
+	// ShareInfo
+	if source.ShareInfo != nil {
+		shareInfoList := make([]ShareInfoElement_STATUS, len(source.ShareInfo))
+		for shareInfoIndex, shareInfoItem := range source.ShareInfo {
+			var shareInfo ShareInfoElement_STATUS
+			err := shareInfo.AssignProperties_From_ShareInfoElement_STATUS(&shareInfoItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_ShareInfoElement_STATUS() to populate field ShareInfo")
+			}
+			shareInfoList[shareInfoIndex] = shareInfo
+		}
+		disk.ShareInfo = shareInfoList
+	} else {
+		disk.ShareInfo = nil
+	}
+
+	// Sku
+	if source.Sku != nil {
+		var sku DiskSku_STATUS
+		err := sku.AssignProperties_From_DiskSku_STATUS(source.Sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_DiskSku_STATUS() to populate field Sku")
+		}
+		disk.Sku = &sku
+	} else {
+		disk.Sku = nil
+	}
+
+	// SupportedCapabilities
+	if source.SupportedCapabilities != nil {
+		var supportedCapability SupportedCapabilities_STATUS
+		err := supportedCapability.AssignProperties_From_SupportedCapabilities_STATUS(source.SupportedCapabilities)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SupportedCapabilities_STATUS() to populate field SupportedCapabilities")
+		}
+		disk.SupportedCapabilities = &supportedCapability
+	} else {
+		disk.SupportedCapabilities = nil
+	}
+
+	// SupportsHibernation
+	if source.SupportsHibernation != nil {
+		supportsHibernation := *source.SupportsHibernation
+		disk.SupportsHibernation = &supportsHibernation
+	} else {
+		disk.SupportsHibernation = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		disk.SystemData = &systemDatum
+	} else {
+		disk.SystemData = nil
+	}
+
+	// Tags
+	disk.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Tier
+	disk.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// TimeCreated
+	disk.TimeCreated = genruntime.ClonePointerToString(source.TimeCreated)
+
+	// Type
+	disk.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UniqueId
+	disk.UniqueId = genruntime.ClonePointerToString(source.UniqueId)
+
+	// Zones
+	disk.Zones = genruntime.CloneSliceOfString(source.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		disk.PropertyBag = propertyBag
+	} else {
+		disk.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDisk_STATUS interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk_STATUS); ok {
+		err := augmentedDisk.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Disk_STATUS populates the provided destination Disk_STATUS from our Disk_STATUS
+func (disk *Disk_STATUS) AssignProperties_To_Disk_STATUS(destination *storage.Disk_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(disk.PropertyBag)
+
+	// BurstingEnabled
+	if disk.BurstingEnabled != nil {
+		burstingEnabled := *disk.BurstingEnabled
+		destination.BurstingEnabled = &burstingEnabled
+	} else {
+		destination.BurstingEnabled = nil
+	}
+
+	// BurstingEnabledTime
+	destination.BurstingEnabledTime = genruntime.ClonePointerToString(disk.BurstingEnabledTime)
+
+	// CompletionPercent
+	if disk.CompletionPercent != nil {
+		completionPercent := *disk.CompletionPercent
+		destination.CompletionPercent = &completionPercent
+	} else {
+		destination.CompletionPercent = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(disk.Conditions)
+
+	// CreationData
+	if disk.CreationData != nil {
+		var creationDatum storage.CreationData_STATUS
+		err := disk.CreationData.AssignProperties_To_CreationData_STATUS(&creationDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
+		}
+		destination.CreationData = &creationDatum
+	} else {
+		destination.CreationData = nil
+	}
+
+	// DataAccessAuthMode
+	destination.DataAccessAuthMode = genruntime.ClonePointerToString(disk.DataAccessAuthMode)
+
+	// DiskAccessId
+	destination.DiskAccessId = genruntime.ClonePointerToString(disk.DiskAccessId)
+
+	// DiskIOPSReadOnly
+	destination.DiskIOPSReadOnly = genruntime.ClonePointerToInt(disk.DiskIOPSReadOnly)
+
+	// DiskIOPSReadWrite
+	destination.DiskIOPSReadWrite = genruntime.ClonePointerToInt(disk.DiskIOPSReadWrite)
+
+	// DiskMBpsReadOnly
+	destination.DiskMBpsReadOnly = genruntime.ClonePointerToInt(disk.DiskMBpsReadOnly)
+
+	// DiskMBpsReadWrite
+	destination.DiskMBpsReadWrite = genruntime.ClonePointerToInt(disk.DiskMBpsReadWrite)
+
+	// DiskSizeBytes
+	destination.DiskSizeBytes = genruntime.ClonePointerToInt(disk.DiskSizeBytes)
+
+	// DiskSizeGB
+	destination.DiskSizeGB = genruntime.ClonePointerToInt(disk.DiskSizeGB)
+
+	// DiskState
+	destination.DiskState = genruntime.ClonePointerToString(disk.DiskState)
+
+	// Encryption
+	if disk.Encryption != nil {
+		var encryption storage.Encryption_STATUS
+		err := disk.Encryption.AssignProperties_To_Encryption_STATUS(&encryption)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Encryption_STATUS() to populate field Encryption")
+		}
+		destination.Encryption = &encryption
+	} else {
+		destination.Encryption = nil
+	}
+
+	// EncryptionSettingsCollection
+	if disk.EncryptionSettingsCollection != nil {
+		var encryptionSettingsCollection storage.EncryptionSettingsCollection_STATUS
+		err := disk.EncryptionSettingsCollection.AssignProperties_To_EncryptionSettingsCollection_STATUS(&encryptionSettingsCollection)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionSettingsCollection_STATUS() to populate field EncryptionSettingsCollection")
+		}
+		destination.EncryptionSettingsCollection = &encryptionSettingsCollection
+	} else {
+		destination.EncryptionSettingsCollection = nil
+	}
+
+	// ExtendedLocation
+	if disk.ExtendedLocation != nil {
+		var extendedLocation storage.ExtendedLocation_STATUS
+		err := disk.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+		}
+		destination.ExtendedLocation = &extendedLocation
+	} else {
+		destination.ExtendedLocation = nil
+	}
+
+	// HyperVGeneration
+	destination.HyperVGeneration = genruntime.ClonePointerToString(disk.HyperVGeneration)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(disk.Id)
+
+	// LastOwnershipUpdateTime
+	destination.LastOwnershipUpdateTime = genruntime.ClonePointerToString(disk.LastOwnershipUpdateTime)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(disk.Location)
+
+	// ManagedBy
+	destination.ManagedBy = genruntime.ClonePointerToString(disk.ManagedBy)
+
+	// ManagedByExtended
+	destination.ManagedByExtended = genruntime.CloneSliceOfString(disk.ManagedByExtended)
+
+	// MaxShares
+	destination.MaxShares = genruntime.ClonePointerToInt(disk.MaxShares)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(disk.Name)
+
+	// NetworkAccessPolicy
+	destination.NetworkAccessPolicy = genruntime.ClonePointerToString(disk.NetworkAccessPolicy)
+
+	// OptimizedForFrequentAttach
+	if disk.OptimizedForFrequentAttach != nil {
+		optimizedForFrequentAttach := *disk.OptimizedForFrequentAttach
+		destination.OptimizedForFrequentAttach = &optimizedForFrequentAttach
+	} else {
+		destination.OptimizedForFrequentAttach = nil
+	}
+
+	// OsType
+	destination.OsType = genruntime.ClonePointerToString(disk.OsType)
+
+	// PropertyUpdatesInProgress
+	if disk.PropertyUpdatesInProgress != nil {
+		var propertyUpdatesInProgress storage.PropertyUpdatesInProgress_STATUS
+		err := disk.PropertyUpdatesInProgress.AssignProperties_To_PropertyUpdatesInProgress_STATUS(&propertyUpdatesInProgress)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_PropertyUpdatesInProgress_STATUS() to populate field PropertyUpdatesInProgress")
+		}
+		destination.PropertyUpdatesInProgress = &propertyUpdatesInProgress
+	} else {
+		destination.PropertyUpdatesInProgress = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(disk.ProvisioningState)
+
+	// PublicNetworkAccess
+	destination.PublicNetworkAccess = genruntime.ClonePointerToString(disk.PublicNetworkAccess)
+
+	// PurchasePlan
+	if disk.PurchasePlan != nil {
+		var purchasePlan storage.DiskPurchasePlan_STATUS
+		err := disk.PurchasePlan.AssignProperties_To_DiskPurchasePlan_STATUS(&purchasePlan)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskPurchasePlan_STATUS() to populate field PurchasePlan")
+		}
+		destination.PurchasePlan = &purchasePlan
+	} else {
+		destination.PurchasePlan = nil
+	}
+
+	// SecurityProfile
+	if disk.SecurityProfile != nil {
+		var securityProfile storage.DiskSecurityProfile_STATUS
+		err := disk.SecurityProfile.AssignProperties_To_DiskSecurityProfile_STATUS(&securityProfile)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskSecurityProfile_STATUS() to populate field SecurityProfile")
+		}
+		destination.SecurityProfile = &securityProfile
+	} else {
+		destination.SecurityProfile = nil
+	}
+
+	// ShareInfo
+	if disk.ShareInfo != nil {
+		shareInfoList := make([]storage.ShareInfoElement_STATUS, len(disk.ShareInfo))
+		for shareInfoIndex, shareInfoItem := range disk.ShareInfo {
+			var shareInfo storage.ShareInfoElement_STATUS
+			err := shareInfoItem.AssignProperties_To_ShareInfoElement_STATUS(&shareInfo)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_ShareInfoElement_STATUS() to populate field ShareInfo")
+			}
+			shareInfoList[shareInfoIndex] = shareInfo
+		}
+		destination.ShareInfo = shareInfoList
+	} else {
+		destination.ShareInfo = nil
+	}
+
+	// Sku
+	if disk.Sku != nil {
+		var sku storage.DiskSku_STATUS
+		err := disk.Sku.AssignProperties_To_DiskSku_STATUS(&sku)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_DiskSku_STATUS() to populate field Sku")
+		}
+		destination.Sku = &sku
+	} else {
+		destination.Sku = nil
+	}
+
+	// SupportedCapabilities
+	if disk.SupportedCapabilities != nil {
+		var supportedCapability storage.SupportedCapabilities_STATUS
+		err := disk.SupportedCapabilities.AssignProperties_To_SupportedCapabilities_STATUS(&supportedCapability)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SupportedCapabilities_STATUS() to populate field SupportedCapabilities")
+		}
+		destination.SupportedCapabilities = &supportedCapability
+	} else {
+		destination.SupportedCapabilities = nil
+	}
+
+	// SupportsHibernation
+	if disk.SupportsHibernation != nil {
+		supportsHibernation := *disk.SupportsHibernation
+		destination.SupportsHibernation = &supportsHibernation
+	} else {
+		destination.SupportsHibernation = nil
+	}
+
+	// SystemData
+	if disk.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := disk.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(disk.Tags)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(disk.Tier)
+
+	// TimeCreated
+	destination.TimeCreated = genruntime.ClonePointerToString(disk.TimeCreated)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(disk.Type)
+
+	// UniqueId
+	destination.UniqueId = genruntime.ClonePointerToString(disk.UniqueId)
+
+	// Zones
+	destination.Zones = genruntime.CloneSliceOfString(disk.Zones)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDisk_STATUS interface (if implemented) to customize the conversion
+	var diskAsAny any = disk
+	if augmentedDisk, ok := diskAsAny.(augmentConversionForDisk_STATUS); ok {
+		err := augmentedDisk.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDisk_Spec interface {
+	AssignPropertiesFrom(src *storage.Disk_Spec) error
+	AssignPropertiesTo(dst *storage.Disk_Spec) error
+}
+
+type augmentConversionForDisk_STATUS interface {
+	AssignPropertiesFrom(src *storage.Disk_STATUS) error
+	AssignPropertiesTo(dst *storage.Disk_STATUS) error
 }
 
 // Storage version of v1api20240302.CreationData
@@ -329,6 +1518,194 @@ type CreationData struct {
 	UploadSizeBytes         *int                          `json:"uploadSizeBytes,omitempty"`
 }
 
+// AssignProperties_From_CreationData populates our CreationData from the provided source CreationData
+func (data *CreationData) AssignProperties_From_CreationData(source *storage.CreationData) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreateOption
+	data.CreateOption = genruntime.ClonePointerToString(source.CreateOption)
+
+	// ElasticSanResourceReference
+	if source.ElasticSanResourceReference != nil {
+		elasticSanResourceReference := source.ElasticSanResourceReference.Copy()
+		data.ElasticSanResourceReference = &elasticSanResourceReference
+	} else {
+		data.ElasticSanResourceReference = nil
+	}
+
+	// GalleryImageReference
+	if source.GalleryImageReference != nil {
+		var galleryImageReference ImageDiskReference
+		err := galleryImageReference.AssignProperties_From_ImageDiskReference(source.GalleryImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ImageDiskReference() to populate field GalleryImageReference")
+		}
+		data.GalleryImageReference = &galleryImageReference
+	} else {
+		data.GalleryImageReference = nil
+	}
+
+	// ImageReference
+	if source.ImageReference != nil {
+		var imageReference ImageDiskReference
+		err := imageReference.AssignProperties_From_ImageDiskReference(source.ImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ImageDiskReference() to populate field ImageReference")
+		}
+		data.ImageReference = &imageReference
+	} else {
+		data.ImageReference = nil
+	}
+
+	// LogicalSectorSize
+	data.LogicalSectorSize = genruntime.ClonePointerToInt(source.LogicalSectorSize)
+
+	// PerformancePlus
+	if source.PerformancePlus != nil {
+		performancePlus := *source.PerformancePlus
+		data.PerformancePlus = &performancePlus
+	} else {
+		data.PerformancePlus = nil
+	}
+
+	// ProvisionedBandwidthCopySpeed
+	data.ProvisionedBandwidthCopySpeed = genruntime.ClonePointerToString(source.ProvisionedBandwidthCopySpeed)
+
+	// SecurityDataUri
+	data.SecurityDataUri = genruntime.ClonePointerToString(source.SecurityDataUri)
+
+	// SourceResourceReference
+	if source.SourceResourceReference != nil {
+		sourceResourceReference := source.SourceResourceReference.Copy()
+		data.SourceResourceReference = &sourceResourceReference
+	} else {
+		data.SourceResourceReference = nil
+	}
+
+	// SourceUri
+	data.SourceUri = genruntime.ClonePointerToString(source.SourceUri)
+
+	// StorageAccountId
+	data.StorageAccountId = genruntime.ClonePointerToString(source.StorageAccountId)
+
+	// UploadSizeBytes
+	data.UploadSizeBytes = genruntime.ClonePointerToInt(source.UploadSizeBytes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreationData interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CreationData populates the provided destination CreationData from our CreationData
+func (data *CreationData) AssignProperties_To_CreationData(destination *storage.CreationData) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreateOption
+	destination.CreateOption = genruntime.ClonePointerToString(data.CreateOption)
+
+	// ElasticSanResourceReference
+	if data.ElasticSanResourceReference != nil {
+		elasticSanResourceReference := data.ElasticSanResourceReference.Copy()
+		destination.ElasticSanResourceReference = &elasticSanResourceReference
+	} else {
+		destination.ElasticSanResourceReference = nil
+	}
+
+	// GalleryImageReference
+	if data.GalleryImageReference != nil {
+		var galleryImageReference storage.ImageDiskReference
+		err := data.GalleryImageReference.AssignProperties_To_ImageDiskReference(&galleryImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ImageDiskReference() to populate field GalleryImageReference")
+		}
+		destination.GalleryImageReference = &galleryImageReference
+	} else {
+		destination.GalleryImageReference = nil
+	}
+
+	// ImageReference
+	if data.ImageReference != nil {
+		var imageReference storage.ImageDiskReference
+		err := data.ImageReference.AssignProperties_To_ImageDiskReference(&imageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ImageDiskReference() to populate field ImageReference")
+		}
+		destination.ImageReference = &imageReference
+	} else {
+		destination.ImageReference = nil
+	}
+
+	// LogicalSectorSize
+	destination.LogicalSectorSize = genruntime.ClonePointerToInt(data.LogicalSectorSize)
+
+	// PerformancePlus
+	if data.PerformancePlus != nil {
+		performancePlus := *data.PerformancePlus
+		destination.PerformancePlus = &performancePlus
+	} else {
+		destination.PerformancePlus = nil
+	}
+
+	// ProvisionedBandwidthCopySpeed
+	destination.ProvisionedBandwidthCopySpeed = genruntime.ClonePointerToString(data.ProvisionedBandwidthCopySpeed)
+
+	// SecurityDataUri
+	destination.SecurityDataUri = genruntime.ClonePointerToString(data.SecurityDataUri)
+
+	// SourceResourceReference
+	if data.SourceResourceReference != nil {
+		sourceResourceReference := data.SourceResourceReference.Copy()
+		destination.SourceResourceReference = &sourceResourceReference
+	} else {
+		destination.SourceResourceReference = nil
+	}
+
+	// SourceUri
+	destination.SourceUri = genruntime.ClonePointerToString(data.SourceUri)
+
+	// StorageAccountId
+	destination.StorageAccountId = genruntime.ClonePointerToString(data.StorageAccountId)
+
+	// UploadSizeBytes
+	destination.UploadSizeBytes = genruntime.ClonePointerToInt(data.UploadSizeBytes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreationData interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.CreationData_STATUS
 // Data used when creating a disk.
 type CreationData_STATUS struct {
@@ -348,12 +1725,468 @@ type CreationData_STATUS struct {
 	UploadSizeBytes               *int                       `json:"uploadSizeBytes,omitempty"`
 }
 
+// AssignProperties_From_CreationData_STATUS populates our CreationData_STATUS from the provided source CreationData_STATUS
+func (data *CreationData_STATUS) AssignProperties_From_CreationData_STATUS(source *storage.CreationData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreateOption
+	data.CreateOption = genruntime.ClonePointerToString(source.CreateOption)
+
+	// ElasticSanResourceId
+	data.ElasticSanResourceId = genruntime.ClonePointerToString(source.ElasticSanResourceId)
+
+	// GalleryImageReference
+	if source.GalleryImageReference != nil {
+		var galleryImageReference ImageDiskReference_STATUS
+		err := galleryImageReference.AssignProperties_From_ImageDiskReference_STATUS(source.GalleryImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ImageDiskReference_STATUS() to populate field GalleryImageReference")
+		}
+		data.GalleryImageReference = &galleryImageReference
+	} else {
+		data.GalleryImageReference = nil
+	}
+
+	// ImageReference
+	if source.ImageReference != nil {
+		var imageReference ImageDiskReference_STATUS
+		err := imageReference.AssignProperties_From_ImageDiskReference_STATUS(source.ImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_ImageDiskReference_STATUS() to populate field ImageReference")
+		}
+		data.ImageReference = &imageReference
+	} else {
+		data.ImageReference = nil
+	}
+
+	// LogicalSectorSize
+	data.LogicalSectorSize = genruntime.ClonePointerToInt(source.LogicalSectorSize)
+
+	// PerformancePlus
+	if source.PerformancePlus != nil {
+		performancePlus := *source.PerformancePlus
+		data.PerformancePlus = &performancePlus
+	} else {
+		data.PerformancePlus = nil
+	}
+
+	// ProvisionedBandwidthCopySpeed
+	data.ProvisionedBandwidthCopySpeed = genruntime.ClonePointerToString(source.ProvisionedBandwidthCopySpeed)
+
+	// SecurityDataUri
+	data.SecurityDataUri = genruntime.ClonePointerToString(source.SecurityDataUri)
+
+	// SourceResourceId
+	data.SourceResourceId = genruntime.ClonePointerToString(source.SourceResourceId)
+
+	// SourceUniqueId
+	data.SourceUniqueId = genruntime.ClonePointerToString(source.SourceUniqueId)
+
+	// SourceUri
+	data.SourceUri = genruntime.ClonePointerToString(source.SourceUri)
+
+	// StorageAccountId
+	data.StorageAccountId = genruntime.ClonePointerToString(source.StorageAccountId)
+
+	// UploadSizeBytes
+	data.UploadSizeBytes = genruntime.ClonePointerToInt(source.UploadSizeBytes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreationData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CreationData_STATUS populates the provided destination CreationData_STATUS from our CreationData_STATUS
+func (data *CreationData_STATUS) AssignProperties_To_CreationData_STATUS(destination *storage.CreationData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreateOption
+	destination.CreateOption = genruntime.ClonePointerToString(data.CreateOption)
+
+	// ElasticSanResourceId
+	destination.ElasticSanResourceId = genruntime.ClonePointerToString(data.ElasticSanResourceId)
+
+	// GalleryImageReference
+	if data.GalleryImageReference != nil {
+		var galleryImageReference storage.ImageDiskReference_STATUS
+		err := data.GalleryImageReference.AssignProperties_To_ImageDiskReference_STATUS(&galleryImageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ImageDiskReference_STATUS() to populate field GalleryImageReference")
+		}
+		destination.GalleryImageReference = &galleryImageReference
+	} else {
+		destination.GalleryImageReference = nil
+	}
+
+	// ImageReference
+	if data.ImageReference != nil {
+		var imageReference storage.ImageDiskReference_STATUS
+		err := data.ImageReference.AssignProperties_To_ImageDiskReference_STATUS(&imageReference)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_ImageDiskReference_STATUS() to populate field ImageReference")
+		}
+		destination.ImageReference = &imageReference
+	} else {
+		destination.ImageReference = nil
+	}
+
+	// LogicalSectorSize
+	destination.LogicalSectorSize = genruntime.ClonePointerToInt(data.LogicalSectorSize)
+
+	// PerformancePlus
+	if data.PerformancePlus != nil {
+		performancePlus := *data.PerformancePlus
+		destination.PerformancePlus = &performancePlus
+	} else {
+		destination.PerformancePlus = nil
+	}
+
+	// ProvisionedBandwidthCopySpeed
+	destination.ProvisionedBandwidthCopySpeed = genruntime.ClonePointerToString(data.ProvisionedBandwidthCopySpeed)
+
+	// SecurityDataUri
+	destination.SecurityDataUri = genruntime.ClonePointerToString(data.SecurityDataUri)
+
+	// SourceResourceId
+	destination.SourceResourceId = genruntime.ClonePointerToString(data.SourceResourceId)
+
+	// SourceUniqueId
+	destination.SourceUniqueId = genruntime.ClonePointerToString(data.SourceUniqueId)
+
+	// SourceUri
+	destination.SourceUri = genruntime.ClonePointerToString(data.SourceUri)
+
+	// StorageAccountId
+	destination.StorageAccountId = genruntime.ClonePointerToString(data.StorageAccountId)
+
+	// UploadSizeBytes
+	destination.UploadSizeBytes = genruntime.ClonePointerToInt(data.UploadSizeBytes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreationData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForCreationData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.DiskOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type DiskOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_DiskOperatorSpec populates our DiskOperatorSpec from the provided source DiskOperatorSpec
+func (operator *DiskOperatorSpec) AssignProperties_From_DiskOperatorSpec(source *storage.DiskOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskOperatorSpec populates the provided destination DiskOperatorSpec from our DiskOperatorSpec
+func (operator *DiskOperatorSpec) AssignProperties_To_DiskOperatorSpec(destination *storage.DiskOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForDiskOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240302.DiskPurchasePlan
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan struct {
+	Name          *string                `json:"name,omitempty"`
+	Product       *string                `json:"product,omitempty"`
+	PromotionCode *string                `json:"promotionCode,omitempty"`
+	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Publisher     *string                `json:"publisher,omitempty"`
+}
+
+// AssignProperties_From_DiskPurchasePlan populates our DiskPurchasePlan from the provided source DiskPurchasePlan
+func (plan *DiskPurchasePlan) AssignProperties_From_DiskPurchasePlan(source *storage.DiskPurchasePlan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	plan.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Product
+	plan.Product = genruntime.ClonePointerToString(source.Product)
+
+	// PromotionCode
+	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
+
+	// Publisher
+	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		plan.PropertyBag = propertyBag
+	} else {
+		plan.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskPurchasePlan interface (if implemented) to customize the conversion
+	var planAsAny any = plan
+	if augmentedPlan, ok := planAsAny.(augmentConversionForDiskPurchasePlan); ok {
+		err := augmentedPlan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskPurchasePlan populates the provided destination DiskPurchasePlan from our DiskPurchasePlan
+func (plan *DiskPurchasePlan) AssignProperties_To_DiskPurchasePlan(destination *storage.DiskPurchasePlan) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(plan.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(plan.Name)
+
+	// Product
+	destination.Product = genruntime.ClonePointerToString(plan.Product)
+
+	// PromotionCode
+	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
+
+	// Publisher
+	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskPurchasePlan interface (if implemented) to customize the conversion
+	var planAsAny any = plan
+	if augmentedPlan, ok := planAsAny.(augmentConversionForDiskPurchasePlan); ok {
+		err := augmentedPlan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240302.DiskPurchasePlan_STATUS
+// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
+type DiskPurchasePlan_STATUS struct {
+	Name          *string                `json:"name,omitempty"`
+	Product       *string                `json:"product,omitempty"`
+	PromotionCode *string                `json:"promotionCode,omitempty"`
+	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	Publisher     *string                `json:"publisher,omitempty"`
+}
+
+// AssignProperties_From_DiskPurchasePlan_STATUS populates our DiskPurchasePlan_STATUS from the provided source DiskPurchasePlan_STATUS
+func (plan *DiskPurchasePlan_STATUS) AssignProperties_From_DiskPurchasePlan_STATUS(source *storage.DiskPurchasePlan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	plan.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Product
+	plan.Product = genruntime.ClonePointerToString(source.Product)
+
+	// PromotionCode
+	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
+
+	// Publisher
+	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		plan.PropertyBag = propertyBag
+	} else {
+		plan.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskPurchasePlan_STATUS interface (if implemented) to customize the conversion
+	var planAsAny any = plan
+	if augmentedPlan, ok := planAsAny.(augmentConversionForDiskPurchasePlan_STATUS); ok {
+		err := augmentedPlan.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskPurchasePlan_STATUS populates the provided destination DiskPurchasePlan_STATUS from our DiskPurchasePlan_STATUS
+func (plan *DiskPurchasePlan_STATUS) AssignProperties_To_DiskPurchasePlan_STATUS(destination *storage.DiskPurchasePlan_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(plan.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(plan.Name)
+
+	// Product
+	destination.Product = genruntime.ClonePointerToString(plan.Product)
+
+	// PromotionCode
+	destination.PromotionCode = genruntime.ClonePointerToString(plan.PromotionCode)
+
+	// Publisher
+	destination.Publisher = genruntime.ClonePointerToString(plan.Publisher)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskPurchasePlan_STATUS interface (if implemented) to customize the conversion
+	var planAsAny any = plan
+	if augmentedPlan, ok := planAsAny.(augmentConversionForDiskPurchasePlan_STATUS); ok {
+		err := augmentedPlan.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.DiskSecurityProfile
@@ -367,6 +2200,78 @@ type DiskSecurityProfile struct {
 	SecurityType                       *string                       `json:"securityType,omitempty"`
 }
 
+// AssignProperties_From_DiskSecurityProfile populates our DiskSecurityProfile from the provided source DiskSecurityProfile
+func (profile *DiskSecurityProfile) AssignProperties_From_DiskSecurityProfile(source *storage.DiskSecurityProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SecureVMDiskEncryptionSetReference
+	if source.SecureVMDiskEncryptionSetReference != nil {
+		secureVMDiskEncryptionSetReference := source.SecureVMDiskEncryptionSetReference.Copy()
+		profile.SecureVMDiskEncryptionSetReference = &secureVMDiskEncryptionSetReference
+	} else {
+		profile.SecureVMDiskEncryptionSetReference = nil
+	}
+
+	// SecurityType
+	profile.SecurityType = genruntime.ClonePointerToString(source.SecurityType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSecurityProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForDiskSecurityProfile); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskSecurityProfile populates the provided destination DiskSecurityProfile from our DiskSecurityProfile
+func (profile *DiskSecurityProfile) AssignProperties_To_DiskSecurityProfile(destination *storage.DiskSecurityProfile) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// SecureVMDiskEncryptionSetReference
+	if profile.SecureVMDiskEncryptionSetReference != nil {
+		secureVMDiskEncryptionSetReference := profile.SecureVMDiskEncryptionSetReference.Copy()
+		destination.SecureVMDiskEncryptionSetReference = &secureVMDiskEncryptionSetReference
+	} else {
+		destination.SecureVMDiskEncryptionSetReference = nil
+	}
+
+	// SecurityType
+	destination.SecurityType = genruntime.ClonePointerToString(profile.SecurityType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSecurityProfile interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForDiskSecurityProfile); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.DiskSecurityProfile_STATUS
 // Contains the security related information for the resource.
 type DiskSecurityProfile_STATUS struct {
@@ -375,12 +2280,130 @@ type DiskSecurityProfile_STATUS struct {
 	SecurityType                *string                `json:"securityType,omitempty"`
 }
 
+// AssignProperties_From_DiskSecurityProfile_STATUS populates our DiskSecurityProfile_STATUS from the provided source DiskSecurityProfile_STATUS
+func (profile *DiskSecurityProfile_STATUS) AssignProperties_From_DiskSecurityProfile_STATUS(source *storage.DiskSecurityProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SecureVMDiskEncryptionSetId
+	profile.SecureVMDiskEncryptionSetId = genruntime.ClonePointerToString(source.SecureVMDiskEncryptionSetId)
+
+	// SecurityType
+	profile.SecurityType = genruntime.ClonePointerToString(source.SecurityType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		profile.PropertyBag = propertyBag
+	} else {
+		profile.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSecurityProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForDiskSecurityProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskSecurityProfile_STATUS populates the provided destination DiskSecurityProfile_STATUS from our DiskSecurityProfile_STATUS
+func (profile *DiskSecurityProfile_STATUS) AssignProperties_To_DiskSecurityProfile_STATUS(destination *storage.DiskSecurityProfile_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
+
+	// SecureVMDiskEncryptionSetId
+	destination.SecureVMDiskEncryptionSetId = genruntime.ClonePointerToString(profile.SecureVMDiskEncryptionSetId)
+
+	// SecurityType
+	destination.SecurityType = genruntime.ClonePointerToString(profile.SecurityType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSecurityProfile_STATUS interface (if implemented) to customize the conversion
+	var profileAsAny any = profile
+	if augmentedProfile, ok := profileAsAny.(augmentConversionForDiskSecurityProfile_STATUS); ok {
+		err := augmentedProfile.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.DiskSku
 // The disks sku name. Can be Standard_LRS, Premium_LRS, StandardSSD_LRS, UltraSSD_LRS, Premium_ZRS, StandardSSD_ZRS, or
 // PremiumV2_LRS.
 type DiskSku struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DiskSku populates our DiskSku from the provided source DiskSku
+func (diskSku *DiskSku) AssignProperties_From_DiskSku(source *storage.DiskSku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	diskSku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		diskSku.PropertyBag = propertyBag
+	} else {
+		diskSku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSku interface (if implemented) to customize the conversion
+	var diskSkuAsAny any = diskSku
+	if augmentedDiskSku, ok := diskSkuAsAny.(augmentConversionForDiskSku); ok {
+		err := augmentedDiskSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskSku populates the provided destination DiskSku from our DiskSku
+func (diskSku *DiskSku) AssignProperties_To_DiskSku(destination *storage.DiskSku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(diskSku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(diskSku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSku interface (if implemented) to customize the conversion
+	var diskSkuAsAny any = diskSku
+	if augmentedDiskSku, ok := diskSkuAsAny.(augmentConversionForDiskSku); ok {
+		err := augmentedDiskSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.DiskSku_STATUS
@@ -392,6 +2415,68 @@ type DiskSku_STATUS struct {
 	Tier        *string                `json:"tier,omitempty"`
 }
 
+// AssignProperties_From_DiskSku_STATUS populates our DiskSku_STATUS from the provided source DiskSku_STATUS
+func (diskSku *DiskSku_STATUS) AssignProperties_From_DiskSku_STATUS(source *storage.DiskSku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	diskSku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Tier
+	diskSku.Tier = genruntime.ClonePointerToString(source.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		diskSku.PropertyBag = propertyBag
+	} else {
+		diskSku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSku_STATUS interface (if implemented) to customize the conversion
+	var diskSkuAsAny any = diskSku
+	if augmentedDiskSku, ok := diskSkuAsAny.(augmentConversionForDiskSku_STATUS); ok {
+		err := augmentedDiskSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DiskSku_STATUS populates the provided destination DiskSku_STATUS from our DiskSku_STATUS
+func (diskSku *DiskSku_STATUS) AssignProperties_To_DiskSku_STATUS(destination *storage.DiskSku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(diskSku.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(diskSku.Name)
+
+	// Tier
+	destination.Tier = genruntime.ClonePointerToString(diskSku.Tier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDiskSku_STATUS interface (if implemented) to customize the conversion
+	var diskSkuAsAny any = diskSku
+	if augmentedDiskSku, ok := diskSkuAsAny.(augmentConversionForDiskSku_STATUS); ok {
+		err := augmentedDiskSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.Encryption
 // Encryption at rest settings for disk or snapshot
 type Encryption struct {
@@ -401,12 +2486,146 @@ type Encryption struct {
 	Type                       *string                       `json:"type,omitempty"`
 }
 
+// AssignProperties_From_Encryption populates our Encryption from the provided source Encryption
+func (encryption *Encryption) AssignProperties_From_Encryption(source *storage.Encryption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DiskEncryptionSetReference
+	if source.DiskEncryptionSetReference != nil {
+		diskEncryptionSetReference := source.DiskEncryptionSetReference.Copy()
+		encryption.DiskEncryptionSetReference = &diskEncryptionSetReference
+	} else {
+		encryption.DiskEncryptionSetReference = nil
+	}
+
+	// Type
+	encryption.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryption interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForEncryption); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Encryption populates the provided destination Encryption from our Encryption
+func (encryption *Encryption) AssignProperties_To_Encryption(destination *storage.Encryption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// DiskEncryptionSetReference
+	if encryption.DiskEncryptionSetReference != nil {
+		diskEncryptionSetReference := encryption.DiskEncryptionSetReference.Copy()
+		destination.DiskEncryptionSetReference = &diskEncryptionSetReference
+	} else {
+		destination.DiskEncryptionSetReference = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(encryption.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryption interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForEncryption); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.Encryption_STATUS
 // Encryption at rest settings for disk or snapshot
 type Encryption_STATUS struct {
 	DiskEncryptionSetId *string                `json:"diskEncryptionSetId,omitempty"`
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type                *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_Encryption_STATUS populates our Encryption_STATUS from the provided source Encryption_STATUS
+func (encryption *Encryption_STATUS) AssignProperties_From_Encryption_STATUS(source *storage.Encryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DiskEncryptionSetId
+	encryption.DiskEncryptionSetId = genruntime.ClonePointerToString(source.DiskEncryptionSetId)
+
+	// Type
+	encryption.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		encryption.PropertyBag = propertyBag
+	} else {
+		encryption.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForEncryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Encryption_STATUS populates the provided destination Encryption_STATUS from our Encryption_STATUS
+func (encryption *Encryption_STATUS) AssignProperties_To_Encryption_STATUS(destination *storage.Encryption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(encryption.PropertyBag)
+
+	// DiskEncryptionSetId
+	destination.DiskEncryptionSetId = genruntime.ClonePointerToString(encryption.DiskEncryptionSetId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(encryption.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryption_STATUS interface (if implemented) to customize the conversion
+	var encryptionAsAny any = encryption
+	if augmentedEncryption, ok := encryptionAsAny.(augmentConversionForEncryption_STATUS); ok {
+		err := augmentedEncryption.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.EncryptionSettingsCollection
@@ -418,6 +2637,110 @@ type EncryptionSettingsCollection struct {
 	PropertyBag               genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_EncryptionSettingsCollection populates our EncryptionSettingsCollection from the provided source EncryptionSettingsCollection
+func (collection *EncryptionSettingsCollection) AssignProperties_From_EncryptionSettingsCollection(source *storage.EncryptionSettingsCollection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		collection.Enabled = &enabled
+	} else {
+		collection.Enabled = nil
+	}
+
+	// EncryptionSettings
+	if source.EncryptionSettings != nil {
+		encryptionSettingList := make([]EncryptionSettingsElement, len(source.EncryptionSettings))
+		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
+			var encryptionSetting EncryptionSettingsElement
+			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement(&encryptionSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_EncryptionSettingsElement() to populate field EncryptionSettings")
+			}
+			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
+		}
+		collection.EncryptionSettings = encryptionSettingList
+	} else {
+		collection.EncryptionSettings = nil
+	}
+
+	// EncryptionSettingsVersion
+	collection.EncryptionSettingsVersion = genruntime.ClonePointerToString(source.EncryptionSettingsVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		collection.PropertyBag = propertyBag
+	} else {
+		collection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsCollection interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForEncryptionSettingsCollection); ok {
+		err := augmentedCollection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSettingsCollection populates the provided destination EncryptionSettingsCollection from our EncryptionSettingsCollection
+func (collection *EncryptionSettingsCollection) AssignProperties_To_EncryptionSettingsCollection(destination *storage.EncryptionSettingsCollection) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(collection.PropertyBag)
+
+	// Enabled
+	if collection.Enabled != nil {
+		enabled := *collection.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// EncryptionSettings
+	if collection.EncryptionSettings != nil {
+		encryptionSettingList := make([]storage.EncryptionSettingsElement, len(collection.EncryptionSettings))
+		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
+			var encryptionSetting storage.EncryptionSettingsElement
+			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement(&encryptionSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_EncryptionSettingsElement() to populate field EncryptionSettings")
+			}
+			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
+		}
+		destination.EncryptionSettings = encryptionSettingList
+	} else {
+		destination.EncryptionSettings = nil
+	}
+
+	// EncryptionSettingsVersion
+	destination.EncryptionSettingsVersion = genruntime.ClonePointerToString(collection.EncryptionSettingsVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsCollection interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForEncryptionSettingsCollection); ok {
+		err := augmentedCollection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.EncryptionSettingsCollection_STATUS
 // Encryption settings for disk or snapshot
 type EncryptionSettingsCollection_STATUS struct {
@@ -425,6 +2748,110 @@ type EncryptionSettingsCollection_STATUS struct {
 	EncryptionSettings        []EncryptionSettingsElement_STATUS `json:"encryptionSettings,omitempty"`
 	EncryptionSettingsVersion *string                            `json:"encryptionSettingsVersion,omitempty"`
 	PropertyBag               genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_EncryptionSettingsCollection_STATUS populates our EncryptionSettingsCollection_STATUS from the provided source EncryptionSettingsCollection_STATUS
+func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_From_EncryptionSettingsCollection_STATUS(source *storage.EncryptionSettingsCollection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Enabled
+	if source.Enabled != nil {
+		enabled := *source.Enabled
+		collection.Enabled = &enabled
+	} else {
+		collection.Enabled = nil
+	}
+
+	// EncryptionSettings
+	if source.EncryptionSettings != nil {
+		encryptionSettingList := make([]EncryptionSettingsElement_STATUS, len(source.EncryptionSettings))
+		for encryptionSettingIndex, encryptionSettingItem := range source.EncryptionSettings {
+			var encryptionSetting EncryptionSettingsElement_STATUS
+			err := encryptionSetting.AssignProperties_From_EncryptionSettingsElement_STATUS(&encryptionSettingItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_EncryptionSettingsElement_STATUS() to populate field EncryptionSettings")
+			}
+			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
+		}
+		collection.EncryptionSettings = encryptionSettingList
+	} else {
+		collection.EncryptionSettings = nil
+	}
+
+	// EncryptionSettingsVersion
+	collection.EncryptionSettingsVersion = genruntime.ClonePointerToString(source.EncryptionSettingsVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		collection.PropertyBag = propertyBag
+	} else {
+		collection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsCollection_STATUS interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForEncryptionSettingsCollection_STATUS); ok {
+		err := augmentedCollection.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSettingsCollection_STATUS populates the provided destination EncryptionSettingsCollection_STATUS from our EncryptionSettingsCollection_STATUS
+func (collection *EncryptionSettingsCollection_STATUS) AssignProperties_To_EncryptionSettingsCollection_STATUS(destination *storage.EncryptionSettingsCollection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(collection.PropertyBag)
+
+	// Enabled
+	if collection.Enabled != nil {
+		enabled := *collection.Enabled
+		destination.Enabled = &enabled
+	} else {
+		destination.Enabled = nil
+	}
+
+	// EncryptionSettings
+	if collection.EncryptionSettings != nil {
+		encryptionSettingList := make([]storage.EncryptionSettingsElement_STATUS, len(collection.EncryptionSettings))
+		for encryptionSettingIndex, encryptionSettingItem := range collection.EncryptionSettings {
+			var encryptionSetting storage.EncryptionSettingsElement_STATUS
+			err := encryptionSettingItem.AssignProperties_To_EncryptionSettingsElement_STATUS(&encryptionSetting)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_EncryptionSettingsElement_STATUS() to populate field EncryptionSettings")
+			}
+			encryptionSettingList[encryptionSettingIndex] = encryptionSetting
+		}
+		destination.EncryptionSettings = encryptionSettingList
+	} else {
+		destination.EncryptionSettings = nil
+	}
+
+	// EncryptionSettingsVersion
+	destination.EncryptionSettingsVersion = genruntime.ClonePointerToString(collection.EncryptionSettingsVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsCollection_STATUS interface (if implemented) to customize the conversion
+	var collectionAsAny any = collection
+	if augmentedCollection, ok := collectionAsAny.(augmentConversionForEncryptionSettingsCollection_STATUS); ok {
+		err := augmentedCollection.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.ExtendedLocation
@@ -435,12 +2862,136 @@ type ExtendedLocation struct {
 	Type        *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_ExtendedLocation populates our ExtendedLocation from the provided source ExtendedLocation
+func (location *ExtendedLocation) AssignProperties_From_ExtendedLocation(source *storage.ExtendedLocation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	location.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Type
+	location.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		location.PropertyBag = propertyBag
+	} else {
+		location.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForExtendedLocation interface (if implemented) to customize the conversion
+	var locationAsAny any = location
+	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
+		err := augmentedLocation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ExtendedLocation populates the provided destination ExtendedLocation from our ExtendedLocation
+func (location *ExtendedLocation) AssignProperties_To_ExtendedLocation(destination *storage.ExtendedLocation) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(location.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(location.Name)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(location.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForExtendedLocation interface (if implemented) to customize the conversion
+	var locationAsAny any = location
+	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation); ok {
+		err := augmentedLocation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.ExtendedLocation_STATUS
 // The complex type of the extended location.
 type ExtendedLocation_STATUS struct {
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_ExtendedLocation_STATUS populates our ExtendedLocation_STATUS from the provided source ExtendedLocation_STATUS
+func (location *ExtendedLocation_STATUS) AssignProperties_From_ExtendedLocation_STATUS(source *storage.ExtendedLocation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Name
+	location.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Type
+	location.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		location.PropertyBag = propertyBag
+	} else {
+		location.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForExtendedLocation_STATUS interface (if implemented) to customize the conversion
+	var locationAsAny any = location
+	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
+		err := augmentedLocation.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ExtendedLocation_STATUS populates the provided destination ExtendedLocation_STATUS from our ExtendedLocation_STATUS
+func (location *ExtendedLocation_STATUS) AssignProperties_To_ExtendedLocation_STATUS(destination *storage.ExtendedLocation_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(location.PropertyBag)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(location.Name)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(location.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForExtendedLocation_STATUS interface (if implemented) to customize the conversion
+	var locationAsAny any = location
+	if augmentedLocation, ok := locationAsAny.(augmentConversionForExtendedLocation_STATUS); ok {
+		err := augmentedLocation.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.PropertyUpdatesInProgress_STATUS
@@ -450,30 +3001,122 @@ type PropertyUpdatesInProgress_STATUS struct {
 	TargetTier  *string                `json:"targetTier,omitempty"`
 }
 
-// Storage version of v1api20240302.PurchasePlan
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan struct {
-	Name          *string                `json:"name,omitempty"`
-	Product       *string                `json:"product,omitempty"`
-	PromotionCode *string                `json:"promotionCode,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Publisher     *string                `json:"publisher,omitempty"`
+// AssignProperties_From_PropertyUpdatesInProgress_STATUS populates our PropertyUpdatesInProgress_STATUS from the provided source PropertyUpdatesInProgress_STATUS
+func (progress *PropertyUpdatesInProgress_STATUS) AssignProperties_From_PropertyUpdatesInProgress_STATUS(source *storage.PropertyUpdatesInProgress_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// TargetTier
+	progress.TargetTier = genruntime.ClonePointerToString(source.TargetTier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		progress.PropertyBag = propertyBag
+	} else {
+		progress.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPropertyUpdatesInProgress_STATUS interface (if implemented) to customize the conversion
+	var progressAsAny any = progress
+	if augmentedProgress, ok := progressAsAny.(augmentConversionForPropertyUpdatesInProgress_STATUS); ok {
+		err := augmentedProgress.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
-// Storage version of v1api20240302.PurchasePlan_STATUS
-// Used for establishing the purchase context of any 3rd Party artifact through MarketPlace.
-type PurchasePlan_STATUS struct {
-	Name          *string                `json:"name,omitempty"`
-	Product       *string                `json:"product,omitempty"`
-	PromotionCode *string                `json:"promotionCode,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-	Publisher     *string                `json:"publisher,omitempty"`
+// AssignProperties_To_PropertyUpdatesInProgress_STATUS populates the provided destination PropertyUpdatesInProgress_STATUS from our PropertyUpdatesInProgress_STATUS
+func (progress *PropertyUpdatesInProgress_STATUS) AssignProperties_To_PropertyUpdatesInProgress_STATUS(destination *storage.PropertyUpdatesInProgress_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(progress.PropertyBag)
+
+	// TargetTier
+	destination.TargetTier = genruntime.ClonePointerToString(progress.TargetTier)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPropertyUpdatesInProgress_STATUS interface (if implemented) to customize the conversion
+	var progressAsAny any = progress
+	if augmentedProgress, ok := progressAsAny.(augmentConversionForPropertyUpdatesInProgress_STATUS); ok {
+		err := augmentedProgress.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.ShareInfoElement_STATUS
 type ShareInfoElement_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	VmUri       *string                `json:"vmUri,omitempty"`
+}
+
+// AssignProperties_From_ShareInfoElement_STATUS populates our ShareInfoElement_STATUS from the provided source ShareInfoElement_STATUS
+func (element *ShareInfoElement_STATUS) AssignProperties_From_ShareInfoElement_STATUS(source *storage.ShareInfoElement_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// VmUri
+	element.VmUri = genruntime.ClonePointerToString(source.VmUri)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		element.PropertyBag = propertyBag
+	} else {
+		element.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForShareInfoElement_STATUS interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForShareInfoElement_STATUS); ok {
+		err := augmentedElement.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ShareInfoElement_STATUS populates the provided destination ShareInfoElement_STATUS from our ShareInfoElement_STATUS
+func (element *ShareInfoElement_STATUS) AssignProperties_To_ShareInfoElement_STATUS(destination *storage.ShareInfoElement_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(element.PropertyBag)
+
+	// VmUri
+	destination.VmUri = genruntime.ClonePointerToString(element.VmUri)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForShareInfoElement_STATUS interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForShareInfoElement_STATUS); ok {
+		err := augmentedElement.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.SupportedCapabilities
@@ -485,6 +3128,84 @@ type SupportedCapabilities struct {
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SupportedCapabilities populates our SupportedCapabilities from the provided source SupportedCapabilities
+func (capabilities *SupportedCapabilities) AssignProperties_From_SupportedCapabilities(source *storage.SupportedCapabilities) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AcceleratedNetwork
+	if source.AcceleratedNetwork != nil {
+		acceleratedNetwork := *source.AcceleratedNetwork
+		capabilities.AcceleratedNetwork = &acceleratedNetwork
+	} else {
+		capabilities.AcceleratedNetwork = nil
+	}
+
+	// Architecture
+	capabilities.Architecture = genruntime.ClonePointerToString(source.Architecture)
+
+	// DiskControllerTypes
+	capabilities.DiskControllerTypes = genruntime.ClonePointerToString(source.DiskControllerTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		capabilities.PropertyBag = propertyBag
+	} else {
+		capabilities.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSupportedCapabilities interface (if implemented) to customize the conversion
+	var capabilitiesAsAny any = capabilities
+	if augmentedCapabilities, ok := capabilitiesAsAny.(augmentConversionForSupportedCapabilities); ok {
+		err := augmentedCapabilities.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SupportedCapabilities populates the provided destination SupportedCapabilities from our SupportedCapabilities
+func (capabilities *SupportedCapabilities) AssignProperties_To_SupportedCapabilities(destination *storage.SupportedCapabilities) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(capabilities.PropertyBag)
+
+	// AcceleratedNetwork
+	if capabilities.AcceleratedNetwork != nil {
+		acceleratedNetwork := *capabilities.AcceleratedNetwork
+		destination.AcceleratedNetwork = &acceleratedNetwork
+	} else {
+		destination.AcceleratedNetwork = nil
+	}
+
+	// Architecture
+	destination.Architecture = genruntime.ClonePointerToString(capabilities.Architecture)
+
+	// DiskControllerTypes
+	destination.DiskControllerTypes = genruntime.ClonePointerToString(capabilities.DiskControllerTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSupportedCapabilities interface (if implemented) to customize the conversion
+	var capabilitiesAsAny any = capabilities
+	if augmentedCapabilities, ok := capabilitiesAsAny.(augmentConversionForSupportedCapabilities); ok {
+		err := augmentedCapabilities.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.SupportedCapabilities_STATUS
 // List of supported capabilities persisted on the disk resource for VM use.
 type SupportedCapabilities_STATUS struct {
@@ -492,6 +3213,282 @@ type SupportedCapabilities_STATUS struct {
 	Architecture        *string                `json:"architecture,omitempty"`
 	DiskControllerTypes *string                `json:"diskControllerTypes,omitempty"`
 	PropertyBag         genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SupportedCapabilities_STATUS populates our SupportedCapabilities_STATUS from the provided source SupportedCapabilities_STATUS
+func (capabilities *SupportedCapabilities_STATUS) AssignProperties_From_SupportedCapabilities_STATUS(source *storage.SupportedCapabilities_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AcceleratedNetwork
+	if source.AcceleratedNetwork != nil {
+		acceleratedNetwork := *source.AcceleratedNetwork
+		capabilities.AcceleratedNetwork = &acceleratedNetwork
+	} else {
+		capabilities.AcceleratedNetwork = nil
+	}
+
+	// Architecture
+	capabilities.Architecture = genruntime.ClonePointerToString(source.Architecture)
+
+	// DiskControllerTypes
+	capabilities.DiskControllerTypes = genruntime.ClonePointerToString(source.DiskControllerTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		capabilities.PropertyBag = propertyBag
+	} else {
+		capabilities.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSupportedCapabilities_STATUS interface (if implemented) to customize the conversion
+	var capabilitiesAsAny any = capabilities
+	if augmentedCapabilities, ok := capabilitiesAsAny.(augmentConversionForSupportedCapabilities_STATUS); ok {
+		err := augmentedCapabilities.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SupportedCapabilities_STATUS populates the provided destination SupportedCapabilities_STATUS from our SupportedCapabilities_STATUS
+func (capabilities *SupportedCapabilities_STATUS) AssignProperties_To_SupportedCapabilities_STATUS(destination *storage.SupportedCapabilities_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(capabilities.PropertyBag)
+
+	// AcceleratedNetwork
+	if capabilities.AcceleratedNetwork != nil {
+		acceleratedNetwork := *capabilities.AcceleratedNetwork
+		destination.AcceleratedNetwork = &acceleratedNetwork
+	} else {
+		destination.AcceleratedNetwork = nil
+	}
+
+	// Architecture
+	destination.Architecture = genruntime.ClonePointerToString(capabilities.Architecture)
+
+	// DiskControllerTypes
+	destination.DiskControllerTypes = genruntime.ClonePointerToString(capabilities.DiskControllerTypes)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSupportedCapabilities_STATUS interface (if implemented) to customize the conversion
+	var capabilitiesAsAny any = capabilities
+	if augmentedCapabilities, ok := capabilitiesAsAny.(augmentConversionForSupportedCapabilities_STATUS); ok {
+		err := augmentedCapabilities.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240302.SystemData_STATUS
+// Metadata pertaining to creation and last modification of the resource.
+type SystemData_STATUS struct {
+	CreatedAt          *string                `json:"createdAt,omitempty"`
+	CreatedBy          *string                `json:"createdBy,omitempty"`
+	CreatedByType      *string                `json:"createdByType,omitempty"`
+	LastModifiedAt     *string                `json:"lastModifiedAt,omitempty"`
+	LastModifiedBy     *string                `json:"lastModifiedBy,omitempty"`
+	LastModifiedByType *string                `json:"lastModifiedByType,omitempty"`
+	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForCreationData interface {
+	AssignPropertiesFrom(src *storage.CreationData) error
+	AssignPropertiesTo(dst *storage.CreationData) error
+}
+
+type augmentConversionForCreationData_STATUS interface {
+	AssignPropertiesFrom(src *storage.CreationData_STATUS) error
+	AssignPropertiesTo(dst *storage.CreationData_STATUS) error
+}
+
+type augmentConversionForDiskOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.DiskOperatorSpec) error
+	AssignPropertiesTo(dst *storage.DiskOperatorSpec) error
+}
+
+type augmentConversionForDiskPurchasePlan interface {
+	AssignPropertiesFrom(src *storage.DiskPurchasePlan) error
+	AssignPropertiesTo(dst *storage.DiskPurchasePlan) error
+}
+
+type augmentConversionForDiskPurchasePlan_STATUS interface {
+	AssignPropertiesFrom(src *storage.DiskPurchasePlan_STATUS) error
+	AssignPropertiesTo(dst *storage.DiskPurchasePlan_STATUS) error
+}
+
+type augmentConversionForDiskSecurityProfile interface {
+	AssignPropertiesFrom(src *storage.DiskSecurityProfile) error
+	AssignPropertiesTo(dst *storage.DiskSecurityProfile) error
+}
+
+type augmentConversionForDiskSecurityProfile_STATUS interface {
+	AssignPropertiesFrom(src *storage.DiskSecurityProfile_STATUS) error
+	AssignPropertiesTo(dst *storage.DiskSecurityProfile_STATUS) error
+}
+
+type augmentConversionForDiskSku interface {
+	AssignPropertiesFrom(src *storage.DiskSku) error
+	AssignPropertiesTo(dst *storage.DiskSku) error
+}
+
+type augmentConversionForDiskSku_STATUS interface {
+	AssignPropertiesFrom(src *storage.DiskSku_STATUS) error
+	AssignPropertiesTo(dst *storage.DiskSku_STATUS) error
+}
+
+type augmentConversionForEncryption interface {
+	AssignPropertiesFrom(src *storage.Encryption) error
+	AssignPropertiesTo(dst *storage.Encryption) error
+}
+
+type augmentConversionForEncryption_STATUS interface {
+	AssignPropertiesFrom(src *storage.Encryption_STATUS) error
+	AssignPropertiesTo(dst *storage.Encryption_STATUS) error
+}
+
+type augmentConversionForEncryptionSettingsCollection interface {
+	AssignPropertiesFrom(src *storage.EncryptionSettingsCollection) error
+	AssignPropertiesTo(dst *storage.EncryptionSettingsCollection) error
+}
+
+type augmentConversionForEncryptionSettingsCollection_STATUS interface {
+	AssignPropertiesFrom(src *storage.EncryptionSettingsCollection_STATUS) error
+	AssignPropertiesTo(dst *storage.EncryptionSettingsCollection_STATUS) error
+}
+
+type augmentConversionForExtendedLocation interface {
+	AssignPropertiesFrom(src *storage.ExtendedLocation) error
+	AssignPropertiesTo(dst *storage.ExtendedLocation) error
+}
+
+type augmentConversionForExtendedLocation_STATUS interface {
+	AssignPropertiesFrom(src *storage.ExtendedLocation_STATUS) error
+	AssignPropertiesTo(dst *storage.ExtendedLocation_STATUS) error
+}
+
+type augmentConversionForPropertyUpdatesInProgress_STATUS interface {
+	AssignPropertiesFrom(src *storage.PropertyUpdatesInProgress_STATUS) error
+	AssignPropertiesTo(dst *storage.PropertyUpdatesInProgress_STATUS) error
+}
+
+type augmentConversionForShareInfoElement_STATUS interface {
+	AssignPropertiesFrom(src *storage.ShareInfoElement_STATUS) error
+	AssignPropertiesTo(dst *storage.ShareInfoElement_STATUS) error
+}
+
+type augmentConversionForSupportedCapabilities interface {
+	AssignPropertiesFrom(src *storage.SupportedCapabilities) error
+	AssignPropertiesTo(dst *storage.SupportedCapabilities) error
+}
+
+type augmentConversionForSupportedCapabilities_STATUS interface {
+	AssignPropertiesFrom(src *storage.SupportedCapabilities_STATUS) error
+	AssignPropertiesTo(dst *storage.SupportedCapabilities_STATUS) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
 }
 
 // Storage version of v1api20240302.EncryptionSettingsElement
@@ -502,12 +3499,208 @@ type EncryptionSettingsElement struct {
 	PropertyBag       genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_EncryptionSettingsElement populates our EncryptionSettingsElement from the provided source EncryptionSettingsElement
+func (element *EncryptionSettingsElement) AssignProperties_From_EncryptionSettingsElement(source *storage.EncryptionSettingsElement) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DiskEncryptionKey
+	if source.DiskEncryptionKey != nil {
+		var diskEncryptionKey KeyVaultAndSecretReference
+		err := diskEncryptionKey.AssignProperties_From_KeyVaultAndSecretReference(source.DiskEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultAndSecretReference() to populate field DiskEncryptionKey")
+		}
+		element.DiskEncryptionKey = &diskEncryptionKey
+	} else {
+		element.DiskEncryptionKey = nil
+	}
+
+	// KeyEncryptionKey
+	if source.KeyEncryptionKey != nil {
+		var keyEncryptionKey KeyVaultAndKeyReference
+		err := keyEncryptionKey.AssignProperties_From_KeyVaultAndKeyReference(source.KeyEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultAndKeyReference() to populate field KeyEncryptionKey")
+		}
+		element.KeyEncryptionKey = &keyEncryptionKey
+	} else {
+		element.KeyEncryptionKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		element.PropertyBag = propertyBag
+	} else {
+		element.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsElement interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForEncryptionSettingsElement); ok {
+		err := augmentedElement.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSettingsElement populates the provided destination EncryptionSettingsElement from our EncryptionSettingsElement
+func (element *EncryptionSettingsElement) AssignProperties_To_EncryptionSettingsElement(destination *storage.EncryptionSettingsElement) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(element.PropertyBag)
+
+	// DiskEncryptionKey
+	if element.DiskEncryptionKey != nil {
+		var diskEncryptionKey storage.KeyVaultAndSecretReference
+		err := element.DiskEncryptionKey.AssignProperties_To_KeyVaultAndSecretReference(&diskEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultAndSecretReference() to populate field DiskEncryptionKey")
+		}
+		destination.DiskEncryptionKey = &diskEncryptionKey
+	} else {
+		destination.DiskEncryptionKey = nil
+	}
+
+	// KeyEncryptionKey
+	if element.KeyEncryptionKey != nil {
+		var keyEncryptionKey storage.KeyVaultAndKeyReference
+		err := element.KeyEncryptionKey.AssignProperties_To_KeyVaultAndKeyReference(&keyEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultAndKeyReference() to populate field KeyEncryptionKey")
+		}
+		destination.KeyEncryptionKey = &keyEncryptionKey
+	} else {
+		destination.KeyEncryptionKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsElement interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForEncryptionSettingsElement); ok {
+		err := augmentedElement.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.EncryptionSettingsElement_STATUS
 // Encryption settings for one disk volume.
 type EncryptionSettingsElement_STATUS struct {
 	DiskEncryptionKey *KeyVaultAndSecretReference_STATUS `json:"diskEncryptionKey,omitempty"`
 	KeyEncryptionKey  *KeyVaultAndKeyReference_STATUS    `json:"keyEncryptionKey,omitempty"`
 	PropertyBag       genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_EncryptionSettingsElement_STATUS populates our EncryptionSettingsElement_STATUS from the provided source EncryptionSettingsElement_STATUS
+func (element *EncryptionSettingsElement_STATUS) AssignProperties_From_EncryptionSettingsElement_STATUS(source *storage.EncryptionSettingsElement_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DiskEncryptionKey
+	if source.DiskEncryptionKey != nil {
+		var diskEncryptionKey KeyVaultAndSecretReference_STATUS
+		err := diskEncryptionKey.AssignProperties_From_KeyVaultAndSecretReference_STATUS(source.DiskEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultAndSecretReference_STATUS() to populate field DiskEncryptionKey")
+		}
+		element.DiskEncryptionKey = &diskEncryptionKey
+	} else {
+		element.DiskEncryptionKey = nil
+	}
+
+	// KeyEncryptionKey
+	if source.KeyEncryptionKey != nil {
+		var keyEncryptionKey KeyVaultAndKeyReference_STATUS
+		err := keyEncryptionKey.AssignProperties_From_KeyVaultAndKeyReference_STATUS(source.KeyEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultAndKeyReference_STATUS() to populate field KeyEncryptionKey")
+		}
+		element.KeyEncryptionKey = &keyEncryptionKey
+	} else {
+		element.KeyEncryptionKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		element.PropertyBag = propertyBag
+	} else {
+		element.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsElement_STATUS interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForEncryptionSettingsElement_STATUS); ok {
+		err := augmentedElement.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_EncryptionSettingsElement_STATUS populates the provided destination EncryptionSettingsElement_STATUS from our EncryptionSettingsElement_STATUS
+func (element *EncryptionSettingsElement_STATUS) AssignProperties_To_EncryptionSettingsElement_STATUS(destination *storage.EncryptionSettingsElement_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(element.PropertyBag)
+
+	// DiskEncryptionKey
+	if element.DiskEncryptionKey != nil {
+		var diskEncryptionKey storage.KeyVaultAndSecretReference_STATUS
+		err := element.DiskEncryptionKey.AssignProperties_To_KeyVaultAndSecretReference_STATUS(&diskEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultAndSecretReference_STATUS() to populate field DiskEncryptionKey")
+		}
+		destination.DiskEncryptionKey = &diskEncryptionKey
+	} else {
+		destination.DiskEncryptionKey = nil
+	}
+
+	// KeyEncryptionKey
+	if element.KeyEncryptionKey != nil {
+		var keyEncryptionKey storage.KeyVaultAndKeyReference_STATUS
+		err := element.KeyEncryptionKey.AssignProperties_To_KeyVaultAndKeyReference_STATUS(&keyEncryptionKey)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultAndKeyReference_STATUS() to populate field KeyEncryptionKey")
+		}
+		destination.KeyEncryptionKey = &keyEncryptionKey
+	} else {
+		destination.KeyEncryptionKey = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForEncryptionSettingsElement_STATUS interface (if implemented) to customize the conversion
+	var elementAsAny any = element
+	if augmentedElement, ok := elementAsAny.(augmentConversionForEncryptionSettingsElement_STATUS); ok {
+		err := augmentedElement.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.ImageDiskReference
@@ -523,6 +3716,90 @@ type ImageDiskReference struct {
 	SharedGalleryImageId *string                       `json:"sharedGalleryImageId,omitempty"`
 }
 
+// AssignProperties_From_ImageDiskReference populates our ImageDiskReference from the provided source ImageDiskReference
+func (reference *ImageDiskReference) AssignProperties_From_ImageDiskReference(source *storage.ImageDiskReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CommunityGalleryImageId
+	reference.CommunityGalleryImageId = genruntime.ClonePointerToString(source.CommunityGalleryImageId)
+
+	// Lun
+	reference.Lun = genruntime.ClonePointerToInt(source.Lun)
+
+	// Reference
+	if source.Reference != nil {
+		referenceTemp := source.Reference.Copy()
+		reference.Reference = &referenceTemp
+	} else {
+		reference.Reference = nil
+	}
+
+	// SharedGalleryImageId
+	reference.SharedGalleryImageId = genruntime.ClonePointerToString(source.SharedGalleryImageId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImageDiskReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForImageDiskReference); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImageDiskReference populates the provided destination ImageDiskReference from our ImageDiskReference
+func (reference *ImageDiskReference) AssignProperties_To_ImageDiskReference(destination *storage.ImageDiskReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// CommunityGalleryImageId
+	destination.CommunityGalleryImageId = genruntime.ClonePointerToString(reference.CommunityGalleryImageId)
+
+	// Lun
+	destination.Lun = genruntime.ClonePointerToInt(reference.Lun)
+
+	// Reference
+	if reference.Reference != nil {
+		referenceTemp := reference.Reference.Copy()
+		destination.Reference = &referenceTemp
+	} else {
+		destination.Reference = nil
+	}
+
+	// SharedGalleryImageId
+	destination.SharedGalleryImageId = genruntime.ClonePointerToString(reference.SharedGalleryImageId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImageDiskReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForImageDiskReference); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.ImageDiskReference_STATUS
 // The source image used for creating the disk.
 type ImageDiskReference_STATUS struct {
@@ -533,12 +3810,186 @@ type ImageDiskReference_STATUS struct {
 	SharedGalleryImageId    *string                `json:"sharedGalleryImageId,omitempty"`
 }
 
+// AssignProperties_From_ImageDiskReference_STATUS populates our ImageDiskReference_STATUS from the provided source ImageDiskReference_STATUS
+func (reference *ImageDiskReference_STATUS) AssignProperties_From_ImageDiskReference_STATUS(source *storage.ImageDiskReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CommunityGalleryImageId
+	reference.CommunityGalleryImageId = genruntime.ClonePointerToString(source.CommunityGalleryImageId)
+
+	// Id
+	reference.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Lun
+	reference.Lun = genruntime.ClonePointerToInt(source.Lun)
+
+	// SharedGalleryImageId
+	reference.SharedGalleryImageId = genruntime.ClonePointerToString(source.SharedGalleryImageId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImageDiskReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForImageDiskReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImageDiskReference_STATUS populates the provided destination ImageDiskReference_STATUS from our ImageDiskReference_STATUS
+func (reference *ImageDiskReference_STATUS) AssignProperties_To_ImageDiskReference_STATUS(destination *storage.ImageDiskReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// CommunityGalleryImageId
+	destination.CommunityGalleryImageId = genruntime.ClonePointerToString(reference.CommunityGalleryImageId)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(reference.Id)
+
+	// Lun
+	destination.Lun = genruntime.ClonePointerToInt(reference.Lun)
+
+	// SharedGalleryImageId
+	destination.SharedGalleryImageId = genruntime.ClonePointerToString(reference.SharedGalleryImageId)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImageDiskReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForImageDiskReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForEncryptionSettingsElement interface {
+	AssignPropertiesFrom(src *storage.EncryptionSettingsElement) error
+	AssignPropertiesTo(dst *storage.EncryptionSettingsElement) error
+}
+
+type augmentConversionForEncryptionSettingsElement_STATUS interface {
+	AssignPropertiesFrom(src *storage.EncryptionSettingsElement_STATUS) error
+	AssignPropertiesTo(dst *storage.EncryptionSettingsElement_STATUS) error
+}
+
+type augmentConversionForImageDiskReference interface {
+	AssignPropertiesFrom(src *storage.ImageDiskReference) error
+	AssignPropertiesTo(dst *storage.ImageDiskReference) error
+}
+
+type augmentConversionForImageDiskReference_STATUS interface {
+	AssignPropertiesFrom(src *storage.ImageDiskReference_STATUS) error
+	AssignPropertiesTo(dst *storage.ImageDiskReference_STATUS) error
+}
+
 // Storage version of v1api20240302.KeyVaultAndKeyReference
 // Key Vault Key Url and vault id of KeK, KeK is optional and when provided is used to unwrap the encryptionKey
 type KeyVaultAndKeyReference struct {
 	KeyUrl      *string                `json:"keyUrl,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SourceVault *SourceVault           `json:"sourceVault,omitempty"`
+}
+
+// AssignProperties_From_KeyVaultAndKeyReference populates our KeyVaultAndKeyReference from the provided source KeyVaultAndKeyReference
+func (reference *KeyVaultAndKeyReference) AssignProperties_From_KeyVaultAndKeyReference(source *storage.KeyVaultAndKeyReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KeyUrl
+	reference.KeyUrl = genruntime.ClonePointerToString(source.KeyUrl)
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault
+		err := sourceVault.AssignProperties_From_SourceVault(source.SourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SourceVault() to populate field SourceVault")
+		}
+		reference.SourceVault = &sourceVault
+	} else {
+		reference.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndKeyReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndKeyReference); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyVaultAndKeyReference populates the provided destination KeyVaultAndKeyReference from our KeyVaultAndKeyReference
+func (reference *KeyVaultAndKeyReference) AssignProperties_To_KeyVaultAndKeyReference(destination *storage.KeyVaultAndKeyReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// KeyUrl
+	destination.KeyUrl = genruntime.ClonePointerToString(reference.KeyUrl)
+
+	// SourceVault
+	if reference.SourceVault != nil {
+		var sourceVault storage.SourceVault
+		err := reference.SourceVault.AssignProperties_To_SourceVault(&sourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SourceVault() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndKeyReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndKeyReference); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240302.KeyVaultAndKeyReference_STATUS
@@ -549,6 +4000,86 @@ type KeyVaultAndKeyReference_STATUS struct {
 	SourceVault *SourceVault_STATUS    `json:"sourceVault,omitempty"`
 }
 
+// AssignProperties_From_KeyVaultAndKeyReference_STATUS populates our KeyVaultAndKeyReference_STATUS from the provided source KeyVaultAndKeyReference_STATUS
+func (reference *KeyVaultAndKeyReference_STATUS) AssignProperties_From_KeyVaultAndKeyReference_STATUS(source *storage.KeyVaultAndKeyReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// KeyUrl
+	reference.KeyUrl = genruntime.ClonePointerToString(source.KeyUrl)
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault_STATUS
+		err := sourceVault.AssignProperties_From_SourceVault_STATUS(source.SourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SourceVault_STATUS() to populate field SourceVault")
+		}
+		reference.SourceVault = &sourceVault
+	} else {
+		reference.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndKeyReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndKeyReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyVaultAndKeyReference_STATUS populates the provided destination KeyVaultAndKeyReference_STATUS from our KeyVaultAndKeyReference_STATUS
+func (reference *KeyVaultAndKeyReference_STATUS) AssignProperties_To_KeyVaultAndKeyReference_STATUS(destination *storage.KeyVaultAndKeyReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// KeyUrl
+	destination.KeyUrl = genruntime.ClonePointerToString(reference.KeyUrl)
+
+	// SourceVault
+	if reference.SourceVault != nil {
+		var sourceVault storage.SourceVault_STATUS
+		err := reference.SourceVault.AssignProperties_To_SourceVault_STATUS(&sourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SourceVault_STATUS() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndKeyReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndKeyReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.KeyVaultAndSecretReference
 // Key Vault Secret Url and vault id of the encryption key
 type KeyVaultAndSecretReference struct {
@@ -557,12 +4088,192 @@ type KeyVaultAndSecretReference struct {
 	SourceVault *SourceVault           `json:"sourceVault,omitempty"`
 }
 
+// AssignProperties_From_KeyVaultAndSecretReference populates our KeyVaultAndSecretReference from the provided source KeyVaultAndSecretReference
+func (reference *KeyVaultAndSecretReference) AssignProperties_From_KeyVaultAndSecretReference(source *storage.KeyVaultAndSecretReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SecretUrl
+	reference.SecretUrl = genruntime.ClonePointerToString(source.SecretUrl)
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault
+		err := sourceVault.AssignProperties_From_SourceVault(source.SourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SourceVault() to populate field SourceVault")
+		}
+		reference.SourceVault = &sourceVault
+	} else {
+		reference.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndSecretReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndSecretReference); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyVaultAndSecretReference populates the provided destination KeyVaultAndSecretReference from our KeyVaultAndSecretReference
+func (reference *KeyVaultAndSecretReference) AssignProperties_To_KeyVaultAndSecretReference(destination *storage.KeyVaultAndSecretReference) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// SecretUrl
+	destination.SecretUrl = genruntime.ClonePointerToString(reference.SecretUrl)
+
+	// SourceVault
+	if reference.SourceVault != nil {
+		var sourceVault storage.SourceVault
+		err := reference.SourceVault.AssignProperties_To_SourceVault(&sourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SourceVault() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndSecretReference interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndSecretReference); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240302.KeyVaultAndSecretReference_STATUS
 // Key Vault Secret Url and vault id of the encryption key
 type KeyVaultAndSecretReference_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SecretUrl   *string                `json:"secretUrl,omitempty"`
 	SourceVault *SourceVault_STATUS    `json:"sourceVault,omitempty"`
+}
+
+// AssignProperties_From_KeyVaultAndSecretReference_STATUS populates our KeyVaultAndSecretReference_STATUS from the provided source KeyVaultAndSecretReference_STATUS
+func (reference *KeyVaultAndSecretReference_STATUS) AssignProperties_From_KeyVaultAndSecretReference_STATUS(source *storage.KeyVaultAndSecretReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// SecretUrl
+	reference.SecretUrl = genruntime.ClonePointerToString(source.SecretUrl)
+
+	// SourceVault
+	if source.SourceVault != nil {
+		var sourceVault SourceVault_STATUS
+		err := sourceVault.AssignProperties_From_SourceVault_STATUS(source.SourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SourceVault_STATUS() to populate field SourceVault")
+		}
+		reference.SourceVault = &sourceVault
+	} else {
+		reference.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		reference.PropertyBag = propertyBag
+	} else {
+		reference.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndSecretReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndSecretReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_KeyVaultAndSecretReference_STATUS populates the provided destination KeyVaultAndSecretReference_STATUS from our KeyVaultAndSecretReference_STATUS
+func (reference *KeyVaultAndSecretReference_STATUS) AssignProperties_To_KeyVaultAndSecretReference_STATUS(destination *storage.KeyVaultAndSecretReference_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(reference.PropertyBag)
+
+	// SecretUrl
+	destination.SecretUrl = genruntime.ClonePointerToString(reference.SecretUrl)
+
+	// SourceVault
+	if reference.SourceVault != nil {
+		var sourceVault storage.SourceVault_STATUS
+		err := reference.SourceVault.AssignProperties_To_SourceVault_STATUS(&sourceVault)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SourceVault_STATUS() to populate field SourceVault")
+		}
+		destination.SourceVault = &sourceVault
+	} else {
+		destination.SourceVault = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForKeyVaultAndSecretReference_STATUS interface (if implemented) to customize the conversion
+	var referenceAsAny any = reference
+	if augmentedReference, ok := referenceAsAny.(augmentConversionForKeyVaultAndSecretReference_STATUS); ok {
+		err := augmentedReference.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForKeyVaultAndKeyReference interface {
+	AssignPropertiesFrom(src *storage.KeyVaultAndKeyReference) error
+	AssignPropertiesTo(dst *storage.KeyVaultAndKeyReference) error
+}
+
+type augmentConversionForKeyVaultAndKeyReference_STATUS interface {
+	AssignPropertiesFrom(src *storage.KeyVaultAndKeyReference_STATUS) error
+	AssignPropertiesTo(dst *storage.KeyVaultAndKeyReference_STATUS) error
+}
+
+type augmentConversionForKeyVaultAndSecretReference interface {
+	AssignPropertiesFrom(src *storage.KeyVaultAndSecretReference) error
+	AssignPropertiesTo(dst *storage.KeyVaultAndSecretReference) error
+}
+
+type augmentConversionForKeyVaultAndSecretReference_STATUS interface {
+	AssignPropertiesFrom(src *storage.KeyVaultAndSecretReference_STATUS) error
+	AssignPropertiesTo(dst *storage.KeyVaultAndSecretReference_STATUS) error
 }
 
 func init() {

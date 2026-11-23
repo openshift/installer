@@ -17,11 +17,15 @@ limitations under the License.
 package privateendpoints
 
 import (
+	"context"
+
 	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
+	"sigs.k8s.io/cluster-api-provider-azure/util/slice"
 )
 
 // ServiceName is the name of this service.
@@ -36,7 +40,14 @@ type PrivateEndpointScope interface {
 // New creates a new service.
 func New(scope PrivateEndpointScope) *aso.Service[*asonetworkv1.PrivateEndpoint, PrivateEndpointScope] {
 	svc := aso.NewService[*asonetworkv1.PrivateEndpoint, PrivateEndpointScope](ServiceName, scope)
+	svc.ListFunc = list
 	svc.ConditionType = infrav1.PrivateEndpointsReadyCondition
 	svc.Specs = scope.PrivateEndpointSpecs()
 	return svc
+}
+
+func list(ctx context.Context, client client.Client, opts ...client.ListOption) ([]*asonetworkv1.PrivateEndpoint, error) {
+	list := &asonetworkv1.PrivateEndpointList{}
+	err := client.List(ctx, list, opts...)
+	return slice.ToPtrs(list.Items), err
 }

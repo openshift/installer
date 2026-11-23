@@ -54,13 +54,21 @@ type OpenStackClusterSpec struct {
 
 	// Subnets specifies existing subnets to use if not ManagedSubnets are
 	// specified. All subnets must be in the network specified by Network.
-	// There can be zero, one, or two subnets. If no subnets are specified,
-	// all subnets in Network will be used. If 2 subnets are specified, one
-	// must be IPv4 and the other IPv6.
-	// +kubebuilder:validation:MaxItems=2
+	// If no subnets are specified, all subnets in Network will be used.
+	// Multiple subnets of the same IP version are supported when PrimarySubnet
+	// is also set to identify which subnet should be used for services like
+	// load balancer VIP allocation.
 	// +listType=atomic
 	// +optional
 	Subnets []SubnetParam `json:"subnets,omitempty"`
+
+	// PrimarySubnet identifies the primary subnet for the cluster when multiple
+	// subnets are specified in Subnets. It is used to determine the subnet for
+	// load balancer VIP allocation and node member registration.
+	// If not specified and multiple subnets exist, the first subnet in the
+	// resolved Subnets list is used.
+	// +optional
+	PrimarySubnet *SubnetParam `json:"primarySubnet,omitempty"`
 
 	// NetworkMTU sets the maximum transmission unit (MTU) value to address fragmentation for the private network ID.
 	// This value will be used only if the Cluster actuator creates the network.
@@ -311,7 +319,6 @@ type OpenStackClusterStatus struct {
 // +genclient
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=openstackclusters,scope=Namespaced,categories=cluster-api,shortName=osc
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this OpenStackCluster belongs"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Cluster infrastructure is ready for OpenStack instances"

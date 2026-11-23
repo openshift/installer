@@ -27,13 +27,14 @@ import (
 	"github.com/gophercloud/gophercloud/v2"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsbinding"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsecurity"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portstrustedvif"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
 	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
@@ -128,11 +129,35 @@ func (s *Service) GetPortForExternalNetwork(instanceID string, externalNetworkID
 func (s *Service) ensurePortTagsAndTrunk(port *ports.Port, eventObject runtime.Object, portSpec *infrav1.ResolvedPortSpec) error {
 	wantedTags := uniqueSortedTags(portSpec.Tags)
 	actualTags := uniqueSortedTags(port.Tags)
+
+	// hasTagSupport is populated lazily on first use so that ensurePortTagsAndTrunk
+	// performs at most one ListExtensions call, even when both the port and its
+	// trunk need tagging.
+	var hasTagSupport *bool
+	tagSupportChecked := func() (bool, error) {
+		if hasTagSupport == nil {
+			supported, err := s.hasStandardAttrTagExtension()
+			if err != nil {
+				return false, err
+			}
+			hasTagSupport = &supported
+		}
+		return *hasTagSupport, nil
+	}
+
 	// Only replace tags if there is a difference
 	if !slices.Equal(wantedTags, actualTags) && len(wantedTags) > 0 {
-		if err := s.replaceAllAttributesTags(eventObject, portResource, port.ID, wantedTags); err != nil {
-			record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace port tags %s: %v", port.Name, err)
+		supported, err := tagSupportChecked()
+		if err != nil {
 			return err
+		}
+		if supported {
+			if err := s.replaceAllAttributesTags(eventObject, portResource, port.ID, wantedTags); err != nil {
+				record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace port tags %s: %v", port.Name, err)
+				return err
+			}
+		} else {
+			s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", portResource, "resourceID", port.ID)
 		}
 	}
 	if ptr.Deref(portSpec.Trunk, false) {
@@ -142,10 +167,18 @@ func (s *Service) ensurePortTagsAndTrunk(port *ports.Port, eventObject runtime.O
 			return err
 		}
 
-		if !slices.Equal(wantedTags, trunk.Tags) {
-			if err = s.replaceAllAttributesTags(eventObject, trunkResource, trunk.ID, wantedTags); err != nil {
-				record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace trunk tags %s: %v", port.Name, err)
+		if len(wantedTags) > 0 && !slices.Equal(wantedTags, trunk.Tags) {
+			supported, err := tagSupportChecked()
+			if err != nil {
 				return err
+			}
+			if supported {
+				if err = s.replaceAllAttributesTags(eventObject, trunkResource, trunk.ID, wantedTags); err != nil {
+					record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace trunk tags %s: %v", port.Name, err)
+					return err
+				}
+			} else {
+				s.scope.Logger().V(4).Info("standard-attr-tag extension not available, skipping tag replacement", "resourceType", trunkResource, "resourceID", trunk.ID)
 			}
 		}
 	}
@@ -180,7 +213,7 @@ func (s *Service) EnsurePort(eventObject runtime.Object, portSpec *infrav1.Resol
 		return port, nil
 	}
 	var addressPairs []ports.AddressPair
-	if !ptr.Deref(portSpec.DisablePortSecurity, false) {
+	if ptr.Deref(portSpec.EnablePortSecurity, true) {
 		for _, ap := range portSpec.AllowedAddressPairs {
 			addressPairs = append(addressPairs, ports.AddressPair{
 				IPAddress:  ap.IPAddress,
@@ -224,29 +257,47 @@ func (s *Service) EnsurePort(eventObject runtime.Object, portSpec *infrav1.Resol
 		createOpts.FixedIPs = fixedIPs
 	}
 	if portSpec.SecurityGroups != nil {
-		if ptr.Deref(portSpec.DisablePortSecurity, false) {
+		if !ptr.Deref(portSpec.EnablePortSecurity, true) {
 			return nil, errors.New("security groups cannot be set when port security is disabled")
 		}
 		createOpts.SecurityGroups = &portSpec.SecurityGroups
 	}
 	builder = createOpts
 
-	if portSpec.DisablePortSecurity != nil {
-		portSecurity := !*portSpec.DisablePortSecurity
+	if portSpec.EnablePortSecurity != nil {
 		portSecurityOpts := portsecurity.PortCreateOptsExt{
 			CreateOptsBuilder:   builder,
-			PortSecurityEnabled: &portSecurity,
+			PortSecurityEnabled: portSpec.EnablePortSecurity,
 		}
 		builder = portSecurityOpts
+	}
+
+	// Determine if port_trusted_vif extension is available when TrustedVF is requested.
+	// If available, we use the dedicated port attribute instead of binding:profile.
+	var usePortTrustedVIF bool
+	if portSpec.Profile != nil && ptr.Deref(portSpec.Profile.TrustedVF, false) {
+		usePortTrustedVIF, err = s.HasPortTrustedVIFExtension()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	portsBindingOpts := portsbinding.CreateOptsExt{
 		CreateOptsBuilder: builder,
 		HostID:            ptr.Deref(portSpec.HostID, ""),
 		VNICType:          ptr.Deref(portSpec.VNICType, ""),
-		Profile:           getPortProfile(portSpec.Profile),
+		Profile:           getPortProfile(portSpec.Profile, usePortTrustedVIF),
 	}
 	builder = portsBindingOpts
+
+	// If the port_trusted_vif extension is available, set trusted mode via the
+	// dedicated port attribute rather than through binding:profile.
+	if usePortTrustedVIF {
+		builder = portstrustedvif.PortCreateOptsExt{
+			CreateOptsBuilder: builder,
+			PortTrustedVIF:    portSpec.Profile.TrustedVF,
+		}
+	}
 
 	port, err := s.client.CreatePort(builder)
 	if err != nil {
@@ -262,7 +313,7 @@ func (s *Service) EnsurePort(eventObject runtime.Object, portSpec *infrav1.Resol
 	return port, nil
 }
 
-func getPortProfile(p *infrav1.BindingProfile) map[string]interface{} {
+func getPortProfile(p *infrav1.BindingProfile, usePortTrustedVIF bool) map[string]interface{} {
 	if p == nil {
 		return nil
 	}
@@ -274,7 +325,10 @@ func getPortProfile(p *infrav1.BindingProfile) map[string]interface{} {
 	if ptr.Deref(p.OVSHWOffload, false) {
 		portProfile["capabilities"] = []string{"switchdev"}
 	}
-	if ptr.Deref(p.TrustedVF, false) {
+	// Only set trusted in binding:profile if the port_trusted_vif extension
+	// is not available. When the extension is available, trusted mode is set
+	// via the dedicated port attribute instead.
+	if !usePortTrustedVIF && ptr.Deref(p.TrustedVF, false) {
 		portProfile["trusted"] = true
 	}
 
@@ -488,7 +542,7 @@ func (s *Service) normalizePorts(ports []infrav1.PortOpts, clusterResourceName, 
 		}
 
 		// Resolve security groups when port security is not disabled
-		if !ptr.Deref(port.DisablePortSecurity, false) {
+		if ptr.Deref(port.EnablePortSecurity, true) {
 			if len(port.SecurityGroups) == 0 {
 				normalizedPort.SecurityGroups = defaultSecurityGroupIDs
 			} else {
@@ -607,6 +661,24 @@ func (s *Service) IsTrunkExtSupported() (trunknSupported bool, err error) {
 	return true, nil
 }
 
+// HasPortTrustedVIFExtension checks whether the Neutron port_trusted_vif
+// extension is available. When this extension is present, trusted VF mode
+// should be set via the dedicated port attribute rather than through
+// binding:profile.
+func (s *Service) HasPortTrustedVIFExtension() (bool, error) {
+	allExts, err := s.client.ListExtensions()
+	if err != nil {
+		return false, err
+	}
+
+	for _, ext := range allExts {
+		if ext.Alias == "port-trusted-vif" {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // AdoptPortsServer looks for ports in desiredPorts which were previously created, and adds them to resources.Ports.
 // A port matches if it has the same name and network ID as the desired port.
 // TODO(emilien): remove this function: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/2071
@@ -663,10 +735,25 @@ func uniqueSortedTags(tags []string) []string {
 		tagsMap[t] = t
 	}
 
-	uniqueTags := []string{}
+	uniqueTags := make([]string, 0, len(tagsMap))
 	for k := range tagsMap {
 		uniqueTags = append(uniqueTags, k)
 	}
 	slices.Sort(uniqueTags)
 	return uniqueTags
+}
+
+// UpdateAllowedAddressPairs updates the allowedAddressPairs on an existing Neutron port.
+func (s *Service) UpdateAllowedAddressPairs(portID string, pairs []infrav1.AddressPair) error {
+	addressPairs := make([]ports.AddressPair, len(pairs))
+	for i, ap := range pairs {
+		addressPairs[i] = ports.AddressPair{
+			IPAddress:  ap.IPAddress,
+			MACAddress: ptr.Deref(ap.MACAddress, ""),
+		}
+	}
+	_, err := s.client.UpdatePort(portID, ports.UpdateOpts{
+		AllowedAddressPairs: &addressPairs,
+	})
+	return err
 }

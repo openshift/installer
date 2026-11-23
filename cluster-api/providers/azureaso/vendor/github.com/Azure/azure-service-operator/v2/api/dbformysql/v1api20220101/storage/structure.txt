@@ -5,7 +5,7 @@ APIVersion: Enum (1 value)
 └── "2022-01-01"
 
 FlexibleServersAdministrator: Resource
-├── Owner: dbformysql/v1api20220101.FlexibleServer
+├── Owner: dbformysql/v20220101.FlexibleServer
 ├── Spec: Object (11 properties)
 │   ├── AdministratorType: *string
 │   ├── IdentityResourceReference: *genruntime.ResourceReference
@@ -42,7 +42,7 @@ FlexibleServersAdministrator: Resource
     └── Type: *string
 
 FlexibleServersConfiguration: Resource
-├── Owner: dbformysql/v1api20220101.FlexibleServer
+├── Owner: dbformysql/v20220101.FlexibleServer
 ├── Spec: Object (8 properties)
 │   ├── AzureName: string
 │   ├── CurrentValue: *string

@@ -22,7 +22,7 @@ import (
 
 	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servergroups"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta2"
 )
 
 // GetServerGroupID looks up a server group using the passed filter and returns

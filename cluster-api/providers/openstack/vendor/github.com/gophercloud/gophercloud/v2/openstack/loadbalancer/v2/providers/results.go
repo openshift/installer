@@ -73,3 +73,45 @@ func (r commonResult) Extract() (*Provider, error) {
 type GetResult struct {
 	commonResult
 }
+
+// Capability represents a provider-specific metadata key that can be used in
+// a flavor profile or an availability zone profile.
+type Capability struct {
+	// Name is the name of the capability.
+	Name string `json:"name"`
+
+	// Description is a human-readable description of the capability.
+	Description string `json:"description"`
+}
+
+// ListFlavorCapabilitiesResult represents the result of a request to list a
+// provider's flavor capabilities.
+type ListFlavorCapabilitiesResult struct {
+	gophercloud.Result
+}
+
+// Extract interprets a ListFlavorCapabilitiesResult as a slice of
+// capabilities.
+func (r ListFlavorCapabilitiesResult) Extract() ([]Capability, error) {
+	var s struct {
+		Capabilities []Capability `json:"flavor_capabilities"`
+	}
+	err := r.ExtractInto(&s)
+	return s.Capabilities, err
+}
+
+// ListAvailabilityZoneCapabilitiesResult represents the result of a request
+// to list a provider's availability zone capabilities.
+type ListAvailabilityZoneCapabilitiesResult struct {
+	gophercloud.Result
+}
+
+// Extract interprets a ListAvailabilityZoneCapabilitiesResult as a slice of
+// capabilities.
+func (r ListAvailabilityZoneCapabilitiesResult) Extract() ([]Capability, error) {
+	var s struct {
+		Capabilities []Capability `json:"availability_zone_capabilities"`
+	}
+	err := r.ExtractInto(&s)
+	return s.Capabilities, err
+}

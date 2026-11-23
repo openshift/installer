@@ -340,8 +340,8 @@ func (az *Cloud) getLocalInstanceProviderID(metadata *InstanceMetadata, _ string
 		return "", fmt.Errorf("get empty ResoureceID from instance metadata service")
 	}
 
-	providerID := strings.Replace(metadata.Compute.ResourceID, metadata.Compute.SubscriptionID, subscriptionID, -1)
-	providerID = strings.Replace(providerID, metadata.Compute.ResourceGroup, resourceGroup, -1)
+	providerID := strings.ReplaceAll(metadata.Compute.ResourceID, metadata.Compute.SubscriptionID, subscriptionID)
+	providerID = strings.ReplaceAll(providerID, metadata.Compute.ResourceGroup, resourceGroup)
 
 	return providerID, nil
 }

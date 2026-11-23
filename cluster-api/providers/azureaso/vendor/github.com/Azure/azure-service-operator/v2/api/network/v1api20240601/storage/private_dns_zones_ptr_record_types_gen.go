@@ -18,6 +18,7 @@ import (
 // +kubebuilder:rbac:groups=network.azure.com,resources={privatednszonesptrrecords/status,privatednszonesptrrecords/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
@@ -26,7 +27,7 @@ import (
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240601.PrivateDnsZonesPTRRecord
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/PTR/{relativeRecordSetName}
 type PrivateDnsZonesPTRRecord struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -157,7 +158,7 @@ func (record *PrivateDnsZonesPTRRecord) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240601.PrivateDnsZonesPTRRecord
 // Generator information:
-// - Generated from: /privatedns/resource-manager/Microsoft.Network/stable/2024-06-01/privatedns.json
+// - Generated from: /privatedns/resource-manager/Microsoft.Network/PrivateDns/stable/2024-06-01/privatedns.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/privateDnsZones/{privateZoneName}/PTR/{relativeRecordSetName}
 type PrivateDnsZonesPTRRecordList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -230,6 +231,7 @@ type PrivateDnsZonesPTRRecord_STATUS struct {
 	PtrRecords       []PtrRecord_STATUS     `json:"ptrRecords,omitempty"`
 	SoaRecord        *SoaRecord_STATUS      `json:"soaRecord,omitempty"`
 	SrvRecords       []SrvRecord_STATUS     `json:"srvRecords,omitempty"`
+	SystemData       *SystemData_STATUS     `json:"systemData,omitempty"`
 	Ttl              *int                   `json:"ttl,omitempty"`
 	TxtRecords       []TxtRecord_STATUS     `json:"txtRecords,omitempty"`
 	Type             *string                `json:"type,omitempty"`

@@ -116,7 +116,12 @@ func (extension *VirtualMachinesExtension) ValidateUpdate(ctx context.Context, o
 
 // createValidations validates the creation of the resource
 func (extension *VirtualMachinesExtension) createValidations() []func(ctx context.Context, obj *v20201201.VirtualMachinesExtension) (admission.Warnings, error) {
-	return []func(ctx context.Context, obj *v20201201.VirtualMachinesExtension) (admission.Warnings, error){extension.validateResourceReferences, extension.validateOwnerReference, extension.validateSecretDestinations, extension.validateConfigMapDestinations}
+	return []func(ctx context.Context, obj *v20201201.VirtualMachinesExtension) (admission.Warnings, error){
+		extension.validateResourceReferences,
+		extension.validateOwnerReference,
+		extension.validateSecretDestinations,
+		extension.validateConfigMapDestinations,
+	}
 }
 
 // deleteValidations validates the deletion of the resource

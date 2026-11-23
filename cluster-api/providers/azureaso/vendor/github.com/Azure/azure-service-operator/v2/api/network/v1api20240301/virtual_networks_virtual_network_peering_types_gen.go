@@ -19,13 +19,14 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeering struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &VirtualNetworksVirtualNetworkPeering{}
 
 // ConvertFrom populates our VirtualNetworksVirtualNetworkPeering from the provided hub VirtualNetworksVirtualNetworkPeering
 func (peering *VirtualNetworksVirtualNetworkPeering) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.VirtualNetworksVirtualNetworkPeering)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.VirtualNetworksVirtualNetworkPeering
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering(source)
+	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to peering")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub VirtualNetworksVirtualNetworkPeering from our VirtualNetworksVirtualNetworkPeering
 func (peering *VirtualNetworksVirtualNetworkPeering) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.VirtualNetworksVirtualNetworkPeering)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20240301/storage/VirtualNetworksVirtualNetworkPeering but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.VirtualNetworksVirtualNetworkPeering
+	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from peering")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &VirtualNetworksVirtualNetworkPeering{}
@@ -86,17 +101,6 @@ func (peering *VirtualNetworksVirtualNetworkPeering) SecretDestinationExpression
 		return nil
 	}
 	return peering.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &VirtualNetworksVirtualNetworkPeering{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (peering *VirtualNetworksVirtualNetworkPeering) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*VirtualNetworksVirtualNetworkPeering_STATUS); ok {
-		return peering.Spec.Initialize_From_VirtualNetworksVirtualNetworkPeering_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type VirtualNetworksVirtualNetworkPeering_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &VirtualNetworksVirtualNetworkPeering{}
@@ -237,7 +241,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) OriginalGVK() *schema.Group
 
 // +kubebuilder:object:root=true
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/virtualNetwork.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/virtualNetwork.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/virtualNetworkPeerings/{virtualNetworkPeeringName}
 type VirtualNetworksVirtualNetworkPeeringList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -372,7 +376,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
 	}
 	if peering.LocalAddressSpace != nil {
-		localAddressSpace_ARM, err := (*peering.LocalAddressSpace).ConvertToARM(resolved)
+		localAddressSpace_ARM, err := peering.LocalAddressSpace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -383,7 +387,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.LocalSubnetNames = append(result.Properties.LocalSubnetNames, item)
 	}
 	if peering.LocalVirtualNetworkAddressSpace != nil {
-		localVirtualNetworkAddressSpace_ARM, err := (*peering.LocalVirtualNetworkAddressSpace).ConvertToARM(resolved)
+		localVirtualNetworkAddressSpace_ARM, err := peering.LocalVirtualNetworkAddressSpace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -407,7 +411,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.PeeringSyncLevel = &peeringSyncLevel
 	}
 	if peering.RemoteAddressSpace != nil {
-		remoteAddressSpace_ARM, err := (*peering.RemoteAddressSpace).ConvertToARM(resolved)
+		remoteAddressSpace_ARM, err := peering.RemoteAddressSpace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -415,7 +419,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.RemoteAddressSpace = &remoteAddressSpace
 	}
 	if peering.RemoteBgpCommunities != nil {
-		remoteBgpCommunities_ARM, err := (*peering.RemoteBgpCommunities).ConvertToARM(resolved)
+		remoteBgpCommunities_ARM, err := peering.RemoteBgpCommunities.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +430,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.RemoteSubnetNames = append(result.Properties.RemoteSubnetNames, item)
 	}
 	if peering.RemoteVirtualNetwork != nil {
-		remoteVirtualNetwork_ARM, err := (*peering.RemoteVirtualNetwork).ConvertToARM(resolved)
+		remoteVirtualNetwork_ARM, err := peering.RemoteVirtualNetwork.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -434,7 +438,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertToARM(resolved 
 		result.Properties.RemoteVirtualNetwork = &remoteVirtualNetwork
 	}
 	if peering.RemoteVirtualNetworkAddressSpace != nil {
-		remoteVirtualNetworkAddressSpace_ARM, err := (*peering.RemoteVirtualNetworkAddressSpace).ConvertToARM(resolved)
+		remoteVirtualNetworkAddressSpace_ARM, err := peering.RemoteVirtualNetworkAddressSpace.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -1078,163 +1082,6 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_VirtualNetworksVirtualNetworkPeering_STATUS populates our VirtualNetworksVirtualNetworkPeering_Spec from the provided source VirtualNetworksVirtualNetworkPeering_STATUS
-func (peering *VirtualNetworksVirtualNetworkPeering_Spec) Initialize_From_VirtualNetworksVirtualNetworkPeering_STATUS(source *VirtualNetworksVirtualNetworkPeering_STATUS) error {
-
-	// AllowForwardedTraffic
-	if source.AllowForwardedTraffic != nil {
-		allowForwardedTraffic := *source.AllowForwardedTraffic
-		peering.AllowForwardedTraffic = &allowForwardedTraffic
-	} else {
-		peering.AllowForwardedTraffic = nil
-	}
-
-	// AllowGatewayTransit
-	if source.AllowGatewayTransit != nil {
-		allowGatewayTransit := *source.AllowGatewayTransit
-		peering.AllowGatewayTransit = &allowGatewayTransit
-	} else {
-		peering.AllowGatewayTransit = nil
-	}
-
-	// AllowVirtualNetworkAccess
-	if source.AllowVirtualNetworkAccess != nil {
-		allowVirtualNetworkAccess := *source.AllowVirtualNetworkAccess
-		peering.AllowVirtualNetworkAccess = &allowVirtualNetworkAccess
-	} else {
-		peering.AllowVirtualNetworkAccess = nil
-	}
-
-	// DoNotVerifyRemoteGateways
-	if source.DoNotVerifyRemoteGateways != nil {
-		doNotVerifyRemoteGateway := *source.DoNotVerifyRemoteGateways
-		peering.DoNotVerifyRemoteGateways = &doNotVerifyRemoteGateway
-	} else {
-		peering.DoNotVerifyRemoteGateways = nil
-	}
-
-	// EnableOnlyIPv6Peering
-	if source.EnableOnlyIPv6Peering != nil {
-		enableOnlyIPv6Peering := *source.EnableOnlyIPv6Peering
-		peering.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
-	} else {
-		peering.EnableOnlyIPv6Peering = nil
-	}
-
-	// LocalAddressSpace
-	if source.LocalAddressSpace != nil {
-		var localAddressSpace AddressSpace
-		err := localAddressSpace.Initialize_From_AddressSpace_STATUS(source.LocalAddressSpace)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field LocalAddressSpace")
-		}
-		peering.LocalAddressSpace = &localAddressSpace
-	} else {
-		peering.LocalAddressSpace = nil
-	}
-
-	// LocalSubnetNames
-	peering.LocalSubnetNames = genruntime.CloneSliceOfString(source.LocalSubnetNames)
-
-	// LocalVirtualNetworkAddressSpace
-	if source.LocalVirtualNetworkAddressSpace != nil {
-		var localVirtualNetworkAddressSpace AddressSpace
-		err := localVirtualNetworkAddressSpace.Initialize_From_AddressSpace_STATUS(source.LocalVirtualNetworkAddressSpace)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field LocalVirtualNetworkAddressSpace")
-		}
-		peering.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
-	} else {
-		peering.LocalVirtualNetworkAddressSpace = nil
-	}
-
-	// PeerCompleteVnets
-	if source.PeerCompleteVnets != nil {
-		peerCompleteVnet := *source.PeerCompleteVnets
-		peering.PeerCompleteVnets = &peerCompleteVnet
-	} else {
-		peering.PeerCompleteVnets = nil
-	}
-
-	// PeeringState
-	if source.PeeringState != nil {
-		peeringState := genruntime.ToEnum(string(*source.PeeringState), virtualNetworkPeeringPropertiesFormat_PeeringState_Values)
-		peering.PeeringState = &peeringState
-	} else {
-		peering.PeeringState = nil
-	}
-
-	// PeeringSyncLevel
-	if source.PeeringSyncLevel != nil {
-		peeringSyncLevel := genruntime.ToEnum(string(*source.PeeringSyncLevel), virtualNetworkPeeringPropertiesFormat_PeeringSyncLevel_Values)
-		peering.PeeringSyncLevel = &peeringSyncLevel
-	} else {
-		peering.PeeringSyncLevel = nil
-	}
-
-	// RemoteAddressSpace
-	if source.RemoteAddressSpace != nil {
-		var remoteAddressSpace AddressSpace
-		err := remoteAddressSpace.Initialize_From_AddressSpace_STATUS(source.RemoteAddressSpace)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field RemoteAddressSpace")
-		}
-		peering.RemoteAddressSpace = &remoteAddressSpace
-	} else {
-		peering.RemoteAddressSpace = nil
-	}
-
-	// RemoteBgpCommunities
-	if source.RemoteBgpCommunities != nil {
-		var remoteBgpCommunity VirtualNetworkBgpCommunities
-		err := remoteBgpCommunity.Initialize_From_VirtualNetworkBgpCommunities_STATUS(source.RemoteBgpCommunities)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
-		}
-		peering.RemoteBgpCommunities = &remoteBgpCommunity
-	} else {
-		peering.RemoteBgpCommunities = nil
-	}
-
-	// RemoteSubnetNames
-	peering.RemoteSubnetNames = genruntime.CloneSliceOfString(source.RemoteSubnetNames)
-
-	// RemoteVirtualNetwork
-	if source.RemoteVirtualNetwork != nil {
-		var remoteVirtualNetwork SubResource
-		err := remoteVirtualNetwork.Initialize_From_SubResource_STATUS(source.RemoteVirtualNetwork)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field RemoteVirtualNetwork")
-		}
-		peering.RemoteVirtualNetwork = &remoteVirtualNetwork
-	} else {
-		peering.RemoteVirtualNetwork = nil
-	}
-
-	// RemoteVirtualNetworkAddressSpace
-	if source.RemoteVirtualNetworkAddressSpace != nil {
-		var remoteVirtualNetworkAddressSpace AddressSpace
-		err := remoteVirtualNetworkAddressSpace.Initialize_From_AddressSpace_STATUS(source.RemoteVirtualNetworkAddressSpace)
-		if err != nil {
-			return eris.Wrap(err, "calling Initialize_From_AddressSpace_STATUS() to populate field RemoteVirtualNetworkAddressSpace")
-		}
-		peering.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
-	} else {
-		peering.RemoteVirtualNetworkAddressSpace = nil
-	}
-
-	// UseRemoteGateways
-	if source.UseRemoteGateways != nil {
-		useRemoteGateway := *source.UseRemoteGateways
-		peering.UseRemoteGateways = &useRemoteGateway
-	} else {
-		peering.UseRemoteGateways = nil
 	}
 
 	// No error
@@ -2132,8 +1979,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2150,8 +1995,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -2177,8 +2020,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -2195,8 +2036,6 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

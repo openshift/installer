@@ -412,11 +412,13 @@ var probePropertiesFormat_Protocol_Values = map[string]ProbePropertiesFormat_Pro
 
 // Public IP address resource.
 type PublicIPAddressSpec_LoadBalancer_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 
 // Subnet in a virtual network resource.
 type Subnet_LoadBalancer_SubResourceEmbedded struct {
+	// Id: Resource ID.
 	Id *string `json:"id,omitempty"`
 }
 

@@ -4,6 +4,8 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
@@ -12,27 +14,25 @@ import (
 	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
-// +kubebuilder:rbac:groups=network.azure.com,resources=networksecuritygroups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources={networksecuritygroups/status,networksecuritygroups/finalizers},verbs=get;update;patch
-
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,network}
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // Storage version of v1api20240301.NetworkSecurityGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/networkSecurityGroup.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/networkSecurityGroup.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/{networkSecurityGroupName}
 type NetworkSecurityGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              NetworkSecurityGroup_Spec                                            `json:"spec,omitempty"`
-	Status            NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded `json:"status,omitempty"`
+	Spec              NetworkSecurityGroup_Spec   `json:"spec,omitempty"`
+	Status            NetworkSecurityGroup_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NetworkSecurityGroup{}
@@ -45,6 +45,28 @@ func (group *NetworkSecurityGroup) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (group *NetworkSecurityGroup) SetConditions(conditions conditions.Conditions) {
 	group.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NetworkSecurityGroup{}
+
+// ConvertFrom populates our NetworkSecurityGroup from the provided hub NetworkSecurityGroup
+func (group *NetworkSecurityGroup) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.NetworkSecurityGroup)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NetworkSecurityGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_From_NetworkSecurityGroup(source)
+}
+
+// ConvertTo populates the provided hub NetworkSecurityGroup from our NetworkSecurityGroup
+func (group *NetworkSecurityGroup) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.NetworkSecurityGroup)
+	if !ok {
+		return fmt.Errorf("expected network/v20250301/storage/NetworkSecurityGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_To_NetworkSecurityGroup(destination)
 }
 
 var _ configmaps.Exporter = &NetworkSecurityGroup{}
@@ -110,7 +132,7 @@ func (group *NetworkSecurityGroup) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (group *NetworkSecurityGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
+	return &NetworkSecurityGroup_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -126,13 +148,13 @@ func (group *NetworkSecurityGroup) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (group *NetworkSecurityGroup) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+	if st, ok := status.(*NetworkSecurityGroup_STATUS); ok {
 		group.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+	var st NetworkSecurityGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return eris.Wrap(err, "failed to convert status")
@@ -142,8 +164,75 @@ func (group *NetworkSecurityGroup) SetStatus(status genruntime.ConvertibleStatus
 	return nil
 }
 
-// Hub marks that this NetworkSecurityGroup is the hub type for conversion
-func (group *NetworkSecurityGroup) Hub() {}
+// AssignProperties_From_NetworkSecurityGroup populates our NetworkSecurityGroup from the provided source NetworkSecurityGroup
+func (group *NetworkSecurityGroup) AssignProperties_From_NetworkSecurityGroup(source *storage.NetworkSecurityGroup) error {
+
+	// ObjectMeta
+	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NetworkSecurityGroup_Spec
+	err := spec.AssignProperties_From_NetworkSecurityGroup_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_Spec() to populate field Spec")
+	}
+	group.Spec = spec
+
+	// Status
+	var status NetworkSecurityGroup_STATUS
+	err = status.AssignProperties_From_NetworkSecurityGroup_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroup_STATUS() to populate field Status")
+	}
+	group.Status = status
+
+	// Invoke the augmentConversionForNetworkSecurityGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroup populates the provided destination NetworkSecurityGroup from our NetworkSecurityGroup
+func (group *NetworkSecurityGroup) AssignProperties_To_NetworkSecurityGroup(destination *storage.NetworkSecurityGroup) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.NetworkSecurityGroup_Spec
+	err := group.Spec.AssignProperties_To_NetworkSecurityGroup_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.NetworkSecurityGroup_STATUS
+	err = group.Status.AssignProperties_To_NetworkSecurityGroup_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroup_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNetworkSecurityGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (group *NetworkSecurityGroup) OriginalGVK() *schema.GroupVersionKind {
@@ -157,12 +246,17 @@ func (group *NetworkSecurityGroup) OriginalGVK() *schema.GroupVersionKind {
 // +kubebuilder:object:root=true
 // Storage version of v1api20240301.NetworkSecurityGroup
 // Generator information:
-// - Generated from: /network/resource-manager/Microsoft.Network/stable/2024-03-01/networkSecurityGroup.json
+// - Generated from: /network/resource-manager/Microsoft.Network/Network/stable/2024-03-01/networkSecurityGroup.json
 // - ARM URI: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/{networkSecurityGroupName}
 type NetworkSecurityGroupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NetworkSecurityGroup `json:"items"`
+}
+
+type augmentConversionForNetworkSecurityGroup interface {
+	AssignPropertiesFrom(src *storage.NetworkSecurityGroup) error
+	AssignPropertiesTo(dst *storage.NetworkSecurityGroup) error
 }
 
 // Storage version of v1api20240301.NetworkSecurityGroup_Spec
@@ -188,25 +282,185 @@ var _ genruntime.ConvertibleSpec = &NetworkSecurityGroup_Spec{}
 
 // ConvertSpecFrom populates our NetworkSecurityGroup_Spec from the provided source
 func (group *NetworkSecurityGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.NetworkSecurityGroup_Spec)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_NetworkSecurityGroup_Spec(src)
 	}
 
-	return source.ConvertSpecTo(group)
+	// Convert to an intermediate form
+	src = &storage.NetworkSecurityGroup_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_NetworkSecurityGroup_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NetworkSecurityGroup_Spec
 func (group *NetworkSecurityGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == group {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.NetworkSecurityGroup_Spec)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_NetworkSecurityGroup_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.NetworkSecurityGroup_Spec{}
+	err := group.AssignProperties_To_NetworkSecurityGroup_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20240301.NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+// AssignProperties_From_NetworkSecurityGroup_Spec populates our NetworkSecurityGroup_Spec from the provided source NetworkSecurityGroup_Spec
+func (group *NetworkSecurityGroup_Spec) AssignProperties_From_NetworkSecurityGroup_Spec(source *storage.NetworkSecurityGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	group.AzureName = source.AzureName
+
+	// FlushConnection
+	if source.FlushConnection != nil {
+		flushConnection := *source.FlushConnection
+		group.FlushConnection = &flushConnection
+	} else {
+		group.FlushConnection = nil
+	}
+
+	// Location
+	group.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NetworkSecurityGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_NetworkSecurityGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	group.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		group.Owner = &owner
+	} else {
+		group.Owner = nil
+	}
+
+	// Tags
+	group.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroup_Spec populates the provided destination NetworkSecurityGroup_Spec from our NetworkSecurityGroup_Spec
+func (group *NetworkSecurityGroup_Spec) AssignProperties_To_NetworkSecurityGroup_Spec(destination *storage.NetworkSecurityGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// AzureName
+	destination.AzureName = group.AzureName
+
+	// FlushConnection
+	if group.FlushConnection != nil {
+		flushConnection := *group.FlushConnection
+		destination.FlushConnection = &flushConnection
+	} else {
+		destination.FlushConnection = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(group.Location)
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.NetworkSecurityGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_NetworkSecurityGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkSecurityGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = group.OriginalVersion
+
+	// Owner
+	if group.Owner != nil {
+		owner := group.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(group.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20240301.NetworkSecurityGroup_STATUS
 // NetworkSecurityGroup resource.
-type NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct {
+type NetworkSecurityGroup_STATUS struct {
 	Conditions           []conditions.Condition                                             `json:"conditions,omitempty"`
 	DefaultSecurityRules []SecurityRule_STATUS                                              `json:"defaultSecurityRules,omitempty"`
 	Etag                 *string                                                            `json:"etag,omitempty"`
@@ -223,24 +477,280 @@ type NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct
 	Type                 *string                                                            `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded{}
+var _ genruntime.ConvertibleStatus = &NetworkSecurityGroup_STATUS{}
 
-// ConvertStatusFrom populates our NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded from the provided source
-func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our NetworkSecurityGroup_STATUS from the provided source
+func (group *NetworkSecurityGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.NetworkSecurityGroup_STATUS)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_NetworkSecurityGroup_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(embedded)
+	// Convert to an intermediate form
+	src = &storage.NetworkSecurityGroup_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_NetworkSecurityGroup_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded
-func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == embedded {
-		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our NetworkSecurityGroup_STATUS
+func (group *NetworkSecurityGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.NetworkSecurityGroup_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_NetworkSecurityGroup_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(embedded)
+	// Convert to an intermediate form
+	dst = &storage.NetworkSecurityGroup_STATUS{}
+	err := group.AssignProperties_To_NetworkSecurityGroup_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NetworkSecurityGroup_STATUS populates our NetworkSecurityGroup_STATUS from the provided source NetworkSecurityGroup_STATUS
+func (group *NetworkSecurityGroup_STATUS) AssignProperties_From_NetworkSecurityGroup_STATUS(source *storage.NetworkSecurityGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// DefaultSecurityRules
+	if source.DefaultSecurityRules != nil {
+		defaultSecurityRuleList := make([]SecurityRule_STATUS, len(source.DefaultSecurityRules))
+		for defaultSecurityRuleIndex, defaultSecurityRuleItem := range source.DefaultSecurityRules {
+			var defaultSecurityRule SecurityRule_STATUS
+			err := defaultSecurityRule.AssignProperties_From_SecurityRule_STATUS(&defaultSecurityRuleItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_SecurityRule_STATUS() to populate field DefaultSecurityRules")
+			}
+			defaultSecurityRuleList[defaultSecurityRuleIndex] = defaultSecurityRule
+		}
+		group.DefaultSecurityRules = defaultSecurityRuleList
+	} else {
+		group.DefaultSecurityRules = nil
+	}
+
+	// Etag
+	group.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// FlushConnection
+	if source.FlushConnection != nil {
+		flushConnection := *source.FlushConnection
+		group.FlushConnection = &flushConnection
+	} else {
+		group.FlushConnection = nil
+	}
+
+	// Id
+	group.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	group.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// NetworkInterfaces
+	if source.NetworkInterfaces != nil {
+		networkInterfaceList := make([]NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded, len(source.NetworkInterfaces))
+		for networkInterfaceIndex, networkInterfaceItem := range source.NetworkInterfaces {
+			var networkInterface NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+			err := networkInterface.AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&networkInterfaceItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
+			}
+			networkInterfaceList[networkInterfaceIndex] = networkInterface
+		}
+		group.NetworkInterfaces = networkInterfaceList
+	} else {
+		group.NetworkInterfaces = nil
+	}
+
+	// ProvisioningState
+	group.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// ResourceGuid
+	group.ResourceGuid = genruntime.ClonePointerToString(source.ResourceGuid)
+
+	// Subnets
+	if source.Subnets != nil {
+		subnetList := make([]Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded, len(source.Subnets))
+		for subnetIndex, subnetItem := range source.Subnets {
+			var subnet Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+			err := subnet.AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&subnetItem)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		group.Subnets = subnetList
+	} else {
+		group.Subnets = nil
+	}
+
+	// Tags
+	group.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	group.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroup_STATUS populates the provided destination NetworkSecurityGroup_STATUS from our NetworkSecurityGroup_STATUS
+func (group *NetworkSecurityGroup_STATUS) AssignProperties_To_NetworkSecurityGroup_STATUS(destination *storage.NetworkSecurityGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(group.Conditions)
+
+	// DefaultSecurityRules
+	if group.DefaultSecurityRules != nil {
+		defaultSecurityRuleList := make([]storage.SecurityRule_STATUS, len(group.DefaultSecurityRules))
+		for defaultSecurityRuleIndex, defaultSecurityRuleItem := range group.DefaultSecurityRules {
+			var defaultSecurityRule storage.SecurityRule_STATUS
+			err := defaultSecurityRuleItem.AssignProperties_To_SecurityRule_STATUS(&defaultSecurityRule)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_SecurityRule_STATUS() to populate field DefaultSecurityRules")
+			}
+			defaultSecurityRuleList[defaultSecurityRuleIndex] = defaultSecurityRule
+		}
+		destination.DefaultSecurityRules = defaultSecurityRuleList
+	} else {
+		destination.DefaultSecurityRules = nil
+	}
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(group.Etag)
+
+	// FlushConnection
+	if group.FlushConnection != nil {
+		flushConnection := *group.FlushConnection
+		destination.FlushConnection = &flushConnection
+	} else {
+		destination.FlushConnection = nil
+	}
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(group.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(group.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// NetworkInterfaces
+	if group.NetworkInterfaces != nil {
+		networkInterfaceList := make([]storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded, len(group.NetworkInterfaces))
+		for networkInterfaceIndex, networkInterfaceItem := range group.NetworkInterfaces {
+			var networkInterface storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+			err := networkInterfaceItem.AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&networkInterface)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field NetworkInterfaces")
+			}
+			networkInterfaceList[networkInterfaceIndex] = networkInterface
+		}
+		destination.NetworkInterfaces = networkInterfaceList
+	} else {
+		destination.NetworkInterfaces = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(group.ProvisioningState)
+
+	// ResourceGuid
+	destination.ResourceGuid = genruntime.ClonePointerToString(group.ResourceGuid)
+
+	// Subnets
+	if group.Subnets != nil {
+		subnetList := make([]storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded, len(group.Subnets))
+		for subnetIndex, subnetItem := range group.Subnets {
+			var subnet storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+			err := subnetItem.AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(&subnet)
+			if err != nil {
+				return eris.Wrap(err, "calling AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded() to populate field Subnets")
+			}
+			subnetList[subnetIndex] = subnet
+		}
+		destination.Subnets = subnetList
+	} else {
+		destination.Subnets = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(group.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(group.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNetworkSecurityGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNetworkSecurityGroup_Spec interface {
+	AssignPropertiesFrom(src *storage.NetworkSecurityGroup_Spec) error
+	AssignPropertiesTo(dst *storage.NetworkSecurityGroup_Spec) error
+}
+
+type augmentConversionForNetworkSecurityGroup_STATUS interface {
+	AssignPropertiesFrom(src *storage.NetworkSecurityGroup_STATUS) error
+	AssignPropertiesTo(dst *storage.NetworkSecurityGroup_STATUS) error
 }
 
 // Storage version of v1api20240301.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
@@ -248,6 +758,62 @@ func (embedded *NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbe
 type NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded populates our NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded from the provided source NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+func (embedded *NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) AssignProperties_From_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(source *storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded populates the provided destination NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded from our NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+func (embedded *NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) AssignProperties_To_NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded(destination *storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20240301.NetworkSecurityGroupOperatorSpec
@@ -258,6 +824,120 @@ type NetworkSecurityGroupOperatorSpec struct {
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
+// AssignProperties_From_NetworkSecurityGroupOperatorSpec populates our NetworkSecurityGroupOperatorSpec from the provided source NetworkSecurityGroupOperatorSpec
+func (operator *NetworkSecurityGroupOperatorSpec) AssignProperties_From_NetworkSecurityGroupOperatorSpec(source *storage.NetworkSecurityGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNetworkSecurityGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NetworkSecurityGroupOperatorSpec populates the provided destination NetworkSecurityGroupOperatorSpec from our NetworkSecurityGroupOperatorSpec
+func (operator *NetworkSecurityGroupOperatorSpec) AssignProperties_To_NetworkSecurityGroupOperatorSpec(destination *storage.NetworkSecurityGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNetworkSecurityGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNetworkSecurityGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.SecurityRule_STATUS
 // Network security rule.
 type SecurityRule_STATUS struct {
@@ -265,11 +945,143 @@ type SecurityRule_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SecurityRule_STATUS populates our SecurityRule_STATUS from the provided source SecurityRule_STATUS
+func (rule *SecurityRule_STATUS) AssignProperties_From_SecurityRule_STATUS(source *storage.SecurityRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	rule.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecurityRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSecurityRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SecurityRule_STATUS populates the provided destination SecurityRule_STATUS from our SecurityRule_STATUS
+func (rule *SecurityRule_STATUS) AssignProperties_To_SecurityRule_STATUS(destination *storage.SecurityRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(rule.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecurityRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForSecurityRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20240301.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
 // Subnet in a virtual network resource.
 type Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded populates our Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded from the provided source Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+func (embedded *Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) AssignProperties_From_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(source *storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	embedded.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		embedded.PropertyBag = propertyBag
+	} else {
+		embedded.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded populates the provided destination Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded from our Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded
+func (embedded *Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) AssignProperties_To_Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded(destination *storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(embedded.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(embedded.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface (if implemented) to customize the conversion
+	var embeddedAsAny any = embedded
+	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded); ok {
+		err := augmentedEmbedded.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.NetworkInterface_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error
+}
+
+type augmentConversionForNetworkSecurityGroupOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.NetworkSecurityGroupOperatorSpec) error
+	AssignPropertiesTo(dst *storage.NetworkSecurityGroupOperatorSpec) error
+}
+
+type augmentConversionForSecurityRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.SecurityRule_STATUS) error
+	AssignPropertiesTo(dst *storage.SecurityRule_STATUS) error
+}
+
+type augmentConversionForSubnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded interface {
+	AssignPropertiesFrom(src *storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error
+	AssignPropertiesTo(dst *storage.Subnet_STATUS_NetworkSecurityGroup_SubResourceEmbedded) error
 }
 
 func init() {

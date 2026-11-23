@@ -36,7 +36,7 @@ const tagsLastAppliedAnnotation = "sigs.k8s.io/cluster-api-provider-azure-last-a
 // reconcileTags modifies parameters in place to update its tags and its last-applied annotation.
 func reconcileTags[T genruntime.MetaObject](t TagsGetterSetter[T], existing T, resourceExists bool, parameters T) error {
 	var existingTags infrav1.Tags
-	lastAppliedTags := map[string]interface{}{}
+	lastAppliedTags := map[string]any{}
 
 	if resourceExists {
 		lastAppliedTagsJSON := existing.GetAnnotations()[tagsLastAppliedAnnotation]

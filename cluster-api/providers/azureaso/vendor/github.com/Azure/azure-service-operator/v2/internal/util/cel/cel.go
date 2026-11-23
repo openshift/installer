@@ -158,6 +158,7 @@ func NewEnv(resource reflect.Type) (*cel.Env, error) {
 		cel.EagerlyValidateDeclarations(true),
 		cel.OptionalTypes(),
 		cel.CrossTypeNumericComparisons(true),
+		ext.TwoVarComprehensions(ext.TwoVarComprehensionsVersion(0)),
 
 		ext.NativeTypes(typesList...),
 		newJSONProvider(), // This must come after ext.NativeTypes
@@ -390,7 +391,8 @@ func makeUnexpectedResultError(ast *cel.Ast, allowed ...*cel.Type) error {
 		allowed,
 		func(item *cel.Type, _ int) string {
 			return item.String()
-		})
+		},
+	)
 	expectedTypesStr := strings.Join(expectedTypes, ",")
 	return eris.Errorf("expression %q must return one of [%s], but was %s", ast.Source().Content(), expectedTypesStr, ast.OutputType().String())
 }
@@ -421,7 +423,7 @@ func simplePkgAlias(pkgPath string) string {
 
 // getResourceTypename should return the package name +
 func getTypeImportPath(t reflect.Type) string {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -429,7 +431,7 @@ func getTypeImportPath(t reflect.Type) string {
 }
 
 func findTypesRecursive(t reflect.Type) []reflect.Type { // Returns any here because that's what cel.Native expects
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

@@ -18,7 +18,7 @@
 ARG ARCH
 
 # Build the manager binary
-FROM golang:1.24 AS builder
+FROM golang:1.26.9@sha256:f1f0bcc2c524a3ced375fcb4d1ecb7aa371aa7070e112599aaca45cc02d0101b AS builder
 WORKDIR /workspace
 
 # Run this with docker build --build_arg $(go env GOPROXY) to override the goproxy
@@ -34,10 +34,11 @@ ARG ARCH
 ARG ldflags
 
 # Do not force rebuild of up-to-date packages (do not use -a) and use the compiler cache folder
+# TODO: Remove fieldsv1string once it becomes the apimachinery default (https://github.com/kubernetes/kubernetes/issues/137109)
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} \
-    go build -ldflags "${ldflags} -extldflags '-static'" \
+    go build -tags=fieldsv1string -ldflags "${ldflags} -extldflags '-static'" \
     -o manager ${package}
 
 # Production image

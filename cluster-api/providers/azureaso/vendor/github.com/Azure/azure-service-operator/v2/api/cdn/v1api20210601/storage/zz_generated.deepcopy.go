@@ -3945,7 +3945,7 @@ func (in *ProfileOperatorSpec) DeepCopyInto(out *ProfileOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -3963,7 +3963,7 @@ func (in *ProfileOperatorSpec) DeepCopyInto(out *ProfileOperatorSpec) {
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4193,7 +4193,7 @@ func (in *ProfilesEndpointOperatorSpec) DeepCopyInto(out *ProfilesEndpointOperat
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}
@@ -4211,7 +4211,7 @@ func (in *ProfilesEndpointOperatorSpec) DeepCopyInto(out *ProfilesEndpointOperat
 			if (*in)[i] != nil {
 				in, out := &(*in)[i], &(*out)[i]
 				*out = new(core.DestinationExpression)
-				**out = **in
+				(*in).DeepCopyInto(*out)
 			}
 		}
 	}

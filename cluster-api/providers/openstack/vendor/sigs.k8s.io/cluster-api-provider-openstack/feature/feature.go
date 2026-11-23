@@ -33,6 +33,7 @@ const (
 	// instead of the default queue implementation.
 	//
 	// alpha: v0.14
+	// beta: v0.15
 	PriorityQueue featuregate.Feature = "PriorityQueue"
 
 	// AutoScaleFromZero is a feature gate that enables the OpenStackMachineTemplate controller that adds
@@ -51,6 +52,6 @@ func init() {
 // To add a new feature, define a key for it above and add it here.
 var defaultCAPOFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
-	PriorityQueue:     {Default: false, PreRelease: featuregate.Alpha},
+	PriorityQueue:     {Default: true, PreRelease: featuregate.Beta},
 	AutoScaleFromZero: {Default: false, PreRelease: featuregate.Alpha},
 }

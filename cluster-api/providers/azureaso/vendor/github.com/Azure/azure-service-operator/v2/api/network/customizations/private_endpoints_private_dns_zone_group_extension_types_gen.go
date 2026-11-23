@@ -8,6 +8,8 @@ import (
 	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	v20240301 "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301"
 	v20240301s "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
+	v20250301 "github.com/Azure/azure-service-operator/v2/api/network/v20250301"
+	v20250301s "github.com/Azure/azure-service-operator/v2/api/network/v20250301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *PrivateEndpointsPrivateDnsZoneGroupExtension) GetExtendedResour
 		&v20220701.PrivateEndpointsPrivateDnsZoneGroup{},
 		&v20220701s.PrivateEndpointsPrivateDnsZoneGroup{},
 		&v20240301.PrivateEndpointsPrivateDnsZoneGroup{},
-		&v20240301s.PrivateEndpointsPrivateDnsZoneGroup{}}
+		&v20240301s.PrivateEndpointsPrivateDnsZoneGroup{},
+		&v20250301.PrivateEndpointsPrivateDnsZoneGroup{},
+		&v20250301s.PrivateEndpointsPrivateDnsZoneGroup{}}
 }

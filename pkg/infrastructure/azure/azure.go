@@ -37,10 +37,11 @@ import (
 )
 
 const (
-	retryTime        = 10 * time.Second
-	retryCount       = 6
-	confidentialVMST = "ConfidentialVMSupported"
-	trustedLaunchST  = "TrustedLaunchsupported"
+	// Allow time for Azure directory replication within the existing one-minute retry window.
+	roleAssignmentRetryInterval = 10 * time.Second
+	roleAssignmentRetryTimeout  = time.Minute
+	confidentialVMST            = "ConfidentialVMSupported"
+	trustedLaunchST             = "TrustedLaunchsupported"
 
 	// stackAPIVersion is the Azure Stack compatible API version.
 	stackAPIVersion = "2019-06-01"

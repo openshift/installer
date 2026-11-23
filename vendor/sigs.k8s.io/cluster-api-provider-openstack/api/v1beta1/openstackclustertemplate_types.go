@@ -32,7 +32,6 @@ type OpenStackClusterTemplateSpec struct {
 
 // +genclient
 // +kubebuilder:object:root=true
-// +kubebuilder:storageversion
 // +kubebuilder:resource:path=openstackclustertemplates,scope=Namespaced,categories=cluster-api,shortName=osct
 
 // OpenStackClusterTemplate is the Schema for the openstackclustertemplates API.

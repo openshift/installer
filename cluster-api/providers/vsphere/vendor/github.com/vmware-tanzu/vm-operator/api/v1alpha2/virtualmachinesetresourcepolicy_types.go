@@ -1,4 +1,5 @@
-// Copyright (c) 2023 VMware, Inc. All Rights Reserved.
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha2
@@ -35,19 +36,26 @@ type VirtualMachineSetResourcePolicySpec struct {
 // VirtualMachineSetResourcePolicyStatus defines the observed state of
 // VirtualMachineSetResourcePolicy.
 type VirtualMachineSetResourcePolicyStatus struct {
+	ResourcePools  []ResourcePoolStatus         `json:"resourcePools,omitempty"`
 	ClusterModules []VSphereClusterModuleStatus `json:"clustermodules,omitempty"`
+}
+
+// ResourcePoolStatus describes the observed state of a vSphere child
+// resource pool created for the Spec.ResourcePool.Name.
+type ResourcePoolStatus struct {
+	ClusterMoID           string `json:"clusterMoID"`
+	ChildResourcePoolMoID string `json:"childResourcePoolMoID"`
 }
 
 // VSphereClusterModuleStatus describes the observed state of a vSphere
 // cluster module.
 type VSphereClusterModuleStatus struct {
 	GroupName   string `json:"groupName"`
-	ModuleUuid  string `json:"moduleUUID"` //nolint:revive,stylecheck
+	ModuleUuid  string `json:"moduleUUID"` //nolint:revive
 	ClusterMoID string `json:"clusterMoID"`
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
 // VirtualMachineSetResourcePolicy is the Schema for the virtualmachinesetresourcepolicies API.
@@ -73,5 +81,5 @@ type VirtualMachineSetResourcePolicyList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VirtualMachineSetResourcePolicy{}, &VirtualMachineSetResourcePolicyList{})
+	objectTypes = append(objectTypes, &VirtualMachineSetResourcePolicy{}, &VirtualMachineSetResourcePolicyList{})
 }

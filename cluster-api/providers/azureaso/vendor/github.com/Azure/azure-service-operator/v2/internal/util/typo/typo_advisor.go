@@ -67,19 +67,22 @@ func (advisor *Advisor) Errorf(typo string, format string, args ...interface{}) 
 	suggestion, err := edlib.FuzzySearch(
 		strings.ToLower(typo),
 		set.AsSortedSlice(advisor.terms),
-		edlib.Levenshtein)
+		edlib.Levenshtein,
+	)
 	if err != nil {
 		// Can't offer a suggestion
 		return eris.Errorf(
 			"%s (unable to provide suggestion: %s)",
 			msg,
-			err)
+			err,
+		)
 	}
 
 	return eris.Errorf(
 		"%s (did you mean %s?)",
 		msg,
-		suggestion)
+		suggestion,
+	)
 }
 
 // Wrapf adds any guidance to the provided error, if possible
@@ -97,19 +100,22 @@ func (advisor *Advisor) Wrapf(originalError error, typo string, format string, a
 	suggestion, err := edlib.FuzzySearch(
 		strings.ToLower(typo),
 		set.AsSortedSlice(advisor.terms),
-		edlib.Levenshtein)
+		edlib.Levenshtein,
+	)
 	if err != nil {
 		// Can't offer a suggestion
 		return eris.Wrapf(
 			originalError,
 			"%s (unable to provide suggestion: %s)",
 			msg,
-			err)
+			err,
+		)
 	}
 
 	return eris.Wrapf(
 		originalError,
 		"%s (did you mean %s?)",
 		msg,
-		suggestion)
+		suggestion,
+	)
 }

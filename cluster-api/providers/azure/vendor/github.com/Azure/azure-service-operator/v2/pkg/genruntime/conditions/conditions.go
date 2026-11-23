@@ -206,7 +206,8 @@ func (c Condition) String() string {
 		c.Severity,
 		c.Reason,
 		c.Message,
-		c.LastTransitionTime)
+		c.LastTransitionTime,
+	)
 }
 
 // SetCondition sets the provided Condition on the Conditioner. The condition is only

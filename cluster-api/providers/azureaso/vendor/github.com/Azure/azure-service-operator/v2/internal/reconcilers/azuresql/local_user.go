@@ -141,7 +141,8 @@ func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved
 				details.fqdn,
 				details.database,
 				azuresqlutil.ServerPort,
-				adminUser)
+				adminUser,
+			)
 		}
 
 		return db, nil

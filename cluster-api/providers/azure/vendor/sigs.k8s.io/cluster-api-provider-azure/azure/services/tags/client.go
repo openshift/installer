@@ -41,7 +41,7 @@ var _ client = (*AzureClient)(nil)
 
 // NewClient creates a tags client from an authorizer.
 func NewClient(auth azure.Authorizer) (*AzureClient, error) {
-	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	opts, err := azure.ARMClientOptionsForAuth(auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tags client options")
 	}

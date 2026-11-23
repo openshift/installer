@@ -32,12 +32,15 @@ import (
 	mysqlv1webhook "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1/webhook"
 	postgresqlv1 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1"
 	postgresqlv1webhook "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1/webhook"
+	entrav1 "github.com/Azure/azure-service-operator/v2/api/entra/v1"
+	entrav1webhook "github.com/Azure/azure-service-operator/v2/api/entra/v1/webhook"
 	azuresqlv1 "github.com/Azure/azure-service-operator/v2/api/sql/v1"
 	azuresqlv1webhook "github.com/Azure/azure-service-operator/v2/api/sql/v1/webhook"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm"
 	azuresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/azuresql"
+	entrareconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/entra"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/generic"
 	mysqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/mysql"
 	postgresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/postgresql"
@@ -54,24 +57,30 @@ type Schemer interface {
 	GetScheme() *runtime.Scheme
 }
 
+type ClientsProvider struct {
+	KubeClient             kubeclient.Client
+	ARMConnectionFactory   arm.ARMConnectionFactory
+	EntraConnectionFactory entrareconciler.EntraConnectionFactory
+}
+
 func GetKnownStorageTypes(
 	schemer Schemer,
-	armConnectionFactory arm.ARMConnectionFactory,
+	clients *ClientsProvider,
 	credentialProvider identity.CredentialProvider,
-	kubeClient kubeclient.Client,
 	positiveConditions *conditions.PositiveConditionBuilder,
 	expressionEvaluator asocel.ExpressionEvaluator,
 	options generic.Options,
 ) ([]*registration.StorageType, error) {
-	resourceResolver := resolver.NewResolver(kubeClient)
+	resourceResolver := resolver.NewResolver(clients.KubeClient)
 	knownStorageTypes, err := getGeneratedStorageTypes(
 		schemer,
-		armConnectionFactory,
-		kubeClient,
+		clients.ARMConnectionFactory,
+		clients.KubeClient,
 		resourceResolver,
 		positiveConditions,
 		expressionEvaluator,
-		options)
+		options,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -85,17 +94,19 @@ func GetKnownStorageTypes(
 		augmentWithPredicate(t)
 	}
 
+	// mysql
 	knownStorageTypes = append(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &mysqlv1.User{},
 			Name: "mysql_user",
 			Reconciler: mysqlreconciler.NewMySQLUserReconciler(
-				kubeClient,
+				clients.KubeClient,
 				resourceResolver,
 				positiveConditions,
 				credentialProvider,
-				options.Config),
+				options.Config,
+			),
 			Predicate: makeStandardPredicate(),
 			Indexes: []registration.Index{
 				{
@@ -109,17 +120,21 @@ func GetKnownStorageTypes(
 					MakeEventHandler: watchSecretsFactory([]string{".spec.localUser.password"}, &mysqlv1.UserList{}),
 				},
 			},
-		})
+		},
+	)
+
+	// dbforpostgresql
 	knownStorageTypes = append(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &postgresqlv1.User{},
 			Name: "postgresql_user",
 			Reconciler: postgresqlreconciler.NewPostgreSQLUserReconciler(
-				kubeClient,
+				clients.KubeClient,
 				resourceResolver,
 				positiveConditions,
-				options.Config),
+				options.Config,
+			),
 			Predicate: makeStandardPredicate(),
 			Indexes: []registration.Index{
 				{
@@ -133,19 +148,22 @@ func GetKnownStorageTypes(
 					MakeEventHandler: watchSecretsFactory([]string{".spec.localUser.password"}, &postgresqlv1.UserList{}),
 				},
 			},
-		})
+		},
+	)
 
+	// azuresql
 	knownStorageTypes = append(
 		knownStorageTypes,
 		&registration.StorageType{
 			Obj:  &azuresqlv1.User{},
 			Name: "sql_user",
 			Reconciler: azuresqlreconciler.NewAzureSQLUserReconciler(
-				kubeClient,
+				clients.KubeClient,
 				resourceResolver,
 				positiveConditions,
 				credentialProvider,
-				options.Config),
+				options.Config,
+			),
 			Predicate: makeStandardPredicate(),
 			Indexes: []registration.Index{
 				{
@@ -159,7 +177,27 @@ func GetKnownStorageTypes(
 					MakeEventHandler: watchSecretsFactory([]string{".spec.localUser.password"}, &azuresqlv1.UserList{}),
 				},
 			},
-		})
+		},
+	)
+
+	// entra
+	knownStorageTypes = append(
+		knownStorageTypes,
+		&registration.StorageType{
+			Obj:  &entrav1.SecurityGroup{},
+			Name: "entra_securitygroup",
+			Reconciler: entrareconciler.NewEntraSecurityGroupReconciler(
+				clients.KubeClient,
+				clients.EntraConnectionFactory,
+				resourceResolver,
+				positiveConditions,
+				options.Config,
+			),
+			Predicate: makeStandardPredicate(),
+			Indexes:   []registration.Index{},
+			Watches:   []registration.Watch{},
+		},
+	)
 
 	return knownStorageTypes, nil
 }
@@ -203,7 +241,8 @@ func getGeneratedStorageTypes(
 			expressionEvaluator,
 			options,
 			extension,
-			t)
+			t,
+		)
 	}
 
 	return knownStorageTypes, nil
@@ -226,7 +265,8 @@ func augmentWithARMReconciler(
 		positiveConditions,
 		expressionEvaluator,
 		options.Config,
-		extension)
+		extension,
+	)
 }
 
 func augmentWithPredicate(t *registration.StorageType) {
@@ -239,7 +279,8 @@ func makeStandardPredicate() predicate.Predicate {
 	return predicate.Or(
 		predicate.GenerationChangedPredicate{},
 		reconcilers.ARMReconcilerAnnotationChangedPredicate(),
-		reconcilers.ARMPerResourceSecretAnnotationChangedPredicate())
+		reconcilers.ARMPerResourceSecretAnnotationChangedPredicate(),
+	)
 }
 
 func augmentWithControllerName(t *registration.StorageType) error {
@@ -275,27 +316,45 @@ func getControllerName(obj client.Object) (string, error) {
 func GetKnownTypes() []*registration.KnownType {
 	knownTypes := getKnownTypes()
 
+	// MySQL
 	knownTypes = append(
 		knownTypes,
 		&registration.KnownType{
 			Obj:       &mysqlv1.User{},
 			Defaulter: &mysqlv1webhook.User_Webhook{},
 			Validator: &mysqlv1webhook.User_Webhook{},
-		})
+		},
+	)
+
+	// dbforpostgresql
 	knownTypes = append(
 		knownTypes,
 		&registration.KnownType{
 			Obj:       &postgresqlv1.User{},
 			Defaulter: &postgresqlv1webhook.User_Webhook{},
 			Validator: &postgresqlv1webhook.User_Webhook{},
-		})
+		},
+	)
+
+	// Azure SQL
 	knownTypes = append(
 		knownTypes,
 		&registration.KnownType{
 			Obj:       &azuresqlv1.User{},
 			Defaulter: &azuresqlv1webhook.User_Webhook{},
 			Validator: &azuresqlv1webhook.User_Webhook{},
-		})
+		},
+	)
+	// Entra
+	knownTypes = append(
+		knownTypes,
+		&registration.KnownType{
+			Obj:       &entrav1.SecurityGroup{},
+			Defaulter: &entrav1webhook.SecurityGroup_Webhook{},
+			Validator: &entrav1webhook.SecurityGroup_Webhook{},
+		},
+	)
+
 	return knownTypes
 }
 
@@ -304,6 +363,7 @@ func CreateScheme() *runtime.Scheme {
 	_ = mysqlv1.AddToScheme(scheme)
 	_ = postgresqlv1.AddToScheme(scheme)
 	_ = azuresqlv1.AddToScheme(scheme)
+	_ = entrav1.AddToScheme(scheme)
 	return scheme
 }
 
@@ -360,7 +420,8 @@ func watchEntity(c client.Client, log logr.Logger, keys []string, objList client
 				"namespace", o.GetNamespace(),
 				"name", o.GetName(),
 				"actual", fmt.Sprintf("%T", o),
-				"expected", fmt.Sprintf("%T", entity))
+				"expected", fmt.Sprintf("%T", entity),
+			)
 			return nil
 		}
 

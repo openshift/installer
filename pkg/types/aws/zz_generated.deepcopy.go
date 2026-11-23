@@ -13,6 +13,11 @@ func (in *CPUOptions) DeepCopyInto(out *CPUOptions) {
 		*out = new(ConfidentialComputePolicy)
 		**out = **in
 	}
+	if in.NestedVirtualization != nil {
+		in, out := &in.NestedVirtualization, &out.NestedVirtualization
+		*out = new(NestedVirtualizationPolicy)
+		**out = **in
+	}
 	return
 }
 

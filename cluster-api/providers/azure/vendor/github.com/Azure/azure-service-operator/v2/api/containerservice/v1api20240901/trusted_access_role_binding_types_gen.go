@@ -19,6 +19,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories={azure,containerservice}
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
@@ -50,22 +51,36 @@ var _ conversion.Convertible = &TrustedAccessRoleBinding{}
 
 // ConvertFrom populates our TrustedAccessRoleBinding from the provided hub TrustedAccessRoleBinding
 func (binding *TrustedAccessRoleBinding) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.TrustedAccessRoleBinding)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20240901/storage/TrustedAccessRoleBinding but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.TrustedAccessRoleBinding
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return binding.AssignProperties_From_TrustedAccessRoleBinding(source)
+	err = binding.AssignProperties_From_TrustedAccessRoleBinding(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to binding")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub TrustedAccessRoleBinding from our TrustedAccessRoleBinding
 func (binding *TrustedAccessRoleBinding) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.TrustedAccessRoleBinding)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20240901/storage/TrustedAccessRoleBinding but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.TrustedAccessRoleBinding
+	err := binding.AssignProperties_To_TrustedAccessRoleBinding(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from binding")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return binding.AssignProperties_To_TrustedAccessRoleBinding(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &TrustedAccessRoleBinding{}
@@ -86,17 +101,6 @@ func (binding *TrustedAccessRoleBinding) SecretDestinationExpressions() []*core.
 		return nil
 	}
 	return binding.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &TrustedAccessRoleBinding{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (binding *TrustedAccessRoleBinding) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*TrustedAccessRoleBinding_STATUS); ok {
-		return binding.Spec.Initialize_From_TrustedAccessRoleBinding_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type TrustedAccessRoleBinding_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &TrustedAccessRoleBinding{}
@@ -484,24 +488,6 @@ func (binding *TrustedAccessRoleBinding_Spec) AssignProperties_To_TrustedAccessR
 	return nil
 }
 
-// Initialize_From_TrustedAccessRoleBinding_STATUS populates our TrustedAccessRoleBinding_Spec from the provided source TrustedAccessRoleBinding_STATUS
-func (binding *TrustedAccessRoleBinding_Spec) Initialize_From_TrustedAccessRoleBinding_STATUS(source *TrustedAccessRoleBinding_STATUS) error {
-
-	// Roles
-	binding.Roles = genruntime.CloneSliceOfString(source.Roles)
-
-	// SourceResourceReference
-	if source.SourceResourceId != nil {
-		sourceResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.SourceResourceId)
-		binding.SourceResourceReference = &sourceResourceReference
-	} else {
-		binding.SourceResourceReference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (binding *TrustedAccessRoleBinding_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -783,8 +769,6 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_From_Trus
 	if source.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -801,8 +785,6 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_From_Trus
 	if source.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression
@@ -828,8 +810,6 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_To_Truste
 	if operator.ConfigMapExpressions != nil {
 		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
 		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
-			// Shadow the loop variable to avoid aliasing
-			configMapExpressionItem := configMapExpressionItem
 			if configMapExpressionItem != nil {
 				configMapExpression := *configMapExpressionItem.DeepCopy()
 				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
@@ -846,8 +826,6 @@ func (operator *TrustedAccessRoleBindingOperatorSpec) AssignProperties_To_Truste
 	if operator.SecretExpressions != nil {
 		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
 		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
-			// Shadow the loop variable to avoid aliasing
-			secretExpressionItem := secretExpressionItem
 			if secretExpressionItem != nil {
 				secretExpression := *secretExpressionItem.DeepCopy()
 				secretExpressionList[secretExpressionIndex] = &secretExpression

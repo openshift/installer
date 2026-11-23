@@ -31,7 +31,7 @@ func folderExists(validationCtx *validationContext, folderPath string, fldPath *
 	if folder == nil {
 		return allErrs
 	}
-	permissionGroup := permissions[permissionFolder]
+	permissionGroup := validationCtx.permissionGroup(permissionFolder)
 
 	err = comparePrivileges(ctx, validationCtx, folder.Reference(), permissionGroup)
 	if err != nil {

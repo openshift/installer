@@ -35,31 +35,32 @@ type TID struct {
 	Valid        bool
 }
 
+// ScanTID implements the [TIDScanner] interface.
 func (b *TID) ScanTID(v TID) error {
 	*b = v
 	return nil
 }
 
+// TIDValue implements the [TIDValuer] interface.
 func (b TID) TIDValue() (TID, error) {
 	return b, nil
 }
 
-// Scan implements the database/sql Scanner interface.
+// Scan implements the [database/sql.Scanner] interface.
 func (dst *TID) Scan(src any) error {
 	if src == nil {
 		*dst = TID{}
 		return nil
 	}
 
-	switch src := src.(type) {
-	case string:
+	if src, ok := src.(string); ok {
 		return scanPlanTextAnyToTIDScanner{}.Scan([]byte(src), dst)
 	}
 
 	return fmt.Errorf("cannot scan %T", src)
 }
 
-// Value implements the database/sql/driver Valuer interface.
+// Value implements the [database/sql/driver.Valuer] interface.
 func (src TID) Value() (driver.Value, error) {
 	if !src.Valid {
 		return nil, nil
@@ -131,7 +132,6 @@ func (encodePlanTIDCodecText) Encode(value any, buf []byte) (newBuf []byte, err 
 }
 
 func (TIDCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
-
 	switch format {
 	case BinaryFormatCode:
 		switch target.(type) {
@@ -141,8 +141,7 @@ func (TIDCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan 
 			return scanPlanBinaryTIDToTextScanner{}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case TIDScanner:
+		if _, ok := target.(TIDScanner); ok {
 			return scanPlanTextAnyToTIDScanner{}
 		}
 	}

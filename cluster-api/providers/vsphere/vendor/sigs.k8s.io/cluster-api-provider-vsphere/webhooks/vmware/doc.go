@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package vmware contains webhooks for the infrastructure vmware v1beta1 API group.
+// Package vmware contains webhooks for the infrastructure vmware API group.
 package vmware

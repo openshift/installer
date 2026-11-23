@@ -17,15 +17,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/grafana/regexp"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -77,14 +77,6 @@ const (
 	// strings.
 	UTF8Validation
 )
-
-var _ interface {
-	yaml.Marshaler
-	yaml.Unmarshaler
-	json.Marshaler
-	json.Unmarshaler
-	fmt.Stringer
-} = new(ValidationScheme)
 
 // String returns the string representation of s.
 func (s ValidationScheme) String() string {
@@ -267,9 +259,7 @@ func (m Metric) Before(o Metric) bool {
 // Clone returns a copy of the Metric.
 func (m Metric) Clone() Metric {
 	clone := make(Metric, len(m))
-	for k, v := range m {
-		clone[k] = v
-	}
+	maps.Copy(clone, m)
 	return clone
 }
 

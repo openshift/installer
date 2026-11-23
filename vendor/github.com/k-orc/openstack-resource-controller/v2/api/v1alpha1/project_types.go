@@ -64,6 +64,11 @@ type ProjectResourceSpec struct {
 	// +optional
 	Description *string `json:"description,omitempty"`
 
+	// domainRef is a reference to the ORC Domain which this resource is associated with.
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="domainRef is immutable"
+	DomainRef *KubernetesNameRef `json:"domainRef,omitempty"`
+
 	// enabled defines whether a project is enabled or not. Default is true.
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
@@ -83,6 +88,10 @@ type ProjectFilter struct {
 	// +optional
 	Name *KeystoneName `json:"name,omitempty"`
 
+	// domainRef is a reference to the ORC Domain which this resource is associated with.
+	// +optional
+	DomainRef *KubernetesNameRef `json:"domainRef,omitempty"`
+
 	FilterByKeystoneTags `json:",inline"`
 }
 
@@ -97,6 +106,11 @@ type ProjectResourceStatus struct {
 	// +kubebuilder:validation:MaxLength:=65535
 	// +optional
 	Description string `json:"description,omitempty"`
+
+	// domainID is the ID of the Domain to which the resource is associated.
+	// +kubebuilder:validation:MaxLength=1024
+	// +optional
+	DomainID string `json:"domainID,omitempty"`
 
 	// enabled represents whether a project is enabled or not.
 	// +optional

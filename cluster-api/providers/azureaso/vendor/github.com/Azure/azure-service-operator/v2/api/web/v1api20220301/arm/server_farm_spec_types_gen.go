@@ -140,11 +140,13 @@ type Capability struct {
 
 // Specification for an App Service Environment to use for this resource.
 type HostingEnvironmentProfile struct {
+	// Id: Resource ID of the App Service Environment.
 	Id *string `json:"id,omitempty"`
 }
 
 // Specification for a Kubernetes Environment to use for this resource.
 type KubeEnvironmentProfile struct {
+	// Id: Resource ID of the Kubernetes Environment.
 	Id *string `json:"id,omitempty"`
 }
 

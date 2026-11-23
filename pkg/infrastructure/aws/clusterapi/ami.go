@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -65,6 +66,30 @@ func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallCo
 	if err != nil {
 		return "", fmt.Errorf("failed to tag AMI copy (%s): %w", name, err)
 	}
+
+	describeImagesInput := &ec2.DescribeImagesInput{
+		ImageIds: []string{aws.ToString(res.ImageId)},
+	}
+
+	logrus.Infof("Waiting for AMI [%s] to exist in region [%s]",
+		aws.ToString(res.ImageId), installConfig.AWS.Region)
+
+	existsWaiter := ec2.NewImageExistsWaiter(client)
+	if err := existsWaiter.Wait(ctx, describeImagesInput, 5*time.Minute); err != nil {
+		return "", fmt.Errorf("failed to wait for AMI [%s] to exist: %w",
+			aws.ToString(res.ImageId), err)
+	}
+
+	logrus.Infof("AMI [%s] exists, waiting for it to become available", aws.ToString(res.ImageId))
+
+	// Wait for the AMI to transition from pending to available
+	availableWaiter := ec2.NewImageAvailableWaiter(client)
+	if err := availableWaiter.Wait(ctx, describeImagesInput, 10*time.Minute); err != nil {
+		return "", fmt.Errorf("failed to wait for AMI [%s] to become available: %w",
+			aws.ToString(res.ImageId), err)
+	}
+
+	logrus.Infof("AMI [%s] is now available", aws.ToString(res.ImageId))
 
 	return aws.ToString(res.ImageId), nil
 }

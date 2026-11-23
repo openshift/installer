@@ -1,5 +1,5 @@
 // © Broadcom. All Rights Reserved.
-// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
 package internal
@@ -15,6 +15,7 @@ const (
 	CategoryPath                   = "/com/vmware/cis/tagging/category"
 	TagPath                        = "/com/vmware/cis/tagging/tag"
 	AssociationPath                = "/com/vmware/cis/tagging/tag-association"
+	APILibraryPath                 = "/api/content/library"
 	LibraryPath                    = "/com/vmware/content/library"
 	LibraryItemFileData            = "/com/vmware/cis/data"
 	LibraryItemPath                = "/com/vmware/content/library/item"
@@ -24,6 +25,7 @@ const (
 	LibraryItemUpdateSessionFile   = "/com/vmware/content/library/item/updatesession/file"
 	LibraryItemDownloadSession     = "/com/vmware/content/library/item/download-session"
 	LibraryItemDownloadSessionFile = "/com/vmware/content/library/item/downloadsession/file"
+	LibraryUsages                  = "usages"
 	LocalLibraryPath               = "/com/vmware/content/local-library"
 	SubscribedLibraryPath          = "/com/vmware/content/subscribed-library"
 	SecurityPoliciesPath           = "/api/content/security-policies"
@@ -35,6 +37,22 @@ const (
 	SessionCookieName              = "vmware-api-session-id"
 	UseHeaderAuthn                 = "vmware-use-header-authn"
 	DebugEcho                      = "/vc-sim/debug/echo"
+)
+
+// VAPI sub path
+const (
+	LibraryUsagesSubPath = "usages"
+)
+
+// VAPI URL params
+const (
+	LibraryParam      = "library"
+	LibraryUsageParam = "usage"
+)
+
+// VAPI actions
+const (
+	LibraryUsageAddAction = "add"
 )
 
 // AssociatedObject is the same structure as types.ManagedObjectReference,
@@ -79,4 +97,8 @@ type SubscriptionDestinationSpec struct {
 type SubscriptionItemDestinationSpec struct {
 	Force         bool                      `json:"force_sync_content"`
 	Subscriptions []SubscriptionDestination `json:"subscriptions,omitempty"`
+}
+
+type LibraryUsageDestination struct {
+	ID string `json:"usage"`
 }

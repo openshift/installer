@@ -99,7 +99,7 @@ type ServerProperties_STATUS struct {
 	Storage *Storage_STATUS `json:"storage,omitempty"`
 
 	// Version: Server version.
-	Version *ServerVersion_STATUS `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Billing information related properties of a server.
@@ -266,20 +266,6 @@ var serverProperties_State_STATUS_Values = map[string]ServerProperties_State_STA
 	"stopped":  ServerProperties_State_STATUS_Stopped,
 	"stopping": ServerProperties_State_STATUS_Stopping,
 	"updating": ServerProperties_State_STATUS_Updating,
-}
-
-// The version of a server.
-type ServerVersion_STATUS string
-
-const (
-	ServerVersion_STATUS_57   = ServerVersion_STATUS("5.7")
-	ServerVersion_STATUS_8021 = ServerVersion_STATUS("8.0.21")
-)
-
-// Mapping from string to ServerVersion_STATUS
-var serverVersion_STATUS_Values = map[string]ServerVersion_STATUS{
-	"5.7":    ServerVersion_STATUS_57,
-	"8.0.21": ServerVersion_STATUS_8021,
 }
 
 type Sku_Tier_STATUS string
