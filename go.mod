@@ -270,7 +270,7 @@ replace github.com/openshift/assisted-service/api => github.com/openshift/assist
 replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20220928142635-a40422bdea61
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2064702
-replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.24.0-sec.4
+replace golang.org/x/crypto => github.com/openshift-sustaining/crypto v0.24.0-sec.5
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
 replace golang.org/x/text => golang.org/x/text v0.3.7
