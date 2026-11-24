@@ -17,7 +17,6 @@ import (
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	"go.podman.io/image/v5/pkg/sysregistriesv2"
@@ -195,7 +194,15 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
 	clusterID := &installconfig.ClusterID{}
-	dependencies.Get(installConfig, bootstrapSSHKeyPair, clusterID)
+	operators := &manifests.Manifests{}
+	openshiftManifests := &manifests.Openshift{}
+	dependencies.Get(installConfig, bootstrapSSHKeyPair, clusterID, operators, openshiftManifests)
+
+	files := append([]*asset.File{}, operators.Files()...)
+	files = append(files, openshiftManifests.Files()...)
+	if err := validateTopology(files, installConfig.Config); err != nil {
+		return err
+	}
 
 	a.Config = &igntypes.Config{
 		Ignition: igntypes.Ignition{
@@ -274,7 +281,7 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 func (a *Common) generateFile(filename string) error {
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
-		return errors.Wrap(err, "failed to Marshal Ignition config")
+		return fmt.Errorf("failed to marshal Ignition config: %w", err)
 	}
 	a.File = &asset.File{
 		Filename: filename,
@@ -785,7 +792,7 @@ func (a *Common) load(f asset.FileFetcher, filename string) (found bool, err err
 
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", filename)
+		return false, fmt.Errorf("failed to unmarshal %s: %w", filename, err)
 	}
 
 	a.File, a.Config = file, config

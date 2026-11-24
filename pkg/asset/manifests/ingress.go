@@ -79,7 +79,7 @@ func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) erro
 }
 
 func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, error) {
-	controlPlaneTopology, _ := determineTopologies(config)
+	controlPlaneTopology, _ := DetermineTopologies(config)
 
 	isSingleControlPlaneNode := controlPlaneTopology == configv1.SingleReplicaTopologyMode
 
