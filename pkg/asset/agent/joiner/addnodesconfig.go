@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -28,6 +30,14 @@ type AddNodesConfig struct {
 	Config Config
 }
 
+// Host is used specifically for add nodes to avoid implicitly inheriting future changes from agent.Host.
+type Host struct {
+	Hostname        string                    `json:"hostname,omitempty"`
+	RootDeviceHints baremetal.RootDeviceHints `json:"rootDeviceHints,omitempty"`
+	Interfaces      []*aiv1beta1.Interface    `json:"interfaces,omitempty"`
+	NetworkConfig   aiv1beta1.NetConfig       `json:"networkConfig,omitempty"`
+}
+
 var _ asset.WritableAsset = (*AddNodesConfig)(nil)
 
 // Config defines the configuration for the nodes-config.yaml file
@@ -36,10 +46,10 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	CPUArchitecture      string       `json:"cpuArchitecture,omitempty"`
-	SSHKey               string       `json:"sshKey,omitempty"`
-	BootArtifactsBaseURL string       `json:"bootArtifactsBaseURL,omitempty"`
-	Hosts                []agent.Host `json:"hosts,omitempty"`
+	CPUArchitecture      string `json:"cpuArchitecture,omitempty"`
+	SSHKey               string `json:"sshKey,omitempty"`
+	BootArtifactsBaseURL string `json:"bootArtifactsBaseURL,omitempty"`
+	Hosts                []Host `json:"hosts,omitempty"`
 }
 
 // Params is used to store the command line parameters.
@@ -103,7 +113,7 @@ func (a *AddNodesConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	config := Config{}
-	if err = yaml.Unmarshal(file.Data, &config); err != nil {
+	if err = yaml.UnmarshalStrict(file.Data, &config); err != nil {
 		return false, fmt.Errorf("failed to unmarshal %s: %w", nodesConfigFilename, err)
 	}
 	a.Config = config
@@ -150,4 +160,17 @@ func (a *AddNodesConfig) validateSSHKey() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), a.Config.SSHKey, err.Error()))
 	}
 	return allErrs
+}
+
+// ToAgentHost converts a joiner Host to an agent.Host.
+func (h Host) ToAgentHost() agent.Host {
+	agentHost := agent.Host{
+		Hostname:        h.Hostname,
+		Interfaces:      h.Interfaces,
+		RootDeviceHints: h.RootDeviceHints,
+		NetworkConfig:   h.NetworkConfig,
+	}
+	// Currently the add node supports only worker, forcing the role to avoid any ambiguity
+	agentHost.Role = "worker"
+	return agentHost
 }

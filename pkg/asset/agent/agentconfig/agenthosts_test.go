@@ -140,10 +140,9 @@ func TestAgentHosts_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.AddNodesConfig{
 					Config: joiner.Config{
-						Hosts: []agent.Host{
+						Hosts: []joiner.Host{
 							{
 								Hostname: "extra-worker-0",
-								Role:     "worker",
 								Interfaces: []*aiv1beta1.Interface{
 									{
 										Name:       "enp3s1",
@@ -429,10 +428,9 @@ func TestAgentHosts_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.AddNodesConfig{
 					Config: joiner.Config{
-						Hosts: []agent.Host{
+						Hosts: []joiner.Host{
 							{
 								Hostname: "extra-worker-0",
-								Role:     "worker",
 								Interfaces: []*aiv1beta1.Interface{
 									{
 										Name:       "nic0",
@@ -458,10 +456,9 @@ func TestAgentHosts_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.AddNodesConfig{
 					Config: joiner.Config{
-						Hosts: []agent.Host{
+						Hosts: []joiner.Host{
 							{
 								Hostname: "extra-worker-0",
-								Role:     "worker",
 								Interfaces: []*aiv1beta1.Interface{
 									{
 										Name:       "eth0",
