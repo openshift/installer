@@ -2121,6 +2121,69 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
 		},
 		{
+			name: "aws: invalid single-stack IPv6 without ipFamily set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				// IPFamily not set on AWS platform
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^networking: Invalid value: "IPv6": single-stack IPv6 is not supported for this platform$`,
+		},
+		{
+			name: "aws: invalid single-stack IPv6 with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
+			name: "aws: invalid single-stack IPv6 with DualStackIPv6Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv6Primary
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
+			name: "aws: valid single-stack IPv4 without ipFamily set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				// IPFamily not set on AWS platform
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "aws: invalid single-stack IPv4 with multiple service networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				// IPFamily not set on AWS platform
+				c.Networking = validIPv4NetworkingConfig()
+				c.Networking.ServiceNetwork = append(c.Networking.ServiceNetwork, *ipnet.MustParseCIDR("172.31.0.0/16"))
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16, 172.31.0.0/16": only one service network can be specified$`,
+		},
+		{
+			name: "aws: invalid single-stack IPv4 with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type$`,
+		},
+		{
 			name: "azure: invalid dual-stack with DualStackIPv6Primary but IPv4-first serviceNetwork",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

@@ -474,13 +474,9 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.External != nil:
-		case p.AWS != nil:
+		case p.AWS != nil && p.AWS.IPFamily.DualStackEnabled():
 			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
-			if p.AWS.IPFamily.DualStackEnabled() {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
-				break
-			}
-			fallthrough
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
 		case p.Azure != nil && p.Azure.IPFamily.DualStackEnabled():
@@ -493,13 +489,9 @@ func validateNetworkingIPVersion(c *types.InstallConfig) field.ErrorList {
 		switch {
 		case p.Azure != nil && p.Azure.IPFamily.DualStackEnabled():
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
-		case p.AWS != nil:
+		case p.AWS != nil && p.AWS.IPFamily.DualStackEnabled():
 			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
-			if p.AWS.IPFamily.DualStackEnabled() {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
-				break
-			}
-			fallthrough
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		default:
 			if len(n.ServiceNetwork) > 1 {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "only one service network can be specified"))
