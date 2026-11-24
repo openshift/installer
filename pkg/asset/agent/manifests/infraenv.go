@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
@@ -71,6 +72,11 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 				}
 			}
 
+			externalPlatformName := ""
+			if installConfig.Config.Platform.External != nil {
+				externalPlatformName = installConfig.Config.Platform.External.PlatformName
+			}
+			i.setKernelArgs(GetAdditionalKernelArgs(installConfig.Config.FIPS, externalPlatformName))
 		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
@@ -78,12 +84,27 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 		if err != nil {
 			return err
 		}
+		i.setKernelArgs(GetAdditionalKernelArgs(clusterInfo.FIPS, ""))
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
 	return i.finish()
+}
+
+// setKernelArgs reports the same kernel args that are added to the agent
+// ISO/PXE artifacts, so that the InfraEnv reflects the actual boot config.
+// These are computed from the InstallConfig/ClusterInfo rather than from other
+// cluster-manifests assets, since InfraEnv must not depend on assets that are
+// generated in the same target.
+func (i *InfraEnv) setKernelArgs(kargs []string) {
+	for _, karg := range kargs {
+		i.Config.Spec.KernelArguments = append(i.Config.Spec.KernelArguments, aiv1beta1.KernelArgument{
+			Operation: models.KernelArgumentOperationAppend,
+			Value:     karg,
+		})
+	}
 }
 
 func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, additionalTrustBundle string, proxy *types.Proxy, architecture string, machineNetwork *[]types.MachineNetworkEntry, rendezvousIP string) error {
