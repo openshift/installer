@@ -152,18 +152,17 @@ type Platform struct {
 type LoadBalancer struct {
 	// ClientAccess describes how client access is restricted for internal load balancers.
 	//
-	// Valid values are:
-	// * "Global": Specifying an internal load balancer with Global client access
-	//   allows clients from any region within the VPC to communicate with the load
-	//   balancer. Set this when the installer or other clients run in a different
-	//   region than the cluster, for example when ACM installs a GCP cluster from
-	//   another region.
+	// Valid values are "Global" and "Local". Local is the default and admits only
+	// clients in the same region as the load balancer. Global admits clients from
+	// any region in the same VPC network.
 	//
-	//     https://cloud.google.com/load-balancing/docs/internal#client_access
+	// https://cloud.google.com/load-balancing/docs/internal#client_access
 	//
-	// * "Local": Specifying an internal load balancer with Local client access
-	//   means only clients within the same region (and VPC) as the GCP load balancer
-	//   can communicate with the load balancer. This is the default behavior.
+	// Global is valid only when the API is published internally. A regional
+	// internal load balancer drops traffic from other regions, so a client in
+	// another region (for example an ACM hub installing this cluster) cannot
+	// reach the API until Global is set. The same value is applied to the
+	// default IngressController when ingress is internal.
 	//
 	// +optional
 	ClientAccess ClientAccess `json:"clientAccess,omitempty"`

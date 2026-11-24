@@ -153,19 +153,29 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 	}
 
 	if p.LoadBalancer != nil {
-		allErrs = append(allErrs, validateLoadBalancer(p.LoadBalancer, fldPath.Child("loadBalancer"))...)
+		allErrs = append(allErrs, validateLoadBalancer(p.LoadBalancer, fldPath.Child("loadBalancer"), ic)...)
 	}
 
 	return allErrs
 }
 
-func validateLoadBalancer(lb *gcp.LoadBalancer, fldPath *field.Path) field.ErrorList {
+// validateLoadBalancer checks GCP load balancer settings. Global client access
+// changes which regions can reach the internal API load balancer, so it is
+// rejected unless that load balancer is the published API endpoint.
+func validateLoadBalancer(lb *gcp.LoadBalancer, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if lb.ClientAccess != "" {
 		supported := sets.New(gcp.ClientAccessGlobal, gcp.ClientAccessLocal)
 		if !supported.Has(lb.ClientAccess) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("clientAccess"), lb.ClientAccess, sets.List(supported)))
 		}
+	}
+	if lb.ClientAccess == gcp.ClientAccessGlobal && (ic == nil || ic.PublicAPI()) {
+		allErrs = append(allErrs, field.Invalid(
+			fldPath.Child("clientAccess"),
+			lb.ClientAccess,
+			"global client access requires the API to be published internally",
+		))
 	}
 	return allErrs
 }

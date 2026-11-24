@@ -4,6 +4,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 * `projectID` (required string): The project where the cluster should be created.
 * `region` (required string): The GCP region where the cluster should be created.
+* `loadBalancer.clientAccess` (optional string): `Local` (default) or `Global`. `Global` enables [global access](https://cloud.google.com/load-balancing/docs/internal#client_access) on the internal API load balancer so clients in any region of the same VPC can open `api.<cluster>:6443`. Set this when `publish` is `Internal` and the installer runs in a different region from the cluster, for example when ACM installs the cluster from a hub in another region. A regional internal load balancer drops that cross-region traffic, and the installer times out waiting for the API. `Global` is rejected when the API is published externally. When ingress is also internal, the default IngressController receives the same `clientAccess` value.
 * `network` (optional string): The name of an existing GCP VPC where the cluster infrastructure should be provisioned.
 * `controlPlaneSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster control plane.
 * `computeSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster nodes.
@@ -110,6 +111,29 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+### Private cluster reached from another region
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: example-cluster
+publish: Internal
+platform:
+  gcp:
+    projectID: example-project
+    region: us-east1
+    network: example-network
+    controlPlaneSubnet: example-controlplane-subnet
+    computeSubnet: example-worker-subnet
+    loadBalancer:
+      clientAccess: Global
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+The VPC firewall must already allow the client to the control plane on TCP 6443. Global access does not add that rule, and it does not extend past the VPC.
 
 ### Pre-existing Networks & Subnets
 
