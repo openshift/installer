@@ -5,9 +5,10 @@ DATA_DIR="/usr/local/share/assisted-service"
 
 validator_query() {
     printf '.'
-    # Increase disk size requirements for InternalReleaseImage
-    if [ -d /etc/assisted/extra-manifests ] && \
-        grep -q "^kind:[[:space:]]*InternalReleaseImage[[:space:]]*$" /etc/assisted/extra-manifests/* 2>/dev/null; then
+    # Increase disk size requirements for InternalReleaseImage, which can be
+    # provided either as an extra manifest or as a system manifest
+    if grep -qs "^kind:[[:space:]]*InternalReleaseImage[[:space:]]*$" \
+        /etc/assisted/extra-manifests/* /etc/assisted/system-manifests/*; then
         printf '|.[].master.disk_size_gb += %d' 120
         printf '|.[].sno.disk_size_gb += %d' 120
     fi
