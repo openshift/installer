@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -152,6 +153,27 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 	}
 
+	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+
+	return allErrs
+}
+
+// validIPFamilies are the IP address families supported on GCP.
+var validIPFamilies = sets.New(
+	network.IPv4,
+	network.DualStackIPv4Primary,
+	network.DualStackIPv6Primary,
+)
+
+// validateIPFamily checks that the IPFamily field has a valid value.
+func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ipFamily == "" {
+		return allErrs
+	}
+	if !validIPFamilies.Has(ipFamily) {
+		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, sets.List(validIPFamilies)))
+	}
 	return allErrs
 }
 

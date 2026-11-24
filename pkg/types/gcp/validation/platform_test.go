@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func TestValidatePlatform(t *testing.T) {
@@ -242,6 +243,50 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "unset ipFamily",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+			},
+			valid: true,
+		},
+		{
+			name: "ipv4 ipFamily",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				IPFamily:  network.IPv4,
+			},
+			valid: true,
+		},
+		{
+			name: "dual-stack ipv4 primary ipFamily",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				IPFamily:  network.DualStackIPv4Primary,
+			},
+			valid: true,
+		},
+		{
+			name: "dual-stack ipv6 primary ipFamily",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				IPFamily:  network.DualStackIPv6Primary,
+			},
+			valid: true,
+		},
+		{
+			name: "invalid ipFamily",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				IPFamily:  network.IPFamily("IPv6"),
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -384,6 +429,53 @@ func TestValidateUserLabels(t *testing.T) {
 			err := validateUserLabels(tt.userLabels, field.NewPath(fieldPath))
 			if fmt.Sprintf("%v", err) != tt.expectedErr {
 				t.Errorf("Got: %+v Want: %+v", err, tt.expectedErr)
+			}
+		})
+	}
+}
+
+func TestValidateIPFamily(t *testing.T) {
+	cases := []struct {
+		name        string
+		ipFamily    network.IPFamily
+		expectedErr string
+	}{
+		{
+			name:     "unset is allowed",
+			ipFamily: "",
+		},
+		{
+			name:     "IPv4",
+			ipFamily: network.IPv4,
+		},
+		{
+			name:     "DualStackIPv4Primary",
+			ipFamily: network.DualStackIPv4Primary,
+		},
+		{
+			name:     "DualStackIPv6Primary",
+			ipFamily: network.DualStackIPv6Primary,
+		},
+		{
+			name:     "single-stack IPv6 is not a supported family",
+			ipFamily: network.IPFamily("IPv6"),
+			// sets.List sorts, so the supported values are reported alphabetically.
+			expectedErr: `^test-path: Unsupported value: "IPv6": supported values: "DualStackIPv4Primary", "DualStackIPv6Primary", "IPv4"$`,
+		},
+		{
+			name:        "arbitrary value",
+			ipFamily:    network.IPFamily("bogus"),
+			expectedErr: `^test-path: Unsupported value: "bogus": supported values: "DualStackIPv4Primary", "DualStackIPv6Primary", "IPv4"$`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateIPFamily(tc.ipFamily, field.NewPath("test-path")).ToAggregate()
+			if tc.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expectedErr, err)
 			}
 		})
 	}

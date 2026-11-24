@@ -1880,7 +1880,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, bad platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform = types.Platform{IBMCloud: validIBMCloudPlatform()}
 				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
@@ -1890,7 +1890,39 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid single-stack IPv6 configuration, bad platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.Platform = types.Platform{IBMCloud: validIBMCloudPlatform()}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
+		},
+		{
+			name: "gcp: invalid single-stack IPv6 configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
 				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
+		},
+		{
+			// Without a dual-stack ipFamily, AWS used to fall through to the Azure Stack case
+			// and report "Azure Stack does not support IPv6".
+			name: "aws: invalid single-stack IPv6 configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{AWS: validAWSPlatform()}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
+		},
+		{
+			name: "azure: invalid single-stack IPv6 configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
 				c.Networking = validIPv6NetworkingConfig()
 				return c
 			}(),
@@ -1979,7 +2011,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, IPv6-primary",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{GCP: &gcp.Platform{}}
+				c.Platform = types.Platform{Nutanix: validNutanixPlatform()}
 				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ServiceNetwork = []ipnet.IPNet{
 					c.Networking.ServiceNetwork[1],
@@ -2201,6 +2233,122 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `\Qnetworking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list\E`,
+		},
+		{
+			name: "gcp: valid dual-stack with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "gcp: valid dual-stack with DualStackIPv6Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "gcp: invalid dual-stack without ipFamily set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				// IPFamily not set on GCP platform
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `networking: Invalid value: "DualStack": dual-stack IPv4/IPv6 can only be specified when platform.gcp.ipFamily is DualStackIPv4Primary or DualStackIPv6Primary`,
+		},
+		{
+			name: "gcp: invalid dual-stack without the feature gate enabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `platform\.gcp\.ipFamily: Forbidden: this field is protected by the GCPDualStackInstall feature gate`,
+		},
+		{
+			name: "gcp: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "ffd2::/48, 192.168.1.0/24": DualStackIPv4Primary requires an IPv4 network first in this list, networking.machineNetwork: Invalid value: "ffd0::/48, 10.0.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list, networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list]\E$`,
+		},
+		{
+			name: "gcp: invalid dual-stack with DualStackIPv6Primary but IPv4-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv6Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "192.168.1.0/24, ffd2::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.machineNetwork: Invalid value: "10.0.0.0/16, ffd0::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.serviceNetwork: Invalid value: "172.30.0.0/16, ffd1::/112": DualStackIPv6Primary requires an IPv6 network first in this list]\E$`,
+		},
+		{
+			name: "gcp: invalid dual-stack with only IPv4 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				// Remove IPv6 service network, leaving only IPv4
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[:1]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "gcp: invalid dual-stack with only IPv6 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				// Remove IPv4 service network, leaving only IPv6
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[1:]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "gcp: invalid dual-stack, machine network has no IPv6",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Platform.GCP.IPFamily = network.DualStackIPv4Primary
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPDualStackInstall=true"}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[:1]
+				return c
+			}(),
+			expectedError: `networking.machineNetwork: Invalid value: "10.0.0.0/16": dual-stack IPv4/IPv6 requires an IPv6 network in this list`,
 		},
 		{
 			name: "invalid IPv6 hostprefix",
