@@ -160,9 +160,8 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		// Sources come from the live cluster, where ICSP and IDMS may coexist
-		// during migration. Combine into one digest-source list, normalize
-		// policies per source (NeverContactSource wins), then let
-		// MergedMirrorSets union mirrors.
+		// during migration. Combine into one digest-source list and let
+		// MergedMirrorSets merge entries per source (NeverContactSource wins).
 		imageDigestSources = clusterInfo.ImageDigestSources
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
@@ -175,7 +174,6 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 			copy(imageDigestSources, converted)
 			deprecatedImageContentSources = nil
 		}
-		imageDigestSources = normalizeMirrorSourcePoliciesForAddNodes(imageDigestSources)
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -208,8 +206,8 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 }
 
 // mergeICSPIntoIDMS converts ICSP entries to digest mirror entries and appends
-// them after IDMS entries. The add-nodes caller normalizes policies per source
-// before generating the registry configuration.
+// them after IDMS entries. MergedMirrorSets later merges entries that share a
+// source when generating the registry configuration.
 func mergeICSPIntoIDMS(idms []types.ImageDigestSource, icsp []types.ImageContentSource) ([]types.ImageDigestSource, []types.ImageContentSource) {
 	logrus.Warn("Both imageContentSources (ICSP) and imageDigestSources (IDMS) are present; combining configurations")
 	convertedICSP := bootstrap.ContentSourceToDigestMirror(icsp)
@@ -217,31 +215,6 @@ func mergeICSPIntoIDMS(idms []types.ImageDigestSource, icsp []types.ImageContent
 	out = append(out, idms...)
 	out = append(out, convertedICSP...)
 	return out, nil
-}
-
-// normalizeMirrorSourcePoliciesForAddNodes applies per-source policy precedence
-// for add-nodes: if any entry for a source is NeverContactSource, all entries
-// for that source become NeverContactSource; otherwise the policy is cleared.
-// This matches the per-source policy precedence used when merging mirror
-// objects on the cluster, without changing bootstrap.MergedMirrorSets.
-func normalizeMirrorSourcePoliciesForAddNodes(sources []types.ImageDigestSource) []types.ImageDigestSource {
-	neverBySource := make(map[string]bool, len(sources))
-	for _, s := range sources {
-		if s.SourcePolicy == configv1.NeverContactSource {
-			neverBySource[s.Source] = true
-		}
-	}
-
-	out := make([]types.ImageDigestSource, len(sources))
-	for i, s := range sources {
-		if neverBySource[s.Source] {
-			s.SourcePolicy = configv1.NeverContactSource
-		} else {
-			s.SourcePolicy = ""
-		}
-		out[i] = s
-	}
-	return out
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
