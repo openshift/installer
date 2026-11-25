@@ -212,6 +212,9 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
 				"the ClusterAPI capability requires the CompatibilityRequirements capability: add CompatibilityRequirements to capabilities.additionalEnabledCapabilities"))
 		}
+
+		// Validate that capabilities requiring specific feature gates are only used when those gates are enabled
+		allErrs = append(allErrs, validateCapabilityFeatureGateRequirements(c)...)
 	}
 	if c.Capabilities != nil {
 		allErrs = append(allErrs, validateCapabilities(c.Capabilities, field.NewPath("capabilities"))...)
@@ -1634,6 +1637,65 @@ func validateCapabilities(c *types.Capabilities, fldPath *field.Path) field.Erro
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("additionalEnabledCapabilities").Index(i), capability, allAvailableCapabilities.List()))
 		}
 	}
+	return allErrs
+}
+
+// validateCapabilityFeatureGateRequirements checks if explicitly supplied capabilities require
+// specific feature gates that are not enabled by the current feature set.
+// Validates only explicitly supplied additional capability names.
+// Baseline-derived capabilities are not subject to this name-eligibility check.
+func validateCapabilityFeatureGateRequirements(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if c.Capabilities == nil {
+		return allErrs
+	}
+
+	// CustomNoUpgrade publishes all capability names in its schema regardless of which
+	// individual gates are enabled, so name eligibility is not restricted by gates.
+	// Dependency validation (handled separately) still applies.
+	if c.FeatureSet == configv1.CustomNoUpgrade {
+		return allErrs
+	}
+
+	// Define which feature gates each capability requires.
+	// These requirements match the FeatureGateAwareEnum markers in
+	// vendor/github.com/openshift/api/config/v1/types_cluster_version.go.
+	capabilityGateRequirements := map[configv1.ClusterVersionCapability][]configv1.FeatureGateName{
+		configv1.ClusterVersionCapabilityClusterAPI: {
+			features.FeatureGateClusterAPIOperator,
+			features.FeatureGateCRDCompatibilityRequirementOperator,
+		},
+		configv1.ClusterVersionCapabilityCompatibilityRequirements: {
+			features.FeatureGateCRDCompatibilityRequirementOperator,
+		},
+	}
+
+	// For other feature sets, validate that explicitly supplied capability names
+	// are only used when their required feature gates are enabled.
+	fg := c.EnabledFeatureGates()
+	for i, capability := range c.Capabilities.AdditionalEnabledCapabilities {
+		requiredGates, hasRequirements := capabilityGateRequirements[capability]
+		if !hasRequirements {
+			continue
+		}
+
+		// Check which required gates are missing
+		var missingGates []string
+		for _, gate := range requiredGates {
+			if !fg.Enabled(gate) {
+				missingGates = append(missingGates, string(gate))
+			}
+		}
+
+		if len(missingGates) > 0 {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("capabilities", "additionalEnabledCapabilities").Index(i),
+				capability,
+				fmt.Sprintf("requires feature gate(s) to be enabled: %s. Use featureSet: TechPreviewNoUpgrade or CustomNoUpgrade to enable these capabilities", strings.Join(missingGates, ", "))))
+		}
+	}
+
 	return allErrs
 }
 

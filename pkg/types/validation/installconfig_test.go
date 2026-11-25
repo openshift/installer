@@ -329,6 +329,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = "InvalidFeatureSet"
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityClusterAPI,
+					},
+				}
 				return c
 			}(),
 			expectedError: `^featureSet: Unsupported value: "InvalidFeatureSet": supported values: .*`,
@@ -2834,6 +2844,146 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
+		},
+		{
+			name: "installer rejects ClusterAPI and CompatibilityRequirements with unset featureSet (defaults to Default)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				// featureSet is unset, defaults to Default
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityClusterAPI,
+						configv1.ClusterVersionCapabilityCompatibilityRequirements,
+					},
+				}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[4\]: Invalid value: "ClusterAPI": requires feature gate\(s\) to be enabled: ClusterAPIOperator, CRDCompatibilityRequirementOperator. Use featureSet: TechPreviewNoUpgrade or CustomNoUpgrade to enable these capabilities`,
+		},
+		{
+			name: "installer rejects ClusterAPI with explicit Default featureSet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.Default
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityClusterAPI,
+						configv1.ClusterVersionCapabilityCompatibilityRequirements,
+					},
+				}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[4\]: Invalid value: "ClusterAPI": requires feature gate\(s\) to be enabled: ClusterAPIOperator, CRDCompatibilityRequirementOperator. Use featureSet: TechPreviewNoUpgrade or CustomNoUpgrade to enable these capabilities`,
+		},
+		{
+			name: "installer rejects CompatibilityRequirements alone with Default featureSet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.Default
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityCompatibilityRequirements,
+					},
+				}
+				return c
+			}(),
+			expectedError: `capabilities.additionalEnabledCapabilities\[4\]: Invalid value: "CompatibilityRequirements": requires feature gate\(s\) to be enabled: CRDCompatibilityRequirementOperator. Use featureSet: TechPreviewNoUpgrade or CustomNoUpgrade to enable these capabilities`,
+		},
+		{
+			name: "installer accepts ClusterAPI and CompatibilityRequirements with TechPreviewNoUpgrade featureSet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityClusterAPI,
+						configv1.ClusterVersionCapabilityCompatibilityRequirements,
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "installer accepts vCurrent baseline with Default featureSet and no additional capabilities",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.Default
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent,
+				}
+				return c
+			}(),
+		},
+		{
+			name: "installer accepts valid Insights-disabled config without gated capabilities",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.Default
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityBaremetal,
+						configv1.ClusterVersionCapabilityConsole,
+						// Insights intentionally excluded to disable it
+						configv1.ClusterVersionCapabilityMarketplace,
+						configv1.ClusterVersionCapabilityStorage,
+						configv1.ClusterVersionCapabilityOpenShiftSamples,
+						configv1.ClusterVersionCapabilityCSISnapshot,
+						configv1.ClusterVersionCapabilityNodeTuning,
+						configv1.ClusterVersionCapabilityMachineAPI,
+						configv1.ClusterVersionCapabilityBuild,
+						configv1.ClusterVersionCapabilityDeploymentConfig,
+						configv1.ClusterVersionCapabilityImageRegistry,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						// Note: ClusterAPI and CompatibilityRequirements are NOT included
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "installer accepts ClusterAPI and CompatibilityRequirements under CustomNoUpgrade with gates disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{"ClusterAPIOperator=false", "CRDCompatibilityRequirementOperator=false"}
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+						configv1.ClusterVersionCapabilityCloudCredential,
+						configv1.ClusterVersionCapabilityCloudControllerManager,
+						configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityOperatorLifecycleManager,
+						configv1.ClusterVersionCapabilityClusterAPI,
+						configv1.ClusterVersionCapabilityCompatibilityRequirements,
+					},
+				}
+				return c
+			}(),
+			// Should pass - CustomNoUpgrade schema includes these names regardless of gate status
 		},
 		{
 			name: "installer rejects v4.12 baseline selecting MachineAPI without ClusterAPI when both prerequisite feature gates are enabled",
