@@ -54,7 +54,10 @@ func TestFetchByName(t *testing.T) {
 				}
 			}
 
-			f := &fileFetcher{directory: tempDir}
+			f := &fileFetcher{
+				directory: tempDir,
+				modCheck:  newModificationTracker(),
+			}
 			file, err := f.FetchByName(tt.input)
 			if err != nil {
 				if os.IsNotExist(err) && tt.expectFile == nil {
@@ -155,7 +158,10 @@ func TestFetchByPattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			f := &fileFetcher{directory: tempDir}
+			f := &fileFetcher{
+				directory: tempDir,
+				modCheck:  newModificationTracker(),
+			}
 			files, err := f.FetchByPattern(tt.input)
 			if err != nil {
 				t.Fatal(err)
