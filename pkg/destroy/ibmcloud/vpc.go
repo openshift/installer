@@ -17,13 +17,18 @@ func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListVpcsOptions()
-	resources, _, err := o.vpcSvc.ListVpcsWithContext(ctx, options)
+	vpcsPager, err := o.vpcSvc.NewVpcsPager(options)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create vpc pager")
+	}
+
+	vpcs, err := vpcsPager.GetAllWithContext(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list vpcs")
 	}
 
 	result := []cloudResource{}
-	for _, vpc := range resources.Vpcs {
+	for _, vpc := range vpcs {
 		if strings.Contains(*vpc.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *vpc.ID,
