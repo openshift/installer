@@ -265,27 +265,38 @@ func TestHostGroupTopologyUsed(t *testing.T) {
 
 // TestMachineManagementValidation verifies that the machine-management
 // privilege matrix requires Host.Inventory.EditCluster for HostGroup failure
-// domains only when the component-scoped credentials feature gate is enabled;
-// with the gate disabled the matrix matches the legacy behavior that existing
-// global-credential install configs are validated against.
+// domains only for component-scoped credentials with the feature gate
+// enabled. Global-credential install configs keep the legacy behavior, even
+// when they enable the feature gate for another feature.
 func TestMachineManagementValidation(t *testing.T) {
 	tests := []struct {
 		name                     string
 		featureSet               v1.FeatureSet
+		credentialType           vsphere.CredentialType
 		failureDomains           []vsphere.FailureDomain
 		wantEditCluster          bool
 		wantReconfigurationCheck bool
 	}{
 		{
-			name:       "HostGroup topology with the gate disabled keeps the legacy matrix",
-			featureSet: v1.Default,
+			name:           "HostGroup topology with global credentials and the gate disabled keeps the legacy matrix",
+			featureSet:     v1.Default,
+			credentialType: vsphere.CredentialTypeGlobal,
 			failureDomains: []vsphere.FailureDomain{
 				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
 			},
 		},
 		{
-			name:       "HostGroup topology with the gate enabled requires EditCluster",
-			featureSet: v1.DevPreviewNoUpgrade,
+			name:           "HostGroup topology with global credentials and the gate enabled keeps the legacy matrix",
+			featureSet:     v1.DevPreviewNoUpgrade,
+			credentialType: vsphere.CredentialTypeGlobal,
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+		},
+		{
+			name:           "HostGroup topology with component-scoped credentials and the gate enabled requires EditCluster",
+			featureSet:     v1.DevPreviewNoUpgrade,
+			credentialType: vsphere.CredentialTypeComponentScoped,
 			failureDomains: []vsphere.FailureDomain{
 				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
 			},
@@ -293,8 +304,17 @@ func TestMachineManagementValidation(t *testing.T) {
 			wantReconfigurationCheck: true,
 		},
 		{
-			name:       "compute cluster topology with the gate enabled keeps the legacy matrix",
-			featureSet: v1.DevPreviewNoUpgrade,
+			name:           "HostGroup topology with component-scoped credentials and the gate disabled keeps the legacy matrix",
+			featureSet:     v1.Default,
+			credentialType: vsphere.CredentialTypeComponentScoped,
+			failureDomains: []vsphere.FailureDomain{
+				{Server: "test-vcenter", ZoneType: vsphere.HostGroupFailureDomain},
+			},
+		},
+		{
+			name:           "compute cluster topology with component-scoped credentials and the gate enabled keeps the legacy matrix",
+			featureSet:     v1.DevPreviewNoUpgrade,
+			credentialType: vsphere.CredentialTypeComponentScoped,
 			failureDomains: []vsphere.FailureDomain{
 				{Server: "test-vcenter", ZoneType: vsphere.ComputeClusterFailureDomain},
 			},
@@ -307,6 +327,7 @@ func TestMachineManagementValidation(t *testing.T) {
 				FeatureSet: test.featureSet,
 				Platform: types.Platform{
 					VSphere: &vsphere.Platform{
+						CredentialType: test.credentialType,
 						FailureDomains: test.failureDomains,
 					},
 				},
@@ -318,6 +339,50 @@ func TestMachineManagementValidation(t *testing.T) {
 				assert.NotContains(t, componentGroups[permissionCluster].Permissions, "Host.Inventory.EditCluster")
 			}
 			assert.Equal(t, test.wantReconfigurationCheck, checkReconfiguration)
+		})
+	}
+}
+
+// TestValidationContextPermissionGroup verifies that a component context does
+// not fall back to the installer matrix for a group the component does not
+// define, while machine-management and legacy contexts keep the full matrix.
+func TestValidationContextPermissionGroup(t *testing.T) {
+	tests := []struct {
+		name      string
+		ctx       *validationContext
+		group     permissionGroup
+		wantFound bool
+	}{
+		{
+			name:      "component group defined for the component",
+			ctx:       &validationContext{Component: componentStorage},
+			group:     permissionVcenter,
+			wantFound: true,
+		},
+		{
+			name:      "component group not defined for the component",
+			ctx:       &validationContext{Component: componentStorage},
+			group:     permissionPortgroup,
+			wantFound: false,
+		},
+		{
+			name:      "machine-management matrix covers every group",
+			ctx:       &validationContext{Component: componentMachineManagement, componentGroups: machineManagementPermissions(false)},
+			group:     permissionPortgroup,
+			wantFound: true,
+		},
+		{
+			name:      "legacy context covers every group",
+			ctx:       &validationContext{},
+			group:     permissionPortgroup,
+			wantFound: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, found := test.ctx.permissionGroup(test.group)
+			assert.Equal(t, test.wantFound, found)
 		})
 	}
 }
@@ -447,18 +512,26 @@ func TestValidateFailureDomainHostGroupResourcePool(t *testing.T) {
 	failureDomain.Topology.HostGroup = "host-group-a"
 
 	tests := []struct {
-		name        string
-		featureSet  v1.FeatureSet
-		gateEnabled bool
+		name            string
+		featureSet      v1.FeatureSet
+		credentialType  vsphere.CredentialType
+		wantEditCluster bool
 	}{
 		{
-			name:        "feature gate enabled",
-			featureSet:  v1.DevPreviewNoUpgrade,
-			gateEnabled: true,
+			name:            "component-scoped credentials with the feature gate enabled",
+			featureSet:      v1.DevPreviewNoUpgrade,
+			credentialType:  vsphere.CredentialTypeComponentScoped,
+			wantEditCluster: true,
 		},
 		{
-			name:       "feature gate disabled",
-			featureSet: v1.Default,
+			name:           "component-scoped credentials with the feature gate disabled",
+			featureSet:     v1.Default,
+			credentialType: vsphere.CredentialTypeComponentScoped,
+		},
+		{
+			name:           "global credentials with the feature gate enabled",
+			featureSet:     v1.DevPreviewNoUpgrade,
+			credentialType: vsphere.CredentialTypeGlobal,
 		},
 	}
 
@@ -480,6 +553,7 @@ func TestValidateFailureDomainHostGroupResourcePool(t *testing.T) {
 				FeatureSet: test.featureSet,
 				Platform: types.Platform{
 					VSphere: &vsphere.Platform{
+						CredentialType: test.credentialType,
 						FailureDomains: []vsphere.FailureDomain{
 							{Server: failureDomain.Server, ZoneType: vsphere.HostGroupFailureDomain},
 						},
@@ -503,7 +577,7 @@ func TestValidateFailureDomainHostGroupResourcePool(t *testing.T) {
 			// reconfiguration privilege is checked despite the custom resource
 			// pool.
 			errs := validateFailureDomain(validationCtx, &failureDomain, false).ToAggregate()
-			if test.gateEnabled {
+			if test.wantEditCluster {
 				assert.ErrorContains(t, errs, "Host.Inventory.EditCluster")
 			} else {
 				assert.NotContains(t, errs.Error(), "Host.Inventory.EditCluster")

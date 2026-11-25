@@ -1510,7 +1510,13 @@ func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Pat
 		powervc.Name:   {types.PassthroughCredentialsMode},
 		powervs.Name:   {types.ManualCredentialsMode},
 		nutanix.Name:   {types.ManualCredentialsMode},
-		vsphere.Name:   {types.ManualCredentialsMode},
+	}
+	// vSphere supports Manual credentials mode only for component-scoped
+	// credentials. With global credentials the installer generates the
+	// vSphere credential Secret, so Manual mode would leave the cluster
+	// without vCenter credentials.
+	if platform.VSphere != nil && platform.VSphere.CredentialType == vsphere.CredentialTypeComponentScoped {
+		validPlatformCredentialsModes[vsphere.Name] = []types.CredentialsMode{types.ManualCredentialsMode}
 	}
 	if validModes, ok := validPlatformCredentialsModes[platform.Name()]; ok {
 		validModesSet := sets.NewString()
