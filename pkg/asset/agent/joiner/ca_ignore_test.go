@@ -11,6 +11,31 @@ func TestFilterUserCaBundle(t *testing.T) {
 	assert.Equal(t, userCert, filtered)
 }
 
+func TestFilterUserCaBundleWhitespace(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "LF", value: "\n"},
+		{name: "spaces", value: "   "},
+		{name: "tabs", value: "\t\t"},
+		{name: "CRLF", value: "\r\n"},
+		{name: "mixed whitespace", value: " \t\r\n \t"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for cert := range coreOS92CaCerts {
+				assert.Equal(t, "", filterCaBundleData(cert+test.value),
+					"a filtered public certificate followed by whitespace must produce an empty bundle")
+			}
+
+			assert.Equal(t, userCert, filterCaBundleData(certs+test.value),
+				"the user certificate must be preserved without trailing whitespace")
+		})
+	}
+}
+
 const userCert = `-----BEGIN CERTIFICATE-----
 MIID0zCCArugAwIBAgIUFMfnyXUogJfKSeKtHcTL5Q9tM3MwDQYJKoZIhvcNAQEL
 BQAwcjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk5DMRAwDgYDVQQHDAdSYWxlaWdo
