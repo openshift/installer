@@ -536,6 +536,7 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	hostsWithBGPPeers := 0
 	for i, host := range p.Hosts {
 		if host == nil {
 			continue
@@ -546,10 +547,16 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 				"host-level BGP peer overrides require platform.baremetal.bgpVIPConfig"))
 			continue
 		}
+		if len(host.BGPPeers) > 0 {
+			hostsWithBGPPeers++
+		}
 		if len(host.BGPPeers) > 16 {
 			allErrs = append(allErrs, field.TooMany(hostsPath, len(host.BGPPeers), 16))
 		}
 		allErrs = append(allErrs, validateBGPPeers(host.BGPPeers, hostsPath)...)
+	}
+	if hostsWithBGPPeers > 16 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), hostsWithBGPPeers, "at most 16 hosts may specify bgpPeers"))
 	}
 
 	return allErrs
