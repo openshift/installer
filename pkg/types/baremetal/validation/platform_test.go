@@ -1453,6 +1453,36 @@ func TestValidateBGPVIP(t *testing.T) {
 	}
 }
 
+func TestValidateBGPHostOverrideCount(t *testing.T) {
+	for _, tc := range []struct {
+		overrides int
+		wantError bool
+	}{{16, false}, {17, true}} {
+		t.Run(fmt.Sprintf("%d overrides", tc.overrides), func(t *testing.T) {
+			cfg := installConfig().build()
+			p := platform().build()
+			cfg.BareMetal = p
+			peers := []baremetal.BGPPeerConfig{{PeerAddress: "192.168.111.1", PeerASN: 64513}}
+			p.BGPVIPConfig = &baremetal.BGPVIPConfig{LocalASN: 64512, Peers: peers}
+			// All 18 hosts are valid; only hosts with explicit peers count.
+			p.Hosts = nil
+			for i := 0; i < 18; i++ {
+				host := &baremetal.Host{Name: fmt.Sprintf("host-%d", i)}
+				if i < tc.overrides {
+					host.BGPPeers = peers
+				}
+				p.Hosts = append(p.Hosts, host)
+			}
+			err := ValidatePlatform(p, true, nil, field.NewPath("baremetal"), cfg).ToAggregate()
+			if tc.wantError {
+				assert.ErrorContains(t, err, "at most 16 hosts may specify bgpPeers")
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 // An overlong BGP password is rejected without echoing it in the error.
 func TestValidateBGPVIPPasswordNotEchoed(t *testing.T) {
 	n := network()
