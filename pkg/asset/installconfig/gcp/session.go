@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -87,7 +88,7 @@ func loadCredentials(ctx context.Context) (*googleoauth.Credentials, string, err
 			continue
 		}
 		onceLoggers[loader].Do(func() {
-			logrus.Infof("Credentials loaded from %s", loader)
+			logCredsAuthType(loader, creds)
 		})
 		return creds, loader.Content(), nil
 	}
@@ -328,4 +329,32 @@ func validateCredSourceFile(file string) error {
 		return fmt.Errorf("credential_source.file must not contain path traversal")
 	}
 	return nil
+}
+
+func logCredsAuthType(loader credLoader, creds *googleoauth.Credentials) {
+	if creds == nil {
+		logrus.Warn("No GCP credentials loaded")
+		return
+	}
+	if _, ok := loader.(*fileLoader); ok {
+		logrus.Infof("Credentials loaded from %s", loader)
+		return
+	}
+	if len(creds.JSON) > 0 {
+		authEnvVars := []string{"GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_CREDENTIALS", "GOOGLE_CLOUD_KEYFILE_JSON", "GCLOUD_KEYFILE_JSON"}
+		for _, envvar := range authEnvVars {
+			if os.Getenv(envvar) != "" {
+				logrus.Infof("Credentials loaded from %s file", envvar)
+				return
+			}
+		}
+		logrus.Infof("Credentials loaded from local gcloud ADC file")
+		return
+	}
+	// Empty creds.JSON on GCE/GKE/Cloud Run means the compute metadata server was used.
+	if metadata.OnGCE() {
+		logrus.Infof("Credentials loaded from GCE metadata server")
+		return
+	}
+	logrus.Infof("Credentials loaded from unknown/custom token source")
 }
