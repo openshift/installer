@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"k8s.io/utils/ptr"
@@ -64,25 +66,26 @@ func TestValidateTopology(t *testing.T) {
 		// when the control plane remains schedulable.
 		{"1+0 unschedulable", 1, 0, 0, false, single, []string{single, ha}},
 		{"1+0 schedulable", 1, 0, 0, true, single, []string{single, ha}},
-		{"1+1 unschedulable", 1, 0, 1, false, single, []string{single}},
+		// HA is allowed with one schedulable node to accommodate planned scale-up.
+		{"1+1 unschedulable", 1, 0, 1, false, single, []string{single, ha}},
 		{"1+1 schedulable", 1, 0, 1, true, single, []string{ha}},
 		{"1+2 unschedulable", 1, 0, 2, false, single, []string{ha}},
 		{"1+2 schedulable", 1, 0, 2, true, single, []string{ha}},
 		{"2+0 unschedulable", 2, 0, 0, false, dual, []string{single, ha}},
 		{"2+0 schedulable", 2, 0, 0, true, dual, []string{ha}},
-		{"2+1 unschedulable", 2, 0, 1, false, dual, []string{single}},
+		{"2+1 unschedulable", 2, 0, 1, false, dual, []string{single, ha}},
 		{"2+1 schedulable", 2, 0, 1, true, dual, []string{ha}},
 		{"2+2 unschedulable", 2, 0, 2, false, dual, []string{ha}},
 		{"2+2 schedulable", 2, 0, 2, true, dual, []string{ha}},
 		{"2+arbiter+0 unschedulable", 2, 1, 0, false, arbiter, []string{single, ha}},
 		{"2+arbiter+0 schedulable", 2, 1, 0, true, arbiter, []string{ha}},
-		{"2+arbiter+1 unschedulable", 2, 1, 1, false, arbiter, []string{single}},
+		{"2+arbiter+1 unschedulable", 2, 1, 1, false, arbiter, []string{single, ha}},
 		{"2+arbiter+1 schedulable", 2, 1, 1, true, arbiter, []string{ha}},
 		{"2+arbiter+2 unschedulable", 2, 1, 2, false, arbiter, []string{ha}},
 		{"2+arbiter+2 schedulable", 2, 1, 2, true, arbiter, []string{ha}},
 		{"3+0 unschedulable", 3, 0, 0, false, ha, []string{single, ha}},
 		{"3+0 schedulable", 3, 0, 0, true, ha, []string{ha}},
-		{"3+1 unschedulable", 3, 0, 1, false, ha, []string{single}},
+		{"3+1 unschedulable", 3, 0, 1, false, ha, []string{single, ha}},
 		{"3+1 schedulable", 3, 0, 1, true, ha, []string{ha}},
 		{"3+2 unschedulable", 3, 0, 2, false, ha, []string{ha}},
 		{"3+2 schedulable", 3, 0, 2, true, ha, []string{ha}},
@@ -117,6 +120,52 @@ func TestValidateTopology(t *testing.T) {
 						}
 					})
 				}
+			}
+		})
+	}
+}
+
+func TestValidateTopologyWarnings(t *testing.T) {
+	originalHooks := logrus.StandardLogger().ReplaceHooks(make(logrus.LevelHooks))
+	t.Cleanup(func() { logrus.StandardLogger().ReplaceHooks(originalHooks) })
+	hook := logrusTest.NewGlobal()
+
+	cases := []struct {
+		name                   string
+		controlPlaneReplicas   int64
+		workerReplicas         int64
+		mastersSchedulable     bool
+		controlPlaneTopology   string
+		infrastructureTopology string
+		expectWarning          bool
+	}{
+		{"HA with one worker", 3, 1, false, "HighlyAvailable", "HighlyAvailable", true},
+		{"single replica with one worker", 3, 1, false, "HighlyAvailable", "SingleReplica", false},
+		{"HA with two workers", 3, 2, false, "HighlyAvailable", "HighlyAvailable", false},
+		{"HA with schedulable masters", 3, 1, true, "HighlyAvailable", "HighlyAvailable", false},
+		{"UPI with unknown workers", 3, 0, false, "HighlyAvailable", "HighlyAvailable", false},
+		{"UPI with one schedulable master and unknown workers", 1, 0, true, "SingleReplica", "HighlyAvailable", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			hook.Reset()
+			config := &types.InstallConfig{
+				ControlPlane: &types.MachinePool{Replicas: ptr.To(tc.controlPlaneReplicas)},
+				Compute:      []types.MachinePool{{Replicas: ptr.To(tc.workerReplicas)}},
+			}
+			files := topologyManifests(tc.mastersSchedulable, tc.controlPlaneTopology, tc.infrastructureTopology)
+			assert.NoError(t, validateTopology(files, config))
+			entries := hook.AllEntries()
+			if tc.expectWarning {
+				if assert.Len(t, entries, 1) {
+					assert.Equal(t, logrus.WarnLevel, entries[0].Level)
+					assert.Contains(t, entries[0].Message, "only one schedulable node")
+					assert.Contains(t, entries[0].Message, files[0].Filename)
+					assert.Contains(t, entries[0].Message, files[1].Filename)
+					assert.Contains(t, entries[0].Message, "installation may not complete")
+				}
+			} else {
+				assert.Empty(t, entries)
 			}
 		})
 	}

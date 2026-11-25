@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
@@ -76,20 +77,16 @@ func validateTopology(files []*asset.File, installConfig *types.InstallConfig) e
 			schedulableReplicas += ptr.Deref(installConfig.ControlPlane.Replicas, 3)
 		}
 		// Zero configured workers can mean UPI, with workers provisioned outside
-		// the installer. Skip the replica-count comparison when at most one
-		// schedulable node is known: external workers may still provide HA.
-		// Multiple known schedulable nodes require HA even for UPI.
+		// the installer. Only reject SingleReplica when multiple schedulable
+		// nodes are known; zero or one does not establish the actual UPI count.
 		// Arbiters do not provide infrastructure workload capacity.
-		if workerReplicas > 0 || schedulableReplicas > 1 {
-			expectedInfra := configv1.SingleReplicaTopologyMode
-			if schedulableReplicas > 1 {
-				expectedInfra = configv1.HighlyAvailableTopologyMode
-			}
-			if infrastructure.Status.InfrastructureTopology != expectedInfra {
-				errs = append(errs, field.Invalid(infraPath, infrastructure.Status.InfrastructureTopology,
-					fmt.Sprintf("must be %s for %d configured workers and spec.mastersSchedulable=%t in %s; correct the infrastructure topology or scheduler settings before creating ignition configs",
-						expectedInfra, workerReplicas, scheduler.Spec.MastersSchedulable, schedulerFilename)))
-			}
+		if infrastructure.Status.InfrastructureTopology == configv1.SingleReplicaTopologyMode && schedulableReplicas > 1 {
+			errs = append(errs, field.Invalid(infraPath, infrastructure.Status.InfrastructureTopology,
+				fmt.Sprintf("must be %s for %d configured workers and spec.mastersSchedulable=%t in %s; correct the infrastructure topology or scheduler settings before creating ignition configs",
+					configv1.HighlyAvailableTopologyMode, workerReplicas, scheduler.Spec.MastersSchedulable, schedulerFilename)))
+		} else if infrastructure.Status.InfrastructureTopology == configv1.HighlyAvailableTopologyMode && workerReplicas > 0 && schedulableReplicas == 1 {
+			// Allow HA with a single schedulable node so users can plan for scale-up.
+			logrus.Warnf("status.infrastructureTopology is HighlyAvailable in %s, but only one schedulable node is configured with spec.mastersSchedulable=false in %s; installation may not complete until additional schedulable nodes are available", infrastructureFilename, schedulerFilename)
 		}
 	default:
 		errs = append(errs, field.NotSupported(infraPath, infrastructure.Status.InfrastructureTopology,
