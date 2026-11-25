@@ -95,7 +95,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		},
 	}
 
-	controlPlaneTopology, infrastructureTopology := determineTopologies(installConfig.Config)
+	controlPlaneTopology, infrastructureTopology := DetermineTopologies(installConfig.Config)
 
 	config.Status.InfrastructureTopology = infrastructureTopology
 	config.Status.ControlPlaneTopology = controlPlaneTopology

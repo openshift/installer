@@ -7,9 +7,9 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// determineTopologies determines the Infrastructure CR's
-// infrastructureTopology and controlPlaneTopology given an install config file
-func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
+// DetermineTopologies determines the Infrastructure CR's
+// infrastructureTopology and controlPlaneTopology given an install config file.
+func DetermineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
 	controlPlaneReplicas := ptr.Deref(installConfig.ControlPlane.Replicas, 3)
 	switch controlPlaneReplicas {
 	case 1:
