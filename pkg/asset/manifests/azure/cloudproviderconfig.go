@@ -9,19 +9,20 @@ import (
 
 // CloudProviderConfig is the azure cloud provider config
 type CloudProviderConfig struct {
-	CloudName                azure.CloudEnvironment
-	TenantID                 string
-	SubscriptionID           string
-	ResourceGroupName        string
-	GroupLocation            string
-	ResourcePrefix           string
-	NetworkResourceGroupName string
-	NetworkSecurityGroupName string
-	VirtualNetworkName       string
-	SubnetName               string
-	ResourceManagerEndpoint  string
-	ARO                      bool
-	UseManagedIdentity       bool
+	CloudName                  azure.CloudEnvironment
+	TenantID                   string
+	SubscriptionID             string
+	ResourceGroupName          string
+	GroupLocation              string
+	ResourcePrefix             string
+	NetworkResourceGroupName   string
+	NetworkSecurityGroupName   string
+	VirtualNetworkName         string
+	SubnetName                 string
+	ResourceManagerEndpoint    string
+	ARO                        bool
+	UseManagedIdentity         bool
+	PrimaryAvailabilitySetName string
 }
 
 // JSON generates the cloud provider json config for the azure platform.
@@ -56,6 +57,7 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku:             "standard",
 		ExcludeMasterFromStandardLB: &excludeMasterFromStandardLB,
+		PrimaryAvailabilitySetName:  params.PrimaryAvailabilitySetName,
 	}
 
 	if params.UseManagedIdentity {

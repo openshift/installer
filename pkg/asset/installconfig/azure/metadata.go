@@ -126,6 +126,13 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	defer m.mutex.Unlock()
 
 	if len(m.availabilityZones) == 0 {
+		if m.client == nil {
+			ssn, err := m.unlockedSession()
+			if err != nil {
+				return nil, fmt.Errorf("creating Azure session: %w", err)
+			}
+			m.client = NewClient(ssn)
+		}
 		zones, err := m.client.GetRegionAvailabilityZones(ctx, m.Region)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)
@@ -145,6 +152,13 @@ func (m *Metadata) VMAvailabilityZones(ctx context.Context, instanceType string)
 	defer m.mutex.Unlock()
 
 	if len(m.vmZones) == 0 {
+		if m.client == nil {
+			ssn, err := m.unlockedSession()
+			if err != nil {
+				return nil, fmt.Errorf("creating Azure session: %w", err)
+			}
+			m.client = NewClient(ssn)
+		}
 		zones, err := m.client.GetAvailabilityZones(ctx, m.Region, instanceType)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Availability Zones: %w", err)

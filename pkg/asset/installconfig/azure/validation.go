@@ -57,7 +57,7 @@ func Validate(client API, meta *Metadata, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateNetworks(client, ic.Azure, field.NewPath("platform").Child("azure"))...)
-	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
+	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, validateAzureStackDiskType(client, ic)...)
 	}
@@ -637,10 +637,12 @@ func validateNetworks(client API, p *aztypes.Platform, fieldPath *field.Path) fi
 }
 
 // validateRegion checks that the desired region is valid and available to the user
-func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) field.ErrorList {
+func validateRegion(client API, fieldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	p := ic.Azure
 	locations, err := client.ListLocations(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve available regions: %w", err))}
+		return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to retrieve available regions: %w", err)))
 	}
 
 	availableRegions := map[string]string{}
@@ -657,26 +659,60 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 			errMsg += fmt.Sprintf(", did you mean %q?", normalizedRegion)
 		}
 
-		return field.ErrorList{field.Invalid(fieldPath, p.Region, errMsg)}
+		return append(allErrs, field.Invalid(fieldPath, p.Region, errMsg))
 
 	}
 
 	provider, err := client.GetResourcesProvider(context.TODO(), "Microsoft.Resources")
 	if err != nil {
-		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve resource capable regions: %w", err))}
+		return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to retrieve resource capable regions: %w", err)))
+	}
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil && len(ic.ControlPlane.Platform.Azure.Zones) != 0 {
+		zones, err := client.GetRegionAvailabilityZones(context.TODO(), p.Region)
+		if err != nil {
+			return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to retrieve availability zones for region: %w", err)))
+		}
+		controlPlaneZones := sets.NewString(ic.ControlPlane.Platform.Azure.Zones...)
+		zoneSet := sets.NewString(zones...)
+		if diffSet := controlPlaneZones.Difference(zoneSet); len(diffSet) > 0 {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("controlplane"), controlPlaneZones.List(), fmt.Sprintf("zones mentioned are not supported in the region %v", diffSet.List())))
+		}
+	}
+
+	var regionZones []string
+	for idx, compute := range ic.Compute {
+		if compute.Platform.Azure == nil {
+			continue
+		}
+		computeZones := compute.Platform.Azure.Zones
+		if len(computeZones) == 0 {
+			continue
+		}
+		if regionZones == nil {
+			regionZones, err = client.GetRegionAvailabilityZones(context.TODO(), p.Region)
+			if err != nil {
+				return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to retrieve availability zones for region: %w", err)))
+			}
+		}
+		computeZoneSet := sets.NewString(computeZones...)
+		zoneSet := sets.NewString(regionZones...)
+		if diffSet := computeZoneSet.Difference(zoneSet); len(diffSet) > 0 {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("compute").Index(idx), computeZoneSet.List(), fmt.Sprintf("zones mentioned are not supported in the region %v", diffSet.List())))
+		}
 	}
 
 	for _, resType := range *provider.ResourceTypes {
 		if *resType.ResourceType == "resourceGroups" {
 			for _, resourceCapableRegion := range *resType.Locations {
 				if resourceCapableRegion == displayName {
-					return field.ErrorList{}
+					return allErrs
 				}
 			}
 		}
 	}
 
-	return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region))}
+	return append(allErrs, field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region)))
 }
 
 // ValidatePublicDNS checks DNS for CNAME, A, and AAA records for
