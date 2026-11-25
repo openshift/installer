@@ -125,6 +125,39 @@ routes:
     - ip: 192.168.111.80
       prefix-length: 24
 `
+	addNodesNetworkConfigIPv4Shared = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.122.2
+      prefix-length: 23
+    dhcp: false
+    enabled: true
+  name: eth0
+  state: up
+  type: ethernet
+`
+	addNodesNetworkConfigIPv4Other = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.122.3
+      prefix-length: 23
+    dhcp: false
+    enabled: true
+  name: eth0
+  state: up
+  type: ethernet
+`
+	addNodesNetworkConfigIPv6Shared = `interfaces:
+- ipv6:
+    address:
+    - ip: 2001:db8::2
+      prefix-length: 64
+    dhcp: false
+    enabled: true
+  name: eth0
+  state: up
+  type: ethernet
+`
 )
 
 func TestAgentHosts_Generate(t *testing.T) {
@@ -503,6 +536,50 @@ func TestAgentHosts_Generate(t *testing.T) {
 			expectedConfig: agentHosts().hosts(
 				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:d2:b2:1a")).deviceHint().rawNetworkConfig("not: valid: yaml: [[")),
 		},
+		{
+			name: "add-nodes-duplicate-ipv4-across-hosts",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				addNodesConfig(
+					addNodesHost("extra-worker-0", "00:00:00:00:00:00", addNodesNetworkConfigIPv4Shared),
+					addNodesHost("extra-worker-1", "00:00:00:00:00:02", addNodesNetworkConfigIPv4Shared),
+				),
+				getNoHostsInstallConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedError:  "invalid Hosts configuration: hosts[1].networkConfig: Invalid value: \"192.168.122.2\": duplicate IP address found",
+			expectedConfig: nil,
+		},
+		{
+			name: "add-nodes-distinct-ipv4-across-hosts",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				addNodesConfig(
+					addNodesHost("extra-worker-0", "00:00:00:00:00:00", addNodesNetworkConfigIPv4Shared),
+					addNodesHost("extra-worker-1", "00:00:00:00:00:02", addNodesNetworkConfigIPv4Other),
+				),
+				getNoHostsInstallConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("extra-worker-0").role("worker").interfaces(iface("eth0", "00:00:00:00:00:00")).rawNetworkConfig(addNodesNetworkConfigIPv4Shared),
+				agentHost().name("extra-worker-1").role("worker").interfaces(iface("eth0", "00:00:00:00:00:02")).rawNetworkConfig(addNodesNetworkConfigIPv4Other),
+			),
+		},
+		{
+			name: "add-nodes-duplicate-ipv6-across-hosts",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				addNodesConfig(
+					addNodesHost("extra-worker-0", "00:00:00:00:00:00", addNodesNetworkConfigIPv6Shared),
+					addNodesHost("extra-worker-1", "00:00:00:00:00:02", addNodesNetworkConfigIPv6Shared),
+				),
+				getNoHostsInstallConfig(),
+				getNoHostsAgentConfig(),
+			},
+			expectedError:  "invalid Hosts configuration: hosts[1].networkConfig: Invalid value: \"2001:db8::2\": duplicate IP address found",
+			expectedConfig: nil,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -523,6 +600,30 @@ func TestAgentHosts_Generate(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func addNodesConfig(hosts ...agent.Host) *joiner.AddNodesConfig {
+	return &joiner.AddNodesConfig{
+		Config: joiner.Config{
+			Hosts: hosts,
+		},
+	}
+}
+
+func addNodesHost(hostname, mac, networkConfig string) agent.Host {
+	return agent.Host{
+		Hostname: hostname,
+		Role:     "worker",
+		Interfaces: []*aiv1beta1.Interface{
+			{
+				Name:       "eth0",
+				MacAddress: mac,
+			},
+		},
+		NetworkConfig: aiv1beta1.NetConfig{
+			Raw: []byte(networkConfig),
+		},
 	}
 }
 
