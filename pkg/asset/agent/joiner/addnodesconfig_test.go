@@ -6,8 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 func TestAddNodesConfig_Load(t *testing.T) {
@@ -48,6 +51,26 @@ sshKey: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAklOUpkDHrfHY17SbrmTIpNLTGK9Tjom/BWD
 sshKey: "not a valid ssh key"`,
 			expectedError: "sshKey: Invalid value: \"not a valid ssh key\": ssh: no key found; last parsing error for ignored line: illegal base64 data at input byte 4",
 		},
+		{
+			name: "role field not supported",
+			nodesConfigData: `hosts:
+- hostname: master-0
+  role: ""
+  interfaces:
+  - name: eth0
+    macAddress: 00:ef:29:72:b9:771`,
+			expectedError: "failed to unmarshal nodes-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"role\"",
+		},
+		{
+			name: "unknown field not supported",
+			nodesConfigData: `hosts:
+- hostname: master-0
+  invalidField: value
+  interfaces:
+  - name: eth0
+    macAddress: 00:ef:29:72:b9:771`,
+			expectedError: "failed to unmarshal nodes-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\"",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -83,4 +106,34 @@ sshKey: "not a valid ssh key"`,
 			}
 		})
 	}
+}
+
+func TestHost_ToAgentHost(t *testing.T) {
+	tc := struct {
+		name     string
+		host     Host
+		expected agent.Host
+	}{
+		name: "all fields mapped and role defaults to worker",
+		host: Host{
+			Hostname:        "extra-worker-0",
+			RootDeviceHints: baremetal.RootDeviceHints{DeviceName: "/dev/sda"},
+			Interfaces: []*aiv1beta1.Interface{
+				{Name: "eth0", MacAddress: "00:ef:29:72:b9:771"},
+			},
+			NetworkConfig: aiv1beta1.NetConfig{Raw: []byte("interfaces: []")},
+		},
+		expected: agent.Host{
+			Hostname:        "extra-worker-0",
+			Role:            "worker",
+			RootDeviceHints: baremetal.RootDeviceHints{DeviceName: "/dev/sda"},
+			Interfaces: []*aiv1beta1.Interface{
+				{Name: "eth0", MacAddress: "00:ef:29:72:b9:771"},
+			},
+			NetworkConfig: aiv1beta1.NetConfig{Raw: []byte("interfaces: []")},
+		},
+	}
+	t.Run(tc.name, func(t *testing.T) {
+		assert.Equal(t, tc.expected, tc.host.ToAgentHost())
+	})
 }
