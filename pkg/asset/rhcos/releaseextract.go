@@ -35,10 +35,17 @@ const (
 	ocDefaultRetryDelay = time.Second * 5
 )
 
+// usesCoreOS10Layout reports whether machine-os-images stores the artifacts
+// for the given stream with the coreos10- file prefix. This is the case for
+// the version 10 streams: rhel-10 (OCP) and centos-10 (OKD/SCOS). Version 9
+// streams use the coreos- prefix.
+func usesCoreOS10Layout(stream types.OSImageStream) bool {
+	return stream == types.OSImageStreamRHCOS10 || stream == types.OSImageStreamCentos10
+}
+
 // getCoreOsFileName returns the ISO file path in machine-os-images based on stream.
 func getCoreOsFileName(stream types.OSImageStream, architecture string) string {
-	// rhel-10 uses coreos10- prefix, rhel-9 uses coreos- prefix
-	if stream == types.OSImageStreamRHCOS10 {
+	if usesCoreOS10Layout(stream) {
 		return fmt.Sprintf("/coreos/coreos10-%s.iso", architecture)
 	}
 	return fmt.Sprintf("/coreos/coreos-%s.iso", architecture)
@@ -46,7 +53,7 @@ func getCoreOsFileName(stream types.OSImageStream, architecture string) string {
 
 // getCoreOsSha256FileName returns the ISO checksum file path based on stream.
 func getCoreOsSha256FileName(stream types.OSImageStream, architecture string) string {
-	if stream == types.OSImageStreamRHCOS10 {
+	if usesCoreOS10Layout(stream) {
 		return fmt.Sprintf("/coreos/coreos10-%s.iso.sha256", architecture)
 	}
 	return fmt.Sprintf("/coreos/coreos-%s.iso.sha256", architecture)
@@ -54,7 +61,7 @@ func getCoreOsSha256FileName(stream types.OSImageStream, architecture string) st
 
 // getCoreOsStreamFileName returns the stream metadata file path based on stream.
 func getCoreOsStreamFileName(stream types.OSImageStream) string {
-	if stream == types.OSImageStreamRHCOS10 {
+	if usesCoreOS10Layout(stream) {
 		return "/coreos/coreos10-stream.json"
 	}
 	return "/coreos/coreos-stream.json"
