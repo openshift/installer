@@ -1,14 +1,19 @@
 package manifests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/none"
 )
 
 func TestBuildNoProxySet(t *testing.T) {
@@ -181,4 +186,78 @@ func TestBuildNoProxySet(t *testing.T) {
 			assert.ElementsMatch(t, tc.expected, sets.List(result))
 		})
 	}
+}
+
+func TestCreateNoProxyIBMCloudIncludesIMDS(t *testing.T) {
+	cases := []struct {
+		name             string
+		platform         types.Platform
+		wantIMDS         bool
+		wantIBMHost      bool
+		wantAWSEC2Suffix string
+	}{
+		{
+			name:        "ibmcloud includes VPC IMDS address and hostname",
+			platform:    types.Platform{IBMCloud: &ibmcloud.Platform{Region: "us-south"}},
+			wantIMDS:    true,
+			wantIBMHost: true,
+		},
+		{
+			name:             "aws still includes IMDS",
+			platform:         types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			wantIMDS:         true,
+			wantAWSEC2Suffix: ".ec2.internal",
+		},
+		{
+			name:     "none does not include IMDS",
+			platform: types.Platform{None: &none.Platform{}},
+			wantIMDS: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			noProxy, err := createNoProxy(proxyTestInstallConfig(tc.platform))
+			assert.NoError(t, err)
+			entries := strings.Split(noProxy, ",")
+			if tc.wantIMDS {
+				assert.Contains(t, entries, "169.254.169.254")
+			} else {
+				assert.NotContains(t, entries, "169.254.169.254")
+			}
+			if tc.wantIBMHost {
+				assert.Contains(t, entries, "api.metadata.cloud.ibm.com")
+			} else {
+				assert.NotContains(t, entries, "api.metadata.cloud.ibm.com")
+			}
+			if tc.wantAWSEC2Suffix != "" {
+				assert.Contains(t, entries, tc.wantAWSEC2Suffix)
+			}
+			assert.Contains(t, entries, "127.0.0.1")
+			assert.Contains(t, entries, "api-int.test.example.com")
+		})
+	}
+}
+
+func proxyTestInstallConfig(platform types.Platform) *installconfig.InstallConfig {
+	return installconfig.MakeAsset(&types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		BaseDomain: "example.com",
+		Networking: &types.Networking{
+			ClusterNetwork: []types.ClusterNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.128.0.0/14"), HostPrefix: 23},
+			},
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+			},
+			ServiceNetwork: []ipnet.IPNet{
+				*ipnet.MustParseCIDR("172.30.0.0/16"),
+			},
+		},
+		Platform: platform,
+		Proxy: &types.Proxy{
+			HTTPProxy:  "http://proxy.example.com:3128",
+			HTTPSProxy: "http://proxy.example.com:3128",
+		},
+	})
 }
