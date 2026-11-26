@@ -65,6 +65,150 @@ func TestValidatePlatform(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "subnets below ALB limit (1 control plane + 1 compute = 2 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{"cp-1"}
+				p.ComputeSubnets = []string{"comp-1"}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "subnets at ALB limit (12 control plane + 3 compute = 15 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6",
+					"cp-7", "cp-8", "cp-9", "cp-10", "cp-11", "cp-12",
+				}
+				p.ComputeSubnets = []string{"comp-1", "comp-2", "comp-3"}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "subnets at ALB limit (8 control plane + 7 compute = 15 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7", "cp-8",
+				}
+				p.ComputeSubnets = []string{
+					"comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7",
+				}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "subnets exceed ALB limit (13 control plane + 3 compute = 16 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7",
+					"cp-8", "cp-9", "cp-10", "cp-11", "cp-12", "cp-13",
+				}
+				p.ComputeSubnets = []string{"comp-1", "comp-2", "comp-3"}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets exceed ALB limit (8 control plane + 8 compute = 16 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7", "cp-8",
+				}
+				p.ComputeSubnets = []string{
+					"comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7", "comp-8",
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets exceed ALB limit (15 control plane + 1 compute = 16 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7", "cp-8",
+					"cp-9", "cp-10", "cp-11", "cp-12", "cp-13", "cp-14", "cp-15",
+				}
+				p.ComputeSubnets = []string{"comp-1"}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets exceed ALB limit (1 control plane + 15 compute = 16 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{"cp-1"}
+				p.ComputeSubnets = []string{
+					"comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7", "comp-8",
+					"comp-9", "comp-10", "comp-11", "comp-12", "comp-13", "comp-14", "comp-15",
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets exceed ALB limit (15 control plane + 15 compute = 30 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7", "cp-8",
+					"cp-9", "cp-10", "cp-11", "cp-12", "cp-13", "cp-14", "cp-15",
+				}
+				p.ComputeSubnets = []string{
+					"comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7", "comp-8",
+					"comp-9", "comp-10", "comp-11", "comp-12", "comp-13", "comp-14", "comp-15",
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets at ALB limit with overlap (8 control plane + 8 compute, 1 shared = 15 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"shared-1", "cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7",
+				}
+				p.ComputeSubnets = []string{
+					"shared-1", "comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7",
+				}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "subnets exceed ALB limit with overlap (9 control plane + 9 compute, 2 shared = 16 distinct)",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.VPCName = "valid-vpc"
+				p.ControlPlaneSubnets = []string{
+					"shared-1", "shared-2", "cp-1", "cp-2", "cp-3", "cp-4", "cp-5", "cp-6", "cp-7",
+				}
+				p.ComputeSubnets = []string{
+					"shared-1", "shared-2", "comp-1", "comp-2", "comp-3", "comp-4", "comp-5", "comp-6", "comp-7",
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name: "vpc without control plane subnet",
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
