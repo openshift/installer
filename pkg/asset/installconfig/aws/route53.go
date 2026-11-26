@@ -260,6 +260,18 @@ type HostedZoneInput struct {
 	UserTags map[string]string
 }
 
+// SOA record RDATA is a space-separated string of the form:
+//
+//	MNAME RNAME SERIAL REFRESH RETRY EXPIRE MINIMUM
+//
+// where the final MINIMUM field is the negative-caching TTL (RFC 2308). We lower
+// it so that failed api-int lookups are not cached for the AWS default of a day.
+const (
+	soaFieldCount        = 7
+	soaMinimumTTLField   = 6
+	soaMinimumTTLSeconds = "60"
+)
+
 // CreateHostedZone creates a private hosted zone.
 func (c *Route53Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (*route53types.HostedZone, error) {
 	// CallerReference needs to be a unique string. We include the infra id,
@@ -313,13 +325,12 @@ func (c *Route53Client) CreateHostedZone(ctx context.Context, input *HostedZoneI
 	if len(recordSet.ResourceRecords) == 0 || recordSet.ResourceRecords[0].Value == nil {
 		return nil, fmt.Errorf("failed to find SOA record for private zone")
 	}
-	record := recordSet.ResourceRecords[0]
-	fields := strings.Split(aws.ToString(record.Value), " ")
-	if len(fields) != 7 {
-		return nil, fmt.Errorf("SOA record value has %d fields, expected 7", len(fields))
+	value, err := setSOAMinimumTTL(aws.ToString(recordSet.ResourceRecords[0].Value))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse SOA record for private zone: %w", err)
 	}
-	fields[0] = "60"
-	record.Value = aws.String(strings.Join(fields, " "))
+	recordSet.ResourceRecords[0].Value = aws.String(value)
+
 	req, err := c.client.ChangeResourceRecordSets(ctx, &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: res.HostedZone.Id,
 		ChangeBatch: &route53types.ChangeBatch{
@@ -336,12 +347,22 @@ func (c *Route53Client) CreateHostedZone(ctx context.Context, input *HostedZoneI
 	}
 
 	waiter := route53.NewResourceRecordSetsChangedWaiter(c.client)
-
 	if err := waiter.Wait(ctx, &route53.GetChangeInput{Id: req.ChangeInfo.Id}, RecordChangeMaxWaitTime); err != nil {
 		return nil, fmt.Errorf("failed to wait for SOA TTL change: %w", err)
 	}
 
 	return res.HostedZone, nil
+}
+
+// setSOAMinimumTTL returns the SOA record RDATA with its MINIMUM (negative-caching)
+// field set to soaMinimumTTLSeconds.
+func setSOAMinimumTTL(value string) (string, error) {
+	fields := strings.Split(value, " ")
+	if len(fields) != soaFieldCount {
+		return "", fmt.Errorf("SOA record value has %d fields, expected %d", len(fields), soaFieldCount)
+	}
+	fields[soaMinimumTTLField] = soaMinimumTTLSeconds
+	return strings.Join(fields, " "), nil
 }
 
 func existingRecordSet(ctx context.Context, client *route53.Client, zoneID *string, recordName string, recordType route53types.RRType) (*route53types.ResourceRecordSet, error) {
