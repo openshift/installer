@@ -54,3 +54,55 @@ func TestCloudProviderConfig(t *testing.T) {
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expected, json, "unexpected cloud provider config")
 }
+
+func TestCloudProviderConfigSecretClouds(t *testing.T) {
+	for _, cloudName := range []azure.CloudEnvironment{azure.USSecCloud, azure.USNatCloud} {
+		t.Run(string(cloudName), func(t *testing.T) {
+			config := CloudProviderConfig{
+				CloudName:                cloudName,
+				ResourceGroupName:        "clusterid-rg",
+				GroupLocation:            "region",
+				ResourcePrefix:           "clusterid",
+				SubscriptionID:           "subID",
+				TenantID:                 "tenantID",
+				NetworkResourceGroupName: "clusterid-rg",
+				NetworkSecurityGroupName: "clusterid-node-nsg",
+				VirtualNetworkName:       "clusterid-vnet",
+				SubnetName:               "clusterid-worker-subnet",
+				ResourceManagerEndpoint:  "https://management.example.test",
+			}
+			expected := `{
+	"cloud": "` + string(cloudName) + `",
+	"tenantId": "tenantID",
+	"aadClientId": "",
+	"aadClientSecret": "",
+	"aadClientCertPath": "",
+	"aadClientCertPassword": "",
+	"useManagedIdentityExtension": false,
+	"userAssignedIdentityID": "",
+	"subscriptionId": "subID",
+	"resourceManagerEndpoint": "https://management.example.test",
+	"resourceGroup": "clusterid-rg",
+	"location": "region",
+	"vnetName": "clusterid-vnet",
+	"vnetResourceGroup": "clusterid-rg",
+	"subnetName": "clusterid-worker-subnet",
+	"securityGroupName": "clusterid-node-nsg",
+	"routeTableName": "clusterid-node-routetable",
+	"vmType": "standard",
+	"loadBalancerSku": "standard",
+	"cloudProviderBackoff": true,
+	"useInstanceMetadata": true,
+	"excludeMasterFromStandardLB": false,
+	"cloudProviderBackoffDuration": 6,
+	"putVMSSVMBatchSize": 0,
+	"enableMigrateToIPBasedBackendPoolAPI": false
+}
+`
+
+			json, err := config.JSON()
+			assert.NoError(t, err, "failed to create cloud provider config")
+			assert.Equal(t, expected, json, "unexpected cloud provider config")
+		})
+	}
+}
