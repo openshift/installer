@@ -242,6 +242,52 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "valid global client access on internal api",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: gcp.ClientAccessGlobal,
+				},
+			},
+			publishStrategy: types.InternalPublishingStrategy,
+			valid:           true,
+		},
+		{
+			name: "global client access rejected when api is public",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: gcp.ClientAccessGlobal,
+				},
+			},
+			publishStrategy: types.ExternalPublishingStrategy,
+			valid:           false,
+		},
+		{
+			name: "valid local client access",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: gcp.ClientAccessLocal,
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "invalid client access",
+			platform: &gcp.Platform{
+				Region:    "us-east1",
+				ProjectID: "valid-project",
+				LoadBalancer: &gcp.LoadBalancer{
+					ClientAccess: "Regional",
+				},
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

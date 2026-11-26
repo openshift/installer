@@ -11,6 +11,10 @@ import (
 // +kubebuilder:validation:Enum:="Managed";"Unmanaged"
 type FirewallRulesManagementPolicy string
 
+// ClientAccess describes how client access is restricted for internal GCP load balancers.
+// +kubebuilder:validation:Enum:="Global";"Local"
+type ClientAccess string
+
 const (
 	// ManagedFirewallRules indicates that the firewall rules should be managed by the cluster.
 	ManagedFirewallRules FirewallRulesManagementPolicy = "Managed"
@@ -18,6 +22,14 @@ const (
 	// UnmanagedFirewallRules indicates that the firewall rules should be managed by the user. The
 	// firewall rules should exist prior to the installation occurs.
 	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
+
+	// ClientAccessGlobal allows clients from any region within the VPC to
+	// communicate with the internal load balancer.
+	ClientAccessGlobal ClientAccess = "Global"
+
+	// ClientAccessLocal restricts clients of the internal load balancer to
+	// the same region (and VPC) as the load balancer. This is the default.
+	ClientAccessLocal ClientAccess = "Local"
 
 	// CloudEnvironmentSovereign is the cloud environment identifier for GCP sovereign clouds.
 	CloudEnvironmentSovereign = "sovereign"
@@ -130,6 +142,36 @@ type Platform struct {
 	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+
+	// LoadBalancer contains configuration for load balancers created by the installer.
+	// +optional
+	LoadBalancer *LoadBalancer `json:"loadBalancer,omitempty"`
+}
+
+// LoadBalancer contains configuration for GCP load balancers created by the installer.
+type LoadBalancer struct {
+	// ClientAccess describes how client access is restricted for internal load balancers.
+	//
+	// Valid values are "Global" and "Local". Local is the default and admits only
+	// clients in the same region as the load balancer. Global admits clients from
+	// any region in the same VPC network.
+	//
+	// https://cloud.google.com/load-balancing/docs/internal#client_access
+	//
+	// Global is valid only when the API is published internally. A regional
+	// internal load balancer drops traffic from other regions, so a client in
+	// another region (for example an ACM hub installing this cluster) cannot
+	// reach the API until Global is set. The same value is applied to the
+	// default IngressController when ingress is internal.
+	//
+	// +optional
+	ClientAccess ClientAccess `json:"clientAccess,omitempty"`
+}
+
+// ClientAccessGlobal returns true when internal load balancers should allow
+// clients from any region in the VPC.
+func (p *Platform) ClientAccessGlobal() bool {
+	return p != nil && p.LoadBalancer != nil && p.LoadBalancer.ClientAccess == ClientAccessGlobal
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
