@@ -149,9 +149,6 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 				Name:      "default",
 			},
 			Spec: operatorv1.IngressControllerSpec{
-				TLSSecurityProfile: &configv1.TLSSecurityProfile{
-					Type: configv1.TLSProfileModernType,
-				},
 				EndpointPublishingStrategy: &operatorv1.EndpointPublishingStrategy{
 					Type:         operatorv1.LoadBalancerServiceStrategyType,
 					LoadBalancer: &operatorv1.LoadBalancerStrategy{},
