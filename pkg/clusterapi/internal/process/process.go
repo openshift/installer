@@ -139,7 +139,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 
 	pollerStopCh := make(stopChannel)
 	if ps.HealthCheck != nil {
-		go pollURLUntilOK(ps.HealthCheck.URL, ps.HealthCheck.PollInterval, ready, pollerStopCh)
+		go pollURLUntilOK(ctx, ps.HealthCheck.URL, ps.HealthCheck.PollInterval, ready, pollerStopCh)
 	} else {
 		// Assume that if we're not health-checking, we're ready to go.
 		close(ready)
@@ -147,6 +147,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 
 	ps.waitDone = make(chan struct{})
 	if err := ps.Cmd.Start(); err != nil {
+		close(pollerStopCh)
 		ps.errMu.Lock()
 		defer ps.errMu.Unlock()
 		ps.exited = true
@@ -190,7 +191,7 @@ func (ps *State) Exited() (bool, error) {
 	return ps.exited, ps.exitErr
 }
 
-func pollURLUntilOK(url url.URL, interval time.Duration, ready chan bool, stopCh stopChannel) {
+func pollURLUntilOK(ctx context.Context, url url.URL, interval time.Duration, ready chan bool, stopCh stopChannel) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -205,20 +206,28 @@ func pollURLUntilOK(url url.URL, interval time.Duration, ready chan bool, stopCh
 		interval = 100 * time.Millisecond
 	}
 	for {
-		res, err := client.Get(url.String())
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
 		if err == nil {
-			res.Body.Close()
-			if res.StatusCode == http.StatusOK {
-				ready <- true
-				return
+			res, err := client.Do(req) //nolint:gosec // URL is always a locally-controlled health check endpoint
+			if err == nil {
+				res.Body.Close()
+				if res.StatusCode == http.StatusOK {
+					select {
+					case ready <- true:
+					case <-stopCh:
+					case <-ctx.Done():
+					}
+					return
+				}
 			}
 		}
 
 		select {
 		case <-stopCh:
 			return
-		default:
-			time.Sleep(interval)
+		case <-ctx.Done():
+			return
+		case <-time.After(interval):
 		}
 	}
 }
