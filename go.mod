@@ -111,7 +111,7 @@ require (
 	golang.org/x/text v0.40.0
 	google.golang.org/api v0.287.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.82.2
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.36.2
