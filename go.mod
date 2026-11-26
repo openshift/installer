@@ -34,7 +34,7 @@ require (
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.51.2
 	github.com/IBM/platform-services-go-sdk v0.79.0
-	github.com/IBM/vpc-go-sdk v0.65.0
+	github.com/IBM/vpc-go-sdk v0.65.1
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.55.5
