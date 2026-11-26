@@ -27,12 +27,12 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 }
 
 func (o *ClusterUninstaller) listInstances(ctx context.Context) ([]cloudResource, error) {
-	byName, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType),nextPageToken", o.clusterIDFilter(), nil)
+	byName, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType,labels),nextPageToken", o.clusterIDFilter(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	byLabel, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType),nextPageToken", o.clusterLabelFilter(), nil)
+	byLabel, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType,labels),nextPageToken", o.clusterLabelFilter(), nil)
 	if err != nil {
 		return nil, err
 	}
