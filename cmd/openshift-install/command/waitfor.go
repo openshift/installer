@@ -67,6 +67,9 @@ type WaitOptions struct {
 	UserProvisionedDNSEnabled bool
 	// VerifyFIPS verifies that FIPS mode is enabled on the cluster before completing.
 	VerifyFIPS bool
+	// ClusterInitTimeout overrides the default cluster initialization timeout.
+	// If zero, the default (40m) is used.
+	ClusterInitTimeout time.Duration
 }
 
 // verifyFIPSEnabled checks that the cluster has FIPS enabled by querying
@@ -116,7 +119,7 @@ func verifyFIPSEnabled(ctx context.Context, config *rest.Config) error {
 // WaitForInstallComplete waits for cluster to complete installation, checks for operator stability
 // and logs cluster information when successful.
 func WaitForInstallComplete(ctx context.Context, config *rest.Config, options WaitOptions) error {
-	if err := waitForInitializedCluster(ctx, config, options.ExtendTimeoutForBaremetal || options.UserProvisionedDNSEnabled); err != nil {
+	if err := waitForInitializedCluster(ctx, config, options); err != nil {
 		return err
 	}
 
@@ -144,17 +147,17 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
-func waitForInitializedCluster(ctx context.Context, config *rest.Config, extendTimeout bool) error {
-	// TODO revert this value back to 30 minutes.  It's currently at the end of 4.6 and we're trying to see if the
+func waitForInitializedCluster(ctx context.Context, config *rest.Config, options WaitOptions) error {
+	// Default cluster initialization timeout.
 	timeout := 40 * time.Minute
-
-	// Wait longer for baremetal, due to length of time it takes to boot
-	// Wait longer for AWS with userProvisionedDNS enabled.
-	// Tests show that with this feature enabled, MCO needs additional time to complete tasks
-	if extendTimeout {
+	if options.ClusterInitTimeout > 0 {
+		timeout = options.ClusterInitTimeout
+	} else if options.ExtendTimeoutForBaremetal || options.UserProvisionedDNSEnabled {
+		// Wait longer for baremetal, due to length of time it takes to boot
+		// Wait longer for AWS with userProvisionedDNS enabled.
+		// Tests show that with this feature enabled, MCO needs additional time to complete tasks
 		timeout = 60 * time.Minute
 	}
-
 	untilTime := time.Now().Add(timeout)
 	timezone, _ := untilTime.Zone()
 	logrus.Infof("Waiting up to %v (until %v %s) for the cluster at %s to initialize...",
