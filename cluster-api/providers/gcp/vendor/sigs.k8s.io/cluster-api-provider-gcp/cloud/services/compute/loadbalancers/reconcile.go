@@ -615,12 +615,19 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	ports = append(ports, "22623")
 	spec.Ports = ports
 	spec.PortRange = ""
-	subnet, err := s.getSubnet(ctx)
-	if err != nil {
-		log.Error(err, "Error getting subnet for regional forwardingrule")
-		return nil, err
+	if s.scope.IsSharedVpc() {
+		network := s.scope.Network()
+		if network.SelfLink != nil {
+			spec.Network = *network.SelfLink
+		}
+	} else {
+		subnet, err := s.getSubnet(ctx)
+		if err != nil {
+			log.Error(err, "Error getting subnet for regional forwardingrule")
+			return nil, err
+		}
+		spec.Subnetwork = subnet.SelfLink
 	}
-	spec.Subnetwork = subnet.SelfLink
 	spec.IPAddress = addr.SelfLink
 
 	key := meta.RegionalKey(spec.Name, s.scope.Region())
