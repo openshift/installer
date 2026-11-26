@@ -115,6 +115,9 @@ func validateInstanceAndConfidentialCompute(fldPath *field.Path, instanceType st
 	if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.DisabledFeature) {
 		// Nothing to validate here
 		return allErrs
+	} else if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.EnabledFeature) ||
+		confidentialCompute == gcp.ConfidentialComputePolicySEV {
+		return field.ErrorList{field.Invalid(fldPath.Child("confidentialCompute"), confidentialCompute, fmt.Sprintf("no longer supported. Use %q (SEV-SNP) or %q (TDX) instead", gcp.ConfidentialComputePolicySEVSNP, gcp.ConfidentialComputePolicyTDX))}
 	}
 
 	if onHostMaintenance != gcp.OnHostMaintenanceTerminate {
@@ -122,11 +125,7 @@ func validateInstanceAndConfidentialCompute(fldPath *field.Path, instanceType st
 	}
 
 	machineType, _, _ := strings.Cut(instanceType, "-")
-	machineSupportMatrixSelector := confidentialCompute
-	if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.EnabledFeature) {
-		machineSupportMatrixSelector = gcp.ConfidentialComputePolicySEV
-	}
-	supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[machineSupportMatrixSelector]
+	supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[confidentialCompute]
 	if !ok {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("confidentialCompute"), confidentialCompute, fmt.Sprintf("Unknown confidential computing technology %s", confidentialCompute)))
 	} else if !slices.Contains(supportedMachineTypes, machineType) {
