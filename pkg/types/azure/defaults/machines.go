@@ -20,6 +20,8 @@ func ControlPlaneInstanceType(cloud azure.CloudEnvironment, region string, arch 
 	}
 	if cloud == azure.StackCloud {
 		size = "DS4_v2"
+	} else if cloud == azure.USSecCloud {
+		size = "D4_v2"
 	}
 	return instanceType(instanceClass, size)
 }
@@ -36,6 +38,8 @@ func ComputeInstanceType(cloud azure.CloudEnvironment, region string, arch types
 	}
 	if cloud == azure.StackCloud {
 		size = "DS3_v2"
+	} else if cloud == azure.USSecCloud {
+		size = "D4_v2"
 	}
 	return instanceType(instanceClass, size)
 }
