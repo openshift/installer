@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -643,7 +644,13 @@ type dnsZone struct {
 }
 
 func groupFromID(id string) string {
-	return strings.Split(id, "/")[4]
+	parts := strings.Split(id, "/")
+	// Azure resource IDs are /subscriptions/<sub>/resourceGroups/<group>/...
+	// A short or empty ID used to panic on parts[4].
+	if len(parts) < 5 {
+		return ""
+	}
+	return parts[4]
 }
 
 func toRecordType(t string) dns.RecordType {
@@ -777,7 +784,16 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 
 	var errorList []error
 	for _, sp := range servicePrincipals {
-		appID := *sp.GetAppId()
+		if isNilInterface(sp) {
+			logger.Warn("Skipping nil Service Principal entry while deleting Application registrations")
+			continue
+		}
+		appIDValue := sp.GetAppId()
+		if appIDValue == nil {
+			logger.Warn("Skipping Service Principal without an AppID while deleting Application registrations")
+			continue
+		}
+		appID := *appIDValue
 		logger := logger.WithField("appID", appID)
 
 		filter := fmt.Sprintf("appId eq '%s'", appID)
@@ -794,13 +810,22 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 		}
 		// msgraphsdk can return a `nil` response even if no errors occurred
 		if resp == nil {
-			logger.Debugf("Empty response getting Application from Service Principal %s", *sp.GetDisplayName())
+			logger.Debug("Empty response getting Application from Service Principal")
 			continue
 		}
 		apps := resp.GetValue()
-		if len(apps) != 1 {
-			err = fmt.Errorf("should have received only a single matching AppID, received %d instead", len(apps))
+		if len(apps) == 0 {
+			logger.Debug("No Application found for Service Principal; nothing to delete")
+			continue
+		}
+		if len(apps) > 1 {
+			err = fmt.Errorf("expected one matching AppID, got %d", len(apps))
 			errorList = append(errorList, err)
+		}
+		if isNilInterface(apps[0]) || apps[0].GetId() == nil {
+			err = errors.New("matching app entry is nil or has no ID")
+			errorList = append(errorList, err)
+			continue
 		}
 
 		err = graphClient.ApplicationsById(*apps[0].GetId()).Delete(ctx, nil)
@@ -811,6 +836,19 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 	}
 
 	return utilerrors.NewAggregate(errorList)
+}
+
+func isNilInterface(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return reflected.IsNil()
+	default:
+		return false
+	}
 }
 
 func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, matchTag, infraID string) ([]models.ServicePrincipalable, error) {

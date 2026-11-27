@@ -297,20 +297,24 @@ func getClient() (*armcompute.VirtualMachineImagesClient, error) {
 // ARO combines xy into what should be the x, and includes the RHEL version in y; e.g. 418.94.20250122.
 // Paid marketplace images use a correct semantic version (well, they use a timestamp for z, but good enough): 4.17.2024101109.
 func convertToSemver(ver string) string {
+	segments := strings.Split(ver, ".")
+	var semVer string
+
 	// Using RHEL versioning
-	if major := strings.Split(ver, ".")[0]; major == "9" || major == "10" {
-		return fmt.Sprintf("v%s", ver)
+	switch {
+	case segments[0] == "9" || segments[0] == "10":
+		semVer = fmt.Sprintf("v%s", ver)
+	case len(segments[0]) == 1:
+		semVer = fmt.Sprintf("v%s", ver)
+	case len(segments[0]) == 3 && len(segments) > 2:
+		combinedXY := segments[0]
+		semVer = fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
 	}
 
-	if segments := strings.Split(ver, "."); len(segments[0]) == 1 {
-		semV := fmt.Sprintf("v%s", ver)
-		return semV
-	} else if len(segments[0]) == 3 {
-		combinedXY := segments[0]
-		semV := fmt.Sprintf("v%s", strings.Join([]string{combinedXY[:1], combinedXY[1:], segments[2]}, "."))
-		return semV
+	if !semver.IsValid(semVer) {
+		return ""
 	}
-	return ""
+	return semVer
 }
 
 // FillMissing copies any nil image types from fallback into target.
@@ -359,7 +363,12 @@ func matchesRHELMajor(ver string, rhelMajor int) bool {
 
 func checkIfNewer(candidate, release string) bool {
 	mm := semver.MajorMinor(candidate)
-	imgMajor, err := strconv.Atoi(strings.TrimPrefix(strings.Split(mm, ".")[0], "v"))
+	mmParts := strings.Split(mm, ".")
+	if len(mmParts) < 2 {
+		logrus.Infof("Error converting minor version to int with version %s", candidate)
+		return true
+	}
+	imgMajor, err := strconv.Atoi(strings.TrimPrefix(mmParts[0], "v"))
 	if err != nil {
 		logrus.Infof("Error converting major version to int with version %s", candidate)
 		return true
@@ -369,12 +378,16 @@ func checkIfNewer(candidate, release string) bool {
 	if imgMajor == 9 || imgMajor == 10 {
 		return false
 	}
-	imgMinor, err := strconv.Atoi(strings.Split(mm, ".")[1])
+	imgMinor, err := strconv.Atoi(mmParts[1])
 	if err != nil {
 		logrus.Infof("Error converting minor version to int with version %s", candidate)
 		return true
 	}
 	relParts := strings.Split(release, ".")
+	if len(relParts) < 2 {
+		logrus.Infof("Error converting minor version to int with version %s", release)
+		return true
+	}
 	relMajor, err := strconv.Atoi(relParts[0])
 	if err != nil {
 		logrus.Infof("Error converting major version to int with version %s", release)

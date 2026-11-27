@@ -247,6 +247,9 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6
 	if err != nil {
 		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
 	}
+	if extLB.Properties == nil {
+		return nil, fmt.Errorf("external load balancer %s has no properties", in.loadBalancerName)
+	}
 
 	// Get the existing frontend configuration and backend address pool and
 	// create an additional frontend configuration and backend address
@@ -410,11 +413,11 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 		},
 	}
 
-	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
-	if len(existingFrontEndIPConfig) == 0 {
-		return nil, fmt.Errorf("could not get frontEndIPConfig for internal LB %s", *intLB.Name)
+	if intLB.Properties == nil || len(intLB.Properties.FrontendIPConfigurations) == 0 || intLB.Properties.FrontendIPConfigurations[0] == nil || intLB.Properties.FrontendIPConfigurations[0].Name == nil {
+		return nil, fmt.Errorf("could not get frontEndIPConfig for internal LB %s", stringValue(intLB.Name))
 	}
-	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
+	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
+	existingFrontEndIPConfigName := *existingFrontEndIPConfig[0].Name
 
 	mcsRule := &armnetwork.LoadBalancingRule{
 		Name: to.Ptr("sint-v4"),
@@ -477,17 +480,17 @@ func addIPv6InternalLBFrontend(ctx context.Context, in *lbInput) error {
 	}
 	intLB := lbResp.LoadBalancer
 
-	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
-	if len(existingFrontEndIPConfig) == 0 {
-		return fmt.Errorf("could not get frontEndIPConfig for internal LB %s", *intLB.Name)
+	if intLB.Properties == nil || len(intLB.Properties.FrontendIPConfigurations) == 0 || intLB.Properties.FrontendIPConfigurations[0] == nil || intLB.Properties.FrontendIPConfigurations[0].Name == nil {
+		return fmt.Errorf("could not get frontEndIPConfig for internal LB %s", stringValue(intLB.Name))
 	}
+	existingFrontEndIPConfig := intLB.Properties.FrontendIPConfigurations
 
 	var subnetID string
-	if existingFrontEndIPConfig[0].Properties != nil && existingFrontEndIPConfig[0].Properties.Subnet != nil {
+	if existingFrontEndIPConfig[0].Properties != nil && existingFrontEndIPConfig[0].Properties.Subnet != nil && existingFrontEndIPConfig[0].Properties.Subnet.ID != nil {
 		subnetID = *existingFrontEndIPConfig[0].Properties.Subnet.ID
 	}
 
-	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
+	existingFrontEndIPConfigName := *existingFrontEndIPConfig[0].Name
 	frontendIPv6Name := fmt.Sprintf("%s-IPv6", existingFrontEndIPConfigName)
 	frontendIPv6 := &armnetwork.FrontendIPConfiguration{
 		Name: to.Ptr(frontendIPv6Name),
@@ -527,42 +530,57 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			return fmt.Errorf("failed to get vm %s: %w", vmName, err)
 		}
 
-		if nics := vm.Properties.NetworkProfile.NetworkInterfaces; len(nics) == 1 {
-			nicRef := nics[0]
+		if vm.Properties == nil || vm.Properties.NetworkProfile == nil {
+			return fmt.Errorf("vm %s has no network profile", vmName)
+		}
+		nics := vm.Properties.NetworkProfile.NetworkInterfaces
+		if len(nics) != 1 {
+			return fmt.Errorf("vm %s has %d network interfaces, expected exactly one", vmName, len(nics))
+		}
+		if nics[0] == nil || nics[0].ID == nil {
+			return fmt.Errorf("vm %s has a network interface reference without an ID", vmName)
+		}
+		nicRef := nics[0]
 
-			nicName := path.Base(*nicRef.ID)
-			nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
-			if err != nil {
-				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
+		nicName := path.Base(*nicRef.ID)
+		nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
+		}
+		if nic.Properties == nil {
+			return fmt.Errorf("nic %s has no properties", nicName)
+		}
+		for _, ipconfig := range nic.Properties.IPConfigurations {
+			if ipconfig == nil || ipconfig.Properties == nil {
+				continue
 			}
-			for _, ipconfig := range nic.Properties.IPConfigurations {
-				ipversion := armnetwork.IPVersionIPv4
-				if ipconfig.Properties.PrivateIPAddressVersion != nil {
-					ipversion = *ipconfig.Properties.PrivateIPAddressVersion
+			ipversion := armnetwork.IPVersionIPv4
+			if ipconfig.Properties.PrivateIPAddressVersion != nil {
+				ipversion = *ipconfig.Properties.PrivateIPAddressVersion
+			}
+			for _, pool := range in.backendAddressPools {
+				if pool == nil {
+					continue
 				}
-				for _, pool := range in.backendAddressPools {
-					poolAddressVersion := armnetwork.IPVersionIPv4
-					if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
-						poolAddressVersion = armnetwork.IPVersionIPv6
-					}
-					if ipversion == poolAddressVersion {
-						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
-							ipconfig.Properties.LoadBalancerBackendAddressPools,
-							pool,
-						)
-					}
+				poolAddressVersion := armnetwork.IPVersionIPv4
+				if pool.Name != nil && strings.HasSuffix(strings.ToLower(*pool.Name), "-ipv6") {
+					poolAddressVersion = armnetwork.IPVersionIPv6
+				}
+				if ipversion == poolAddressVersion {
+					ipconfig.Properties.LoadBalancerBackendAddressPools = append(
+						ipconfig.Properties.LoadBalancerBackendAddressPools,
+						pool,
+					)
 				}
 			}
-			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
-			if err != nil {
-				return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
-			}
-			_, err = pollerResp.PollUntilDone(ctx, nil)
-			if err != nil {
-				return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
-			}
-		} else {
-			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
+		}
+		pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
+		}
+		_, err = pollerResp.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
 		}
 	}
 	return nil
@@ -771,4 +789,11 @@ func associateNatGatewayToSubnet(ctx context.Context, in natGatewayInput) error 
 		}
 	}
 	return nil
+}
+
+func stringValue(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }

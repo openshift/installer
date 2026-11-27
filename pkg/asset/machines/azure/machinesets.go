@@ -20,6 +20,9 @@ import (
 
 // MachineSets returns a list of machinesets for a machinepool.
 func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, subnetZones []string, session *icazure.Session) ([]*clusterapi.MachineSet, error) {
+	if ic == nil || ic.Config == nil || pool == nil {
+		return nil, fmt.Errorf("missing Azure machine pool configuration")
+	}
 	config := ic.Config
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-azure configuration: %q", configPlatform)
@@ -29,6 +32,9 @@ func MachineSets(clusterID string, ic *installconfig.InstallConfig, pool *types.
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
+	if platform == nil || mpool == nil {
+		return nil, fmt.Errorf("missing Azure machine pool configuration")
+	}
 
 	if len(mpool.Zones) == 0 {
 		// if no azs are given we set to []string{""} for convenience over later operations.
@@ -148,15 +154,32 @@ type multiZoneMachineSetInput struct {
 }
 
 func getMultiZoneMachineSets(in multiZoneMachineSetInput) ([]*clusterapi.MachineSet, error) {
+	if in.ic == nil || in.ic.Azure == nil {
+		return nil, fmt.Errorf("missing Azure zone subnet map")
+	}
 	// Deep copy metadata map.
 	zoneSubnetmap := map[string][]string{}
 	subnetCount := 0
 	// Filter for the zones the user provided for compute nodes.
 	for key, value := range in.ic.Azure.ZonesSubnetMap {
-		if slices.Contains(in.azs, key) {
-			zoneSubnetmap[key] = sets.NewString(value...).List()
-			subnetCount += len(value)
+		if len(value) == 0 || !slices.Contains(in.azs, key) {
+			continue
 		}
+		// Count each subnet name once. A repeated name is still one subnet.
+		zoneSubnetmap[key] = sets.NewString(value...).List()
+		subnetCount += len(zoneSubnetmap[key])
+	}
+	if subnetCount == 0 {
+		requestedZones := append([]string(nil), in.azs...)
+		sort.Strings(requestedZones)
+		availableZones := make([]string, 0, len(in.ic.Azure.ZonesSubnetMap))
+		for zone := range in.ic.Azure.ZonesSubnetMap {
+			availableZones = append(availableZones, zone)
+		}
+		sort.Strings(availableZones)
+		// A missing zone-to-subnet match cannot produce a valid MachineSet.
+		// Fail here instead of silently omitting the worker pool.
+		return nil, fmt.Errorf("cannot create multi-zone machine sets: no subnets available for requested compute zones %v; zone subnet map contains zones %v", requestedZones, availableZones)
 	}
 	machineSets := []*clusterapi.MachineSet{}
 	replicasToCreate := int32(in.replicas)
@@ -183,10 +206,11 @@ func getMultiZoneMachineSets(in multiZoneMachineSetInput) ([]*clusterapi.Machine
 			if replicaPerSet == 0 || len(zoneSubnetmap) == 0 {
 				break
 			}
-			if _, ok := zoneSubnetmap[az]; !ok {
+			subnets, ok := zoneSubnetmap[az]
+			if !ok || len(subnets) == 0 {
 				continue
 			}
-			subnet := zoneSubnetmap[az][0]
+			subnet := subnets[0]
 			if len(zoneSubnetmap[az]) == 1 {
 				delete(zoneSubnetmap, az)
 			} else {

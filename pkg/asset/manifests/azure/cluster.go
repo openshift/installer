@@ -742,20 +742,43 @@ func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
 	}
 	// Check if default lbip is within control plane network.
 	// If not in control plane network, assign the first non-reserved IP in the CIDR to lbip.
+	parsed := net.ParseIP(ip)
+	var network *net.IPNet
 	for _, subnet := range subnets {
-		if subnet == nil {
+		if subnet == nil || len(subnet.IP) == 0 {
 			continue
 		}
-		if subnet.Contains(net.ParseIP(ip)) {
+		if network == nil {
+			network = subnet
+		}
+		if subnet.Contains(parsed) {
 			return ip
 		}
 	}
-	ipSubnets := make(net.IP, len(subnets[0].IP))
-	copy(ipSubnets, subnets[0].IP)
+	if network == nil {
+		return ""
+	}
 	// Since the first 4 IP of the subnets are usually reserved[1], pick the next one that's available in the CIDR.
 	// [1] - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method
-	ipSubnets[len(ipSubnets)-1] += 4
+	ipSubnets, ok := addIPOffset(network.IP, 4)
+	if !ok || !network.Contains(ipSubnets) {
+		return ""
+	}
 	return ipSubnets.String()
+}
+
+func addIPOffset(ip net.IP, offset uint64) (net.IP, bool) {
+	if len(ip) == 0 {
+		return nil, false
+	}
+	result := append(net.IP(nil), ip...)
+	remaining := offset
+	for i := len(result) - 1; i >= 0 && remaining > 0; i-- {
+		sum := uint64(result[i]) + remaining
+		result[i] = byte(sum)
+		remaining = sum >> 8
+	}
+	return result, remaining == 0
 }
 
 // getNextAvailableIPForLoadBalancer returns the next available IP address
@@ -821,8 +844,10 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		if cidr.CIDR.Contains(net.ParseIP(lbip)) {
 			return lbip, nil
 		}
-		ipSubnets := cidr.CIDR.IP
-		ipSubnets[len(ipSubnets)-1] += 4
+		ipSubnets, ok := addIPOffset(cidr.CIDR.IP, 4)
+		if !ok || !cidr.CIDR.Contains(ipSubnets) {
+			return "", fmt.Errorf("unable to select an Azure Stack load balancer IP from machine network CIDR %s", cidr.CIDR.String())
+		}
 		return ipSubnets.String(), nil
 	}
 	availableIP, err := client.CheckIPAddressAvailability(ctx, networkResourceGroupName, virtualNetworkName, lbip)
