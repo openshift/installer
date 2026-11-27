@@ -32,6 +32,8 @@ find_fuzz_corpus() {
 corpus_snapshot=$(mktemp)
 find_fuzz_corpus > "$corpus_snapshot"
 
+# This function is invoked by the EXIT trap below.
+# shellcheck disable=SC2329
 copy_new_fuzz_corpus() {
   local f dest
   while IFS= read -r f; do
