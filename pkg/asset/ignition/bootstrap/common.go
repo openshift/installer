@@ -645,6 +645,15 @@ func replace(input, from, to string) string {
 	return strings.ReplaceAll(input, from, to)
 }
 
+// shellSingleQuote wraps s so bash treats it as one literal word.
+// Use only as a standalone shell word or as the entire RHS of an assignment
+// (for example disk={{shellSingleQuote .Path}}). Do not interpolate the
+// result inside an already double-quoted string: the emitted single quotes
+// would be data, not quoting delimiters.
+func shellSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, `'`, `'"'"'`) + "'"
+}
+
 // Read data from the string reader, and, if the name ends with
 // '.template', strip that extension from the name and render the
 // template.
@@ -656,7 +665,10 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 
 	if filepath.Ext(name) == ".template" {
 		name = strings.TrimSuffix(name, ".template")
-		tmpl := template.New(name).Funcs(template.FuncMap{"replace": replace})
+		tmpl := template.New(name).Funcs(template.FuncMap{
+			"replace":          replace,
+			"shellSingleQuote": shellSingleQuote,
+		})
 		tmpl, err := tmpl.Parse(string(data))
 		if err != nil {
 			return name, data, err

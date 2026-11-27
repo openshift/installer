@@ -669,7 +669,10 @@ const (
 
 // BootstrapInPlace defines the configuration for bootstrap-in-place installation
 type BootstrapInPlace struct {
-	// InstallationDisk is the target disk drive for coreos-installer
+	// InstallationDisk is the target disk drive for coreos-installer.
+	// It must be a single absolute disk path (for example /dev/sda or a
+	// /dev/disk/by-id / by-path name). Extra command-line arguments are
+	// rejected; network configuration copying is built in via coreos-installer's -n flag.
 	InstallationDisk string `json:"installationDisk"`
 }
 
