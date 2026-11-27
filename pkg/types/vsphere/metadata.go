@@ -18,6 +18,8 @@ type Metadata struct {
 type VCenters struct {
 	// VCenter is the domain name or IP address of the vCenter.
 	VCenter string `json:"vCenter"`
+	// Port is the TCP port that will be used to communicate to the vCenter endpoint.
+	Port int32 `json:"port,omitempty"`
 	// Username is the name of the user to use to connect to the vCenter.
 	Username string `json:"username"`
 	// Password is the password for the user to use to connect to the vCenter.

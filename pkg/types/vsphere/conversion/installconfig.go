@@ -199,7 +199,7 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		if err != nil {
 			return fmt.Errorf("unable to select credentials for vCenter %s: %w", vcenter.Server, err)
 		}
-		finder, err := GetFinder(vcenter.Server, credentials.User, credentials.Password)
+		finder, err := GetFinder(vcenter.ServerWithPort(), credentials.User, credentials.Password)
 		if err != nil {
 			return err
 		}

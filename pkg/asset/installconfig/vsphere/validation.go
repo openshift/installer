@@ -95,7 +95,7 @@ func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConf
 				return nil, nil, err
 			}
 			vim25Client, vim25RestClient, cleanup, err := CreateVSphereClients(ctx,
-				vcenter.Server,
+				vcenter.ServerWithPort(),
 				credentials.User,
 				credentials.Password)
 
@@ -172,7 +172,7 @@ func getComponentVCenterClient(failureDomain vsphere.FailureDomain, ic *types.In
 			return nil, nil, fmt.Errorf("unsupported component credential %q", component)
 		}
 
-		client, restClient, cleanup, err := CreateVSphereClients(context.TODO(), vcenter.Server, credentials.User, credentials.Password)
+		client, restClient, cleanup, err := CreateVSphereClients(context.TODO(), vcenter.ServerWithPort(), credentials.User, credentials.Password)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to connect %s credentials to vcenter %s: %w", component, vcenter.Server, err)
 		}

@@ -114,7 +114,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 		for i := range in.MachineManifests {
 			if vm, ok := in.MachineManifests[i].(*v1beta2.VSphereMachine); ok {
-				if vm.Spec.Server == server {
+				if vm.Spec.Server == vcenter.ServerWithPort() {
 					vm.Spec.TagIDs = append(vm.Spec.TagIDs, tagID)
 				}
 			}
