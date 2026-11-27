@@ -423,7 +423,7 @@ func enrichedProxy() *types.Proxy {
 	return &types.Proxy{
 		HTTPProxy:  "http://10.10.10.11:80",
 		HTTPSProxy: "http://my-lab-proxy.org:443",
-		NoProxy:    ".cluster.local,.svc,10.10.11.0/24,127.0.0.1,172.30.0.0/16,192.168.111.0/24,api-int.ocp-ibi.testing.com,internal.com,localhost",
+		NoProxy:    ".cluster.local,.cluster.local.,.svc,10.10.11.0/24,127.0.0.1,172.30.0.0/16,192.168.111.0/24,api-int.ocp-ibi.testing.com,internal.com,localhost",
 	}
 }
 
