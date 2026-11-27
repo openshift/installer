@@ -1649,7 +1649,11 @@ spec:
               with bootstrap in place installation.
             properties:
               installationDisk:
-                description: InstallationDisk is the target disk drive for coreos-installer
+                description: |-
+                  InstallationDisk is the target disk drive for coreos-installer.
+                  It must be a single absolute disk path (for example /dev/sda or a
+                  /dev/disk/by-id / by-path name). Extra command-line arguments are
+                  rejected; network configuration copying is built in via coreos-installer's -n flag.
                 type: string
             required:
             - installationDisk
