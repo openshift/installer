@@ -30,6 +30,13 @@ func BuildNoProxySet(installConfig *types.InstallConfig) sets.Set[string] {
 		"localhost",
 		".svc",
 		".cluster.local",
+		// Fully qualified form: Go's httpproxy matcher suffix-matches literally and
+		// does not strip the root label, so ".cluster.local" never matches
+		// "foo.ns.svc.cluster.local.".
+		// The cluster-network-operator builds the same defaults in
+		// pkg/util/proxyconfig/no_proxy.go; keep both lists identical, otherwise
+		// the bootstrap and in-cluster proxy configurations diverge.
+		".cluster.local.",
 	)
 
 	for _, network := range installConfig.Networking.ServiceNetwork {

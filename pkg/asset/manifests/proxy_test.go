@@ -25,7 +25,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				Networking: &types.Networking{},
 				Proxy:      &types.Proxy{},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "api-int.test.example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "api-int.test.example.com", "localhost"},
 		},
 		{
 			name: "service network entries are included",
@@ -39,7 +39,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				},
 				Proxy: &types.Proxy{},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "172.30.0.0/16", "api-int.test.example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "172.30.0.0/16", "api-int.test.example.com", "localhost"},
 		},
 		{
 			name: "machine network entries are included",
@@ -53,7 +53,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				},
 				Proxy: &types.Proxy{},
 			},
-			expected: []string{".cluster.local", ".svc", "10.0.0.0/16", "127.0.0.1", "api-int.test.example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "10.0.0.0/16", "127.0.0.1", "api-int.test.example.com", "localhost"},
 		},
 		{
 			name: "cluster network entries are included",
@@ -67,7 +67,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				},
 				Proxy: &types.Proxy{},
 			},
-			expected: []string{".cluster.local", ".svc", "10.128.0.0/14", "127.0.0.1", "api-int.test.example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "10.128.0.0/14", "127.0.0.1", "api-int.test.example.com", "localhost"},
 		},
 		{
 			name: "single user no-proxy entry is included",
@@ -79,7 +79,7 @@ func TestBuildNoProxySet(t *testing.T) {
 					NoProxy: "example.com",
 				},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "api-int.test.example.com", "example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "api-int.test.example.com", "example.com", "localhost"},
 		},
 		{
 			name: "multiple comma-separated user entries are included",
@@ -91,7 +91,7 @@ func TestBuildNoProxySet(t *testing.T) {
 					NoProxy: "example.com,internal.corp,192.168.1.0/24",
 				},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "192.168.1.0/24", "api-int.test.example.com", "example.com", "internal.corp", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "192.168.1.0/24", "api-int.test.example.com", "example.com", "internal.corp", "localhost"},
 		},
 		{
 			name: "empty segments in user no-proxy are ignored",
@@ -103,7 +103,7 @@ func TestBuildNoProxySet(t *testing.T) {
 					NoProxy: "example.com,,internal.corp,",
 				},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "api-int.test.example.com", "example.com", "internal.corp", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "api-int.test.example.com", "example.com", "internal.corp", "localhost"},
 		},
 		{
 			name: "all network types and user entries combined",
@@ -126,7 +126,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				},
 			},
 			expected: []string{
-				".cluster.local", ".svc", "10.0.0.0/16", "10.128.0.0/14",
+				".cluster.local", ".cluster.local.", ".svc", "10.0.0.0/16", "10.128.0.0/14",
 				"127.0.0.1", "172.30.0.0/16", "api-int.test.example.com", "example.com", "localhost",
 			},
 		},
@@ -144,7 +144,7 @@ func TestBuildNoProxySet(t *testing.T) {
 					NoProxy: "172.30.0.0/16,localhost",
 				},
 			},
-			expected: []string{".cluster.local", ".svc", "127.0.0.1", "172.30.0.0/16", "api-int.test.example.com", "localhost"},
+			expected: []string{".cluster.local", ".cluster.local.", ".svc", "127.0.0.1", "172.30.0.0/16", "api-int.test.example.com", "localhost"},
 		},
 		{
 			name: "multiple entries in each network type",
@@ -168,7 +168,7 @@ func TestBuildNoProxySet(t *testing.T) {
 				Proxy: &types.Proxy{},
 			},
 			expected: []string{
-				".cluster.local", ".svc", "10.0.0.0/16", "10.128.0.0/14",
+				".cluster.local", ".cluster.local.", ".svc", "10.0.0.0/16", "10.128.0.0/14",
 				"127.0.0.1", "172.30.0.0/16", "api-int.test.example.com",
 				"fd00::/48", "fd01::/48", "fd02::/112", "localhost",
 			},
