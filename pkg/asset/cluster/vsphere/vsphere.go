@@ -22,6 +22,7 @@ func Metadata(config *types.InstallConfig) (*typesvsphere.Metadata, error) {
 			return nil, fmt.Errorf("failed to get credentials for vcenter %q: %w", vcenter.Server, err)
 		}
 		vcenterDef := typesvsphere.VCenters{
+			Port:     vcenter.Port,
 			VCenter:  vcenter.Server,
 			Username: credentials.User,
 			Password: credentials.Password,

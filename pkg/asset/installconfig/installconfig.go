@@ -261,7 +261,7 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 			if err != nil {
 				return errors.Wrapf(err, "failed to select credentials for vCenter %s", v.Server)
 			}
-			_ = a.VSphere.AddCredentials(v.Server, credentials.User, credentials.Password)
+			_ = a.VSphere.AddCredentials(v.Server, v.Port, credentials.User, credentials.Password)
 		}
 	}
 

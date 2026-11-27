@@ -48,7 +48,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Namespace: capiutils.Namespace,
 			},
 			Spec: capv.VSphereClusterSpec{
-				Server: fmt.Sprintf("https://%s", vcenter.Server),
+				Server: fmt.Sprintf("https://%s", vcenter.ServerWithPort()),
 				ControlPlaneEndpoint: capv.APIEndpoint{
 					Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 					Port: 6443,
@@ -83,7 +83,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Name: failureDomain.Name,
 				},
 				Spec: capv.VSphereDeploymentZoneSpec{
-					Server:        fmt.Sprintf("https://%s", failureDomain.Server),
+					Server:        fmt.Sprintf("https://%s", installConfig.Config.VSphere.ServerWithPort(failureDomain.Server)),
 					FailureDomain: failureDomain.Name,
 					ControlPlane:  ptr.To(true),
 					PlacementConstraint: capv.PlacementConstraint{

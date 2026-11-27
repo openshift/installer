@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -33,8 +34,9 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 	// way is for all vcenter data to be part of the vcenters array.
 	if len(metadata.VSphere.VCenters) > 0 {
 		for _, vsphere := range metadata.VSphere.VCenters {
-			logger.Info(fmt.Sprintf("Creating client for vCenter %v for destroy", vsphere.VCenter))
-			client, err := NewClient(vsphere.VCenter, vsphere.Username, vsphere.Password, logger)
+			server := vspheretypes.FormatServerWithPort(vsphere.VCenter, vsphere.Port)
+			logger.Info(fmt.Sprintf("Creating client for vCenter %v for destroy", server))
+			client, err := NewClient(server, vsphere.Username, vsphere.Password, logger)
 			if err != nil {
 				return nil, err
 			}

@@ -2,6 +2,8 @@ package vsphere
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 
 	configv1 "github.com/openshift/api/config/v1"
 )
@@ -441,4 +443,37 @@ func (h *Host) IsCompute() bool {
 // IsBootstrap checks if the current host is a bootstrap.
 func (h *Host) IsBootstrap() bool {
 	return h.Role == BootstrapRole
+}
+
+// FormatServerWithPort returns server formatted with port when a non-default
+// port is configured. When port is 0 or 443 (the HTTPS default), or if server
+// is empty or already includes a port, server is returned unchanged.
+func FormatServerWithPort(server string, port int32) string {
+	if server == "" || port <= 0 || port == 443 {
+		return server
+	}
+	if _, _, err := net.SplitHostPort(server); err == nil {
+		return server
+	}
+	return net.JoinHostPort(server, strconv.Itoa(int(port)))
+}
+
+// ServerWithPort returns the vCenter server address including the configured
+// port when a non-default port is specified.
+func (v VCenter) ServerWithPort() string {
+	return FormatServerWithPort(v.Server, v.Port)
+}
+
+// ServerWithPort returns the server address with its configured port for the
+// matching vCenter entry, or the bare server string if no matching entry is found.
+func (p *Platform) ServerWithPort(server string) string {
+	if p == nil {
+		return server
+	}
+	for _, vc := range p.VCenters {
+		if vc.Server == server {
+			return vc.ServerWithPort()
+		}
+	}
+	return server
 }

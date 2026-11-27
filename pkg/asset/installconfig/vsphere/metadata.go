@@ -33,6 +33,7 @@ type VCenterContext struct {
 type VCenterCredential struct {
 	Username string
 	Password string
+	Port     int32
 }
 
 // Metadata holds vcenter stuff.
@@ -57,13 +58,14 @@ func NewMetadata() *Metadata {
 	}
 }
 
-// AddCredentials creates a session param from the vCenter server, username and password
+// AddCredentials creates a session param from the vCenter server, port, username and password
 // to the Credentials Map.
-func (m *Metadata) AddCredentials(server, username, password string) *session.Params {
+func (m *Metadata) AddCredentials(server string, port int32, username, password string) *session.Params {
 	if _, ok := m.VCenterCredentials[server]; !ok {
 		m.VCenterCredentials[server] = VCenterCredential{
 			Username: username,
 			Password: password,
+			Port:     port,
 		}
 	}
 
@@ -75,7 +77,9 @@ func (m *Metadata) AddCredentials(server, username, password string) *session.Pa
 	}
 
 	if _, ok := m.credentials[server]; !ok {
-		m.credentials[server] = session.NewParams().WithServer(server).WithUserInfo(username, password)
+		m.credentials[server] = session.NewParams().
+			WithServer(vsphere.FormatServerWithPort(server, port)).
+			WithUserInfo(username, password)
 	}
 	return m.credentials[server]
 }
@@ -102,7 +106,7 @@ func (m *Metadata) unlockedSession(ctx context.Context, server string) (*session
 
 	if params, ok = m.credentials[server]; !ok {
 		if creds, ok := m.VCenterCredentials[server]; ok {
-			params = m.AddCredentials(server, creds.Username, creds.Password)
+			params = m.AddCredentials(server, creds.Port, creds.Username, creds.Password)
 		} else {
 			return nil, fmt.Errorf("credentials for %s not found", server)
 		}

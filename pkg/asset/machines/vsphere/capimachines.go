@@ -138,7 +138,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					Folder:            providerSpec.Workspace.Folder,
 					Template:          providerSpec.Template,
 					Datacenter:        providerSpec.Workspace.Datacenter,
-					Server:            providerSpec.Workspace.Server,
+					Server:            config.Platform.VSphere.ServerWithPort(providerSpec.Workspace.Server),
 					NumCPUs:           providerSpec.NumCPUs,
 					NumCoresPerSocket: ptr.To(providerSpec.NumCoresPerSocket),
 					MemoryMiB:         providerSpec.MemoryMiB,
@@ -258,7 +258,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 		// Need to determine the infrastructure ref since there may be multi vcenters.
 		clusterName := clusterID
 		for index, vcenter := range config.Platform.VSphere.VCenters {
-			if vcenter.Server == bootstrapSpec.Server {
+			if vcenter.ServerWithPort() == bootstrapSpec.Server {
 				clusterName = fmt.Sprintf("%v-%d", clusterID, index)
 				break
 			}
